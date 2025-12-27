@@ -44,3 +44,14 @@
   letter-spacing: 2px;
   animation: dotPulse 1.1s infinite;
 }
+/* ---- Fix caret streaming (▍) para que no se vaya debajo del último bloque Markdown ---- */
+.assistant-md > :last-child {
+  display: inline;
+}
+
+.typing-caret {
+  display: inline-block;
+  vertical-align: baseline;
+  line-height: 1;
+  margin-left: 4px;
+}
