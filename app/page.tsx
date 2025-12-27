@@ -1,4 +1,3 @@
-// app/chat/page.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -8,7 +7,7 @@ type Message = {
   id: string;
   role: "user" | "assistant";
   text?: string;
-  image?: string; // data:image/...;base64,...
+  image?: string;
   streaming?: boolean;
 };
 
@@ -51,62 +50,21 @@ function makeTitleFromText(text: string) {
 }
 
 const STORAGE_KEY = "vonu_threads_v1";
+const USAGE_KEY = "vonu_daily_usage";
 
-export default function ChatPage() {
-  // Evitar hydration issues
+export default function Home() {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  // -------- Persistencia local (localStorage) --------
   const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
   const [activeThreadId, setActiveThreadId] = useState<string>("");
+  const [usageCount, setUsageCount] = useState(0);
+  const [isPremium, setIsPremium] = useState(false); // Cambiar a true manualmente para pruebas
 
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-
-      const parsed = JSON.parse(raw) as ChatThread[];
-      if (!Array.isArray(parsed) || parsed.length === 0) return;
-
-      const clean = parsed
-        .filter((t) => t && typeof t.id === "string")
-        .map((t) => ({
-          id: t.id,
-          title: typeof t.title === "string" ? t.title : "Consulta",
-          updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
-          messages:
-            Array.isArray(t.messages) && t.messages.length
-              ? t.messages
-              : [initialAssistantMessage()],
-        }));
-
-      if (clean.length) {
-        setThreads(clean);
-        setActiveThreadId(clean[0].id);
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(threads));
-    } catch {
-      // ignore
-    }
-  }, [threads, mounted]);
-
-  // -------- UI --------
+  // UI States
   const [input, setInput] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
-
-  // Renombrar / borrar
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
 
@@ -114,515 +72,192 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // asegurar thread activo
   useEffect(() => {
-    if (!activeThreadId && threads[0]?.id) setActiveThreadId(threads[0].id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [threads.length]);
+    setMounted(true);
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setThreads(parsed);
+          setActiveThreadId(parsed[0].id);
+        }
+      } catch (e) { console.error(e); }
+    }
+    // Cargar uso diario
+    const usage = window.localStorage.getItem(USAGE_KEY);
+    if (usage) setUsageCount(parseInt(usage));
+  }, []);
 
-  const activeThread = useMemo(() => {
-    return threads.find((t) => t.id === activeThreadId) ?? threads[0];
-  }, [threads, activeThreadId]);
+  useEffect(() => {
+    if (!mounted) return;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(threads));
+  }, [threads, mounted]);
 
+  const activeThread = useMemo(() => threads.find((t) => t.id === activeThreadId) ?? threads[0], [threads, activeThreadId]);
   const messages = activeThread?.messages ?? [];
+  const canSend = useMemo(() => !isTyping && (!!input.trim() || !!imagePreview), [isTyping, input, imagePreview]);
 
-  const sortedThreads = useMemo(() => {
-    return [...threads].sort((a, b) => b.updatedAt - a.updatedAt);
-  }, [threads]);
-
-  const canSend = useMemo(() => {
-    return !isTyping && (!!input.trim() || !!imagePreview);
-  }, [isTyping, input, imagePreview]);
-
-  // Scroll suave al final
   useEffect(() => {
-    scrollRef.current?.scrollTo({
-      top: scrollRef.current.scrollHeight,
-      behavior: "smooth",
-    });
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isTyping]);
 
-  // Auto-resize del textarea (sin scrollbars raros)
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
-
     el.style.height = "0px";
-    const next = Math.min(el.scrollHeight, 140);
-    el.style.height = next + "px";
+    el.style.height = Math.min(el.scrollHeight, 140) + "px";
   }, [input]);
 
-  function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function sendMessage() {
+    if (!canSend || !activeThread) return;
 
-    const reader = new FileReader();
-    reader.onload = () => setImagePreview(reader.result as string);
-    reader.readAsDataURL(file);
-
-    e.target.value = "";
-  }
-
-  function createThreadAndActivate() {
-    const t = makeNewThread();
-    setThreads((prev) => [t, ...prev]);
-    setActiveThreadId(t.id);
-    setMenuOpen(false);
-    setUiError(null);
-    setInput("");
-    setImagePreview(null);
-  }
-
-  function activateThread(id: string) {
-    setActiveThreadId(id);
-    setMenuOpen(false);
-    setUiError(null);
-    setInput("");
-    setImagePreview(null);
-  }
-
-  function openRename() {
-    if (!activeThread) return;
-    setRenameValue(activeThread.title);
-    setRenameOpen(true);
-  }
-
-  function confirmRename() {
-    if (!activeThread) return;
-    const name = renameValue.trim() || "Consulta";
-    setThreads((prev) =>
-      prev.map((t) =>
-        t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t
-      )
-    );
-    setRenameOpen(false);
-  }
-
-  function deleteActiveThread() {
-    if (!activeThread) return;
-
-    if (threads.length === 1) {
-      const fresh = makeNewThread();
-      setThreads([fresh]);
-      setActiveThreadId(fresh.id);
-      setMenuOpen(false);
-      setUiError(null);
-      setInput("");
-      setImagePreview(null);
+    // FREEMIUM LOGIC: Límite de 1 consulta gratis
+    if (usageCount >= 1 && !isPremium) {
+      setUiError("HAS AGOTADO TU ANÁLISIS GRATIS. Pásate a Vonu Pro (3,99€) para consultas ilimitadas.");
       return;
     }
 
-    const remaining = threads.filter((t) => t.id !== activeThread.id);
-    setThreads(remaining);
-
-    const next = remaining[0];
-    setActiveThreadId(next.id);
-    setMenuOpen(false);
-    setUiError(null);
-    setInput("");
-    setImagePreview(null);
-  }
-
-  async function sendMessage() {
-    if (!canSend) return;
-    if (!activeThread) return;
-
     const userText = input.trim();
     const imageBase64 = imagePreview;
-
     setUiError(null);
 
-    const userMsg: Message = {
-      id: crypto.randomUUID(),
-      role: "user",
-      text: userText || (imageBase64 ? "He adjuntado una imagen." : undefined),
-      image: imageBase64 || undefined,
-    };
-
+    const userMsg: Message = { id: crypto.randomUUID(), role: "user", text: userText || "Imagen adjunta", image: imageBase64 || undefined };
     const assistantId = crypto.randomUUID();
-    const assistantMsg: Message = {
-      id: assistantId,
-      role: "assistant",
-      text: "",
-      streaming: true,
-    };
+    const assistantMsg: Message = { id: assistantId, role: "assistant", text: "", streaming: true };
 
-    // pintar en el thread activo
-    setThreads((prev) =>
-      prev.map((t) => {
-        if (t.id !== activeThread.id) return t;
-
-        const hasUserAlready = t.messages.some((m) => m.role === "user");
-        const newTitle = hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen");
-
-        return {
-          ...t,
-          title: newTitle,
-          updatedAt: Date.now(),
-          messages: [...t.messages, userMsg, assistantMsg],
-        };
-      })
-    );
+    setThreads((prev) => prev.map((t) => t.id === activeThread.id ? { 
+      ...t, 
+      title: t.messages.length <= 1 ? makeTitleFromText(userText || "Imagen") : t.title,
+      updatedAt: Date.now(), 
+      messages: [...t.messages, userMsg, assistantMsg] 
+    } : t));
 
     setInput("");
     setImagePreview(null);
     setIsTyping(true);
 
     try {
-      await sleep(420);
-
-      // snapshot del thread actual (ojo con stale state)
-      const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
-
-      const convoForApi = [...(threadNow?.messages ?? []), userMsg]
-        .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
-        .map((m) => ({
-          role: m.role,
-          content: m.text ?? "",
-        }));
-
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: convoForApi,
-          userText,
-          imageBase64,
-        }),
+        body: JSON.stringify({ messages: [...activeThread.messages, userMsg].map(m => ({ role: m.role, content: m.text ?? "" })), userText, imageBase64 }),
       });
 
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(`HTTP ${res.status} ${res.statusText} ${txt}`);
-      }
+      if (!res.ok) throw new Error("Error en la conexión con la IA");
 
       const data = await res.json();
-      const fullText =
-        typeof data?.text === "string" && data.text.trim()
-          ? data.text
-          : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
-
-      await sleep(200);
-
+      const fullText = data?.text || "Lo siento, no he podido procesar eso.";
       let i = 0;
-      const speedMs = fullText.length > 900 ? 7 : 12;
-
       const interval = setInterval(() => {
         i++;
         const partial = fullText.slice(0, i);
-
-        setThreads((prev) =>
-          prev.map((t) => {
-            if (t.id !== activeThread.id) return t;
-            return {
-              ...t,
-              updatedAt: Date.now(),
-              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
-            };
-          })
-        );
+        setThreads(prev => prev.map(t => t.id === activeThread.id ? {
+          ...t, messages: t.messages.map(m => m.id === assistantId ? { ...m, text: partial } : m)
+        } : t));
 
         if (i >= fullText.length) {
           clearInterval(interval);
-
-          setThreads((prev) =>
-            prev.map((t) => {
-              if (t.id !== activeThread.id) return t;
-              return {
-                ...t,
-                updatedAt: Date.now(),
-                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
-              };
-            })
-          );
-
           setIsTyping(false);
+          setThreads(prev => prev.map(t => t.id === activeThread.id ? {
+            ...t, messages: t.messages.map(m => m.id === assistantId ? { ...m, streaming: false } : m)
+          } : t));
+          
+          // Incrementar contador si no es premium
+          if (!isPremium) {
+            const newCount = usageCount + 1;
+            setUsageCount(newCount);
+            window.localStorage.setItem(USAGE_KEY, newCount.toString());
+          }
         }
-      }, speedMs);
+      }, 10);
     } catch (err: any) {
-      const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
-
-      setThreads((prev) =>
-        prev.map((t) => {
-          if (t.id !== activeThread.id) return t;
-          return {
-            ...t,
-            updatedAt: Date.now(),
-            messages: t.messages.map((m) =>
-              m.id === assistantId
-                ? {
-                    ...m,
-                    streaming: false,
-                    text:
-                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" +
-                      msg +
-                      "\n```",
-                  }
-                : m
-            ),
-          };
-        })
-      );
-
-      setUiError(msg);
+      setUiError(err.message);
       setIsTyping(false);
     }
   }
 
+  if (!mounted) return null;
+
   return (
-    <div className="h-screen bg-white flex overflow-hidden">
-      {/* OVERLAY + SIDEBAR */}
-      <div
-        className={`fixed inset-0 z-40 transition-all duration-300 ${
-          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent backdrop-blur-0"
-        }`}
-        onClick={() => setMenuOpen(false)}
-      >
-        <aside
-          className={`absolute left-3 top-3 bottom-3 w-80 bg-white rounded-3xl shadow-xl border border-zinc-200 p-4 transform transition-transform duration-300 ease-out ${
-            menuOpen ? "translate-x-0" : "-translate-x-[110%]"
-          }`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="pt-16">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <div className="text-sm font-semibold text-zinc-800">Historial</div>
-                <div className="text-xs text-zinc-500">Tus consultas recientes</div>
-              </div>
-
-              <button
-                onClick={createThreadAndActivate}
-                className="text-xs px-3 py-2 rounded-full bg-zinc-900 text-white hover:opacity-90 transition-opacity"
-              >
-                Nueva
-              </button>
-            </div>
-
-            <div className="flex gap-2 mb-3">
-              <button
-                onClick={openRename}
-                className="flex-1 text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50"
-              >
-                Renombrar
-              </button>
-              <button
-                onClick={deleteActiveThread}
-                className="flex-1 text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 text-red-600"
-              >
-                Borrar
-              </button>
-            </div>
-
-            <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-170px)]">
-              {sortedThreads.map((t) => {
-                const active = t.id === activeThreadId;
-                const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
-
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => activateThread(t.id)}
-                    className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
-                      active ? "border-zinc-900 bg-zinc-50" : "border-zinc-200 hover:bg-zinc-50"
-                    }`}
-                  >
-                    <div className="text-sm font-medium text-zinc-900">{t.title}</div>
-                    <div className="text-xs text-zinc-500 mt-1">{when}</div>
-                  </button>
-                );
-              })}
+    <div className="h-screen bg-white flex overflow-hidden font-sans">
+      {/* SIDEBAR */}
+      <div className={`fixed inset-0 z-40 transition-all ${menuOpen ? "bg-black/20 backdrop-blur-sm" : "pointer-events-none"}`} onClick={() => setMenuOpen(false)}>
+        <aside className={`absolute left-3 top-3 bottom-3 w-80 bg-white rounded-3xl shadow-xl border border-zinc-200 p-4 transform transition-transform ${menuOpen ? "translate-x-0" : "-translate-x-[110%]"}`} onClick={e => e.stopPropagation()}>
+          <div className="pt-16 space-y-4">
+            <button onClick={() => { setThreads([makeNewThread(), ...threads]); setMenuOpen(false); }} className="w-full py-3 bg-zinc-900 text-white rounded-2xl text-sm font-bold">Nueva consulta</button>
+            <div className="overflow-y-auto h-[60vh] space-y-2">
+              {threads.map(t => (
+                <button key={t.id} onClick={() => { setActiveThreadId(t.id); setMenuOpen(false); }} className={`w-full text-left p-3 rounded-2xl border ${t.id === activeThreadId ? "border-zinc-900 bg-zinc-50" : "border-zinc-100"}`}>
+                  <div className="text-sm font-medium truncate">{t.title}</div>
+                </button>
+              ))}
             </div>
           </div>
         </aside>
       </div>
 
-      {/* LOGO / BURGER */}
-      <button
-        onClick={() => setMenuOpen((v) => !v)}
-        className="fixed left-5 top-5 z-50 flex items-center gap-[4px] select-none"
-        aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-        title={menuOpen ? "Cerrar menú" : "Menú"}
-      >
-        <img
-          src="/vonu-icon.png"
-          alt="Vonu"
-          className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
-          draggable={false}
-        />
-        <img src="/vonu-wordmark.png" alt="Vonu" className="h-5 w-auto" draggable={false} />
+      <button onClick={() => setMenuOpen(!menuOpen)} className="fixed left-5 top-5 z-50 flex items-center gap-2">
+        <img src="/vonu-icon.png" className="h-7 w-7" alt="Logo" />
+        <img src="/vonu-wordmark.png" className="h-5 w-auto" alt="Vonu" />
       </button>
 
-      {/* MAIN */}
       <div className="flex-1 flex flex-col">
-        {/* RENAME MODAL */}
-        {renameOpen && (
-          <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center px-6">
-            <div
-              className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
-              <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
-
-              <input
-                value={renameValue}
-                onChange={(e) => setRenameValue(e.target.value)}
-                className="w-full h-11 rounded-2xl border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
-                placeholder="Ej: SMS del banco"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") confirmRename();
-                  if (e.key === "Escape") setRenameOpen(false);
-                }}
-              />
-
-              <div className="flex justify-end gap-2 mt-4">
-                <button onClick={() => setRenameOpen(false)} className="h-10 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm">
-                  Cancelar
-                </button>
-                <button onClick={confirmRename} className="h-10 px-4 rounded-2xl bg-zinc-900 text-white hover:opacity-90 text-sm">
-                  Guardar
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ERROR BAR */}
         {uiError && (
-          <div className="mx-auto max-w-3xl px-6 mt-3 pt-4">
-            <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              Ha fallado la llamada a la IA. (Error: {uiError})
+          <div className="mx-auto max-w-3xl w-full px-6 mt-20">
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center">
+              <p className="text-red-700 text-sm font-bold mb-2">{uiError}</p>
+              {!isPremium && usageCount >= 1 && (
+                <button className="bg-zinc-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-zinc-800 transition-colors">Suscribirme por 3,99€/mes</button>
+              )}
             </div>
           </div>
         )}
 
-        {/* CHAT */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-3xl px-6 pt-20 pb-10 space-y-10">
-            {messages.map((msg) => {
-              if (msg.role === "assistant") {
-                return (
-                  <div key={msg.id} className="bubble-in-slow">
-                    <div className="prose prose-zinc max-w-none text-sm">
-                      {/* FIX caret: forzamos párrafos inline (sin margen) para que el cursor no salte abajo */}
-                      <span className="leading-relaxed">
-                        <ReactMarkdown
-                          components={{
-                            p: ({ children, ...props }) => (
-                              <p className="m-0 inline" {...props}>
-                                {children}
-                              </p>
-                            ),
-                          }}
-                        >
-                          {msg.text || ""}
-                        </ReactMarkdown>
-
-                        {msg.streaming && (
-                          <span
-                            className="inline-block animate-pulse select-none align-baseline ml-1"
-                            style={{ lineHeight: "1em" }}
-                            aria-label="Escribiendo"
-                            title="Escribiendo"
-                          >
-                            ▍
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                );
-              }
-
-              return (
-                <div key={msg.id} className="flex justify-end bubble-in">
-                  <div className="max-w-xl space-y-2">
-                    {msg.image && (
-                      <img
-                        src={msg.image}
-                        alt="Adjunto"
-                        className="rounded-3xl border border-zinc-200 max-h-64 object-contain"
-                      />
-                    )}
-                    {msg.text && (
-                      <div className="bg-zinc-900 text-white text-sm leading-relaxed rounded-3xl px-5 py-3 break-words">
-                        {msg.text}
-                      </div>
-                    )}
-                  </div>
+        <div ref={scrollRef} className="flex-1 overflow-y-auto pt-20 pb-10">
+          <div className="max-w-3xl mx-auto px-6 space-y-8">
+            {messages.map((msg) => (
+              <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[85%] ${msg.role === "assistant" ? "prose prose-zinc" : "bg-zinc-900 text-white p-4 rounded-3xl text-sm"}`}>
+                  {msg.image && <img src={msg.image} className="rounded-2xl mb-2 max-h-60" alt="SMS" />}
+                  <ReactMarkdown components={{ p: ({children}) => <span className="inline leading-relaxed">{children}</span> }}>
+                    {msg.text || ""}
+                  </ReactMarkdown>
+                  {msg.streaming && <span className="inline-block ml-1 animate-pulse">▍</span>}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* INPUT */}
-        <div className="flex-shrink-0 bg-white">
-          <div className="mx-auto max-w-3xl px-6 pt-4 pb-2 flex items-center gap-3">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="h-12 w-12 inline-flex items-center justify-center rounded-full border border-zinc-300 text-zinc-800 hover:bg-zinc-100 transition-colors"
-              aria-label="Adjuntar imagen"
-              disabled={isTyping}
-              title={isTyping ? "Espera a que Vonu responda…" : "Adjuntar imagen"}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 5V19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                <path d="M5 12H19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-              </svg>
+        <div className="p-6 bg-white border-t border-zinc-100">
+          <div className="max-w-3xl mx-auto flex items-end gap-3">
+            <button onClick={() => fileInputRef.current?.click()} className="p-3 border border-zinc-200 rounded-full hover:bg-zinc-50">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
             </button>
-
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
-
-            <div className="flex-1">
-              {imagePreview && (
-                <div className="mb-2 relative w-fit bubble-in">
-                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
-                  <button
-                    onClick={() => setImagePreview(null)}
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-zinc-900 text-white text-xs"
-                    aria-label="Quitar imagen"
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
-
-              <div className="w-full min-h-12 rounded-3xl border border-zinc-300 px-4 py-3 flex items-center focus-within:border-zinc-400">
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      sendMessage();
-                    }
-                  }}
-                  disabled={isTyping}
-                  placeholder={isTyping ? "Vonu está respondiendo…" : "Escribe tu mensaje…"}
-                  className="w-full resize-none bg-transparent text-sm outline-none leading-5 overflow-hidden"
-                  rows={1}
-                />
-              </div>
+            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onload = () => setImagePreview(reader.result as string);
+                reader.readAsDataURL(file);
+              }
+            }} />
+            <div className="flex-1 bg-zinc-50 rounded-3xl p-2 border border-zinc-200">
+              {imagePreview && <div className="relative inline-block mb-2"><img src={imagePreview} className="h-20 rounded-lg" /><button onClick={() => setImagePreview(null)} className="absolute -top-2 -right-2 bg-black text-white rounded-full w-5 h-5 text-xs">×</button></div>}
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                placeholder="Escribe o pega el SMS sospechoso..."
+                className="w-full bg-transparent border-none outline-none text-sm p-2 resize-none max-h-32"
+                rows={1}
+              />
             </div>
-
-            <button
-              onClick={sendMessage}
-              disabled={!canSend}
-              className="h-12 rounded-3xl bg-zinc-900 text-white px-6 text-sm font-medium disabled:opacity-40 transition-opacity"
-            >
-              Enviar
-            </button>
+            <button onClick={sendMessage} disabled={!canSend} className="bg-zinc-900 text-white px-6 py-3 rounded-full text-sm font-bold disabled:opacity-30">Enviar</button>
           </div>
-
-          <div className="mx-auto max-w-3xl px-6 pb-4">
-            <p className="text-center text-[12px] text-zinc-500 leading-5">
-              Vonu es una herramienta de orientación y prevención; no sustituye asesoramiento profesional (legal, médico o psicológico). Si hay riesgo inmediato, contacta con emergencias.
-            </p>
-          </div>
+          <p className="text-[10px] text-center text-zinc-400 mt-4">Vonu es orientación preventiva. En caso de estafa confirmada, contacta con tu banco y autoridades.</p>
         </div>
       </div>
     </div>
