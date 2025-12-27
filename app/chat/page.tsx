@@ -192,9 +192,7 @@ export default function ChatPage() {
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
       prev.map((t) =>
-        t.id === activeThread.id
-          ? { ...t, title: name, updatedAt: Date.now() }
-          : t
+        t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t
       )
     );
     setRenameOpen(false);
@@ -255,9 +253,7 @@ export default function ChatPage() {
         if (t.id !== activeThread.id) return t;
 
         const hasUserAlready = t.messages.some((m) => m.role === "user");
-        const newTitle = hasUserAlready
-          ? t.title
-          : makeTitleFromText(userText || "Imagen");
+        const newTitle = hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen");
 
         return {
           ...t,
@@ -276,14 +272,10 @@ export default function ChatPage() {
       await sleep(420);
 
       // snapshot del thread actual (ojo con stale state)
-      const threadNow =
-        threads.find((x) => x.id === activeThread.id) ?? activeThread;
+      const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
-        .filter(
-          (m) =>
-            (m.role === "user" || m.role === "assistant") && (m.text || m.image)
-        )
+        .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
         .map((m) => ({
           role: m.role,
           content: m.text ?? "",
@@ -325,9 +317,7 @@ export default function ChatPage() {
             return {
               ...t,
               updatedAt: Date.now(),
-              messages: t.messages.map((m) =>
-                m.id === assistantId ? { ...m, text: partial } : m
-              ),
+              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
             };
           })
         );
@@ -352,10 +342,7 @@ export default function ChatPage() {
         }
       }, speedMs);
     } catch (err: any) {
-      const msg =
-        typeof err?.message === "string"
-          ? err.message
-          : "Error desconocido conectando con la IA.";
+      const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -401,17 +388,11 @@ export default function ChatPage() {
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* espacio arriba para que NO se solape con el logo */}
           <div className="pt-16">
-            {/* header sidebar */}
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-800">
-                  Historial
-                </div>
-                <div className="text-xs text-zinc-500">
-                  Tus consultas recientes
-                </div>
+                <div className="text-sm font-semibold text-zinc-800">Historial</div>
+                <div className="text-xs text-zinc-500">Tus consultas recientes</div>
               </div>
 
               <button
@@ -422,7 +403,6 @@ export default function ChatPage() {
               </button>
             </div>
 
-            {/* acciones del chat actual */}
             <div className="flex gap-2 mb-3">
               <button
                 onClick={openRename}
@@ -438,7 +418,6 @@ export default function ChatPage() {
               </button>
             </div>
 
-            {/* lista */}
             <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-170px)]">
               {sortedThreads.map((t) => {
                 const active = t.id === activeThreadId;
@@ -449,14 +428,10 @@ export default function ChatPage() {
                     key={t.id}
                     onClick={() => activateThread(t.id)}
                     className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
-                      active
-                        ? "border-zinc-900 bg-zinc-50"
-                        : "border-zinc-200 hover:bg-zinc-50"
+                      active ? "border-zinc-900 bg-zinc-50" : "border-zinc-200 hover:bg-zinc-50"
                     }`}
                   >
-                    <div className="text-sm font-medium text-zinc-900">
-                      {t.title}
-                    </div>
+                    <div className="text-sm font-medium text-zinc-900">{t.title}</div>
                     <div className="text-xs text-zinc-500 mt-1">{when}</div>
                   </button>
                 );
@@ -466,7 +441,7 @@ export default function ChatPage() {
         </aside>
       </div>
 
-      {/* LOGO / BURGER (icon rota al abrir) */}
+      {/* LOGO / BURGER */}
       <button
         onClick={() => setMenuOpen((v) => !v)}
         className="fixed left-5 top-5 z-50 flex items-center gap-[4px] select-none"
@@ -476,17 +451,10 @@ export default function ChatPage() {
         <img
           src="/vonu-icon.png"
           alt="Vonu"
-          className={`h-7 w-7 transition-transform duration-300 ease-out ${
-            menuOpen ? "rotate-90" : "rotate-0"
-          }`}
+          className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
           draggable={false}
         />
-        <img
-          src="/vonu-wordmark.png"
-          alt="Vonu"
-          className="h-5 w-auto"
-          draggable={false}
-        />
+        <img src="/vonu-wordmark.png" alt="Vonu" className="h-5 w-auto" draggable={false} />
       </button>
 
       {/* MAIN */}
@@ -498,12 +466,8 @@ export default function ChatPage() {
               className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="text-sm font-semibold text-zinc-900 mb-1">
-                Renombrar chat
-              </div>
-              <div className="text-xs text-zinc-500 mb-3">
-                Ponle un nombre para encontrarlo rápido.
-              </div>
+              <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
+              <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
 
               <input
                 value={renameValue}
@@ -551,21 +515,21 @@ export default function ChatPage() {
               if (msg.role === "assistant") {
                 return (
                   <div key={msg.id} className="bubble-in-slow">
-                    <div className="prose prose-zinc max-w-none text-sm">
-                      {/* ✅ FIX CURSOR: markdown + cursor en flex, alineado al final */}
-                      <div className="flex items-end gap-1">
-                        <div className="min-w-0">
-                          <ReactMarkdown>{msg.text || ""}</ReactMarkdown>
-                        </div>
+                    <div className="prose prose-zinc max-w-none text-sm [&>*:last-child]:mb-0">
+                      {/* FIX cursor: quitamos márgenes en Markdown y cursor inline */}
+                      <div className="inline">
+                        <ReactMarkdown
+                          components={{
+                            p: ({ children }) => <p className="m-0 inline">{children}</p>,
+                            ul: ({ children }) => <ul className="my-2">{children}</ul>,
+                            ol: ({ children }) => <ol className="my-2">{children}</ol>,
+                            pre: ({ children }) => <pre className="my-2">{children}</pre>,
+                          }}
+                        >
+                          {msg.text || ""}
+                        </ReactMarkdown>
                         {msg.streaming && (
-                          <span
-                            className="inline-block animate-pulse select-none"
-                            style={{ lineHeight: "1em" }}
-                            aria-label="Escribiendo"
-                            title="Escribiendo"
-                          >
-                            ▍
-                          </span>
+                          <span className="inline-block align-baseline animate-pulse select-none ml-1">▍</span>
                         )}
                       </div>
                     </div>
@@ -598,7 +562,6 @@ export default function ChatPage() {
         {/* INPUT */}
         <div className="flex-shrink-0 bg-white">
           <div className="mx-auto max-w-3xl px-6 pt-4 pb-2 flex items-center gap-3">
-            {/* + */}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="h-12 w-12 inline-flex items-center justify-center rounded-full border border-zinc-300 text-zinc-800 hover:bg-zinc-100 transition-colors"
@@ -606,45 +569,18 @@ export default function ChatPage() {
               disabled={isTyping}
               title={isTyping ? "Espera a que Vonu responda…" : "Adjuntar imagen"}
             >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M12 5V19"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M5 12H19"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 5V19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                <path d="M5 12H19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
               </svg>
             </button>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={onSelectImage}
-              className="hidden"
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
 
-            {/* input */}
             <div className="flex-1">
               {imagePreview && (
                 <div className="mb-2 relative w-fit bubble-in">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="rounded-3xl border border-zinc-200 max-h-40"
-                  />
+                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
                   <button
                     onClick={() => setImagePreview(null)}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-zinc-900 text-white text-xs"
@@ -674,7 +610,6 @@ export default function ChatPage() {
               </div>
             </div>
 
-            {/* enviar */}
             <button
               onClick={sendMessage}
               disabled={!canSend}
@@ -684,7 +619,6 @@ export default function ChatPage() {
             </button>
           </div>
 
-          {/* DISCLAIMER */}
           <div className="mx-auto max-w-3xl px-6 pb-4">
             <p className="text-center text-[12px] text-zinc-500 leading-5">
               Vonu es una herramienta de orientación y prevención; no sustituye asesoramiento profesional (legal, médico o
