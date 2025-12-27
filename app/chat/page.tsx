@@ -317,7 +317,9 @@ export default function ChatPage() {
             return {
               ...t,
               updatedAt: Date.now(),
-              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
+              messages: t.messages.map((m) =>
+                m.id === assistantId ? { ...m, text: partial } : m
+              ),
             };
           })
         );
@@ -371,14 +373,19 @@ export default function ChatPage() {
     }
   }
 
+  function renderAssistantMarkdown(msg: Message) {
+    // ✅ Evita que el cursor salte a otra línea si el texto termina en \n
+    const safeText = (msg.text ?? "").replace(/\n+$/g, "");
+    const withCursor = msg.streaming ? safeText + " ▍" : safeText;
+    return <ReactMarkdown>{withCursor}</ReactMarkdown>;
+  }
+
   return (
     <div className="h-screen bg-white flex overflow-hidden">
       {/* OVERLAY + SIDEBAR */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-300 ${
-          menuOpen
-            ? "bg-black/20 backdrop-blur-sm pointer-events-auto"
-            : "pointer-events-none bg-transparent backdrop-blur-0"
+          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent backdrop-blur-0"
         }`}
         onClick={() => setMenuOpen(false)}
       >
@@ -515,23 +522,8 @@ export default function ChatPage() {
               if (msg.role === "assistant") {
                 return (
                   <div key={msg.id} className="bubble-in-slow">
-                    <div className="prose prose-zinc max-w-none text-sm [&>*:last-child]:mb-0">
-                      {/* FIX cursor: quitamos márgenes en Markdown y cursor inline */}
-                      <div className="inline">
-                        <ReactMarkdown
-                          components={{
-                            p: ({ children }) => <p className="m-0 inline">{children}</p>,
-                            ul: ({ children }) => <ul className="my-2">{children}</ul>,
-                            ol: ({ children }) => <ol className="my-2">{children}</ol>,
-                            pre: ({ children }) => <pre className="my-2">{children}</pre>,
-                          }}
-                        >
-                          {msg.text || ""}
-                        </ReactMarkdown>
-                        {msg.streaming && (
-                          <span className="inline-block align-baseline animate-pulse select-none ml-1">▍</span>
-                        )}
-                      </div>
+                    <div className="prose prose-zinc max-w-none text-sm">
+                      {renderAssistantMarkdown(msg)}
                     </div>
                   </div>
                 );
