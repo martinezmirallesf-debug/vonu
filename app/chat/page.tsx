@@ -52,6 +52,10 @@ function makeTitleFromText(text: string) {
 
 const STORAGE_KEY = "vonu_threads_v1";
 
+// ✅ Esto es solo para comprobar que “SE ESTÁ DESPLEGANDO”.
+// Cambia el string y lo verás en la UI (abajo a la derecha, muy pequeño).
+const BUILD_TAG = "caret-fix-v1";
+
 export default function ChatPage() {
   // Evitar hydration issues
   const [mounted, setMounted] = useState(false);
@@ -142,7 +146,7 @@ export default function ChatPage() {
     });
   }, [messages, isTyping]);
 
-  // Auto-resize del textarea
+  // Auto-resize del textarea (sin scrollbars raros)
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -192,9 +196,7 @@ export default function ChatPage() {
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
       prev.map((t) =>
-        t.id === activeThread.id
-          ? { ...t, title: name, updatedAt: Date.now() }
-          : t
+        t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t
       )
     );
     setRenameOpen(false);
@@ -249,14 +251,13 @@ export default function ChatPage() {
       streaming: true,
     };
 
+    // pintar en el thread activo
     setThreads((prev) =>
       prev.map((t) => {
         if (t.id !== activeThread.id) return t;
 
         const hasUserAlready = t.messages.some((m) => m.role === "user");
-        const newTitle = hasUserAlready
-          ? t.title
-          : makeTitleFromText(userText || "Imagen");
+        const newTitle = hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen");
 
         return {
           ...t,
@@ -274,14 +275,11 @@ export default function ChatPage() {
     try {
       await sleep(420);
 
-      const threadNow =
-        threads.find((x) => x.id === activeThread.id) ?? activeThread;
+      // snapshot del thread actual (ojo con stale state)
+      const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
-        .filter(
-          (m) =>
-            (m.role === "user" || m.role === "assistant") && (m.text || m.image)
-        )
+        .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
         .map((m) => ({
           role: m.role,
           content: m.text ?? "",
@@ -323,9 +321,7 @@ export default function ChatPage() {
             return {
               ...t,
               updatedAt: Date.now(),
-              messages: t.messages.map((m) =>
-                m.id === assistantId ? { ...m, text: partial } : m
-              ),
+              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
             };
           })
         );
@@ -339,9 +335,7 @@ export default function ChatPage() {
               return {
                 ...t,
                 updatedAt: Date.now(),
-                messages: t.messages.map((m) =>
-                  m.id === assistantId ? { ...m, streaming: false } : m
-                ),
+                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
               };
             })
           );
@@ -350,10 +344,7 @@ export default function ChatPage() {
         }
       }, speedMs);
     } catch (err: any) {
-      const msg =
-        typeof err?.message === "string"
-          ? err.message
-          : "Error desconocido conectando con la IA.";
+      const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -387,9 +378,7 @@ export default function ChatPage() {
       {/* OVERLAY + SIDEBAR */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-300 ${
-          menuOpen
-            ? "bg-black/20 backdrop-blur-sm pointer-events-auto"
-            : "pointer-events-none bg-transparent backdrop-blur-0"
+          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent backdrop-blur-0"
         }`}
         onClick={() => setMenuOpen(false)}
       >
@@ -402,9 +391,7 @@ export default function ChatPage() {
           <div className="pt-16">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-800">
-                  Historial
-                </div>
+                <div className="text-sm font-semibold text-zinc-800">Historial</div>
                 <div className="text-xs text-zinc-500">Tus consultas recientes</div>
               </div>
 
@@ -441,9 +428,7 @@ export default function ChatPage() {
                     key={t.id}
                     onClick={() => activateThread(t.id)}
                     className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
-                      active
-                        ? "border-zinc-900 bg-zinc-50"
-                        : "border-zinc-200 hover:bg-zinc-50"
+                      active ? "border-zinc-900 bg-zinc-50" : "border-zinc-200 hover:bg-zinc-50"
                     }`}
                   >
                     <div className="text-sm font-medium text-zinc-900">{t.title}</div>
@@ -466,33 +451,23 @@ export default function ChatPage() {
         <img
           src="/vonu-icon.png"
           alt="Vonu"
-          className={`h-7 w-7 transition-transform duration-300 ease-out ${
-            menuOpen ? "rotate-90" : "rotate-0"
-          }`}
+          className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
           draggable={false}
         />
-        <img
-          src="/vonu-wordmark.png"
-          alt="Vonu"
-          className="h-5 w-auto"
-          draggable={false}
-        />
+        <img src="/vonu-wordmark.png" alt="Vonu" className="h-5 w-auto" draggable={false} />
       </button>
 
       {/* MAIN */}
       <div className="flex-1 flex flex-col">
+        {/* RENAME MODAL */}
         {renameOpen && (
           <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center px-6">
             <div
               className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="text-sm font-semibold text-zinc-900 mb-1">
-                Renombrar chat
-              </div>
-              <div className="text-xs text-zinc-500 mb-3">
-                Ponle un nombre para encontrarlo rápido.
-              </div>
+              <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
+              <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
 
               <input
                 value={renameValue}
@@ -524,6 +499,7 @@ export default function ChatPage() {
           </div>
         )}
 
+        {/* ERROR BAR */}
         {uiError && (
           <div className="mx-auto max-w-3xl px-6 mt-3 pt-4">
             <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -539,16 +515,24 @@ export default function ChatPage() {
               if (msg.role === "assistant") {
                 return (
                   <div key={msg.id} className="bubble-in-slow">
-                    <div className="prose prose-zinc max-w-none text-sm assistant-md">
-                      <ReactMarkdown>{msg.text || ""}</ReactMarkdown>
-                      {msg.streaming && (
-                        <span
-                          className="typing-caret animate-pulse"
-                          aria-label="Escribiendo"
-                          title="Escribiendo"
-                        >
-                          ▍
-                        </span>
+                    <div className="prose prose-zinc max-w-none text-sm">
+                      {/* ✅ Cursor perfecto:
+                          - Mientras streaming: texto plano (pre-wrap) + caret inline al final
+                          - Cuando termina: Markdown bonito
+                      */}
+                      {msg.streaming ? (
+                        <div className="whitespace-pre-wrap break-words">
+                          <span>{msg.text || ""}</span>
+                          <span
+                            className="inline-block animate-pulse align-baseline select-none"
+                            aria-label="Escribiendo"
+                            title="Escribiendo"
+                          >
+                            ▍
+                          </span>
+                        </div>
+                      ) : (
+                        <ReactMarkdown>{msg.text || ""}</ReactMarkdown>
                       )}
                     </div>
                   </div>
@@ -593,22 +577,12 @@ export default function ChatPage() {
               </svg>
             </button>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={onSelectImage}
-              className="hidden"
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
 
             <div className="flex-1">
               {imagePreview && (
                 <div className="mb-2 relative w-fit bubble-in">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="rounded-3xl border border-zinc-200 max-h-40"
-                  />
+                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
                   <button
                     onClick={() => setImagePreview(null)}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-zinc-900 text-white text-xs"
@@ -647,11 +621,16 @@ export default function ChatPage() {
             </button>
           </div>
 
-          <div className="mx-auto max-w-3xl px-6 pb-4">
+          <div className="mx-auto max-w-3xl px-6 pb-4 relative">
             <p className="text-center text-[12px] text-zinc-500 leading-5">
               Vonu es una herramienta de orientación y prevención; no sustituye asesoramiento profesional (legal, médico o
               psicológico). Si hay riesgo inmediato, contacta con emergencias.
             </p>
+
+            {/* ✅ Marca de build ultra discreta para verificar despliegue */}
+            <div className="absolute right-6 bottom-1 text-[10px] text-zinc-400 select-none">
+              {BUILD_TAG}
+            </div>
           </div>
         </div>
       </div>
