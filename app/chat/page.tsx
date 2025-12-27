@@ -317,9 +317,7 @@ export default function ChatPage() {
             return {
               ...t,
               updatedAt: Date.now(),
-              messages: t.messages.map((m) =>
-                m.id === assistantId ? { ...m, text: partial } : m
-              ),
+              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
             };
           })
         );
@@ -333,9 +331,7 @@ export default function ChatPage() {
               return {
                 ...t,
                 updatedAt: Date.now(),
-                messages: t.messages.map((m) =>
-                  m.id === assistantId ? { ...m, streaming: false } : m
-                ),
+                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
               };
             })
           );
@@ -371,13 +367,6 @@ export default function ChatPage() {
       setUiError(msg);
       setIsTyping(false);
     }
-  }
-
-  function renderAssistantMarkdown(msg: Message) {
-    // ✅ Evita que el cursor salte a otra línea si el texto termina en \n
-    const safeText = (msg.text ?? "").replace(/\n+$/g, "");
-    const withCursor = msg.streaming ? safeText + " ▍" : safeText;
-    return <ReactMarkdown>{withCursor}</ReactMarkdown>;
   }
 
   return (
@@ -522,8 +511,28 @@ export default function ChatPage() {
               if (msg.role === "assistant") {
                 return (
                   <div key={msg.id} className="bubble-in-slow">
-                    <div className="prose prose-zinc max-w-none text-sm">
-                      {renderAssistantMarkdown(msg)}
+                    <div className={`prose prose-zinc max-w-none text-sm ${msg.streaming ? "assistant-streaming" : ""}`}>
+                      <ReactMarkdown
+                        components={
+                          msg.streaming
+                            ? {
+                                // ✅ clave: el último párrafo se vuelve inline mientras escribe
+                                p: ({ children }) => <p className="m-0">{children}</p>,
+                              }
+                            : {
+                                p: ({ children }) => <p className="m-0">{children}</p>,
+                              }
+                        }
+                      >
+                        {msg.text || ""}
+                      </ReactMarkdown>
+
+                      {/* ✅ Cursor pegado al final (no cae abajo) */}
+                      {msg.streaming && (
+                        <span className="cursor-inline ml-1 inline-block align-baseline animate-pulse select-none">
+                          ▍
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
