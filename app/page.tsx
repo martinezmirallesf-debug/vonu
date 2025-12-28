@@ -82,9 +82,7 @@ export default function Page() {
           title: typeof t.title === "string" ? t.title : "Consulta",
           updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
           messages:
-            Array.isArray(t.messages) && t.messages.length
-              ? t.messages
-              : [initialAssistantMessage()],
+            Array.isArray(t.messages) && t.messages.length ? t.messages : [initialAssistantMessage()],
         }));
 
       if (clean.length) {
@@ -143,10 +141,7 @@ export default function Page() {
     return !isTyping && (!!input.trim() || !!imagePreview);
   }, [isTyping, input, imagePreview]);
 
-  const hasUserMessage = useMemo(
-    () => messages.some((m) => m.role === "user"),
-    [messages]
-  );
+  const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
 
   // Scroll suave al final
   useEffect(() => {
@@ -226,11 +221,7 @@ export default function Page() {
     if (!activeThread) return;
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
-      prev.map((t) =>
-        t.id === activeThread.id
-          ? { ...t, title: name, updatedAt: Date.now() }
-          : t
-      )
+      prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t))
     );
     setRenameOpen(false);
 
@@ -296,9 +287,7 @@ export default function Page() {
         if (t.id !== activeThread.id) return t;
 
         const hasUserAlready = t.messages.some((m) => m.role === "user");
-        const newTitle = hasUserAlready
-          ? t.title
-          : makeTitleFromText(userText || "Imagen");
+        const newTitle = hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen");
 
         return {
           ...t,
@@ -362,9 +351,7 @@ export default function Page() {
             return {
               ...t,
               updatedAt: Date.now(),
-              messages: t.messages.map((m) =>
-                m.id === assistantId ? { ...m, text: partial } : m
-              ),
+              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
             };
           })
         );
@@ -378,9 +365,7 @@ export default function Page() {
               return {
                 ...t,
                 updatedAt: Date.now(),
-                messages: t.messages.map((m) =>
-                  m.id === assistantId ? { ...m, streaming: false } : m
-                ),
+                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
               };
             })
           );
@@ -391,9 +376,7 @@ export default function Page() {
       }, speedMs);
     } catch (err: any) {
       const msg =
-        typeof err?.message === "string"
-          ? err.message
-          : "Error desconocido conectando con la IA.";
+        typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -423,13 +406,7 @@ export default function Page() {
     }
   }
 
-  function HomeLink({
-    className,
-    label = "Volver a la home",
-  }: {
-    className?: string;
-    label?: string;
-  }) {
+  function HomeLink({ className, label = "Volver a la home" }: { className?: string; label?: string }) {
     return (
       <a
         href={HOME_URL}
@@ -449,45 +426,36 @@ export default function Page() {
   return (
     <div className="h-[100dvh] bg-white flex overflow-hidden">
       {/* ===== MOBILE HEADER (fijo + blur) ===== */}
-      <div
-        className="md:hidden fixed top-0 left-0 right-0 z-50"
-        style={{ height: MOBILE_HEADER_H }}
-      >
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
         <div className="h-full px-4 flex items-center justify-start bg-white/70 backdrop-blur-xl">
-          {/* ✅ SOLO 1 ICONO (izquierda) = menú con rotación 90° */}
+          {/* ✅ SOLO 1 ICONO (izquierda) = menú burger con rotación 90° */}
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="p-0 bg-transparent rounded-none shadow-none outline-none flex items-center"
+            className="flex items-center"
             aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
             title={menuOpen ? "Cerrar menú" : "Menú"}
-            type="button"
           >
             <img
               src="/vonu-icon.png"
               alt="Menú"
-              className={`h-7 w-7 origin-center transition-transform duration-300 ease-out ${
+              className={`h-7 w-7 transition-transform duration-300 ease-out ${
                 menuOpen ? "rotate-90" : "rotate-0"
               }`}
               draggable={false}
             />
           </button>
 
-          {/* ✅ Wordmark al lado -> HOME */}
+          {/* ✅ Letras "Vonu" al lado -> HOME */}
           <a
             href={HOME_URL}
             className="ml-2 flex items-center"
             aria-label="Ir a la home"
             title="Ir a la home"
           >
-            <img
-              src="/vonu-wordmark.png"
-              alt="Vonu"
-              className="h-5 w-auto"
-              draggable={false}
-            />
+            <img src="/vonu-wordmark.png" alt="Vonu" className="h-5 w-auto" draggable={false} />
           </a>
 
-          {/* ✅ Spacer: garantiza que NO haya nada “a la derecha” */}
+          {/* ✅ Spacer: asegura que NO haya “nada” a la derecha */}
           <div className="flex-1" />
         </div>
       </div>
@@ -663,9 +631,7 @@ export default function Page() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
-              <div className="text-xs text-zinc-500 mb-3">
-                Ponle un nombre para encontrarlo rápido.
-              </div>
+              <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
 
               <input
                 value={renameValue}
@@ -767,28 +733,17 @@ export default function Page() {
               </svg>
             </button>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={onSelectImage}
-              className="hidden"
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
 
             {/* input */}
             <div className="flex-1">
               {imagePreview && (
                 <div className="mb-2 relative w-fit bubble-in">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="rounded-3xl border border-zinc-200 max-h-40"
-                  />
+                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
                   <button
                     onClick={() => setImagePreview(null)}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors"
                     aria-label="Quitar imagen"
-                    type="button"
                   >
                     ×
                   </button>
@@ -837,7 +792,6 @@ export default function Page() {
               "
               aria-label="Enviar"
               title={canSend ? "Enviar" : "Escribe un mensaje para enviar"}
-              type="button"
             >
               <span className="md:hidden" aria-hidden="true">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
