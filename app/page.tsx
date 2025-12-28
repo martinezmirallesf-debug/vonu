@@ -79,9 +79,7 @@ export default function Page() {
           title: typeof t.title === "string" ? t.title : "Consulta",
           updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
           messages:
-            Array.isArray(t.messages) && t.messages.length
-              ? t.messages
-              : [initialAssistantMessage()],
+            Array.isArray(t.messages) && t.messages.length ? t.messages : [initialAssistantMessage()],
         }));
 
       if (clean.length) {
@@ -113,6 +111,9 @@ export default function Page() {
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
 
+  // Input shape en móvil cuando crece
+  const [inputExpanded, setInputExpanded] = useState(false);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -137,9 +138,7 @@ export default function Page() {
     return !isTyping && (!!input.trim() || !!imagePreview);
   }, [isTyping, input, imagePreview]);
 
-  const hasUserMessage = useMemo(() => {
-    return (activeThread?.messages ?? []).some((m) => m.role === "user");
-  }, [activeThread]);
+  const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
 
   // Scroll suave al final
   useEffect(() => {
@@ -157,6 +156,9 @@ export default function Page() {
     el.style.height = "0px";
     const next = Math.min(el.scrollHeight, 140);
     el.style.height = next + "px";
+
+    // si pasa de ~1 línea, dejamos de ser píldora en móvil
+    setInputExpanded(next > 52);
   }, [input]);
 
   // ✅ Auto-focus: cursor dentro del input al abrir el chat
@@ -216,9 +218,7 @@ export default function Page() {
     if (!activeThread) return;
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
-      prev.map((t) =>
-        t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t
-      )
+      prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t))
     );
     setRenameOpen(false);
 
@@ -362,9 +362,7 @@ export default function Page() {
               return {
                 ...t,
                 updatedAt: Date.now(),
-                messages: t.messages.map((m) =>
-                  m.id === assistantId ? { ...m, streaming: false } : m
-                ),
+                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
               };
             })
           );
@@ -410,7 +408,6 @@ export default function Page() {
       {/* ===== MOBILE HEADER (fijo + blur) ===== */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
         <div className="h-full px-4 flex items-center justify-between bg-white/70 backdrop-blur-xl">
-          {/* ✅ Quitado el botón “Nueva” del header móvil */}
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="flex items-center gap-2 select-none"
@@ -420,24 +417,21 @@ export default function Page() {
             <img
               src="/vonu-icon.png"
               alt="Vonu"
-              className={`h-7 w-7 transition-transform duration-300 ease-out ${
-                menuOpen ? "rotate-90" : "rotate-0"
-              }`}
+              className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
               draggable={false}
             />
             <img src="/vonu-wordmark.png" alt="Vonu" className="h-5 w-auto" draggable={false} />
           </button>
 
-          <div className="w-2" />
+          {/* ✅ Quitado "Nueva" en móvil (se mantiene en la sidebar) */}
+          <div className="w-8" />
         </div>
       </div>
 
       {/* ===== OVERLAY + SIDEBAR ===== */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-300 ${
-          menuOpen
-            ? "bg-black/20 backdrop-blur-sm pointer-events-auto"
-            : "pointer-events-none bg-transparent backdrop-blur-0"
+          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent backdrop-blur-0"
         }`}
         onClick={() => setMenuOpen(false)}
       >
@@ -507,7 +501,6 @@ export default function Page() {
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* top padding para “fundirse” con el header (misma pieza visual) */}
           <div style={{ paddingTop: MOBILE_HEADER_H }} className="px-4 pb-4 h-full">
             <div className="pt-4">
               <div className="flex items-center justify-between mb-3">
@@ -573,16 +566,14 @@ export default function Page() {
         <img
           src="/vonu-icon.png"
           alt="Vonu"
-          className={`h-7 w-7 transition-transform duration-300 ease-out ${
-            menuOpen ? "rotate-90" : "rotate-0"
-          }`}
+          className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
           draggable={false}
         />
         <img src="/vonu-wordmark.png" alt="Vonu" className="h-5 w-auto" draggable={false} />
       </button>
 
       {/* MAIN */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-h-0">
         {/* RENAME MODAL */}
         {renameOpen && (
           <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center px-6">
@@ -632,18 +623,14 @@ export default function Page() {
           </div>
         )}
 
-        {/* CHAT (solo esto hace scroll) */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        {/* CHAT (scrollable) */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
           <div
-            className="mx-auto max-w-3xl px-6 space-y-10"
-            style={{
-              paddingTop: MOBILE_HEADER_H + 16,
-              paddingBottom: hasUserMessage ? 96 : 132, // deja hueco para input (+ disclaimer si aplica)
-            }}
+            className="mx-auto max-w-3xl px-6 pb-10 space-y-10"
+            style={{ paddingTop: MOBILE_HEADER_H + 16 }}
           >
             {messages.map((msg) => {
               if (msg.role === "assistant") {
-                // ✅ FIX CARET: caret dentro del markdown para que no baje de línea
                 const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
                 return (
                   <div key={msg.id} className="bubble-in-slow">
@@ -676,8 +663,8 @@ export default function Page() {
           </div>
         </div>
 
-        {/* FOOTER FIJO (input + disclaimer) */}
-        <div className="flex-shrink-0 bg-white pb-[env(safe-area-inset-bottom)]">
+        {/* INPUT + DISCLAIMER (fijos abajo) */}
+        <div className="flex-shrink-0 bg-white">
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             {/* + */}
             <button
@@ -714,16 +701,14 @@ export default function Page() {
                 </div>
               )}
 
-              {/* ✅ Móvil: no “píldora” (cuando crece no debe verse redondo) */}
+              {/* ✅ móvil: píldora al inicio, y cuando crece => rectángulo con esquinas */}
               <div
-                className="
-                  w-full min-h-12
-                  bg-zinc-100 md:bg-white
-                  rounded-3xl
-                  px-4 py-3 flex items-center
-                  md:border md:border-zinc-300
-                  md:focus-within:border-zinc-400
-                "
+                className={[
+                  "w-full min-h-12 px-4 py-3 flex items-center",
+                  "bg-zinc-100 md:bg-white",
+                  "md:rounded-3xl md:border md:border-zinc-300 md:focus-within:border-zinc-400",
+                  inputExpanded ? "rounded-3xl" : "rounded-full",
+                ].join(" ")}
               >
                 <textarea
                   ref={textareaRef}
@@ -759,7 +744,6 @@ export default function Page() {
               aria-label="Enviar"
               title={canSend ? "Enviar" : "Escribe un mensaje para enviar"}
             >
-              {/* En móvil: flecha arriba tipo ChatGPT | En desktop: “Enviar” */}
               <span className="md:hidden" aria-hidden="true">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <path
@@ -775,10 +759,7 @@ export default function Page() {
             </button>
           </div>
 
-          {/* DISCLAIMER:
-              - Desktop: siempre visible (como antes)
-              - Móvil: visible al inicio, y desaparece cuando ya hay mensajes del usuario (estilo ChatGPT)
-           */}
+          {/* DISCLAIMER: fijo abajo; en móvil se oculta tras el primer mensaje del usuario */}
           <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3">
             <p className="hidden md:block text-center text-[12px] text-zinc-500 leading-5">
               Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
