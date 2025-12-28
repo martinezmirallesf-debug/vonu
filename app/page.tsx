@@ -52,6 +52,9 @@ function makeTitleFromText(text: string) {
 
 const STORAGE_KEY = "vonu_threads_v1";
 
+// Header height (para que el chat nunca se meta debajo en móvil)
+const MOBILE_HEADER_H = 64;
+
 export default function Page() {
   // Evitar hydration issues
   const [mounted, setMounted] = useState(false);
@@ -114,24 +117,6 @@ export default function Page() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  function focusComposer(delay = 60) {
-    window.setTimeout(() => {
-      const el = textareaRef.current;
-      if (!el) return;
-      if ((el as any).disabled) return;
-
-      el.focus({ preventScroll: true } as any);
-
-      // Mover caret al final (por si hay texto)
-      try {
-        const len = el.value?.length ?? 0;
-        el.setSelectionRange(len, len);
-      } catch {
-        // ignore
-      }
-    }, delay);
-  }
-
   // asegurar thread activo
   useEffect(() => {
     if (!activeThreadId && threads[0]?.id) setActiveThreadId(threads[0].id);
@@ -170,15 +155,19 @@ export default function Page() {
     el.style.height = next + "px";
   }, [input]);
 
-  // Autofocus al abrir / cambiar chat / cerrar modal / cerrar menú
+  // ✅ Auto-focus: cursor dentro del input al abrir el chat
   useEffect(() => {
     if (!mounted) return;
-    if (renameOpen) return; // si está el modal, no robamos el foco
-    if (menuOpen) return; // si el menú está abierto, no abrimos teclado
+    if (renameOpen) return;
+    if (menuOpen) return;
     if (isTyping) return;
-    focusComposer(120);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted, activeThreadId, renameOpen, menuOpen, isTyping]);
+
+    const t = setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 60);
+
+    return () => clearTimeout(t);
+  }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId]);
 
   function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -189,7 +178,6 @@ export default function Page() {
     reader.readAsDataURL(file);
 
     e.target.value = "";
-    focusComposer(80);
   }
 
   function createThreadAndActivate() {
@@ -200,7 +188,8 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
-    focusComposer(120);
+
+    setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
   function activateThread(id: string) {
@@ -209,7 +198,8 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
-    focusComposer(120);
+
+    setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
   function openRename() {
@@ -227,7 +217,8 @@ export default function Page() {
       )
     );
     setRenameOpen(false);
-    focusComposer(120);
+
+    setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
   function deleteActiveThread() {
@@ -241,7 +232,8 @@ export default function Page() {
       setUiError(null);
       setInput("");
       setImagePreview(null);
-      focusComposer(120);
+
+      setTimeout(() => textareaRef.current?.focus(), 60);
       return;
     }
 
@@ -254,7 +246,8 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
-    focusComposer(120);
+
+    setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
   async function sendMessage() {
@@ -373,7 +366,7 @@ export default function Page() {
           );
 
           setIsTyping(false);
-          focusComposer(120);
+          setTimeout(() => textareaRef.current?.focus(), 60);
         }
       }, speedMs);
     } catch (err: any) {
@@ -404,18 +397,21 @@ export default function Page() {
 
       setUiError(msg);
       setIsTyping(false);
-      focusComposer(150);
+      setTimeout(() => textareaRef.current?.focus(), 60);
     }
   }
 
   return (
     <div className="h-screen bg-white flex overflow-hidden">
-      {/* HEADER (fijo, con blur) */}
-      <header className="fixed inset-x-0 top-0 z-50 h-16 bg-white/80 backdrop-blur-md border-b border-zinc-200">
-        <div className="h-full mx-auto max-w-3xl px-3 sm:px-6 flex items-center justify-between">
+      {/* ===== MOBILE HEADER (fijo + blur) ===== */}
+      <div
+        className="md:hidden fixed top-0 left-0 right-0 z-50"
+        style={{ height: MOBILE_HEADER_H }}
+      >
+        <div className="h-full px-4 flex items-center justify-between bg-white/70 backdrop-blur-xl">
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="flex items-center gap-[6px] select-none"
+            className="flex items-center gap-2 select-none"
             aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
             title={menuOpen ? "Cerrar menú" : "Menú"}
           >
@@ -430,12 +426,16 @@ export default function Page() {
             <img src="/vonu-wordmark.png" alt="Vonu" className="h-5 w-auto" draggable={false} />
           </button>
 
-          {/* espacio “de aire” a la derecha (por si luego metes login/paywall) */}
-          <div className="text-xs text-zinc-400 select-none hidden sm:block"> </div>
+          <button
+            onClick={createThreadAndActivate}
+            className="text-xs px-3 py-2 rounded-full bg-zinc-900 text-white hover:opacity-90 transition-opacity"
+          >
+            Nueva
+          </button>
         </div>
-      </header>
+      </div>
 
-      {/* OVERLAY + SIDEBAR */}
+      {/* ===== OVERLAY + SIDEBAR ===== */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-300 ${
           menuOpen
@@ -444,15 +444,14 @@ export default function Page() {
         }`}
         onClick={() => setMenuOpen(false)}
       >
+        {/* Desktop sidebar (igual que antes) */}
         <aside
-          className={`absolute left-3 top-3 bottom-3 w-80 bg-white rounded-3xl shadow-xl border border-zinc-200 p-4 transform transition-transform duration-300 ease-out ${
+          className={`hidden md:block absolute left-3 top-3 bottom-3 w-80 bg-white rounded-3xl shadow-xl border border-zinc-200 p-4 transform transition-transform duration-300 ease-out ${
             menuOpen ? "translate-x-0" : "-translate-x-[110%]"
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* espacio arriba para que NO se solape con el header */}
           <div className="pt-16">
-            {/* header sidebar */}
             <div className="flex items-center justify-between mb-3">
               <div>
                 <div className="text-sm font-semibold text-zinc-800">Historial</div>
@@ -467,7 +466,6 @@ export default function Page() {
               </button>
             </div>
 
-            {/* acciones del chat actual */}
             <div className="flex gap-2 mb-3">
               <button
                 onClick={openRename}
@@ -483,7 +481,6 @@ export default function Page() {
               </button>
             </div>
 
-            {/* lista */}
             <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-170px)]">
               {sortedThreads.map((t) => {
                 const active = t.id === activeThreadId;
@@ -505,7 +502,87 @@ export default function Page() {
             </div>
           </div>
         </aside>
+
+        {/* Mobile sidebar (integrada con header, sin bordes/grises) */}
+        <aside
+          className={`md:hidden absolute left-0 top-0 bottom-0 w-[86vw] max-w-[360px] bg-white/90 backdrop-blur-xl shadow-2xl transform transition-transform duration-300 ease-out ${
+            menuOpen ? "translate-x-0" : "-translate-x-[110%]"
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* top padding para “fundirse” con el header (misma pieza visual) */}
+          <div style={{ paddingTop: MOBILE_HEADER_H }} className="px-4 pb-4 h-full">
+            <div className="pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className="text-sm font-semibold text-zinc-800">Historial</div>
+                  <div className="text-xs text-zinc-500">Tus consultas recientes</div>
+                </div>
+
+                <button
+                  onClick={createThreadAndActivate}
+                  className="text-xs px-3 py-2 rounded-full bg-zinc-900 text-white hover:opacity-90 transition-opacity"
+                >
+                  Nueva
+                </button>
+              </div>
+
+              <div className="flex gap-2 mb-3">
+                <button
+                  onClick={openRename}
+                  className="flex-1 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200"
+                >
+                  Renombrar
+                </button>
+                <button
+                  onClick={deleteActiveThread}
+                  className="flex-1 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200 text-red-600"
+                >
+                  Borrar
+                </button>
+              </div>
+
+              <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-170px)]">
+                {sortedThreads.map((t) => {
+                  const active = t.id === activeThreadId;
+                  const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
+
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => activateThread(t.id)}
+                      className={`w-full text-left rounded-2xl px-3 py-3 transition-colors ${
+                        active ? "bg-zinc-100" : "bg-white hover:bg-zinc-50"
+                      }`}
+                    >
+                      <div className="text-sm font-medium text-zinc-900">{t.title}</div>
+                      <div className="text-xs text-zinc-500 mt-1">{when}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </aside>
       </div>
+
+      {/* Desktop logo button (igual que antes) */}
+      <button
+        onClick={() => setMenuOpen((v) => !v)}
+        className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-[4px] select-none"
+        aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+        title={menuOpen ? "Cerrar menú" : "Menú"}
+      >
+        <img
+          src="/vonu-icon.png"
+          alt="Vonu"
+          className={`h-7 w-7 transition-transform duration-300 ease-out ${
+            menuOpen ? "rotate-90" : "rotate-0"
+          }`}
+          draggable={false}
+        />
+        <img src="/vonu-wordmark.png" alt="Vonu" className="h-5 w-auto" draggable={false} />
+      </button>
 
       {/* MAIN */}
       <div className="flex-1 flex flex-col">
@@ -517,7 +594,9 @@ export default function Page() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
-              <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
+              <div className="text-xs text-zinc-500 mb-3">
+                Ponle un nombre para encontrarlo rápido.
+              </div>
 
               <input
                 value={renameValue}
@@ -527,19 +606,13 @@ export default function Page() {
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter") confirmRename();
-                  if (e.key === "Escape") {
-                    setRenameOpen(false);
-                    focusComposer(140);
-                  }
+                  if (e.key === "Escape") setRenameOpen(false);
                 }}
               />
 
               <div className="flex justify-end gap-2 mt-4">
                 <button
-                  onClick={() => {
-                    setRenameOpen(false);
-                    focusComposer(140);
-                  }}
+                  onClick={() => setRenameOpen(false)}
                   className="h-10 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm"
                 >
                   Cancelar
@@ -557,7 +630,7 @@ export default function Page() {
 
         {/* ERROR BAR */}
         {uiError && (
-          <div className="mx-auto max-w-3xl px-3 sm:px-6 mt-3 pt-16">
+          <div className="mx-auto max-w-3xl px-6 mt-3 pt-4">
             <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               Ha fallado la llamada a la IA. (Error: {uiError})
             </div>
@@ -566,11 +639,13 @@ export default function Page() {
 
         {/* CHAT */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto">
-          {/* padding-top ajustado al header fijo */}
-          <div className="mx-auto max-w-3xl px-3 sm:px-6 pt-20 pb-28 space-y-10">
+          <div
+            className="mx-auto max-w-3xl px-6 pb-10 space-y-10"
+            style={{ paddingTop: MOBILE_HEADER_H + 16 }}
+          >
             {messages.map((msg) => {
               if (msg.role === "assistant") {
-                // caret dentro del markdown para que no “baje”
+                // ✅ FIX CARET: caret dentro del markdown para que no baje de línea
                 const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
 
                 return (
@@ -604,35 +679,46 @@ export default function Page() {
           </div>
         </div>
 
-        {/* INPUT (barra inferior estilo móvil) */}
-        <div className="fixed inset-x-0 bottom-0 bg-white/90 backdrop-blur-md border-t border-zinc-200">
-          <div className="mx-auto max-w-3xl px-3 sm:px-6 pt-3 pb-2 flex items-end gap-2">
+        {/* INPUT */}
+        <div className="flex-shrink-0 bg-white">
+          <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             {/* + */}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="h-11 w-11 flex-shrink-0 inline-flex items-center justify-center rounded-full border border-zinc-300 text-zinc-800 hover:bg-zinc-100 transition-colors"
+              className="
+                h-12 w-12 inline-flex items-center justify-center rounded-full
+                bg-white md:border md:border-zinc-300
+                text-zinc-900 hover:bg-zinc-100 transition-colors
+              "
               aria-label="Adjuntar imagen"
               disabled={isTyping}
               title={isTyping ? "Espera a que Vonu responda…" : "Adjuntar imagen"}
             >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M12 5V19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                 <path d="M5 12H19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
               </svg>
             </button>
 
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={onSelectImage}
+              className="hidden"
+            />
 
             {/* input */}
             <div className="flex-1">
               {imagePreview && (
                 <div className="mb-2 relative w-fit bubble-in">
-                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-36" />
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="rounded-3xl border border-zinc-200 max-h-40"
+                  />
                   <button
-                    onClick={() => {
-                      setImagePreview(null);
-                      focusComposer(80);
-                    }}
+                    onClick={() => setImagePreview(null)}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-zinc-900 text-white text-xs"
                     aria-label="Quitar imagen"
                   >
@@ -641,7 +727,17 @@ export default function Page() {
                 </div>
               )}
 
-              <div className="w-full min-h-11 rounded-3xl border border-zinc-300 px-4 py-3 flex items-center focus-within:border-zinc-400">
+              {/* ✅ Móvil sin borde gris: estilo “píldora” */}
+              <div
+                className="
+                  w-full min-h-12 rounded-full
+                  bg-zinc-100 md:bg-white
+                  md:rounded-3xl
+                  px-4 py-3 flex items-center
+                  md:border md:border-zinc-300
+                  md:focus-within:border-zinc-400
+                "
+              >
                 <textarea
                   ref={textareaRef}
                   value={input}
@@ -660,35 +756,41 @@ export default function Page() {
               </div>
             </div>
 
-            {/* enviar (redondo con flecha) */}
+            {/* enviar */}
             <button
               onClick={sendMessage}
               disabled={!canSend}
-              className="h-11 w-11 flex-shrink-0 rounded-full bg-zinc-900 text-white inline-flex items-center justify-center disabled:opacity-40 transition-opacity"
+              className="
+                h-12 w-12 md:w-auto
+                rounded-full md:rounded-3xl
+                bg-zinc-900 text-white
+                md:px-6
+                flex items-center justify-center
+                text-sm font-medium
+                disabled:opacity-40 transition-opacity
+              "
               aria-label="Enviar"
-              title="Enviar"
+              title={canSend ? "Enviar" : "Escribe un mensaje para enviar"}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M12 19V5"
-                  stroke="currentColor"
-                  strokeWidth="2.8"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M7 10l5-5 5 5"
-                  stroke="currentColor"
-                  strokeWidth="2.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              {/* En móvil: flecha arriba tipo ChatGPT | En desktop: “Enviar” */}
+              <span className="md:hidden" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M12 5l6 6M12 5l-6 6M12 5v14"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <span className="hidden md:inline">Enviar</span>
             </button>
           </div>
 
-          {/* DISCLAIMER (más corto + más ancho) */}
-          <div className="mx-auto max-w-3xl px-3 sm:px-6 pb-3">
-            <p className="text-center text-[12px] text-zinc-500 leading-4">
+          {/* DISCLAIMER (más corto y a más ancho en móvil) */}
+          <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3">
+            <p className="text-center text-[12px] text-zinc-500 leading-5">
               Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
             </p>
           </div>
