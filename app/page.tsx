@@ -3,206 +3,310 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
-// --- TIPOS ---
 type Message = { id: string; role: "user" | "assistant"; text?: string; image?: string; streaming?: boolean; };
 type ChatThread = { id: string; title: string; updatedAt: number; messages: Message[]; };
 
-// --- CONFIGURACIÓN ---
-const STORAGE_KEY = "vonu_threads_v1";
-const USAGE_KEY = "vonu_daily_usage";
-const STRIPE_LINK = "https://buy.stripe.com/TU_LINK_DE_STRIPE"; // Cambia esto por tu link real
+function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)); }
 
 function initialAssistantMessage(): Message {
   return {
     id: "init",
     role: "assistant",
-    text: "Hola 👋 Soy **Vonu**. Cuéntame tu situación (o adjunta una captura) y te digo qué pinta tiene, el riesgo real y qué haría ahora. *Importante: no compartas contraseñas ni datos bancarios.*"
+    text: "Hola 👋 Soy **Vonu**.\n\nCuéntame tu situación (o adjunta una captura) y te digo **qué pinta tiene**, el **riesgo real** y **qué haría ahora** para decidir con calma.\n\n_Importante: no compartas contraseñas, códigos ni datos bancarios._",
   };
 }
 
 function makeNewThread(): ChatThread {
-  return { id: crypto.randomUUID(), title: "Nueva consulta", updatedAt: Date.now(), messages: [initialAssistantMessage()] };
+  const id = crypto.randomUUID();
+  return { id, title: "Nueva consulta", updatedAt: Date.now(), messages: [initialAssistantMessage()], };
 }
 
-export default function Home() {
+function makeTitleFromText(text: string) {
+  const t = text.trim().replace(/\s+/g, " ");
+  if (!t) return "Nueva consulta";
+  return t.length > 34 ? t.slice(0, 34) + "…" : t;
+}
+
+const STORAGE_KEY = "vonu_threads_v1";
+const USAGE_KEY = "vonu_daily_usage";
+
+export default function ChatPage() {
   const [mounted, setMounted] = useState(false);
-  const [threads, setThreads] = useState<ChatThread[]>([]);
+  useEffect(() => setMounted(true), []);
+
+  const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
   const [activeThreadId, setActiveThreadId] = useState<string>("");
   const [usageCount, setUsageCount] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
-  const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Carga inicial
   useEffect(() => {
-    setMounted(true);
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      try {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (raw) {
         const parsed = JSON.parse(raw);
-        setThreads(parsed);
-        if (parsed.length > 0) setActiveThreadId(parsed[0].id);
-      } catch(e) { setThreads([makeNewThread()]); }
-    } else {
-      const first = makeNewThread();
-      setThreads([first]);
-      setActiveThreadId(first.id);
-    }
-    const usage = window.localStorage.getItem(USAGE_KEY);
-    if (usage) setUsageCount(parseInt(usage));
-
-    // Detectar si vuelve de pago con éxito
-    if (window.location.search.includes("session=success")) {
-      setUsageCount(0);
-      window.localStorage.setItem(USAGE_KEY, "0");
-    }
+        if (Array.isArray(parsed) && parsed.length) {
+          setThreads(parsed);
+          setActiveThreadId(parsed[0].id);
+        }
+      }
+      const usage = window.localStorage.getItem(USAGE_KEY);
+      if (usage) setUsageCount(parseInt(usage));
+    } catch (e) {}
   }, []);
 
-  // Guardado automático
   useEffect(() => {
-    if (mounted) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(threads));
+    if (!mounted) return;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(threads));
   }, [threads, mounted]);
 
-  // Auto-scroll
+  const [input, setInput] = useState("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [uiError, setUiError] = useState<string | null>(null);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const activeThread = useMemo(() => threads.find((t) => t.id === activeThreadId) ?? threads[0], [threads, activeThreadId]);
+  const messages = activeThread?.messages ?? [];
+  const sortedThreads = useMemo(() => [...threads].sort((a, b) => b.updatedAt - a.updatedAt), [threads]);
+  const canSend = useMemo(() => !isTyping && (!!input.trim() || !!imagePreview), [isTyping, input, imagePreview]);
+
   useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [threads, activeThreadId]);
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, isTyping]);
 
-  const activeThread = useMemo(() => 
-    threads.find(t => t.id === activeThreadId) || threads[0] || makeNewThread(), 
-  [threads, activeThreadId]);
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "0px";
+    el.style.height = Math.min(el.scrollHeight, 140) + "px";
+  }, [input]);
 
-  const handleNewChat = () => {
-    const nt = makeNewThread();
-    setThreads([nt, ...threads]);
-    setActiveThreadId(nt.id);
-    setIsSidebarOpen(false);
-  };
+  function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }
 
-  const deleteThread = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const filtered = threads.filter(t => t.id !== id);
-    setThreads(filtered.length ? filtered : [makeNewThread()]);
-    if (activeThreadId === id) setActiveThreadId(filtered[0]?.id || "");
-  };
+  function createThreadAndActivate() {
+    const t = makeNewThread();
+    setThreads((prev) => [t, ...prev]);
+    setActiveThreadId(t.id);
+    setMenuOpen(false);
+    setInput("");
+    setImagePreview(null);
+  }
+
+  function activateThread(id: string) {
+    setActiveThreadId(id);
+    setMenuOpen(false);
+    setInput("");
+    setImagePreview(null);
+  }
+
+  function openRename() { if (!activeThread) return; setRenameValue(activeThread.title); setRenameOpen(true); }
+  function confirmRename() {
+    if (!activeThread) return;
+    const name = renameValue.trim() || "Consulta";
+    setThreads((prev) => prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t)));
+    setRenameOpen(false);
+  }
+
+  function deleteActiveThread() {
+    if (!activeThread) return;
+    const remaining = threads.filter((t) => t.id !== activeThread.id);
+    const fresh = remaining.length ? remaining : [makeNewThread()];
+    setThreads(fresh);
+    setActiveThreadId(fresh[0].id);
+    setMenuOpen(false);
+  }
 
   async function sendMessage() {
-    if (!input.trim() || isTyping) return;
-    if (usageCount >= 1) { setShowPaywall(true); return; }
+    if (!canSend || !activeThread) return;
+    
+    // VERIFICACIÓN PREMIUM
+    if (usageCount >= 1) {
+      setShowPaywall(true);
+      return;
+    }
 
-    const userMsg: Message = { id: crypto.randomUUID(), role: "user", text: input.trim() };
+    const userText = input.trim();
+    const imageBase64 = imagePreview;
+    setUiError(null);
+
+    const userMsg: Message = {
+      id: crypto.randomUUID(),
+      role: "user",
+      text: userText || (imageBase64 ? "He adjuntado una imagen." : undefined),
+      image: imageBase64 || undefined,
+    };
+
     const assistantId = crypto.randomUUID();
     const assistantMsg: Message = { id: assistantId, role: "assistant", text: "", streaming: true };
 
-    setThreads(prev => prev.map(t => t.id === activeThread.id ? { 
-      ...t, messages: [...t.messages, userMsg, assistantMsg], updatedAt: Date.now() 
-    } : t));
+    setThreads((prev) =>
+      prev.map((t) => {
+        if (t.id !== activeThread.id) return t;
+        const hasUserAlready = t.messages.some((m) => m.role === "user");
+        return {
+          ...t,
+          title: hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen"),
+          updatedAt: Date.now(),
+          messages: [...t.messages, userMsg, assistantMsg],
+        };
+      })
+    );
 
     setInput("");
+    setImagePreview(null);
     setIsTyping(true);
 
     try {
+      const convoForApi = [...(activeThread?.messages ?? []), userMsg]
+        .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
+        .map((m) => ({ role: m.role, content: m.text ?? "" }));
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [...activeThread.messages, userMsg].map(m => ({ role: m.role, content: m.text ?? "" })) }),
+        body: JSON.stringify({ messages: convoForApi, userText, imageBase64 }),
       });
+
       const data = await res.json();
-      const fullText = data?.text || "Hubo un error al procesar tu consulta.";
+      const fullText = data?.text || "Error en la respuesta.";
       
       let i = 0;
       const interval = setInterval(() => {
-        i += 2;
+        i++;
         const partial = fullText.slice(0, i);
-        setThreads(prev => prev.map(t => t.id === activeThread.id ? {
-          ...t, messages: t.messages.map(m => m.id === assistantId ? { ...m, text: partial } : m)
-        } : t));
+        setThreads((prev) => prev.map((t) => {
+          if (t.id !== activeThread.id) return t;
+          return { ...t, messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)) };
+        }));
 
         if (i >= fullText.length) {
           clearInterval(interval);
+          setThreads((prev) => prev.map((t) => {
+            if (t.id !== activeThread.id) return t;
+            return { ...t, messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)) };
+          }));
           setIsTyping(false);
-          setThreads(prev => prev.map(t => t.id === activeThread.id ? {
-            ...t, messages: t.messages.map(m => m.id === assistantId ? { ...m, streaming: false } : m)
-          } : t));
+          
+          // SUMAR USO
           const newCount = usageCount + 1;
           setUsageCount(newCount);
           window.localStorage.setItem(USAGE_KEY, newCount.toString());
         }
-      }, 5);
-    } catch (e) { setIsTyping(false); }
+      }, 10);
+    } catch (err: any) {
+      setUiError(err.message);
+      setIsTyping(false);
+    }
   }
 
-  if (!mounted) return null;
-
   return (
-    <div className="h-screen bg-white flex overflow-hidden font-sans text-zinc-900">
-      {/* PAYWALL */}
+    <div className="h-screen bg-white flex overflow-hidden">
+      {/* PAYWALL PREMIUM MODAL */}
       {showPaywall && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-zinc-900/60 backdrop-blur-md">
-          <div className="bg-white w-full max-w-sm rounded-[40px] p-10 shadow-2xl text-center border border-zinc-100">
-            <div className="text-5xl mb-6">🛡️</div>
-            <h2 className="text-2xl font-black mb-2 tracking-tight">VONU PRO</h2>
-            <p className="text-zinc-500 text-sm mb-8">Has agotado tu análisis gratis. Protégete sin límites por solo 3,99€.</p>
-            <button onClick={() => window.location.href = STRIPE_LINK} className="w-full py-4 bg-zinc-900 text-white rounded-2xl font-bold shadow-lg">Activar Protección</button>
-            <button onClick={() => setShowPaywall(false)} className="mt-5 text-xs text-zinc-400">Cerrar</button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-zinc-900/40 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-sm rounded-[40px] p-10 shadow-2xl text-center border border-zinc-100 scale-in-center">
+            <img src="/vonu-icon.png" className="w-16 h-16 mx-auto mb-6 drop-shadow-lg" alt="Vonu Pro" />
+            <h2 className="text-2xl font-black text-zinc-900 mb-2 tracking-tight">EXPERIENCIA PRO</h2>
+            <p className="text-zinc-500 text-sm mb-8 leading-relaxed">Únete a la comunidad Vonu y disfruta de análisis ilimitados para proteger tus ahorros.</p>
+            <button onClick={() => window.location.href='https://buy.stripe.com/TU_LINK'} className="w-full py-4 bg-zinc-900 text-white rounded-2xl font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl">Suscribirme por 3,99€</button>
+            <button onClick={() => setShowPaywall(false)} className="mt-4 text-xs text-zinc-400 font-medium">Continuar más tarde</button>
           </div>
         </div>
       )}
 
-      {/* SIDEBAR (Funciones recuperadas) */}
-      <aside className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative z-50 w-72 h-full bg-zinc-50 border-r border-zinc-100 transition-transform duration-300 flex flex-col`}>
-        <div className="p-6">
-          <button onClick={handleNewChat} className="w-full py-3 bg-white border border-zinc-200 rounded-2xl text-sm font-bold shadow-sm hover:bg-zinc-100 transition-all">+ Nuevo análisis</button>
-        </div>
-        <div className="flex-1 overflow-y-auto px-4 space-y-2">
-          {threads.map(t => (
-            <div key={t.id} onClick={() => {setActiveThreadId(t.id); setIsSidebarOpen(false);}} className={`group p-4 rounded-2xl cursor-pointer transition-all ${activeThreadId === t.id ? 'bg-white shadow-sm ring-1 ring-zinc-200' : 'hover:bg-zinc-100'}`}>
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold truncate pr-2">{t.messages[1]?.text?.slice(0, 30) || "Nueva consulta"}</span>
-                <button onClick={(e) => deleteThread(t.id, e)} className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 text-xs">✕</button>
-              </div>
+      {/* TU SIDEBAR ORIGINAL */}
+      <div className={`fixed inset-0 z-40 transition-all duration-300 ${menuOpen ? "bg-black/20 backdrop-blur-sm" : "pointer-events-none bg-transparent"}`} onClick={() => setMenuOpen(false)}>
+        <aside className={`absolute left-3 top-3 bottom-3 w-80 bg-white rounded-3xl shadow-xl border border-zinc-200 p-4 transform transition-transform duration-300 ${menuOpen ? "translate-x-0" : "-translate-x-[110%]"}`} onClick={(e) => e.stopPropagation()}>
+          <div className="pt-16">
+            <div className="flex items-center justify-between mb-3 text-sm font-semibold text-zinc-800">
+              Historial <button onClick={createThreadAndActivate} className="text-xs px-3 py-2 rounded-full bg-zinc-900 text-white">Nueva</button>
             </div>
-          ))}
-        </div>
-      </aside>
-
-      {/* MAIN CHAT */}
-      <main className="flex-1 flex flex-col min-w-0 bg-white relative">
-        <header className="p-5 flex items-center justify-between border-b border-zinc-50 bg-white/80 backdrop-blur-md sticky top-0 z-10">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden text-zinc-400 text-xl">☰</button>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-6 bg-zinc-900 rounded-full" />
-              <span className="font-black tracking-tighter text-xl">VONU</span>
+            <div className="flex gap-2 mb-3">
+              <button onClick={openRename} className="flex-1 text-xs px-3 py-2 rounded-full border border-zinc-200">Renombrar</button>
+              <button onClick={deleteActiveThread} className="flex-1 text-xs px-3 py-2 rounded-full border border-zinc-200 text-red-600">Borrar</button>
+            </div>
+            <div className="space-y-2 overflow-y-auto h-[calc(100vh-250px)]">
+              {sortedThreads.map((t) => (
+                <button key={t.id} onClick={() => activateThread(t.id)} className={`w-full text-left rounded-2xl px-3 py-3 border ${t.id === activeThreadId ? "border-zinc-900 bg-zinc-50" : "border-zinc-200"}`}>
+                  <div className="text-sm font-medium">{t.title}</div>
+                </button>
+              ))}
             </div>
           </div>
-        </header>
+        </aside>
+      </div>
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-8 max-w-3xl mx-auto w-full scroll-smooth">
-          {activeThread.messages.map(msg => (
-            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2`}>
-              <div className={`max-w-[85%] p-5 rounded-[2rem] ${msg.role === 'user' ? 'bg-zinc-900 text-white shadow-blue-900/10' : 'bg-zinc-50 text-zinc-800'}`}>
-                <div className="prose prose-sm prose-zinc">
-                  <ReactMarkdown components={{ p: ({children}) => <p className="mb-0 inline">{children}</p> }}>
-                    {msg.text || ""}
-                  </ReactMarkdown>
-                  {msg.streaming && <span className="inline-block ml-1 w-1.5 h-4 bg-zinc-400 animate-pulse align-middle" />}
+      {/* TU HEADER ORIGINAL */}
+      <button onClick={() => setMenuOpen((v) => !v)} className="fixed left-5 top-5 z-50 flex items-center gap-[4px]">
+        <img src="/vonu-icon.png" className={`h-7 w-7 transition-transform ${menuOpen ? "rotate-90" : ""}`} />
+        <img src="/vonu-wordmark.png" className="h-5 w-auto" />
+      </button>
+
+      {/* MAIN CHAT AREA */}
+      <div className="flex-1 flex flex-col">
+        {renameOpen && (
+          <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center px-6">
+            <div className="w-full max-w-md rounded-3xl bg-white p-4 shadow-xl border border-zinc-200">
+              <div className="text-sm font-semibold mb-1">Renombrar chat</div>
+              <input value={renameValue} onChange={(e) => setRenameValue(e.target.value)} className="w-full h-11 rounded-2xl border border-zinc-300 px-4 mb-4 outline-none" autoFocus />
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setRenameOpen(false)} className="px-4 py-2 text-sm rounded-xl border border-zinc-200">Cancelar</button>
+                <button onClick={confirmRename} className="px-4 py-2 text-sm rounded-xl bg-zinc-900 text-white">Guardar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 pt-20 pb-10 space-y-10 max-w-3xl mx-auto w-full">
+          {messages.map((msg) => (
+            <div key={msg.id} className={`flex ${msg.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
+              <div className="max-w-xl space-y-2">
+                {msg.image && <img src={msg.image} className="rounded-3xl border border-zinc-200 max-h-64 object-contain" />}
+                <div className={`${msg.role === 'assistant' ? 'prose prose-zinc text-sm' : 'bg-zinc-900 text-white text-sm rounded-3xl px-5 py-3'}`}>
+                  <ReactMarkdown>{msg.text || ""}</ReactMarkdown>
+                  {msg.streaming && <span className="inline-block ml-1 animate-pulse">▍</span>}
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="p-6 max-w-3xl mx-auto w-full bg-gradient-to-t from-white via-white pt-10">
-          <div className="relative flex items-center bg-zinc-100 p-2 rounded-[2.5rem] shadow-inner focus-within:ring-2 ring-zinc-200 transition-all">
-            <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMessage()} placeholder="Analizar mensaje sospechoso..." className="flex-1 bg-transparent px-6 py-4 text-sm outline-none placeholder:text-zinc-400" />
-            <button onClick={sendMessage} disabled={!input.trim() || isTyping} className="bg-zinc-900 text-white w-12 h-12 rounded-full flex items-center justify-center disabled:opacity-20 hover:scale-105 active:scale-95 transition-all shadow-lg">↑</button>
+        {/* TU INPUT ORIGINAL */}
+        <div className="flex-shrink-0 bg-white">
+          <div className="mx-auto max-w-3xl px-6 pt-4 pb-2 flex items-center gap-3">
+            <button onClick={() => fileInputRef.current?.click()} className="h-12 w-12 rounded-full border border-zinc-300 flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
+            <div className="flex-1">
+              {imagePreview && (
+                <div className="mb-2 relative w-fit">
+                  <img src={imagePreview} className="rounded-3xl border border-zinc-200 max-h-40" />
+                  <button onClick={() => setImagePreview(null)} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-zinc-900 text-white">×</button>
+                </div>
+              )}
+              <div className="w-full min-h-12 rounded-3xl border border-zinc-300 px-4 py-3 flex items-center">
+                <textarea ref={textareaRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()} placeholder="Escribe tu mensaje…" className="w-full resize-none bg-transparent text-sm outline-none" rows={1} />
+              </div>
+            </div>
+            <button onClick={sendMessage} disabled={!canSend} className="h-12 rounded-3xl bg-zinc-900 text-white px-6 text-sm font-medium disabled:opacity-40">Enviar</button>
           </div>
-          <p className="text-[10px] text-center text-zinc-400 mt-4 px-6 italic leading-tight">Vonu es una guía preventiva. Ante una estafa real, contacta con las autoridades.</p>
+          <div className="mx-auto max-w-3xl px-6 pb-4 text-center text-[10px] text-zinc-400">Vonu es orientación preventiva; no sustituye asesoramiento profesional.</div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
