@@ -51,23 +51,14 @@ function makeTitleFromText(text: string) {
 }
 
 const STORAGE_KEY = "vonu_threads_v1";
-
-// Header height (para que el chat nunca se meta debajo en móvil)
 const MOBILE_HEADER_H = 64;
-
-// Home URL
 const HOME_URL = "https://vonuai.com";
 
-// ✅ Cache busting para que NO se quede pillado el logo/icono
-// Si vuelves a cambiar los archivos, sube el número (v=4, v=5...)
-const ASSET_V = "3";
-
 export default function Page() {
-  // Evitar hydration issues
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // -------- Persistencia local (localStorage) --------
+  // -------- Persistencia local --------
   const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
   const [activeThreadId, setActiveThreadId] = useState<string>("");
 
@@ -116,18 +107,14 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
 
-  // Renombrar / borrar
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
-
-  // Input shape en móvil cuando crece
   const [inputExpanded, setInputExpanded] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // asegurar thread activo
   useEffect(() => {
     if (!activeThreadId && threads[0]?.id) setActiveThreadId(threads[0].id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -152,7 +139,6 @@ export default function Page() {
     [messages]
   );
 
-  // Scroll suave al final
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
@@ -160,7 +146,6 @@ export default function Page() {
     });
   }, [messages, isTyping]);
 
-  // Auto-resize del textarea (sin scrollbars raros)
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -169,11 +154,9 @@ export default function Page() {
     const next = Math.min(el.scrollHeight, 140);
     el.style.height = next + "px";
 
-    // si pasa de ~1 línea, dejamos de ser píldora en móvil
     setInputExpanded(next > 52);
   }, [input]);
 
-  // ✅ Auto-focus: cursor dentro del input al abrir el chat
   useEffect(() => {
     if (!mounted) return;
     if (renameOpen) return;
@@ -294,7 +277,6 @@ export default function Page() {
       streaming: true,
     };
 
-    // pintar en el thread activo
     setThreads((prev) =>
       prev.map((t) => {
         if (t.id !== activeThread.id) return t;
@@ -320,16 +302,10 @@ export default function Page() {
     try {
       await sleep(420);
 
-      // snapshot del thread actual (ojo con stale state)
-      const threadNow =
-        threads.find((x) => x.id === activeThread.id) ?? activeThread;
+      const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
-        .filter(
-          (m) =>
-            (m.role === "user" || m.role === "assistant") &&
-            (m.text || m.image)
-        )
+        .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
         .map((m) => ({
           role: m.role,
           content: m.text ?? "",
@@ -457,13 +433,13 @@ export default function Page() {
 
   return (
     <div className="h-[100dvh] bg-white flex overflow-hidden">
-      {/* ===== MOBILE HEADER (fijo + blur) ===== */}
+      {/* ===== MOBILE HEADER (SOLO 1 ICONO + WORDMARK, NADA A LA DERECHA) ===== */}
       <div
         className="md:hidden fixed top-0 left-0 right-0 z-50"
         style={{ height: MOBILE_HEADER_H }}
       >
         <div className="h-full px-4 flex items-center bg-white/70 backdrop-blur-xl">
-          {/* ✅ SOLO 1 ICONO (izquierda) = menú burger con rotación 90° */}
+          {/* Icono menú (izquierda) */}
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="flex items-center"
@@ -471,7 +447,7 @@ export default function Page() {
             title={menuOpen ? "Cerrar menú" : "Menú"}
           >
             <img
-              src={`/vonu-icon.png?v=${ASSET_V}`}
+              src={"/vonu-icon.png?v=2"}
               alt="Menú"
               className={`h-7 w-7 transition-transform duration-300 ease-out ${
                 menuOpen ? "rotate-90" : "rotate-0"
@@ -480,7 +456,7 @@ export default function Page() {
             />
           </button>
 
-          {/* ✅ Letras del logo al lado -> HOME (solo letras, SIN icono) */}
+          {/* Letras (wordmark) al lado -> HOME */}
           <a
             href={HOME_URL}
             className="ml-2 flex items-center"
@@ -488,14 +464,14 @@ export default function Page() {
             title="Ir a la home"
           >
             <img
-              src={`/vonu-wordmark.png?v=${ASSET_V}`}
+              src={"/vonu-wordmark.png?v=2"}
               alt="Vonu"
               className="h-5 w-auto"
               draggable={false}
             />
           </a>
 
-          {/* ✅ Spacer para que a la derecha NO haya nada */}
+          {/* Spacer para garantizar que NO hay nada a la derecha */}
           <div className="flex-1" />
         </div>
       </div>
@@ -580,14 +556,17 @@ export default function Page() {
           </div>
         </aside>
 
-        {/* Mobile sidebar (integrada con header) */}
+        {/* Mobile sidebar */}
         <aside
           className={`md:hidden absolute left-0 top-0 bottom-0 w-[86vw] max-w-[360px] bg-white/90 backdrop-blur-xl shadow-2xl transform transition-transform duration-300 ease-out ${
             menuOpen ? "translate-x-0" : "-translate-x-[110%]"
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div style={{ paddingTop: MOBILE_HEADER_H }} className="px-4 pb-4 h-full">
+          <div
+            style={{ paddingTop: MOBILE_HEADER_H }}
+            className="px-4 pb-4 h-full"
+          >
             <div className="pt-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
@@ -652,7 +631,7 @@ export default function Page() {
         </aside>
       </div>
 
-      {/* Desktop top-left: menu button + wordmark link (SIN CAMBIOS) */}
+      {/* Desktop top-left */}
       <div className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-2 select-none">
         <button
           onClick={() => setMenuOpen((v) => !v)}
@@ -661,7 +640,7 @@ export default function Page() {
           title={menuOpen ? "Cerrar menú" : "Menú"}
         >
           <img
-            src={`/vonu-icon.png?v=${ASSET_V}`}
+            src={"/vonu-icon.png?v=2"}
             alt="Menú"
             className={`h-7 w-7 transition-transform duration-300 ease-out ${
               menuOpen ? "rotate-90" : "rotate-0"
@@ -672,7 +651,7 @@ export default function Page() {
 
         <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home">
           <img
-            src={`/vonu-wordmark.png?v=${ASSET_V}`}
+            src={"/vonu-wordmark.png?v=2"}
             alt="Vonu"
             className="h-5 w-auto"
             draggable={false}
@@ -735,7 +714,7 @@ export default function Page() {
           </div>
         )}
 
-        {/* CHAT (scrollable) */}
+        {/* CHAT */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
           <div
             className="mx-auto max-w-3xl px-6 pb-10 space-y-10"
@@ -775,10 +754,9 @@ export default function Page() {
           </div>
         </div>
 
-        {/* INPUT + DISCLAIMER (fijos abajo) */}
+        {/* INPUT + DISCLAIMER */}
         <div className="flex-shrink-0 bg-white">
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
-            {/* + */}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="
@@ -804,7 +782,6 @@ export default function Page() {
               className="hidden"
             />
 
-            {/* input */}
             <div className="flex-1">
               {imagePreview && (
                 <div className="mb-2 relative w-fit bubble-in">
@@ -823,7 +800,6 @@ export default function Page() {
                 </div>
               )}
 
-              {/* ✅ móvil: píldora al inicio, y cuando crece => rectángulo con esquinas */}
               <div
                 className={[
                   "w-full min-h-12 px-4 py-3 flex items-center",
@@ -850,7 +826,6 @@ export default function Page() {
               </div>
             </div>
 
-            {/* enviar */}
             <button
               onClick={sendMessage}
               disabled={!canSend}
@@ -881,7 +856,6 @@ export default function Page() {
             </button>
           </div>
 
-          {/* DISCLAIMER: fijo abajo; en móvil se oculta tras el primer mensaje del usuario */}
           <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3">
             <p className="hidden md:block text-center text-[12px] text-zinc-500 leading-5">
               Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
