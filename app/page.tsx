@@ -114,6 +114,27 @@ export default function Page() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // ✅ Helper: focus suave al input (sin robar foco a modales)
+  function focusComposer() {
+    if (!mounted) return;
+    if (renameOpen) return; // si hay modal abierto, no tocamos el foco
+    // pequeño delay para esperar re-render/layout
+    setTimeout(() => {
+      try {
+        textareaRef.current?.focus({ preventScroll: true });
+      } catch {
+        textareaRef.current?.focus();
+      }
+    }, 0);
+  }
+
+  // ✅ Al cargar la app, foco directo al input
+  useEffect(() => {
+    if (!mounted) return;
+    focusComposer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted]);
+
   // asegurar thread activo
   useEffect(() => {
     if (!activeThreadId && threads[0]?.id) setActiveThreadId(threads[0].id);
@@ -133,6 +154,15 @@ export default function Page() {
   const canSend = useMemo(() => {
     return !isTyping && (!!input.trim() || !!imagePreview);
   }, [isTyping, input, imagePreview]);
+
+  // ✅ Cuando cambias de chat o cierras el menú o termina el typing: foco al input
+  useEffect(() => {
+    if (!mounted) return;
+    if (menuOpen) return; // si el menú está abierto, no molestamos
+    if (isTyping) return; // mientras “escribe”, no hace falta
+    focusComposer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeThreadId, menuOpen, isTyping, mounted, renameOpen]);
 
   // Scroll suave al final
   useEffect(() => {
@@ -161,6 +191,8 @@ export default function Page() {
     reader.readAsDataURL(file);
 
     e.target.value = "";
+    // al adjuntar, foco al input para seguir escribiendo
+    focusComposer();
   }
 
   function createThreadAndActivate() {
@@ -171,6 +203,7 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
+    focusComposer();
   }
 
   function activateThread(id: string) {
@@ -179,6 +212,7 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
+    focusComposer();
   }
 
   function openRename() {
@@ -196,6 +230,7 @@ export default function Page() {
       )
     );
     setRenameOpen(false);
+    focusComposer();
   }
 
   function deleteActiveThread() {
@@ -209,6 +244,7 @@ export default function Page() {
       setUiError(null);
       setInput("");
       setImagePreview(null);
+      focusComposer();
       return;
     }
 
@@ -221,6 +257,7 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
+    focusComposer();
   }
 
   async function sendMessage() {
@@ -317,7 +354,9 @@ export default function Page() {
             return {
               ...t,
               updatedAt: Date.now(),
-              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
+              messages: t.messages.map((m) =>
+                m.id === assistantId ? { ...m, text: partial } : m
+              ),
             };
           })
         );
@@ -339,6 +378,7 @@ export default function Page() {
           );
 
           setIsTyping(false);
+          focusComposer();
         }
       }, speedMs);
     } catch (err: any) {
@@ -369,6 +409,7 @@ export default function Page() {
 
       setUiError(msg);
       setIsTyping(false);
+      focusComposer();
     }
   }
 
@@ -484,13 +525,19 @@ export default function Page() {
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter") confirmRename();
-                  if (e.key === "Escape") setRenameOpen(false);
+                  if (e.key === "Escape") {
+                    setRenameOpen(false);
+                    focusComposer();
+                  }
                 }}
               />
 
               <div className="flex justify-end gap-2 mt-4">
                 <button
-                  onClick={() => setRenameOpen(false)}
+                  onClick={() => {
+                    setRenameOpen(false);
+                    focusComposer();
+                  }}
                   className="h-10 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm"
                 >
                   Cancelar
@@ -521,8 +568,7 @@ export default function Page() {
             {messages.map((msg) => {
               if (msg.role === "assistant") {
                 // ✅ FIX CARET: el caret va DENTRO del markdown para que no “baje” de línea
-                const mdText =
-                  (msg.text || "") + (msg.streaming ? " ▍" : "");
+                const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
 
                 return (
                   <div key={msg.id} className="bubble-in-slow">
@@ -580,7 +626,10 @@ export default function Page() {
                 <div className="mb-2 relative w-fit bubble-in">
                   <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
                   <button
-                    onClick={() => setImagePreview(null)}
+                    onClick={() => {
+                      setImagePreview(null);
+                      focusComposer();
+                    }}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-zinc-900 text-white text-xs"
                     aria-label="Quitar imagen"
                   >
