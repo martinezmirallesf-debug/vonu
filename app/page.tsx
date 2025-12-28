@@ -1,4 +1,4 @@
-// app/chat/page.tsx
+// app/page.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -52,7 +52,7 @@ function makeTitleFromText(text: string) {
 
 const STORAGE_KEY = "vonu_threads_v1";
 
-export default function ChatPage() {
+export default function Page() {
   // Evitar hydration issues
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -60,6 +60,18 @@ export default function ChatPage() {
   // -------- Persistencia local (localStorage) --------
   const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
   const [activeThreadId, setActiveThreadId] = useState<string>("");
+
+  // refs para evitar stale state en sendMessage()
+  const threadsRef = useRef<ChatThread[]>(threads);
+  const activeThreadIdRef = useRef<string>(activeThreadId);
+
+  useEffect(() => {
+    threadsRef.current = threads;
+  }, [threads]);
+
+  useEffect(() => {
+    activeThreadIdRef.current = activeThreadId;
+  }, [activeThreadId]);
 
   useEffect(() => {
     try {
@@ -111,6 +123,9 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Interval ref para limpiar streaming simulado
+  const streamIntervalRef = useRef<number | null>(null);
+
   // asegurar thread activo
   useEffect(() => {
     if (!activeThreadId && threads[0]?.id) setActiveThreadId(threads[0].id);
@@ -149,6 +164,16 @@ export default function ChatPage() {
     el.style.height = next + "px";
   }, [input]);
 
+  // cleanup interval en unmount
+  useEffect(() => {
+    return () => {
+      if (streamIntervalRef.current) {
+        window.clearInterval(streamIntervalRef.current);
+        streamIntervalRef.current = null;
+      }
+    };
+  }, []);
+
   function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -168,6 +193,11 @@ export default function ChatPage() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
+
+    if (streamIntervalRef.current) {
+      window.clearInterval(streamIntervalRef.current);
+      streamIntervalRef.current = null;
+    }
   }
 
   function activateThread(id: string) {
@@ -176,6 +206,12 @@ export default function ChatPage() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
+
+    if (streamIntervalRef.current) {
+      window.clearInterval(streamIntervalRef.current);
+      streamIntervalRef.current = null;
+    }
+    setIsTyping(false);
   }
 
   function openRename() {
@@ -195,6 +231,12 @@ export default function ChatPage() {
 
   function deleteActiveThread() {
     if (!activeThread) return;
+
+    if (streamIntervalRef.current) {
+      window.clearInterval(streamIntervalRef.current);
+      streamIntervalRef.current = null;
+    }
+    setIsTyping(false);
 
     if (threads.length === 1) {
       const fresh = makeNewThread();
@@ -220,7 +262,18 @@ export default function ChatPage() {
 
   async function sendMessage() {
     if (!canSend) return;
-    if (!activeThread) return;
+
+    const currentThreads = threadsRef.current;
+    const currentActiveId = activeThreadIdRef.current;
+    const currentActiveThread = currentThreads.find((t) => t.id === currentActiveId) ?? currentThreads[0];
+
+    if (!currentActiveThread) return;
+
+    // si hubiera un streaming anterior colgando, lo limpiamos
+    if (streamIntervalRef.current) {
+      window.clearInterval(streamIntervalRef.current);
+      streamIntervalRef.current = null;
+    }
 
     const userText = input.trim();
     const imageBase64 = imagePreview;
@@ -245,7 +298,7 @@ export default function ChatPage() {
     // pintar en el thread activo
     setThreads((prev) =>
       prev.map((t) => {
-        if (t.id !== activeThread.id) return t;
+        if (t.id !== currentActiveThread.id) return t;
 
         const hasUserAlready = t.messages.some((m) => m.role === "user");
         const newTitle = hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen");
@@ -266,10 +319,12 @@ export default function ChatPage() {
     try {
       await sleep(420);
 
-      // snapshot del thread actual (ojo con stale state)
-      const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
+      // reconstruir conversación desde el estado más reciente (ref)
+      const latestThreads = threadsRef.current;
+      const latestActiveId = activeThreadIdRef.current;
+      const latestThread = latestThreads.find((t) => t.id === latestActiveId) ?? currentActiveThread;
 
-      const convoForApi = [...(threadNow?.messages ?? []), userMsg]
+      const convoForApi = [...(latestThread?.messages ?? []), userMsg]
         .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
         .map((m) => ({
           role: m.role,
@@ -302,13 +357,15 @@ export default function ChatPage() {
       let i = 0;
       const speedMs = fullText.length > 900 ? 7 : 12;
 
-      const interval = setInterval(() => {
+      streamIntervalRef.current = window.setInterval(() => {
         i++;
         const partial = fullText.slice(0, i);
 
+        const activeIdNow = activeThreadIdRef.current;
+
         setThreads((prev) =>
           prev.map((t) => {
-            if (t.id !== activeThread.id) return t;
+            if (t.id !== activeIdNow) return t;
             return {
               ...t,
               updatedAt: Date.now(),
@@ -318,11 +375,16 @@ export default function ChatPage() {
         );
 
         if (i >= fullText.length) {
-          clearInterval(interval);
+          if (streamIntervalRef.current) {
+            window.clearInterval(streamIntervalRef.current);
+            streamIntervalRef.current = null;
+          }
+
+          const activeIdNow2 = activeThreadIdRef.current;
 
           setThreads((prev) =>
             prev.map((t) => {
-              if (t.id !== activeThread.id) return t;
+              if (t.id !== activeIdNow2) return t;
               return {
                 ...t,
                 updatedAt: Date.now(),
@@ -337,9 +399,16 @@ export default function ChatPage() {
     } catch (err: any) {
       const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
 
+      if (streamIntervalRef.current) {
+        window.clearInterval(streamIntervalRef.current);
+        streamIntervalRef.current = null;
+      }
+
+      const activeIdNow = activeThreadIdRef.current;
+
       setThreads((prev) =>
         prev.map((t) => {
-          if (t.id !== activeThread.id) return t;
+          if (t.id !== activeIdNow) return t;
           return {
             ...t,
             updatedAt: Date.now(),
@@ -510,9 +579,13 @@ export default function ChatPage() {
               if (msg.role === "assistant") {
                 return (
                   <div key={msg.id} className="bubble-in-slow">
-                    <div className="prose prose-zinc max-w-none text-sm">
+                    <div className="prose prose-zinc max-w-none text-sm relative">
                       <ReactMarkdown>{msg.text || ""}</ReactMarkdown>
-                      {msg.streaming && <span className="inline-block ml-1 animate-pulse">▍</span>}
+
+                      {/* Cursor en overlay (NO inline) -> no baja de línea */}
+                      {msg.streaming && (
+                        <span className="absolute -bottom-1 right-0 inline-block animate-pulse select-none">▍</span>
+                      )}
                     </div>
                   </div>
                 );
