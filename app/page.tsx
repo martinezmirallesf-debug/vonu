@@ -114,26 +114,23 @@ export default function Page() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // ✅ Helper: focus suave al input (sin robar foco a modales)
-  function focusComposer() {
-    if (!mounted) return;
-    if (renameOpen) return; // si hay modal abierto, no tocamos el foco
-    // pequeño delay para esperar re-render/layout
-    setTimeout(() => {
-      try {
-        textareaRef.current?.focus({ preventScroll: true });
-      } catch {
-        textareaRef.current?.focus();
-      }
-    }, 0);
-  }
+  function focusComposer(delay = 60) {
+    window.setTimeout(() => {
+      const el = textareaRef.current;
+      if (!el) return;
+      if ((el as any).disabled) return;
 
-  // ✅ Al cargar la app, foco directo al input
-  useEffect(() => {
-    if (!mounted) return;
-    focusComposer();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted]);
+      el.focus({ preventScroll: true } as any);
+
+      // Mover caret al final (por si hay texto)
+      try {
+        const len = el.value?.length ?? 0;
+        el.setSelectionRange(len, len);
+      } catch {
+        // ignore
+      }
+    }, delay);
+  }
 
   // asegurar thread activo
   useEffect(() => {
@@ -155,15 +152,6 @@ export default function Page() {
     return !isTyping && (!!input.trim() || !!imagePreview);
   }, [isTyping, input, imagePreview]);
 
-  // ✅ Cuando cambias de chat o cierras el menú o termina el typing: foco al input
-  useEffect(() => {
-    if (!mounted) return;
-    if (menuOpen) return; // si el menú está abierto, no molestamos
-    if (isTyping) return; // mientras “escribe”, no hace falta
-    focusComposer();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeThreadId, menuOpen, isTyping, mounted, renameOpen]);
-
   // Scroll suave al final
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -182,6 +170,16 @@ export default function Page() {
     el.style.height = next + "px";
   }, [input]);
 
+  // Autofocus al abrir / cambiar chat / cerrar modal / cerrar menú
+  useEffect(() => {
+    if (!mounted) return;
+    if (renameOpen) return; // si está el modal, no robamos el foco
+    if (menuOpen) return; // si el menú está abierto, no abrimos teclado
+    if (isTyping) return;
+    focusComposer(120);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted, activeThreadId, renameOpen, menuOpen, isTyping]);
+
   function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -191,8 +189,7 @@ export default function Page() {
     reader.readAsDataURL(file);
 
     e.target.value = "";
-    // al adjuntar, foco al input para seguir escribiendo
-    focusComposer();
+    focusComposer(80);
   }
 
   function createThreadAndActivate() {
@@ -203,7 +200,7 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
-    focusComposer();
+    focusComposer(120);
   }
 
   function activateThread(id: string) {
@@ -212,7 +209,7 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
-    focusComposer();
+    focusComposer(120);
   }
 
   function openRename() {
@@ -230,7 +227,7 @@ export default function Page() {
       )
     );
     setRenameOpen(false);
-    focusComposer();
+    focusComposer(120);
   }
 
   function deleteActiveThread() {
@@ -244,7 +241,7 @@ export default function Page() {
       setUiError(null);
       setInput("");
       setImagePreview(null);
-      focusComposer();
+      focusComposer(120);
       return;
     }
 
@@ -257,7 +254,7 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
-    focusComposer();
+    focusComposer(120);
   }
 
   async function sendMessage() {
@@ -354,9 +351,7 @@ export default function Page() {
             return {
               ...t,
               updatedAt: Date.now(),
-              messages: t.messages.map((m) =>
-                m.id === assistantId ? { ...m, text: partial } : m
-              ),
+              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
             };
           })
         );
@@ -378,7 +373,7 @@ export default function Page() {
           );
 
           setIsTyping(false);
-          focusComposer();
+          focusComposer(120);
         }
       }, speedMs);
     } catch (err: any) {
@@ -409,12 +404,37 @@ export default function Page() {
 
       setUiError(msg);
       setIsTyping(false);
-      focusComposer();
+      focusComposer(150);
     }
   }
 
   return (
     <div className="h-screen bg-white flex overflow-hidden">
+      {/* HEADER (fijo, con blur) */}
+      <header className="fixed inset-x-0 top-0 z-50 h-16 bg-white/80 backdrop-blur-md border-b border-zinc-200">
+        <div className="h-full mx-auto max-w-3xl px-3 sm:px-6 flex items-center justify-between">
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="flex items-center gap-[6px] select-none"
+            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+            title={menuOpen ? "Cerrar menú" : "Menú"}
+          >
+            <img
+              src="/vonu-icon.png"
+              alt="Vonu"
+              className={`h-7 w-7 transition-transform duration-300 ease-out ${
+                menuOpen ? "rotate-90" : "rotate-0"
+              }`}
+              draggable={false}
+            />
+            <img src="/vonu-wordmark.png" alt="Vonu" className="h-5 w-auto" draggable={false} />
+          </button>
+
+          {/* espacio “de aire” a la derecha (por si luego metes login/paywall) */}
+          <div className="text-xs text-zinc-400 select-none hidden sm:block"> </div>
+        </div>
+      </header>
+
       {/* OVERLAY + SIDEBAR */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-300 ${
@@ -430,7 +450,7 @@ export default function Page() {
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* espacio arriba para que NO se solape con el logo */}
+          {/* espacio arriba para que NO se solape con el header */}
           <div className="pt-16">
             {/* header sidebar */}
             <div className="flex items-center justify-between mb-3">
@@ -487,24 +507,6 @@ export default function Page() {
         </aside>
       </div>
 
-      {/* LOGO / BURGER (icon rota al abrir) */}
-      <button
-        onClick={() => setMenuOpen((v) => !v)}
-        className="fixed left-5 top-5 z-50 flex items-center gap-[4px] select-none"
-        aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-        title={menuOpen ? "Cerrar menú" : "Menú"}
-      >
-        <img
-          src="/vonu-icon.png"
-          alt="Vonu"
-          className={`h-7 w-7 transition-transform duration-300 ease-out ${
-            menuOpen ? "rotate-90" : "rotate-0"
-          }`}
-          draggable={false}
-        />
-        <img src="/vonu-wordmark.png" alt="Vonu" className="h-5 w-auto" draggable={false} />
-      </button>
-
       {/* MAIN */}
       <div className="flex-1 flex flex-col">
         {/* RENAME MODAL */}
@@ -527,7 +529,7 @@ export default function Page() {
                   if (e.key === "Enter") confirmRename();
                   if (e.key === "Escape") {
                     setRenameOpen(false);
-                    focusComposer();
+                    focusComposer(140);
                   }
                 }}
               />
@@ -536,7 +538,7 @@ export default function Page() {
                 <button
                   onClick={() => {
                     setRenameOpen(false);
-                    focusComposer();
+                    focusComposer(140);
                   }}
                   className="h-10 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm"
                 >
@@ -555,7 +557,7 @@ export default function Page() {
 
         {/* ERROR BAR */}
         {uiError && (
-          <div className="mx-auto max-w-3xl px-6 mt-3 pt-4">
+          <div className="mx-auto max-w-3xl px-3 sm:px-6 mt-3 pt-16">
             <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               Ha fallado la llamada a la IA. (Error: {uiError})
             </div>
@@ -564,10 +566,11 @@ export default function Page() {
 
         {/* CHAT */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-3xl px-6 pt-20 pb-10 space-y-10">
+          {/* padding-top ajustado al header fijo */}
+          <div className="mx-auto max-w-3xl px-3 sm:px-6 pt-20 pb-28 space-y-10">
             {messages.map((msg) => {
               if (msg.role === "assistant") {
-                // ✅ FIX CARET: el caret va DENTRO del markdown para que no “baje” de línea
+                // caret dentro del markdown para que no “baje”
                 const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
 
                 return (
@@ -601,18 +604,18 @@ export default function Page() {
           </div>
         </div>
 
-        {/* INPUT */}
-        <div className="flex-shrink-0 bg-white">
-          <div className="mx-auto max-w-3xl px-6 pt-4 pb-2 flex items-center gap-3">
+        {/* INPUT (barra inferior estilo móvil) */}
+        <div className="fixed inset-x-0 bottom-0 bg-white/90 backdrop-blur-md border-t border-zinc-200">
+          <div className="mx-auto max-w-3xl px-3 sm:px-6 pt-3 pb-2 flex items-end gap-2">
             {/* + */}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="h-12 w-12 inline-flex items-center justify-center rounded-full border border-zinc-300 text-zinc-800 hover:bg-zinc-100 transition-colors"
+              className="h-11 w-11 flex-shrink-0 inline-flex items-center justify-center rounded-full border border-zinc-300 text-zinc-800 hover:bg-zinc-100 transition-colors"
               aria-label="Adjuntar imagen"
               disabled={isTyping}
               title={isTyping ? "Espera a que Vonu responda…" : "Adjuntar imagen"}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M12 5V19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                 <path d="M5 12H19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
               </svg>
@@ -624,11 +627,11 @@ export default function Page() {
             <div className="flex-1">
               {imagePreview && (
                 <div className="mb-2 relative w-fit bubble-in">
-                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
+                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-36" />
                   <button
                     onClick={() => {
                       setImagePreview(null);
-                      focusComposer();
+                      focusComposer(80);
                     }}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-zinc-900 text-white text-xs"
                     aria-label="Quitar imagen"
@@ -638,7 +641,7 @@ export default function Page() {
                 </div>
               )}
 
-              <div className="w-full min-h-12 rounded-3xl border border-zinc-300 px-4 py-3 flex items-center focus-within:border-zinc-400">
+              <div className="w-full min-h-11 rounded-3xl border border-zinc-300 px-4 py-3 flex items-center focus-within:border-zinc-400">
                 <textarea
                   ref={textareaRef}
                   value={input}
@@ -657,21 +660,36 @@ export default function Page() {
               </div>
             </div>
 
-            {/* enviar */}
+            {/* enviar (redondo con flecha) */}
             <button
               onClick={sendMessage}
               disabled={!canSend}
-              className="h-12 rounded-3xl bg-zinc-900 text-white px-6 text-sm font-medium disabled:opacity-40 transition-opacity"
+              className="h-11 w-11 flex-shrink-0 rounded-full bg-zinc-900 text-white inline-flex items-center justify-center disabled:opacity-40 transition-opacity"
+              aria-label="Enviar"
+              title="Enviar"
             >
-              Enviar
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M12 19V5"
+                  stroke="currentColor"
+                  strokeWidth="2.8"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M7 10l5-5 5 5"
+                  stroke="currentColor"
+                  strokeWidth="2.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
           </div>
 
-          {/* DISCLAIMER */}
-          <div className="mx-auto max-w-3xl px-6 pb-4">
-            <p className="text-center text-[12px] text-zinc-500 leading-5">
-              Vonu es una herramienta de orientación y prevención; no sustituye asesoramiento profesional (legal, médico o
-              psicológico). Si hay riesgo inmediato, contacta con emergencias.
+          {/* DISCLAIMER (más corto + más ancho) */}
+          <div className="mx-auto max-w-3xl px-3 sm:px-6 pb-3">
+            <p className="text-center text-[12px] text-zinc-500 leading-4">
+              Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
             </p>
           </div>
         </div>
