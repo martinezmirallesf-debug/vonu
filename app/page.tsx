@@ -61,18 +61,6 @@ export default function Page() {
   const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
   const [activeThreadId, setActiveThreadId] = useState<string>("");
 
-  // refs para evitar stale state en sendMessage()
-  const threadsRef = useRef<ChatThread[]>(threads);
-  const activeThreadIdRef = useRef<string>(activeThreadId);
-
-  useEffect(() => {
-    threadsRef.current = threads;
-  }, [threads]);
-
-  useEffect(() => {
-    activeThreadIdRef.current = activeThreadId;
-  }, [activeThreadId]);
-
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -87,7 +75,10 @@ export default function Page() {
           id: t.id,
           title: typeof t.title === "string" ? t.title : "Consulta",
           updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
-          messages: Array.isArray(t.messages) && t.messages.length ? t.messages : [initialAssistantMessage()],
+          messages:
+            Array.isArray(t.messages) && t.messages.length
+              ? t.messages
+              : [initialAssistantMessage()],
         }));
 
       if (clean.length) {
@@ -122,9 +113,6 @@ export default function Page() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Interval ref para limpiar streaming simulado
-  const streamIntervalRef = useRef<number | null>(null);
 
   // asegurar thread activo
   useEffect(() => {
@@ -164,16 +152,6 @@ export default function Page() {
     el.style.height = next + "px";
   }, [input]);
 
-  // cleanup interval en unmount
-  useEffect(() => {
-    return () => {
-      if (streamIntervalRef.current) {
-        window.clearInterval(streamIntervalRef.current);
-        streamIntervalRef.current = null;
-      }
-    };
-  }, []);
-
   function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -193,11 +171,6 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
-
-    if (streamIntervalRef.current) {
-      window.clearInterval(streamIntervalRef.current);
-      streamIntervalRef.current = null;
-    }
   }
 
   function activateThread(id: string) {
@@ -206,12 +179,6 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
-
-    if (streamIntervalRef.current) {
-      window.clearInterval(streamIntervalRef.current);
-      streamIntervalRef.current = null;
-    }
-    setIsTyping(false);
   }
 
   function openRename() {
@@ -224,19 +191,15 @@ export default function Page() {
     if (!activeThread) return;
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
-      prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t))
+      prev.map((t) =>
+        t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t
+      )
     );
     setRenameOpen(false);
   }
 
   function deleteActiveThread() {
     if (!activeThread) return;
-
-    if (streamIntervalRef.current) {
-      window.clearInterval(streamIntervalRef.current);
-      streamIntervalRef.current = null;
-    }
-    setIsTyping(false);
 
     if (threads.length === 1) {
       const fresh = makeNewThread();
@@ -262,18 +225,7 @@ export default function Page() {
 
   async function sendMessage() {
     if (!canSend) return;
-
-    const currentThreads = threadsRef.current;
-    const currentActiveId = activeThreadIdRef.current;
-    const currentActiveThread = currentThreads.find((t) => t.id === currentActiveId) ?? currentThreads[0];
-
-    if (!currentActiveThread) return;
-
-    // si hubiera un streaming anterior colgando, lo limpiamos
-    if (streamIntervalRef.current) {
-      window.clearInterval(streamIntervalRef.current);
-      streamIntervalRef.current = null;
-    }
+    if (!activeThread) return;
 
     const userText = input.trim();
     const imageBase64 = imagePreview;
@@ -298,7 +250,7 @@ export default function Page() {
     // pintar en el thread activo
     setThreads((prev) =>
       prev.map((t) => {
-        if (t.id !== currentActiveThread.id) return t;
+        if (t.id !== activeThread.id) return t;
 
         const hasUserAlready = t.messages.some((m) => m.role === "user");
         const newTitle = hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen");
@@ -319,12 +271,10 @@ export default function Page() {
     try {
       await sleep(420);
 
-      // reconstruir conversación desde el estado más reciente (ref)
-      const latestThreads = threadsRef.current;
-      const latestActiveId = activeThreadIdRef.current;
-      const latestThread = latestThreads.find((t) => t.id === latestActiveId) ?? currentActiveThread;
+      // snapshot del thread actual (ojo con stale state)
+      const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
-      const convoForApi = [...(latestThread?.messages ?? []), userMsg]
+      const convoForApi = [...(threadNow?.messages ?? []), userMsg]
         .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
         .map((m) => ({
           role: m.role,
@@ -357,15 +307,13 @@ export default function Page() {
       let i = 0;
       const speedMs = fullText.length > 900 ? 7 : 12;
 
-      streamIntervalRef.current = window.setInterval(() => {
+      const interval = setInterval(() => {
         i++;
         const partial = fullText.slice(0, i);
 
-        const activeIdNow = activeThreadIdRef.current;
-
         setThreads((prev) =>
           prev.map((t) => {
-            if (t.id !== activeIdNow) return t;
+            if (t.id !== activeThread.id) return t;
             return {
               ...t,
               updatedAt: Date.now(),
@@ -375,20 +323,17 @@ export default function Page() {
         );
 
         if (i >= fullText.length) {
-          if (streamIntervalRef.current) {
-            window.clearInterval(streamIntervalRef.current);
-            streamIntervalRef.current = null;
-          }
-
-          const activeIdNow2 = activeThreadIdRef.current;
+          clearInterval(interval);
 
           setThreads((prev) =>
             prev.map((t) => {
-              if (t.id !== activeIdNow2) return t;
+              if (t.id !== activeThread.id) return t;
               return {
                 ...t,
                 updatedAt: Date.now(),
-                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
+                messages: t.messages.map((m) =>
+                  m.id === assistantId ? { ...m, streaming: false } : m
+                ),
               };
             })
           );
@@ -397,18 +342,12 @@ export default function Page() {
         }
       }, speedMs);
     } catch (err: any) {
-      const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
-
-      if (streamIntervalRef.current) {
-        window.clearInterval(streamIntervalRef.current);
-        streamIntervalRef.current = null;
-      }
-
-      const activeIdNow = activeThreadIdRef.current;
+      const msg =
+        typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
-          if (t.id !== activeIdNow) return t;
+          if (t.id !== activeThread.id) return t;
           return {
             ...t,
             updatedAt: Date.now(),
@@ -438,7 +377,9 @@ export default function Page() {
       {/* OVERLAY + SIDEBAR */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-300 ${
-          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent backdrop-blur-0"
+          menuOpen
+            ? "bg-black/20 backdrop-blur-sm pointer-events-auto"
+            : "pointer-events-none bg-transparent backdrop-blur-0"
         }`}
         onClick={() => setMenuOpen(false)}
       >
@@ -515,7 +456,9 @@ export default function Page() {
         <img
           src="/vonu-icon.png"
           alt="Vonu"
-          className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
+          className={`h-7 w-7 transition-transform duration-300 ease-out ${
+            menuOpen ? "rotate-90" : "rotate-0"
+          }`}
           draggable={false}
         />
         <img src="/vonu-wordmark.png" alt="Vonu" className="h-5 w-auto" draggable={false} />
@@ -577,15 +520,14 @@ export default function Page() {
           <div className="mx-auto max-w-3xl px-6 pt-20 pb-10 space-y-10">
             {messages.map((msg) => {
               if (msg.role === "assistant") {
+                // ✅ FIX CARET: el caret va DENTRO del markdown para que no “baje” de línea
+                const mdText =
+                  (msg.text || "") + (msg.streaming ? " ▍" : "");
+
                 return (
                   <div key={msg.id} className="bubble-in-slow">
-                    <div className="prose prose-zinc max-w-none text-sm relative">
-                      <ReactMarkdown>{msg.text || ""}</ReactMarkdown>
-
-                      {/* Cursor en overlay (NO inline) -> no baja de línea */}
-                      {msg.streaming && (
-                        <span className="absolute -bottom-1 right-0 inline-block animate-pulse select-none">▍</span>
-                      )}
+                    <div className="prose prose-zinc max-w-none text-sm">
+                      <ReactMarkdown>{mdText}</ReactMarkdown>
                     </div>
                   </div>
                 );
