@@ -109,6 +109,9 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
 
+  // ✅ Para ajustar el borde en móvil cuando el textarea crece
+  const [mobileMultiline, setMobileMultiline] = useState(false);
+
   // Renombrar / borrar
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
@@ -153,6 +156,17 @@ export default function Page() {
     el.style.height = "0px";
     const next = Math.min(el.scrollHeight, 140);
     el.style.height = next + "px";
+
+    // ✅ Detectar si ya es multiline (2+ líneas aprox)
+    try {
+      const cs = window.getComputedStyle(el);
+      const lh = parseFloat(cs.lineHeight || "20") || 20;
+      const linesApprox = Math.round(el.scrollHeight / lh);
+      setMobileMultiline(linesApprox >= 2);
+    } catch {
+      // fallback simple
+      setMobileMultiline(el.scrollHeight > 52);
+    }
   }, [input]);
 
   // ✅ Auto-focus: cursor dentro del input al abrir el chat
@@ -404,10 +418,7 @@ export default function Page() {
   return (
     <div className="h-screen bg-white flex overflow-hidden">
       {/* ===== MOBILE HEADER (fijo + blur) ===== */}
-      <div
-        className="md:hidden fixed top-0 left-0 right-0 z-50"
-        style={{ height: MOBILE_HEADER_H }}
-      >
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
         <div className="h-full px-4 flex items-center justify-between bg-white/70 backdrop-blur-xl">
           <button
             onClick={() => setMenuOpen((v) => !v)}
@@ -444,7 +455,7 @@ export default function Page() {
         }`}
         onClick={() => setMenuOpen(false)}
       >
-        {/* Desktop sidebar (igual que antes) */}
+        {/* Desktop sidebar */}
         <aside
           className={`hidden md:block absolute left-3 top-3 bottom-3 w-80 bg-white rounded-3xl shadow-xl border border-zinc-200 p-4 transform transition-transform duration-300 ease-out ${
             menuOpen ? "translate-x-0" : "-translate-x-[110%]"
@@ -503,14 +514,13 @@ export default function Page() {
           </div>
         </aside>
 
-        {/* Mobile sidebar (integrada con header, sin bordes/grises) */}
+        {/* Mobile sidebar */}
         <aside
           className={`md:hidden absolute left-0 top-0 bottom-0 w-[86vw] max-w-[360px] bg-white/90 backdrop-blur-xl shadow-2xl transform transition-transform duration-300 ease-out ${
             menuOpen ? "translate-x-0" : "-translate-x-[110%]"
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* top padding para “fundirse” con el header (misma pieza visual) */}
           <div style={{ paddingTop: MOBILE_HEADER_H }} className="px-4 pb-4 h-full">
             <div className="pt-4">
               <div className="flex items-center justify-between mb-3">
@@ -566,7 +576,7 @@ export default function Page() {
         </aside>
       </div>
 
-      {/* Desktop logo button (igual que antes) */}
+      {/* Desktop logo button */}
       <button
         onClick={() => setMenuOpen((v) => !v)}
         className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-[4px] select-none"
@@ -645,7 +655,6 @@ export default function Page() {
           >
             {messages.map((msg) => {
               if (msg.role === "assistant") {
-                // ✅ FIX CARET: caret dentro del markdown para que no baje de línea
                 const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
 
                 return (
@@ -700,23 +709,13 @@ export default function Page() {
               </svg>
             </button>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={onSelectImage}
-              className="hidden"
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
 
             {/* input */}
             <div className="flex-1">
               {imagePreview && (
                 <div className="mb-2 relative w-fit bubble-in">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="rounded-3xl border border-zinc-200 max-h-40"
-                  />
+                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
                   <button
                     onClick={() => setImagePreview(null)}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-zinc-900 text-white text-xs"
@@ -727,16 +726,17 @@ export default function Page() {
                 </div>
               )}
 
-              {/* ✅ Móvil sin borde gris: estilo “píldora” */}
+              {/* ✅ En móvil: pill en 1 línea, rectangular redondeado en multiline */}
               <div
-                className="
-                  w-full min-h-12 rounded-full
+                className={`
+                  w-full min-h-12
+                  ${mobileMultiline ? "rounded-3xl" : "rounded-full"}
                   bg-zinc-100 md:bg-white
                   md:rounded-3xl
                   px-4 py-3 flex items-center
                   md:border md:border-zinc-300
                   md:focus-within:border-zinc-400
-                "
+                `}
               >
                 <textarea
                   ref={textareaRef}
@@ -772,7 +772,6 @@ export default function Page() {
               aria-label="Enviar"
               title={canSend ? "Enviar" : "Escribe un mensaje para enviar"}
             >
-              {/* En móvil: flecha arriba tipo ChatGPT | En desktop: “Enviar” */}
               <span className="md:hidden" aria-hidden="true">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <path
@@ -788,7 +787,7 @@ export default function Page() {
             </button>
           </div>
 
-          {/* DISCLAIMER (más corto y a más ancho en móvil) */}
+          {/* DISCLAIMER */}
           <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3">
             <p className="text-center text-[12px] text-zinc-500 leading-5">
               Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
