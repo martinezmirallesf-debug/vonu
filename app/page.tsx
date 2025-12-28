@@ -430,44 +430,28 @@ export default function Page() {
       {/* ===== MOBILE HEADER (fijo + blur) ===== */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
         <div className="h-full px-4 flex items-center justify-between bg-white/70 backdrop-blur-xl">
-          {/* ✅ Logo completo (icono + letras) juntos -> HOME */}
-          <a
-            href={HOME_URL}
-            className="flex items-center gap-2 select-none"
-            aria-label="Ir a la home"
-            title="Ir a la home"
-          >
-            <img src="/vonu-icon.png" alt="Vonu" className="h-7 w-7" draggable={false} />
-            <img src="/vonu-wordmark.png" alt="Vonu" className="h-5 w-auto" draggable={false} />
-          </a>
-
-          {/* Menú a la derecha (hamburguesa) */}
+          {/* ✅ Menu button (hamburger) */}
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="h-10 w-10 inline-flex items-center justify-center rounded-full hover:bg-zinc-100 transition-colors"
             aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
             title={menuOpen ? "Cerrar menú" : "Menú"}
           >
-            {menuOpen ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M6 6l12 12M18 6L6 18"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-            ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M4 7h16M4 12h16M4 17h16"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-            )}
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 7h16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M4 12h16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M4 17h16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+            </svg>
           </button>
+
+          {/* ✅ Logo completo (icono + letras) -> HOME */}
+          <a href={HOME_URL} className="flex items-center gap-2" aria-label="Ir a la home">
+            <img src="/vonu-icon.png" alt="Vonu" className="h-7 w-7" draggable={false} />
+            <img src="/vonu-wordmark.png" alt="Vonu" className="h-5 w-auto" draggable={false} />
+          </a>
+
+          {/* ✅ Quitado "Nueva" en móvil (se mantiene en la sidebar) */}
+          <div className="w-10" />
         </div>
       </div>
 
