@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { useRouter } from "next/navigation";
 
 type Message = {
   id: string;
@@ -56,6 +57,8 @@ const STORAGE_KEY = "vonu_threads_v1";
 const MOBILE_HEADER_H = 64;
 
 export default function Page() {
+  const router = useRouter();
+
   // Evitar hydration issues
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -79,7 +82,9 @@ export default function Page() {
           title: typeof t.title === "string" ? t.title : "Consulta",
           updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
           messages:
-            Array.isArray(t.messages) && t.messages.length ? t.messages : [initialAssistantMessage()],
+            Array.isArray(t.messages) && t.messages.length
+              ? t.messages
+              : [initialAssistantMessage()],
         }));
 
       if (clean.length) {
@@ -111,9 +116,6 @@ export default function Page() {
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
 
-  // Input shape en móvil cuando crece
-  const [inputExpanded, setInputExpanded] = useState(false);
-
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -138,8 +140,6 @@ export default function Page() {
     return !isTyping && (!!input.trim() || !!imagePreview);
   }, [isTyping, input, imagePreview]);
 
-  const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
-
   // Scroll suave al final
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -156,9 +156,6 @@ export default function Page() {
     el.style.height = "0px";
     const next = Math.min(el.scrollHeight, 140);
     el.style.height = next + "px";
-
-    // si pasa de ~1 línea, dejamos de ser píldora en móvil
-    setInputExpanded(next > 52);
   }, [input]);
 
   // ✅ Auto-focus: cursor dentro del input al abrir el chat
@@ -174,6 +171,11 @@ export default function Page() {
 
     return () => clearTimeout(t);
   }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId]);
+
+  function goHome() {
+    setMenuOpen(false);
+    router.push("/");
+  }
 
   function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -218,7 +220,9 @@ export default function Page() {
     if (!activeThread) return;
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
-      prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t))
+      prev.map((t) =>
+        t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t
+      )
     );
     setRenameOpen(false);
 
@@ -348,7 +352,9 @@ export default function Page() {
             return {
               ...t,
               updatedAt: Date.now(),
-              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
+              messages: t.messages.map((m) =>
+                m.id === assistantId ? { ...m, text: partial } : m
+              ),
             };
           })
         );
@@ -362,7 +368,9 @@ export default function Page() {
               return {
                 ...t,
                 updatedAt: Date.now(),
-                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
+                messages: t.messages.map((m) =>
+                  m.id === assistantId ? { ...m, streaming: false } : m
+                ),
               };
             })
           );
@@ -373,7 +381,9 @@ export default function Page() {
       }, speedMs);
     } catch (err: any) {
       const msg =
-        typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
+        typeof err?.message === "string"
+          ? err.message
+          : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -404,38 +414,48 @@ export default function Page() {
   }
 
   return (
-    <div className="h-[100dvh] bg-white flex overflow-hidden">
+    <div className="h-screen bg-white flex overflow-hidden">
       {/* ===== MOBILE HEADER (fijo + blur) ===== */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
+      <div
+        className="md:hidden fixed top-0 left-0 right-0 z-50"
+        style={{ height: MOBILE_HEADER_H }}
+      >
         <div className="h-full px-4 flex items-center justify-between bg-white/70 backdrop-blur-xl">
+          {/* ✅ Logo clickable a Home */}
           <button
-            onClick={() => setMenuOpen((v) => !v)}
+            onClick={goHome}
             className="flex items-center gap-2 select-none"
-            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-            title={menuOpen ? "Cerrar menú" : "Menú"}
+            aria-label="Ir a inicio"
+            title="Inicio"
           >
             <img
               src="/vonu-icon.png"
               alt="Vonu"
-              className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
+              className="h-7 w-7"
               draggable={false}
             />
-            <img src="/vonu-wordmark.png" alt="Vonu" className="h-5 w-auto" draggable={false} />
+            <img
+              src="/vonu-wordmark.png"
+              alt="Vonu"
+              className="h-5 w-auto"
+              draggable={false}
+            />
           </button>
 
-          {/* ✅ Quitado "Nueva" en móvil (se mantiene en la sidebar) */}
-          <div className="w-8" />
+          {/* (en móvil ya quitaste “Nueva”, lo dejamos fuera) */}
         </div>
       </div>
 
       {/* ===== OVERLAY + SIDEBAR ===== */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-300 ${
-          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent backdrop-blur-0"
+          menuOpen
+            ? "bg-black/20 backdrop-blur-sm pointer-events-auto"
+            : "pointer-events-none bg-transparent backdrop-blur-0"
         }`}
         onClick={() => setMenuOpen(false)}
       >
-        {/* Desktop sidebar (igual que antes) */}
+        {/* Desktop sidebar */}
         <aside
           className={`hidden md:block absolute left-3 top-3 bottom-3 w-80 bg-white rounded-3xl shadow-xl border border-zinc-200 p-4 transform transition-transform duration-300 ease-out ${
             menuOpen ? "translate-x-0" : "-translate-x-[110%]"
@@ -457,6 +477,14 @@ export default function Page() {
               </button>
             </div>
 
+            {/* ✅ Link a Home */}
+            <button
+              onClick={goHome}
+              className="w-full mb-3 text-left text-xs px-3 py-2 rounded-2xl border border-zinc-200 hover:bg-zinc-50"
+            >
+              Inicio
+            </button>
+
             <div className="flex gap-2 mb-3">
               <button
                 onClick={openRename}
@@ -472,7 +500,7 @@ export default function Page() {
               </button>
             </div>
 
-            <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-170px)]">
+            <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-210px)]">
               {sortedThreads.map((t) => {
                 const active = t.id === activeThreadId;
                 const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
@@ -494,7 +522,7 @@ export default function Page() {
           </div>
         </aside>
 
-        {/* Mobile sidebar (integrada con header, sin bordes/grises) */}
+        {/* Mobile sidebar */}
         <aside
           className={`md:hidden absolute left-0 top-0 bottom-0 w-[86vw] max-w-[360px] bg-white/90 backdrop-blur-xl shadow-2xl transform transition-transform duration-300 ease-out ${
             menuOpen ? "translate-x-0" : "-translate-x-[110%]"
@@ -517,6 +545,14 @@ export default function Page() {
                 </button>
               </div>
 
+              {/* ✅ Link a Home */}
+              <button
+                onClick={goHome}
+                className="w-full mb-3 text-left text-xs px-3 py-2 rounded-2xl bg-zinc-100 hover:bg-zinc-200"
+              >
+                Inicio
+              </button>
+
               <div className="flex gap-2 mb-3">
                 <button
                   onClick={openRename}
@@ -532,7 +568,7 @@ export default function Page() {
                 </button>
               </div>
 
-              <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-170px)]">
+              <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-210px)]">
                 {sortedThreads.map((t) => {
                   const active = t.id === activeThreadId;
                   const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
@@ -556,7 +592,7 @@ export default function Page() {
         </aside>
       </div>
 
-      {/* Desktop logo button (igual que antes) */}
+      {/* Desktop logo button (abre/cierra menú) */}
       <button
         onClick={() => setMenuOpen((v) => !v)}
         className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-[4px] select-none"
@@ -566,14 +602,16 @@ export default function Page() {
         <img
           src="/vonu-icon.png"
           alt="Vonu"
-          className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
+          className={`h-7 w-7 transition-transform duration-300 ease-out ${
+            menuOpen ? "rotate-90" : "rotate-0"
+          }`}
           draggable={false}
         />
         <img src="/vonu-wordmark.png" alt="Vonu" className="h-5 w-auto" draggable={false} />
       </button>
 
       {/* MAIN */}
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 flex flex-col">
         {/* RENAME MODAL */}
         {renameOpen && (
           <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center px-6">
@@ -582,7 +620,9 @@ export default function Page() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
-              <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
+              <div className="text-xs text-zinc-500 mb-3">
+                Ponle un nombre para encontrarlo rápido.
+              </div>
 
               <input
                 value={renameValue}
@@ -623,8 +663,8 @@ export default function Page() {
           </div>
         )}
 
-        {/* CHAT (scrollable) */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
+        {/* CHAT */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto">
           <div
             className="mx-auto max-w-3xl px-6 pb-10 space-y-10"
             style={{ paddingTop: MOBILE_HEADER_H + 16 }}
@@ -663,7 +703,7 @@ export default function Page() {
           </div>
         </div>
 
-        {/* INPUT + DISCLAIMER (fijos abajo) */}
+        {/* INPUT */}
         <div className="flex-shrink-0 bg-white">
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             {/* + */}
@@ -690,7 +730,11 @@ export default function Page() {
             <div className="flex-1">
               {imagePreview && (
                 <div className="mb-2 relative w-fit bubble-in">
-                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="rounded-3xl border border-zinc-200 max-h-40"
+                  />
                   <button
                     onClick={() => setImagePreview(null)}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-zinc-900 text-white text-xs"
@@ -701,14 +745,15 @@ export default function Page() {
                 </div>
               )}
 
-              {/* ✅ móvil: píldora al inicio, y cuando crece => rectángulo con esquinas */}
               <div
-                className={[
-                  "w-full min-h-12 px-4 py-3 flex items-center",
-                  "bg-zinc-100 md:bg-white",
-                  "md:rounded-3xl md:border md:border-zinc-300 md:focus-within:border-zinc-400",
-                  inputExpanded ? "rounded-3xl" : "rounded-full",
-                ].join(" ")}
+                className="
+                  w-full min-h-12 rounded-full
+                  bg-zinc-100 md:bg-white
+                  md:rounded-3xl
+                  px-4 py-3 flex items-center
+                  md:border md:border-zinc-300
+                  md:focus-within:border-zinc-400
+                "
               >
                 <textarea
                   ref={textareaRef}
@@ -759,17 +804,11 @@ export default function Page() {
             </button>
           </div>
 
-          {/* DISCLAIMER: fijo abajo; en móvil se oculta tras el primer mensaje del usuario */}
+          {/* DISCLAIMER */}
           <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3">
-            <p className="hidden md:block text-center text-[12px] text-zinc-500 leading-5">
+            <p className="text-center text-[12px] text-zinc-500 leading-5">
               Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
             </p>
-
-            {!hasUserMessage && (
-              <p className="md:hidden text-center text-[12px] text-zinc-500 leading-5">
-                Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
-              </p>
-            )}
           </div>
         </div>
       </div>
