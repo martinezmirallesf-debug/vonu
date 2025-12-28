@@ -77,9 +77,7 @@ export default function Page() {
           title: typeof t.title === "string" ? t.title : "Consulta",
           updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
           messages:
-            Array.isArray(t.messages) && t.messages.length
-              ? t.messages
-              : [initialAssistantMessage()],
+            Array.isArray(t.messages) && t.messages.length ? t.messages : [initialAssistantMessage()],
         }));
 
       if (clean.length) {
@@ -134,11 +132,9 @@ export default function Page() {
     return !isTyping && (!!input.trim() || !!imagePreview);
   }, [isTyping, input, imagePreview]);
 
-  const hasUserMessage = useMemo(
-    () => messages.some((m) => m.role === "user"),
-    [messages]
-  );
+  const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
 
+  // Scroll suave al final
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
@@ -146,6 +142,7 @@ export default function Page() {
     });
   }, [messages, isTyping]);
 
+  // Auto-resize textarea
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -157,6 +154,7 @@ export default function Page() {
     setInputExpanded(next > 52);
   }, [input]);
 
+  // Auto-focus
   useEffect(() => {
     if (!mounted) return;
     if (renameOpen) return;
@@ -213,11 +211,7 @@ export default function Page() {
     if (!activeThread) return;
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
-      prev.map((t) =>
-        t.id === activeThread.id
-          ? { ...t, title: name, updatedAt: Date.now() }
-          : t
-      )
+      prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t))
     );
     setRenameOpen(false);
 
@@ -282,9 +276,7 @@ export default function Page() {
         if (t.id !== activeThread.id) return t;
 
         const hasUserAlready = t.messages.some((m) => m.role === "user");
-        const newTitle = hasUserAlready
-          ? t.title
-          : makeTitleFromText(userText || "Imagen");
+        const newTitle = hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen");
 
         return {
           ...t,
@@ -347,9 +339,7 @@ export default function Page() {
             return {
               ...t,
               updatedAt: Date.now(),
-              messages: t.messages.map((m) =>
-                m.id === assistantId ? { ...m, text: partial } : m
-              ),
+              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
             };
           })
         );
@@ -363,9 +353,7 @@ export default function Page() {
               return {
                 ...t,
                 updatedAt: Date.now(),
-                messages: t.messages.map((m) =>
-                  m.id === assistantId ? { ...m, streaming: false } : m
-                ),
+                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
               };
             })
           );
@@ -375,10 +363,7 @@ export default function Page() {
         }
       }, speedMs);
     } catch (err: any) {
-      const msg =
-        typeof err?.message === "string"
-          ? err.message
-          : "Error desconocido conectando con la IA.";
+      const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -408,13 +393,7 @@ export default function Page() {
     }
   }
 
-  function HomeLink({
-    className,
-    label = "Volver a la home",
-  }: {
-    className?: string;
-    label?: string;
-  }) {
+  function HomeLink({ className, label = "Volver a la home" }: { className?: string; label?: string }) {
     return (
       <a
         href={HOME_URL}
@@ -433,11 +412,8 @@ export default function Page() {
 
   return (
     <div className="h-[100dvh] bg-white flex overflow-hidden">
-      {/* ===== MOBILE HEADER (SOLO 1 ICONO + WORDMARK, NADA A LA DERECHA) ===== */}
-      <div
-        className="md:hidden fixed top-0 left-0 right-0 z-50"
-        style={{ height: MOBILE_HEADER_H }}
-      >
+      {/* ===== MOBILE HEADER (SOLO 1 ICONO + LETRAS, NADA A LA DERECHA) ===== */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
         <div className="h-full px-4 flex items-center bg-white/70 backdrop-blur-xl">
           {/* Icono menú (izquierda) */}
           <button
@@ -449,29 +425,17 @@ export default function Page() {
             <img
               src={"/vonu-icon.png?v=2"}
               alt="Menú"
-              className={`h-7 w-7 transition-transform duration-300 ease-out ${
-                menuOpen ? "rotate-90" : "rotate-0"
-              }`}
+              className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
               draggable={false}
             />
           </button>
 
           {/* Letras (wordmark) al lado -> HOME */}
-          <a
-            href={HOME_URL}
-            className="ml-2 flex items-center"
-            aria-label="Ir a la home"
-            title="Ir a la home"
-          >
-            <img
-              src={"/vonu-wordmark.png?v=2"}
-              alt="Vonu"
-              className="h-5 w-auto"
-              draggable={false}
-            />
+          <a href={HOME_URL} className="ml-2 flex items-center" aria-label="Ir a la home" title="Ir a la home">
+            <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
           </a>
 
-          {/* Spacer para garantizar que NO hay nada a la derecha */}
+          {/* Spacer para garantizar vacío a la derecha */}
           <div className="flex-1" />
         </div>
       </div>
@@ -479,9 +443,7 @@ export default function Page() {
       {/* ===== OVERLAY + SIDEBAR ===== */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-300 ${
-          menuOpen
-            ? "bg-black/20 backdrop-blur-sm pointer-events-auto"
-            : "pointer-events-none bg-transparent backdrop-blur-0"
+          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent backdrop-blur-0"
         }`}
         onClick={() => setMenuOpen(false)}
       >
@@ -495,12 +457,8 @@ export default function Page() {
           <div className="pt-16">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-800">
-                  Historial
-                </div>
-                <div className="text-xs text-zinc-500">
-                  Tus consultas recientes
-                </div>
+                <div className="text-sm font-semibold text-zinc-800">Historial</div>
+                <div className="text-xs text-zinc-500">Tus consultas recientes</div>
               </div>
 
               <button
@@ -540,14 +498,10 @@ export default function Page() {
                     key={t.id}
                     onClick={() => activateThread(t.id)}
                     className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
-                      active
-                        ? "border-blue-600 bg-blue-50"
-                        : "border-zinc-200 hover:bg-zinc-50"
+                      active ? "border-blue-600 bg-blue-50" : "border-zinc-200 hover:bg-zinc-50"
                     }`}
                   >
-                    <div className="text-sm font-medium text-zinc-900">
-                      {t.title}
-                    </div>
+                    <div className="text-sm font-medium text-zinc-900">{t.title}</div>
                     <div className="text-xs text-zinc-500 mt-1">{when}</div>
                   </button>
                 );
@@ -563,19 +517,12 @@ export default function Page() {
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div
-            style={{ paddingTop: MOBILE_HEADER_H }}
-            className="px-4 pb-4 h-full"
-          >
+          <div style={{ paddingTop: MOBILE_HEADER_H }} className="px-4 pb-4 h-full">
             <div className="pt-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <div className="text-sm font-semibold text-zinc-800">
-                    Historial
-                  </div>
-                  <div className="text-xs text-zinc-500">
-                    Tus consultas recientes
-                  </div>
+                  <div className="text-sm font-semibold text-zinc-800">Historial</div>
+                  <div className="text-xs text-zinc-500">Tus consultas recientes</div>
                 </div>
 
                 <button
@@ -587,10 +534,7 @@ export default function Page() {
               </div>
 
               <div className="flex gap-2 mb-3">
-                <button
-                  onClick={openRename}
-                  className="flex-1 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200"
-                >
+                <button onClick={openRename} className="flex-1 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200">
                   Renombrar
                 </button>
                 <button
@@ -618,9 +562,7 @@ export default function Page() {
                         active ? "bg-blue-50" : "bg-white hover:bg-zinc-50"
                       }`}
                     >
-                      <div className="text-sm font-medium text-zinc-900">
-                        {t.title}
-                      </div>
+                      <div className="text-sm font-medium text-zinc-900">{t.title}</div>
                       <div className="text-xs text-zinc-500 mt-1">{when}</div>
                     </button>
                   );
@@ -642,20 +584,13 @@ export default function Page() {
           <img
             src={"/vonu-icon.png?v=2"}
             alt="Menú"
-            className={`h-7 w-7 transition-transform duration-300 ease-out ${
-              menuOpen ? "rotate-90" : "rotate-0"
-            }`}
+            className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
             draggable={false}
           />
         </button>
 
         <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home">
-          <img
-            src={"/vonu-wordmark.png?v=2"}
-            alt="Vonu"
-            className="h-5 w-auto"
-            draggable={false}
-          />
+          <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
         </a>
       </div>
 
@@ -668,12 +603,8 @@ export default function Page() {
               className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="text-sm font-semibold text-zinc-900 mb-1">
-                Renombrar chat
-              </div>
-              <div className="text-xs text-zinc-500 mb-3">
-                Ponle un nombre para encontrarlo rápido.
-              </div>
+              <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
+              <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
 
               <input
                 value={renameValue}
@@ -716,16 +647,22 @@ export default function Page() {
 
         {/* CHAT */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
-          <div
-            className="mx-auto max-w-3xl px-6 pb-10 space-y-10"
-            style={{ paddingTop: MOBILE_HEADER_H + 16 }}
-          >
+          <div className="mx-auto max-w-3xl px-6 pb-10 space-y-10" style={{ paddingTop: MOBILE_HEADER_H + 16 }}>
             {messages.map((msg) => {
               if (msg.role === "assistant") {
                 const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
                 return (
                   <div key={msg.id} className="bubble-in-slow">
-                    <div className="prose prose-zinc max-w-none text-sm">
+                    {/* ✅ MÁS GRANDE + MÁS ESPACIO ENTRE PÁRRAFOS/LISTAS */}
+                    <div
+                      className={[
+                        "prose prose-zinc max-w-none",
+                        "text-[15px] leading-6 md:text-[15px]",
+                        "prose-p:my-3 prose-ul:my-3 prose-ol:my-3",
+                        "prose-li:my-1",
+                        "prose-strong:font-semibold",
+                      ].join(" ")}
+                    >
                       <ReactMarkdown>{mdText}</ReactMarkdown>
                     </div>
                   </div>
@@ -743,7 +680,7 @@ export default function Page() {
                       />
                     )}
                     {msg.text && (
-                      <div className="bg-blue-600 text-white text-sm leading-relaxed rounded-3xl px-5 py-3 break-words">
+                      <div className="bg-blue-600 text-white text-[15px] leading-6 rounded-3xl px-5 py-3 break-words">
                         {msg.text}
                       </div>
                     )}
@@ -774,22 +711,12 @@ export default function Page() {
               </svg>
             </button>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={onSelectImage}
-              className="hidden"
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
 
             <div className="flex-1">
               {imagePreview && (
                 <div className="mb-2 relative w-fit bubble-in">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="rounded-3xl border border-zinc-200 max-h-40"
-                  />
+                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
                   <button
                     onClick={() => setImagePreview(null)}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors"
