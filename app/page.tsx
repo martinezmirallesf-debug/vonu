@@ -58,31 +58,13 @@ const MOBILE_HEADER_H = 64;
 // Home URL
 const HOME_URL = "https://vonuai.com";
 
+// Cache-busting simple (sube el número cuando cambies logos)
+const ASSET_V = "2";
+
 export default function Page() {
   // Evitar hydration issues
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-
-  // ✅ Detectar móvil de forma "a prueba de balas" (evita duplicados por breakpoints/caché)
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    if (!mounted) return;
-
-    const mq = window.matchMedia("(max-width: 767px)");
-    const apply = () => setIsMobile(mq.matches);
-
-    apply();
-    // Safari viejo no soporta addEventListener en media queries
-    if (typeof mq.addEventListener === "function") {
-      mq.addEventListener("change", apply);
-      return () => mq.removeEventListener("change", apply);
-    } else {
-      // @ts-ignore
-      mq.addListener(apply);
-      // @ts-ignore
-      return () => mq.removeListener(apply);
-    }
-  }, [mounted]);
 
   // -------- Persistencia local (localStorage) --------
   const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
@@ -172,7 +154,7 @@ export default function Page() {
     });
   }, [messages, isTyping]);
 
-  // Auto-resize del textarea (sin scrollbars raros)
+  // Auto-resize del textarea
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -185,7 +167,7 @@ export default function Page() {
     setInputExpanded(next > 52);
   }, [input]);
 
-  // ✅ Auto-focus: cursor dentro del input al abrir el chat
+  // ✅ Auto-focus
   useEffect(() => {
     if (!mounted) return;
     if (renameOpen) return;
@@ -302,7 +284,6 @@ export default function Page() {
       streaming: true,
     };
 
-    // pintar en el thread activo
     setThreads((prev) =>
       prev.map((t) => {
         if (t.id !== activeThread.id) return t;
@@ -326,7 +307,6 @@ export default function Page() {
     try {
       await sleep(420);
 
-      // snapshot del thread actual (ojo con stale state)
       const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
@@ -386,7 +366,9 @@ export default function Page() {
               return {
                 ...t,
                 updatedAt: Date.now(),
-                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
+                messages: t.messages.map((m) =>
+                  m.id === assistantId ? { ...m, streaming: false } : m
+                ),
               };
             })
           );
@@ -396,7 +378,8 @@ export default function Page() {
         }
       }, speedMs);
     } catch (err: any) {
-      const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
+      const msg =
+        typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -410,7 +393,9 @@ export default function Page() {
                     ...m,
                     streaming: false,
                     text:
-                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" + msg + "\n```",
+                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" +
+                      msg +
+                      "\n```",
                   }
                 : m
             ),
@@ -429,7 +414,8 @@ export default function Page() {
       <a
         href={HOME_URL}
         className={
-          className ?? "inline-flex items-center gap-2 text-sm text-zinc-700 hover:text-blue-700 transition-colors"
+          className ??
+          "inline-flex items-center gap-2 text-sm text-zinc-700 hover:text-blue-700 transition-colors"
         }
       >
         <span className="text-[16px]" aria-hidden="true">
@@ -440,40 +426,12 @@ export default function Page() {
     );
   }
 
-  const topPad = isMobile ? MOBILE_HEADER_H + 16 : 0;
-
   return (
     <div className="h-[100dvh] bg-white flex overflow-hidden">
-      {/* ===== HEADER (solo uno: móvil o desktop) ===== */}
-      {isMobile ? (
-        <div className="fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
-          <div className="h-full px-4 flex items-center bg-white/70 backdrop-blur-xl">
-            {/* ✅ ÚNICO ICONO: menú a la izquierda (rota 90°) */}
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              className="flex items-center"
-              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-              title={menuOpen ? "Cerrar menú" : "Menú"}
-            >
-              <img
-                src="/vonu-icon.png"
-                alt="Menú"
-                className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
-                draggable={false}
-              />
-            </button>
-
-            {/* ✅ SOLO LETRAS “Vonu” al lado -> HOME */}
-            <a href={HOME_URL} className="ml-2 flex items-center" aria-label="Ir a la home" title="Ir a la home">
-              <img src="/vonu-wordmark.png" alt="Vonu" className="h-5 w-auto" draggable={false} />
-            </a>
-
-            {/* espacio a la derecha */}
-            <div className="flex-1" />
-          </div>
-        </div>
-      ) : (
-        <div className="fixed left-5 top-5 z-50 flex items-center gap-2 select-none">
+      {/* ===== MOBILE HEADER (fijo + blur) ===== */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
+        <div className="h-full px-4 flex items-center bg-white/70 backdrop-blur-xl">
+          {/* ✅ SOLO 1 ICONO (izquierda) = menú burger con rotación 90° */}
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="flex items-center"
@@ -481,23 +439,41 @@ export default function Page() {
             title={menuOpen ? "Cerrar menú" : "Menú"}
           >
             <img
-              src="/vonu-icon.png"
+              src={`/vonu-icon.png?v=${ASSET_V}`}
               alt="Menú"
-              className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
+              className={`h-7 w-7 transition-transform duration-300 ease-out ${
+                menuOpen ? "rotate-90" : "rotate-0"
+              }`}
               draggable={false}
             />
           </button>
 
-          <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home">
-            <img src="/vonu-wordmark.png" alt="Vonu" className="h-5 w-auto" draggable={false} />
+          {/* ✅ SOLO letras (wordmark) al lado -> HOME */}
+          <a
+            href={HOME_URL}
+            className="ml-2 flex items-center"
+            aria-label="Ir a la home"
+            title="Ir a la home"
+          >
+            <img
+              src={`/vonu-wordmark.png?v=${ASSET_V}`}
+              alt="Vonu"
+              className="h-5 w-auto"
+              draggable={false}
+            />
           </a>
+
+          {/* ✅ nada a la derecha */}
+          <div className="flex-1" />
         </div>
-      )}
+      </div>
 
       {/* ===== OVERLAY + SIDEBAR ===== */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-300 ${
-          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent backdrop-blur-0"
+          menuOpen
+            ? "bg-black/20 backdrop-blur-sm pointer-events-auto"
+            : "pointer-events-none bg-transparent backdrop-blur-0"
         }`}
         onClick={() => setMenuOpen(false)}
       >
@@ -524,7 +500,10 @@ export default function Page() {
             </div>
 
             <div className="flex gap-2 mb-3">
-              <button onClick={openRename} className="flex-1 text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50">
+              <button
+                onClick={openRename}
+                className="flex-1 text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50"
+              >
                 Renombrar
               </button>
               <button
@@ -568,7 +547,7 @@ export default function Page() {
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div style={{ paddingTop: isMobile ? MOBILE_HEADER_H : 0 }} className="px-4 pb-4 h-full">
+          <div style={{ paddingTop: MOBILE_HEADER_H }} className="px-4 pb-4 h-full">
             <div className="pt-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
@@ -585,7 +564,10 @@ export default function Page() {
               </div>
 
               <div className="flex gap-2 mb-3">
-                <button onClick={openRename} className="flex-1 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200">
+                <button
+                  onClick={openRename}
+                  className="flex-1 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200"
+                >
                   Renombrar
                 </button>
                 <button
@@ -624,6 +606,34 @@ export default function Page() {
         </aside>
       </div>
 
+      {/* Desktop top-left: menu button + wordmark link */}
+      <div className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-2 select-none">
+        <button
+          onClick={() => setMenuOpen((v) => !v)}
+          className="flex items-center"
+          aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+          title={menuOpen ? "Cerrar menú" : "Menú"}
+        >
+          <img
+            src={`/vonu-icon.png?v=${ASSET_V}`}
+            alt="Menú"
+            className={`h-7 w-7 transition-transform duration-300 ease-out ${
+              menuOpen ? "rotate-90" : "rotate-0"
+            }`}
+            draggable={false}
+          />
+        </button>
+
+        <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home">
+          <img
+            src={`/vonu-wordmark.png?v=${ASSET_V}`}
+            alt="Vonu"
+            className="h-5 w-auto"
+            draggable={false}
+          />
+        </a>
+      </div>
+
       {/* MAIN */}
       <div className="flex-1 flex flex-col min-h-0">
         {/* RENAME MODAL */}
@@ -649,10 +659,16 @@ export default function Page() {
               />
 
               <div className="flex justify-end gap-2 mt-4">
-                <button onClick={() => setRenameOpen(false)} className="h-10 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm">
+                <button
+                  onClick={() => setRenameOpen(false)}
+                  className="h-10 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm"
+                >
                   Cancelar
                 </button>
-                <button onClick={confirmRename} className="h-10 px-4 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 text-sm transition-colors">
+                <button
+                  onClick={confirmRename}
+                  className="h-10 px-4 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 text-sm transition-colors"
+                >
                   Guardar
                 </button>
               </div>
@@ -669,9 +685,9 @@ export default function Page() {
           </div>
         )}
 
-        {/* CHAT (scrollable) */}
+        {/* CHAT */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
-          <div className="mx-auto max-w-3xl px-6 pb-10 space-y-10" style={{ paddingTop: topPad }}>
+          <div className="mx-auto max-w-3xl px-6 pb-10 space-y-10" style={{ paddingTop: MOBILE_HEADER_H + 16 }}>
             {messages.map((msg) => {
               if (msg.role === "assistant") {
                 const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
@@ -688,10 +704,16 @@ export default function Page() {
                 <div key={msg.id} className="flex justify-end bubble-in">
                   <div className="max-w-xl space-y-2">
                     {msg.image && (
-                      <img src={msg.image} alt="Adjunto" className="rounded-3xl border border-zinc-200 max-h-64 object-contain" />
+                      <img
+                        src={msg.image}
+                        alt="Adjunto"
+                        className="rounded-3xl border border-zinc-200 max-h-64 object-contain"
+                      />
                     )}
                     {msg.text && (
-                      <div className="bg-blue-600 text-white text-sm leading-relaxed rounded-3xl px-5 py-3 break-words">{msg.text}</div>
+                      <div className="bg-blue-600 text-white text-sm leading-relaxed rounded-3xl px-5 py-3 break-words">
+                        {msg.text}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -700,7 +722,7 @@ export default function Page() {
           </div>
         </div>
 
-        {/* INPUT + DISCLAIMER (fijos abajo) */}
+        {/* INPUT + DISCLAIMER */}
         <div className="flex-shrink-0 bg-white">
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             {/* + */}
@@ -738,7 +760,6 @@ export default function Page() {
                 </div>
               )}
 
-              {/* ✅ móvil: píldora al inicio, y cuando crece => rectángulo con esquinas */}
               <div
                 className={[
                   "w-full min-h-12 px-4 py-3 flex items-center",
@@ -796,7 +817,7 @@ export default function Page() {
             </button>
           </div>
 
-          {/* DISCLAIMER: fijo abajo; en móvil se oculta tras el primer mensaje del usuario */}
+          {/* DISCLAIMER */}
           <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3">
             <p className="hidden md:block text-center text-[12px] text-zinc-500 leading-5">
               Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
