@@ -58,8 +58,9 @@ const MOBILE_HEADER_H = 64;
 // Home URL
 const HOME_URL = "https://vonuai.com";
 
-// Cache-busting simple (sube el número cuando cambies logos)
-const ASSET_V = "2";
+// ✅ Cache busting para que NO se quede pillado el logo/icono
+// Si vuelves a cambiar los archivos, sube el número (v=4, v=5...)
+const ASSET_V = "3";
 
 export default function Page() {
   // Evitar hydration issues
@@ -85,7 +86,9 @@ export default function Page() {
           title: typeof t.title === "string" ? t.title : "Consulta",
           updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
           messages:
-            Array.isArray(t.messages) && t.messages.length ? t.messages : [initialAssistantMessage()],
+            Array.isArray(t.messages) && t.messages.length
+              ? t.messages
+              : [initialAssistantMessage()],
         }));
 
       if (clean.length) {
@@ -144,7 +147,10 @@ export default function Page() {
     return !isTyping && (!!input.trim() || !!imagePreview);
   }, [isTyping, input, imagePreview]);
 
-  const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
+  const hasUserMessage = useMemo(
+    () => messages.some((m) => m.role === "user"),
+    [messages]
+  );
 
   // Scroll suave al final
   useEffect(() => {
@@ -154,7 +160,7 @@ export default function Page() {
     });
   }, [messages, isTyping]);
 
-  // Auto-resize del textarea
+  // Auto-resize del textarea (sin scrollbars raros)
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -167,7 +173,7 @@ export default function Page() {
     setInputExpanded(next > 52);
   }, [input]);
 
-  // ✅ Auto-focus
+  // ✅ Auto-focus: cursor dentro del input al abrir el chat
   useEffect(() => {
     if (!mounted) return;
     if (renameOpen) return;
@@ -224,7 +230,11 @@ export default function Page() {
     if (!activeThread) return;
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
-      prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t))
+      prev.map((t) =>
+        t.id === activeThread.id
+          ? { ...t, title: name, updatedAt: Date.now() }
+          : t
+      )
     );
     setRenameOpen(false);
 
@@ -284,12 +294,15 @@ export default function Page() {
       streaming: true,
     };
 
+    // pintar en el thread activo
     setThreads((prev) =>
       prev.map((t) => {
         if (t.id !== activeThread.id) return t;
 
         const hasUserAlready = t.messages.some((m) => m.role === "user");
-        const newTitle = hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen");
+        const newTitle = hasUserAlready
+          ? t.title
+          : makeTitleFromText(userText || "Imagen");
 
         return {
           ...t,
@@ -307,10 +320,16 @@ export default function Page() {
     try {
       await sleep(420);
 
-      const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
+      // snapshot del thread actual (ojo con stale state)
+      const threadNow =
+        threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
-        .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
+        .filter(
+          (m) =>
+            (m.role === "user" || m.role === "assistant") &&
+            (m.text || m.image)
+        )
         .map((m) => ({
           role: m.role,
           content: m.text ?? "",
@@ -352,7 +371,9 @@ export default function Page() {
             return {
               ...t,
               updatedAt: Date.now(),
-              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
+              messages: t.messages.map((m) =>
+                m.id === assistantId ? { ...m, text: partial } : m
+              ),
             };
           })
         );
@@ -379,7 +400,9 @@ export default function Page() {
       }, speedMs);
     } catch (err: any) {
       const msg =
-        typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
+        typeof err?.message === "string"
+          ? err.message
+          : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -409,7 +432,13 @@ export default function Page() {
     }
   }
 
-  function HomeLink({ className, label = "Volver a la home" }: { className?: string; label?: string }) {
+  function HomeLink({
+    className,
+    label = "Volver a la home",
+  }: {
+    className?: string;
+    label?: string;
+  }) {
     return (
       <a
         href={HOME_URL}
@@ -429,7 +458,10 @@ export default function Page() {
   return (
     <div className="h-[100dvh] bg-white flex overflow-hidden">
       {/* ===== MOBILE HEADER (fijo + blur) ===== */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
+      <div
+        className="md:hidden fixed top-0 left-0 right-0 z-50"
+        style={{ height: MOBILE_HEADER_H }}
+      >
         <div className="h-full px-4 flex items-center bg-white/70 backdrop-blur-xl">
           {/* ✅ SOLO 1 ICONO (izquierda) = menú burger con rotación 90° */}
           <button
@@ -448,7 +480,7 @@ export default function Page() {
             />
           </button>
 
-          {/* ✅ SOLO letras (wordmark) al lado -> HOME */}
+          {/* ✅ Letras del logo al lado -> HOME (solo letras, SIN icono) */}
           <a
             href={HOME_URL}
             className="ml-2 flex items-center"
@@ -463,7 +495,7 @@ export default function Page() {
             />
           </a>
 
-          {/* ✅ nada a la derecha */}
+          {/* ✅ Spacer para que a la derecha NO haya nada */}
           <div className="flex-1" />
         </div>
       </div>
@@ -487,8 +519,12 @@ export default function Page() {
           <div className="pt-16">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-800">Historial</div>
-                <div className="text-xs text-zinc-500">Tus consultas recientes</div>
+                <div className="text-sm font-semibold text-zinc-800">
+                  Historial
+                </div>
+                <div className="text-xs text-zinc-500">
+                  Tus consultas recientes
+                </div>
               </div>
 
               <button
@@ -528,10 +564,14 @@ export default function Page() {
                     key={t.id}
                     onClick={() => activateThread(t.id)}
                     className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
-                      active ? "border-blue-600 bg-blue-50" : "border-zinc-200 hover:bg-zinc-50"
+                      active
+                        ? "border-blue-600 bg-blue-50"
+                        : "border-zinc-200 hover:bg-zinc-50"
                     }`}
                   >
-                    <div className="text-sm font-medium text-zinc-900">{t.title}</div>
+                    <div className="text-sm font-medium text-zinc-900">
+                      {t.title}
+                    </div>
                     <div className="text-xs text-zinc-500 mt-1">{when}</div>
                   </button>
                 );
@@ -540,7 +580,7 @@ export default function Page() {
           </div>
         </aside>
 
-        {/* Mobile sidebar */}
+        {/* Mobile sidebar (integrada con header) */}
         <aside
           className={`md:hidden absolute left-0 top-0 bottom-0 w-[86vw] max-w-[360px] bg-white/90 backdrop-blur-xl shadow-2xl transform transition-transform duration-300 ease-out ${
             menuOpen ? "translate-x-0" : "-translate-x-[110%]"
@@ -551,8 +591,12 @@ export default function Page() {
             <div className="pt-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <div className="text-sm font-semibold text-zinc-800">Historial</div>
-                  <div className="text-xs text-zinc-500">Tus consultas recientes</div>
+                  <div className="text-sm font-semibold text-zinc-800">
+                    Historial
+                  </div>
+                  <div className="text-xs text-zinc-500">
+                    Tus consultas recientes
+                  </div>
                 </div>
 
                 <button
@@ -595,7 +639,9 @@ export default function Page() {
                         active ? "bg-blue-50" : "bg-white hover:bg-zinc-50"
                       }`}
                     >
-                      <div className="text-sm font-medium text-zinc-900">{t.title}</div>
+                      <div className="text-sm font-medium text-zinc-900">
+                        {t.title}
+                      </div>
                       <div className="text-xs text-zinc-500 mt-1">{when}</div>
                     </button>
                   );
@@ -606,7 +652,7 @@ export default function Page() {
         </aside>
       </div>
 
-      {/* Desktop top-left: menu button + wordmark link */}
+      {/* Desktop top-left: menu button + wordmark link (SIN CAMBIOS) */}
       <div className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-2 select-none">
         <button
           onClick={() => setMenuOpen((v) => !v)}
@@ -643,8 +689,12 @@ export default function Page() {
               className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
-              <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
+              <div className="text-sm font-semibold text-zinc-900 mb-1">
+                Renombrar chat
+              </div>
+              <div className="text-xs text-zinc-500 mb-3">
+                Ponle un nombre para encontrarlo rápido.
+              </div>
 
               <input
                 value={renameValue}
@@ -685,9 +735,12 @@ export default function Page() {
           </div>
         )}
 
-        {/* CHAT */}
+        {/* CHAT (scrollable) */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
-          <div className="mx-auto max-w-3xl px-6 pb-10 space-y-10" style={{ paddingTop: MOBILE_HEADER_H + 16 }}>
+          <div
+            className="mx-auto max-w-3xl px-6 pb-10 space-y-10"
+            style={{ paddingTop: MOBILE_HEADER_H + 16 }}
+          >
             {messages.map((msg) => {
               if (msg.role === "assistant") {
                 const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
@@ -722,7 +775,7 @@ export default function Page() {
           </div>
         </div>
 
-        {/* INPUT + DISCLAIMER */}
+        {/* INPUT + DISCLAIMER (fijos abajo) */}
         <div className="flex-shrink-0 bg-white">
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             {/* + */}
@@ -743,13 +796,23 @@ export default function Page() {
               </svg>
             </button>
 
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={onSelectImage}
+              className="hidden"
+            />
 
             {/* input */}
             <div className="flex-1">
               {imagePreview && (
                 <div className="mb-2 relative w-fit bubble-in">
-                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="rounded-3xl border border-zinc-200 max-h-40"
+                  />
                   <button
                     onClick={() => setImagePreview(null)}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors"
@@ -760,6 +823,7 @@ export default function Page() {
                 </div>
               )}
 
+              {/* ✅ móvil: píldora al inicio, y cuando crece => rectángulo con esquinas */}
               <div
                 className={[
                   "w-full min-h-12 px-4 py-3 flex items-center",
@@ -817,7 +881,7 @@ export default function Page() {
             </button>
           </div>
 
-          {/* DISCLAIMER */}
+          {/* DISCLAIMER: fijo abajo; en móvil se oculta tras el primer mensaje del usuario */}
           <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3">
             <p className="hidden md:block text-center text-[12px] text-zinc-500 leading-5">
               Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
