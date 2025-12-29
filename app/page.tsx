@@ -54,6 +54,56 @@ const STORAGE_KEY = "vonu_threads_v1";
 const MOBILE_HEADER_H = 64;
 const HOME_URL = "https://vonuai.com";
 
+/**
+ * Ajustes de formato “visual” para que:
+ * - haya más aire aunque el modelo mande saltos simples
+ * - en sección “Evita” fuerce ❌ aunque vengan bullets normales
+ */
+function prettifyAssistantMarkdown(raw: string) {
+  if (!raw) return raw;
+
+  let text = raw;
+
+  // 1) Convertir saltos simples en párrafos (solo cuando NO es heading/lista)
+  //    Ej: "Frase.\nOtra frase" -> "Frase.\n\nOtra frase"
+  text = text.replace(
+    /([^\n])\n(?!\n|#{1,6}\s|[-*•]\s|\d+\.\s|\s*✅\s|\s*❌\s)/g,
+    "$1\n\n"
+  );
+
+  // 2) En la sección "Evita", convertir bullets normales a ❌
+  const lines = text.split("\n");
+  let inEvita = false;
+
+  const out = lines.map((line) => {
+    const l = line.trim();
+
+    // entra en Evita si detecta heading con “Evita”
+    if (/^#{2,6}\s.*Evita/i.test(l) || /\bEvita\b/i.test(l) && l.startsWith("###")) {
+      inEvita = true;
+      return line;
+    }
+
+    // sale de Evita cuando empieza otro heading numerado/markdown
+    if (inEvita && /^#{2,6}\s/.test(l)) {
+      inEvita = false;
+      return line;
+    }
+
+    if (inEvita) {
+      // Si viene como "- algo" o "• algo" -> "❌ algo"
+      if (/^[-*•]\s+/.test(l)) return line.replace(/^(\s*)[-*•]\s+/, "$1❌ ");
+      // Si viene sin icono pero con sangría tipo lista
+      // (no forzamos aquí para no romper frases normales)
+      return line;
+    }
+
+    return line;
+  });
+
+  return out.join("\n");
+}
+
 export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -77,7 +127,9 @@ export default function Page() {
           title: typeof t.title === "string" ? t.title : "Consulta",
           updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
           messages:
-            Array.isArray(t.messages) && t.messages.length ? t.messages : [initialAssistantMessage()],
+            Array.isArray(t.messages) && t.messages.length
+              ? t.messages
+              : [initialAssistantMessage()],
         }));
 
       if (clean.length) {
@@ -132,9 +184,11 @@ export default function Page() {
     return !isTyping && (!!input.trim() || !!imagePreview);
   }, [isTyping, input, imagePreview]);
 
-  const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
+  const hasUserMessage = useMemo(
+    () => messages.some((m) => m.role === "user"),
+    [messages]
+  );
 
-  // Scroll suave al final
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
@@ -142,7 +196,6 @@ export default function Page() {
     });
   }, [messages, isTyping]);
 
-  // Auto-resize del textarea
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -154,7 +207,6 @@ export default function Page() {
     setInputExpanded(next > 52);
   }, [input]);
 
-  // Auto-focus
   useEffect(() => {
     if (!mounted) return;
     if (renameOpen) return;
@@ -210,7 +262,13 @@ export default function Page() {
   function confirmRename() {
     if (!activeThread) return;
     const name = renameValue.trim() || "Consulta";
-    setThreads((prev) => prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t)));
+    setThreads((prev) =>
+      prev.map((t) =>
+        t.id === activeThread.id
+          ? { ...t, title: name, updatedAt: Date.now() }
+          : t
+      )
+    );
     setRenameOpen(false);
 
     setTimeout(() => textareaRef.current?.focus(), 60);
@@ -274,7 +332,9 @@ export default function Page() {
         if (t.id !== activeThread.id) return t;
 
         const hasUserAlready = t.messages.some((m) => m.role === "user");
-        const newTitle = hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen");
+        const newTitle = hasUserAlready
+          ? t.title
+          : makeTitleFromText(userText || "Imagen");
 
         return {
           ...t,
@@ -292,10 +352,14 @@ export default function Page() {
     try {
       await sleep(420);
 
-      const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
+      const threadNow =
+        threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
-        .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
+        .filter(
+          (m) =>
+            (m.role === "user" || m.role === "assistant") && (m.text || m.image)
+        )
         .map((m) => ({
           role: m.role,
           content: m.text ?? "",
@@ -317,10 +381,12 @@ export default function Page() {
       }
 
       const data = await res.json();
-      const fullText =
+      const fullTextRaw =
         typeof data?.text === "string" && data.text.trim()
           ? data.text
           : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
+
+      const fullText = prettifyAssistantMarkdown(fullTextRaw);
 
       await sleep(200);
 
@@ -337,7 +403,9 @@ export default function Page() {
             return {
               ...t,
               updatedAt: Date.now(),
-              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
+              messages: t.messages.map((m) =>
+                m.id === assistantId ? { ...m, text: partial } : m
+              ),
             };
           })
         );
@@ -351,7 +419,9 @@ export default function Page() {
               return {
                 ...t,
                 updatedAt: Date.now(),
-                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
+                messages: t.messages.map((m) =>
+                  m.id === assistantId ? { ...m, streaming: false } : m
+                ),
               };
             })
           );
@@ -361,7 +431,10 @@ export default function Page() {
         }
       }, speedMs);
     } catch (err: any) {
-      const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
+      const msg =
+        typeof err?.message === "string"
+          ? err.message
+          : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -375,7 +448,9 @@ export default function Page() {
                     ...m,
                     streaming: false,
                     text:
-                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" + msg + "\n```",
+                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" +
+                      msg +
+                      "\n```",
                   }
                 : m
             ),
@@ -389,7 +464,13 @@ export default function Page() {
     }
   }
 
-  function HomeLink({ className, label = "Volver a la home" }: { className?: string; label?: string }) {
+  function HomeLink({
+    className,
+    label = "Volver a la home",
+  }: {
+    className?: string;
+    label?: string;
+  }) {
     return (
       <a
         href={HOME_URL}
@@ -406,14 +487,13 @@ export default function Page() {
     );
   }
 
-  // Botón estilo “tarjeta blanca” (como las consultas)
-  const mobileActionBtn =
-    "flex-1 text-xs px-3 py-3 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors";
-
   return (
     <div className="h-[100dvh] bg-white flex overflow-hidden">
       {/* ===== MOBILE HEADER ===== */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
+      <div
+        className="md:hidden fixed top-0 left-0 right-0 z-50"
+        style={{ height: MOBILE_HEADER_H }}
+      >
         <div className="h-full px-4 flex items-center bg-white/70 backdrop-blur-xl">
           <button
             onClick={() => setMenuOpen((v) => !v)}
@@ -424,13 +504,25 @@ export default function Page() {
             <img
               src={"/vonu-icon.png?v=2"}
               alt="Menú"
-              className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
+              className={`h-7 w-7 transition-transform duration-300 ease-out ${
+                menuOpen ? "rotate-90" : "rotate-0"
+              }`}
               draggable={false}
             />
           </button>
 
-          <a href={HOME_URL} className="ml-2 flex items-center" aria-label="Ir a la home" title="Ir a la home">
-            <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
+          <a
+            href={HOME_URL}
+            className="ml-2 flex items-center"
+            aria-label="Ir a la home"
+            title="Ir a la home"
+          >
+            <img
+              src={"/vonu-wordmark.png?v=2"}
+              alt="Vonu"
+              className="h-5 w-auto"
+              draggable={false}
+            />
           </a>
 
           <div className="flex-1" />
@@ -456,8 +548,12 @@ export default function Page() {
           <div className="pt-16">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-800">Historial</div>
-                <div className="text-xs text-zinc-500">Tus consultas recientes</div>
+                <div className="text-sm font-semibold text-zinc-800">
+                  Historial
+                </div>
+                <div className="text-xs text-zinc-500">
+                  Tus consultas recientes
+                </div>
               </div>
 
               <button
@@ -497,10 +593,14 @@ export default function Page() {
                     key={t.id}
                     onClick={() => activateThread(t.id)}
                     className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
-                      active ? "border-blue-600 bg-blue-50" : "border-zinc-200 hover:bg-zinc-50"
+                      active
+                        ? "border-blue-600 bg-blue-50"
+                        : "border-zinc-200 hover:bg-zinc-50"
                     }`}
                   >
-                    <div className="text-sm font-medium text-zinc-900">{t.title}</div>
+                    <div className="text-sm font-medium text-zinc-900">
+                      {t.title}
+                    </div>
                     <div className="text-xs text-zinc-500 mt-1">{when}</div>
                   </button>
                 );
@@ -516,12 +616,19 @@ export default function Page() {
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div style={{ paddingTop: MOBILE_HEADER_H }} className="px-4 pb-4 h-full">
+          <div
+            style={{ paddingTop: MOBILE_HEADER_H }}
+            className="px-4 pb-4 h-full"
+          >
             <div className="pt-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <div className="text-sm font-semibold text-zinc-800">Historial</div>
-                  <div className="text-xs text-zinc-500">Tus consultas recientes</div>
+                  <div className="text-sm font-semibold text-zinc-800">
+                    Historial
+                  </div>
+                  <div className="text-xs text-zinc-500">
+                    Tus consultas recientes
+                  </div>
                 </div>
 
                 <button
@@ -532,18 +639,24 @@ export default function Page() {
                 </button>
               </div>
 
-              {/* ✅ BOTONES estilo blanco (como tarjetas) */}
+              {/* ✅ Botones “más blancos” como las cards */}
               <div className="flex gap-2 mb-3">
-                <button onClick={openRename} className={mobileActionBtn}>
+                <button
+                  onClick={openRename}
+                  className="flex-1 text-xs px-3 py-2 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 transition-colors"
+                >
                   Renombrar
                 </button>
-                <button onClick={deleteActiveThread} className={`${mobileActionBtn} text-red-600`}>
+                <button
+                  onClick={deleteActiveThread}
+                  className="flex-1 text-xs px-3 py-2 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 transition-colors"
+                >
                   Borrar
                 </button>
               </div>
 
               <div className="mb-3">
-                <HomeLink className={`${mobileActionBtn} w-full inline-flex items-center justify-center gap-2 text-zinc-700`} />
+                <HomeLink className="w-full inline-flex items-center justify-center gap-2 text-xs px-3 py-2 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-700 transition-colors" />
               </div>
 
               <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-220px)]">
@@ -556,10 +669,14 @@ export default function Page() {
                       key={t.id}
                       onClick={() => activateThread(t.id)}
                       className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
-                        active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"
+                        active
+                          ? "border-blue-200 bg-blue-50"
+                          : "border-zinc-200 bg-white hover:bg-zinc-50"
                       }`}
                     >
-                      <div className="text-sm font-medium text-zinc-900">{t.title}</div>
+                      <div className="text-sm font-medium text-zinc-900">
+                        {t.title}
+                      </div>
                       <div className="text-xs text-zinc-500 mt-1">{when}</div>
                     </button>
                   );
@@ -581,13 +698,20 @@ export default function Page() {
           <img
             src={"/vonu-icon.png?v=2"}
             alt="Menú"
-            className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
+            className={`h-7 w-7 transition-transform duration-300 ease-out ${
+              menuOpen ? "rotate-90" : "rotate-0"
+            }`}
             draggable={false}
           />
         </button>
 
         <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home">
-          <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
+          <img
+            src={"/vonu-wordmark.png?v=2"}
+            alt="Vonu"
+            className="h-5 w-auto"
+            draggable={false}
+          />
         </a>
       </div>
 
@@ -600,8 +724,12 @@ export default function Page() {
               className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
-              <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
+              <div className="text-sm font-semibold text-zinc-900 mb-1">
+                Renombrar chat
+              </div>
+              <div className="text-xs text-zinc-500 mb-3">
+                Ponle un nombre para encontrarlo rápido.
+              </div>
 
               <input
                 value={renameValue}
@@ -644,7 +772,10 @@ export default function Page() {
 
         {/* CHAT */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
-          <div className="mx-auto max-w-3xl px-6 pb-10 space-y-10" style={{ paddingTop: MOBILE_HEADER_H + 16 }}>
+          <div
+            className="mx-auto max-w-3xl px-6 pb-10 space-y-10"
+            style={{ paddingTop: MOBILE_HEADER_H + 16 }}
+          >
             {messages.map((msg) => {
               if (msg.role === "assistant") {
                 const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
@@ -653,10 +784,15 @@ export default function Page() {
                     <div
                       className={[
                         "prose prose-zinc max-w-none",
-                        "text-[15px] md:text-base",
-                        "leading-relaxed",
-                        "prose-p:my-3 prose-ul:my-3 prose-ol:my-3 prose-li:my-1",
-                        "prose-strong:text-zinc-900",
+                        // ✅ tamaño general + aire
+                        "text-[15px] leading-6",
+                        // ✅ títulos más grandes
+                        "prose-h3:text-[18px] prose-h3:leading-7 prose-h3:font-semibold",
+                        "prose-h3:mt-6 prose-h3:mb-3",
+                        // ✅ más espacio en párrafos y listas
+                        "prose-p:my-3",
+                        "prose-ul:my-3 prose-ol:my-3",
+                        "prose-li:my-1",
                       ].join(" ")}
                     >
                       <ReactMarkdown>{mdText}</ReactMarkdown>
@@ -707,12 +843,22 @@ export default function Page() {
               </svg>
             </button>
 
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={onSelectImage}
+              className="hidden"
+            />
 
             <div className="flex-1">
               {imagePreview && (
                 <div className="mb-2 relative w-fit bubble-in">
-                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="rounded-3xl border border-zinc-200 max-h-40"
+                  />
                   <button
                     onClick={() => setImagePreview(null)}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors"
