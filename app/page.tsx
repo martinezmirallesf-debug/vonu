@@ -51,42 +51,27 @@ function makeTitleFromText(text: string) {
 }
 
 const STORAGE_KEY = "vonu_threads_v1";
-<<<<<<< HEAD
 
-// Mobile header fino
-const MOBILE_HEADER_H = 52;
+// Header fijo móvil (fino)
+const MOBILE_HEADER_H = 56;
 
 // Home
-=======
-const MOBILE_HEADER_H = 56;
->>>>>>> origin/main
 const HOME_URL = "https://vonuai.com";
 
-// Heurística: desktop = puntero fino (ratón/trackpad)
-function isDesktopPointer() {
-  if (typeof window === "undefined") return true;
-  return window.matchMedia?.("(pointer: fine)")?.matches ?? true;
-}
+// Para “cache busting” de assets (cambia el número si vuelves a cambiar logos)
+const ASSET_V = "3";
+
+// Padding extra para que el chat no quede tapado por el input fijo
+const CHAT_BOTTOM_PAD = 190;
+
+// Umbral para considerar “estoy cerca del final”
+const STICKY_SCROLL_PX = 140;
 
 export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-<<<<<<< HEAD
-  // Detectar móvil (para evitar auto-focus que dispara el teclado sin parar)
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const apply = () => setIsMobile(mq.matches);
-    apply();
-    mq.addEventListener?.("change", apply);
-    return () => mq.removeEventListener?.("change", apply);
-  }, []);
-
-  // -------- Persistencia local (localStorage) --------
-=======
   // -------- Persistencia local --------
->>>>>>> origin/main
   const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
   const [activeThreadId, setActiveThreadId] = useState<string>("");
 
@@ -105,7 +90,9 @@ export default function Page() {
           title: typeof t.title === "string" ? t.title : "Consulta",
           updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
           messages:
-            Array.isArray(t.messages) && t.messages.length ? t.messages : [initialAssistantMessage()],
+            Array.isArray(t.messages) && t.messages.length
+              ? t.messages
+              : [initialAssistantMessage()],
         }));
 
       if (clean.length) {
@@ -133,88 +120,19 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
 
+  // Renombrar / borrar
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
 
+  // Input shape en móvil cuando crece
   const [inputExpanded, setInputExpanded] = useState(false);
 
+  // Para autoscroll inteligente
+  const [stickToBottom, setStickToBottom] = useState(true);
+
   const scrollRef = useRef<HTMLDivElement>(null);
-<<<<<<< HEAD
-  const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Keyboard handling (VisualViewport)
-  const [keyboardLift, setKeyboardLift] = useState(0);
-  useEffect(() => {
-    if (!mounted) return;
-
-    const vv = window.visualViewport;
-    if (!vv) return;
-
-    const onVV = () => {
-      // En Android/Chrome: cuando aparece teclado, visualViewport.height baja
-      const lift = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
-      setKeyboardLift(lift);
-    };
-
-    onVV();
-    vv.addEventListener("resize", onVV);
-    vv.addEventListener("scroll", onVV);
-    window.addEventListener("resize", onVV);
-
-    return () => {
-      vv.removeEventListener("resize", onVV);
-      vv.removeEventListener("scroll", onVV);
-      window.removeEventListener("resize", onVV);
-    };
-  }, [mounted]);
-=======
-  const inputBarRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Altura dinámica del input bar para no tapar el chat (y evitar “cursor detrás”)
-  const [inputBarH, setInputBarH] = useState<number>(140);
-
-  // Autoscroll: solo si el usuario está cerca del final
-  const shouldStickToBottomRef = useRef(true);
-
-  // Arregla bugs de viewport en móvil (teclado) usando VisualViewport
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const vv = window.visualViewport;
-    if (!vv) return;
-
-    const setVvh = () => {
-      // altura visible real
-      document.documentElement.style.setProperty("--vvh", `${vv.height}px`);
-    };
-
-    setVvh();
-    vv.addEventListener("resize", setVvh);
-    vv.addEventListener("scroll", setVvh);
-    return () => {
-      vv.removeEventListener("resize", setVvh);
-      vv.removeEventListener("scroll", setVvh);
-    };
-  }, []);
-
-  // Resize observer del input bar
-  useEffect(() => {
-    const el = inputBarRef.current;
-    if (!el) return;
-
-    const ro = new ResizeObserver(() => {
-      const h = el.getBoundingClientRect().height;
-      // +8 para respirar y evitar “corte” del último mensaje
-      setInputBarH(Math.max(120, Math.ceil(h) + 8));
-    });
-
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
->>>>>>> origin/main
 
   // asegurar thread activo
   useEffect(() => {
@@ -238,34 +156,34 @@ export default function Page() {
 
   const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
 
-<<<<<<< HEAD
-  // Solo autoscroll si el usuario está “abajo”
-  const [stickToBottom, setStickToBottom] = useState(true);
+  // Track si el usuario está cerca del final (para no “secuestrar” el scroll)
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
 
     const onScroll = () => {
-      const threshold = 140;
-      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
-      setStickToBottom(atBottom);
+      const remaining = el.scrollHeight - el.scrollTop - el.clientHeight;
+      setStickToBottom(remaining < STICKY_SCROLL_PX);
     };
 
     el.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
-    return () => el.removeEventListener("scroll", onScroll as any);
+
+    return () => el.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Autoscroll al último mensaje (ancla)
+  // Autoscroll SOLO si estamos “pegados abajo”
   useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
     if (!stickToBottom) return;
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+
+    requestAnimationFrame(() => {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    });
   }, [messages, isTyping, stickToBottom]);
 
   // Auto-resize textarea
-=======
-  // textarea autoresize
->>>>>>> origin/main
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -273,58 +191,25 @@ export default function Page() {
     el.style.height = "0px";
     const next = Math.min(el.scrollHeight, 140);
     el.style.height = next + "px";
+
     setInputExpanded(next > 52);
   }, [input]);
 
-<<<<<<< HEAD
-  // Auto-focus SOLO al entrar (y en desktop). En móvil lo evitamos para que no “bote” el teclado.
-  useEffect(() => {
-    if (!mounted) return;
-    if (isMobile) return;
-    const t = setTimeout(() => textareaRef.current?.focus(), 120);
-    return () => clearTimeout(t);
-  }, [mounted, isMobile]);
-=======
-  // onScroll: decide si pegamos abajo
-  function handleChatScroll() {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const threshold = 140; // px
-    const distToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    shouldStickToBottomRef.current = distToBottom < threshold;
-  }
-
-  // autoscroll cuando llegan mensajes/streaming (pero solo si el usuario está abajo)
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    if (!shouldStickToBottomRef.current) return;
-
-    el.scrollTo({
-      top: el.scrollHeight,
-      behavior: "smooth",
-    });
-  }, [messages, isTyping]);
-
-  // Autofocus:
-  // - Desktop: ok (mejora UX)
-  // - Móvil: NO re-enfocar tras cada update (evita “baile” del teclado)
+  // Auto-focus (pero SIN “rebotes” constantes en móvil):
+  // Solo hacemos focus al cambiar de thread o cerrar overlays, no cada render.
   useEffect(() => {
     if (!mounted) return;
     if (renameOpen) return;
     if (menuOpen) return;
     if (isTyping) return;
 
-    if (!isDesktopPointer()) return;
-
     const t = setTimeout(() => {
       textareaRef.current?.focus();
     }, 60);
 
     return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId]);
->>>>>>> origin/main
 
   function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -346,16 +231,13 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
-    // ver saludo inicial
+    // subir arriba para ver saludo inicial
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-      shouldStickToBottomRef.current = false;
+      setStickToBottom(true);
     });
-<<<<<<< HEAD
-=======
 
-    if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
->>>>>>> origin/main
+    setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
   function activateThread(id: string) {
@@ -365,30 +247,9 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
-<<<<<<< HEAD
-    // Cuando cambias de hilo, volvemos a “stick”
-    setStickToBottom(true);
-=======
-    // al cambiar de chat, dejaremos que el usuario esté arriba (saludo) si es nuevo
-    requestAnimationFrame(() => {
-      const el = scrollRef.current;
-      if (!el) return;
-
-      // si es un chat con pocos mensajes, lo ponemos arriba
-      const thread = threads.find((x) => x.id === id);
-      const isFresh = (thread?.messages ?? []).filter((m) => m.role === "user").length === 0;
-
-      if (isFresh) {
-        el.scrollTo({ top: 0, behavior: "auto" });
-        shouldStickToBottomRef.current = false;
-      } else {
-        el.scrollTo({ top: el.scrollHeight, behavior: "auto" });
-        shouldStickToBottomRef.current = true;
-      }
-    });
-
-    if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
->>>>>>> origin/main
+    // al cambiar de conversación, dejamos stickToBottom en true
+    requestAnimationFrame(() => setStickToBottom(true));
+    setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
   function openRename() {
@@ -401,14 +262,13 @@ export default function Page() {
     if (!activeThread) return;
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
-      prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t))
+      prev.map((t) =>
+        t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t
+      )
     );
     setRenameOpen(false);
-<<<<<<< HEAD
-=======
 
-    if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
->>>>>>> origin/main
+    setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
   function deleteActiveThread() {
@@ -425,13 +285,10 @@ export default function Page() {
 
       requestAnimationFrame(() => {
         scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-        shouldStickToBottomRef.current = false;
+        setStickToBottom(true);
       });
-<<<<<<< HEAD
-=======
 
-      if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
->>>>>>> origin/main
+      setTimeout(() => textareaRef.current?.focus(), 60);
       return;
     }
 
@@ -444,16 +301,9 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
-<<<<<<< HEAD
-=======
 
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-      shouldStickToBottomRef.current = false;
-    });
-
-    if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
->>>>>>> origin/main
+    requestAnimationFrame(() => setStickToBottom(true));
+    setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
   async function sendMessage() {
@@ -480,9 +330,6 @@ export default function Page() {
       streaming: true,
     };
 
-    // al enviar, nos pegamos abajo
-    shouldStickToBottomRef.current = true;
-
     setThreads((prev) =>
       prev.map((t) => {
         if (t.id !== activeThread.id) return t;
@@ -502,13 +349,12 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
     setIsTyping(true);
-<<<<<<< HEAD
+
+    // aseguramos “sticky” durante respuesta
     setStickToBottom(true);
-=======
->>>>>>> origin/main
 
     try {
-      await sleep(220);
+      await sleep(240);
 
       const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
@@ -540,7 +386,7 @@ export default function Page() {
           ? data.text
           : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
 
-      await sleep(90);
+      await sleep(100);
 
       let i = 0;
       const speedMs = fullText.length > 900 ? 7 : 11;
@@ -569,18 +415,15 @@ export default function Page() {
               return {
                 ...t,
                 updatedAt: Date.now(),
-                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
+                messages: t.messages.map((m) =>
+                  m.id === assistantId ? { ...m, streaming: false } : m
+                ),
               };
             })
           );
 
           setIsTyping(false);
-<<<<<<< HEAD
-=======
-
-          // Solo desktop: no queremos que en móvil vuelva a abrir teclado y “baile”
-          if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
->>>>>>> origin/main
+          // no forzamos focus aquí para evitar “rebotes” de teclado
         }
       }, speedMs);
     } catch (err: any) {
@@ -598,7 +441,10 @@ export default function Page() {
                 ? {
                     ...m,
                     streaming: false,
-                    text: "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" + msg + "\n```",
+                    text:
+                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" +
+                      msg +
+                      "\n```",
                   }
                 : m
             ),
@@ -608,10 +454,6 @@ export default function Page() {
 
       setUiError(msg);
       setIsTyping(false);
-<<<<<<< HEAD
-=======
-      if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
->>>>>>> origin/main
     }
   }
 
@@ -638,60 +480,35 @@ export default function Page() {
     );
   }
 
-<<<<<<< HEAD
-  // Altura extra del chat: input + safe area + teclado
-  const BASE_CHAT_BOTTOM_PAD = 190;
-  const chatBottomPad = BASE_CHAT_BOTTOM_PAD + keyboardLift;
+  // --- helpers UI bubbles ---
+  function BubbleTail({ side }: { side: "left" | "right" }) {
+    // triangulito tipo “tail”
+    if (side === "right") {
+      return (
+        <span
+          aria-hidden="true"
+          className="absolute -bottom-[1px] right-3 h-0 w-0
+          border-l-[10px] border-l-transparent
+          border-t-[10px] border-t-blue-600"
+        />
+      );
+    }
 
-  // Subir el input cuando hay teclado (Android)
-  const inputTransform = keyboardLift > 0 ? `translateY(-${keyboardLift}px)` : "translateY(0px)";
+    return (
+      <span
+        aria-hidden="true"
+        className="absolute -bottom-[1px] left-3 h-0 w-0
+        border-r-[10px] border-r-transparent
+        border-t-[10px] border-t-white"
+      />
+    );
+  }
 
   return (
     <div className="h-[100dvh] bg-white flex overflow-hidden">
-      {/* Estilos globales (piquito + overflow safe) */}
-      <style jsx global>{`
-        .vonu-safe-x {
-          overflow-x: hidden;
-        }
-        .bubble-user {
-          position: relative;
-        }
-        /* Piquito tipo WhatsApp (abajo a la derecha) */
-        .bubble-user:after {
-          content: "";
-          position: absolute;
-          right: 10px;
-          bottom: -6px;
-          width: 12px;
-          height: 12px;
-          background: #2563eb; /* tailwind blue-600 */
-          transform: rotate(45deg);
-          border-radius: 2px;
-        }
-      `}</style>
-
-      {/* ===== MOBILE HEADER (fino) ===== */}
+      {/* ===== MOBILE HEADER (fino, fijo) ===== */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
-        <div className="h-full px-4 flex items-center bg-white/85 backdrop-blur-xl">
-=======
-  // Padding inferior del chat = alto real del input bar (evita que el cursor se “meta detrás”)
-  const chatBottomPad = inputBarH;
-
-  return (
-    <div
-      className="bg-white flex overflow-hidden"
-      style={{
-        // Altura real visible (soluciona parte de issues con teclado en móvil)
-        height: "calc(var(--vvh, 100dvh))",
-      }}
-    >
-      {/* ===== MOBILE HEADER (solo móvil, fino, SIN línea gris) ===== */}
-      <div
-        className="md:hidden fixed top-0 left-0 right-0 z-50"
-        style={{ height: MOBILE_HEADER_H }}
-      >
         <div className="h-full px-4 flex items-center bg-white/80 backdrop-blur-xl">
->>>>>>> origin/main
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="flex items-center"
@@ -699,7 +516,7 @@ export default function Page() {
             title={menuOpen ? "Cerrar menú" : "Menú"}
           >
             <img
-              src={"/vonu-icon.png?v=999"}
+              src={`/vonu-icon.png?v=${ASSET_V}`}
               alt="Menú"
               className={`h-7 w-7 transition-transform duration-300 ease-out ${
                 menuOpen ? "rotate-90" : "rotate-0"
@@ -708,48 +525,17 @@ export default function Page() {
             />
           </button>
 
-<<<<<<< HEAD
           <a href={HOME_URL} className="ml-2 flex items-center" aria-label="Ir a la home" title="Ir a la home">
-            <img src={"/vonu-wordmark.png?v=999"} alt="Vonu" className="h-5 w-auto" draggable={false} />
-=======
-          <a
-            href={HOME_URL}
-            className="ml-2 flex items-center"
-            aria-label="Ir a la home"
-            title="Ir a la home"
-          >
             <img
-              src={"/vonu-wordmark.png?v=2"}
+              src={`/vonu-wordmark.png?v=${ASSET_V}`}
               alt="Vonu"
               className="h-5 w-auto"
               draggable={false}
             />
->>>>>>> origin/main
           </a>
 
           <div className="flex-1" />
         </div>
-      </div>
-
-      {/* Desktop top-left (logo + burger) */}
-      <div className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-2 select-none">
-        <button
-          onClick={() => setMenuOpen((v) => !v)}
-          className="flex items-center"
-          aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-          title={menuOpen ? "Cerrar menú" : "Menú"}
-        >
-          <img
-            src={"/vonu-icon.png?v=999"}
-            alt="Menú"
-            className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
-            draggable={false}
-          />
-        </button>
-
-        <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home" title="Ir a la home">
-          <img src={"/vonu-wordmark.png?v=999"} alt="Vonu" className="h-5 w-auto" draggable={false} />
-        </a>
       </div>
 
       {/* ===== OVERLAY + SIDEBAR ===== */}
@@ -759,14 +545,14 @@ export default function Page() {
         }`}
         onClick={() => setMenuOpen(false)}
       >
-        {/* Desktop sidebar */}
+        {/* Desktop sidebar (ventana redondeada) */}
         <aside
           className={`hidden md:block absolute left-3 top-3 bottom-3 w-80 bg-white rounded-3xl shadow-xl border border-zinc-200 p-4 transform transition-transform duration-300 ease-out ${
             menuOpen ? "translate-x-0" : "-translate-x-[110%]"
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="pt-16">
+          <div className="pt-2">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <div className="text-sm font-semibold text-zinc-800">Historial</div>
@@ -800,7 +586,7 @@ export default function Page() {
               <HomeLink className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 transition-colors" />
             </div>
 
-            <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-220px)]">
+            <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-200px)]">
               {sortedThreads.map((t) => {
                 const active = t.id === activeThreadId;
                 const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
@@ -888,7 +674,7 @@ export default function Page() {
         </aside>
       </div>
 
-      {/* ===== Desktop top-left (como antes: icono + wordmark flotando, SIN header) ===== */}
+      {/* Desktop top-left: burger + wordmark (como antes) */}
       <div className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-2 select-none">
         <button
           onClick={() => setMenuOpen((v) => !v)}
@@ -897,20 +683,27 @@ export default function Page() {
           title={menuOpen ? "Cerrar menú" : "Menú"}
         >
           <img
-            src={"/vonu-icon.png?v=2"}
+            src={`/vonu-icon.png?v=${ASSET_V}`}
             alt="Menú"
-            className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
+            className={`h-7 w-7 transition-transform duration-300 ease-out ${
+              menuOpen ? "rotate-90" : "rotate-0"
+            }`}
             draggable={false}
           />
         </button>
 
         <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home" title="Ir a la home">
-          <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
+          <img
+            src={`/vonu-wordmark.png?v=${ASSET_V}`}
+            alt="Vonu"
+            className="h-5 w-auto"
+            draggable={false}
+          />
         </a>
       </div>
 
       {/* MAIN */}
-      <div className="flex-1 flex flex-col min-h-0 vonu-safe-x">
+      <div className="flex-1 flex flex-col min-h-0">
         {/* RENAME MODAL */}
         {renameOpen && (
           <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center px-6">
@@ -961,46 +754,36 @@ export default function Page() {
         )}
 
         {/* CHAT */}
-        <div
-          ref={scrollRef}
-          onScroll={handleChatScroll}
-          className="flex-1 overflow-y-auto min-h-0"
-        >
+        <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
           <div
             className="mx-auto max-w-3xl px-4 md:px-6 pb-10"
             style={{
-<<<<<<< HEAD
               paddingTop: MOBILE_HEADER_H + 14,
-              paddingBottom: chatBottomPad,
+              paddingBottom: CHAT_BOTTOM_PAD,
             }}
           >
-            {/* Menos espacio entre mensajes */}
-            <div className="space-y-2 md:space-y-2">
-=======
-              paddingTop: MOBILE_HEADER_H + 14, // en desktop no molesta (no hay header bar)
-              paddingBottom: chatBottomPad,
-            }}
-          >
-            {/* menos espacio entre mensajes */}
-            <div className="space-y-3 py-8">
->>>>>>> origin/main
+            <div className="space-y-2 md:space-y-3">
               {messages.map((msg) => {
                 if (msg.role === "assistant") {
                   const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
                   return (
                     <div key={msg.id} className="bubble-in-slow">
-                      <div
-                        className={[
-                          "prose prose-zinc max-w-none",
-                          "text-[15px] md:text-[15.5px]",
-                          "leading-[1.6]",
-                          "break-words overflow-hidden",
-                          "prose-headings:font-semibold prose-headings:text-zinc-900",
-                          "prose-h3:text-[17px] md:prose-h3:text-[18px]",
-                          "prose-p:my-3 prose-p:break-words",
-                        ].join(" ")}
-                      >
-                        <ReactMarkdown>{mdText}</ReactMarkdown>
+                      <div className="max-w-[92%] md:max-w-[80%]">
+                        <div className="relative inline-block bg-white border border-zinc-200 rounded-[22px] px-4 py-2.5 shadow-sm">
+                          <BubbleTail side="left" />
+                          <div
+                            className={[
+                              "prose prose-zinc max-w-none",
+                              "text-[15px] md:text-[15.5px]",
+                              "leading-[1.6]",
+                              "prose-headings:font-semibold prose-headings:text-zinc-900",
+                              "prose-h3:text-[17px] md:prose-h3:text-[18px]",
+                              "prose-p:my-3",
+                            ].join(" ")}
+                          >
+                            <ReactMarkdown>{mdText}</ReactMarkdown>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   );
@@ -1008,11 +791,7 @@ export default function Page() {
 
                 return (
                   <div key={msg.id} className="flex justify-end bubble-in">
-<<<<<<< HEAD
-                    <div className="max-w-[85%] md:max-w-xl space-y-2">
-=======
-                    <div className="max-w-xl space-y-2">
->>>>>>> origin/main
+                    <div className="max-w-[92%] md:max-w-[80%] space-y-2">
                       {msg.image && (
                         <img
                           src={msg.image}
@@ -1020,54 +799,31 @@ export default function Page() {
                           className="rounded-3xl border border-zinc-200 max-h-64 object-contain"
                         />
                       )}
+
                       {msg.text && (
-<<<<<<< HEAD
-                        <div
-                          className={[
-                            "bubble-user",
-                            "bg-blue-600 text-white",
-                            "text-[14.5px] leading-relaxed",
-                            "rounded-[22px]",
-                            "px-4 py-2", // MÁS FINITA
-                            "break-words overflow-hidden",
-                            "inline-block",
-                          ].join(" ")}
-                        >
-=======
-                        <div className="bg-blue-600 text-white text-[14.5px] leading-relaxed rounded-3xl px-4 py-2.5 break-words">
->>>>>>> origin/main
-                          {msg.text}
+                        <div className="flex justify-end">
+                          <div className="relative inline-block bg-blue-600 text-white rounded-[22px] px-4 py-2 break-words text-[14.5px] leading-[1.45]">
+                            <BubbleTail side="right" />
+                            {msg.text}
+                          </div>
                         </div>
                       )}
                     </div>
                   </div>
                 );
               })}
-<<<<<<< HEAD
-              <div ref={bottomRef} />
-=======
->>>>>>> origin/main
             </div>
           </div>
         </div>
 
-<<<<<<< HEAD
-        {/* INPUT + DISCLAIMER (fijo SIEMPRE) */}
-        <div
-          className="fixed bottom-0 left-0 right-0 z-30 bg-white"
-          style={{ transform: inputTransform, willChange: "transform" }}
-        >
-=======
-        {/* INPUT + DISCLAIMER (sticky en TODAS las vistas) */}
-        <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white">
->>>>>>> origin/main
+        {/* INPUT + DISCLAIMER (fijo en móvil; normal en desktop) */}
+        <div className="md:static fixed bottom-0 left-0 right-0 z-30 bg-white">
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
-            {/* + */}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="
                 h-12 w-12 inline-flex items-center justify-center rounded-full
-                bg-white border border-zinc-200
+                bg-white md:border md:border-zinc-300
                 text-zinc-900 hover:bg-zinc-100 transition-colors
               "
               aria-label="Adjuntar imagen"
@@ -1080,23 +836,12 @@ export default function Page() {
               </svg>
             </button>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={onSelectImage}
-              className="hidden"
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
 
-            {/* input */}
             <div className="flex-1">
               {imagePreview && (
                 <div className="mb-2 relative w-fit bubble-in">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="rounded-3xl border border-zinc-200 max-h-40"
-                  />
+                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
                   <button
                     onClick={() => setImagePreview(null)}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors"
@@ -1119,7 +864,6 @@ export default function Page() {
                   ref={textareaRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onFocus={() => setStickToBottom(true)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -1134,7 +878,6 @@ export default function Page() {
               </div>
             </div>
 
-            {/* enviar */}
             <button
               onClick={sendMessage}
               disabled={!canSend}
