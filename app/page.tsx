@@ -51,52 +51,42 @@ function makeTitleFromText(text: string) {
 }
 
 const STORAGE_KEY = "vonu_threads_v1";
-
-// Home
 const HOME_URL = "https://vonuai.com";
 
-// Header (móvil) fino
-const MOBILE_HEADER_H = 54;
+// Header móvil (premium, fino)
+const MOBILE_HEADER_H = 56;
 
 export default function Page() {
   const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  // Persistencia
+  // --- VisualViewport fix (Android) para evitar saltos / header que desaparece
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const vv = window.visualViewport;
+
+    const setVvh = () => {
+      const h = vv?.height ?? window.innerHeight;
+      document.documentElement.style.setProperty("--vvh", `${h}px`);
+    };
+
+    setVvh();
+    vv?.addEventListener("resize", setVvh);
+    vv?.addEventListener("scroll", setVvh);
+    window.addEventListener("resize", setVvh);
+
+    return () => {
+      vv?.removeEventListener("resize", setVvh);
+      vv?.removeEventListener("scroll", setVvh);
+      window.removeEventListener("resize", setVvh);
+    };
+  }, []);
+
+  // -------- Persistencia local (localStorage) --------
   const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
   const [activeThreadId, setActiveThreadId] = useState<string>("");
 
-  // UI
-  const [input, setInput] = useState("");
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isTyping, setIsTyping] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [uiError, setUiError] = useState<string | null>(null);
-
-  // Renombrar
-  const [renameOpen, setRenameOpen] = useState(false);
-  const [renameValue, setRenameValue] = useState("");
-
-  // Input shape
-  const [inputExpanded, setInputExpanded] = useState(false);
-
-  // Header hide (móvil) cuando teclado activo
-  const [inputFocused, setInputFocused] = useState(false);
-
-  // Autoscroll “inteligente”
-  const [stickToBottom, setStickToBottom] = useState(true);
-
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const endRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // medir altura real del dock inferior
-  const dockRef = useRef<HTMLDivElement>(null);
-  const [dockH, setDockH] = useState<number>(170);
-
-  useEffect(() => setMounted(true), []);
-
-  // Cargar localStorage
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -112,9 +102,7 @@ export default function Page() {
           title: typeof t.title === "string" ? t.title : "Consulta",
           updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
           messages:
-            Array.isArray(t.messages) && t.messages.length
-              ? t.messages
-              : [initialAssistantMessage()],
+            Array.isArray(t.messages) && t.messages.length ? t.messages : [initialAssistantMessage()],
         }));
 
       if (clean.length) {
@@ -126,7 +114,6 @@ export default function Page() {
     }
   }, []);
 
-  // Guardar localStorage
   useEffect(() => {
     if (!mounted) return;
     try {
@@ -135,6 +122,31 @@ export default function Page() {
       // ignore
     }
   }, [threads, mounted]);
+
+  // -------- UI --------
+  const [input, setInput] = useState("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [uiError, setUiError] = useState<string | null>(null);
+
+  // Renombrar / borrar
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+
+  // Input shape en móvil cuando crece
+  const [inputExpanded, setInputExpanded] = useState(false);
+
+  // Keyboard / focus (para que el header no “desaparezca para siempre”)
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+
+  // Altura del composer para padding del chat (evita que se “corten” burbujas/último mensaje)
+  const [composerH, setComposerH] = useState(140);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const composerRef = useRef<HTMLDivElement>(null);
 
   // asegurar thread activo
   useEffect(() => {
@@ -156,24 +168,21 @@ export default function Page() {
     return !isTyping && (!!input.trim() || !!imagePreview);
   }, [isTyping, input, imagePreview]);
 
-  const hasUserMessage = useMemo(
-    () => messages.some((m) => m.role === "user"),
-    [messages]
-  );
+  const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
 
-  // medir dock (input+disclaimer) con ResizeObserver
+  // Medir composer height
   useEffect(() => {
-    const el = dockRef.current;
+    const el = composerRef.current;
     if (!el) return;
 
     const ro = new ResizeObserver(() => {
-      const h = el.getBoundingClientRect().height;
-      if (h && Math.abs(h - dockH) > 2) setDockH(h);
+      setComposerH(el.getBoundingClientRect().height);
     });
 
     ro.observe(el);
+    setComposerH(el.getBoundingClientRect().height);
+
     return () => ro.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-resize textarea
@@ -188,43 +197,34 @@ export default function Page() {
     setInputExpanded(next > 52);
   }, [input]);
 
-  // Autoscroll “solo si toca”
-  useEffect(() => {
-    if (!stickToBottom) return;
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, isTyping, stickToBottom]);
-
-  // Cuando abre teclado (focus), empujar al final para que no tape el último mensaje
-  useEffect(() => {
-    if (!inputFocused) return;
-    const t = window.setTimeout(() => {
-      if (stickToBottom) endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-    }, 140);
-    return () => window.clearTimeout(t);
-  }, [inputFocused, stickToBottom]);
-
-  // Control stickToBottom según scroll
-  function onChatScroll() {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const threshold = 140;
-    const dist = el.scrollHeight - (el.scrollTop + el.clientHeight);
-    setStickToBottom(dist < threshold);
-  }
-
-  // Auto-focus SOLO al entrar/crear chat (evita “pantalla moviéndose”)
+  // NO auto-focus agresivo en móvil (evita “teclado sube/baja y pantalla baila”)
   useEffect(() => {
     if (!mounted) return;
-    if (renameOpen || menuOpen) return;
-    // importante: NO refocus cada vez que cambian mensajes en móvil
-    // Solo cuando cambias de thread o al cargar.
-    const t = setTimeout(() => {
-      textareaRef.current?.focus();
-    }, 60);
+    if (renameOpen) return;
+    if (menuOpen) return;
+    if (isTyping) return;
+
+    const isMobile = window.matchMedia?.("(max-width: 767px)")?.matches ?? false;
+    if (isMobile) return;
+
+    const t = setTimeout(() => textareaRef.current?.focus(), 60);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted, activeThreadId]);
+  }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId]);
+
+  // Keyboard open/close (Android + iOS)
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const onResize = () => {
+      // si el viewport baja mucho, consideramos teclado abierto
+      const open = vv.height < window.innerHeight - 120;
+      setKeyboardOpen(open);
+    };
+
+    vv.addEventListener("resize", onResize);
+    return () => vv.removeEventListener("resize", onResize);
+  }, []);
 
   function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -246,13 +246,10 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
-    // subir arriba para ver saludo inicial
+    // nuevo chat: arriba para ver saludo inicial
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
     });
-
-    // foco suave (al principio sí)
-    setTimeout(() => textareaRef.current?.focus(), 80);
   }
 
   function activateThread(id: string) {
@@ -262,12 +259,12 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
-    // al cambiar de chat, mostramos arriba primero
+    // al abrir un chat existente, vamos al final
     requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+      const el = scrollRef.current;
+      if (!el) return;
+      el.scrollTo({ top: el.scrollHeight, behavior: "auto" });
     });
-
-    setTimeout(() => textareaRef.current?.focus(), 80);
   }
 
   function openRename() {
@@ -280,9 +277,7 @@ export default function Page() {
     if (!activeThread) return;
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
-      prev.map((t) =>
-        t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t
-      )
+      prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t))
     );
     setRenameOpen(false);
   }
@@ -302,8 +297,6 @@ export default function Page() {
       requestAnimationFrame(() => {
         scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
       });
-
-      setTimeout(() => textareaRef.current?.focus(), 80);
       return;
     }
 
@@ -318,11 +311,32 @@ export default function Page() {
     setImagePreview(null);
 
     requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+      const el = scrollRef.current;
+      if (!el) return;
+      el.scrollTo({ top: el.scrollHeight, behavior: "auto" });
     });
-
-    setTimeout(() => textareaRef.current?.focus(), 80);
   }
+
+  // Auto-scroll inteligente (solo si estás cerca del final)
+  const isNearBottom = () => {
+    const el = scrollRef.current;
+    if (!el) return true;
+    const threshold = 140;
+    return el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+  };
+
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior });
+  };
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (!isNearBottom()) return;
+    requestAnimationFrame(() => scrollToBottom("smooth"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, isTyping, mounted]);
 
   async function sendMessage() {
     if (!canSend) return;
@@ -348,6 +362,9 @@ export default function Page() {
       streaming: true,
     };
 
+    // Antes de actualizar, forzamos scroll a bottom (envío)
+    requestAnimationFrame(() => scrollToBottom("auto"));
+
     setThreads((prev) =>
       prev.map((t) => {
         if (t.id !== activeThread.id) return t;
@@ -364,20 +381,19 @@ export default function Page() {
       })
     );
 
-    // reset input
     setInput("");
     setImagePreview(null);
     setIsTyping(true);
 
-    // al enviar: cerramos “modo teclado” para que header vuelva al terminar
-    setInputFocused(false);
-    textareaRef.current?.blur();
-
-    // asegurar autoscroll
-    setStickToBottom(true);
+    // En móvil: cerrar teclado tras enviar (para que vuelva header + no “baile”)
+    const isMobile = window.matchMedia?.("(max-width: 767px)")?.matches ?? false;
+    if (isMobile) {
+      textareaRef.current?.blur();
+      setKeyboardOpen(false);
+    }
 
     try {
-      await sleep(180);
+      await sleep(220);
 
       const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
@@ -409,7 +425,7 @@ export default function Page() {
           ? data.text
           : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
 
-      await sleep(80);
+      await sleep(90);
 
       let i = 0;
       const speedMs = fullText.length > 900 ? 7 : 11;
@@ -429,6 +445,9 @@ export default function Page() {
           })
         );
 
+        // mientras escribe, autoscroll si estás cerca del final
+        if (isNearBottom()) requestAnimationFrame(() => scrollToBottom("auto"));
+
         if (i >= fullText.length) {
           clearInterval(interval);
 
@@ -445,11 +464,9 @@ export default function Page() {
 
           setIsTyping(false);
 
-          // cuando Vonu termina, dejamos el input listo, pero sin forzar focus (evita “saltos”)
-          // si quieres volver a focus sólo en desktop:
-          if (window.matchMedia("(min-width: 768px)").matches) {
-            setTimeout(() => textareaRef.current?.focus(), 60);
-          }
+          // en desktop sí re-enfocamos suave
+          const isMobileNow = window.matchMedia?.("(max-width: 767px)")?.matches ?? false;
+          if (!isMobileNow) setTimeout(() => textareaRef.current?.focus(), 60);
         }
       }, speedMs);
     } catch (err: any) {
@@ -466,8 +483,7 @@ export default function Page() {
                 ? {
                     ...m,
                     streaming: false,
-                    text:
-                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" + msg + "\n```",
+                    text: "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" + msg + "\n```",
                   }
                 : m
             ),
@@ -480,18 +496,22 @@ export default function Page() {
     }
   }
 
-  function HomeLink({ className, label = "Inicio" }: { className?: string; label?: string }) {
+  function HomeLink({
+    className,
+    label = "Home",
+  }: {
+    className?: string;
+    label?: string;
+  }) {
     return (
       <a
         href={HOME_URL}
         className={
           className ??
-          "inline-flex items-center gap-2 text-sm text-zinc-700 hover:text-blue-700 transition-colors"
+          "inline-flex items-center gap-2 text-sm text-zinc-700 hover:text-zinc-900 transition-colors"
         }
-        aria-label="Volver a inicio"
-        title="Volver a inicio"
       >
-        <span className="text-[15px]" aria-hidden="true">
+        <span className="text-[16px]" aria-hidden="true">
           🏠
         </span>
         <span className="font-medium">{label}</span>
@@ -499,68 +519,50 @@ export default function Page() {
     );
   }
 
-  // header visible sólo si NO está el input focused (móvil)
-  const mobileHeaderVisible = !inputFocused;
-
-  // padding top del chat según header
-  const chatPadTopMobile = mobileHeaderVisible ? MOBILE_HEADER_H + 12 : 12;
-
-  // padding bottom dinámico = dock real + un poquito
-  const chatPadBottom = Math.max(140, dockH + 16);
+  // WhatsApp-like tail (SVG) — evita “rombo”
+  function BubbleTail({
+    side,
+    color,
+  }: {
+    side: "left" | "right";
+    color: string;
+  }) {
+    // path simple tipo “coma” para efecto WhatsApp
+    // (lo colocamos pegado al borde y abajo)
+    const common = "absolute bottom-2";
+    const pos = side === "right" ? "-right-[6px]" : "-left-[6px]";
+    const flip = side === "right" ? "" : "scale-x-[-1]";
+    return (
+      <svg
+        className={`${common} ${pos} ${flip}`}
+        width="18"
+        height="18"
+        viewBox="0 0 18 18"
+        aria-hidden="true"
+      >
+        <path
+          d="M3 2c7 1 11 6 12 12-4-2-7-2-12 0V2z"
+          fill={color}
+        />
+      </svg>
+    );
+  }
 
   return (
-    <div className="h-[100dvh] bg-white flex overflow-hidden">
-      {/* ======= ESTILOS GLOBALES (colas WhatsApp-like) ======= */}
-      <style jsx global>{`
-        .vonu-user-bubble {
-          position: relative;
-          border-radius: 22px;
-          border-bottom-right-radius: 10px; /* “corte” WhatsApp */
-        }
-        .vonu-user-bubble:after {
-          content: "";
-          position: absolute;
-          right: -10px;
-          bottom: 0px;
-          width: 22px;
-          height: 22px;
-          background-repeat: no-repeat;
-          background-size: 22px 22px;
-          /* cola curva (no rombo) */
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M0 0c9 0 15 6 15 15 0 4-1 6-3 7-3 2-7 0-12 0 5-1 6-3 6-7C6 8 3 3 0 0Z' fill='%230B57D0'/%3E%3C/svg%3E");
-        }
-
-        .vonu-assistant-bubble {
-          position: relative;
-          border-radius: 22px;
-          border-bottom-left-radius: 10px;
-        }
-        .vonu-assistant-bubble:before {
-          content: "";
-          position: absolute;
-          left: -10px;
-          bottom: 0px;
-          width: 22px;
-          height: 22px;
-          background-repeat: no-repeat;
-          background-size: 22px 22px;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M22 0c-9 0-15 6-15 15 0 4 1 6 3 7 3 2 7 0 12 0-5-1-6-3-6-7 0-7 3-12 6-15Z' fill='%23E9F7EF'/%3E%3C/svg%3E");
-        }
-
-        /* Evitar que palabras largas rompan layout */
-        .vonu-break {
-          overflow-wrap: anywhere;
-          word-break: break-word;
-        }
-      `}</style>
-
-      {/* ===== MOBILE HEADER (solo móvil, premium, aparece al inicio) ===== */}
+    <div
+      className="bg-white flex overflow-hidden"
+      style={{
+        height: "var(--vvh, 100dvh)",
+        // variable para padding del chat (último mensaje nunca queda detrás del input)
+        // @ts-ignore
+        ["--composer-h" as any]: `${composerH}px`,
+      }}
+    >
+      {/* ===== MOBILE HEADER ===== */}
       <div
-        className={[
-          "md:hidden fixed top-0 left-0 right-0 z-50",
-          "transition-transform duration-200 ease-out",
-          mobileHeaderVisible ? "translate-y-0" : "-translate-y-full",
-        ].join(" ")}
+        className={`md:hidden fixed top-0 left-0 right-0 z-50 transition-opacity ${
+          keyboardOpen ? "opacity-0 pointer-events-none" : "opacity-100"
+        }`}
         style={{ height: MOBILE_HEADER_H }}
       >
         <div className="h-full px-4 flex items-center bg-white/90 backdrop-blur-xl">
@@ -571,15 +573,15 @@ export default function Page() {
             title={menuOpen ? "Cerrar menú" : "Menú"}
           >
             <img
-              src={"/vonu-icon.png?v=3"}
+              src={"/vonu-icon.png?v=2"}
               alt="Menú"
               className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
               draggable={false}
             />
           </button>
 
-          <a href={HOME_URL} className="ml-2 flex items-center" aria-label="Ir a inicio" title="Ir a inicio">
-            <img src={"/vonu-wordmark.png?v=3"} alt="Vonu" className="h-5 w-auto" draggable={false} />
+          <a href={HOME_URL} className="ml-2 flex items-center" aria-label="Ir a la home" title="Ir a la home">
+            <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
           </a>
 
           <div className="flex-1" />
@@ -593,14 +595,15 @@ export default function Page() {
         }`}
         onClick={() => setMenuOpen(false)}
       >
-        {/* Desktop sidebar (ventana redondeada) */}
+        {/* Desktop sidebar */}
         <aside
           className={`hidden md:block absolute left-3 top-3 bottom-3 w-80 bg-white rounded-3xl shadow-xl border border-zinc-200 p-4 transform transition-transform duration-300 ease-out ${
             menuOpen ? "translate-x-0" : "-translate-x-[110%]"
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="pt-2">
+          {/* ✅ espacio para que NO se solape con logo/burger */}
+          <div className="pt-14">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <div className="text-sm font-semibold text-zinc-800">Historial</div>
@@ -634,7 +637,7 @@ export default function Page() {
               <HomeLink className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-800 transition-colors" />
             </div>
 
-            <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-190px)]">
+            <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-220px)]">
               {sortedThreads.map((t) => {
                 const active = t.id === activeThreadId;
                 const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
@@ -658,7 +661,7 @@ export default function Page() {
 
         {/* Mobile sidebar */}
         <aside
-          className={`md:hidden absolute left-0 top-0 bottom-0 w-[86vw] max-w-[360px] bg-white/90 backdrop-blur-xl shadow-2xl transform transition-transform duration-300 ease-out ${
+          className={`md:hidden absolute left-0 top-0 bottom-0 w-[86vw] max-w-[360px] bg-white/92 backdrop-blur-xl shadow-2xl transform transition-transform duration-300 ease-out ${
             menuOpen ? "translate-x-0" : "-translate-x-[110%]"
           }`}
           onClick={(e) => e.stopPropagation()}
@@ -698,7 +701,7 @@ export default function Page() {
                 <HomeLink className="w-full inline-flex items-center justify-center gap-2 text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-900 transition-colors" />
               </div>
 
-              <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-230px)]">
+              <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-240px)]">
                 {sortedThreads.map((t) => {
                   const active = t.id === activeThreadId;
                   const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
@@ -722,7 +725,7 @@ export default function Page() {
         </aside>
       </div>
 
-      {/* Desktop “logo + burger” arriba izquierda (sin barra gris) */}
+      {/* Desktop top-left (logo + burger) */}
       <div className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-2 select-none">
         <button
           onClick={() => setMenuOpen((v) => !v)}
@@ -731,15 +734,15 @@ export default function Page() {
           title={menuOpen ? "Cerrar menú" : "Menú"}
         >
           <img
-            src={"/vonu-icon.png?v=3"}
+            src={"/vonu-icon.png?v=2"}
             alt="Menú"
             className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
             draggable={false}
           />
         </button>
 
-        <a href={HOME_URL} className="flex items-center" aria-label="Ir a inicio" title="Ir a inicio">
-          <img src={"/vonu-wordmark.png?v=3"} alt="Vonu" className="h-5 w-auto" draggable={false} />
+        <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home">
+          <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
         </a>
       </div>
 
@@ -787,65 +790,52 @@ export default function Page() {
 
         {/* ERROR BAR */}
         {uiError && (
-          <div className="mx-auto max-w-3xl px-6 mt-3 pt-4">
+          <div className="mx-auto max-w-3xl px-4 md:px-6 mt-3 pt-4">
             <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               Ha fallado la llamada a la IA. (Error: {uiError})
             </div>
           </div>
         )}
 
-        {/* CHAT */}
-        <div
-          ref={scrollRef}
-          className="flex-1 overflow-y-auto min-h-0"
-          onScroll={onChatScroll}
-        >
+        {/* CHAT (scrollable) */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
           <div
             className="mx-auto max-w-3xl px-4 md:px-6"
             style={{
-              paddingTop: chatPadTopMobile,
-              paddingBottom: chatPadBottom,
+              paddingTop: MOBILE_HEADER_H + 14, // reserva en móvil para header fijo
+              paddingBottom: `calc(var(--composer-h, 140px) + 20px)`,
             }}
           >
-            <div className="space-y-3 md:space-y-4">
+            <div className="space-y-3 md:space-y-4 py-4">
               {messages.map((msg) => {
                 if (msg.role === "assistant") {
                   const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
-
-                  // Assistant: bubble verde clarito (premium) + cola suave
                   return (
-                    <div key={msg.id} className="flex justify-start">
-                      <div
-                        className={[
-                          "vonu-assistant-bubble vonu-break",
-                          "max-w-[92%] md:max-w-[78%]",
-                          "bg-[#E9F7EF] text-zinc-900",
-                          "px-4 py-3",
-                          "shadow-[0_1px_0_rgba(0,0,0,0.04)]",
-                          "border border-black/5",
-                        ].join(" ")}
-                      >
-                        <div
-                          className={[
-                            "prose prose-zinc max-w-none",
-                            "text-[15.5px] md:text-[15.5px]",
-                            "leading-[1.55]",
-                            "prose-headings:font-semibold prose-headings:text-zinc-900",
-                            "prose-p:my-2.5",
-                            "prose-ul:my-2.5 prose-ol:my-2.5",
-                          ].join(" ")}
-                        >
-                          <ReactMarkdown>{mdText}</ReactMarkdown>
+                    <div key={msg.id} className="w-full">
+                      <div className="max-w-[92%] md:max-w-[78%]">
+                        <div className="relative rounded-[24px] bg-emerald-50 border border-emerald-100 px-4 py-3 shadow-[0_1px_10px_rgba(0,0,0,0.04)]">
+                          <div
+                            className={[
+                              "prose prose-zinc max-w-none",
+                              "text-[15px] md:text-[15.5px]",
+                              "leading-[1.65]",
+                              "prose-headings:font-semibold prose-headings:text-zinc-900",
+                              "prose-h3:text-[17px] md:prose-h3:text-[18px]",
+                              "prose-p:my-3",
+                            ].join(" ")}
+                          >
+                            <ReactMarkdown>{mdText}</ReactMarkdown>
+                          </div>
                         </div>
                       </div>
                     </div>
                   );
                 }
 
-                // User bubble: azul Google + cola curva
+                // USER
                 return (
                   <div key={msg.id} className="flex justify-end">
-                    <div className="max-w-[92%] md:max-w-[78%] space-y-2">
+                    <div className="max-w-[86%] md:max-w-[70%] space-y-2">
                       {msg.image && (
                         <img
                           src={msg.image}
@@ -855,40 +845,42 @@ export default function Page() {
                       )}
 
                       {msg.text && (
-                        <div
-                          className={[
-                            "vonu-user-bubble vonu-break",
-                            "bg-[#0B57D0] text-white",
-                            "text-[15px] md:text-[15px]",
-                            "leading-[1.35]",
-                            "px-4 py-2.5",
-                            "shadow-[0_1px_0_rgba(0,0,0,0.04)]",
-                          ].join(" ")}
-                        >
-                          {msg.text}
+                        <div className="relative inline-block">
+                          <div
+                            className={[
+                              "bg-blue-600 text-white",
+                              "text-[14.5px] md:text-[14.75px]",
+                              "leading-relaxed",
+                              "px-4 py-2.5",
+                              "break-words",
+                              "shadow-[0_1px_10px_rgba(0,0,0,0.08)]",
+                              // Forma WhatsApp-like: muy redonda en 1 línea, y “squircle” al crecer
+                              msg.text.length < 22 ? "rounded-full" : "rounded-[22px]",
+                              "pr-5", // aire para el tail
+                            ].join(" ")}
+                          >
+                            {msg.text}
+                          </div>
+
+                          {/* Tail curvo (no rombo), pegado abajo a la derecha */}
+                          <BubbleTail side="right" color="#2563eb" />
                         </div>
                       )}
                     </div>
                   </div>
                 );
               })}
-
-              <div ref={endRef} />
             </div>
           </div>
         </div>
 
-        {/* INPUT + DISCLAIMER (FIJO EN TODAS LAS RESOLUCIONES) */}
-        <div ref={dockRef} className="fixed bottom-0 left-0 right-0 z-30 bg-white">
+        {/* INPUT + DISCLAIMER (sticky para PC y móvil) */}
+        <div ref={composerRef} className="sticky bottom-0 z-30 bg-white">
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             {/* + */}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="
-                h-12 w-12 inline-flex items-center justify-center rounded-full
-                bg-white border border-zinc-200
-                text-zinc-900 hover:bg-zinc-50 transition-colors
-              "
+              className="h-12 w-12 inline-flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-50 transition-colors"
               aria-label="Adjuntar imagen"
               disabled={isTyping}
               title={isTyping ? "Espera a que Vonu responda…" : "Adjuntar imagen"}
@@ -908,7 +900,7 @@ export default function Page() {
                   <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
                   <button
                     onClick={() => setImagePreview(null)}
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-[#0B57D0] hover:opacity-90 text-white text-xs transition-colors"
+                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors"
                     aria-label="Quitar imagen"
                   >
                     ×
@@ -919,9 +911,8 @@ export default function Page() {
               <div
                 className={[
                   "w-full min-h-12 px-4 py-3 flex items-center",
-                  "bg-zinc-100",
+                  "bg-zinc-100 border border-zinc-200",
                   inputExpanded ? "rounded-3xl" : "rounded-full",
-                  "border border-zinc-200",
                   "focus-within:border-zinc-300",
                 ].join(" ")}
               >
@@ -929,17 +920,17 @@ export default function Page() {
                   ref={textareaRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
+                  onFocus={() => setKeyboardOpen(true)}
+                  onBlur={() => setKeyboardOpen(false)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
                       sendMessage();
                     }
                   }}
-                  onFocus={() => setInputFocused(true)}
-                  onBlur={() => setInputFocused(false)}
                   disabled={isTyping}
                   placeholder={isTyping ? "Vonu está respondiendo…" : "Escribe tu mensaje…"}
-                  className="w-full resize-none bg-transparent text-sm outline-none leading-5 overflow-hidden"
+                  className="w-full resize-none bg-transparent text-[15px] outline-none leading-6 overflow-y-auto"
                   rows={1}
                 />
               </div>
@@ -949,25 +940,22 @@ export default function Page() {
             <button
               onClick={sendMessage}
               disabled={!canSend}
-              className="
-                h-12 w-12 md:w-12
-                rounded-full
-                bg-[#0B57D0] hover:opacity-90 text-white
-                flex items-center justify-center
-                disabled:opacity-40 transition-colors
-              "
+              className="h-12 w-12 md:w-auto rounded-full md:rounded-3xl bg-blue-600 hover:bg-blue-700 text-white md:px-6 flex items-center justify-center text-sm font-medium disabled:opacity-40 transition-colors"
               aria-label="Enviar"
               title={canSend ? "Enviar" : "Escribe un mensaje para enviar"}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M12 5l6 6M12 5l-6 6M12 5v14"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <span className="md:hidden" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M12 5l6 6M12 5l-6 6M12 5v14"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <span className="hidden md:inline">Enviar</span>
             </button>
           </div>
 
@@ -977,12 +965,9 @@ export default function Page() {
               Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
             </p>
 
-            {/* Extra: botón home solo en móvil y solo si menú abierto (premium: no ensucia UI) */}
-            {menuOpen && (
-              <div className="md:hidden flex justify-center mt-2">
-                <HomeLink className="inline-flex items-center justify-center gap-2 text-xs px-3 py-2 rounded-full bg-zinc-100 border border-zinc-200 text-zinc-800" />
-              </div>
-            )}
+            {/* espacio extra cuando el teclado está abierto para que no “muerda” el contenido */}
+            <div className={keyboardOpen ? "h-2" : "h-0"} />
+            {!hasUserMessage && <div className="h-0" />}
           </div>
         </div>
       </div>
