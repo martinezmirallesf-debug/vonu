@@ -58,7 +58,7 @@ export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // -------- Persistencia local (localStorage) --------
+  // -------- Persistencia local --------
   const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
   const [activeThreadId, setActiveThreadId] = useState<string>("");
 
@@ -139,14 +139,7 @@ export default function Page() {
     [messages]
   );
 
-  // ✅ al cambiar de hilo, subir arriba para ver saludo + header
-  useEffect(() => {
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-    });
-  }, [activeThreadId]);
-
-  // Scroll suave al final cuando llegan mensajes / streaming
+  // Scroll al final cuando llegan mensajes
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
@@ -162,10 +155,11 @@ export default function Page() {
     el.style.height = "0px";
     const next = Math.min(el.scrollHeight, 140);
     el.style.height = next + "px";
+
     setInputExpanded(next > 52);
   }, [input]);
 
-  // Auto-focus (cuando se puede)
+  // Auto-focus
   useEffect(() => {
     if (!mounted) return;
     if (renameOpen) return;
@@ -199,6 +193,7 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
+    // Mostrar saludo inicial (arriba)
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
     });
@@ -212,10 +207,6 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
-
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-    });
 
     setTimeout(() => textareaRef.current?.focus(), 60);
   }
@@ -271,10 +262,6 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-    });
-
     setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
@@ -325,13 +312,16 @@ export default function Page() {
     setIsTyping(true);
 
     try {
-      await sleep(260);
+      await sleep(220);
 
       const threadNow =
         threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
-        .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
+        .filter(
+          (m) =>
+            (m.role === "user" || m.role === "assistant") && (m.text || m.image)
+        )
         .map((m) => ({
           role: m.role,
           content: m.text ?? "",
@@ -358,7 +348,7 @@ export default function Page() {
           ? data.text
           : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
 
-      await sleep(120);
+      await sleep(110);
 
       let i = 0;
       const speedMs = fullText.length > 900 ? 7 : 11;
@@ -457,10 +447,11 @@ export default function Page() {
     );
   }
 
+  // padding para que el chat nunca quede tapado por el input fijo
   const CHAT_BOTTOM_PAD = 190;
 
   return (
-    <div className="h-[100dvh] bg-white flex overflow-hidden">
+    <div className="min-h-[100dvh] bg-white flex overflow-hidden">
       {/* ===== OVERLAY + SIDEBAR ===== */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-300 ${
@@ -518,7 +509,9 @@ export default function Page() {
             <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-220px)]">
               {sortedThreads.map((t) => {
                 const active = t.id === activeThreadId;
-                const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
+                const when = mounted
+                  ? new Date(t.updatedAt).toLocaleString()
+                  : "";
 
                 return (
                   <button
@@ -590,7 +583,9 @@ export default function Page() {
               <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-240px)]">
                 {sortedThreads.map((t) => {
                   const active = t.id === activeThreadId;
-                  const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
+                  const when = mounted
+                    ? new Date(t.updatedAt).toLocaleString()
+                    : "";
 
                   return (
                     <button
@@ -616,10 +611,18 @@ export default function Page() {
       </div>
 
       {/* MAIN */}
-      <div className="flex-1 flex flex-col min-h-0 relative">
-        {/* ✅ MOBILE HEADER (sticky, no desaparece) */}
-        <div className="md:hidden sticky top-0 z-50" style={{ height: MOBILE_HEADER_H }}>
-          <div className="h-full px-4 flex items-center bg-white/85 backdrop-blur-xl border-b border-zinc-200">
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* ===== HEADER (sticky en móvil para NO desaparecer con teclado) ===== */}
+        <div
+          className={[
+            "sticky top-0 z-50",
+            "md:static md:top-auto",
+            "bg-white/85 backdrop-blur-xl",
+            "border-b border-zinc-200",
+          ].join(" ")}
+          style={{ height: MOBILE_HEADER_H }}
+        >
+          <div className="h-full px-4 md:px-6 flex items-center">
             <button
               onClick={() => setMenuOpen((v) => !v)}
               className="flex items-center"
@@ -652,34 +655,6 @@ export default function Page() {
 
             <div className="flex-1" />
           </div>
-        </div>
-
-        {/* Desktop top-left */}
-        <div className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-2 select-none">
-          <button
-            onClick={() => setMenuOpen((v) => !v)}
-            className="flex items-center"
-            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-            title={menuOpen ? "Cerrar menú" : "Menú"}
-          >
-            <img
-              src={"/vonu-icon.png?v=2"}
-              alt="Menú"
-              className={`h-7 w-7 transition-transform duration-300 ease-out ${
-                menuOpen ? "rotate-90" : "rotate-0"
-              }`}
-              draggable={false}
-            />
-          </button>
-
-          <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home">
-            <img
-              src={"/vonu-wordmark.png?v=2"}
-              alt="Vonu"
-              className="h-5 w-auto"
-              draggable={false}
-            />
-          </a>
         </div>
 
         {/* RENAME MODAL */}
@@ -735,12 +710,12 @@ export default function Page() {
           </div>
         )}
 
-        {/* CHAT (scrollable) */}
+        {/* CHAT */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
           <div
             className="mx-auto max-w-3xl px-6 pb-10"
             style={{
-              paddingTop: 16, // header ya ocupa su sitio al ser sticky
+              paddingTop: 16, // ya no hace falta sumar header aquí porque es sticky dentro del flujo
               paddingBottom: CHAT_BOTTOM_PAD,
             }}
           >
@@ -789,8 +764,8 @@ export default function Page() {
           </div>
         </div>
 
-        {/* ✅ INPUT + DISCLAIMER (sticky bottom en móvil) */}
-        <div className="md:static sticky bottom-0 z-30 bg-white">
+        {/* INPUT + DISCLAIMER (fijo en móvil) */}
+        <div className="md:static fixed bottom-0 left-0 right-0 z-40 bg-white">
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             <button
               onClick={() => fileInputRef.current?.click()}
@@ -803,9 +778,25 @@ export default function Page() {
               disabled={isTyping}
               title={isTyping ? "Espera a que Vonu responda…" : "Adjuntar imagen"}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 5V19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                <path d="M5 12H19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 5V19"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M5 12H19"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
               </svg>
             </button>
 
@@ -854,7 +845,9 @@ export default function Page() {
                     }
                   }}
                   disabled={isTyping}
-                  placeholder={isTyping ? "Vonu está respondiendo…" : "Escribe tu mensaje…"}
+                  placeholder={
+                    isTyping ? "Vonu está respondiendo…" : "Escribe tu mensaje…"
+                  }
                   className="w-full resize-none bg-transparent text-sm outline-none leading-5 overflow-hidden"
                   rows={1}
                 />
@@ -893,12 +886,14 @@ export default function Page() {
 
           <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
             <p className="hidden md:block text-center text-[12px] text-zinc-500 leading-5">
-              Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
+              Orientación y prevención. No sustituye profesionales. Si hay riesgo
+              inmediato, contacta con emergencias.
             </p>
 
             {!hasUserMessage && (
               <p className="md:hidden text-center text-[12px] text-zinc-500 leading-5">
-                Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
+                Orientación y prevención. No sustituye profesionales. Si hay
+                riesgo inmediato, contacta con emergencias.
               </p>
             )}
           </div>
