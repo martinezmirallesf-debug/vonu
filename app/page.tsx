@@ -51,11 +51,7 @@ function makeTitleFromText(text: string) {
 }
 
 const STORAGE_KEY = "vonu_threads_v1";
-
-// header fijo móvil
 const MOBILE_HEADER_H = 64;
-
-// Home
 const HOME_URL = "https://vonuai.com";
 
 export default function Page() {
@@ -81,7 +77,9 @@ export default function Page() {
           title: typeof t.title === "string" ? t.title : "Consulta",
           updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
           messages:
-            Array.isArray(t.messages) && t.messages.length ? t.messages : [initialAssistantMessage()],
+            Array.isArray(t.messages) && t.messages.length
+              ? t.messages
+              : [initialAssistantMessage()],
         }));
 
       if (clean.length) {
@@ -109,18 +107,14 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
 
-  // Renombrar / borrar
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
-
-  // Input shape en móvil cuando crece
   const [inputExpanded, setInputExpanded] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // asegurar thread activo
   useEffect(() => {
     if (!activeThreadId && threads[0]?.id) setActiveThreadId(threads[0].id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -140,9 +134,19 @@ export default function Page() {
     return !isTyping && (!!input.trim() || !!imagePreview);
   }, [isTyping, input, imagePreview]);
 
-  const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
+  const hasUserMessage = useMemo(
+    () => messages.some((m) => m.role === "user"),
+    [messages]
+  );
 
-  // Scroll suave al final
+  // ✅ al cambiar de hilo, subir arriba para ver saludo + header
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    });
+  }, [activeThreadId]);
+
+  // Scroll suave al final cuando llegan mensajes / streaming
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
@@ -158,11 +162,10 @@ export default function Page() {
     el.style.height = "0px";
     const next = Math.min(el.scrollHeight, 140);
     el.style.height = next + "px";
-
     setInputExpanded(next > 52);
   }, [input]);
 
-  // Auto-focus
+  // Auto-focus (cuando se puede)
   useEffect(() => {
     if (!mounted) return;
     if (renameOpen) return;
@@ -196,7 +199,6 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
-    // IMPORTANTE: llevar el scroll arriba para que se vea el saludo inicial
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
     });
@@ -211,6 +213,10 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    });
+
     setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
@@ -224,7 +230,11 @@ export default function Page() {
     if (!activeThread) return;
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
-      prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t))
+      prev.map((t) =>
+        t.id === activeThread.id
+          ? { ...t, title: name, updatedAt: Date.now() }
+          : t
+      )
     );
     setRenameOpen(false);
 
@@ -261,6 +271,10 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    });
+
     setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
@@ -293,7 +307,9 @@ export default function Page() {
         if (t.id !== activeThread.id) return t;
 
         const hasUserAlready = t.messages.some((m) => m.role === "user");
-        const newTitle = hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen");
+        const newTitle = hasUserAlready
+          ? t.title
+          : makeTitleFromText(userText || "Imagen");
 
         return {
           ...t,
@@ -311,7 +327,8 @@ export default function Page() {
     try {
       await sleep(260);
 
-      const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
+      const threadNow =
+        threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
         .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
@@ -356,7 +373,9 @@ export default function Page() {
             return {
               ...t,
               updatedAt: Date.now(),
-              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
+              messages: t.messages.map((m) =>
+                m.id === assistantId ? { ...m, text: partial } : m
+              ),
             };
           })
         );
@@ -370,7 +389,9 @@ export default function Page() {
               return {
                 ...t,
                 updatedAt: Date.now(),
-                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
+                messages: t.messages.map((m) =>
+                  m.id === assistantId ? { ...m, streaming: false } : m
+                ),
               };
             })
           );
@@ -380,7 +401,10 @@ export default function Page() {
         }
       }, speedMs);
     } catch (err: any) {
-      const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
+      const msg =
+        typeof err?.message === "string"
+          ? err.message
+          : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -394,7 +418,9 @@ export default function Page() {
                     ...m,
                     streaming: false,
                     text:
-                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" + msg + "\n```",
+                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" +
+                      msg +
+                      "\n```",
                   }
                 : m
             ),
@@ -408,7 +434,13 @@ export default function Page() {
     }
   }
 
-  function HomeLink({ className, label = "Volver a la home" }: { className?: string; label?: string }) {
+  function HomeLink({
+    className,
+    label = "Volver a la home",
+  }: {
+    className?: string;
+    label?: string;
+  }) {
     return (
       <a
         href={HOME_URL}
@@ -425,42 +457,16 @@ export default function Page() {
     );
   }
 
-  // altura “segura” extra para que el chat nunca quede tapado por input fijo
-  const CHAT_BOTTOM_PAD = 180;
+  const CHAT_BOTTOM_PAD = 190;
 
   return (
     <div className="h-[100dvh] bg-white flex overflow-hidden">
-      {/* ===== MOBILE HEADER (Fijo + visible) ===== */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
-        <div className="h-full px-4 flex items-center bg-white/80 backdrop-blur-xl border-b border-zinc-200">
-          {/* Icono menú (izquierda) */}
-          <button
-            onClick={() => setMenuOpen((v) => !v)}
-            className="flex items-center"
-            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-            title={menuOpen ? "Cerrar menú" : "Menú"}
-          >
-            <img
-              src={"/vonu-icon.png?v=2"}
-              alt="Menú"
-              className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
-              draggable={false}
-            />
-          </button>
-
-          {/* Letras al lado -> HOME */}
-          <a href={HOME_URL} className="ml-2 flex items-center" aria-label="Ir a la home" title="Ir a la home">
-            <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
-          </a>
-
-          <div className="flex-1" />
-        </div>
-      </div>
-
       {/* ===== OVERLAY + SIDEBAR ===== */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-300 ${
-          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent"
+          menuOpen
+            ? "bg-black/20 backdrop-blur-sm pointer-events-auto"
+            : "pointer-events-none bg-transparent"
         }`}
         onClick={() => setMenuOpen(false)}
       >
@@ -474,8 +480,12 @@ export default function Page() {
           <div className="pt-16">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-800">Historial</div>
-                <div className="text-xs text-zinc-500">Tus consultas recientes</div>
+                <div className="text-sm font-semibold text-zinc-800">
+                  Historial
+                </div>
+                <div className="text-xs text-zinc-500">
+                  Tus consultas recientes
+                </div>
               </div>
 
               <button
@@ -515,10 +525,14 @@ export default function Page() {
                     key={t.id}
                     onClick={() => activateThread(t.id)}
                     className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
-                      active ? "border-blue-600 bg-blue-50" : "border-zinc-200 hover:bg-zinc-50"
+                      active
+                        ? "border-blue-600 bg-blue-50"
+                        : "border-zinc-200 hover:bg-zinc-50"
                     }`}
                   >
-                    <div className="text-sm font-medium text-zinc-900">{t.title}</div>
+                    <div className="text-sm font-medium text-zinc-900">
+                      {t.title}
+                    </div>
                     <div className="text-xs text-zinc-500 mt-1">{when}</div>
                   </button>
                 );
@@ -538,8 +552,12 @@ export default function Page() {
             <div className="pt-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <div className="text-sm font-semibold text-zinc-800">Historial</div>
-                  <div className="text-xs text-zinc-500">Tus consultas recientes</div>
+                  <div className="text-sm font-semibold text-zinc-800">
+                    Historial
+                  </div>
+                  <div className="text-xs text-zinc-500">
+                    Tus consultas recientes
+                  </div>
                 </div>
 
                 <button
@@ -550,7 +568,6 @@ export default function Page() {
                 </button>
               </div>
 
-              {/* ✅ Botones como “cards” blancas (mismo tono que abajo) */}
               <div className="grid grid-cols-2 gap-2 mb-3">
                 <button
                   onClick={openRename}
@@ -580,10 +597,14 @@ export default function Page() {
                       key={t.id}
                       onClick={() => activateThread(t.id)}
                       className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
-                        active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"
+                        active
+                          ? "border-blue-600 bg-blue-50"
+                          : "border-zinc-200 bg-white hover:bg-zinc-50"
                       }`}
                     >
-                      <div className="text-sm font-medium text-zinc-900">{t.title}</div>
+                      <div className="text-sm font-medium text-zinc-900">
+                        {t.title}
+                      </div>
                       <div className="text-xs text-zinc-500 mt-1">{when}</div>
                     </button>
                   );
@@ -594,29 +615,73 @@ export default function Page() {
         </aside>
       </div>
 
-      {/* Desktop top-left */}
-      <div className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-2 select-none">
-        <button
-          onClick={() => setMenuOpen((v) => !v)}
-          className="flex items-center"
-          aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-          title={menuOpen ? "Cerrar menú" : "Menú"}
-        >
-          <img
-            src={"/vonu-icon.png?v=2"}
-            alt="Menú"
-            className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
-            draggable={false}
-          />
-        </button>
-
-        <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home">
-          <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
-        </a>
-      </div>
-
       {/* MAIN */}
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 flex flex-col min-h-0 relative">
+        {/* ✅ MOBILE HEADER (sticky, no desaparece) */}
+        <div className="md:hidden sticky top-0 z-50" style={{ height: MOBILE_HEADER_H }}>
+          <div className="h-full px-4 flex items-center bg-white/85 backdrop-blur-xl border-b border-zinc-200">
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="flex items-center"
+              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+              title={menuOpen ? "Cerrar menú" : "Menú"}
+            >
+              <img
+                src={"/vonu-icon.png?v=2"}
+                alt="Menú"
+                className={`h-7 w-7 transition-transform duration-300 ease-out ${
+                  menuOpen ? "rotate-90" : "rotate-0"
+                }`}
+                draggable={false}
+              />
+            </button>
+
+            <a
+              href={HOME_URL}
+              className="ml-2 flex items-center"
+              aria-label="Ir a la home"
+              title="Ir a la home"
+            >
+              <img
+                src={"/vonu-wordmark.png?v=2"}
+                alt="Vonu"
+                className="h-5 w-auto"
+                draggable={false}
+              />
+            </a>
+
+            <div className="flex-1" />
+          </div>
+        </div>
+
+        {/* Desktop top-left */}
+        <div className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-2 select-none">
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="flex items-center"
+            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+            title={menuOpen ? "Cerrar menú" : "Menú"}
+          >
+            <img
+              src={"/vonu-icon.png?v=2"}
+              alt="Menú"
+              className={`h-7 w-7 transition-transform duration-300 ease-out ${
+                menuOpen ? "rotate-90" : "rotate-0"
+              }`}
+              draggable={false}
+            />
+          </button>
+
+          <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home">
+            <img
+              src={"/vonu-wordmark.png?v=2"}
+              alt="Vonu"
+              className="h-5 w-auto"
+              draggable={false}
+            />
+          </a>
+        </div>
+
         {/* RENAME MODAL */}
         {renameOpen && (
           <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center px-6">
@@ -624,8 +689,12 @@ export default function Page() {
               className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
-              <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
+              <div className="text-sm font-semibold text-zinc-900 mb-1">
+                Renombrar chat
+              </div>
+              <div className="text-xs text-zinc-500 mb-3">
+                Ponle un nombre para encontrarlo rápido.
+              </div>
 
               <input
                 value={renameValue}
@@ -671,11 +740,10 @@ export default function Page() {
           <div
             className="mx-auto max-w-3xl px-6 pb-10"
             style={{
-              paddingTop: MOBILE_HEADER_H + 16,
+              paddingTop: 16, // header ya ocupa su sitio al ser sticky
               paddingBottom: CHAT_BOTTOM_PAD,
             }}
           >
-            {/* Menos espacio entre mensajes */}
             <div className="space-y-4">
               {messages.map((msg) => {
                 if (msg.role === "assistant") {
@@ -687,10 +755,8 @@ export default function Page() {
                           "prose prose-zinc max-w-none",
                           "text-[15px] md:text-[15.5px]",
                           "leading-[1.6]",
-                          // títulos más grandes
                           "prose-headings:font-semibold prose-headings:text-zinc-900",
                           "prose-h3:text-[17px] md:prose-h3:text-[18px]",
-                          // más aire entre párrafos
                           "prose-p:my-3",
                         ].join(" ")}
                       >
@@ -723,10 +789,9 @@ export default function Page() {
           </div>
         </div>
 
-        {/* INPUT + DISCLAIMER (Fijo en móvil) */}
-        <div className="md:static fixed bottom-0 left-0 right-0 z-30 bg-white">
+        {/* ✅ INPUT + DISCLAIMER (sticky bottom en móvil) */}
+        <div className="md:static sticky bottom-0 z-30 bg-white">
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
-            {/* + */}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="
@@ -744,13 +809,22 @@ export default function Page() {
               </svg>
             </button>
 
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={onSelectImage}
+              className="hidden"
+            />
 
-            {/* input */}
             <div className="flex-1">
               {imagePreview && (
                 <div className="mb-2 relative w-fit bubble-in">
-                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="rounded-3xl border border-zinc-200 max-h-40"
+                  />
                   <button
                     onClick={() => setImagePreview(null)}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors"
@@ -787,7 +861,6 @@ export default function Page() {
               </div>
             </div>
 
-            {/* enviar */}
             <button
               onClick={sendMessage}
               disabled={!canSend}
@@ -818,7 +891,6 @@ export default function Page() {
             </button>
           </div>
 
-          {/* DISCLAIMER */}
           <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
             <p className="hidden md:block text-center text-[12px] text-zinc-500 leading-5">
               Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
