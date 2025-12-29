@@ -52,7 +52,7 @@ function makeTitleFromText(text: string) {
 
 const STORAGE_KEY = "vonu_threads_v1";
 
-// Header fijo móvil (más fino)
+// Header fijo móvil (fino)
 const MOBILE_HEADER_H = 56;
 
 // Home
@@ -61,6 +61,16 @@ const HOME_URL = "https://vonuai.com";
 export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  // Detectar móvil para paddings correctos (sin hueco arriba en PC)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const apply = () => setIsMobile(mq.matches);
+    apply();
+    mq.addEventListener?.("change", apply);
+    return () => mq.removeEventListener?.("change", apply);
+  }, []);
 
   // -------- Persistencia local (localStorage) --------
   const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
@@ -119,8 +129,28 @@ export default function Page() {
   const [inputExpanded, setInputExpanded] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // “Autoscroll inteligente”
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const onScroll = () => {
+      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      // Si estás a ~120px del final, consideramos que “estás abajo”
+      setShouldAutoScroll(distanceFromBottom < 120);
+    };
+
+    el.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    return () => el.removeEventListener("scroll", onScroll as any);
+  }, []);
 
   // asegurar thread activo
   useEffect(() => {
@@ -147,13 +177,17 @@ export default function Page() {
     [messages]
   );
 
-  // Scroll suave al final
+  // Autoscroll (solo si procede)
   useEffect(() => {
-    scrollRef.current?.scrollTo({
-      top: scrollRef.current.scrollHeight,
-      behavior: "smooth",
+    if (!shouldAutoScroll) return;
+
+    // 2 raf: más estable durante streaming/markdown
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      });
     });
-  }, [messages, isTyping]);
+  }, [messages, isTyping, shouldAutoScroll]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -215,6 +249,12 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
+
+    // al cambiar de chat, si el usuario estaba abajo, mantenemos autoscroll
+    setShouldAutoScroll(true);
+    requestAnimationFrame(() => {
+      endRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+    });
 
     setTimeout(() => textareaRef.current?.focus(), 60);
   }
@@ -296,6 +336,9 @@ export default function Page() {
       text: "",
       streaming: true,
     };
+
+    // al enviar, forzamos “estar abajo”
+    setShouldAutoScroll(true);
 
     setThreads((prev) =>
       prev.map((t) => {
@@ -456,11 +499,13 @@ export default function Page() {
   }
 
   // pad extra para que el chat nunca quede tapado por el input fijo
-  const CHAT_BOTTOM_PAD = 180;
+  const CHAT_BOTTOM_PAD = 190;
+
+  const chatTopPadding = isMobile ? MOBILE_HEADER_H + 14 : 24;
 
   return (
-    <div className="h-[100dvh] bg-white flex overflow-hidden">
-      {/* ===== MOBILE HEADER (más fino, sin línea gris) ===== */}
+    <div className="min-h-[100svh] bg-white flex overflow-hidden">
+      {/* ===== MOBILE HEADER (solo móvil) ===== */}
       <div
         className="md:hidden fixed top-0 left-0 right-0 z-50"
         style={{ height: MOBILE_HEADER_H }}
@@ -509,7 +554,7 @@ export default function Page() {
         }`}
         onClick={() => setMenuOpen(false)}
       >
-        {/* Desktop sidebar (ventana redondeada, SIN header arriba) */}
+        {/* Desktop sidebar (ventana redondeada) */}
         <aside
           className={`hidden md:block absolute left-3 top-3 bottom-3 w-80 bg-white rounded-3xl shadow-xl border border-zinc-200 p-4 transform transition-transform duration-300 ease-out ${
             menuOpen ? "translate-x-0" : "-translate-x-[110%]"
@@ -721,7 +766,7 @@ export default function Page() {
           <div
             className="mx-auto max-w-3xl px-6 pb-10"
             style={{
-              paddingTop: MOBILE_HEADER_H + 14,
+              paddingTop: chatTopPadding,
               paddingBottom: CHAT_BOTTOM_PAD,
             }}
           >
@@ -766,12 +811,15 @@ export default function Page() {
                   </div>
                 );
               })}
+
+              {/* ancla de autoscroll */}
+              <div ref={endRef} />
             </div>
           </div>
         </div>
 
-        {/* INPUT + DISCLAIMER (fijo en móvil) */}
-        <div className="md:static fixed bottom-0 left-0 right-0 z-30 bg-white">
+        {/* INPUT + DISCLAIMER (fijo SIEMPRE, también en PC) */}
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white">
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             <button
               onClick={() => fileInputRef.current?.click()}
