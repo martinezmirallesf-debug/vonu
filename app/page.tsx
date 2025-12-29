@@ -240,7 +240,10 @@ export default function Page() {
     setImagePreview(null);
 
     // Al cambiar de chat, te llevo abajo al último
-    setTimeout(() => endRef.current?.scrollIntoView({ behavior: "auto", block: "end" }), 50);
+    setTimeout(
+      () => endRef.current?.scrollIntoView({ behavior: "auto", block: "end" }),
+      50
+    );
   }
 
   function openRename() {
@@ -254,7 +257,9 @@ export default function Page() {
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
       prev.map((t) =>
-        t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t
+        t.id === activeThread.id
+          ? { ...t, title: name, updatedAt: Date.now() }
+          : t
       )
     );
     setRenameOpen(false);
@@ -322,7 +327,9 @@ export default function Page() {
         if (t.id !== activeThread.id) return t;
 
         const hasUserAlready = t.messages.some((m) => m.role === "user");
-        const newTitle = hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen");
+        const newTitle = hasUserAlready
+          ? t.title
+          : makeTitleFromText(userText || "Imagen");
 
         return {
           ...t,
@@ -343,10 +350,14 @@ export default function Page() {
     try {
       await sleep(220);
 
-      const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
+      const threadNow =
+        threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
-        .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
+        .filter(
+          (m) =>
+            (m.role === "user" || m.role === "assistant") && (m.text || m.image)
+        )
         .map((m) => ({
           role: m.role,
           content: m.text ?? "",
@@ -388,7 +399,9 @@ export default function Page() {
             return {
               ...t,
               updatedAt: Date.now(),
-              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
+              messages: t.messages.map((m) =>
+                m.id === assistantId ? { ...m, text: partial } : m
+              ),
             };
           })
         );
@@ -417,7 +430,9 @@ export default function Page() {
       }, speedMs);
     } catch (err: any) {
       const msg =
-        typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
+        typeof err?.message === "string"
+          ? err.message
+          : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -520,10 +535,15 @@ export default function Page() {
             aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
             title={menuOpen ? "Cerrar menú" : "Menú"}
           >
+            {/* ✅ ÚNICO CAMBIO: rotación 90º del icono al abrir el menú */}
             <img
               src={"/vonu-icon.png?v=2"}
               alt="Vonu"
-              className="h-6 w-6"
+              className={[
+                "h-6 w-6",
+                "transition-transform duration-300 ease-out",
+                menuOpen ? "rotate-90" : "rotate-0",
+              ].join(" ")}
               draggable={false}
             />
             <img
@@ -556,8 +576,12 @@ export default function Page() {
           <div className="pt-14">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-800">Historial</div>
-                <div className="text-xs text-zinc-500">Tus consultas recientes</div>
+                <div className="text-sm font-semibold text-zinc-800">
+                  Historial
+                </div>
+                <div className="text-xs text-zinc-500">
+                  Tus consultas recientes
+                </div>
               </div>
 
               <button
@@ -590,17 +614,23 @@ export default function Page() {
             <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-220px)]">
               {sortedThreads.map((t) => {
                 const active = t.id === activeThreadId;
-                const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
+                const when = mounted
+                  ? new Date(t.updatedAt).toLocaleString()
+                  : "";
 
                 return (
                   <button
                     key={t.id}
                     onClick={() => activateThread(t.id)}
                     className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
-                      active ? "border-blue-600 bg-blue-50" : "border-zinc-200 hover:bg-zinc-50"
+                      active
+                        ? "border-blue-600 bg-blue-50"
+                        : "border-zinc-200 hover:bg-zinc-50"
                     }`}
                   >
-                    <div className="text-sm font-medium text-zinc-900">{t.title}</div>
+                    <div className="text-sm font-medium text-zinc-900">
+                      {t.title}
+                    </div>
                     <div className="text-xs text-zinc-500 mt-1">{when}</div>
                   </button>
                 );
@@ -620,8 +650,12 @@ export default function Page() {
             <div className="pt-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <div className="text-sm font-semibold text-zinc-800">Historial</div>
-                  <div className="text-xs text-zinc-500">Tus consultas recientes</div>
+                  <div className="text-sm font-semibold text-zinc-800">
+                    Historial
+                  </div>
+                  <div className="text-xs text-zinc-500">
+                    Tus consultas recientes
+                  </div>
                 </div>
 
                 <button
@@ -654,7 +688,9 @@ export default function Page() {
               <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-240px)]">
                 {sortedThreads.map((t) => {
                   const active = t.id === activeThreadId;
-                  const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
+                  const when = mounted
+                    ? new Date(t.updatedAt).toLocaleString()
+                    : "";
 
                   return (
                     <button
@@ -666,7 +702,9 @@ export default function Page() {
                           : "border-zinc-200 bg-white hover:bg-zinc-50"
                       }`}
                     >
-                      <div className="text-sm font-medium text-zinc-900">{t.title}</div>
+                      <div className="text-sm font-medium text-zinc-900">
+                        {t.title}
+                      </div>
                       <div className="text-xs text-zinc-500 mt-1">{when}</div>
                     </button>
                   );
@@ -686,8 +724,12 @@ export default function Page() {
               className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
-              <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
+              <div className="text-sm font-semibold text-zinc-900 mb-1">
+                Renombrar chat
+              </div>
+              <div className="text-xs text-zinc-500 mb-3">
+                Ponle un nombre para encontrarlo rápido.
+              </div>
 
               <input
                 value={renameValue}
@@ -771,11 +813,7 @@ export default function Page() {
                           className="rounded-3xl border border-zinc-200 max-h-64 object-contain"
                         />
                       )}
-                      {msg.text && (
-                        <div className={userBubble}>
-                          {msg.text}
-                        </div>
-                      )}
+                      {msg.text && <div className={userBubble}>{msg.text}</div>}
                     </div>
                   </div>
                 );
@@ -798,19 +836,45 @@ export default function Page() {
               disabled={isTyping}
               title={isTyping ? "Espera a que Vonu responda…" : "Adjuntar imagen"}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 5V19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                <path d="M5 12H19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 5V19"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M5 12H19"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
               </svg>
             </button>
 
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={onSelectImage}
+              className="hidden"
+            />
 
             {/* input */}
             <div className="flex-1">
               {imagePreview && (
                 <div className="mb-2 relative w-fit">
-                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="rounded-3xl border border-zinc-200 max-h-40"
+                  />
                   <button
                     onClick={() => setImagePreview(null)}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors"
@@ -835,7 +899,9 @@ export default function Page() {
                     }
                   }}
                   disabled={isTyping}
-                  placeholder={isTyping ? "Vonu está respondiendo…" : "Escribe tu mensaje…"}
+                  placeholder={
+                    isTyping ? "Vonu está respondiendo…" : "Escribe tu mensaje…"
+                  }
                   className="w-full resize-none bg-transparent text-sm outline-none leading-5 overflow-hidden"
                   rows={1}
                 />
@@ -850,7 +916,13 @@ export default function Page() {
               aria-label="Enviar"
               title={canSend ? "Enviar" : "Escribe un mensaje para enviar"}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
                 <path
                   d="M12 5l6 6M12 5l-6 6M12 5v14"
                   stroke="currentColor"
@@ -864,7 +936,8 @@ export default function Page() {
 
           <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
             <p className="text-center text-[12px] text-zinc-500 leading-5">
-              Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
+              Orientación y prevención. No sustituye profesionales. Si hay riesgo
+              inmediato, contacta con emergencias.
             </p>
 
             {/* si aún no ha hablado el usuario, dejamos un pelín más de aire visual */}
