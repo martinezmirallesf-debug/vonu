@@ -51,20 +51,18 @@ function makeTitleFromText(text: string) {
 }
 
 const STORAGE_KEY = "vonu_threads_v1";
-const MOBILE_HEADER_H = 56;
-const HOME_URL = "https://vonuai.com";
 
-// Heurística: desktop = puntero fino (ratón/trackpad)
-function isDesktopPointer() {
-  if (typeof window === "undefined") return true;
-  return window.matchMedia?.("(pointer: fine)")?.matches ?? true;
-}
+// Header fijo móvil (fino)
+const MOBILE_HEADER_H = 56;
+
+// Home
+const HOME_URL = "https://vonuai.com";
 
 export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // -------- Persistencia local --------
+  // -------- Persistencia local (localStorage) --------
   const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
   const [activeThreadId, setActiveThreadId] = useState<string>("");
 
@@ -113,55 +111,24 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
 
+  // Renombrar / borrar
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
 
+  // Input shape en móvil cuando crece
   const [inputExpanded, setInputExpanded] = useState(false);
 
+  // Medidas dinámicas para teclado móvil
+  const [keyboardInset, setKeyboardInset] = useState(0);
+
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputBarRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Altura dinámica del input bar para no tapar el chat (y evitar “cursor detrás”)
-  const [inputBarH, setInputBarH] = useState<number>(140);
-
-  // Autoscroll: solo si el usuario está cerca del final
-  const shouldStickToBottomRef = useRef(true);
-
-  // Arregla bugs de viewport en móvil (teclado) usando VisualViewport
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const vv = window.visualViewport;
-    if (!vv) return;
-
-    const setVvh = () => {
-      // altura visible real
-      document.documentElement.style.setProperty("--vvh", `${vv.height}px`);
-    };
-
-    setVvh();
-    vv.addEventListener("resize", setVvh);
-    vv.addEventListener("scroll", setVvh);
-    return () => {
-      vv.removeEventListener("resize", setVvh);
-      vv.removeEventListener("scroll", setVvh);
-    };
-  }, []);
-
-  // Resize observer del input bar
-  useEffect(() => {
-    const el = inputBarRef.current;
-    if (!el) return;
-
-    const ro = new ResizeObserver(() => {
-      const h = el.getBoundingClientRect().height;
-      // +8 para respirar y evitar “corte” del último mensaje
-      setInputBarH(Math.max(120, Math.ceil(h) + 8));
-    });
-
-    ro.observe(el);
-    return () => ro.disconnect();
+  const isCoarsePointer = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia?.("(pointer: coarse)")?.matches ?? false;
   }, []);
 
   // asegurar thread activo
@@ -189,7 +156,35 @@ export default function Page() {
     [messages]
   );
 
-  // textarea autoresize
+  // ---- teclado móvil: levantar input y dar padding al chat (Android/iOS)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const onResize = () => {
+      // Teclado = diferencia entre layout viewport y visual viewport
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setKeyboardInset(inset);
+
+      // Mantener el final visible si ya estabas abajo
+      requestAnimationFrame(() => {
+        endRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+      });
+    };
+
+    onResize();
+    vv.addEventListener("resize", onResize);
+    vv.addEventListener("scroll", onResize);
+
+    return () => {
+      vv.removeEventListener("resize", onResize);
+      vv.removeEventListener("scroll", onResize);
+    };
+  }, []);
+
+  // Auto-resize textarea
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -197,48 +192,34 @@ export default function Page() {
     el.style.height = "0px";
     const next = Math.min(el.scrollHeight, 140);
     el.style.height = next + "px";
+
     setInputExpanded(next > 52);
   }, [input]);
 
-  // onScroll: decide si pegamos abajo
-  function handleChatScroll() {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const threshold = 140; // px
-    const distToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    shouldStickToBottomRef.current = distToBottom < threshold;
-  }
-
-  // autoscroll cuando llegan mensajes/streaming (pero solo si el usuario está abajo)
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    if (!shouldStickToBottomRef.current) return;
-
-    el.scrollTo({
-      top: el.scrollHeight,
-      behavior: "smooth",
-    });
-  }, [messages, isTyping]);
-
-  // Autofocus:
-  // - Desktop: ok (mejora UX)
-  // - Móvil: NO re-enfocar tras cada update (evita “baile” del teclado)
+  // Focus “suave”: solo al abrir/cambiar chat / crear chat.
+  // Evitamos forzarlo tras cada mensaje en móvil (causaba “baile” del teclado).
   useEffect(() => {
     if (!mounted) return;
     if (renameOpen) return;
     if (menuOpen) return;
-    if (isTyping) return;
-
-    if (!isDesktopPointer()) return;
 
     const t = setTimeout(() => {
       textareaRef.current?.focus();
-    }, 60);
+    }, 80);
 
     return () => clearTimeout(t);
-  }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId]);
+  }, [mounted, renameOpen, menuOpen, activeThreadId]);
+
+  function scrollToBottom(behavior: ScrollBehavior = "smooth") {
+    // Anchor siempre es lo más estable (mejor que scrollHeight)
+    endRef.current?.scrollIntoView({ behavior, block: "end" });
+  }
+
+  // Scroll al final cuando llegan mensajes / typing
+  useEffect(() => {
+    scrollToBottom("smooth");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, isTyping]);
 
   function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -260,13 +241,11 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
-    // ver saludo inicial
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-      shouldStickToBottomRef.current = false;
     });
 
-    if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+    setTimeout(() => textareaRef.current?.focus(), 80);
   }
 
   function activateThread(id: string) {
@@ -276,25 +255,12 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
-    // al cambiar de chat, dejaremos que el usuario esté arriba (saludo) si es nuevo
+    // al cambiar chat, subir al inicio (saludo) y luego permitir scroll normal
     requestAnimationFrame(() => {
-      const el = scrollRef.current;
-      if (!el) return;
-
-      // si es un chat con pocos mensajes, lo ponemos arriba
-      const thread = threads.find((x) => x.id === id);
-      const isFresh = (thread?.messages ?? []).filter((m) => m.role === "user").length === 0;
-
-      if (isFresh) {
-        el.scrollTo({ top: 0, behavior: "auto" });
-        shouldStickToBottomRef.current = false;
-      } else {
-        el.scrollTo({ top: el.scrollHeight, behavior: "auto" });
-        shouldStickToBottomRef.current = true;
-      }
+      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
     });
 
-    if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+    setTimeout(() => textareaRef.current?.focus(), 80);
   }
 
   function openRename() {
@@ -313,7 +279,7 @@ export default function Page() {
     );
     setRenameOpen(false);
 
-    if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+    setTimeout(() => textareaRef.current?.focus(), 80);
   }
 
   function deleteActiveThread() {
@@ -330,10 +296,9 @@ export default function Page() {
 
       requestAnimationFrame(() => {
         scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-        shouldStickToBottomRef.current = false;
       });
 
-      if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+      setTimeout(() => textareaRef.current?.focus(), 80);
       return;
     }
 
@@ -347,12 +312,7 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-      shouldStickToBottomRef.current = false;
-    });
-
-    if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+    setTimeout(() => textareaRef.current?.focus(), 80);
   }
 
   async function sendMessage() {
@@ -379,9 +339,6 @@ export default function Page() {
       streaming: true,
     };
 
-    // al enviar, nos pegamos abajo
-    shouldStickToBottomRef.current = true;
-
     setThreads((prev) =>
       prev.map((t) => {
         if (t.id !== activeThread.id) return t;
@@ -402,8 +359,11 @@ export default function Page() {
     setImagePreview(null);
     setIsTyping(true);
 
+    // Importante: al enviar, sí bajamos al final (y dejamos el teclado como esté)
+    requestAnimationFrame(() => scrollToBottom("smooth"));
+
     try {
-      await sleep(220);
+      await sleep(240);
 
       const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
@@ -435,7 +395,7 @@ export default function Page() {
           ? data.text
           : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
 
-      await sleep(90);
+      await sleep(100);
 
       let i = 0;
       const speedMs = fullText.length > 900 ? 7 : 11;
@@ -455,6 +415,9 @@ export default function Page() {
           })
         );
 
+        // Mantener autoscroll durante streaming
+        requestAnimationFrame(() => scrollToBottom("auto"));
+
         if (i >= fullText.length) {
           clearInterval(interval);
 
@@ -473,13 +436,14 @@ export default function Page() {
 
           setIsTyping(false);
 
-          // Solo desktop: no queremos que en móvil vuelva a abrir teclado y “baile”
-          if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+          // En móvil NO forzamos focus aquí (evita que el teclado “bote”)
+          if (!isCoarsePointer) {
+            setTimeout(() => textareaRef.current?.focus(), 80);
+          }
         }
       }, speedMs);
     } catch (err: any) {
-      const msg =
-        typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
+      const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -505,23 +469,19 @@ export default function Page() {
 
       setUiError(msg);
       setIsTyping(false);
-      if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+
+      if (!isCoarsePointer) {
+        setTimeout(() => textareaRef.current?.focus(), 80);
+      }
     }
   }
 
-  function HomeLink({
-    className,
-    label = "Volver a la home",
-  }: {
-    className?: string;
-    label?: string;
-  }) {
+  function HomeLink({ className, label = "Volver a la home" }: { className?: string; label?: string }) {
     return (
       <a
         href={HOME_URL}
         className={
-          className ??
-          "inline-flex items-center gap-2 text-sm text-zinc-700 hover:text-blue-700 transition-colors"
+          className ?? "inline-flex items-center gap-2 text-sm text-zinc-700 hover:text-blue-700 transition-colors"
         }
       >
         <span className="text-[16px]" aria-hidden="true">
@@ -532,22 +492,16 @@ export default function Page() {
     );
   }
 
-  // Padding inferior del chat = alto real del input bar (evita que el cursor se “meta detrás”)
-  const chatBottomPad = inputBarH;
+  // Altura base extra abajo para que nunca quede tapado por input + teclado
+  const CHAT_BOTTOM_PAD = 190;
+
+  // Input “lift” cuando sale teclado (Android/iOS)
+  const inputLiftStyle = keyboardInset > 0 ? { transform: `translateY(-${keyboardInset}px)` } : undefined;
 
   return (
-    <div
-      className="bg-white flex overflow-hidden"
-      style={{
-        // Altura real visible (soluciona parte de issues con teclado en móvil)
-        height: "calc(var(--vvh, 100dvh))",
-      }}
-    >
-      {/* ===== MOBILE HEADER (solo móvil, fino, SIN línea gris) ===== */}
-      <div
-        className="md:hidden fixed top-0 left-0 right-0 z-50"
-        style={{ height: MOBILE_HEADER_H }}
-      >
+    <div className="h-[100dvh] bg-white flex overflow-hidden">
+      {/* ===== MOBILE HEADER ===== */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
         <div className="h-full px-4 flex items-center bg-white/80 backdrop-blur-xl">
           <button
             onClick={() => setMenuOpen((v) => !v)}
@@ -558,25 +512,13 @@ export default function Page() {
             <img
               src={"/vonu-icon.png?v=2"}
               alt="Menú"
-              className={`h-7 w-7 transition-transform duration-300 ease-out ${
-                menuOpen ? "rotate-90" : "rotate-0"
-              }`}
+              className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
               draggable={false}
             />
           </button>
 
-          <a
-            href={HOME_URL}
-            className="ml-2 flex items-center"
-            aria-label="Ir a la home"
-            title="Ir a la home"
-          >
-            <img
-              src={"/vonu-wordmark.png?v=2"}
-              alt="Vonu"
-              className="h-5 w-auto"
-              draggable={false}
-            />
+          <a href={HOME_URL} className="ml-2 flex items-center" aria-label="Ir a la home" title="Ir a la home">
+            <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
           </a>
 
           <div className="flex-1" />
@@ -597,7 +539,7 @@ export default function Page() {
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="pt-16">
+          <div className="pt-2">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <div className="text-sm font-semibold text-zinc-800">Historial</div>
@@ -631,7 +573,7 @@ export default function Page() {
               <HomeLink className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 transition-colors" />
             </div>
 
-            <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-220px)]">
+            <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-200px)]">
               {sortedThreads.map((t) => {
                 const active = t.id === activeThreadId;
                 const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
@@ -719,27 +661,6 @@ export default function Page() {
         </aside>
       </div>
 
-      {/* ===== Desktop top-left (como antes: icono + wordmark flotando, SIN header) ===== */}
-      <div className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-2 select-none">
-        <button
-          onClick={() => setMenuOpen((v) => !v)}
-          className="flex items-center"
-          aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-          title={menuOpen ? "Cerrar menú" : "Menú"}
-        >
-          <img
-            src={"/vonu-icon.png?v=2"}
-            alt="Menú"
-            className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
-            draggable={false}
-          />
-        </button>
-
-        <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home" title="Ir a la home">
-          <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
-        </a>
-      </div>
-
       {/* MAIN */}
       <div className="flex-1 flex flex-col min-h-0">
         {/* RENAME MODAL */}
@@ -792,20 +713,16 @@ export default function Page() {
         )}
 
         {/* CHAT */}
-        <div
-          ref={scrollRef}
-          onScroll={handleChatScroll}
-          className="flex-1 overflow-y-auto min-h-0"
-        >
+        <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
           <div
             className="mx-auto max-w-3xl px-6"
             style={{
-              paddingTop: MOBILE_HEADER_H + 14, // en desktop no molesta (no hay header bar)
-              paddingBottom: chatBottomPad,
+              paddingTop: MOBILE_HEADER_H + 14,
+              paddingBottom: CHAT_BOTTOM_PAD + keyboardInset, // clave: el teclado ya no tapa
             }}
           >
-            {/* menos espacio entre mensajes */}
-            <div className="space-y-3 py-8">
+            {/* Menos espacio entre mensajes */}
+            <div className="space-y-2.5">
               {messages.map((msg) => {
                 if (msg.role === "assistant") {
                   const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
@@ -827,9 +744,10 @@ export default function Page() {
                   );
                 }
 
+                // USER
                 return (
                   <div key={msg.id} className="flex justify-end bubble-in">
-                    <div className="max-w-xl space-y-2">
+                    <div className="max-w-xl space-y-1.5">
                       {msg.image && (
                         <img
                           src={msg.image}
@@ -837,8 +755,23 @@ export default function Page() {
                           className="rounded-3xl border border-zinc-200 max-h-64 object-contain"
                         />
                       )}
+
                       {msg.text && (
-                        <div className="bg-blue-600 text-white text-[14.5px] leading-relaxed rounded-3xl px-4 py-2.5 break-words">
+                        <div
+                          className={[
+                            "relative inline-block",
+                            "bg-blue-600 text-white",
+                            "text-[14.5px] leading-relaxed",
+                            "rounded-3xl",
+                            "px-4 py-2", // más finita (menos alto)
+                            "break-words",
+                            // “colita” tipo WhatsApp (derecha)
+                            "after:content-[''] after:absolute after:right-[-6px] after:bottom-[10px]",
+                            "after:w-0 after:h-0",
+                            "after:border-t-[7px] after:border-b-[7px] after:border-l-[8px]",
+                            "after:border-t-transparent after:border-b-transparent after:border-l-blue-600",
+                          ].join(" ")}
+                        >
                           {msg.text}
                         </div>
                       )}
@@ -846,12 +779,15 @@ export default function Page() {
                   </div>
                 );
               })}
+
+              {/* anchor para scroll estable */}
+              <div ref={endRef} />
             </div>
           </div>
         </div>
 
-        {/* INPUT + DISCLAIMER (sticky en TODAS las vistas) */}
-        <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white">
+        {/* INPUT + DISCLAIMER (fijo en TODOS) */}
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white" style={inputLiftStyle}>
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             {/* + */}
             <button
@@ -871,23 +807,13 @@ export default function Page() {
               </svg>
             </button>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={onSelectImage}
-              className="hidden"
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
 
             {/* input */}
             <div className="flex-1">
               {imagePreview && (
                 <div className="mb-2 relative w-fit bubble-in">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="rounded-3xl border border-zinc-200 max-h-40"
-                  />
+                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
                   <button
                     onClick={() => setImagePreview(null)}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors"
@@ -955,16 +881,11 @@ export default function Page() {
             </button>
           </div>
 
+          {/* DISCLAIMER */}
           <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
-            <p className="hidden md:block text-center text-[12px] text-zinc-500 leading-5">
+            <p className="text-center text-[12px] text-zinc-500 leading-5">
               Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
             </p>
-
-            {!hasUserMessage && (
-              <p className="md:hidden text-center text-[12px] text-zinc-500 leading-5">
-                Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
-              </p>
-            )}
           </div>
         </div>
       </div>
