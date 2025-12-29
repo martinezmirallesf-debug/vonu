@@ -142,7 +142,7 @@ export default function Page() {
     });
   }, [messages, isTyping]);
 
-  // Auto-resize textarea
+  // Auto-resize del textarea
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -210,9 +210,7 @@ export default function Page() {
   function confirmRename() {
     if (!activeThread) return;
     const name = renameValue.trim() || "Consulta";
-    setThreads((prev) =>
-      prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t))
-    );
+    setThreads((prev) => prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t)));
     setRenameOpen(false);
 
     setTimeout(() => textareaRef.current?.focus(), 60);
@@ -377,9 +375,7 @@ export default function Page() {
                     ...m,
                     streaming: false,
                     text:
-                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" +
-                      msg +
-                      "\n```",
+                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" + msg + "\n```",
                   }
                 : m
             ),
@@ -410,12 +406,15 @@ export default function Page() {
     );
   }
 
+  // Botón estilo “tarjeta blanca” (como las consultas)
+  const mobileActionBtn =
+    "flex-1 text-xs px-3 py-3 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors";
+
   return (
     <div className="h-[100dvh] bg-white flex overflow-hidden">
-      {/* ===== MOBILE HEADER (SOLO 1 ICONO + LETRAS, NADA A LA DERECHA) ===== */}
+      {/* ===== MOBILE HEADER ===== */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
         <div className="h-full px-4 flex items-center bg-white/70 backdrop-blur-xl">
-          {/* Icono menú (izquierda) */}
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="flex items-center"
@@ -430,12 +429,10 @@ export default function Page() {
             />
           </button>
 
-          {/* Letras (wordmark) al lado -> HOME */}
           <a href={HOME_URL} className="ml-2 flex items-center" aria-label="Ir a la home" title="Ir a la home">
             <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
           </a>
 
-          {/* Spacer para garantizar vacío a la derecha */}
           <div className="flex-1" />
         </div>
       </div>
@@ -443,7 +440,9 @@ export default function Page() {
       {/* ===== OVERLAY + SIDEBAR ===== */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-300 ${
-          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent backdrop-blur-0"
+          menuOpen
+            ? "bg-black/20 backdrop-blur-sm pointer-events-auto"
+            : "pointer-events-none bg-transparent backdrop-blur-0"
         }`}
         onClick={() => setMenuOpen(false)}
       >
@@ -533,20 +532,18 @@ export default function Page() {
                 </button>
               </div>
 
+              {/* ✅ BOTONES estilo blanco (como tarjetas) */}
               <div className="flex gap-2 mb-3">
-                <button onClick={openRename} className="flex-1 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200">
+                <button onClick={openRename} className={mobileActionBtn}>
                   Renombrar
                 </button>
-                <button
-                  onClick={deleteActiveThread}
-                  className="flex-1 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200 text-red-600"
-                >
+                <button onClick={deleteActiveThread} className={`${mobileActionBtn} text-red-600`}>
                   Borrar
                 </button>
               </div>
 
               <div className="mb-3">
-                <HomeLink className="w-full inline-flex items-center justify-center gap-2 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 transition-colors" />
+                <HomeLink className={`${mobileActionBtn} w-full inline-flex items-center justify-center gap-2 text-zinc-700`} />
               </div>
 
               <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-220px)]">
@@ -558,8 +555,8 @@ export default function Page() {
                     <button
                       key={t.id}
                       onClick={() => activateThread(t.id)}
-                      className={`w-full text-left rounded-2xl px-3 py-3 transition-colors ${
-                        active ? "bg-blue-50" : "bg-white hover:bg-zinc-50"
+                      className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
+                        active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"
                       }`}
                     >
                       <div className="text-sm font-medium text-zinc-900">{t.title}</div>
@@ -653,14 +650,13 @@ export default function Page() {
                 const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
                 return (
                   <div key={msg.id} className="bubble-in-slow">
-                    {/* ✅ MÁS GRANDE + MÁS ESPACIO ENTRE PÁRRAFOS/LISTAS */}
                     <div
                       className={[
                         "prose prose-zinc max-w-none",
-                        "text-[15px] leading-6 md:text-[15px]",
-                        "prose-p:my-3 prose-ul:my-3 prose-ol:my-3",
-                        "prose-li:my-1",
-                        "prose-strong:font-semibold",
+                        "text-[15px] md:text-base",
+                        "leading-relaxed",
+                        "prose-p:my-3 prose-ul:my-3 prose-ol:my-3 prose-li:my-1",
+                        "prose-strong:text-zinc-900",
                       ].join(" ")}
                     >
                       <ReactMarkdown>{mdText}</ReactMarkdown>
@@ -680,7 +676,7 @@ export default function Page() {
                       />
                     )}
                     {msg.text && (
-                      <div className="bg-blue-600 text-white text-[15px] leading-6 rounded-3xl px-5 py-3 break-words">
+                      <div className="bg-blue-600 text-white text-sm leading-relaxed rounded-3xl px-5 py-3 break-words">
                         {msg.text}
                       </div>
                     )}
