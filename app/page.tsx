@@ -51,14 +51,21 @@ function makeTitleFromText(text: string) {
 }
 
 const STORAGE_KEY = "vonu_threads_v1";
-const MOBILE_HEADER_H = 64;
+
+// Header móvil más fino
+const MOBILE_HEADER_H = 52;
+
+// Home
 const HOME_URL = "https://vonuai.com";
+
+// cache-busting simple para logos (sube este número cuando cambies PNG)
+const ASSET_V = "3";
 
 export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // -------- Persistencia local --------
+  // -------- Persistencia local (localStorage) --------
   const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
   const [activeThreadId, setActiveThreadId] = useState<string>("");
 
@@ -107,14 +114,18 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
 
+  // Renombrar / borrar
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
+
+  // Input shape en móvil cuando crece
   const [inputExpanded, setInputExpanded] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // asegurar thread activo
   useEffect(() => {
     if (!activeThreadId && threads[0]?.id) setActiveThreadId(threads[0].id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -139,6 +150,7 @@ export default function Page() {
     [messages]
   );
 
+  // Scroll suave al final
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
@@ -146,6 +158,7 @@ export default function Page() {
     });
   }, [messages, isTyping]);
 
+  // Auto-resize textarea
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -157,6 +170,7 @@ export default function Page() {
     setInputExpanded(next > 52);
   }, [input]);
 
+  // Auto-focus
   useEffect(() => {
     if (!mounted) return;
     if (renameOpen) return;
@@ -190,6 +204,7 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
+    // llevar scroll arriba para ver saludo inicial
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
     });
@@ -203,6 +218,10 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
+
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    });
 
     setTimeout(() => textareaRef.current?.focus(), 60);
   }
@@ -218,9 +237,7 @@ export default function Page() {
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
       prev.map((t) =>
-        t.id === activeThread.id
-          ? { ...t, title: name, updatedAt: Date.now() }
-          : t
+        t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t
       )
     );
     setRenameOpen(false);
@@ -258,6 +275,10 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    });
+
     setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
@@ -290,9 +311,7 @@ export default function Page() {
         if (t.id !== activeThread.id) return t;
 
         const hasUserAlready = t.messages.some((m) => m.role === "user");
-        const newTitle = hasUserAlready
-          ? t.title
-          : makeTitleFromText(userText || "Imagen");
+        const newTitle = hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen");
 
         return {
           ...t,
@@ -310,14 +329,10 @@ export default function Page() {
     try {
       await sleep(260);
 
-      const threadNow =
-        threads.find((x) => x.id === activeThread.id) ?? activeThread;
+      const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
-        .filter(
-          (m) =>
-            (m.role === "user" || m.role === "assistant") && (m.text || m.image)
-        )
+        .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
         .map((m) => ({
           role: m.role,
           content: m.text ?? "",
@@ -443,17 +458,17 @@ export default function Page() {
     );
   }
 
-  // Más compacto porque las burbujas ahora ocupan menos
-  const CHAT_BOTTOM_PAD = 150;
+  // espacio para que el chat no quede tapado por el input fijo
+  const CHAT_BOTTOM_PAD = 160;
 
   return (
     <div className="h-[100dvh] bg-white flex overflow-hidden">
-      {/* ===== MOBILE HEADER (Fijo) ===== */}
+      {/* ===== MOBILE HEADER (fino, sin línea gris) ===== */}
       <div
         className="md:hidden fixed top-0 left-0 right-0 z-50"
         style={{ height: MOBILE_HEADER_H }}
       >
-        <div className="h-full px-4 flex items-center bg-white/80 backdrop-blur-xl border-b border-zinc-200">
+        <div className="h-full px-4 flex items-center bg-white/80 backdrop-blur-xl">
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="flex items-center"
@@ -461,7 +476,7 @@ export default function Page() {
             title={menuOpen ? "Cerrar menú" : "Menú"}
           >
             <img
-              src={"/vonu-icon.png?v=2"}
+              src={`/vonu-icon.png?v=${ASSET_V}`}
               alt="Menú"
               className={`h-7 w-7 transition-transform duration-300 ease-out ${
                 menuOpen ? "rotate-90" : "rotate-0"
@@ -477,7 +492,7 @@ export default function Page() {
             title="Ir a la home"
           >
             <img
-              src={"/vonu-wordmark.png?v=2"}
+              src={`/vonu-wordmark.png?v=${ASSET_V}`}
               alt="Vonu"
               className="h-5 w-auto"
               draggable={false}
@@ -497,14 +512,14 @@ export default function Page() {
         }`}
         onClick={() => setMenuOpen(false)}
       >
-        {/* Desktop sidebar */}
+        {/* Desktop sidebar (solo panel redondeado, sin header arriba) */}
         <aside
           className={`hidden md:block absolute left-3 top-3 bottom-3 w-80 bg-white rounded-3xl shadow-xl border border-zinc-200 p-4 transform transition-transform duration-300 ease-out ${
             menuOpen ? "translate-x-0" : "-translate-x-[110%]"
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="pt-16">
+          <div className="pt-6">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <div className="text-sm font-semibold text-zinc-800">
@@ -542,7 +557,7 @@ export default function Page() {
               <HomeLink className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 transition-colors" />
             </div>
 
-            <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-220px)]">
+            <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-180px)]">
               {sortedThreads.map((t) => {
                 const active = t.id === activeThreadId;
                 const when = mounted
@@ -649,34 +664,6 @@ export default function Page() {
         </aside>
       </div>
 
-      {/* Desktop top-left */}
-      <div className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-2 select-none">
-        <button
-          onClick={() => setMenuOpen((v) => !v)}
-          className="flex items-center"
-          aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-          title={menuOpen ? "Cerrar menú" : "Menú"}
-        >
-          <img
-            src={"/vonu-icon.png?v=2"}
-            alt="Menú"
-            className={`h-7 w-7 transition-transform duration-300 ease-out ${
-              menuOpen ? "rotate-90" : "rotate-0"
-            }`}
-            draggable={false}
-          />
-        </button>
-
-        <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home">
-          <img
-            src={"/vonu-wordmark.png?v=2"}
-            alt="Vonu"
-            className="h-5 w-auto"
-            draggable={false}
-          />
-        </a>
-      </div>
-
       {/* MAIN */}
       <div className="flex-1 flex flex-col min-h-0">
         {/* RENAME MODAL */}
@@ -735,14 +722,11 @@ export default function Page() {
         {/* CHAT */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
           <div
-            className="mx-auto max-w-3xl px-6"
-            style={{
-              paddingTop: MOBILE_HEADER_H + 16,
-              paddingBottom: CHAT_BOTTOM_PAD,
-            }}
+            className="mx-auto max-w-3xl px-6 pb-10 pt-[68px] md:pt-10"
+            style={{ paddingBottom: CHAT_BOTTOM_PAD }}
           >
-            {/* ✅ MÁS COMPACTO */}
-            <div className="space-y-2.5">
+            {/* menos espacio entre mensajes */}
+            <div className="space-y-3">
               {messages.map((msg) => {
                 if (msg.role === "assistant") {
                   const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
@@ -766,7 +750,7 @@ export default function Page() {
 
                 return (
                   <div key={msg.id} className="flex justify-end bubble-in">
-                    <div className="max-w-xl space-y-1.5">
+                    <div className="max-w-xl space-y-2">
                       {msg.image && (
                         <img
                           src={msg.image}
@@ -775,16 +759,7 @@ export default function Page() {
                         />
                       )}
                       {msg.text && (
-                        <div
-                          className={[
-                            "bg-blue-600 text-white",
-                            "text-[14.5px] leading-relaxed",
-                            "rounded-3xl",
-                            // ✅ burbuja más fina (menos padding vertical)
-                            "px-4 py-2",
-                            "break-words",
-                          ].join(" ")}
-                        >
+                        <div className="bg-blue-600 text-white text-[14.5px] leading-relaxed rounded-3xl px-4 py-2 break-words">
                           {msg.text}
                         </div>
                       )}
@@ -796,7 +771,7 @@ export default function Page() {
           </div>
         </div>
 
-        {/* INPUT + DISCLAIMER (Fijo en móvil) */}
+        {/* INPUT + DISCLAIMER (fijo en móvil) */}
         <div className="md:static fixed bottom-0 left-0 right-0 z-30 bg-white">
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             <button
@@ -810,9 +785,25 @@ export default function Page() {
               disabled={isTyping}
               title={isTyping ? "Espera a que Vonu responda…" : "Adjuntar imagen"}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 5V19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                <path d="M5 12H19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 5V19"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M5 12H19"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
               </svg>
             </button>
 
@@ -861,7 +852,9 @@ export default function Page() {
                     }
                   }}
                   disabled={isTyping}
-                  placeholder={isTyping ? "Vonu está respondiendo…" : "Escribe tu mensaje…"}
+                  placeholder={
+                    isTyping ? "Vonu está respondiendo…" : "Escribe tu mensaje…"
+                  }
                   className="w-full resize-none bg-transparent text-sm outline-none leading-5 overflow-hidden"
                   rows={1}
                 />
