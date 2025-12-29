@@ -51,15 +51,12 @@ function makeTitleFromText(text: string) {
 }
 
 const STORAGE_KEY = "vonu_threads_v1";
-
-// Header fijo móvil (fino)
-const MOBILE_HEADER_H = 56;
-
-// Home
+const MOBILE_HEADER_H = 52; // más fino
 const HOME_URL = "https://vonuai.com";
 
-// Cache-bust para assets (cámbialo si actualizas iconos)
-const ASSET_V = "6";
+// cache-bust para evitar que Vercel sirva iconos antiguos
+const ICON_SRC = "/vonu-icon.png?v=6";
+const WORDMARK_SRC = "/vonu-wordmark.png?v=6";
 
 export default function Page() {
   const [mounted, setMounted] = useState(false);
@@ -114,27 +111,25 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
 
-  // Renombrar / borrar
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
 
-  // Input shape en móvil cuando crece
   const [inputExpanded, setInputExpanded] = useState(false);
 
-  // Detectores para NO “forzar focus” en móvil (evitar baile del teclado)
-  const [isMobile, setIsMobile] = useState(false);
-  const [keyboardOpen, setKeyboardOpen] = useState(false);
-  const hasAutoFocusedOnce = useRef(false);
-
   const scrollRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Si el usuario ha scrolleado manualmente hacia arriba, no auto-bajarle
-  const userLockedScrollRef = useRef(false);
+  // Detectar móvil/touch para NO auto-focus agresivo (evita baile del teclado)
+  const isCoarsePointerRef = useRef<boolean>(false);
+  const didInitialFocusRef = useRef<boolean>(false);
 
-  // asegurar thread activo
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    isCoarsePointerRef.current = window.matchMedia?.("(pointer: coarse)")?.matches ?? false;
+  }, []);
+
   useEffect(() => {
     if (!activeThreadId && threads[0]?.id) setActiveThreadId(threads[0].id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -159,53 +154,17 @@ export default function Page() {
     [messages]
   );
 
-  // Detectar mobile + teclado (visualViewport)
+  // Auto-scroll robusto al final
   useEffect(() => {
-    if (!mounted) return;
+    // si estás viendo el menú o renombrando, no molestamos
+    if (menuOpen || renameOpen) return;
 
-    const mq = window.matchMedia("(max-width: 767px)");
-    const applyMobile = () => setIsMobile(mq.matches);
-    applyMobile();
-
-    const onMq = () => applyMobile();
-    mq.addEventListener?.("change", onMq);
-
-    const vv = window.visualViewport;
-    const baseH = () => window.innerHeight;
-
-    const onVv = () => {
-      if (!vv) return;
-      // Si el viewport visible baja bastante vs innerHeight => teclado abierto
-      const diff = baseH() - vv.height;
-      setKeyboardOpen(diff > 120);
-    };
-
-    vv?.addEventListener("resize", onVv);
-    vv?.addEventListener("scroll", onVv);
-    onVv();
-
-    return () => {
-      mq.removeEventListener?.("change", onMq);
-      vv?.removeEventListener("resize", onVv);
-      vv?.removeEventListener("scroll", onVv);
-    };
-  }, [mounted]);
-
-  // Bloquear scroll del body para que no “empuje” el header/input en móvil
-  useEffect(() => {
-    if (!mounted) return;
-
-    const prevOverflow = document.body.style.overflow;
-    const prevHeight = document.body.style.height;
-
-    document.body.style.overflow = "hidden";
-    document.body.style.height = "100%";
-
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      document.body.style.height = prevHeight;
-    };
-  }, [mounted]);
+    // esperamos un frame para que el DOM pinte alturas correctas
+    const raf = requestAnimationFrame(() => {
+      endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [messages, isTyping, menuOpen, renameOpen]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -219,59 +178,28 @@ export default function Page() {
     setInputExpanded(next > 52);
   }, [input]);
 
-  // Focus SOLO al entrar (una vez) y en PC cuando cambias de chat (sin teclado abierto)
+  // Auto-focus SOLO en desktop (o al entrar por primera vez)
   useEffect(() => {
     if (!mounted) return;
     if (renameOpen) return;
     if (menuOpen) return;
     if (isTyping) return;
 
-    // En móvil: solo una vez al cargar (para que puedas escribir directo),
-    // pero NO re-enfocar continuamente (evita “baile” del teclado).
-    if (isMobile) {
-      if (hasAutoFocusedOnce.current) return;
-      hasAutoFocusedOnce.current = true;
-      const t = setTimeout(() => textareaRef.current?.focus(), 80);
+    // En móvil/touch: solo foco inicial al abrir la página (evita baile del teclado)
+    if (isCoarsePointerRef.current) {
+      if (didInitialFocusRef.current) return;
+      didInitialFocusRef.current = true;
+      const t = setTimeout(() => textareaRef.current?.focus(), 120);
       return () => clearTimeout(t);
     }
 
-    // En desktop: sí podemos enfocar sin problemas
-    const t = setTimeout(() => textareaRef.current?.focus(), 60);
+    // Desktop: sí podemos re-enfocar suavemente
+    const t = setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 60);
+
     return () => clearTimeout(t);
-  }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId, isMobile]);
-
-  // Scroll: detecta si el usuario se fue hacia arriba
-  function onChatScroll() {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const distanceToBottom = el.scrollHeight - (el.scrollTop + el.clientHeight);
-    userLockedScrollRef.current = distanceToBottom > 140; // si está “lejos” del final, respetar
-  }
-
-  function scrollToBottom(force = false) {
-    if (!force && userLockedScrollRef.current) return;
-
-    // rAF doble para asegurar que el DOM ya pintó el streaming
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        bottomRef.current?.scrollIntoView({ behavior: force ? "auto" : "smooth", block: "end" });
-      });
-    });
-  }
-
-  // Auto-scroll al final cuando llegan mensajes o está escribiendo
-  useEffect(() => {
-    scrollToBottom(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages.length, isTyping]);
-
-  // Si el último mensaje es streaming, mantenerlo visible (sin secuestrar si el user subió)
-  useEffect(() => {
-    const last = messages[messages.length - 1];
-    if (last?.streaming) scrollToBottom(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages]);
+  }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId]);
 
   function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -292,12 +220,16 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
-    userLockedScrollRef.current = false;
 
-    // subir arriba para ver saludo inicial
+    // Al crear chat nuevo: sube arriba para ver saludo inicial
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
     });
+
+    // Desktop: foco ok. Móvil: NO forzamos (evita teclado subiendo solo)
+    if (!isCoarsePointerRef.current) {
+      setTimeout(() => textareaRef.current?.focus(), 60);
+    }
   }
 
   function activateThread(id: string) {
@@ -306,10 +238,10 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
-    userLockedScrollRef.current = false;
 
-    // si cambias de chat, que se vea el final por defecto
-    requestAnimationFrame(() => scrollToBottom(true));
+    if (!isCoarsePointerRef.current) {
+      setTimeout(() => textareaRef.current?.focus(), 60);
+    }
   }
 
   function openRename() {
@@ -327,6 +259,10 @@ export default function Page() {
       )
     );
     setRenameOpen(false);
+
+    if (!isCoarsePointerRef.current) {
+      setTimeout(() => textareaRef.current?.focus(), 60);
+    }
   }
 
   function deleteActiveThread() {
@@ -340,11 +276,14 @@ export default function Page() {
       setUiError(null);
       setInput("");
       setImagePreview(null);
-      userLockedScrollRef.current = false;
 
       requestAnimationFrame(() => {
         scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
       });
+
+      if (!isCoarsePointerRef.current) {
+        setTimeout(() => textareaRef.current?.focus(), 60);
+      }
       return;
     }
 
@@ -357,9 +296,10 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
-    userLockedScrollRef.current = false;
 
-    requestAnimationFrame(() => scrollToBottom(true));
+    if (!isCoarsePointerRef.current) {
+      setTimeout(() => textareaRef.current?.focus(), 60);
+    }
   }
 
   async function sendMessage() {
@@ -386,9 +326,6 @@ export default function Page() {
       streaming: true,
     };
 
-    // En cuanto envías, queremos ver el final
-    userLockedScrollRef.current = false;
-
     setThreads((prev) =>
       prev.map((t) => {
         if (t.id !== activeThread.id) return t;
@@ -409,11 +346,8 @@ export default function Page() {
     setImagePreview(null);
     setIsTyping(true);
 
-    // NO forzar focus aquí (en móvil provoca baile del teclado)
-    scrollToBottom(false);
-
     try {
-      await sleep(200);
+      await sleep(220);
 
       const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
@@ -474,25 +408,21 @@ export default function Page() {
               return {
                 ...t,
                 updatedAt: Date.now(),
-                messages: t.messages.map((m) =>
-                  m.id === assistantId ? { ...m, streaming: false } : m
-                ),
+                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
               };
             })
           );
 
           setIsTyping(false);
-          scrollToBottom(false);
 
-          // En desktop ok enfocar, en móvil NO (evita baile teclado)
-          if (!isMobile && !keyboardOpen) {
+          // Desktop: ok. Móvil: NO (evita teclado subiendo al terminar respuesta)
+          if (!isCoarsePointerRef.current) {
             setTimeout(() => textareaRef.current?.focus(), 60);
           }
         }
       }, speedMs);
     } catch (err: any) {
-      const msg =
-        typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
+      const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -518,9 +448,8 @@ export default function Page() {
 
       setUiError(msg);
       setIsTyping(false);
-      scrollToBottom(false);
 
-      if (!isMobile && !keyboardOpen) {
+      if (!isCoarsePointerRef.current) {
         setTimeout(() => textareaRef.current?.focus(), 60);
       }
     }
@@ -549,15 +478,20 @@ export default function Page() {
     );
   }
 
-  // pad extra para que el chat nunca quede tapado por el input sticky
-  const CHAT_BOTTOM_PAD = 170;
+  // input fijo: deja espacio suficiente al final (móvil + desktop)
+  const CHAT_BOTTOM_PAD = 210;
 
   return (
     <div className="h-[100dvh] bg-white flex overflow-hidden">
-      {/* ===== MOBILE HEADER (icono + wordmark, siempre visible) ===== */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
+      {/* ===== MOBILE HEADER (fino, sin raya) ===== */}
+      <div
+        className="md:hidden fixed left-0 right-0 z-50"
+        style={{
+          top: "env(safe-area-inset-top)",
+          height: MOBILE_HEADER_H,
+        }}
+      >
         <div className="h-full px-4 flex items-center bg-white/80 backdrop-blur-xl">
-          {/* Botón menú */}
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="flex items-center"
@@ -565,7 +499,7 @@ export default function Page() {
             title={menuOpen ? "Cerrar menú" : "Menú"}
           >
             <img
-              src={`/vonu-icon.png?v=${ASSET_V}`}
+              src={ICON_SRC}
               alt="Menú"
               className={`h-7 w-7 transition-transform duration-300 ease-out ${
                 menuOpen ? "rotate-90" : "rotate-0"
@@ -574,19 +508,13 @@ export default function Page() {
             />
           </button>
 
-          {/* Wordmark */}
           <a
             href={HOME_URL}
             className="ml-2 flex items-center"
             aria-label="Ir a la home"
             title="Ir a la home"
           >
-            <img
-              src={`/vonu-wordmark.png?v=${ASSET_V}`}
-              alt="Vonu"
-              className="h-5 w-auto"
-              draggable={false}
-            />
+            <img src={WORDMARK_SRC} alt="Vonu" className="h-5 w-auto" draggable={false} />
           </a>
 
           <div className="flex-1" />
@@ -670,7 +598,7 @@ export default function Page() {
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div style={{ paddingTop: MOBILE_HEADER_H }} className="px-4 pb-4 h-full">
+          <div style={{ paddingTop: MOBILE_HEADER_H + 8 }} className="px-4 pb-4 h-full">
             <div className="pt-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
@@ -715,9 +643,7 @@ export default function Page() {
                       key={t.id}
                       onClick={() => activateThread(t.id)}
                       className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
-                        active
-                          ? "border-blue-600 bg-blue-50"
-                          : "border-zinc-200 bg-white hover:bg-zinc-50"
+                        active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"
                       }`}
                     >
                       <div className="text-sm font-medium text-zinc-900">{t.title}</div>
@@ -729,6 +655,27 @@ export default function Page() {
             </div>
           </div>
         </aside>
+      </div>
+
+      {/* Desktop top-left floating (NO header, como antes) */}
+      <div className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-2 select-none">
+        <button
+          onClick={() => setMenuOpen((v) => !v)}
+          className="flex items-center"
+          aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+          title={menuOpen ? "Cerrar menú" : "Menú"}
+        >
+          <img
+            src={ICON_SRC}
+            alt="Menú"
+            className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
+            draggable={false}
+          />
+        </button>
+
+        <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home" title="Ir a la home">
+          <img src={WORDMARK_SRC} alt="Vonu" className="h-5 w-auto" draggable={false} />
+        </a>
       </div>
 
       {/* MAIN */}
@@ -783,14 +730,9 @@ export default function Page() {
         )}
 
         {/* CHAT */}
-        <div
-          ref={scrollRef}
-          onScroll={onChatScroll}
-          className="flex-1 overflow-y-auto min-h-0"
-          style={{ overscrollBehavior: "contain" }}
-        >
+        <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
           <div
-            className="mx-auto max-w-3xl px-6 pb-10"
+            className="mx-auto max-w-3xl px-6"
             style={{
               paddingTop: MOBILE_HEADER_H + 14,
               paddingBottom: CHAT_BOTTOM_PAD,
@@ -838,13 +780,13 @@ export default function Page() {
                 );
               })}
 
-              <div ref={bottomRef} />
+              <div ref={endRef} />
             </div>
           </div>
         </div>
 
-        {/* INPUT + DISCLAIMER (sticky abajo en todas) */}
-        <div className="sticky bottom-0 z-30 bg-white">
+        {/* INPUT + DISCLAIMER (FIJO en móvil y en PC) */}
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white">
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             <button
               onClick={() => fileInputRef.current?.click()}
