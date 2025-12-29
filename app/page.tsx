@@ -52,8 +52,8 @@ function makeTitleFromText(text: string) {
 
 const STORAGE_KEY = "vonu_threads_v1";
 
-// Header fijo móvil (fino)
-const MOBILE_HEADER_H = 56;
+// Mobile header fino
+const MOBILE_HEADER_H = 52;
 
 // Home
 const HOME_URL = "https://vonuai.com";
@@ -61,6 +61,16 @@ const HOME_URL = "https://vonuai.com";
 export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  // Detectar móvil (para evitar auto-focus que dispara el teclado sin parar)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const apply = () => setIsMobile(mq.matches);
+    apply();
+    mq.addEventListener?.("change", apply);
+    return () => mq.removeEventListener?.("change", apply);
+  }, []);
 
   // -------- Persistencia local (localStorage) --------
   const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
@@ -81,9 +91,7 @@ export default function Page() {
           title: typeof t.title === "string" ? t.title : "Consulta",
           updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
           messages:
-            Array.isArray(t.messages) && t.messages.length
-              ? t.messages
-              : [initialAssistantMessage()],
+            Array.isArray(t.messages) && t.messages.length ? t.messages : [initialAssistantMessage()],
         }));
 
       if (clean.length) {
@@ -118,18 +126,36 @@ export default function Page() {
   // Input shape en móvil cuando crece
   const [inputExpanded, setInputExpanded] = useState(false);
 
-  // Medidas dinámicas para teclado móvil
-  const [keyboardInset, setKeyboardInset] = useState(0);
-
   const scrollRef = useRef<HTMLDivElement>(null);
-  const endRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const isCoarsePointer = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia?.("(pointer: coarse)")?.matches ?? false;
-  }, []);
+  // Keyboard handling (VisualViewport)
+  const [keyboardLift, setKeyboardLift] = useState(0);
+  useEffect(() => {
+    if (!mounted) return;
+
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const onVV = () => {
+      // En Android/Chrome: cuando aparece teclado, visualViewport.height baja
+      const lift = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+      setKeyboardLift(lift);
+    };
+
+    onVV();
+    vv.addEventListener("resize", onVV);
+    vv.addEventListener("scroll", onVV);
+    window.addEventListener("resize", onVV);
+
+    return () => {
+      vv.removeEventListener("resize", onVV);
+      vv.removeEventListener("scroll", onVV);
+      window.removeEventListener("resize", onVV);
+    };
+  }, [mounted]);
 
   // asegurar thread activo
   useEffect(() => {
@@ -151,38 +177,30 @@ export default function Page() {
     return !isTyping && (!!input.trim() || !!imagePreview);
   }, [isTyping, input, imagePreview]);
 
-  const hasUserMessage = useMemo(
-    () => messages.some((m) => m.role === "user"),
-    [messages]
-  );
+  const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
 
-  // ---- teclado móvil: levantar input y dar padding al chat (Android/iOS)
+  // Solo autoscroll si el usuario está “abajo”
+  const [stickToBottom, setStickToBottom] = useState(true);
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    const el = scrollRef.current;
+    if (!el) return;
 
-    const vv = window.visualViewport;
-    if (!vv) return;
-
-    const onResize = () => {
-      // Teclado = diferencia entre layout viewport y visual viewport
-      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      setKeyboardInset(inset);
-
-      // Mantener el final visible si ya estabas abajo
-      requestAnimationFrame(() => {
-        endRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
-      });
+    const onScroll = () => {
+      const threshold = 140;
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+      setStickToBottom(atBottom);
     };
 
-    onResize();
-    vv.addEventListener("resize", onResize);
-    vv.addEventListener("scroll", onResize);
-
-    return () => {
-      vv.removeEventListener("resize", onResize);
-      vv.removeEventListener("scroll", onResize);
-    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => el.removeEventListener("scroll", onScroll as any);
   }, []);
+
+  // Autoscroll al último mensaje (ancla)
+  useEffect(() => {
+    if (!stickToBottom) return;
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages, isTyping, stickToBottom]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -196,30 +214,13 @@ export default function Page() {
     setInputExpanded(next > 52);
   }, [input]);
 
-  // Focus “suave”: solo al abrir/cambiar chat / crear chat.
-  // Evitamos forzarlo tras cada mensaje en móvil (causaba “baile” del teclado).
+  // Auto-focus SOLO al entrar (y en desktop). En móvil lo evitamos para que no “bote” el teclado.
   useEffect(() => {
     if (!mounted) return;
-    if (renameOpen) return;
-    if (menuOpen) return;
-
-    const t = setTimeout(() => {
-      textareaRef.current?.focus();
-    }, 80);
-
+    if (isMobile) return;
+    const t = setTimeout(() => textareaRef.current?.focus(), 120);
     return () => clearTimeout(t);
-  }, [mounted, renameOpen, menuOpen, activeThreadId]);
-
-  function scrollToBottom(behavior: ScrollBehavior = "smooth") {
-    // Anchor siempre es lo más estable (mejor que scrollHeight)
-    endRef.current?.scrollIntoView({ behavior, block: "end" });
-  }
-
-  // Scroll al final cuando llegan mensajes / typing
-  useEffect(() => {
-    scrollToBottom("smooth");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages, isTyping]);
+  }, [mounted, isMobile]);
 
   function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -244,8 +245,6 @@ export default function Page() {
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
     });
-
-    setTimeout(() => textareaRef.current?.focus(), 80);
   }
 
   function activateThread(id: string) {
@@ -255,12 +254,8 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
-    // al cambiar chat, subir al inicio (saludo) y luego permitir scroll normal
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-    });
-
-    setTimeout(() => textareaRef.current?.focus(), 80);
+    // Cuando cambias de hilo, volvemos a “stick”
+    setStickToBottom(true);
   }
 
   function openRename() {
@@ -273,13 +268,9 @@ export default function Page() {
     if (!activeThread) return;
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
-      prev.map((t) =>
-        t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t
-      )
+      prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t))
     );
     setRenameOpen(false);
-
-    setTimeout(() => textareaRef.current?.focus(), 80);
   }
 
   function deleteActiveThread() {
@@ -297,8 +288,6 @@ export default function Page() {
       requestAnimationFrame(() => {
         scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
       });
-
-      setTimeout(() => textareaRef.current?.focus(), 80);
       return;
     }
 
@@ -311,8 +300,6 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
-
-    setTimeout(() => textareaRef.current?.focus(), 80);
   }
 
   async function sendMessage() {
@@ -358,12 +345,10 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
     setIsTyping(true);
-
-    // Importante: al enviar, sí bajamos al final (y dejamos el teclado como esté)
-    requestAnimationFrame(() => scrollToBottom("smooth"));
+    setStickToBottom(true);
 
     try {
-      await sleep(240);
+      await sleep(220);
 
       const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
@@ -395,7 +380,7 @@ export default function Page() {
           ? data.text
           : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
 
-      await sleep(100);
+      await sleep(90);
 
       let i = 0;
       const speedMs = fullText.length > 900 ? 7 : 11;
@@ -415,9 +400,6 @@ export default function Page() {
           })
         );
 
-        // Mantener autoscroll durante streaming
-        requestAnimationFrame(() => scrollToBottom("auto"));
-
         if (i >= fullText.length) {
           clearInterval(interval);
 
@@ -427,19 +409,12 @@ export default function Page() {
               return {
                 ...t,
                 updatedAt: Date.now(),
-                messages: t.messages.map((m) =>
-                  m.id === assistantId ? { ...m, streaming: false } : m
-                ),
+                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
               };
             })
           );
 
           setIsTyping(false);
-
-          // En móvil NO forzamos focus aquí (evita que el teclado “bote”)
-          if (!isCoarsePointer) {
-            setTimeout(() => textareaRef.current?.focus(), 80);
-          }
         }
       }, speedMs);
     } catch (err: any) {
@@ -456,10 +431,7 @@ export default function Page() {
                 ? {
                     ...m,
                     streaming: false,
-                    text:
-                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" +
-                      msg +
-                      "\n```",
+                    text: "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" + msg + "\n```",
                   }
                 : m
             ),
@@ -469,10 +441,6 @@ export default function Page() {
 
       setUiError(msg);
       setIsTyping(false);
-
-      if (!isCoarsePointer) {
-        setTimeout(() => textareaRef.current?.focus(), 80);
-      }
     }
   }
 
@@ -481,7 +449,8 @@ export default function Page() {
       <a
         href={HOME_URL}
         className={
-          className ?? "inline-flex items-center gap-2 text-sm text-zinc-700 hover:text-blue-700 transition-colors"
+          className ??
+          "inline-flex items-center gap-2 text-sm text-zinc-700 hover:text-blue-700 transition-colors"
         }
       >
         <span className="text-[16px]" aria-hidden="true">
@@ -492,17 +461,40 @@ export default function Page() {
     );
   }
 
-  // Altura base extra abajo para que nunca quede tapado por input + teclado
-  const CHAT_BOTTOM_PAD = 190;
+  // Altura extra del chat: input + safe area + teclado
+  const BASE_CHAT_BOTTOM_PAD = 190;
+  const chatBottomPad = BASE_CHAT_BOTTOM_PAD + keyboardLift;
 
-  // Input “lift” cuando sale teclado (Android/iOS)
-  const inputLiftStyle = keyboardInset > 0 ? { transform: `translateY(-${keyboardInset}px)` } : undefined;
+  // Subir el input cuando hay teclado (Android)
+  const inputTransform = keyboardLift > 0 ? `translateY(-${keyboardLift}px)` : "translateY(0px)";
 
   return (
     <div className="h-[100dvh] bg-white flex overflow-hidden">
-      {/* ===== MOBILE HEADER ===== */}
+      {/* Estilos globales (piquito + overflow safe) */}
+      <style jsx global>{`
+        .vonu-safe-x {
+          overflow-x: hidden;
+        }
+        .bubble-user {
+          position: relative;
+        }
+        /* Piquito tipo WhatsApp (abajo a la derecha) */
+        .bubble-user:after {
+          content: "";
+          position: absolute;
+          right: 10px;
+          bottom: -6px;
+          width: 12px;
+          height: 12px;
+          background: #2563eb; /* tailwind blue-600 */
+          transform: rotate(45deg);
+          border-radius: 2px;
+        }
+      `}</style>
+
+      {/* ===== MOBILE HEADER (fino) ===== */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
-        <div className="h-full px-4 flex items-center bg-white/80 backdrop-blur-xl">
+        <div className="h-full px-4 flex items-center bg-white/85 backdrop-blur-xl">
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="flex items-center"
@@ -510,7 +502,7 @@ export default function Page() {
             title={menuOpen ? "Cerrar menú" : "Menú"}
           >
             <img
-              src={"/vonu-icon.png?v=2"}
+              src={"/vonu-icon.png?v=999"}
               alt="Menú"
               className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
               draggable={false}
@@ -518,11 +510,32 @@ export default function Page() {
           </button>
 
           <a href={HOME_URL} className="ml-2 flex items-center" aria-label="Ir a la home" title="Ir a la home">
-            <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
+            <img src={"/vonu-wordmark.png?v=999"} alt="Vonu" className="h-5 w-auto" draggable={false} />
           </a>
 
           <div className="flex-1" />
         </div>
+      </div>
+
+      {/* Desktop top-left (logo + burger) */}
+      <div className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-2 select-none">
+        <button
+          onClick={() => setMenuOpen((v) => !v)}
+          className="flex items-center"
+          aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+          title={menuOpen ? "Cerrar menú" : "Menú"}
+        >
+          <img
+            src={"/vonu-icon.png?v=999"}
+            alt="Menú"
+            className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
+            draggable={false}
+          />
+        </button>
+
+        <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home" title="Ir a la home">
+          <img src={"/vonu-wordmark.png?v=999"} alt="Vonu" className="h-5 w-auto" draggable={false} />
+        </a>
       </div>
 
       {/* ===== OVERLAY + SIDEBAR ===== */}
@@ -662,7 +675,7 @@ export default function Page() {
       </div>
 
       {/* MAIN */}
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 flex flex-col min-h-0 vonu-safe-x">
         {/* RENAME MODAL */}
         {renameOpen && (
           <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center px-6">
@@ -715,14 +728,14 @@ export default function Page() {
         {/* CHAT */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
           <div
-            className="mx-auto max-w-3xl px-6"
+            className="mx-auto max-w-3xl px-4 md:px-6 pb-10"
             style={{
               paddingTop: MOBILE_HEADER_H + 14,
-              paddingBottom: CHAT_BOTTOM_PAD + keyboardInset, // clave: el teclado ya no tapa
+              paddingBottom: chatBottomPad,
             }}
           >
             {/* Menos espacio entre mensajes */}
-            <div className="space-y-2.5">
+            <div className="space-y-2 md:space-y-2">
               {messages.map((msg) => {
                 if (msg.role === "assistant") {
                   const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
@@ -733,9 +746,10 @@ export default function Page() {
                           "prose prose-zinc max-w-none",
                           "text-[15px] md:text-[15.5px]",
                           "leading-[1.6]",
+                          "break-words overflow-hidden",
                           "prose-headings:font-semibold prose-headings:text-zinc-900",
                           "prose-h3:text-[17px] md:prose-h3:text-[18px]",
-                          "prose-p:my-3",
+                          "prose-p:my-3 prose-p:break-words",
                         ].join(" ")}
                       >
                         <ReactMarkdown>{mdText}</ReactMarkdown>
@@ -744,10 +758,9 @@ export default function Page() {
                   );
                 }
 
-                // USER
                 return (
                   <div key={msg.id} className="flex justify-end bubble-in">
-                    <div className="max-w-xl space-y-1.5">
+                    <div className="max-w-[85%] md:max-w-xl space-y-2">
                       {msg.image && (
                         <img
                           src={msg.image}
@@ -755,21 +768,16 @@ export default function Page() {
                           className="rounded-3xl border border-zinc-200 max-h-64 object-contain"
                         />
                       )}
-
                       {msg.text && (
                         <div
                           className={[
-                            "relative inline-block",
+                            "bubble-user",
                             "bg-blue-600 text-white",
                             "text-[14.5px] leading-relaxed",
-                            "rounded-3xl",
-                            "px-4 py-2", // más finita (menos alto)
-                            "break-words",
-                            // “colita” tipo WhatsApp (derecha)
-                            "after:content-[''] after:absolute after:right-[-6px] after:bottom-[10px]",
-                            "after:w-0 after:h-0",
-                            "after:border-t-[7px] after:border-b-[7px] after:border-l-[8px]",
-                            "after:border-t-transparent after:border-b-transparent after:border-l-blue-600",
+                            "rounded-[22px]",
+                            "px-4 py-2", // MÁS FINITA
+                            "break-words overflow-hidden",
+                            "inline-block",
                           ].join(" ")}
                         >
                           {msg.text}
@@ -779,22 +787,23 @@ export default function Page() {
                   </div>
                 );
               })}
-
-              {/* anchor para scroll estable */}
-              <div ref={endRef} />
+              <div ref={bottomRef} />
             </div>
           </div>
         </div>
 
-        {/* INPUT + DISCLAIMER (fijo en TODOS) */}
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white" style={inputLiftStyle}>
+        {/* INPUT + DISCLAIMER (fijo SIEMPRE) */}
+        <div
+          className="fixed bottom-0 left-0 right-0 z-30 bg-white"
+          style={{ transform: inputTransform, willChange: "transform" }}
+        >
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             {/* + */}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="
                 h-12 w-12 inline-flex items-center justify-center rounded-full
-                bg-white md:border md:border-zinc-300
+                bg-white border border-zinc-200
                 text-zinc-900 hover:bg-zinc-100 transition-colors
               "
               aria-label="Adjuntar imagen"
@@ -836,6 +845,7 @@ export default function Page() {
                   ref={textareaRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
+                  onFocus={() => setStickToBottom(true)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -883,9 +893,15 @@ export default function Page() {
 
           {/* DISCLAIMER */}
           <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
-            <p className="text-center text-[12px] text-zinc-500 leading-5">
+            <p className="hidden md:block text-center text-[12px] text-zinc-500 leading-5">
               Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
             </p>
+
+            {!hasUserMessage && (
+              <p className="md:hidden text-center text-[12px] text-zinc-500 leading-5">
+                Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
+              </p>
+            )}
           </div>
         </div>
       </div>
