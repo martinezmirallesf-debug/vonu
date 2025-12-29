@@ -51,27 +51,29 @@ function makeTitleFromText(text: string) {
 }
 
 const STORAGE_KEY = "vonu_threads_v1";
-
-// Header fijo móvil (fino)
-const MOBILE_HEADER_H = 56;
-
-// Home
 const HOME_URL = "https://vonuai.com";
 
-// Para “cache busting” de assets (cambia el número si vuelves a cambiar logos)
-const ASSET_V = "3";
+// Header móvil más fino
+const MOBILE_HEADER_H = 52;
 
-// Padding extra para que el chat no quede tapado por el input fijo
-const CHAT_BOTTOM_PAD = 190;
-
-// Umbral para considerar “estoy cerca del final”
-const STICKY_SCROLL_PX = 140;
+// Un “padding” de seguridad para que el chat no quede tapado por el input
+const CHAT_BOTTOM_PAD = 200;
 
 export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // -------- Persistencia local --------
+  // Detectar móvil (para no hacer auto-focus agresivo y evitar “saltos” con teclado)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
+
+  // -------- Persistencia local (localStorage) --------
   const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
   const [activeThreadId, setActiveThreadId] = useState<string>("");
 
@@ -90,9 +92,7 @@ export default function Page() {
           title: typeof t.title === "string" ? t.title : "Consulta",
           updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
           messages:
-            Array.isArray(t.messages) && t.messages.length
-              ? t.messages
-              : [initialAssistantMessage()],
+            Array.isArray(t.messages) && t.messages.length ? t.messages : [initialAssistantMessage()],
         }));
 
       if (clean.length) {
@@ -120,17 +120,15 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
 
-  // Renombrar / borrar
+  // Renombrar
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
 
-  // Input shape en móvil cuando crece
+  // Textarea auto-resize
   const [inputExpanded, setInputExpanded] = useState(false);
 
-  // Para autoscroll inteligente
-  const [stickToBottom, setStickToBottom] = useState(true);
-
   const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -156,32 +154,14 @@ export default function Page() {
 
   const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
 
-  // Track si el usuario está cerca del final (para no “secuestrar” el scroll)
+  // Auto-scroll al final: estable (y sin “locuras”)
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const onScroll = () => {
-      const remaining = el.scrollHeight - el.scrollTop - el.clientHeight;
-      setStickToBottom(remaining < STICKY_SCROLL_PX);
-    };
-
-    el.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-
-    return () => el.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // Autoscroll SOLO si estamos “pegados abajo”
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    if (!stickToBottom) return;
-
-    requestAnimationFrame(() => {
-      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-    });
-  }, [messages, isTyping, stickToBottom]);
+    // micro-delay para asegurar layout antes de scrollear
+    const t = setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }, 30);
+    return () => clearTimeout(t);
+  }, [messages.length, isTyping]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -191,25 +171,21 @@ export default function Page() {
     el.style.height = "0px";
     const next = Math.min(el.scrollHeight, 140);
     el.style.height = next + "px";
-
     setInputExpanded(next > 52);
   }, [input]);
 
-  // Auto-focus (pero SIN “rebotes” constantes en móvil):
-  // Solo hacemos focus al cambiar de thread o cerrar overlays, no cada render.
+  // Auto-focus SOLO al abrir un chat (y solo si no es móvil, para evitar saltos)
   useEffect(() => {
     if (!mounted) return;
-    if (renameOpen) return;
-    if (menuOpen) return;
-    if (isTyping) return;
+    if (isMobile) return;
+    if (renameOpen || menuOpen || isTyping) return;
 
     const t = setTimeout(() => {
       textareaRef.current?.focus();
-    }, 60);
+    }, 80);
 
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId]);
+  }, [mounted, isMobile, renameOpen, menuOpen, isTyping, activeThreadId]);
 
   function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -231,13 +207,10 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
-    // subir arriba para ver saludo inicial
+    // arriba para ver saludo
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-      setStickToBottom(true);
     });
-
-    setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
   function activateThread(id: string) {
@@ -247,9 +220,10 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
-    // al cambiar de conversación, dejamos stickToBottom en true
-    requestAnimationFrame(() => setStickToBottom(true));
-    setTimeout(() => textareaRef.current?.focus(), 60);
+    // al cambiar de chat, posiciona abajo (historial)
+    requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+    });
   }
 
   function openRename() {
@@ -262,13 +236,9 @@ export default function Page() {
     if (!activeThread) return;
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
-      prev.map((t) =>
-        t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t
-      )
+      prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t))
     );
     setRenameOpen(false);
-
-    setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
   function deleteActiveThread() {
@@ -285,10 +255,7 @@ export default function Page() {
 
       requestAnimationFrame(() => {
         scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-        setStickToBottom(true);
       });
-
-      setTimeout(() => textareaRef.current?.focus(), 60);
       return;
     }
 
@@ -301,9 +268,6 @@ export default function Page() {
     setUiError(null);
     setInput("");
     setImagePreview(null);
-
-    requestAnimationFrame(() => setStickToBottom(true));
-    setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
   async function sendMessage() {
@@ -350,14 +314,17 @@ export default function Page() {
     setImagePreview(null);
     setIsTyping(true);
 
-    // aseguramos “sticky” durante respuesta
-    setStickToBottom(true);
+    // Al enviar, en móvil NO forzamos focus (evita “saltos” del teclado)
+    requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    });
 
     try {
-      await sleep(240);
+      await sleep(200);
 
       const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
+      // Mandamos texto + (si hay imagen, la pasamos aparte)
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
         .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
         .map((m) => ({
@@ -386,7 +353,7 @@ export default function Page() {
           ? data.text
           : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
 
-      await sleep(100);
+      await sleep(80);
 
       let i = 0;
       const speedMs = fullText.length > 900 ? 7 : 11;
@@ -415,20 +382,19 @@ export default function Page() {
               return {
                 ...t,
                 updatedAt: Date.now(),
-                messages: t.messages.map((m) =>
-                  m.id === assistantId ? { ...m, streaming: false } : m
-                ),
+                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
               };
             })
           );
 
           setIsTyping(false);
-          // no forzamos focus aquí para evitar “rebotes” de teclado
+
+          // Desktop: ok refocus suave; móvil: NO (evita saltos)
+          if (!isMobile) setTimeout(() => textareaRef.current?.focus(), 80);
         }
       }, speedMs);
     } catch (err: any) {
-      const msg =
-        typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
+      const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -442,9 +408,7 @@ export default function Page() {
                     ...m,
                     streaming: false,
                     text:
-                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" +
-                      msg +
-                      "\n```",
+                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" + msg + "\n```",
                   }
                 : m
             ),
@@ -457,13 +421,7 @@ export default function Page() {
     }
   }
 
-  function HomeLink({
-    className,
-    label = "Volver a la home",
-  }: {
-    className?: string;
-    label?: string;
-  }) {
+  function HomeLink({ className, label = "Volver a la home" }: { className?: string; label?: string }) {
     return (
       <a
         href={HOME_URL}
@@ -480,35 +438,11 @@ export default function Page() {
     );
   }
 
-  // --- helpers UI bubbles ---
-  function BubbleTail({ side }: { side: "left" | "right" }) {
-    // triangulito tipo “tail”
-    if (side === "right") {
-      return (
-        <span
-          aria-hidden="true"
-          className="absolute -bottom-[1px] right-3 h-0 w-0
-          border-l-[10px] border-l-transparent
-          border-t-[10px] border-t-blue-600"
-        />
-      );
-    }
-
-    return (
-      <span
-        aria-hidden="true"
-        className="absolute -bottom-[1px] left-3 h-0 w-0
-        border-r-[10px] border-r-transparent
-        border-t-[10px] border-t-white"
-      />
-    );
-  }
-
   return (
-    <div className="h-[100dvh] bg-white flex overflow-hidden">
-      {/* ===== MOBILE HEADER (fino, fijo) ===== */}
+    <div className="h-[100dvh] bg-white flex overflow-hidden overflow-x-hidden">
+      {/* ===== MOBILE HEADER (fino) ===== */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
-        <div className="h-full px-4 flex items-center bg-white/80 backdrop-blur-xl">
+        <div className="h-full px-4 flex items-center bg-white/88 backdrop-blur-xl">
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="flex items-center"
@@ -516,22 +450,15 @@ export default function Page() {
             title={menuOpen ? "Cerrar menú" : "Menú"}
           >
             <img
-              src={`/vonu-icon.png?v=${ASSET_V}`}
+              src="/vonu-icon.png?v=3"
               alt="Menú"
-              className={`h-7 w-7 transition-transform duration-300 ease-out ${
-                menuOpen ? "rotate-90" : "rotate-0"
-              }`}
+              className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
               draggable={false}
             />
           </button>
 
           <a href={HOME_URL} className="ml-2 flex items-center" aria-label="Ir a la home" title="Ir a la home">
-            <img
-              src={`/vonu-wordmark.png?v=${ASSET_V}`}
-              alt="Vonu"
-              className="h-5 w-auto"
-              draggable={false}
-            />
+            <img src="/vonu-wordmark.png?v=3" alt="Vonu" className="h-5 w-auto" draggable={false} />
           </a>
 
           <div className="flex-1" />
@@ -610,7 +537,7 @@ export default function Page() {
 
         {/* Mobile sidebar */}
         <aside
-          className={`md:hidden absolute left-0 top-0 bottom-0 w-[86vw] max-w-[360px] bg-white/90 backdrop-blur-xl shadow-2xl transform transition-transform duration-300 ease-out ${
+          className={`md:hidden absolute left-0 top-0 bottom-0 w-[86vw] max-w-[360px] bg-white/92 backdrop-blur-xl shadow-2xl transform transition-transform duration-300 ease-out ${
             menuOpen ? "translate-x-0" : "-translate-x-[110%]"
           }`}
           onClick={(e) => e.stopPropagation()}
@@ -674,7 +601,7 @@ export default function Page() {
         </aside>
       </div>
 
-      {/* Desktop top-left: burger + wordmark (como antes) */}
+      {/* Desktop logo + burger (sin barra/header gris) */}
       <div className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-2 select-none">
         <button
           onClick={() => setMenuOpen((v) => !v)}
@@ -683,22 +610,15 @@ export default function Page() {
           title={menuOpen ? "Cerrar menú" : "Menú"}
         >
           <img
-            src={`/vonu-icon.png?v=${ASSET_V}`}
+            src="/vonu-icon.png?v=3"
             alt="Menú"
-            className={`h-7 w-7 transition-transform duration-300 ease-out ${
-              menuOpen ? "rotate-90" : "rotate-0"
-            }`}
+            className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
             draggable={false}
           />
         </button>
 
         <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home" title="Ir a la home">
-          <img
-            src={`/vonu-wordmark.png?v=${ASSET_V}`}
-            alt="Vonu"
-            className="h-5 w-auto"
-            draggable={false}
-          />
+          <img src="/vonu-wordmark.png?v=3" alt="Vonu" className="h-5 w-auto" draggable={false} />
         </a>
       </div>
 
@@ -754,44 +674,41 @@ export default function Page() {
         )}
 
         {/* CHAT */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0 overflow-x-hidden">
           <div
-            className="mx-auto max-w-3xl px-4 md:px-6 pb-10"
+            className="mx-auto w-full max-w-3xl px-4 md:px-6"
             style={{
               paddingTop: MOBILE_HEADER_H + 14,
               paddingBottom: CHAT_BOTTOM_PAD,
             }}
           >
-            <div className="space-y-2 md:space-y-3">
+            <div className="space-y-3">
               {messages.map((msg) => {
                 if (msg.role === "assistant") {
                   const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
                   return (
-                    <div key={msg.id} className="bubble-in-slow">
-                      <div className="max-w-[92%] md:max-w-[80%]">
-                        <div className="relative inline-block bg-white border border-zinc-200 rounded-[22px] px-4 py-2.5 shadow-sm">
-                          <BubbleTail side="left" />
-                          <div
-                            className={[
-                              "prose prose-zinc max-w-none",
-                              "text-[15px] md:text-[15.5px]",
-                              "leading-[1.6]",
-                              "prose-headings:font-semibold prose-headings:text-zinc-900",
-                              "prose-h3:text-[17px] md:prose-h3:text-[18px]",
-                              "prose-p:my-3",
-                            ].join(" ")}
-                          >
-                            <ReactMarkdown>{mdText}</ReactMarkdown>
-                          </div>
-                        </div>
+                    <div key={msg.id} className="max-w-[52rem]">
+                      <div
+                        className={[
+                          "prose prose-zinc max-w-none",
+                          "text-[15px] md:text-[15.5px]",
+                          "leading-[1.65]",
+                          "prose-headings:font-semibold prose-headings:text-zinc-900",
+                          "prose-h3:text-[17px] md:prose-h3:text-[18px]",
+                          "prose-p:my-3",
+                          "break-words",
+                        ].join(" ")}
+                      >
+                        <ReactMarkdown>{mdText}</ReactMarkdown>
                       </div>
                     </div>
                   );
                 }
 
+                // USER bubble (con “piquito” estilo Messenger, grande y abajo-derecha)
                 return (
-                  <div key={msg.id} className="flex justify-end bubble-in">
-                    <div className="max-w-[92%] md:max-w-[80%] space-y-2">
+                  <div key={msg.id} className="flex justify-end">
+                    <div className="max-w-[85%] md:max-w-xl space-y-2">
                       {msg.image && (
                         <img
                           src={msg.image}
@@ -801,31 +718,54 @@ export default function Page() {
                       )}
 
                       {msg.text && (
-                        <div className="flex justify-end">
-                          <div className="relative inline-block bg-blue-600 text-white rounded-[22px] px-4 py-2 break-words text-[14.5px] leading-[1.45]">
-                            <BubbleTail side="right" />
+                        <div className="relative inline-block">
+                          <div
+                            className={[
+                              "bg-blue-600 text-white",
+                              "text-[14.5px] md:text-[14.5px]",
+                              "leading-relaxed",
+                              "rounded-[26px]",
+                              "px-4 py-2",
+                              "break-words",
+                              "[overflow-wrap:anywhere]",
+                              "shadow-[0_1px_0_rgba(0,0,0,0.04)]",
+                            ].join(" ")}
+                          >
                             {msg.text}
                           </div>
+
+                          {/* Tail */}
+                          <span
+                            aria-hidden="true"
+                            className={[
+                              "absolute",
+                              "-right-[6px]",
+                              "bottom-[6px]",
+                              "h-5 w-5",
+                              "bg-blue-600",
+                              "rounded-br-[18px]",
+                              "rotate-45",
+                            ].join(" ")}
+                          />
                         </div>
                       )}
                     </div>
                   </div>
                 );
               })}
+
+              <div ref={bottomRef} />
             </div>
           </div>
         </div>
 
-        {/* INPUT + DISCLAIMER (fijo en móvil; normal en desktop) */}
-        <div className="md:static fixed bottom-0 left-0 right-0 z-30 bg-white">
+        {/* INPUT + DISCLAIMER (sticky también en PC para que sea estable) */}
+        <div className="sticky bottom-0 left-0 right-0 z-30 bg-white">
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
+            {/* + */}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="
-                h-12 w-12 inline-flex items-center justify-center rounded-full
-                bg-white md:border md:border-zinc-300
-                text-zinc-900 hover:bg-zinc-100 transition-colors
-              "
+              className="h-12 w-12 inline-flex items-center justify-center rounded-full bg-white md:border md:border-zinc-300 text-zinc-900 hover:bg-zinc-100 transition-colors"
               aria-label="Adjuntar imagen"
               disabled={isTyping}
               title={isTyping ? "Espera a que Vonu responda…" : "Adjuntar imagen"}
@@ -838,9 +778,10 @@ export default function Page() {
 
             <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
 
+            {/* input */}
             <div className="flex-1">
               {imagePreview && (
-                <div className="mb-2 relative w-fit bubble-in">
+                <div className="mb-2 relative w-fit">
                   <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
                   <button
                     onClick={() => setImagePreview(null)}
@@ -878,18 +819,11 @@ export default function Page() {
               </div>
             </div>
 
+            {/* enviar */}
             <button
               onClick={sendMessage}
               disabled={!canSend}
-              className="
-                h-12 w-12 md:w-auto
-                rounded-full md:rounded-3xl
-                bg-blue-600 hover:bg-blue-700 text-white
-                md:px-6
-                flex items-center justify-center
-                text-sm font-medium
-                disabled:opacity-40 transition-colors
-              "
+              className="h-12 w-12 md:w-auto rounded-full md:rounded-3xl bg-blue-600 hover:bg-blue-700 text-white md:px-6 flex items-center justify-center text-sm font-medium disabled:opacity-40 transition-colors"
               aria-label="Enviar"
               title={canSend ? "Enviar" : "Escribe un mensaje para enviar"}
             >
@@ -908,16 +842,11 @@ export default function Page() {
             </button>
           </div>
 
+          {/* DISCLAIMER */}
           <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
-            <p className="hidden md:block text-center text-[12px] text-zinc-500 leading-5">
+            <p className="text-center text-[12px] text-zinc-500 leading-5">
               Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
             </p>
-
-            {!hasUserMessage && (
-              <p className="md:hidden text-center text-[12px] text-zinc-500 leading-5">
-                Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
-              </p>
-            )}
           </div>
         </div>
       </div>
