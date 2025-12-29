@@ -52,17 +52,13 @@ function makeTitleFromText(text: string) {
 
 const STORAGE_KEY = "vonu_threads_v1";
 
-// Header height (para que el chat nunca se meta debajo en móvil)
+// header fijo móvil
 const MOBILE_HEADER_H = 64;
 
-// Altura estimada de la barra inferior fija en móvil (input + disclaimer)
-const MOBILE_BOTTOM_BAR_H = 116;
-
-// Home URL
+// Home
 const HOME_URL = "https://vonuai.com";
 
 export default function Page() {
-  // Evitar hydration issues
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -85,9 +81,7 @@ export default function Page() {
           title: typeof t.title === "string" ? t.title : "Consulta",
           updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
           messages:
-            Array.isArray(t.messages) && t.messages.length
-              ? t.messages
-              : [initialAssistantMessage()],
+            Array.isArray(t.messages) && t.messages.length ? t.messages : [initialAssistantMessage()],
         }));
 
       if (clean.length) {
@@ -148,21 +142,15 @@ export default function Page() {
 
   const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
 
-  // ✅ Scroll inteligente:
-  // - si solo está el mensaje inicial -> arriba (para que se vea header + saludo)
-  // - si hay conversación -> al final
+  // Scroll suave al final
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const onlyInit = messages.length <= 1 && messages[0]?.id === "init";
-    el.scrollTo({
-      top: onlyInit ? 0 : el.scrollHeight,
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
       behavior: "smooth",
     });
   }, [messages, isTyping]);
 
-  // Auto-resize del textarea (sin scrollbars raros)
+  // Auto-resize textarea
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -171,11 +159,10 @@ export default function Page() {
     const next = Math.min(el.scrollHeight, 140);
     el.style.height = next + "px";
 
-    // si pasa de ~1 línea, dejamos de ser píldora en móvil
     setInputExpanded(next > 52);
   }, [input]);
 
-  // ✅ Auto-focus: cursor dentro del input al abrir el chat
+  // Auto-focus
   useEffect(() => {
     if (!mounted) return;
     if (renameOpen) return;
@@ -209,11 +196,12 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
-    // asegurar que al crear thread se ve el inicio
-    setTimeout(() => {
+    // IMPORTANTE: llevar el scroll arriba para que se vea el saludo inicial
+    requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-      textareaRef.current?.focus();
-    }, 60);
+    });
+
+    setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
   function activateThread(id: string) {
@@ -255,10 +243,11 @@ export default function Page() {
       setInput("");
       setImagePreview(null);
 
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-        textareaRef.current?.focus();
-      }, 60);
+      });
+
+      setTimeout(() => textareaRef.current?.focus(), 60);
       return;
     }
 
@@ -299,7 +288,6 @@ export default function Page() {
       streaming: true,
     };
 
-    // pintar en el thread activo
     setThreads((prev) =>
       prev.map((t) => {
         if (t.id !== activeThread.id) return t;
@@ -321,9 +309,8 @@ export default function Page() {
     setIsTyping(true);
 
     try {
-      await sleep(220);
+      await sleep(260);
 
-      // snapshot del thread actual (ojo con stale state)
       const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
@@ -357,7 +344,7 @@ export default function Page() {
       await sleep(120);
 
       let i = 0;
-      const speedMs = fullText.length > 900 ? 7 : 12;
+      const speedMs = fullText.length > 900 ? 7 : 11;
 
       const interval = setInterval(() => {
         i++;
@@ -393,8 +380,7 @@ export default function Page() {
         }
       }, speedMs);
     } catch (err: any) {
-      const msg =
-        typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
+      const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -408,9 +394,7 @@ export default function Page() {
                     ...m,
                     streaming: false,
                     text:
-                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" +
-                      msg +
-                      "\n```",
+                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" + msg + "\n```",
                   }
                 : m
             ),
@@ -441,12 +425,15 @@ export default function Page() {
     );
   }
 
+  // altura “segura” extra para que el chat nunca quede tapado por input fijo
+  const CHAT_BOTTOM_PAD = 180;
+
   return (
     <div className="h-[100dvh] bg-white flex overflow-hidden">
-      {/* ===== MOBILE HEADER (fijo + blur) ===== */}
+      {/* ===== MOBILE HEADER (Fijo + visible) ===== */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
-        <div className="h-full px-4 flex items-center bg-white/70 backdrop-blur-xl">
-          {/* SOLO 1 ICONO (izquierda) = menú con rotación 90° */}
+        <div className="h-full px-4 flex items-center bg-white/80 backdrop-blur-xl border-b border-zinc-200">
+          {/* Icono menú (izquierda) */}
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="flex items-center"
@@ -454,16 +441,16 @@ export default function Page() {
             title={menuOpen ? "Cerrar menú" : "Menú"}
           >
             <img
-              src="/vonu-icon.png?v=2"
+              src={"/vonu-icon.png?v=2"}
               alt="Menú"
               className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
               draggable={false}
             />
           </button>
 
-          {/* Letras del logo al lado -> HOME */}
+          {/* Letras al lado -> HOME */}
           <a href={HOME_URL} className="ml-2 flex items-center" aria-label="Ir a la home" title="Ir a la home">
-            <img src="/vonu-wordmark.png?v=2" alt="Vonu" className="h-5 w-auto" draggable={false} />
+            <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
           </a>
 
           <div className="flex-1" />
@@ -473,7 +460,7 @@ export default function Page() {
       {/* ===== OVERLAY + SIDEBAR ===== */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-300 ${
-          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent backdrop-blur-0"
+          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent"
         }`}
         onClick={() => setMenuOpen(false)}
       >
@@ -502,13 +489,13 @@ export default function Page() {
             <div className="flex gap-2 mb-3">
               <button
                 onClick={openRename}
-                className="flex-1 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-800 transition-colors"
+                className="flex-1 text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50"
               >
                 Renombrar
               </button>
               <button
                 onClick={deleteActiveThread}
-                className="flex-1 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200 text-red-600 transition-colors"
+                className="flex-1 text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 text-red-600"
               >
                 Borrar
               </button>
@@ -563,27 +550,27 @@ export default function Page() {
                 </button>
               </div>
 
-              {/* ✅ Botones “premium” como las tarjetas de abajo */}
-              <div className="flex gap-2 mb-3">
+              {/* ✅ Botones como “cards” blancas (mismo tono que abajo) */}
+              <div className="grid grid-cols-2 gap-2 mb-3">
                 <button
                   onClick={openRename}
-                  className="flex-1 text-xs px-3 py-2 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 transition-colors"
+                  className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50"
                 >
                   Renombrar
                 </button>
                 <button
                   onClick={deleteActiveThread}
-                  className="flex-1 text-xs px-3 py-2 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 transition-colors"
+                  className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600"
                 >
                   Borrar
                 </button>
               </div>
 
               <div className="mb-3">
-                <HomeLink className="w-full inline-flex items-center justify-center gap-2 text-xs px-3 py-2 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-700 transition-colors" />
+                <HomeLink className="w-full inline-flex items-center justify-center gap-2 text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 transition-colors" />
               </div>
 
-              <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-220px)]">
+              <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-240px)]">
                 {sortedThreads.map((t) => {
                   const active = t.id === activeThreadId;
                   const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
@@ -607,7 +594,7 @@ export default function Page() {
         </aside>
       </div>
 
-      {/* Desktop top-left: menu button + wordmark link */}
+      {/* Desktop top-left */}
       <div className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-2 select-none">
         <button
           onClick={() => setMenuOpen((v) => !v)}
@@ -616,7 +603,7 @@ export default function Page() {
           title={menuOpen ? "Cerrar menú" : "Menú"}
         >
           <img
-            src="/vonu-icon.png?v=2"
+            src={"/vonu-icon.png?v=2"}
             alt="Menú"
             className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
             draggable={false}
@@ -624,7 +611,7 @@ export default function Page() {
         </button>
 
         <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home">
-          <img src="/vonu-wordmark.png?v=2" alt="Vonu" className="h-5 w-auto" draggable={false} />
+          <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
         </a>
       </div>
 
@@ -682,27 +669,29 @@ export default function Page() {
         {/* CHAT (scrollable) */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
           <div
-            className="mx-auto max-w-3xl px-6"
+            className="mx-auto max-w-3xl px-6 pb-10"
             style={{
-              paddingTop: MOBILE_HEADER_H + 12,
-              paddingBottom: MOBILE_BOTTOM_BAR_H + 18, // deja sitio para la barra fija móvil
+              paddingTop: MOBILE_HEADER_H + 16,
+              paddingBottom: CHAT_BOTTOM_PAD,
             }}
           >
-            {/* ✅ Menos separación para “juntar” conversación */}
-            <div className="space-y-5 md:space-y-6">
+            {/* Menos espacio entre mensajes */}
+            <div className="space-y-4">
               {messages.map((msg) => {
                 if (msg.role === "assistant") {
                   const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
                   return (
                     <div key={msg.id} className="bubble-in-slow">
-                      {/* ✅ Texto más grande + títulos más grandes + más aire entre párrafos */}
                       <div
                         className={[
                           "prose prose-zinc max-w-none",
-                          "text-[15px] md:text-[15px]",
-                          "prose-p:my-3 prose-li:my-1",
-                          "prose-strong:font-semibold",
-                          "prose-h3:mt-5 prose-h3:mb-2 prose-h3:text-[17px] md:prose-h3:text-[18px] prose-h3:font-semibold",
+                          "text-[15px] md:text-[15.5px]",
+                          "leading-[1.6]",
+                          // títulos más grandes
+                          "prose-headings:font-semibold prose-headings:text-zinc-900",
+                          "prose-h3:text-[17px] md:prose-h3:text-[18px]",
+                          // más aire entre párrafos
+                          "prose-p:my-3",
                         ].join(" ")}
                       >
                         <ReactMarkdown>{mdText}</ReactMarkdown>
@@ -722,8 +711,7 @@ export default function Page() {
                         />
                       )}
                       {msg.text && (
-                        // ✅ Burbuja azul “más fina” (menos padding vertical)
-                        <div className="bg-blue-600 text-white text-[15px] leading-relaxed rounded-3xl px-5 py-[10px] break-words">
+                        <div className="bg-blue-600 text-white text-[14.5px] leading-relaxed rounded-3xl px-4 py-2.5 break-words">
                           {msg.text}
                         </div>
                       )}
@@ -732,14 +720,11 @@ export default function Page() {
                 );
               })}
             </div>
-
-            {/* un poco de aire final */}
-            <div className="h-4" />
           </div>
         </div>
 
-        {/* ✅ INPUT + DISCLAIMER (FIJO EN MÓVIL, normal en desktop) */}
-        <div className="md:static fixed bottom-0 left-0 right-0 z-50 bg-white">
+        {/* INPUT + DISCLAIMER (Fijo en móvil) */}
+        <div className="md:static fixed bottom-0 left-0 right-0 z-30 bg-white">
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             {/* + */}
             <button
@@ -776,7 +761,6 @@ export default function Page() {
                 </div>
               )}
 
-              {/* móvil: píldora al inicio, y cuando crece => rectángulo con esquinas */}
               <div
                 className={[
                   "w-full min-h-12 px-4 py-3 flex items-center",
@@ -797,7 +781,7 @@ export default function Page() {
                   }}
                   disabled={isTyping}
                   placeholder={isTyping ? "Vonu está respondiendo…" : "Escribe tu mensaje…"}
-                  className="w-full resize-none bg-transparent text-[15px] outline-none leading-5 overflow-hidden"
+                  className="w-full resize-none bg-transparent text-sm outline-none leading-5 overflow-hidden"
                   rows={1}
                 />
               </div>
@@ -834,15 +818,18 @@ export default function Page() {
             </button>
           </div>
 
-          {/* DISCLAIMER: en móvil siempre visible y pegado al input; en desktop centrado */}
-          <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3">
-            <p className="text-center text-[12px] text-zinc-500 leading-5">
+          {/* DISCLAIMER */}
+          <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
+            <p className="hidden md:block text-center text-[12px] text-zinc-500 leading-5">
               Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
             </p>
-          </div>
 
-          {/* safe-area iOS */}
-          <div className="h-[env(safe-area-inset-bottom)]" />
+            {!hasUserMessage && (
+              <p className="md:hidden text-center text-[12px] text-zinc-500 leading-5">
+                Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>
