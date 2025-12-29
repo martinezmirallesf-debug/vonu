@@ -92,6 +92,12 @@ export default function Page() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // ✅ refs para evitar closures “viejas” en listeners (teclado móvil)
+  const inputFocusedRef = useRef(false);
+  useEffect(() => {
+    inputFocusedRef.current = inputFocused;
+  }, [inputFocused]);
+
   // --- Mount + localStorage ---
   useEffect(() => setMounted(true), []);
 
@@ -158,6 +164,30 @@ export default function Page() {
     [messages]
   );
 
+  // Auto-resize textarea
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+
+    el.style.height = "0px";
+    const next = Math.min(el.scrollHeight, 140);
+    el.style.height = next + "px";
+    setInputExpanded(next > 52);
+  }, [input]);
+
+  const chatPadBottom = Math.max(footerH + 18, FALLBACK_FOOTER_PAD);
+
+  // ✅ FIX: función de scroll robusta (respeta scrollPaddingBottom y evita “meterse debajo”)
+  function scrollToBottom(behavior: ScrollBehavior = "auto") {
+    if (endRef.current) {
+      endRef.current.scrollIntoView({ behavior, block: "end" });
+      return;
+    }
+    const sc = scrollRef.current;
+    if (!sc) return;
+    sc.scrollTo({ top: sc.scrollHeight, behavior });
+  }
+
   // --- VisualViewport: ayuda a que no “corte” cosas con teclado móvil ---
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -166,6 +196,11 @@ export default function Page() {
     const setVars = () => {
       const h = vv?.height ?? window.innerHeight;
       document.documentElement.style.setProperty("--vvh", `${h}px`);
+
+      // ✅ FIX 1: cuando aparece/cambia el teclado (input enfocado), mantenemos el final visible
+      if (inputFocusedRef.current) {
+        requestAnimationFrame(() => scrollToBottom("auto"));
+      }
     };
 
     setVars();
@@ -178,6 +213,7 @@ export default function Page() {
       vv?.removeEventListener("scroll", setVars);
       window.removeEventListener("resize", setVars);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Medir footer (para que el chat tenga padding exacto y nunca se esconda nada detrás)
@@ -203,29 +239,9 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-resize textarea
-  useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-
-    el.style.height = "0px";
-    const next = Math.min(el.scrollHeight, 140);
-    el.style.height = next + "px";
-    setInputExpanded(next > 52);
-  }, [input]);
-
-  const chatPadBottom = Math.max(footerH + 18, FALLBACK_FOOTER_PAD);
-
-  // ✅ FIX 1: autoscroll SIEMPRE al final (también mientras Vonu va “escribiendo” y aunque el texto no cambie de length)
-  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
-    const sc = scrollRef.current;
-    if (!sc) return;
-    sc.scrollTo({ top: sc.scrollHeight, behavior });
-  };
-
+  // ✅ FIX 2: autoscroll estable (también mientras Vonu escribe y con teclado abierto)
   useEffect(() => {
     if (menuOpen || renameOpen) return;
-    // dejamos que el DOM pinte el nuevo texto antes de scrollear
     requestAnimationFrame(() => scrollToBottom("smooth"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length, isTyping, menuOpen, renameOpen, chatPadBottom]);
@@ -375,7 +391,7 @@ export default function Page() {
     // Oculta teclado al enviar (móvil)
     textareaRef.current?.blur();
 
-    // ✅ FIX 2: justo al enviar, baja al final (sin depender de “length”)
+    // Baja al final inmediatamente
     requestAnimationFrame(() => scrollToBottom("auto"));
 
     try {
@@ -437,7 +453,7 @@ export default function Page() {
           })
         );
 
-        // ✅ mientras escribe, forzamos que el final sea visible (esto evita que “se meta debajo del input”)
+        // Mantener el final visible mientras escribe
         requestAnimationFrame(() => scrollToBottom("auto"));
 
         if (i >= fullText.length) {
@@ -804,15 +820,14 @@ export default function Page() {
           ref={scrollRef}
           className="flex-1 overflow-y-auto overscroll-contain"
           style={{
-            // ✅ hace que “scrollIntoView / scrollTo bottom” respete el footer y no deje el final “debajo”
             scrollPaddingBottom: chatPadBottom,
           }}
         >
           <div
             className="mx-auto max-w-3xl px-4 md:px-6"
             style={{
-              paddingTop: 88, // para que el header flotante no tape
-              paddingBottom: chatPadBottom, // ✅ exacto según el input real
+              paddingTop: 88,
+              paddingBottom: chatPadBottom,
             }}
           >
             <div className="space-y-3">
@@ -855,7 +870,6 @@ export default function Page() {
                 );
               })}
 
-              {/* Anchor */}
               <div ref={endRef} style={{ scrollMarginBottom: chatPadBottom }} />
             </div>
           </div>
@@ -867,7 +881,6 @@ export default function Page() {
           className="fixed bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl"
         >
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
-            {/* + */}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="h-12 w-12 inline-flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-100 transition-colors"
@@ -905,7 +918,6 @@ export default function Page() {
               className="hidden"
             />
 
-            {/* input */}
             <div className="flex-1">
               {imagePreview && (
                 <div className="mb-2 relative w-fit">
@@ -947,7 +959,6 @@ export default function Page() {
               </div>
             </div>
 
-            {/* enviar */}
             <button
               onClick={sendMessage}
               disabled={!canSend}
