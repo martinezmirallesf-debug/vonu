@@ -56,8 +56,8 @@ const HOME_URL = "https://vonuai.com";
 // Header flotante (tipo ChatGPT)
 const FLOAT_HEADER_H = 56;
 
-// Padding inferior para que nunca tape el input fijo
-const CHAT_BOTTOM_PAD = 190;
+// Fallback por si no podemos medir el footer
+const FALLBACK_FOOTER_PAD = 190;
 
 export default function Page() {
   const [mounted, setMounted] = useState(false);
@@ -82,6 +82,10 @@ export default function Page() {
 
   // “Header como ChatGPT”: visible siempre, pero si el input está enfocado (teclado) lo hacemos más sutil
   const [inputFocused, setInputFocused] = useState(false);
+
+  // Medición del footer (input + disclaimer) para que NUNCA tape mensajes
+  const footerRef = useRef<HTMLDivElement>(null);
+  const [footerH, setFooterH] = useState<number>(FALLBACK_FOOTER_PAD);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -176,6 +180,29 @@ export default function Page() {
     };
   }, []);
 
+  // Medir footer (para que el chat tenga padding exacto y nunca se esconda nada detrás)
+  useEffect(() => {
+    const el = footerRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const h = el.getBoundingClientRect().height;
+      if (h && Math.abs(h - footerH) > 2) setFooterH(h);
+    };
+
+    update();
+
+    const ro = new ResizeObserver(() => update());
+    ro.observe(el);
+
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Auto-resize textarea
   useEffect(() => {
     const el = textareaRef.current;
@@ -187,20 +214,15 @@ export default function Page() {
     setInputExpanded(next > 52);
   }, [input]);
 
-  // Autoscroll (anchor) estable
+  // Autoscroll (anchor) estable: que el texto nuevo empuje el viejo hacia arriba
   useEffect(() => {
-    // Si está el menú abierto o renombrando, no forzamos scroll.
     if (menuOpen || renameOpen) return;
-
-    // Siempre que entren mensajes nuevos / streaming, bajamos.
-    // (Es el comportamiento tipo WhatsApp; luego si quieres, añadimos “solo si estás abajo”.)
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages.length, isTyping, menuOpen, renameOpen]);
 
   // Focus: SOLO al abrir (no re-enfocar cada mensaje, para evitar “bailes” en móvil)
   useEffect(() => {
     if (!mounted) return;
-    // al cargar: foco suave
     const t = setTimeout(() => textareaRef.current?.focus(), 120);
     return () => clearTimeout(t);
   }, [mounted]);
@@ -239,7 +261,6 @@ export default function Page() {
     setInput("");
     setImagePreview(null);
 
-    // Al cambiar de chat, te llevo abajo al último
     setTimeout(
       () => endRef.current?.scrollIntoView({ behavior: "auto", block: "end" }),
       50
@@ -423,9 +444,6 @@ export default function Page() {
           );
 
           setIsTyping(false);
-
-          // NO auto-focus aquí para evitar “bailes” en móvil.
-          // (Si lo quieres de vuelta solo en PC, lo hacemos con matchMedia.)
         }
       }, speedMs);
     } catch (err: any) {
@@ -500,6 +518,8 @@ export default function Page() {
     inputExpanded ? "rounded-3xl" : "rounded-full",
   ].join(" ");
 
+  const chatPadBottom = Math.max(footerH + 18, FALLBACK_FOOTER_PAD);
+
   return (
     <div
       className="bg-white"
@@ -508,9 +528,9 @@ export default function Page() {
         height: "var(--vvh, 100dvh)" as any,
       }}
     >
-      {/* ===== HEADER FLOTANTE (tipo ChatGPT) ===== */}
+      {/* ===== HEADER FLOTANTE (fijo, NO transparente) ===== */}
       <div className="fixed top-0 left-0 right-0 z-50">
-        {/* Fade/blur arriba */}
+        {/* (Puedes dejar este gradiente como está; la burbuja del logo YA no es transparente) */}
         <div
           className={[
             "pointer-events-none",
@@ -531,11 +551,11 @@ export default function Page() {
         >
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="h-11 px-3 rounded-full bg-white/85 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center gap-2"
+            // ✅ NO transparente: fondo blanco sólido, sin blur/opacity
+            className="h-11 px-3 rounded-full bg-white border border-zinc-200 shadow-sm flex items-center gap-2"
             aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
             title={menuOpen ? "Cerrar menú" : "Menú"}
           >
-            {/* ✅ ÚNICO CAMBIO: rotación 90º del icono al abrir el menú */}
             <img
               src={"/vonu-icon.png?v=2"}
               alt="Vonu"
@@ -572,7 +592,6 @@ export default function Page() {
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* ✅ padding arriba para que NO se solape con el header flotante */}
           <div className="pt-14">
             <div className="flex items-center justify-between mb-3">
               <div>
@@ -614,9 +633,7 @@ export default function Page() {
             <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-220px)]">
               {sortedThreads.map((t) => {
                 const active = t.id === activeThreadId;
-                const when = mounted
-                  ? new Date(t.updatedAt).toLocaleString()
-                  : "";
+                const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
 
                 return (
                   <button
@@ -688,9 +705,7 @@ export default function Page() {
               <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-240px)]">
                 {sortedThreads.map((t) => {
                   const active = t.id === activeThreadId;
-                  const when = mounted
-                    ? new Date(t.updatedAt).toLocaleString()
-                    : "";
+                  const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
 
                   return (
                     <button
@@ -770,13 +785,13 @@ export default function Page() {
           </div>
         )}
 
-        {/* CHAT */}
+        {/* CHAT (solo esto hace scroll) */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto">
           <div
             className="mx-auto max-w-3xl px-4 md:px-6 pb-10"
             style={{
               paddingTop: 88, // para que el header flotante no tape
-              paddingBottom: CHAT_BOTTOM_PAD,
+              paddingBottom: chatPadBottom, // ✅ exacto según el input real
             }}
           >
             <div className="space-y-3">
@@ -825,8 +840,11 @@ export default function Page() {
           </div>
         </div>
 
-        {/* INPUT + DISCLAIMER (fijo) */}
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl">
+        {/* INPUT + DISCLAIMER (fijo SIEMPRE abajo) */}
+        <div
+          ref={footerRef}
+          className="fixed bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl"
+        >
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             {/* + */}
             <button
@@ -836,25 +854,9 @@ export default function Page() {
               disabled={isTyping}
               title={isTyping ? "Espera a que Vonu responda…" : "Adjuntar imagen"}
             >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M12 5V19"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M5 12H19"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 5V19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                <path d="M5 12H19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
               </svg>
             </button>
 
@@ -899,9 +901,7 @@ export default function Page() {
                     }
                   }}
                   disabled={isTyping}
-                  placeholder={
-                    isTyping ? "Vonu está respondiendo…" : "Escribe tu mensaje…"
-                  }
+                  placeholder={isTyping ? "Vonu está respondiendo…" : "Escribe tu mensaje…"}
                   className="w-full resize-none bg-transparent text-sm outline-none leading-5 overflow-hidden"
                   rows={1}
                 />
@@ -916,13 +916,7 @@ export default function Page() {
               aria-label="Enviar"
               title={canSend ? "Enviar" : "Escribe un mensaje para enviar"}
             >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
-              >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path
                   d="M12 5l6 6M12 5l-6 6M12 5v14"
                   stroke="currentColor"
@@ -936,11 +930,9 @@ export default function Page() {
 
           <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
             <p className="text-center text-[12px] text-zinc-500 leading-5">
-              Orientación y prevención. No sustituye profesionales. Si hay riesgo
-              inmediato, contacta con emergencias.
+              Orientación y prevención. No sustituye profesionales. Si hay riesgo inmediato, contacta con emergencias.
             </p>
 
-            {/* si aún no ha hablado el usuario, dejamos un pelín más de aire visual */}
             {!hasUserMessage && <div className="h-1" />}
           </div>
         </div>
