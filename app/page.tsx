@@ -194,10 +194,16 @@ export default function Page() {
 
     const vv = window.visualViewport;
     const setVars = () => {
-      const h = vv?.height ?? window.innerHeight;
-      document.documentElement.style.setProperty("--vvh", `${h}px`);
+      const height = vv?.height ?? window.innerHeight;
+      document.documentElement.style.setProperty("--vvh", `${height}px`);
 
-      // ✅ FIX 1: cuando aparece/cambia el teclado (input enfocado), mantenemos el final visible
+      // ✅ NUEVO: cuánto “tapa” el teclado (o barras) abajo
+      // window.innerHeight (layout) - (vv.height + vv.offsetTop) ≈ zona “oculta” inferior
+      const offsetTop = vv?.offsetTop ?? 0;
+      const bottomCover = Math.max(0, window.innerHeight - (height + offsetTop));
+      document.documentElement.style.setProperty("--vvb", `${bottomCover}px`);
+
+      // Mantener el final visible cuando el teclado está abierto y el input enfocado
       if (inputFocusedRef.current) {
         requestAnimationFrame(() => scrollToBottom("auto"));
       }
@@ -239,7 +245,7 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ FIX 2: autoscroll estable (también mientras Vonu escribe y con teclado abierto)
+  // ✅ autoscroll estable (también mientras Vonu escribe y con teclado abierto)
   useEffect(() => {
     if (menuOpen || renameOpen) return;
     requestAnimationFrame(() => scrollToBottom("smooth"));
@@ -879,6 +885,10 @@ export default function Page() {
         <div
           ref={footerRef}
           className="fixed bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl"
+          // ✅ NUEVO: sube el footer cuando aparece teclado (Android/iOS)
+          style={{
+            bottom: "calc(env(safe-area-inset-bottom) + var(--vvb, 0px))",
+          }}
         >
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             <button
