@@ -283,7 +283,8 @@ export default function Page() {
 
       // si es un chat con pocos mensajes, lo ponemos arriba
       const thread = threads.find((x) => x.id === id);
-      const isFresh = (thread?.messages ?? []).filter((m) => m.role === "user").length === 0;
+      const isFresh =
+        (thread?.messages ?? []).filter((m) => m.role === "user").length === 0;
 
       if (isFresh) {
         el.scrollTo({ top: 0, behavior: "auto" });
@@ -308,7 +309,9 @@ export default function Page() {
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
       prev.map((t) =>
-        t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t
+        t.id === activeThread.id
+          ? { ...t, title: name, updatedAt: Date.now() }
+          : t
       )
     );
     setRenameOpen(false);
@@ -387,7 +390,9 @@ export default function Page() {
         if (t.id !== activeThread.id) return t;
 
         const hasUserAlready = t.messages.some((m) => m.role === "user");
-        const newTitle = hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen");
+        const newTitle = hasUserAlready
+          ? t.title
+          : makeTitleFromText(userText || "Imagen");
 
         return {
           ...t,
@@ -405,10 +410,14 @@ export default function Page() {
     try {
       await sleep(220);
 
-      const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
+      const threadNow =
+        threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
-        .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
+        .filter(
+          (m) =>
+            (m.role === "user" || m.role === "assistant") && (m.text || m.image)
+        )
         .map((m) => ({
           role: m.role,
           content: m.text ?? "",
@@ -450,7 +459,9 @@ export default function Page() {
             return {
               ...t,
               updatedAt: Date.now(),
-              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
+              messages: t.messages.map((m) =>
+                m.id === assistantId ? { ...m, text: partial } : m
+              ),
             };
           })
         );
@@ -474,12 +485,15 @@ export default function Page() {
           setIsTyping(false);
 
           // Solo desktop: no queremos que en móvil vuelva a abrir teclado y “baile”
-          if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+          if (isDesktopPointer())
+            setTimeout(() => textareaRef.current?.focus(), 60);
         }
       }, speedMs);
     } catch (err: any) {
       const msg =
-        typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
+        typeof err?.message === "string"
+          ? err.message
+          : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -549,6 +563,7 @@ export default function Page() {
         style={{ height: MOBILE_HEADER_H }}
       >
         <div className="h-full px-4 flex items-center bg-white/80 backdrop-blur-xl">
+          {/* ✅ Icono = menú */}
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="flex items-center"
@@ -565,6 +580,7 @@ export default function Page() {
             />
           </button>
 
+          {/* ✅ Letras = home */}
           <a
             href={HOME_URL}
             className="ml-2 flex items-center"
@@ -586,7 +602,9 @@ export default function Page() {
       {/* ===== OVERLAY + SIDEBAR ===== */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-300 ${
-          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent"
+          menuOpen
+            ? "bg-black/20 backdrop-blur-sm pointer-events-auto"
+            : "pointer-events-none bg-transparent"
         }`}
         onClick={() => setMenuOpen(false)}
       >
@@ -600,8 +618,12 @@ export default function Page() {
           <div className="pt-16">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-800">Historial</div>
-                <div className="text-xs text-zinc-500">Tus consultas recientes</div>
+                <div className="text-sm font-semibold text-zinc-800">
+                  Historial
+                </div>
+                <div className="text-xs text-zinc-500">
+                  Tus consultas recientes
+                </div>
               </div>
 
               <button
@@ -641,10 +663,14 @@ export default function Page() {
                     key={t.id}
                     onClick={() => activateThread(t.id)}
                     className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
-                      active ? "border-blue-600 bg-blue-50" : "border-zinc-200 hover:bg-zinc-50"
+                      active
+                        ? "border-blue-600 bg-blue-50"
+                        : "border-zinc-200 hover:bg-zinc-50"
                     }`}
                   >
-                    <div className="text-sm font-medium text-zinc-900">{t.title}</div>
+                    <div className="text-sm font-medium text-zinc-900">
+                      {t.title}
+                    </div>
                     <div className="text-xs text-zinc-500 mt-1">{when}</div>
                   </button>
                 );
@@ -664,8 +690,12 @@ export default function Page() {
             <div className="pt-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <div className="text-sm font-semibold text-zinc-800">Historial</div>
-                  <div className="text-xs text-zinc-500">Tus consultas recientes</div>
+                  <div className="text-sm font-semibold text-zinc-800">
+                    Historial
+                  </div>
+                  <div className="text-xs text-zinc-500">
+                    Tus consultas recientes
+                  </div>
                 </div>
 
                 <button
@@ -705,10 +735,14 @@ export default function Page() {
                       key={t.id}
                       onClick={() => activateThread(t.id)}
                       className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
-                        active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"
+                        active
+                          ? "border-blue-600 bg-blue-50"
+                          : "border-zinc-200 bg-white hover:bg-zinc-50"
                       }`}
                     >
-                      <div className="text-sm font-medium text-zinc-900">{t.title}</div>
+                      <div className="text-sm font-medium text-zinc-900">
+                        {t.title}
+                      </div>
                       <div className="text-xs text-zinc-500 mt-1">{when}</div>
                     </button>
                   );
@@ -719,8 +753,9 @@ export default function Page() {
         </aside>
       </div>
 
-      {/* ===== Desktop top-left (como antes: icono + wordmark flotando, SIN header) ===== */}
+      {/* ===== Desktop top-left (icono abre menú, letras van a home) ===== */}
       <div className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-2 select-none">
+        {/* ✅ Icono = menú */}
         <button
           onClick={() => setMenuOpen((v) => !v)}
           className="flex items-center"
@@ -730,13 +765,26 @@ export default function Page() {
           <img
             src={"/vonu-icon.png?v=2"}
             alt="Menú"
-            className={`h-7 w-7 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
+            className={`h-7 w-7 transition-transform duration-300 ease-out ${
+              menuOpen ? "rotate-90" : "rotate-0"
+            }`}
             draggable={false}
           />
         </button>
 
-        <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home" title="Ir a la home">
-          <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
+        {/* ✅ Letras = home */}
+        <a
+          href={HOME_URL}
+          className="flex items-center"
+          aria-label="Ir a la home"
+          title="Ir a la home"
+        >
+          <img
+            src={"/vonu-wordmark.png?v=2"}
+            alt="Vonu"
+            className="h-5 w-auto"
+            draggable={false}
+          />
         </a>
       </div>
 
@@ -749,8 +797,12 @@ export default function Page() {
               className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
-              <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
+              <div className="text-sm font-semibold text-zinc-900 mb-1">
+                Renombrar chat
+              </div>
+              <div className="text-xs text-zinc-500 mb-3">
+                Ponle un nombre para encontrarlo rápido.
+              </div>
 
               <input
                 value={renameValue}
