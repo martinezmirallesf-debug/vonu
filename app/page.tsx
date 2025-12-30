@@ -598,12 +598,21 @@ export default function Page() {
               ].join(" ")}
               draggable={false}
             />
-            <img
-              src={"/vonu-wordmark.png?v=2"}
-              alt="Vonu"
-              className="h-4 w-auto"
-              draggable={false}
-            />
+
+            {/* ✅ CAMBIO 1: SOLO el wordmark (letras) lleva a HOME */}
+            <a
+              href={HOME_URL}
+              className="inline-flex items-center"
+              aria-label="Ir a la home"
+              title="Ir a la home"
+            >
+              <img
+                src={"/vonu-wordmark.png?v=2"}
+                alt="Vonu"
+                className="h-4 w-auto"
+                draggable={false}
+              />
+            </a>
           </button>
         </div>
       </div>
@@ -617,14 +626,22 @@ export default function Page() {
         }`}
         onClick={() => setMenuOpen(false)}
       >
+        {/* ✅ CAMBIO 2: Sidebar tipo “burbuja” que se abre DEBAJO del logo (sin solapar) */}
+
         {/* Desktop sidebar */}
         <aside
-          className={`hidden md:block absolute left-3 top-3 bottom-3 w-80 bg-white rounded-3xl shadow-xl border border-zinc-200 p-4 transform transition-transform duration-300 ease-out ${
-            menuOpen ? "translate-x-0" : "-translate-x-[110%]"
+          className={`hidden md:block absolute left-3 top-[calc(12px+44px+10px)] w-80 bg-white/92 backdrop-blur-xl rounded-[28px] shadow-[0_18px_60px_rgba(0,0,0,0.18)] border border-zinc-200/80 p-4 transform transition-all duration-300 ease-out ${
+            menuOpen
+              ? "translate-x-0 opacity-100"
+              : "-translate-x-[110%] opacity-0"
           }`}
+          style={{
+            // altura: desde debajo del logo hasta un margen abajo
+            height: "calc(var(--vvh, 100dvh) - 12px - 44px - 10px - 12px)",
+          }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="pt-14">
+          <div className="h-full flex flex-col">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <div className="text-sm font-semibold text-zinc-800">
@@ -662,12 +679,10 @@ export default function Page() {
               <HomeLink className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 transition-colors" />
             </div>
 
-            <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-220px)]">
+            <div className="space-y-2 overflow-y-auto pr-1 flex-1">
               {sortedThreads.map((t) => {
                 const active = t.id === activeThreadId;
-                const when = mounted
-                  ? new Date(t.updatedAt).toLocaleString()
-                  : "";
+                const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
 
                 return (
                   <button
@@ -692,75 +707,77 @@ export default function Page() {
 
         {/* Mobile sidebar */}
         <aside
-          className={`md:hidden absolute left-0 top-0 bottom-0 w-[86vw] max-w-[360px] bg-white/90 backdrop-blur-xl shadow-2xl transform transition-transform duration-300 ease-out ${
-            menuOpen ? "translate-x-0" : "-translate-x-[110%]"
+          className={`md:hidden absolute left-3 right-3 top-[calc(12px+44px+10px)] bg-white/92 backdrop-blur-xl rounded-[28px] shadow-[0_18px_60px_rgba(0,0,0,0.20)] border border-zinc-200/80 p-4 transform transition-all duration-300 ease-out ${
+            menuOpen
+              ? "translate-y-0 opacity-100"
+              : "-translate-y-2 opacity-0 pointer-events-none"
           }`}
+          style={{
+            // se abre debajo del logo y ocupa hasta abajo con margen
+            height: "calc(var(--vvh, 100dvh) - 12px - 44px - 10px - 12px)",
+          }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="px-4 pb-4 h-full pt-16">
-            <div className="pt-4">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <div className="text-sm font-semibold text-zinc-800">
-                    Historial
-                  </div>
-                  <div className="text-xs text-zinc-500">
-                    Tus consultas recientes
-                  </div>
+          <div className="h-full flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="text-sm font-semibold text-zinc-800">
+                  Historial
                 </div>
-
-                <button
-                  onClick={createThreadAndActivate}
-                  className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                >
-                  Nueva
-                </button>
+                <div className="text-xs text-zinc-500">
+                  Tus consultas recientes
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                <button
-                  onClick={openRename}
-                  className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50"
-                >
-                  Renombrar
-                </button>
-                <button
-                  onClick={deleteActiveThread}
-                  className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600"
-                >
-                  Borrar
-                </button>
-              </div>
+              <button
+                onClick={createThreadAndActivate}
+                className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              >
+                Nueva
+              </button>
+            </div>
 
-              <div className="mb-3">
-                <HomeLink className="w-full inline-flex items-center justify-center gap-2 text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 transition-colors" />
-              </div>
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <button
+                onClick={openRename}
+                className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50"
+              >
+                Renombrar
+              </button>
+              <button
+                onClick={deleteActiveThread}
+                className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600"
+              >
+                Borrar
+              </button>
+            </div>
 
-              <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-240px)]">
-                {sortedThreads.map((t) => {
-                  const active = t.id === activeThreadId;
-                  const when = mounted
-                    ? new Date(t.updatedAt).toLocaleString()
-                    : "";
+            <div className="mb-3">
+              <HomeLink className="w-full inline-flex items-center justify-center gap-2 text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 transition-colors" />
+            </div>
 
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => activateThread(t.id)}
-                      className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
-                        active
-                          ? "border-blue-600 bg-blue-50"
-                          : "border-zinc-200 bg-white hover:bg-zinc-50"
-                      }`}
-                    >
-                      <div className="text-sm font-medium text-zinc-900">
-                        {t.title}
-                      </div>
-                      <div className="text-xs text-zinc-500 mt-1">{when}</div>
-                    </button>
-                  );
-                })}
-              </div>
+            <div className="space-y-2 overflow-y-auto pr-1 flex-1">
+              {sortedThreads.map((t) => {
+                const active = t.id === activeThreadId;
+                const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
+
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => activateThread(t.id)}
+                    className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
+                      active
+                        ? "border-blue-600 bg-blue-50"
+                        : "border-zinc-200 bg-white hover:bg-zinc-50"
+                    }`}
+                  >
+                    <div className="text-sm font-medium text-zinc-900">
+                      {t.title}
+                    </div>
+                    <div className="text-xs text-zinc-500 mt-1">{when}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </aside>
