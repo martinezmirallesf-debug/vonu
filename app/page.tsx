@@ -200,7 +200,10 @@ export default function Page() {
       // ✅ NUEVO: cuánto “tapa” el teclado (o barras) abajo
       // window.innerHeight (layout) - (vv.height + vv.offsetTop) ≈ zona “oculta” inferior
       const offsetTop = vv?.offsetTop ?? 0;
-      const bottomCover = Math.max(0, window.innerHeight - (height + offsetTop));
+      const bottomCover = Math.max(
+        0,
+        window.innerHeight - (height + offsetTop)
+      );
       document.documentElement.style.setProperty("--vvb", `${bottomCover}px`);
 
       // Mantener el final visible cuando el teclado está abierto y el input enfocado
@@ -599,7 +602,7 @@ export default function Page() {
               draggable={false}
             />
 
-            {/* ✅ CAMBIO 1: SOLO el wordmark (letras) lleva a HOME */}
+            {/* El wordmark sigue yendo a HOME (sin cambiar nada) */}
             <a
               href={HOME_URL}
               className="inline-flex items-center"
@@ -626,8 +629,6 @@ export default function Page() {
         }`}
         onClick={() => setMenuOpen(false)}
       >
-        {/* ✅ CAMBIO 2: Sidebar tipo “burbuja” que se abre DEBAJO del logo (sin solapar) */}
-
         {/* Desktop sidebar */}
         <aside
           className={`hidden md:block absolute left-3 top-[calc(12px+44px+10px)] w-80 bg-white/92 backdrop-blur-xl rounded-[28px] shadow-[0_18px_60px_rgba(0,0,0,0.18)] border border-zinc-200/80 p-4 transform transition-all duration-300 ease-out ${
@@ -636,7 +637,6 @@ export default function Page() {
               : "-translate-x-[110%] opacity-0"
           }`}
           style={{
-            // altura: desde debajo del logo hasta un margen abajo
             height: "calc(var(--vvh, 100dvh) - 12px - 44px - 10px - 12px)",
           }}
           onClick={(e) => e.stopPropagation()}
@@ -675,9 +675,7 @@ export default function Page() {
               </button>
             </div>
 
-            <div className="mb-3">
-              <HomeLink className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 transition-colors" />
-            </div>
+            {/* ✅ CAMBIO ÚNICO: Quitado el botón Home */}
 
             <div className="space-y-2 overflow-y-auto pr-1 flex-1">
               {sortedThreads.map((t) => {
@@ -713,7 +711,6 @@ export default function Page() {
               : "-translate-y-2 opacity-0 pointer-events-none"
           }`}
           style={{
-            // se abre debajo del logo y ocupa hasta abajo con margen
             height: "calc(var(--vvh, 100dvh) - 12px - 44px - 10px - 12px)",
           }}
           onClick={(e) => e.stopPropagation()}
@@ -752,9 +749,7 @@ export default function Page() {
               </button>
             </div>
 
-            <div className="mb-3">
-              <HomeLink className="w-full inline-flex items-center justify-center gap-2 text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 transition-colors" />
-            </div>
+            {/* ✅ CAMBIO ÚNICO: Quitado el botón Home */}
 
             <div className="space-y-2 overflow-y-auto pr-1 flex-1">
               {sortedThreads.map((t) => {
