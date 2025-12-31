@@ -763,7 +763,7 @@ export default function Page() {
 
             <a
               href={HOME_URL}
-              className="h-11 -ml-2 pl-0 pr-2 flex items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
+              className="h-11 -ml-2.5 pl-0 pr-2 flex items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
               aria-label="Ir a la home"
               title="Ir a la home"
             >
