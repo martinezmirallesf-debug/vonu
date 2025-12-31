@@ -65,7 +65,7 @@ export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // ===== AUTH (NUEVO, mínimo) =====
+  // ===== AUTH (NUEVO) =====
   const [authLoading, setAuthLoading] = useState(true);
   const [authUserEmail, setAuthUserEmail] = useState<string | null>(null);
 
@@ -120,16 +120,21 @@ export default function Page() {
         body: JSON.stringify({ email }),
       });
 
-      const txt = await res.text().catch(() => "");
+      const raw = await res.text().catch(() => "");
       let data: any = null;
       try {
-        data = txt ? JSON.parse(txt) : null;
+        data = raw ? JSON.parse(raw) : null;
       } catch {
         data = null;
       }
 
       if (!res.ok) {
-        setLoginMsg(data?.error || data?.message || txt || `Error (HTTP ${res.status})`);
+        const errMsg =
+          data?.error ||
+          data?.message ||
+          raw ||
+          `Error enviando email (HTTP ${res.status})`;
+        setLoginMsg(errMsg);
         return;
       }
 
@@ -169,7 +174,9 @@ export default function Page() {
           title: typeof t.title === "string" ? t.title : "Consulta",
           updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
           messages:
-            Array.isArray(t.messages) && t.messages.length ? t.messages : [initialAssistantMessage()],
+            Array.isArray(t.messages) && t.messages.length
+              ? t.messages
+              : [initialAssistantMessage()],
         }));
 
       if (clean.length) {
@@ -207,13 +214,13 @@ export default function Page() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Altura dinámica del input bar para no tapar el chat
+  // Altura dinámica del input bar para no tapar el chat (y evitar “cursor detrás”)
   const [inputBarH, setInputBarH] = useState<number>(140);
 
   // Autoscroll: solo si el usuario está cerca del final
   const shouldStickToBottomRef = useRef(true);
 
-  // VisualViewport (móvil teclado)
+  // Arregla bugs de viewport en móvil (teclado) usando VisualViewport
   useEffect(() => {
     if (typeof window === "undefined") return;
     const vv = window.visualViewport;
@@ -266,7 +273,10 @@ export default function Page() {
     return !isTyping && (!!input.trim() || !!imagePreview);
   }, [isTyping, input, imagePreview]);
 
-  const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
+  const hasUserMessage = useMemo(
+    () => messages.some((m) => m.role === "user"),
+    [messages]
+  );
 
   // textarea autoresize
   useEffect(() => {
@@ -279,15 +289,17 @@ export default function Page() {
     setInputExpanded(next > 52);
   }, [input]);
 
+  // onScroll: decide si pegamos abajo
   function handleChatScroll() {
     const el = scrollRef.current;
     if (!el) return;
 
-    const threshold = 140;
+    const threshold = 140; // px
     const distToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
     shouldStickToBottomRef.current = distToBottom < threshold;
   }
 
+  // autoscroll cuando llegan mensajes/streaming (pero solo si el usuario está abajo)
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -299,7 +311,7 @@ export default function Page() {
     });
   }, [messages, isTyping]);
 
-  // Autofocus (solo desktop)
+  // Autofocus:
   useEffect(() => {
     if (!mounted) return;
     if (renameOpen) return;
@@ -356,7 +368,8 @@ export default function Page() {
       if (!el) return;
 
       const thread = threads.find((x) => x.id === id);
-      const isFresh = (thread?.messages ?? []).filter((m) => m.role === "user").length === 0;
+      const isFresh =
+        (thread?.messages ?? []).filter((m) => m.role === "user").length === 0;
 
       if (isFresh) {
         el.scrollTo({ top: 0, behavior: "auto" });
@@ -380,7 +393,11 @@ export default function Page() {
     if (!activeThread) return;
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
-      prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t))
+      prev.map((t) =>
+        t.id === activeThread.id
+          ? { ...t, title: name, updatedAt: Date.now() }
+          : t
+      )
     );
     setRenameOpen(false);
 
@@ -457,7 +474,9 @@ export default function Page() {
         if (t.id !== activeThread.id) return t;
 
         const hasUserAlready = t.messages.some((m) => m.role === "user");
-        const newTitle = hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen");
+        const newTitle = hasUserAlready
+          ? t.title
+          : makeTitleFromText(userText || "Imagen");
 
         return {
           ...t,
@@ -475,10 +494,14 @@ export default function Page() {
     try {
       await sleep(220);
 
-      const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
+      const threadNow =
+        threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
-        .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
+        .filter(
+          (m) =>
+            (m.role === "user" || m.role === "assistant") && (m.text || m.image)
+        )
         .map((m) => ({
           role: m.role,
           content: m.text ?? "",
@@ -520,7 +543,9 @@ export default function Page() {
             return {
               ...t,
               updatedAt: Date.now(),
-              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
+              messages: t.messages.map((m) =>
+                m.id === assistantId ? { ...m, text: partial } : m
+              ),
             };
           })
         );
@@ -543,12 +568,15 @@ export default function Page() {
 
           setIsTyping(false);
 
-          if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+          if (isDesktopPointer())
+            setTimeout(() => textareaRef.current?.focus(), 60);
         }
       }, speedMs);
     } catch (err: any) {
       const msg =
-        typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
+        typeof err?.message === "string"
+          ? err.message
+          : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -578,7 +606,29 @@ export default function Page() {
     }
   }
 
-  // Padding inferior del chat = alto real del input bar
+  function HomeLink({
+    className,
+    label = "Volver a la home",
+  }: {
+    className?: string;
+    label?: string;
+  }) {
+    return (
+      <a
+        href={HOME_URL}
+        className={
+          className ??
+          "inline-flex items-center gap-2 text-sm text-zinc-700 hover:text-blue-700 transition-colors"
+        }
+      >
+        <span className="text-[16px]" aria-hidden="true">
+          ⟵
+        </span>
+        <span className="font-medium">{label}</span>
+      </a>
+    );
+  }
+
   const chatBottomPad = inputBarH;
 
   return (
@@ -595,7 +645,9 @@ export default function Page() {
             className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-sm font-semibold text-zinc-900 mb-1">Iniciar sesión</div>
+            <div className="text-sm font-semibold text-zinc-900 mb-1">
+              Iniciar sesión
+            </div>
             <div className="text-xs text-zinc-500 mb-3">
               Te enviamos un enlace por email para entrar (sin contraseña).
             </div>
@@ -642,15 +694,17 @@ export default function Page() {
             </div>
 
             <div className="mt-3 text-[11px] text-zinc-500 leading-4">
-              Si no te llega, mira Spam/Promociones. El enlace te llevará a{" "}
-              <span className="font-medium">/auth/callback</span>.
+              Si no te llega, mira Spam/Promociones.
             </div>
           </div>
         </div>
       )}
 
       {/* ===== MOBILE HEADER ===== */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50" style={{ height: MOBILE_HEADER_H }}>
+      <div
+        className="md:hidden fixed top-0 left-0 right-0 z-50"
+        style={{ height: MOBILE_HEADER_H }}
+      >
         <div className="h-full px-4 flex items-center bg-white/80 backdrop-blur-xl">
           {/* Icono = menú */}
           <button
@@ -670,13 +724,23 @@ export default function Page() {
           </button>
 
           {/* Letras = home */}
-          <a href={HOME_URL} className="ml-2 flex items-center" aria-label="Ir a la home" title="Ir a la home">
-            <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
+          <a
+            href={HOME_URL}
+            className="ml-2 flex items-center"
+            aria-label="Ir a la home"
+            title="Ir a la home"
+          >
+            <img
+              src={"/vonu-wordmark.png?v=2"}
+              alt="Vonu"
+              className="h-5 w-auto"
+              draggable={false}
+            />
           </a>
 
           <div className="flex-1" />
 
-          {/* Entrar / Salir */}
+          {/* Botón Entrar/Salir (móvil) */}
           {!authLoading && (
             <button
               onClick={() => {
@@ -699,7 +763,9 @@ export default function Page() {
       {/* ===== OVERLAY + SIDEBAR ===== */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-300 ${
-          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent"
+          menuOpen
+            ? "bg-black/20 backdrop-blur-sm pointer-events-auto"
+            : "pointer-events-none bg-transparent"
         }`}
         onClick={() => setMenuOpen(false)}
       >
@@ -713,7 +779,9 @@ export default function Page() {
           <div className="pt-16">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-800">Historial</div>
+                <div className="text-sm font-semibold text-zinc-800">
+                  Historial
+                </div>
                 <div className="text-xs text-zinc-500">Tus consultas recientes</div>
               </div>
 
@@ -740,13 +808,19 @@ export default function Page() {
               </button>
             </div>
 
-            {/* Auth mini (desktop sidebar) */}
+            <div className="mb-3">
+              <HomeLink className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 transition-colors" />
+            </div>
+
+            {/* Cuenta (desktop sidebar) */}
             {!authLoading && (
               <div className="mb-3 rounded-3xl border border-zinc-200 bg-white px-3 py-3">
                 <div className="text-xs text-zinc-500 mb-2">Cuenta</div>
                 {authUserEmail ? (
                   <div className="flex items-center justify-between gap-2">
-                    <div className="text-xs text-zinc-800 truncate">{authUserEmail}</div>
+                    <div className="text-xs text-zinc-800 truncate">
+                      {authUserEmail}
+                    </div>
                     <button
                       onClick={logout}
                       className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50"
@@ -779,10 +853,14 @@ export default function Page() {
                     key={t.id}
                     onClick={() => activateThread(t.id)}
                     className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
-                      active ? "border-blue-600 bg-blue-50" : "border-zinc-200 hover:bg-zinc-50"
+                      active
+                        ? "border-blue-600 bg-blue-50"
+                        : "border-zinc-200 hover:bg-zinc-50"
                     }`}
                   >
-                    <div className="text-sm font-medium text-zinc-900">{t.title}</div>
+                    <div className="text-sm font-medium text-zinc-900">
+                      {t.title}
+                    </div>
                     <div className="text-xs text-zinc-500 mt-1">{when}</div>
                   </button>
                 );
@@ -802,8 +880,12 @@ export default function Page() {
             <div className="pt-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <div className="text-sm font-semibold text-zinc-800">Historial</div>
-                  <div className="text-xs text-zinc-500">Tus consultas recientes</div>
+                  <div className="text-sm font-semibold text-zinc-800">
+                    Historial
+                  </div>
+                  <div className="text-xs text-zinc-500">
+                    Tus consultas recientes
+                  </div>
                 </div>
 
                 <button
@@ -829,6 +911,10 @@ export default function Page() {
                 </button>
               </div>
 
+              <div className="mb-3">
+                <HomeLink className="w-full inline-flex items-center justify-center gap-2 text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 transition-colors" />
+              </div>
+
               <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-240px)]">
                 {sortedThreads.map((t) => {
                   const active = t.id === activeThreadId;
@@ -839,10 +925,14 @@ export default function Page() {
                       key={t.id}
                       onClick={() => activateThread(t.id)}
                       className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors ${
-                        active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"
+                        active
+                          ? "border-blue-600 bg-blue-50"
+                          : "border-zinc-200 bg-white hover:bg-zinc-50"
                       }`}
                     >
-                      <div className="text-sm font-medium text-zinc-900">{t.title}</div>
+                      <div className="text-sm font-medium text-zinc-900">
+                        {t.title}
+                      </div>
                       <div className="text-xs text-zinc-500 mt-1">{when}</div>
                     </button>
                   );
@@ -853,7 +943,7 @@ export default function Page() {
         </aside>
       </div>
 
-      {/* ===== Desktop top-left (icono abre menú, letras van a home) ===== */}
+      {/* ===== Desktop top-left ===== */}
       <div className="hidden md:flex fixed left-5 top-5 z-50 items-center gap-2 select-none">
         <button
           onClick={() => setMenuOpen((v) => !v)}
@@ -871,17 +961,29 @@ export default function Page() {
           />
         </button>
 
-        <a href={HOME_URL} className="flex items-center" aria-label="Ir a la home" title="Ir a la home">
-          <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-5 w-auto" draggable={false} />
+        <a
+          href={HOME_URL}
+          className="flex items-center"
+          aria-label="Ir a la home"
+          title="Ir a la home"
+        >
+          <img
+            src={"/vonu-wordmark.png?v=2"}
+            alt="Vonu"
+            className="h-5 w-auto"
+            draggable={false}
+          />
         </a>
       </div>
 
-      {/* ===== Desktop top-right AUTH ===== */}
+      {/* ===== Desktop top-right auth ===== */}
       {!authLoading && (
         <div className="hidden md:flex fixed right-5 top-5 z-50 items-center gap-2">
           {authUserEmail ? (
             <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 backdrop-blur-xl px-3 py-2">
-              <div className="text-xs text-zinc-700 max-w-[240px] truncate">{authUserEmail}</div>
+              <div className="text-xs text-zinc-700 max-w-[240px] truncate">
+                {authUserEmail}
+              </div>
               <button
                 onClick={logout}
                 className="text-xs px-3 py-1.5 rounded-full border border-zinc-200 hover:bg-zinc-50"
@@ -913,8 +1015,12 @@ export default function Page() {
               className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
-              <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
+              <div className="text-sm font-semibold text-zinc-900 mb-1">
+                Renombrar chat
+              </div>
+              <div className="text-xs text-zinc-500 mb-3">
+                Ponle un nombre para encontrarlo rápido.
+              </div>
 
               <input
                 value={renameValue}
@@ -956,7 +1062,11 @@ export default function Page() {
         )}
 
         {/* CHAT */}
-        <div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0">
+        <div
+          ref={scrollRef}
+          onScroll={handleChatScroll}
+          className="flex-1 overflow-y-auto min-h-0"
+        >
           <div
             className="mx-auto max-w-3xl px-6"
             style={{
@@ -1029,12 +1139,22 @@ export default function Page() {
               </svg>
             </button>
 
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={onSelectImage}
+              className="hidden"
+            />
 
             <div className="flex-1">
               {imagePreview && (
                 <div className="mb-2 relative w-fit bubble-in">
-                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="rounded-3xl border border-zinc-200 max-h-40"
+                  />
                   <button
                     onClick={() => setImagePreview(null)}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors"
