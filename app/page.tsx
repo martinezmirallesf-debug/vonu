@@ -473,7 +473,8 @@ export default function Page() {
         shouldStickToBottomRef.current = false;
       });
 
-      if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+      if (isDesktopPointer())
+        setTimeout(() => textareaRef.current?.focus(), 60);
       return;
     }
 
@@ -741,12 +742,12 @@ export default function Page() {
 
       {/* ===== TOP BUBBLES (sin header) ===== */}
       <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
-        {/* Left: UNA burbuja con icono+logo dentro */}
+        {/* Left: UNA burbuja con icono+logo dentro (sin separador) */}
         <div className="pointer-events-auto">
-          <div className="h-11 rounded-full bg-white/85 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden">
+          <div className="h-11 rounded-full bg-white/85 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden px-2">
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              className="h-11 w-11 flex items-center justify-center hover:bg-white transition-colors cursor-pointer"
+              className="h-11 w-11 flex items-center justify-center hover:bg-white/80 transition-colors cursor-pointer rounded-full"
               aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
               title={menuOpen ? "Cerrar menú" : "Menú"}
             >
@@ -760,11 +761,9 @@ export default function Page() {
               />
             </button>
 
-            <div className="h-6 w-px bg-zinc-200/80" />
-
             <a
               href={HOME_URL}
-              className="h-11 px-4 flex items-center hover:bg-white transition-colors cursor-pointer"
+              className="h-11 pl-1 pr-3 flex items-center hover:bg-white/80 transition-colors cursor-pointer rounded-full"
               aria-label="Ir a la home"
               title="Ir a la home"
             >
@@ -778,7 +777,7 @@ export default function Page() {
           </div>
         </div>
 
-        {/* Right: burbuja usuario con esquina exterior “cuadrada” */}
+        {/* Right: burbuja usuario TOTALMENTE redonda */}
         {!authLoading && (
           <div className="pointer-events-auto">
             <button
@@ -794,7 +793,7 @@ export default function Page() {
                 "h-11 w-11",
                 "bg-white/85 backdrop-blur-xl border border-zinc-200 shadow-sm",
                 "flex items-center justify-center text-zinc-900 hover:bg-white transition-colors cursor-pointer",
-                "rounded-[22px] rounded-tr-[6px]", // 👈 esquina exterior “no redondeada”
+                "rounded-full",
               ].join(" ")}
               aria-label={authUserEmail ? "Cerrar sesión" : "Iniciar sesión"}
               title={authUserEmail ? authUserEmail : "Iniciar sesión"}
@@ -822,7 +821,9 @@ export default function Page() {
             "rounded-[28px] shadow-[0_18px_60px_rgba(0,0,0,0.18)] border border-zinc-200/80",
             "p-4",
             "transform transition-all duration-300 ease-out",
-            menuOpen ? "translate-x-0 opacity-100" : "-translate-x-[110%] opacity-0",
+            menuOpen
+              ? "translate-x-0 opacity-100"
+              : "-translate-x-[110%] opacity-0",
           ].join(" ")}
           style={{
             top: SIDEBAR_TOP,
@@ -838,7 +839,9 @@ export default function Page() {
                 <div className="text-sm font-semibold text-zinc-800">
                   Historial
                 </div>
-                <div className="text-xs text-zinc-500">Tus consultas recientes</div>
+                <div className="text-xs text-zinc-500">
+                  Tus consultas recientes
+                </div>
               </div>
 
               <button
