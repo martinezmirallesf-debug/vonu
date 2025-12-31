@@ -744,7 +744,7 @@ export default function Page() {
       <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
         {/* Left: UNA burbuja con icono+logo dentro (sin separador) */}
         <div className="pointer-events-auto">
-          <div className="h-11 rounded-full bg-white/85 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden px-1.5">
+          <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden px-1">
             <button
               onClick={() => setMenuOpen((v) => !v)}
               className="h-11 w-11 flex items-center justify-center transition-colors cursor-pointer rounded-full bg-transparent"
@@ -763,7 +763,7 @@ export default function Page() {
 
             <a
               href={HOME_URL}
-              className="h-11 pl-0.5 pr-2.5 flex items-center transition-colors cursor-pointer rounded-full bg-transparent"
+              className="h-11 -ml-1 pl-0 pr-2 flex items-center transition-colors cursor-pointer rounded-full bg-transparent"
               aria-label="Ir a la home"
               title="Ir a la home"
             >
@@ -791,7 +791,7 @@ export default function Page() {
               }}
               className={[
                 "h-11 w-11",
-                "bg-white/85 backdrop-blur-xl border border-zinc-200 shadow-sm",
+                "bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm",
                 "flex items-center justify-center text-zinc-900 hover:bg-white transition-colors cursor-pointer",
                 "rounded-full",
               ].join(" ")}
