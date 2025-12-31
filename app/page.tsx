@@ -691,7 +691,7 @@ export default function Page() {
               value={loginEmail}
               onChange={(e) => setLoginEmail(e.target.value)}
               className="w-full h-11 rounded-2xl border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
-              placeholder="tu@ejemplo.com"
+              placeholder="tuemail@ejemplo.com"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === "Enter") sendLoginEmail();
@@ -744,10 +744,10 @@ export default function Page() {
       <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
         {/* Left: UNA burbuja con icono+logo dentro (sin separador) */}
         <div className="pointer-events-auto">
-          <div className="h-11 rounded-full bg-white/85 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden px-2">
+          <div className="h-11 rounded-full bg-white/85 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden px-1.5">
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              className="h-11 w-11 flex items-center justify-center hover:bg-white/80 transition-colors cursor-pointer rounded-full"
+              className="h-11 w-11 flex items-center justify-center transition-colors cursor-pointer rounded-full bg-transparent"
               aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
               title={menuOpen ? "Cerrar menú" : "Menú"}
             >
@@ -763,7 +763,7 @@ export default function Page() {
 
             <a
               href={HOME_URL}
-              className="h-11 pl-1 pr-3 flex items-center hover:bg-white/80 transition-colors cursor-pointer rounded-full"
+              className="h-11 pl-0.5 pr-2.5 flex items-center transition-colors cursor-pointer rounded-full bg-transparent"
               aria-label="Ir a la home"
               title="Ir a la home"
             >
