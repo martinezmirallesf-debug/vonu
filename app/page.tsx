@@ -744,10 +744,10 @@ export default function Page() {
       <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
         {/* Left: UNA burbuja con icono+logo dentro (sin separador) */}
         <div className="pointer-events-auto">
-          <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden px-1">
+          <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden px-0.5">
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              className="h-11 w-11 flex items-center justify-center transition-colors cursor-pointer rounded-full bg-transparent"
+              className="h-11 w-10 flex items-center justify-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
               aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
               title={menuOpen ? "Cerrar menú" : "Menú"}
             >
@@ -763,7 +763,7 @@ export default function Page() {
 
             <a
               href={HOME_URL}
-              className="h-11 -ml-1 pl-0 pr-2 flex items-center transition-colors cursor-pointer rounded-full bg-transparent"
+              className="h-11 -ml-2 pl-0 pr-2 flex items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
               aria-label="Ir a la home"
               title="Ir a la home"
             >
