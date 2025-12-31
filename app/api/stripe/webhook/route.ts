@@ -3,11 +3,11 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { supabaseAdmin } from "@/app/lib/supabaseAdmin";
 
-export const runtime = "nodejs"; // Stripe webhook necesita body raw y crypto Node
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
-  apiVersion: "2025-01-27.acacia",
+  apiVersion: "2025-12-15.clover",
 });
 
 function toISOFromUnixSeconds(sec?: number | null) {
@@ -25,95 +25,147 @@ export async function POST(req: Request) {
       );
     }
 
-    // IMPORTANTE: Stripe requiere el body en texto raw para verificar la firma
-    const body = await req.text();
-
-    const sig =
-      req.headers.get("stripe-signature") ??
-      req.headers.get("Stripe-Signature") ??
-      "";
-
-    let event: Stripe.Event;
-    try {
-      event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-    } catch (err: any) {
+    const rawBody = await req.text();
+    const sig = req.headers.get("stripe-signature");
+    if (!sig) {
       return NextResponse.json(
-        { error: `Webhook signature verification failed: ${err?.message ?? "unknown"}` },
+        { error: "Missing stripe-signature header" },
         { status: 400 }
       );
     }
 
-    // ===== Manejo de eventos =====
+    let event: Stripe.Event;
+    try {
+      event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
+    } catch (err: any) {
+      return NextResponse.json(
+        { error: `Webhook signature verification failed: ${err?.message ?? "Unknown"}` },
+        { status: 400 }
+      );
+    }
+
+    // Helpers para logs (muy útil en Vercel)
+    const log = (msg: string, extra?: any) => {
+      if (extra) console.log(`[stripe-webhook] ${msg}`, extra);
+      else console.log(`[stripe-webhook] ${msg}`);
+    };
+
     switch (event.type) {
       case "checkout.session.completed": {
-        // Si lo estás usando para crear la suscripción, aquí normalmente solo logueamos.
-        // La “verdad” de la suscripción la tratamos en customer.subscription.created/updated
-        return NextResponse.json({ received: true, type: event.type }, { status: 200 });
-      }
+        const session = event.data.object as Stripe.Checkout.Session;
 
-      case "customer.subscription.created":
-      case "customer.subscription.updated":
-      case "customer.subscription.deleted": {
-        // 👇 SOLUCIÓN: casteamos el objeto como Stripe.Subscription (evita el error TS)
-        const sub = event.data.object as unknown as Stripe.Subscription;
-
-        const stripeSubscriptionId = sub.id;
-        const stripeCustomerId =
-          typeof sub.customer === "string" ? sub.customer : sub.customer?.id ?? null;
-
-        const priceId =
-          sub.items?.data?.[0]?.price?.id ?? null;
-
-        const currentPeriodEndISO = toISOFromUnixSeconds(
-          // en Stripe es unix seconds
-          (sub as any).current_period_end ?? null
-        );
-
-        // 👇 Si estás pasando metadata.supabase_user_id en el checkout, lo recogemos aquí:
         const userId =
-          (sub.metadata?.supabase_user_id as string | undefined) ?? null;
+          (session.metadata?.supabase_user_id as string | undefined) ?? null;
 
-        // Si aún no hay userId (porque todavía no lo metes en metadata), no insertamos:
-        if (!userId) {
-          // No lo consideramos error para no romper el webhook
-          return NextResponse.json(
-            { received: true, warning: "Missing sub.metadata.supabase_user_id (no DB upsert done)" },
-            { status: 200 }
-          );
-        }
+        const stripeCustomerId =
+          typeof session.customer === "string" ? session.customer : null;
 
-        // Upsert en public.subscriptions
+        const stripeSubscriptionId =
+          typeof session.subscription === "string" ? session.subscription : null;
+
+        log("checkout.session.completed", {
+          userId,
+          stripeCustomerId,
+          stripeSubscriptionId,
+        });
+
+        // Si aún no pasas metadata.supabase_user_id, aquí verás null y NO se insertará nada
+        if (!stripeSubscriptionId) break;
+
+        // Traer subscription real para status/period_end/price
+        const stripeSub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+
+        // OJO: typings pueden variar según evento/apiVersion -> leemos seguro
+        const status = (stripeSub as any).status ?? null;
+        const currentPeriodEndSec = (stripeSub as any).current_period_end ?? null;
+
+        // price_id
+        const priceId =
+          (stripeSub as any)?.items?.data?.[0]?.price?.id ??
+          (stripeSub as any)?.plan?.id ??
+          null;
+
+        const payload = {
+          user_id: userId,
+          stripe_customer_id: stripeCustomerId,
+          stripe_subscription_id: stripeSubscriptionId,
+          status,
+          current_period_end: toISOFromUnixSeconds(currentPeriodEndSec),
+          price_id: priceId,
+        };
+
+        log("upsert subscriptions (checkout)", payload);
+
         const { error } = await supabaseAdmin
           .from("subscriptions")
-          .upsert(
-            {
-              user_id: userId,
-              stripe_customer_id: stripeCustomerId,
-              stripe_subscription_id: stripeSubscriptionId,
-              status: sub.status ?? null,
-              current_period_end: currentPeriodEndISO,
-              price_id: priceId,
-            },
-            { onConflict: "stripe_subscription_id" }
-          );
+          .upsert(payload, { onConflict: "stripe_subscription_id" });
 
         if (error) {
+          log("supabase upsert error (checkout)", error);
           return NextResponse.json(
             { error: `Supabase upsert failed: ${error.message}` },
             { status: 500 }
           );
         }
 
-        return NextResponse.json({ received: true, type: event.type }, { status: 200 });
+        break;
+      }
+
+      case "customer.subscription.created":
+      case "customer.subscription.updated":
+      case "customer.subscription.deleted": {
+        // En deleted puede venir DeletedSubscription (y faltar campos)
+        const stripeSub = event.data.object as any;
+
+        const stripeSubscriptionId = stripeSub?.id ?? null;
+        const stripeCustomerId =
+          typeof stripeSub?.customer === "string" ? stripeSub.customer : null;
+
+        const status = stripeSub?.status ?? null;
+        const currentPeriodEndSec = stripeSub?.current_period_end ?? null;
+
+        const priceId =
+          stripeSub?.items?.data?.[0]?.price?.id ??
+          stripeSub?.plan?.id ??
+          null;
+
+        const payload = {
+          stripe_customer_id: stripeCustomerId,
+          stripe_subscription_id: stripeSubscriptionId,
+          status,
+          current_period_end: toISOFromUnixSeconds(currentPeriodEndSec),
+          price_id: priceId,
+        };
+
+        log(`subscription event: ${event.type}`, payload);
+
+        if (!stripeSubscriptionId) break;
+
+        const { error } = await supabaseAdmin
+          .from("subscriptions")
+          .upsert(payload, { onConflict: "stripe_subscription_id" });
+
+        if (error) {
+          log("supabase upsert error (subscription event)", error);
+          return NextResponse.json(
+            { error: `Supabase upsert failed: ${error.message}` },
+            { status: 500 }
+          );
+        }
+
+        break;
       }
 
       default:
-        // No hacemos nada con otros eventos
-        return NextResponse.json({ received: true, type: event.type }, { status: 200 });
+        // No hacemos nada
+        break;
     }
+
+    return NextResponse.json({ received: true }, { status: 200 });
   } catch (e: any) {
+    console.error("[stripe-webhook] fatal", e);
     return NextResponse.json(
-      { error: e?.message ?? "Unknown webhook error" },
+      { error: e?.message ?? "Unknown error" },
       { status: 500 }
     );
   }
