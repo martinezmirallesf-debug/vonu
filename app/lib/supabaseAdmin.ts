@@ -8,5 +8,8 @@ if (!supabaseUrl) throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL in env");
 if (!serviceRoleKey) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY in env");
 
 export const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-  auth: { persistSession: false, autoRefreshToken: false },
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
 });
