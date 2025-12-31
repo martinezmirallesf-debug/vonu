@@ -658,15 +658,19 @@ export default function Page() {
     }
   }
 
-  // Padding inferior del chat = alto real del input bar (evita que el cursor se “meta detrás”)
+  // Padding inferior del chat = alto real del input bar
   const chatBottomPad = inputBarH;
+
+  // Medidas de la “zona top” (burbujas) para colocar sidebar justo debajo
+  const TOP_OFFSET_PX = 12; // top-3
+  const TOP_BUBBLE_H = 44; // h-11
+  const TOP_GAP_PX = 10;
+  const SIDEBAR_TOP = TOP_OFFSET_PX + TOP_BUBBLE_H + TOP_GAP_PX; // 66px
 
   return (
     <div
       className="bg-white flex overflow-hidden"
-      style={{
-        height: "calc(var(--vvh, 100dvh))",
-      }}
+      style={{ height: "calc(var(--vvh, 100dvh))" }}
     >
       {/* ===== LOGIN MODAL ===== */}
       {loginOpen && (
@@ -686,7 +690,7 @@ export default function Page() {
               value={loginEmail}
               onChange={(e) => setLoginEmail(e.target.value)}
               className="w-full h-11 rounded-2xl border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
-              placeholder="tuemail@gmail.com"
+              placeholder="tu@ejemplo.com"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === "Enter") sendLoginEmail();
@@ -730,49 +734,51 @@ export default function Page() {
         </div>
       )}
 
-      {/* ===== TOP FADE (efecto difuminado al subir) ===== */}
+      {/* ===== TOP FADE (difuminado al subir) ===== */}
       <div className="fixed top-0 left-0 right-0 z-40 pointer-events-none">
         <div className="h-[86px] bg-gradient-to-b from-white via-white/85 to-transparent" />
       </div>
 
       {/* ===== TOP BUBBLES (sin header) ===== */}
       <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
-        {/* Left bubbles */}
-        <div className="flex items-center gap-2 pointer-events-auto">
-          {/* Icon bubble (menu) */}
-          <button
-            onClick={() => setMenuOpen((v) => !v)}
-            className="h-11 w-11 rounded-full bg-white/85 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center justify-center cursor-pointer"
-            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-            title={menuOpen ? "Cerrar menú" : "Menú"}
-          >
-            <img
-              src={"/vonu-icon.png?v=2"}
-              alt="Menú"
-              className={`h-6 w-6 transition-transform duration-300 ease-out ${
-                menuOpen ? "rotate-90" : "rotate-0"
-              }`}
-              draggable={false}
-            />
-          </button>
+        {/* Left: UNA burbuja con icono+logo dentro */}
+        <div className="pointer-events-auto">
+          <div className="h-11 rounded-full bg-white/85 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden">
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="h-11 w-11 flex items-center justify-center hover:bg-white transition-colors cursor-pointer"
+              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+              title={menuOpen ? "Cerrar menú" : "Menú"}
+            >
+              <img
+                src={"/vonu-icon.png?v=2"}
+                alt="Menú"
+                className={`h-6 w-6 transition-transform duration-300 ease-out ${
+                  menuOpen ? "rotate-90" : "rotate-0"
+                }`}
+                draggable={false}
+              />
+            </button>
 
-          {/* Wordmark bubble (home) */}
-          <a
-            href={HOME_URL}
-            className="h-11 px-4 rounded-full bg-white/85 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center cursor-pointer"
-            aria-label="Ir a la home"
-            title="Ir a la home"
-          >
-            <img
-              src={"/vonu-wordmark.png?v=2"}
-              alt="Vonu"
-              className="h-4 w-auto"
-              draggable={false}
-            />
-          </a>
+            <div className="h-6 w-px bg-zinc-200/80" />
+
+            <a
+              href={HOME_URL}
+              className="h-11 px-4 flex items-center hover:bg-white transition-colors cursor-pointer"
+              aria-label="Ir a la home"
+              title="Ir a la home"
+            >
+              <img
+                src={"/vonu-wordmark.png?v=2"}
+                alt="Vonu"
+                className="h-4 w-auto"
+                draggable={false}
+              />
+            </a>
+          </div>
         </div>
 
-        {/* Right bubble (user) */}
+        {/* Right: burbuja usuario con esquina exterior “cuadrada” */}
         {!authLoading && (
           <div className="pointer-events-auto">
             <button
@@ -784,7 +790,12 @@ export default function Page() {
                   setLoginOpen(true);
                 }
               }}
-              className="h-11 w-11 rounded-full bg-white/85 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-900 hover:bg-white transition-colors cursor-pointer"
+              className={[
+                "h-11 w-11",
+                "bg-white/85 backdrop-blur-xl border border-zinc-200 shadow-sm",
+                "flex items-center justify-center text-zinc-900 hover:bg-white transition-colors cursor-pointer",
+                "rounded-[22px] rounded-tr-[6px]", // 👈 esquina exterior “no redondeada”
+              ].join(" ")}
               aria-label={authUserEmail ? "Cerrar sesión" : "Iniciar sesión"}
               title={authUserEmail ? authUserEmail : "Iniciar sesión"}
             >
@@ -803,22 +814,31 @@ export default function Page() {
         }`}
         onClick={() => setMenuOpen(false)}
       >
-        {/* Desktop sidebar */}
+        {/* Sidebar (desktop y móvil) – debajo del top bubble, casi full height */}
         <aside
-          className={`hidden md:block absolute left-3 top-3 bottom-3 w-80 bg-white rounded-3xl shadow-xl border border-zinc-200 p-4 transform transition-transform duration-300 ease-out ${
-            menuOpen ? "translate-x-0" : "-translate-x-[110%]"
-          }`}
+          className={[
+            "absolute left-3 right-3 md:right-auto",
+            "bg-white/92 backdrop-blur-xl",
+            "rounded-[28px] shadow-[0_18px_60px_rgba(0,0,0,0.18)] border border-zinc-200/80",
+            "p-4",
+            "transform transition-all duration-300 ease-out",
+            menuOpen ? "translate-x-0 opacity-100" : "-translate-x-[110%] opacity-0",
+          ].join(" ")}
+          style={{
+            top: SIDEBAR_TOP,
+            bottom: 12,
+            width: isDesktopPointer() ? 360 : undefined,
+            maxWidth: "calc(100vw - 24px)",
+          }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="pt-16">
+          <div className="h-full flex flex-col">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <div className="text-sm font-semibold text-zinc-800">
                   Historial
                 </div>
-                <div className="text-xs text-zinc-500">
-                  Tus consultas recientes
-                </div>
+                <div className="text-xs text-zinc-500">Tus consultas recientes</div>
               </div>
 
               <button
@@ -829,22 +849,21 @@ export default function Page() {
               </button>
             </div>
 
-            <div className="flex gap-2 mb-3">
+            <div className="grid grid-cols-2 gap-2 mb-3">
               <button
                 onClick={openRename}
-                className="flex-1 text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer"
+                className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer"
               >
                 Renombrar
               </button>
               <button
                 onClick={deleteActiveThread}
-                className="flex-1 text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer"
+                className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer"
               >
                 Borrar
               </button>
             </div>
 
-            {/* Cuenta (desktop sidebar) */}
             {!authLoading && (
               <div className="mb-3 rounded-3xl border border-zinc-200 bg-white px-3 py-3">
                 <div className="text-xs text-zinc-500 mb-2">Cuenta</div>
@@ -875,7 +894,7 @@ export default function Page() {
               </div>
             )}
 
-            <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-260px)]">
+            <div className="space-y-2 overflow-y-auto pr-1 flex-1">
               {sortedThreads.map((t) => {
                 const active = t.id === activeThreadId;
                 const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
@@ -887,7 +906,7 @@ export default function Page() {
                     className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${
                       active
                         ? "border-blue-600 bg-blue-50"
-                        : "border-zinc-200 hover:bg-zinc-50"
+                        : "border-zinc-200 bg-white hover:bg-zinc-50"
                     }`}
                   >
                     <div className="text-sm font-medium text-zinc-900">
@@ -897,101 +916,6 @@ export default function Page() {
                   </button>
                 );
               })}
-            </div>
-          </div>
-        </aside>
-
-        {/* Mobile sidebar */}
-        <aside
-          className={`md:hidden absolute left-0 top-0 bottom-0 w-[86vw] max-w-[360px] bg-white/90 backdrop-blur-xl shadow-2xl transform transition-transform duration-300 ease-out ${
-            menuOpen ? "translate-x-0" : "-translate-x-[110%]"
-          }`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="px-4 pb-4 pt-16 h-full">
-            <div className="pt-2">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <div className="text-sm font-semibold text-zinc-800">
-                    Historial
-                  </div>
-                  <div className="text-xs text-zinc-500">
-                    Tus consultas recientes
-                  </div>
-                </div>
-
-                <button
-                  onClick={createThreadAndActivate}
-                  className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
-                >
-                  Nueva
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                <button
-                  onClick={openRename}
-                  className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer"
-                >
-                  Renombrar
-                </button>
-                <button
-                  onClick={deleteActiveThread}
-                  className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer"
-                >
-                  Borrar
-                </button>
-              </div>
-
-              {/* Cuenta (móvil) */}
-              {!authLoading && (
-                <div className="mb-3 rounded-3xl border border-zinc-200 bg-white px-3 py-3">
-                  <div className="text-xs text-zinc-500 mb-2">Cuenta</div>
-                  {authUserEmail ? (
-                    <button
-                      onClick={logout}
-                      className="w-full text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer"
-                    >
-                      Salir ({authUserEmail})
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setLoginEmail("");
-                        setLoginMsg(null);
-                        setLoginOpen(true);
-                      }}
-                      className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
-                    >
-                      Iniciar sesión
-                    </button>
-                  )}
-                </div>
-              )}
-
-              <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-240px)]">
-                {sortedThreads.map((t) => {
-                  const active = t.id === activeThreadId;
-                  const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
-
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => activateThread(t.id)}
-                      className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${
-                        active
-                          ? "border-blue-600 bg-blue-50"
-                          : "border-zinc-200 bg-white hover:bg-zinc-50"
-                      }`}
-                    >
-                      <div className="text-sm font-medium text-zinc-900">
-                        {t.title}
-                      </div>
-                      <div className="text-xs text-zinc-500 mt-1">{when}</div>
-                    </button>
-                  );
-                })}
-              </div>
             </div>
           </div>
         </aside>
@@ -1059,9 +983,9 @@ export default function Page() {
           className="flex-1 overflow-y-auto min-h-0"
         >
           <div
-            className="mx-auto max-w-3xl px-6"
+            className="mx-auto max-w-3xl px-4 md:px-6"
             style={{
-              paddingTop: 78, // deja respirar bajo las burbujas, pero “sin header”
+              paddingTop: 78,
               paddingBottom: chatBottomPad,
             }}
           >
@@ -1070,26 +994,30 @@ export default function Page() {
                 if (msg.role === "assistant") {
                   const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
                   return (
-                    <div key={msg.id} className="bubble-in-slow">
-                      <div
-                        className={[
-                          "prose prose-zinc max-w-none",
-                          "text-[15px] md:text-[15.5px]",
-                          "leading-[1.6]",
-                          "prose-headings:font-semibold prose-headings:text-zinc-900",
-                          "prose-h3:text-[17px] md:prose-h3:text-[18px]",
-                          "prose-p:my-3",
-                        ].join(" ")}
-                      >
-                        <ReactMarkdown>{mdText}</ReactMarkdown>
+                    <div key={msg.id} className="flex justify-start">
+                      <div className="max-w-[92%] md:max-w-[80%]">
+                        <div className="bg-emerald-50 text-zinc-900 border border-emerald-100 rounded-[22px] rounded-tl-[6px] px-4 py-3 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
+                          <div
+                            className={[
+                              "prose prose-zinc max-w-none",
+                              "text-[15px] md:text-[15.5px]",
+                              "leading-[1.6]",
+                              "prose-headings:font-semibold prose-headings:text-zinc-900",
+                              "prose-h3:text-[17px] md:prose-h3:text-[18px]",
+                              "prose-p:my-3",
+                            ].join(" ")}
+                          >
+                            <ReactMarkdown>{mdText}</ReactMarkdown>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   );
                 }
 
                 return (
-                  <div key={msg.id} className="flex justify-end bubble-in">
-                    <div className="max-w-xl space-y-2">
+                  <div key={msg.id} className="flex justify-end">
+                    <div className="max-w-[92%] md:max-w-[80%] space-y-2">
                       {msg.image && (
                         <img
                           src={msg.image}
@@ -1098,7 +1026,7 @@ export default function Page() {
                         />
                       )}
                       {msg.text && (
-                        <div className="bg-blue-600 text-white text-[14.5px] leading-relaxed rounded-3xl px-4 py-2.5 break-words">
+                        <div className="bg-blue-600 text-white text-[14.5px] leading-relaxed rounded-[22px] rounded-tr-[6px] px-4 py-2.5 break-words shadow-[0_1px_0_rgba(0,0,0,0.06)]">
                           {msg.text}
                         </div>
                       )}
@@ -1113,17 +1041,13 @@ export default function Page() {
         {/* INPUT + DISCLAIMER */}
         <div
           ref={inputBarRef}
-          className="sticky bottom-0 left-0 right-0 z-30 bg-white"
+          className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl"
         >
           <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             {/* + */}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="
-                h-12 w-12 inline-flex items-center justify-center rounded-full
-                bg-white md:border md:border-zinc-300
-                text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer
-              "
+              className="h-12 w-12 inline-flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer disabled:opacity-50"
               aria-label="Adjuntar imagen"
               disabled={isTyping}
               title={isTyping ? "Espera a que Vonu responda…" : "Adjuntar imagen"}
@@ -1161,7 +1085,7 @@ export default function Page() {
             {/* input */}
             <div className="flex-1">
               {imagePreview && (
-                <div className="mb-2 relative w-fit bubble-in">
+                <div className="mb-2 relative w-fit">
                   <img
                     src={imagePreview}
                     alt="Preview"
@@ -1180,8 +1104,8 @@ export default function Page() {
               <div
                 className={[
                   "w-full min-h-12 px-4 py-3 flex items-center",
-                  "bg-zinc-100 md:bg-white",
-                  "md:rounded-3xl md:border md:border-zinc-300 md:focus-within:border-zinc-400",
+                  "bg-zinc-100",
+                  "border border-zinc-200 focus-within:border-zinc-300",
                   inputExpanded ? "rounded-3xl" : "rounded-full",
                 ].join(" ")}
               >
@@ -1209,37 +1133,21 @@ export default function Page() {
             <button
               onClick={sendMessage}
               disabled={!canSend}
-              className="
-                h-12 w-12 md:w-auto
-                rounded-full md:rounded-3xl
-                bg-blue-600 hover:bg-blue-700 text-white
-                md:px-6
-                flex items-center justify-center
-                text-sm font-medium
-                disabled:opacity-40 transition-colors cursor-pointer
-              "
+              className="h-12 w-12 rounded-full bg-black hover:bg-zinc-900 text-white flex items-center justify-center disabled:opacity-40 transition-colors cursor-pointer"
               aria-label="Enviar"
               title={canSend ? "Enviar" : "Escribe un mensaje para enviar"}
             >
-              <span className="md:hidden flex items-center justify-center">
-                <ArrowUpIcon className="h-5 w-5" />
-              </span>
-              <span className="hidden md:inline">Enviar</span>
+              <ArrowUpIcon className="h-5 w-5" />
             </button>
           </div>
 
           <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
-            <p className="hidden md:block text-center text-[12px] text-zinc-500 leading-5">
+            <p className="text-center text-[12px] text-zinc-500 leading-5">
               Orientación y prevención. No sustituye profesionales. Si hay riesgo
               inmediato, contacta con emergencias.
             </p>
 
-            {!hasUserMessage && (
-              <p className="md:hidden text-center text-[12px] text-zinc-500 leading-5">
-                Orientación y prevención. No sustituye profesionales. Si hay
-                riesgo inmediato, contacta con emergencias.
-              </p>
-            )}
+            {!hasUserMessage && <div className="h-1" />}
           </div>
         </div>
       </div>
