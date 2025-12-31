@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
 type Message = {
   id: string;
@@ -63,6 +64,98 @@ function isDesktopPointer() {
 export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  // ===== AUTH (NUEVO) =====
+  const [authUserEmail, setAuthUserEmail] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginSending, setLoginSending] = useState(false);
+  const [loginMsg, setLoginMsg] = useState<string | null>(null);
+
+  // Detectar sesión al cargar + escuchar cambios
+  useEffect(() => {
+    let unsub: (() => void) | null = null;
+
+    (async () => {
+      try {
+        const { data } = await supabaseBrowser.auth.getSession();
+        const email = data?.session?.user?.email ?? null;
+        setAuthUserEmail(email);
+      } catch {
+        setAuthUserEmail(null);
+      } finally {
+        setAuthLoading(false);
+      }
+
+      const { data: sub } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
+        setAuthUserEmail(session?.user?.email ?? null);
+      });
+
+      unsub = () => sub.subscription.unsubscribe();
+    })();
+
+    return () => {
+      try {
+        unsub?.();
+      } catch {
+        // ignore
+      }
+    };
+  }, []);
+
+  async function sendLoginEmail() {
+    const email = loginEmail.trim();
+    if (!email || !email.includes("@")) {
+      setLoginMsg("Escribe un email válido.");
+      return;
+    }
+
+    setLoginSending(true);
+    setLoginMsg(null);
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const text = await res.text().catch(() => "");
+      let data: any = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        data = null;
+      }
+
+      if (!res.ok) {
+        const errMsg =
+          data?.error ||
+          data?.message ||
+          text ||
+          `Error enviando email (HTTP ${res.status})`;
+        setLoginMsg(errMsg);
+        return;
+      }
+
+      setLoginMsg("✅ Email enviado. Abre tu correo y pulsa el enlace para iniciar sesión.");
+    } catch (e: any) {
+      setLoginMsg(e?.message ?? "Error enviando email.");
+    } finally {
+      setLoginSending(false);
+    }
+  }
+
+  async function logout() {
+    try {
+      await supabaseBrowser.auth.signOut();
+      setAuthUserEmail(null);
+    } catch {
+      // ignore
+    }
+  }
 
   // -------- Persistencia local --------
   const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
@@ -230,6 +323,7 @@ export default function Page() {
     if (renameOpen) return;
     if (menuOpen) return;
     if (isTyping) return;
+    if (loginOpen) return;
 
     if (!isDesktopPointer()) return;
 
@@ -238,7 +332,7 @@ export default function Page() {
     }, 60);
 
     return () => clearTimeout(t);
-  }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId]);
+  }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId, loginOpen]);
 
   function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -557,6 +651,69 @@ export default function Page() {
         height: "calc(var(--vvh, 100dvh))",
       }}
     >
+      {/* ===== LOGIN MODAL (NUEVO) ===== */}
+      {loginOpen && (
+        <div className="fixed inset-0 z-[60] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6">
+          <div
+            className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-sm font-semibold text-zinc-900 mb-1">
+              Iniciar sesión
+            </div>
+            <div className="text-xs text-zinc-500 mb-3">
+              Te enviamos un enlace por email para entrar (sin contraseña).
+            </div>
+
+            <input
+              value={loginEmail}
+              onChange={(e) => setLoginEmail(e.target.value)}
+              className="w-full h-11 rounded-2xl border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
+              placeholder="tuemail@gmail.com"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") sendLoginEmail();
+                if (e.key === "Escape") {
+                  setLoginOpen(false);
+                  setLoginMsg(null);
+                }
+              }}
+            />
+
+            {loginMsg && (
+              <div className="mt-3 text-xs text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-2xl px-3 py-2">
+                {loginMsg}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => {
+                  setLoginOpen(false);
+                  setLoginMsg(null);
+                }}
+                className="h-10 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm"
+                disabled={loginSending}
+              >
+                Cerrar
+              </button>
+              <button
+                onClick={sendLoginEmail}
+                className="h-10 px-4 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 text-sm transition-colors disabled:opacity-50"
+                disabled={loginSending}
+              >
+                {loginSending ? "Enviando…" : "Enviar enlace"}
+              </button>
+            </div>
+
+            <div className="mt-3 text-[11px] text-zinc-500 leading-4">
+              Si no te llega, mira Spam/Promociones. En local, el enlace te llevará a{" "}
+              <span className="font-medium">/auth/callback</span>.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ===== MOBILE HEADER (solo móvil, fino, SIN línea gris) ===== */}
       <div
         className="md:hidden fixed top-0 left-0 right-0 z-50"
@@ -596,6 +753,24 @@ export default function Page() {
           </a>
 
           <div className="flex-1" />
+
+          {/* AUTH BUTTON (MÓVIL) */}
+          {!authLoading && (
+            <button
+              onClick={() => {
+                if (authUserEmail) logout();
+                else {
+                  setLoginEmail("");
+                  setLoginMsg(null);
+                  setLoginOpen(true);
+                }
+              }}
+              className="text-xs px-3 py-2 rounded-full border border-zinc-200 bg-white/80 hover:bg-white transition-colors"
+              title={authUserEmail ? "Cerrar sesión" : "Iniciar sesión"}
+            >
+              {authUserEmail ? "Salir" : "Entrar"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -653,7 +828,40 @@ export default function Page() {
               <HomeLink className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 transition-colors" />
             </div>
 
-            <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-220px)]">
+            {/* AUTH BOX (DESKTOP SIDEBAR) */}
+            {!authLoading && (
+              <div className="mb-3 rounded-3xl border border-zinc-200 bg-white px-3 py-3">
+                <div className="text-xs text-zinc-500 mb-2">
+                  Cuenta
+                </div>
+                {authUserEmail ? (
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs text-zinc-800 truncate">
+                      {authUserEmail}
+                    </div>
+                    <button
+                      onClick={logout}
+                      className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50"
+                    >
+                      Salir
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setLoginEmail("");
+                      setLoginMsg(null);
+                      setLoginOpen(true);
+                    }}
+                    className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                  >
+                    Iniciar sesión
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-2 overflow-y-auto pr-1 h-[calc(100%-280px)]">
               {sortedThreads.map((t) => {
                 const active = t.id === activeThreadId;
                 const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
@@ -787,6 +995,36 @@ export default function Page() {
           />
         </a>
       </div>
+
+      {/* ===== Desktop top-right AUTH button (NUEVO) ===== */}
+      {!authLoading && (
+        <div className="hidden md:flex fixed right-5 top-5 z-50 items-center gap-2">
+          {authUserEmail ? (
+            <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 backdrop-blur-xl px-3 py-2">
+              <div className="text-xs text-zinc-700 max-w-[240px] truncate">
+                {authUserEmail}
+              </div>
+              <button
+                onClick={logout}
+                className="text-xs px-3 py-1.5 rounded-full border border-zinc-200 hover:bg-zinc-50"
+              >
+                Salir
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                setLoginEmail("");
+                setLoginMsg(null);
+                setLoginOpen(true);
+              }}
+              className="text-xs px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            >
+              Iniciar sesión
+            </button>
+          )}
+        </div>
+      )}
 
       {/* MAIN */}
       <div className="flex-1 flex flex-col min-h-0">
