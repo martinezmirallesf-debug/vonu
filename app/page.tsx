@@ -54,6 +54,31 @@ function makeTitleFromText(text: string) {
 const STORAGE_KEY = "vonu_threads_v1";
 const HOME_URL = "https://vonuai.com";
 
+// 1 free/day (por usuario si logueado, si no por dispositivo)
+const FREE_KEY_PREFIX = "vonu_free_used_";
+function todayKey() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+function getFreeStorageKey(userId: string | null) {
+  return `${FREE_KEY_PREFIX}${userId ?? "device"}_${todayKey()}`;
+}
+function markFreeUsed(userId: string | null) {
+  try {
+    window.localStorage.setItem(getFreeStorageKey(userId), "1");
+  } catch {}
+}
+function isFreeUsed(userId: string | null) {
+  try {
+    return window.localStorage.getItem(getFreeStorageKey(userId)) === "1";
+  } catch {
+    return false;
+  }
+}
+
 // Heurística: desktop = puntero fino (ratón/trackpad)
 function isDesktopPointer() {
   if (typeof window === "undefined") return true;
@@ -109,6 +134,25 @@ function ArrowUpIcon({ className }: { className?: string }) {
   );
 }
 
+function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className ?? "h-4 w-4"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M20 6L9 17l-5-5"
+        stroke="currentColor"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -116,11 +160,60 @@ export default function Page() {
   // ===== AUTH =====
   const [authLoading, setAuthLoading] = useState(true);
   const [authUserEmail, setAuthUserEmail] = useState<string | null>(null);
+  const [authUserId, setAuthUserId] = useState<string | null>(null);
 
   const [loginOpen, setLoginOpen] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginSending, setLoginSending] = useState(false);
   const [loginMsg, setLoginMsg] = useState<string | null>(null);
+
+  // ===== PAYWALL / PRO =====
+  const [proLoading, setProLoading] = useState(false);
+  const [isPro, setIsPro] = useState(false);
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [plan, setPlan] = useState<"monthly" | "yearly">("yearly");
+  const [payLoading, setPayLoading] = useState(false);
+  const [payMsg, setPayMsg] = useState<string | null>(null);
+
+  // ===== Free/day =====
+  const [freeUsedToday, setFreeUsedToday] = useState(false);
+
+  function refreshFreeUsedNow(nextUserId: string | null) {
+    // si es pro, no importa
+    if (isPro) {
+      setFreeUsedToday(false);
+      return;
+    }
+    setFreeUsedToday(isFreeUsed(nextUserId));
+  }
+
+  async function refreshProStatus() {
+    if (!authUserId) {
+      setIsPro(false);
+      return;
+    }
+    setProLoading(true);
+    try {
+      const { data } = await supabaseBrowser.auth.getSession();
+      const token = data?.session?.access_token;
+      if (!token) {
+        setIsPro(false);
+        return;
+      }
+
+      const res = await fetch("/api/subscription/status", {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const json = await res.json().catch(() => ({}));
+      setIsPro(!!json?.active);
+    } catch {
+      setIsPro(false);
+    } finally {
+      setProLoading(false);
+    }
+  }
 
   useEffect(() => {
     let unsub: (() => void) | null = null;
@@ -128,16 +221,23 @@ export default function Page() {
     (async () => {
       try {
         const { data } = await supabaseBrowser.auth.getSession();
+        const uid = data?.session?.user?.id ?? null;
         setAuthUserEmail(data?.session?.user?.email ?? null);
+        setAuthUserId(uid);
       } catch {
         setAuthUserEmail(null);
+        setAuthUserId(null);
       } finally {
         setAuthLoading(false);
       }
 
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange(
         (_event, session) => {
+          const uid = session?.user?.id ?? null;
           setAuthUserEmail(session?.user?.email ?? null);
+          setAuthUserId(uid);
+          // refrescar free/day en el cambio de sesión
+          refreshFreeUsedNow(uid);
         }
       );
 
@@ -151,7 +251,118 @@ export default function Page() {
         // ignore
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    // al montar, calculamos free/day con el user actual
+    refreshFreeUsedNow(authUserId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    refreshProStatus();
+    refreshFreeUsedNow(authUserId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUserId, authLoading]);
+
+  useEffect(() => {
+    // si pasa a Pro, ya no hay límite
+    if (isPro) setFreeUsedToday(false);
+  }, [isPro]);
+
+  async function startCheckout(chosen: "monthly" | "yearly") {
+    setPayLoading(true);
+    setPayMsg(null);
+    try {
+      const { data } = await supabaseBrowser.auth.getSession();
+      const token = data?.session?.access_token;
+      if (!token) {
+        setPayMsg("Necesitas iniciar sesión.");
+        setPayLoading(false);
+        return;
+      }
+
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ plan: chosen }),
+      });
+
+      const raw = await res.text().catch(() => "");
+      let json: any = null;
+      try {
+        json = raw ? JSON.parse(raw) : null;
+      } catch {
+        json = null;
+      }
+
+      if (!res.ok) {
+        setPayMsg(json?.error || raw || "Error creando checkout.");
+        setPayLoading(false);
+        return;
+      }
+
+      const url = json?.url as string | undefined;
+      if (!url) {
+        setPayMsg("Stripe devolvió una respuesta inválida (sin URL).");
+        setPayLoading(false);
+        return;
+      }
+
+      window.location.href = url;
+    } catch (e: any) {
+      setPayMsg(e?.message ?? "Error iniciando pago.");
+      setPayLoading(false);
+    }
+  }
+
+  async function openPortal() {
+    setPayLoading(true);
+    setPayMsg(null);
+    try {
+      const { data } = await supabaseBrowser.auth.getSession();
+      const token = data?.session?.access_token;
+      if (!token) {
+        setPayMsg("Necesitas iniciar sesión.");
+        setPayLoading(false);
+        return;
+      }
+
+      const res = await fetch("/api/stripe/portal", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setPayMsg(json?.error || "No se pudo abrir el portal.");
+        setPayLoading(false);
+        return;
+      }
+
+      const url = json?.url as string | undefined;
+      if (!url) {
+        setPayMsg("Respuesta inválida del portal (sin URL).");
+        setPayLoading(false);
+        return;
+      }
+
+      window.location.href = url;
+    } catch (e: any) {
+      setPayMsg(e?.message ?? "Error abriendo portal.");
+      setPayLoading(false);
+    }
+  }
 
   async function sendLoginEmail() {
     const email = loginEmail.trim();
@@ -202,6 +413,10 @@ export default function Page() {
     try {
       await supabaseBrowser.auth.signOut();
       setAuthUserEmail(null);
+      setAuthUserId(null);
+      setIsPro(false);
+      setPaywallOpen(false);
+      refreshFreeUsedNow(null);
     } catch {
       // ignore
     }
@@ -266,13 +481,13 @@ export default function Page() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Altura dinámica del input bar para no tapar el chat (y evitar “cursor detrás”)
+  // Altura dinámica del input bar para no tapar el chat
   const [inputBarH, setInputBarH] = useState<number>(140);
 
   // Autoscroll: solo si el usuario está cerca del final
   const shouldStickToBottomRef = useRef(true);
 
-  // Arregla bugs de viewport en móvil (teclado) usando VisualViewport
+  // VisualViewport
   useEffect(() => {
     if (typeof window === "undefined") return;
     const vv = window.visualViewport;
@@ -321,9 +536,19 @@ export default function Page() {
     return [...threads].sort((a, b) => b.updatedAt - a.updatedAt);
   }, [threads]);
 
+  const userCanUseNow = useMemo(() => {
+    if (authLoading || proLoading) return true; // no bloqueamos por estados intermedios
+    if (isPro) return true;
+    // Free: 1/día
+    return !freeUsedToday;
+  }, [authLoading, proLoading, isPro, freeUsedToday]);
+
   const canSend = useMemo(() => {
-    return !isTyping && (!!input.trim() || !!imagePreview);
-  }, [isTyping, input, imagePreview]);
+    const basicReady = !isTyping && (!!input.trim() || !!imagePreview);
+    if (!basicReady) return false;
+    if (!userCanUseNow) return false;
+    return true;
+  }, [isTyping, input, imagePreview, userCanUseNow]);
 
   const hasUserMessage = useMemo(
     () => messages.some((m) => m.role === "user"),
@@ -341,17 +566,15 @@ export default function Page() {
     setInputExpanded(next > 52);
   }, [input]);
 
-  // onScroll: decide si pegamos abajo
   function handleChatScroll() {
     const el = scrollRef.current;
     if (!el) return;
 
-    const threshold = 140; // px
+    const threshold = 140;
     const distToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
     shouldStickToBottomRef.current = distToBottom < threshold;
   }
 
-  // autoscroll cuando llegan mensajes/streaming (pero solo si el usuario está abajo)
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -363,13 +586,14 @@ export default function Page() {
     });
   }, [messages, isTyping]);
 
-  // Autofocus:
+  // Autofocus
   useEffect(() => {
     if (!mounted) return;
     if (renameOpen) return;
     if (menuOpen) return;
     if (isTyping) return;
     if (loginOpen) return;
+    if (paywallOpen) return;
 
     if (!isDesktopPointer()) return;
 
@@ -378,7 +602,7 @@ export default function Page() {
     }, 60);
 
     return () => clearTimeout(t);
-  }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId, loginOpen]);
+  }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId, loginOpen, paywallOpen]);
 
   function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -473,8 +697,7 @@ export default function Page() {
         shouldStickToBottomRef.current = false;
       });
 
-      if (isDesktopPointer())
-        setTimeout(() => textareaRef.current?.focus(), 60);
+      if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       return;
     }
 
@@ -497,7 +720,22 @@ export default function Page() {
   }
 
   async function sendMessage() {
-    if (!canSend) return;
+    // Si ya gastó el free y no es Pro -> paywall
+    if (!authLoading && !proLoading && !isPro && freeUsedToday) {
+      setPayMsg(null);
+      setPaywallOpen(true);
+      return;
+    }
+
+    if (!canSend) {
+      // si no puede por free y todavía no abrió paywall
+      if (!userCanUseNow && !isPro) {
+        setPayMsg(null);
+        setPaywallOpen(true);
+      }
+      return;
+    }
+
     if (!activeThread) return;
 
     const userText = input.trim();
@@ -621,8 +859,13 @@ export default function Page() {
 
           setIsTyping(false);
 
-          if (isDesktopPointer())
-            setTimeout(() => textareaRef.current?.focus(), 60);
+          // ✅ Consumimos el free del día SOLO si no es pro y aún no estaba consumido
+          if (!isPro && !freeUsedToday) {
+            markFreeUsed(authUserId);
+            refreshFreeUsedNow(authUserId);
+          }
+
+          if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
         }
       }, speedMs);
     } catch (err: any) {
@@ -659,20 +902,182 @@ export default function Page() {
     }
   }
 
-  // Padding inferior del chat = alto real del input bar
   const chatBottomPad = inputBarH;
 
-  // Medidas de la “zona top” (burbujas) para colocar sidebar justo debajo
-  const TOP_OFFSET_PX = 12; // top-3
-  const TOP_BUBBLE_H = 44; // h-11
+  const TOP_OFFSET_PX = 12;
+  const TOP_BUBBLE_H = 44;
   const TOP_GAP_PX = 10;
   const SIDEBAR_TOP = TOP_OFFSET_PX + TOP_BUBBLE_H + TOP_GAP_PX; // 66px
+
+  const showProCTA = useMemo(() => {
+    if (authLoading || proLoading) return false;
+    if (isPro) return false;
+    // si aún le queda free, podemos mostrar CTA más suave; si no, CTA fuerte
+    return true;
+  }, [authLoading, proLoading, isPro]);
 
   return (
     <div
       className="bg-white flex overflow-hidden"
       style={{ height: "calc(var(--vvh, 100dvh))" }}
     >
+      {/* ===== PAYWALL MODAL (bonito) ===== */}
+      {paywallOpen && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/25 backdrop-blur-sm flex items-center justify-center px-5"
+          onClick={() => {
+            if (!payLoading) setPaywallOpen(false);
+          }}
+        >
+          <div
+            className="w-full max-w-xl rounded-[32px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.22)] p-4 md:p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-zinc-900">
+                  Desbloquear Vonu Pro
+                </div>
+                <div className="text-xs text-zinc-500 mt-1">
+                  Acceso completo al análisis, historial y mejoras continuas.
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  if (!payLoading) setPaywallOpen(false);
+                }}
+                className="h-9 w-9 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer"
+                aria-label="Cerrar"
+                disabled={payLoading}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* selector plan */}
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setPlan("monthly")}
+                className={[
+                  "rounded-3xl border p-4 text-left transition-all cursor-pointer",
+                  plan === "monthly"
+                    ? "border-zinc-900 bg-zinc-900 text-white shadow-[0_12px_30px_rgba(0,0,0,0.18)]"
+                    : "border-zinc-200 bg-white hover:bg-zinc-50",
+                ].join(" ")}
+                disabled={payLoading}
+              >
+                <div className="text-xs font-semibold">Monthly</div>
+                <div className="mt-1 text-2xl font-semibold leading-none">
+                  4,99€
+                  <span className={plan === "monthly" ? "text-white/80" : "text-zinc-500"}>
+                    {" "}
+                    /mes
+                  </span>
+                </div>
+                <div
+                  className={
+                    plan === "monthly"
+                      ? "text-white/80 text-xs mt-1"
+                      : "text-zinc-500 text-xs mt-1"
+                  }
+                >
+                  Flexible, cancela cuando quieras
+                </div>
+              </button>
+
+              <button
+                onClick={() => setPlan("yearly")}
+                className={[
+                  "rounded-3xl border p-4 text-left transition-all cursor-pointer relative overflow-hidden",
+                  plan === "yearly"
+                    ? "border-emerald-700 bg-emerald-50 shadow-[0_12px_30px_rgba(0,0,0,0.10)]"
+                    : "border-zinc-200 bg-white hover:bg-zinc-50",
+                ].join(" ")}
+                disabled={payLoading}
+              >
+                <div className="absolute top-3 right-3">
+                  <span className="text-[11px] px-2 py-1 rounded-full bg-emerald-600 text-white">
+                    Mejor valor
+                  </span>
+                </div>
+
+                <div className="text-xs font-semibold text-zinc-900">Yearly</div>
+                <div className="mt-1 text-2xl font-semibold leading-none text-zinc-900">
+                  39,99€
+                  <span className="text-zinc-500"> /año</span>
+                </div>
+                <div className="text-zinc-500 text-xs mt-1">Ahorra vs mensual</div>
+              </button>
+            </div>
+
+            {/* incluye */}
+            <div className="mt-4 rounded-3xl border border-zinc-200 bg-zinc-50 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-xs font-semibold text-zinc-800">Incluye</div>
+                {!isPro && (
+                  <div className="text-[11px] text-zinc-500">
+                    {freeUsedToday
+                      ? "Free usado hoy"
+                      : "Te queda 1 análisis free hoy"}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-[12px] text-zinc-700">
+                {[
+                  "Análisis completo de mensajes, webs e imágenes",
+                  "Prioridad y mejoras continuas",
+                  "Historial organizado",
+                  "Acceso desde cualquier dispositivo",
+                ].map((x) => (
+                  <div key={x} className="flex items-start gap-2">
+                    <span className="mt-[2px] text-emerald-700">
+                      <CheckIcon />
+                    </span>
+                    <span>{x}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {payMsg && (
+              <div className="mt-3 text-xs text-zinc-700 bg-white border border-zinc-200 rounded-2xl px-3 py-2">
+                {payMsg}
+              </div>
+            )}
+
+            <div className="mt-4 flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
+              <button
+                onClick={openPortal}
+                className="h-11 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50"
+                disabled={payLoading}
+              >
+                Gestionar suscripción
+              </button>
+
+              <button
+                onClick={() => startCheckout(plan)}
+                className={[
+                  "h-11 px-5 rounded-2xl text-sm cursor-pointer transition-colors",
+                  plan === "monthly"
+                    ? "bg-black text-white hover:bg-zinc-900"
+                    : "bg-emerald-600 text-white hover:bg-emerald-700",
+                  "disabled:opacity-50",
+                ].join(" ")}
+                disabled={payLoading}
+              >
+                {payLoading ? "Redirigiendo…" : "Continuar al pago"}
+              </button>
+            </div>
+
+            <div className="mt-3 text-[11px] text-zinc-500 leading-4">
+              Pago seguro con Stripe. Puedes cancelar cuando quieras desde el portal.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ===== LOGIN MODAL ===== */}
       {loginOpen && (
         <div className="fixed inset-0 z-[60] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6">
@@ -735,16 +1140,15 @@ export default function Page() {
         </div>
       )}
 
-      {/* ===== TOP FADE (difuminado al subir) ===== */}
+      {/* ===== TOP FADE ===== */}
       <div className="fixed top-0 left-0 right-0 z-40 pointer-events-none">
         <div className="h-[86px] bg-gradient-to-b from-white via-white/85 to-transparent" />
       </div>
 
       {/* ===== TOP BUBBLES (sin header) ===== */}
       <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
-        {/* Left: UNA burbuja con icono+logo dentro (sin separador) */}
+        {/* Left: UNA burbuja con icono+logo dentro (NO TOCAR LOGO) */}
         <div className="pointer-events-auto">
-          {/* (NO TOCAR LOGO) */}
           <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center gap-0 overflow-hidden px-1">
             <button
               onClick={() => setMenuOpen((v) => !v)}
@@ -778,9 +1182,28 @@ export default function Page() {
           </div>
         </div>
 
-        {/* Right: burbuja usuario TOTALMENTE redonda */}
+        {/* Right */}
         {!authLoading && (
-          <div className="pointer-events-auto">
+          <div className="pointer-events-auto flex items-center gap-2">
+            {/* CTA Pro */}
+            {showProCTA && (
+              <button
+                onClick={() => {
+                  setPayMsg(null);
+                  setPaywallOpen(true);
+                }}
+                className={[
+                  "h-11 px-4 rounded-full transition-colors cursor-pointer shadow-sm border",
+                  freeUsedToday
+                    ? "bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-700/10"
+                    : "bg-white/95 text-zinc-900 hover:bg-white border-zinc-200",
+                ].join(" ")}
+                title={freeUsedToday ? "Desbloquear Pro" : "Ver planes Pro"}
+              >
+                {freeUsedToday ? "Desbloquear Pro" : "Pro"}
+              </button>
+            )}
+
             <button
               onClick={() => {
                 if (authUserEmail) logout();
@@ -814,7 +1237,6 @@ export default function Page() {
         }`}
         onClick={() => setMenuOpen(false)}
       >
-        {/* Sidebar (desktop y móvil) – debajo del top bubble, casi full height */}
         <aside
           className={[
             "absolute left-3 right-3 md:right-auto",
@@ -822,9 +1244,7 @@ export default function Page() {
             "rounded-[28px] shadow-[0_18px_60px_rgba(0,0,0,0.18)] border border-zinc-200/80",
             "p-4",
             "transform transition-all duration-300 ease-out",
-            menuOpen
-              ? "translate-x-0 opacity-100"
-              : "-translate-x-[110%] opacity-0",
+            menuOpen ? "translate-x-0 opacity-100" : "-translate-x-[110%] opacity-0",
           ].join(" ")}
           style={{
             top: SIDEBAR_TOP,
@@ -837,12 +1257,8 @@ export default function Page() {
           <div className="h-full flex flex-col">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-800">
-                  Historial
-                </div>
-                <div className="text-xs text-zinc-500">
-                  Tus consultas recientes
-                </div>
+                <div className="text-sm font-semibold text-zinc-800">Historial</div>
+                <div className="text-xs text-zinc-500">Tus consultas recientes</div>
               </div>
 
               <button
@@ -872,16 +1288,42 @@ export default function Page() {
               <div className="mb-3 rounded-3xl border border-zinc-200 bg-white px-3 py-3">
                 <div className="text-xs text-zinc-500 mb-2">Cuenta</div>
                 {authUserEmail ? (
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-xs text-zinc-800 truncate">
-                      {authUserEmail}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-xs text-zinc-800 truncate">{authUserEmail}</div>
+                      <button
+                        onClick={logout}
+                        className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer"
+                      >
+                        Salir
+                      </button>
                     </div>
-                    <button
-                      onClick={logout}
-                      className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer"
-                    >
-                      Salir
-                    </button>
+
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-[11px] text-zinc-500">
+                        Estado: {proLoading ? "comprobando…" : isPro ? "Pro" : "Free"}
+                        {!isPro && (
+                          <>
+                            {" "}
+                            ·{" "}
+                            {freeUsedToday ? "Free usado hoy" : "1 free hoy disponible"}
+                          </>
+                        )}
+                      </div>
+
+                      {!proLoading && !isPro && (
+                        <button
+                          onClick={() => {
+                            setPayMsg(null);
+                            setPaywallOpen(true);
+                            setMenuOpen(false);
+                          }}
+                          className="text-xs px-3 py-2 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer"
+                        >
+                          Mejorar
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <button
@@ -913,9 +1355,7 @@ export default function Page() {
                         : "border-zinc-200 bg-white hover:bg-zinc-50"
                     }`}
                   >
-                    <div className="text-sm font-medium text-zinc-900">
-                      {t.title}
-                    </div>
+                    <div className="text-sm font-medium text-zinc-900">{t.title}</div>
                     <div className="text-xs text-zinc-500 mt-1">{when}</div>
                   </button>
                 );
@@ -934,9 +1374,7 @@ export default function Page() {
               className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="text-sm font-semibold text-zinc-900 mb-1">
-                Renombrar chat
-              </div>
+              <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
               <div className="text-xs text-zinc-500 mb-3">
                 Ponle un nombre para encontrarlo rápido.
               </div>
@@ -981,15 +1419,11 @@ export default function Page() {
         )}
 
         {/* CHAT */}
-        <div
-          ref={scrollRef}
-          onScroll={handleChatScroll}
-          className="flex-1 overflow-y-auto min-h-0"
-        >
+        <div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0">
           <div
             className="mx-auto max-w-3xl px-3 md:px-6"
             style={{
-              paddingTop: 92, // móvil: más margen para que no “pase por debajo”
+              paddingTop: 92,
               paddingBottom: chatBottomPad,
             }}
           >
@@ -1043,38 +1477,25 @@ export default function Page() {
         </div>
 
         {/* INPUT + DISCLAIMER */}
-        <div
-          ref={inputBarRef}
-          className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl"
-        >
+        <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl">
           <div className="mx-auto max-w-3xl px-3 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             {/* + */}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="h-11 w-11 md:h-12 md:w-12 inline-flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
               aria-label="Adjuntar imagen"
-              disabled={isTyping}
-              title={isTyping ? "Espera a que Vonu responda…" : "Adjuntar imagen"}
+              disabled={isTyping || (!userCanUseNow && !isPro)}
+              title={
+                isTyping
+                  ? "Espera a que Vonu responda…"
+                  : (!userCanUseNow && !isPro)
+                  ? "Límite free alcanzado (1/día)"
+                  : "Adjuntar imagen"
+              }
             >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M12 5V19"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M5 12H19"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 5V19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                <path d="M5 12H19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
               </svg>
             </button>
 
@@ -1123,9 +1544,13 @@ export default function Page() {
                       sendMessage();
                     }
                   }}
-                  disabled={isTyping}
+                  disabled={isTyping || (!userCanUseNow && !isPro)}
                   placeholder={
-                    isTyping ? "Vonu está respondiendo…" : "Escribe tu mensaje…"
+                    isTyping
+                      ? "Vonu está respondiendo…"
+                      : (!userCanUseNow && !isPro)
+                      ? "Has usado el análisis gratis de hoy. Hazte Pro para seguir…"
+                      : "Escribe tu mensaje…"
                   }
                   className="w-full resize-none bg-transparent text-sm outline-none leading-5 overflow-hidden"
                   rows={1}
@@ -1136,10 +1561,10 @@ export default function Page() {
             {/* enviar */}
             <button
               onClick={sendMessage}
-              disabled={!canSend}
+              disabled={isTyping || (!input.trim() && !imagePreview)}
               className="h-11 w-11 md:h-12 md:w-12 rounded-full bg-black hover:bg-zinc-900 text-white flex items-center justify-center disabled:opacity-40 transition-colors cursor-pointer shrink-0"
               aria-label="Enviar"
-              title={canSend ? "Enviar" : "Escribe un mensaje para enviar"}
+              title="Enviar"
             >
               <ArrowUpIcon className="h-5 w-5" />
             </button>

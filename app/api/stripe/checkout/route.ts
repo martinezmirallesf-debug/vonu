@@ -1,48 +1,92 @@
 // app/api/stripe/checkout/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/app/lib/stripe";
+import { getSupabaseAdmin } from "@/app/lib/supabaseAdmin";
+import { getUserFromRequest } from "@/app/lib/authServer";
 
 export const runtime = "nodejs";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const plan = (body?.plan ?? "basic").toString();
+    const plan = (body?.plan ?? "monthly").toString(); // "monthly" | "yearly"
 
-    // Por ahora solo "basic"
-    if (plan !== "basic") {
-      return NextResponse.json({ error: "Unknown plan" }, { status: 400 });
+    if (plan !== "monthly" && plan !== "yearly") {
+      return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
-    const priceId = process.env.STRIPE_PRICE_BASIC;
-    if (!priceId) {
+    // ✅ Mantenemos compatibilidad con tu env actual:
+    // - STRIPE_PRICE_MONTHLY => mensual
+    // - STRIPE_PRICE_YEARLY => anual
+    const priceMonthly = process.env.STRIPE_PRICE_MONTHLY;
+    const priceYearly = process.env.STRIPE_PRICE_YEARLY;
+
+    if (!priceMonthly || !priceYearly) {
       return NextResponse.json(
-        { error: "Missing STRIPE_PRICE_BASIC in env" },
+        { error: "Missing STRIPE_PRICE_MONTHLY (monthly) or STRIPE_PRICE_YEARLY in env" },
         { status: 500 }
       );
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const priceId = plan === "yearly" ? priceYearly : priceMonthly;
+
+    // ✅ Auth real (bearer cookie / header según tu helper)
+    const { user, error } = await getUserFromRequest(req);
+    if (!user) {
+      return NextResponse.json({ error: error ?? "Unauthorized" }, { status: 401 });
+    }
 
     const stripe = getStripe();
+    const sbAdmin = getSupabaseAdmin();
 
+    // 1) Leer profile para stripe_customer_id
+    const { data: profile, error: pErr } = await sbAdmin
+      .from("profiles")
+      .select("stripe_customer_id,email")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (pErr) {
+      return NextResponse.json({ error: pErr.message }, { status: 500 });
+    }
+
+    // 2) Si no hay customer, crearlo y guardarlo
+    let customerId = profile?.stripe_customer_id ?? null;
+
+    if (!customerId) {
+      const created = await stripe.customers.create({
+        email: user.email ?? profile?.email ?? undefined,
+        metadata: { supabase_user_id: user.id },
+      });
+
+      customerId = created.id;
+
+      await sbAdmin
+        .from("profiles")
+        .upsert(
+          { id: user.id, stripe_customer_id: customerId, email: user.email ?? profile?.email ?? null },
+          { onConflict: "id" }
+        );
+    }
+
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      "http://localhost:3000";
+
+    // 3) Crear sesión de checkout
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
+      customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${appUrl}/?checkout=success`,
       cancel_url: `${appUrl}/?checkout=cancel`,
-      // Luego (cuando metamos auth) aquí meteremos:
-      // customer_email, client_reference_id, metadata.user_id, etc.
       allow_promotion_codes: true,
+      metadata: { supabase_user_id: user.id, plan },
     });
 
     return NextResponse.json({ url: session.url }, { status: 200 });
   } catch (e: any) {
-    return NextResponse.json(
-      {
-        error: e?.message ?? "Unknown error",
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
   }
 }
