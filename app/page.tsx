@@ -9,7 +9,7 @@ type Message = {
   id: string;
   role: "user" | "assistant";
   text?: string;
-  image?: string; // data:image/...;base64,...
+  image?: string;
   streaming?: boolean;
 };
 
@@ -53,9 +53,7 @@ function makeTitleFromText(text: string) {
 
 const STORAGE_KEY = "vonu_threads_v1";
 const HOME_URL = "https://vonuai.com";
-const LAST_PLAN_KEY = "vonu_last_plan_v1";
 
-// Heurística: desktop = puntero fino (ratón/trackpad)
 function isDesktopPointer() {
   if (typeof window === "undefined") return true;
   return window.matchMedia?.("(pointer: fine)")?.matches ?? true;
@@ -151,27 +149,20 @@ export default function Page() {
   const [payLoading, setPayLoading] = useState(false);
   const [payMsg, setPayMsg] = useState<string | null>(null);
 
-  // “plan actual” (para no liar a nadie)
-  const [currentPlanLabel, setCurrentPlanLabel] = useState<string>("Free");
-
-  const isLoggedIn = !!authUserId;
-  const proGateLocked = isLoggedIn && !proLoading && !isPro; // <-- boolean puro
-  const inputLocked = payLoading || proGateLocked;
+  const isLoggedIn = !authLoading && !!authUserId;
+  const isBlockedByPaywall = !authLoading && !!authUserId && !proLoading && !isPro;
 
   async function refreshProStatus() {
     if (!authUserId) {
       setIsPro(false);
-      setCurrentPlanLabel("Free");
       return;
     }
-
     setProLoading(true);
     try {
       const { data } = await supabaseBrowser.auth.getSession();
       const token = data?.session?.access_token;
       if (!token) {
         setIsPro(false);
-        setCurrentPlanLabel("Free");
         return;
       }
 
@@ -181,27 +172,9 @@ export default function Page() {
       });
 
       const json = await res.json().catch(() => ({}));
-      const active = !!json?.active;
-      setIsPro(active);
-
-      // Si la API no devuelve plan, al menos mostramos Pro/Free sin dudas.
-      // Además recordamos la última elección del usuario (monthly/yearly) para mostrar algo útil.
-      if (active) {
-        let last = "Pro";
-        try {
-          const raw = window.localStorage.getItem(LAST_PLAN_KEY);
-          if (raw === "monthly") last = "Pro (Monthly)";
-          if (raw === "yearly") last = "Pro (Yearly)";
-        } catch {
-          // ignore
-        }
-        setCurrentPlanLabel(last);
-      } else {
-        setCurrentPlanLabel("Free");
-      }
+      setIsPro(!!json?.active);
     } catch {
       setIsPro(false);
-      setCurrentPlanLabel("Free");
     } finally {
       setProLoading(false);
     }
@@ -222,12 +195,10 @@ export default function Page() {
         setAuthLoading(false);
       }
 
-      const { data: sub } = supabaseBrowser.auth.onAuthStateChange(
-        (_event, session) => {
-          setAuthUserEmail(session?.user?.email ?? null);
-          setAuthUserId(session?.user?.id ?? null);
-        }
-      );
+      const { data: sub } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
+        setAuthUserEmail(session?.user?.email ?? null);
+        setAuthUserId(session?.user?.id ?? null);
+      });
 
       unsub = () => sub.subscription.unsubscribe();
     })();
@@ -235,9 +206,7 @@ export default function Page() {
     return () => {
       try {
         unsub?.();
-      } catch {
-        // ignore
-      }
+      } catch {}
     };
   }, []);
 
@@ -246,15 +215,6 @@ export default function Page() {
     refreshProStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUserId, authLoading]);
-
-  useEffect(() => {
-    if (!mounted) return;
-    // por defecto, si es pro -> yearly (mejor valor), si no -> free
-    if (!isLoggedIn) setPlan("free");
-    else if (isPro) setPlan("yearly");
-    else setPlan("free");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted, isLoggedIn, isPro]);
 
   async function startCheckout(chosen: "monthly" | "yearly") {
     setPayLoading(true);
@@ -266,12 +226,6 @@ export default function Page() {
         setPayMsg("Necesitas iniciar sesión.");
         setPayLoading(false);
         return;
-      }
-
-      try {
-        window.localStorage.setItem(LAST_PLAN_KEY, chosen);
-      } catch {
-        // ignore
       }
 
       const res = await fetch("/api/stripe/checkout", {
@@ -388,9 +342,7 @@ export default function Page() {
         return;
       }
 
-      setLoginMsg(
-        "✅ Email enviado. Abre tu correo y pulsa el enlace para iniciar sesión."
-      );
+      setLoginMsg("✅ Email enviado. Abre tu correo y pulsa el enlace para iniciar sesión.");
     } catch (e: any) {
       setLoginMsg(e?.message ?? "Error enviando email.");
     } finally {
@@ -405,10 +357,7 @@ export default function Page() {
       setAuthUserId(null);
       setIsPro(false);
       setPaywallOpen(false);
-      setCurrentPlanLabel("Free");
-    } catch {
-      // ignore
-    }
+    } catch {}
   }
 
   // -------- Persistencia local --------
@@ -439,18 +388,14 @@ export default function Page() {
         setThreads(clean);
         setActiveThreadId(clean[0].id);
       }
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, []);
 
   useEffect(() => {
     if (!mounted) return;
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(threads));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [threads, mounted]);
 
   // -------- UI --------
@@ -470,10 +415,7 @@ export default function Page() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Altura dinámica del input bar para no tapar el chat
   const [inputBarH, setInputBarH] = useState<number>(140);
-
-  // Autoscroll: solo si el usuario está cerca del final
   const shouldStickToBottomRef = useRef(true);
 
   // VisualViewport
@@ -527,10 +469,9 @@ export default function Page() {
 
   const canSend = useMemo(() => {
     const basicReady = !isTyping && (!!input.trim() || !!imagePreview);
-    // si no es pro, aquí devolvemos false (solo si logueado)
-    if (!authLoading && isLoggedIn && !proLoading && !isPro) return false;
+    if (isBlockedByPaywall) return false;
     return basicReady;
-  }, [isTyping, input, imagePreview, authLoading, isLoggedIn, proLoading, isPro]);
+  }, [isTyping, input, imagePreview, isBlockedByPaywall]);
 
   const hasUserMessage = useMemo(
     () => messages.some((m) => m.role === "user"),
@@ -576,7 +517,6 @@ export default function Page() {
     if (isTyping) return;
     if (loginOpen) return;
     if (paywallOpen) return;
-
     if (!isDesktopPointer()) return;
 
     const t = setTimeout(() => {
@@ -702,16 +642,14 @@ export default function Page() {
   }
 
   async function sendMessage() {
-    // si no logueado -> login
-    if (!authLoading && !isLoggedIn) {
+    if (!authLoading && !authUserId) {
       setLoginEmail("");
       setLoginMsg(null);
       setLoginOpen(true);
       return;
     }
 
-    // si logueado pero no pro -> paywall
-    if (!authLoading && isLoggedIn && !proLoading && !isPro) {
+    if (isBlockedByPaywall) {
       setPayMsg(null);
       setPaywallOpen(true);
       return;
@@ -747,9 +685,7 @@ export default function Page() {
         if (t.id !== activeThread.id) return t;
 
         const hasUserAlready = t.messages.some((m) => m.role === "user");
-        const newTitle = hasUserAlready
-          ? t.title
-          : makeTitleFromText(userText || "Imagen");
+        const newTitle = hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen");
 
         return {
           ...t,
@@ -767,14 +703,10 @@ export default function Page() {
     try {
       await sleep(220);
 
-      const threadNow =
-        threads.find((x) => x.id === activeThread.id) ?? activeThread;
+      const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
-        .filter(
-          (m) =>
-            (m.role === "user" || m.role === "assistant") && (m.text || m.image)
-        )
+        .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
         .map((m) => ({
           role: m.role,
           content: m.text ?? "",
@@ -816,9 +748,7 @@ export default function Page() {
             return {
               ...t,
               updatedAt: Date.now(),
-              messages: t.messages.map((m) =>
-                m.id === assistantId ? { ...m, text: partial } : m
-              ),
+              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
             };
           })
         );
@@ -832,23 +762,17 @@ export default function Page() {
               return {
                 ...t,
                 updatedAt: Date.now(),
-                messages: t.messages.map((m) =>
-                  m.id === assistantId ? { ...m, streaming: false } : m
-                ),
+                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
               };
             })
           );
 
           setIsTyping(false);
-
           if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
         }
       }, speedMs);
     } catch (err: any) {
-      const msg =
-        typeof err?.message === "string"
-          ? err.message
-          : "Error desconocido conectando con la IA.";
+      const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -883,19 +807,12 @@ export default function Page() {
   const TOP_OFFSET_PX = 12;
   const TOP_BUBBLE_H = 44;
   const TOP_GAP_PX = 10;
-  const SIDEBAR_TOP = TOP_OFFSET_PX + TOP_BUBBLE_H + TOP_GAP_PX; // 66px
+  const SIDEBAR_TOP = TOP_OFFSET_PX + TOP_BUBBLE_H + TOP_GAP_PX;
 
-  // Helpers UI (blue theme)
-  const bluePrimary = "bg-blue-600 hover:bg-blue-700";
-  const blueSoftBg = "bg-blue-50";
-  const blueBorder = "border-blue-600";
-  const blueRing = "shadow-[0_14px_35px_rgba(37,99,235,0.20)]";
+  const planLabel = isPro ? "Pro" : "Free";
 
   return (
-    <div
-      className="bg-white flex overflow-hidden"
-      style={{ height: "calc(var(--vvh, 100dvh))" }}
-    >
+    <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
       {/* ===== PAYWALL MODAL ===== */}
       {paywallOpen && (
         <div
@@ -905,16 +822,15 @@ export default function Page() {
           }}
         >
           <div
-            className="w-full max-w-2xl rounded-[32px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.22)] p-4 md:p-5"
+            className="w-full max-w-xl rounded-[32px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.22)] p-4 md:p-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-900">
-                  Planes de Vonu
-                </div>
+                <div className="text-sm font-semibold text-zinc-900">Planes</div>
                 <div className="text-xs text-zinc-500 mt-1">
-                  Transparente y fácil: elige tu plan o quédate en Free.
+                  Plan actual: <span className="font-semibold text-zinc-900">{planLabel}</span>
+                  {proLoading ? <span className="ml-2 text-zinc-400">· comprobando…</span> : null}
                 </div>
               </div>
 
@@ -930,11 +846,6 @@ export default function Page() {
               </button>
             </div>
 
-            <div className="mt-3 text-[12px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-2xl px-3 py-2">
-              <span className="font-semibold">Tu plan actual:</span>{" "}
-              {proLoading ? "comprobando…" : currentPlanLabel}
-            </div>
-
             <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-2">
               {/* FREE */}
               <button
@@ -942,28 +853,16 @@ export default function Page() {
                 className={[
                   "rounded-3xl border p-4 text-left transition-all cursor-pointer",
                   plan === "free"
-                    ? `${blueBorder} ${blueSoftBg} ${blueRing}`
+                    ? "border-blue-700 bg-blue-50 shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
                     : "border-zinc-200 bg-white hover:bg-zinc-50",
                 ].join(" ")}
                 disabled={payLoading}
               >
-                <div className="_strip flex items-center justify-between">
-                  <div className="text-xs font-semibold text-zinc-900">Free</div>
-                  {!isPro && (
-                    <span className="text-[11px] px-2 py-1 rounded-full bg-blue-600 text-white">
-                      Actual
-                    </span>
-                  )}
-                </div>
-
+                <div className="text-xs font-semibold text-zinc-900">Free</div>
                 <div className="mt-1 text-2xl font-semibold leading-none text-zinc-900">
-                  0€
-                  <span className="text-zinc-500"> /siempre</span>
+                  0€ <span className="text-zinc-500 text-base font-medium">/siempre</span>
                 </div>
-
-                <div className="text-zinc-500 text-xs mt-1">
-                  Para ayudar a la gente (limitado)
-                </div>
+                <div className="text-zinc-500 text-xs mt-1">Acceso básico</div>
               </button>
 
               {/* MONTHLY */}
@@ -972,20 +871,15 @@ export default function Page() {
                 className={[
                   "rounded-3xl border p-4 text-left transition-all cursor-pointer",
                   plan === "monthly"
-                    ? `border-blue-700 bg-blue-600 text-white shadow-[0_14px_35px_rgba(37,99,235,0.35)]`
+                    ? "border-blue-700 bg-blue-600 text-white shadow-[0_12px_30px_rgba(0,0,0,0.18)]"
                     : "border-zinc-200 bg-white hover:bg-zinc-50",
                 ].join(" ")}
                 disabled={payLoading}
               >
-                <div className="text-xs font-semibold">
-                  Monthly
-                </div>
+                <div className="text-xs font-semibold">Monthly</div>
                 <div className="mt-1 text-2xl font-semibold leading-none">
                   4,99€
-                  <span className={plan === "monthly" ? "text-white/80" : "text-zinc-500"}>
-                    {" "}
-                    /mes
-                  </span>
+                  <span className={plan === "monthly" ? "text-white/80" : "text-zinc-500"}> /mes</span>
                 </div>
                 <div className={plan === "monthly" ? "text-white/80 text-xs mt-1" : "text-zinc-500 text-xs mt-1"}>
                   Flexible, cancela cuando quieras
@@ -998,40 +892,31 @@ export default function Page() {
                 className={[
                   "rounded-3xl border p-4 text-left transition-all cursor-pointer relative overflow-hidden",
                   plan === "yearly"
-                    ? `${blueBorder} ${blueSoftBg} ${blueRing}`
+                    ? "border-blue-700 bg-blue-50 shadow-[0_12px_30px_rgba(0,0,0,0.10)]"
                     : "border-zinc-200 bg-white hover:bg-zinc-50",
                 ].join(" ")}
                 disabled={payLoading}
               >
                 <div className="absolute top-3 right-3">
-                  <span className="text-[11px] px-2 py-1 rounded-full bg-blue-600 text-white">
-                    Mejor valor
-                  </span>
+                  <span className="text-[11px] px-2 py-1 rounded-full bg-blue-600 text-white">Mejor valor</span>
                 </div>
 
-                <div className="text-xs font-semibold text-zinc-900">
-                  Yearly
-                </div>
+                <div className="text-xs font-semibold text-zinc-900">Yearly</div>
                 <div className="mt-1 text-2xl font-semibold leading-none text-zinc-900">
-                  39,99€
-                  <span className="text-zinc-500"> /año</span>
+                  39,99€ <span className="text-zinc-500">/año</span>
                 </div>
-                <div className="text-zinc-500 text-xs mt-1">
-                  Ahorra vs mensual
-                </div>
+                <div className="text-zinc-500 text-xs mt-1">Ahorra vs mensual</div>
               </button>
             </div>
 
             <div className="mt-4 rounded-3xl border border-zinc-200 bg-zinc-50 p-4">
-              <div className="text-xs font-semibold text-zinc-800 mb-2">
-                Incluye (Pro)
-              </div>
+              <div className="text-xs font-semibold text-zinc-800 mb-2">Incluye (Pro)</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[12px] text-zinc-700">
                 {[
                   "Análisis completo de mensajes, webs e imágenes",
                   "Historial organizado",
+                  "Mejoras continuas",
                   "Acceso desde cualquier dispositivo",
-                  "Mejoras continuas y prioridad",
                 ].map((x) => (
                   <div key={x} className="flex items-start gap-2">
                     <span className="mt-[2px] text-blue-700">
@@ -1050,34 +935,41 @@ export default function Page() {
             )}
 
             <div className="mt-4 flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
-              <button
-                onClick={openPortal}
-                className="h-11 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50"
-                disabled={payLoading}
-              >
-                Gestionar / Cancelar suscripción
-              </button>
-
-              {plan === "free" ? (
+              {isPro ? (
                 <button
-                  onClick={() => {
-                    setPaywallOpen(false);
-                    setPayMsg(null);
-                  }}
-                  className="h-11 px-5 rounded-2xl text-sm cursor-pointer transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                  onClick={openPortal}
+                  className="h-11 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50"
                   disabled={payLoading}
                 >
-                  Seguir en Free
+                  Gestionar suscripción
                 </button>
               ) : (
-                <button
-                  onClick={() => startCheckout(plan)}
-                  className="h-11 px-5 rounded-2xl text-sm cursor-pointer transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-                  disabled={payLoading}
-                >
-                  {payLoading ? "Redirigiendo…" : "Continuar al pago"}
-                </button>
+                <div className="text-[12px] text-zinc-500 px-1">
+                  Puedes quedarte en Free o mejorar cuando quieras.
+                </div>
               )}
+
+              <button
+                onClick={() => {
+                  if (plan === "free") {
+                    setPaywallOpen(false);
+                    setPayMsg(null);
+                    return;
+                  }
+                  startCheckout(plan);
+                }}
+                className={[
+                  "h-11 px-5 rounded-2xl text-sm cursor-pointer transition-colors disabled:opacity-50",
+                  plan === "monthly"
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : plan === "yearly"
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "bg-zinc-900 text-white hover:bg-black",
+                ].join(" ")}
+                disabled={payLoading}
+              >
+                {payLoading ? "Redirigiendo…" : plan === "free" ? "Seguir en Free" : "Continuar al pago"}
+              </button>
             </div>
 
             <div className="mt-3 text-[11px] text-zinc-500 leading-4">
@@ -1094,9 +986,7 @@ export default function Page() {
             className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-sm font-semibold text-zinc-900 mb-1">
-              Iniciar sesión
-            </div>
+            <div className="text-sm font-semibold text-zinc-900 mb-1">Iniciar sesión</div>
             <div className="text-xs text-zinc-500 mb-3">
               Te enviamos un enlace por email para entrar (sin contraseña).
             </div>
@@ -1142,9 +1032,7 @@ export default function Page() {
               </button>
             </div>
 
-            <div className="mt-3 text-[11px] text-zinc-500 leading-4">
-              Si no te llega, mira Spam/Promociones.
-            </div>
+            <div className="mt-3 text-[11px] text-zinc-500 leading-4">Si no te llega, mira Spam/Promociones.</div>
           </div>
         </div>
       )}
@@ -1156,7 +1044,6 @@ export default function Page() {
 
       {/* ===== TOP BUBBLES ===== */}
       <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
-        {/* Left bubble */}
         <div className="pointer-events-auto">
           <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center gap-0 overflow-hidden px-1">
             <button
@@ -1168,9 +1055,7 @@ export default function Page() {
               <img
                 src={"/vonu-icon.png?v=2"}
                 alt="Menú"
-                className={`h-6 w-6 transition-transform duration-300 ease-out ${
-                  menuOpen ? "rotate-90" : "rotate-0"
-                }`}
+                className={`h-6 w-6 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
                 draggable={false}
               />
             </button>
@@ -1181,24 +1066,19 @@ export default function Page() {
               aria-label="Ir a la home"
               title="Ir a la home"
             >
-              <img
-                src={"/vonu-wordmark.png?v=2"}
-                alt="Vonu"
-                className="h-4 w-auto"
-                draggable={false}
-              />
+              <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-4 w-auto" draggable={false} />
             </a>
           </div>
         </div>
 
-        {/* Right bubble */}
         {!authLoading && (
           <div className="pointer-events-auto flex items-center gap-2">
-            {/* Botón Pro */}
+            {/* Botón Pro (si no lo es) */}
             {isLoggedIn && !proLoading && !isPro && (
               <button
                 onClick={() => {
                   setPayMsg(null);
+                  setPlan("yearly");
                   setPaywallOpen(true);
                 }}
                 className="h-11 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer shadow-sm border border-blue-700/10"
@@ -1235,9 +1115,7 @@ export default function Page() {
       {/* ===== OVERLAY + SIDEBAR ===== */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-300 ${
-          menuOpen
-            ? "bg-black/20 backdrop-blur-sm pointer-events-auto"
-            : "pointer-events-none bg-transparent"
+          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent"
         }`}
         onClick={() => setMenuOpen(false)}
       >
@@ -1248,9 +1126,7 @@ export default function Page() {
             "rounded-[28px] shadow-[0_18px_60px_rgba(0,0,0,0.18)] border border-zinc-200/80",
             "p-4",
             "transform transition-all duration-300 ease-out",
-            menuOpen
-              ? "translate-x-0 opacity-100"
-              : "-translate-x-[110%] opacity-0",
+            menuOpen ? "translate-x-0 opacity-100" : "-translate-x-[110%] opacity-0",
           ].join(" ")}
           style={{
             top: SIDEBAR_TOP,
@@ -1263,12 +1139,8 @@ export default function Page() {
           <div className="h-full flex flex-col">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-800">
-                  Historial
-                </div>
-                <div className="text-xs text-zinc-500">
-                  Tus consultas recientes
-                </div>
+                <div className="text-sm font-semibold text-zinc-800">Historial</div>
+                <div className="text-xs text-zinc-500">Tus consultas recientes</div>
               </div>
 
               <button
@@ -1300,9 +1172,7 @@ export default function Page() {
                 {authUserEmail ? (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-xs text-zinc-800 truncate">
-                        {authUserEmail}
-                      </div>
+                      <div className="text-xs text-zinc-800 truncate">{authUserEmail}</div>
                       <button
                         onClick={logout}
                         className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer"
@@ -1311,26 +1181,27 @@ export default function Page() {
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-[11px] text-zinc-500">
-                        Plan:{" "}
-                        {proLoading ? "comprobando…" : currentPlanLabel}
-                      </div>
+                    {!!authUserId && (
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-[11px] text-zinc-500">
+                          Plan: {proLoading ? "comprobando…" : isPro ? "Pro" : "Free"}
+                        </div>
 
-                      <button
-                        onClick={() => {
-                          setPayMsg(null);
-                          setPaywallOpen(true);
-                          setMenuOpen(false);
-                        }}
-                        className={[
-                          "text-xs px-3 py-2 rounded-full transition-colors cursor-pointer",
-                          isPro ? "bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800" : "bg-blue-600 text-white hover:bg-blue-700",
-                        ].join(" ")}
-                      >
-                        {isPro ? "Ver planes" : "Mejorar"}
-                      </button>
-                    </div>
+                        {!proLoading && !isPro && (
+                          <button
+                            onClick={() => {
+                              setPayMsg(null);
+                              setPlan("yearly");
+                              setPaywallOpen(true);
+                              setMenuOpen(false);
+                            }}
+                            className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
+                          >
+                            Mejorar
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <button
@@ -1357,14 +1228,10 @@ export default function Page() {
                     key={t.id}
                     onClick={() => activateThread(t.id)}
                     className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${
-                      active
-                        ? "border-blue-600 bg-blue-50"
-                        : "border-zinc-200 bg-white hover:bg-zinc-50"
+                      active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"
                     }`}
                   >
-                    <div className="text-sm font-medium text-zinc-900">
-                      {t.title}
-                    </div>
+                    <div className="text-sm font-medium text-zinc-900">{t.title}</div>
                     <div className="text-xs text-zinc-500 mt-1">{when}</div>
                   </button>
                 );
@@ -1383,12 +1250,8 @@ export default function Page() {
               className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="text-sm font-semibold text-zinc-900 mb-1">
-                Renombrar chat
-              </div>
-              <div className="text-xs text-zinc-500 mb-3">
-                Ponle un nombre para encontrarlo rápido.
-              </div>
+              <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
+              <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
 
               <input
                 value={renameValue}
@@ -1430,11 +1293,7 @@ export default function Page() {
         )}
 
         {/* CHAT */}
-        <div
-          ref={scrollRef}
-          onScroll={handleChatScroll}
-          className="flex-1 overflow-y-auto min-h-0"
-        >
+        <div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0">
           <div
             className="mx-auto max-w-3xl px-3 md:px-6"
             style={{
@@ -1492,21 +1351,18 @@ export default function Page() {
         </div>
 
         {/* INPUT + DISCLAIMER */}
-        <div
-          ref={inputBarRef}
-          className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl"
-        >
+        <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl">
           <div className="mx-auto max-w-3xl px-3 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             {/* + */}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="h-11 w-11 md:h-12 md:w-12 inline-flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
               aria-label="Adjuntar imagen"
-              disabled={isTyping || inputLocked}
+              disabled={isTyping || isBlockedByPaywall}
               title={
                 isTyping
                   ? "Espera a que Vonu responda…"
-                  : inputLocked
+                  : isBlockedByPaywall
                   ? "Disponible en Pro"
                   : "Adjuntar imagen"
               }
@@ -1517,23 +1373,13 @@ export default function Page() {
               </svg>
             </button>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={onSelectImage}
-              className="hidden"
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
 
             {/* input */}
             <div className="flex-1 min-w-0">
               {imagePreview && (
                 <div className="mb-2 relative w-fit">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="rounded-3xl border border-zinc-200 max-h-40"
-                  />
+                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
                   <button
                     onClick={() => setImagePreview(null)}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer"
@@ -1562,13 +1408,13 @@ export default function Page() {
                       sendMessage();
                     }
                   }}
-                  disabled={isTyping || inputLocked}
+                  disabled={isTyping || isBlockedByPaywall}
                   placeholder={
                     isTyping
                       ? "Vonu está respondiendo…"
-                      : (!authLoading && !isLoggedIn)
+                      : !authLoading && !authUserId
                       ? "Inicia sesión para continuar…"
-                      : (!authLoading && isLoggedIn && !proLoading && !isPro)
+                      : isBlockedByPaywall
                       ? "Disponible en Pro…"
                       : "Escribe tu mensaje…"
                   }
