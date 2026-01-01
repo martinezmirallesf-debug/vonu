@@ -651,6 +651,7 @@ export default function Page() {
 
     if (isBlockedByPaywall) {
       setPayMsg(null);
+      setPlan("yearly");
       setPaywallOpen(true);
       return;
     }
@@ -956,15 +957,11 @@ export default function Page() {
                     setPayMsg(null);
                     return;
                   }
-                  startCheckout(plan);
+                  if (plan === "monthly" || plan === "yearly") startCheckout(plan);
                 }}
                 className={[
                   "h-11 px-5 rounded-2xl text-sm cursor-pointer transition-colors disabled:opacity-50",
-                  plan === "monthly"
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : plan === "yearly"
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : "bg-zinc-900 text-white hover:bg-black",
+                  plan === "free" ? "bg-zinc-900 text-white hover:bg-black" : "bg-blue-600 text-white hover:bg-blue-700",
                 ].join(" ")}
                 disabled={payLoading}
               >
@@ -987,9 +984,7 @@ export default function Page() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-sm font-semibold text-zinc-900 mb-1">Iniciar sesión</div>
-            <div className="text-xs text-zinc-500 mb-3">
-              Te enviamos un enlace por email para entrar (sin contraseña).
-            </div>
+            <div className="text-xs text-zinc-500 mb-3">Te enviamos un enlace por email para entrar (sin contraseña).</div>
 
             <input
               value={loginEmail}
@@ -1359,13 +1354,7 @@ export default function Page() {
               className="h-11 w-11 md:h-12 md:w-12 inline-flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
               aria-label="Adjuntar imagen"
               disabled={isTyping || isBlockedByPaywall}
-              title={
-                isTyping
-                  ? "Espera a que Vonu responda…"
-                  : isBlockedByPaywall
-                  ? "Disponible en Pro"
-                  : "Adjuntar imagen"
-              }
+              title={isTyping ? "Espera a que Vonu responda…" : isBlockedByPaywall ? "Disponible en Pro" : "Adjuntar imagen"}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M12 5V19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
@@ -1424,11 +1413,11 @@ export default function Page() {
               </div>
             </div>
 
-            {/* enviar */}
+            {/* enviar (AZUL GOOGLE) */}
             <button
               onClick={sendMessage}
               disabled={isTyping || (!input.trim() && !imagePreview)}
-              className="h-11 w-11 md:h-12 md:w-12 rounded-full bg-black hover:bg-zinc-900 text-white flex items-center justify-center disabled:opacity-40 transition-colors cursor-pointer shrink-0"
+              className="h-11 w-11 md:h-12 md:w-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center disabled:opacity-40 transition-colors cursor-pointer shrink-0"
               aria-label="Enviar"
               title="Enviar"
             >
