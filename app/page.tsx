@@ -1147,8 +1147,7 @@ export default function Page() {
 
           <div className="mx-auto max-w-3xl px-3 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
             <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">
-              Orientación preventiva. No sustituye profesionales. Emergencias:
-              112.
+              Orientación preventiva. No sustituye profesionales.
             </p>
 
             {!hasUserMessage && <div className="h-1" />}
