@@ -53,6 +53,7 @@ function makeTitleFromText(text: string) {
 
 const STORAGE_KEY = "vonu_threads_v1";
 const HOME_URL = "https://vonuai.com";
+const LAST_PLAN_KEY = "vonu_last_plan_v1";
 
 // Heurística: desktop = puntero fino (ratón/trackpad)
 function isDesktopPointer() {
@@ -62,7 +63,12 @@ function isDesktopPointer() {
 
 function UserIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      className={className ?? "h-5 w-5"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="M12 12c2.761 0 5-2.239 5-5S14.761 2 12 2 7 4.239 7 7s2.239 5 5 5Z"
         stroke="currentColor"
@@ -81,8 +87,18 @@ function UserIcon({ className }: { className?: string }) {
 
 function ArrowUpIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 19V6" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+    <svg
+      className={className ?? "h-5 w-5"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M12 19V6"
+        stroke="currentColor"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+      />
       <path
         d="M7 10l5-5 5 5"
         stroke="currentColor"
@@ -96,7 +112,12 @@ function ArrowUpIcon({ className }: { className?: string }) {
 
 function CheckIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-4 w-4"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      className={className ?? "h-4 w-4"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="M20 6L9 17l-5-5"
         stroke="currentColor"
@@ -125,26 +146,32 @@ export default function Page() {
   // ===== PAYWALL / PRO =====
   const [proLoading, setProLoading] = useState(false);
   const [isPro, setIsPro] = useState(false);
-
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [plan, setPlan] = useState<"free" | "monthly" | "yearly">("yearly");
   const [payLoading, setPayLoading] = useState(false);
   const [payMsg, setPayMsg] = useState<string | null>(null);
 
-  // para mostrar feedback de checkout
-  const [toast, setToast] = useState<string | null>(null);
+  // “plan actual” (para no liar a nadie)
+  const [currentPlanLabel, setCurrentPlanLabel] = useState<string>("Free");
+
+  const isLoggedIn = !!authUserId;
+  const proGateLocked = isLoggedIn && !proLoading && !isPro; // <-- boolean puro
+  const inputLocked = payLoading || proGateLocked;
 
   async function refreshProStatus() {
     if (!authUserId) {
       setIsPro(false);
+      setCurrentPlanLabel("Free");
       return;
     }
+
     setProLoading(true);
     try {
       const { data } = await supabaseBrowser.auth.getSession();
       const token = data?.session?.access_token;
       if (!token) {
         setIsPro(false);
+        setCurrentPlanLabel("Free");
         return;
       }
 
@@ -154,9 +181,27 @@ export default function Page() {
       });
 
       const json = await res.json().catch(() => ({}));
-      setIsPro(!!json?.active);
+      const active = !!json?.active;
+      setIsPro(active);
+
+      // Si la API no devuelve plan, al menos mostramos Pro/Free sin dudas.
+      // Además recordamos la última elección del usuario (monthly/yearly) para mostrar algo útil.
+      if (active) {
+        let last = "Pro";
+        try {
+          const raw = window.localStorage.getItem(LAST_PLAN_KEY);
+          if (raw === "monthly") last = "Pro (Monthly)";
+          if (raw === "yearly") last = "Pro (Yearly)";
+        } catch {
+          // ignore
+        }
+        setCurrentPlanLabel(last);
+      } else {
+        setCurrentPlanLabel("Free");
+      }
     } catch {
       setIsPro(false);
+      setCurrentPlanLabel("Free");
     } finally {
       setProLoading(false);
     }
@@ -177,10 +222,12 @@ export default function Page() {
         setAuthLoading(false);
       }
 
-      const { data: sub } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
-        setAuthUserEmail(session?.user?.email ?? null);
-        setAuthUserId(session?.user?.id ?? null);
-      });
+      const { data: sub } = supabaseBrowser.auth.onAuthStateChange(
+        (_event, session) => {
+          setAuthUserEmail(session?.user?.email ?? null);
+          setAuthUserId(session?.user?.id ?? null);
+        }
+      );
 
       unsub = () => sub.subscription.unsubscribe();
     })();
@@ -200,29 +247,14 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUserId, authLoading]);
 
-  // leer ?checkout=success/cancel
   useEffect(() => {
     if (!mounted) return;
-    const sp = new URLSearchParams(window.location.search);
-    const checkout = sp.get("checkout");
-    if (!checkout) return;
-
-    if (checkout === "success") {
-      setToast("✅ Suscripción activada. ¡Bienvenido a Vonu Pro!");
-      refreshProStatus();
-    } else if (checkout === "cancel") {
-      setToast("Pago cancelado. No se ha realizado ningún cargo.");
-    }
-
-    // limpiar query sin recargar
-    sp.delete("checkout");
-    const newUrl = `${window.location.pathname}${sp.toString() ? `?${sp.toString()}` : ""}`;
-    window.history.replaceState({}, "", newUrl);
-
-    const t = setTimeout(() => setToast(null), 4200);
-    return () => clearTimeout(t);
+    // por defecto, si es pro -> yearly (mejor valor), si no -> free
+    if (!isLoggedIn) setPlan("free");
+    else if (isPro) setPlan("yearly");
+    else setPlan("free");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted]);
+  }, [mounted, isLoggedIn, isPro]);
 
   async function startCheckout(chosen: "monthly" | "yearly") {
     setPayLoading(true);
@@ -234,6 +266,12 @@ export default function Page() {
         setPayMsg("Necesitas iniciar sesión.");
         setPayLoading(false);
         return;
+      }
+
+      try {
+        window.localStorage.setItem(LAST_PLAN_KEY, chosen);
+      } catch {
+        // ignore
       }
 
       const res = await fetch("/api/stripe/checkout", {
@@ -342,12 +380,17 @@ export default function Page() {
 
       if (!res.ok) {
         const errMsg =
-          data?.error || data?.message || raw || `Error enviando email (HTTP ${res.status})`;
+          data?.error ||
+          data?.message ||
+          raw ||
+          `Error enviando email (HTTP ${res.status})`;
         setLoginMsg(errMsg);
         return;
       }
 
-      setLoginMsg("✅ Email enviado. Abre tu correo y pulsa el enlace para iniciar sesión.");
+      setLoginMsg(
+        "✅ Email enviado. Abre tu correo y pulsa el enlace para iniciar sesión."
+      );
     } catch (e: any) {
       setLoginMsg(e?.message ?? "Error enviando email.");
     } finally {
@@ -362,6 +405,7 @@ export default function Page() {
       setAuthUserId(null);
       setIsPro(false);
       setPaywallOpen(false);
+      setCurrentPlanLabel("Free");
     } catch {
       // ignore
     }
@@ -385,7 +429,10 @@ export default function Page() {
           id: t.id,
           title: typeof t.title === "string" ? t.title : "Consulta",
           updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
-          messages: Array.isArray(t.messages) && t.messages.length ? t.messages : [initialAssistantMessage()],
+          messages:
+            Array.isArray(t.messages) && t.messages.length
+              ? t.messages
+              : [initialAssistantMessage()],
         }));
 
       if (clean.length) {
@@ -480,12 +527,15 @@ export default function Page() {
 
   const canSend = useMemo(() => {
     const basicReady = !isTyping && (!!input.trim() || !!imagePreview);
-    // ✅ Si está logueado y NO es Pro, no dejamos enviar
-    if (!authLoading && authUserId && !proLoading && !isPro) return false;
+    // si no es pro, aquí devolvemos false (solo si logueado)
+    if (!authLoading && isLoggedIn && !proLoading && !isPro) return false;
     return basicReady;
-  }, [isTyping, input, imagePreview, authLoading, authUserId, proLoading, isPro]);
+  }, [isTyping, input, imagePreview, authLoading, isLoggedIn, proLoading, isPro]);
 
-  const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
+  const hasUserMessage = useMemo(
+    () => messages.some((m) => m.role === "user"),
+    [messages]
+  );
 
   // textarea autoresize
   useEffect(() => {
@@ -576,7 +626,8 @@ export default function Page() {
       if (!el) return;
 
       const thread = threads.find((x) => x.id === id);
-      const isFresh = (thread?.messages ?? []).filter((m) => m.role === "user").length === 0;
+      const isFresh =
+        (thread?.messages ?? []).filter((m) => m.role === "user").length === 0;
 
       if (isFresh) {
         el.scrollTo({ top: 0, behavior: "auto" });
@@ -600,7 +651,11 @@ export default function Page() {
     if (!activeThread) return;
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
-      prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t))
+      prev.map((t) =>
+        t.id === activeThread.id
+          ? { ...t, title: name, updatedAt: Date.now() }
+          : t
+      )
     );
     setRenameOpen(false);
 
@@ -647,18 +702,17 @@ export default function Page() {
   }
 
   async function sendMessage() {
-    // ✅ si no logueado -> login
-    if (!authLoading && !authUserId) {
+    // si no logueado -> login
+    if (!authLoading && !isLoggedIn) {
       setLoginEmail("");
       setLoginMsg(null);
       setLoginOpen(true);
       return;
     }
 
-    // ✅ si logueado pero no pro -> paywall
-    if (!authLoading && authUserId && !proLoading && !isPro) {
+    // si logueado pero no pro -> paywall
+    if (!authLoading && isLoggedIn && !proLoading && !isPro) {
       setPayMsg(null);
-      setPlan("yearly");
       setPaywallOpen(true);
       return;
     }
@@ -693,7 +747,9 @@ export default function Page() {
         if (t.id !== activeThread.id) return t;
 
         const hasUserAlready = t.messages.some((m) => m.role === "user");
-        const newTitle = hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen");
+        const newTitle = hasUserAlready
+          ? t.title
+          : makeTitleFromText(userText || "Imagen");
 
         return {
           ...t,
@@ -711,10 +767,14 @@ export default function Page() {
     try {
       await sleep(220);
 
-      const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
+      const threadNow =
+        threads.find((x) => x.id === activeThread.id) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
-        .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
+        .filter(
+          (m) =>
+            (m.role === "user" || m.role === "assistant") && (m.text || m.image)
+        )
         .map((m) => ({
           role: m.role,
           content: m.text ?? "",
@@ -756,7 +816,9 @@ export default function Page() {
             return {
               ...t,
               updatedAt: Date.now(),
-              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
+              messages: t.messages.map((m) =>
+                m.id === assistantId ? { ...m, text: partial } : m
+              ),
             };
           })
         );
@@ -783,7 +845,10 @@ export default function Page() {
         }
       }, speedMs);
     } catch (err: any) {
-      const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
+      const msg =
+        typeof err?.message === "string"
+          ? err.message
+          : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -797,7 +862,9 @@ export default function Page() {
                     ...m,
                     streaming: false,
                     text:
-                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" + msg + "\n```",
+                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" +
+                      msg +
+                      "\n```",
                   }
                 : m
             ),
@@ -816,21 +883,19 @@ export default function Page() {
   const TOP_OFFSET_PX = 12;
   const TOP_BUBBLE_H = 44;
   const TOP_GAP_PX = 10;
-  const SIDEBAR_TOP = TOP_OFFSET_PX + TOP_BUBBLE_H + TOP_GAP_PX;
+  const SIDEBAR_TOP = TOP_OFFSET_PX + TOP_BUBBLE_H + TOP_GAP_PX; // 66px
 
-  const planLabel = !authUserId ? "—" : proLoading ? "Comprobando…" : isPro ? "Pro" : "Free";
+  // Helpers UI (blue theme)
+  const bluePrimary = "bg-blue-600 hover:bg-blue-700";
+  const blueSoftBg = "bg-blue-50";
+  const blueBorder = "border-blue-600";
+  const blueRing = "shadow-[0_14px_35px_rgba(37,99,235,0.20)]";
 
   return (
-    <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
-      {/* ===== TOAST ===== */}
-      {toast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[80] px-3">
-          <div className="rounded-full border border-blue-200 bg-white/95 backdrop-blur-xl shadow-lg px-4 py-2 text-sm text-zinc-900">
-            {toast}
-          </div>
-        </div>
-      )}
-
+    <div
+      className="bg-white flex overflow-hidden"
+      style={{ height: "calc(var(--vvh, 100dvh))" }}
+    >
       {/* ===== PAYWALL MODAL ===== */}
       {paywallOpen && (
         <div
@@ -840,19 +905,16 @@ export default function Page() {
           }}
         >
           <div
-            className="w-full max-w-xl rounded-[32px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.22)] p-4 md:p-5"
+            className="w-full max-w-2xl rounded-[32px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.22)] p-4 md:p-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-900">Planes</div>
-                <div className="text-xs text-zinc-500 mt-1">
-                  Elige tu plan. Siempre podrás gestionarlo desde el portal.
+                <div className="text-sm font-semibold text-zinc-900">
+                  Planes de Vonu
                 </div>
-                <div className="mt-2 inline-flex items-center gap-2 text-[11px] text-zinc-600">
-                  <span className="px-2 py-1 rounded-full bg-zinc-100 border border-zinc-200">
-                    Plan actual: <span className="font-semibold text-zinc-900">{planLabel}</span>
-                  </span>
+                <div className="text-xs text-zinc-500 mt-1">
+                  Transparente y fácil: elige tu plan o quédate en Free.
                 </div>
               </div>
 
@@ -868,7 +930,11 @@ export default function Page() {
               </button>
             </div>
 
-            {/* Cards */}
+            <div className="mt-3 text-[12px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-2xl px-3 py-2">
+              <span className="font-semibold">Tu plan actual:</span>{" "}
+              {proLoading ? "comprobando…" : currentPlanLabel}
+            </div>
+
             <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-2">
               {/* FREE */}
               <button
@@ -876,17 +942,28 @@ export default function Page() {
                 className={[
                   "rounded-3xl border p-4 text-left transition-all cursor-pointer",
                   plan === "free"
-                    ? "border-blue-600 bg-blue-50 shadow-[0_12px_30px_rgba(26,115,232,0.18)]"
+                    ? `${blueBorder} ${blueSoftBg} ${blueRing}`
                     : "border-zinc-200 bg-white hover:bg-zinc-50",
                 ].join(" ")}
                 disabled={payLoading}
               >
-                <div className="text-xs font-semibold text-zinc-900">Free</div>
+                <div className="_strip flex items-center justify-between">
+                  <div className="text-xs font-semibold text-zinc-900">Free</div>
+                  {!isPro && (
+                    <span className="text-[11px] px-2 py-1 rounded-full bg-blue-600 text-white">
+                      Actual
+                    </span>
+                  )}
+                </div>
+
                 <div className="mt-1 text-2xl font-semibold leading-none text-zinc-900">
                   0€
                   <span className="text-zinc-500"> /siempre</span>
                 </div>
-                <div className="text-zinc-500 text-xs mt-1">Ideal para probar</div>
+
+                <div className="text-zinc-500 text-xs mt-1">
+                  Para ayudar a la gente (limitado)
+                </div>
               </button>
 
               {/* MONTHLY */}
@@ -895,15 +972,20 @@ export default function Page() {
                 className={[
                   "rounded-3xl border p-4 text-left transition-all cursor-pointer",
                   plan === "monthly"
-                    ? "border-blue-700 bg-blue-600 text-white shadow-[0_12px_30px_rgba(26,115,232,0.22)]"
+                    ? `border-blue-700 bg-blue-600 text-white shadow-[0_14px_35px_rgba(37,99,235,0.35)]`
                     : "border-zinc-200 bg-white hover:bg-zinc-50",
                 ].join(" ")}
                 disabled={payLoading}
               >
-                <div className="text-xs font-semibold">Monthly</div>
+                <div className="text-xs font-semibold">
+                  Monthly
+                </div>
                 <div className="mt-1 text-2xl font-semibold leading-none">
                   4,99€
-                  <span className={plan === "monthly" ? "text-white/80" : "text-zinc-500"}> /mes</span>
+                  <span className={plan === "monthly" ? "text-white/80" : "text-zinc-500"}>
+                    {" "}
+                    /mes
+                  </span>
                 </div>
                 <div className={plan === "monthly" ? "text-white/80 text-xs mt-1" : "text-zinc-500 text-xs mt-1"}>
                   Flexible, cancela cuando quieras
@@ -916,7 +998,7 @@ export default function Page() {
                 className={[
                   "rounded-3xl border p-4 text-left transition-all cursor-pointer relative overflow-hidden",
                   plan === "yearly"
-                    ? "border-blue-700 bg-blue-50 shadow-[0_12px_30px_rgba(26,115,232,0.14)]"
+                    ? `${blueBorder} ${blueSoftBg} ${blueRing}`
                     : "border-zinc-200 bg-white hover:bg-zinc-50",
                 ].join(" ")}
                 disabled={payLoading}
@@ -927,24 +1009,29 @@ export default function Page() {
                   </span>
                 </div>
 
-                <div className="text-xs font-semibold text-zinc-900">Yearly</div>
+                <div className="text-xs font-semibold text-zinc-900">
+                  Yearly
+                </div>
                 <div className="mt-1 text-2xl font-semibold leading-none text-zinc-900">
                   39,99€
                   <span className="text-zinc-500"> /año</span>
                 </div>
-                <div className="text-zinc-500 text-xs mt-1">Ahorra vs mensual</div>
+                <div className="text-zinc-500 text-xs mt-1">
+                  Ahorra vs mensual
+                </div>
               </button>
             </div>
 
-            {/* Incluye */}
             <div className="mt-4 rounded-3xl border border-zinc-200 bg-zinc-50 p-4">
-              <div className="text-xs font-semibold text-zinc-800 mb-2">Incluye</div>
+              <div className="text-xs font-semibold text-zinc-800 mb-2">
+                Incluye (Pro)
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[12px] text-zinc-700">
                 {[
                   "Análisis completo de mensajes, webs e imágenes",
                   "Historial organizado",
                   "Acceso desde cualquier dispositivo",
-                  "Mejoras continuas",
+                  "Mejoras continuas y prioridad",
                 ].map((x) => (
                   <div key={x} className="flex items-start gap-2">
                     <span className="mt-[2px] text-blue-700">
@@ -962,33 +1049,30 @@ export default function Page() {
               </div>
             )}
 
-            {/* Actions */}
             <div className="mt-4 flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
               <button
                 onClick={openPortal}
-                className="h-11 px-4 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50"
-                disabled={payLoading || !authUserId}
-                title={!authUserId ? "Inicia sesión para gestionar" : "Abrir portal"}
+                className="h-11 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50"
+                disabled={payLoading}
               >
-                Gestionar suscripción
+                Gestionar / Cancelar suscripción
               </button>
 
               {plan === "free" ? (
                 <button
-                  onClick={() => setPaywallOpen(false)}
-                  className="h-11 px-5 rounded-full text-sm cursor-pointer transition-colors bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 disabled:opacity-50"
+                  onClick={() => {
+                    setPaywallOpen(false);
+                    setPayMsg(null);
+                  }}
+                  className="h-11 px-5 rounded-2xl text-sm cursor-pointer transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
                   disabled={payLoading}
                 >
-                  Seguir con Free
+                  Seguir en Free
                 </button>
               ) : (
                 <button
                   onClick={() => startCheckout(plan)}
-                  className={[
-                    "h-11 px-5 rounded-full text-sm cursor-pointer transition-colors",
-                    "bg-blue-600 text-white hover:bg-blue-700",
-                    "disabled:opacity-50",
-                  ].join(" ")}
+                  className="h-11 px-5 rounded-2xl text-sm cursor-pointer transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
                   disabled={payLoading}
                 >
                   {payLoading ? "Redirigiendo…" : "Continuar al pago"}
@@ -997,7 +1081,7 @@ export default function Page() {
             </div>
 
             <div className="mt-3 text-[11px] text-zinc-500 leading-4">
-              Pago seguro con Stripe. Puedes cancelar o cambiar el plan cuando quieras desde el portal.
+              Pago seguro con Stripe. Puedes cancelar cuando quieras desde el portal.
             </div>
           </div>
         </div>
@@ -1010,7 +1094,9 @@ export default function Page() {
             className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-sm font-semibold text-zinc-900 mb-1">Iniciar sesión</div>
+            <div className="text-sm font-semibold text-zinc-900 mb-1">
+              Iniciar sesión
+            </div>
             <div className="text-xs text-zinc-500 mb-3">
               Te enviamos un enlace por email para entrar (sin contraseña).
             </div>
@@ -1056,7 +1142,9 @@ export default function Page() {
               </button>
             </div>
 
-            <div className="mt-3 text-[11px] text-zinc-500 leading-4">Si no te llega, mira Spam/Promociones.</div>
+            <div className="mt-3 text-[11px] text-zinc-500 leading-4">
+              Si no te llega, mira Spam/Promociones.
+            </div>
           </div>
         </div>
       )}
@@ -1066,8 +1154,9 @@ export default function Page() {
         <div className="h-[86px] bg-gradient-to-b from-white via-white/85 to-transparent" />
       </div>
 
-      {/* ===== TOP BUBBLES (NO TOCAR LOGO) ===== */}
+      {/* ===== TOP BUBBLES ===== */}
       <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
+        {/* Left bubble */}
         <div className="pointer-events-auto">
           <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center gap-0 overflow-hidden px-1">
             <button
@@ -1079,7 +1168,9 @@ export default function Page() {
               <img
                 src={"/vonu-icon.png?v=2"}
                 alt="Menú"
-                className={`h-6 w-6 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
+                className={`h-6 w-6 transition-transform duration-300 ease-out ${
+                  menuOpen ? "rotate-90" : "rotate-0"
+                }`}
                 draggable={false}
               />
             </button>
@@ -1090,19 +1181,24 @@ export default function Page() {
               aria-label="Ir a la home"
               title="Ir a la home"
             >
-              <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-4 w-auto" draggable={false} />
+              <img
+                src={"/vonu-wordmark.png?v=2"}
+                alt="Vonu"
+                className="h-4 w-auto"
+                draggable={false}
+              />
             </a>
           </div>
         </div>
 
+        {/* Right bubble */}
         {!authLoading && (
           <div className="pointer-events-auto flex items-center gap-2">
-            {/* Botón Pro (si no lo es) */}
-            {authUserId && !proLoading && !isPro && (
+            {/* Botón Pro */}
+            {isLoggedIn && !proLoading && !isPro && (
               <button
                 onClick={() => {
                   setPayMsg(null);
-                  setPlan("yearly");
                   setPaywallOpen(true);
                 }}
                 className="h-11 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer shadow-sm border border-blue-700/10"
@@ -1139,7 +1235,9 @@ export default function Page() {
       {/* ===== OVERLAY + SIDEBAR ===== */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-300 ${
-          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent"
+          menuOpen
+            ? "bg-black/20 backdrop-blur-sm pointer-events-auto"
+            : "pointer-events-none bg-transparent"
         }`}
         onClick={() => setMenuOpen(false)}
       >
@@ -1150,7 +1248,9 @@ export default function Page() {
             "rounded-[28px] shadow-[0_18px_60px_rgba(0,0,0,0.18)] border border-zinc-200/80",
             "p-4",
             "transform transition-all duration-300 ease-out",
-            menuOpen ? "translate-x-0 opacity-100" : "-translate-x-[110%] opacity-0",
+            menuOpen
+              ? "translate-x-0 opacity-100"
+              : "-translate-x-[110%] opacity-0",
           ].join(" ")}
           style={{
             top: SIDEBAR_TOP,
@@ -1163,8 +1263,12 @@ export default function Page() {
           <div className="h-full flex flex-col">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-800">Historial</div>
-                <div className="text-xs text-zinc-500">Tus consultas recientes</div>
+                <div className="text-sm font-semibold text-zinc-800">
+                  Historial
+                </div>
+                <div className="text-xs text-zinc-500">
+                  Tus consultas recientes
+                </div>
               </div>
 
               <button
@@ -1196,7 +1300,9 @@ export default function Page() {
                 {authUserEmail ? (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-xs text-zinc-800 truncate">{authUserEmail}</div>
+                      <div className="text-xs text-zinc-800 truncate">
+                        {authUserEmail}
+                      </div>
                       <button
                         onClick={logout}
                         className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer"
@@ -1205,27 +1311,26 @@ export default function Page() {
                       </button>
                     </div>
 
-                    {authUserId && (
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-[11px] text-zinc-500">
-                          Plan: <span className="font-semibold text-zinc-900">{planLabel}</span>
-                        </div>
-
-                        {!proLoading && (
-                          <button
-                            onClick={() => {
-                              setPayMsg(null);
-                              setPlan(isPro ? "yearly" : "yearly");
-                              setPaywallOpen(true);
-                              setMenuOpen(false);
-                            }}
-                            className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
-                          >
-                            {isPro ? "Ver planes" : "Mejorar"}
-                          </button>
-                        )}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-[11px] text-zinc-500">
+                        Plan:{" "}
+                        {proLoading ? "comprobando…" : currentPlanLabel}
                       </div>
-                    )}
+
+                      <button
+                        onClick={() => {
+                          setPayMsg(null);
+                          setPaywallOpen(true);
+                          setMenuOpen(false);
+                        }}
+                        className={[
+                          "text-xs px-3 py-2 rounded-full transition-colors cursor-pointer",
+                          isPro ? "bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800" : "bg-blue-600 text-white hover:bg-blue-700",
+                        ].join(" ")}
+                      >
+                        {isPro ? "Ver planes" : "Mejorar"}
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <button
@@ -1252,10 +1357,14 @@ export default function Page() {
                     key={t.id}
                     onClick={() => activateThread(t.id)}
                     className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${
-                      active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"
+                      active
+                        ? "border-blue-600 bg-blue-50"
+                        : "border-zinc-200 bg-white hover:bg-zinc-50"
                     }`}
                   >
-                    <div className="text-sm font-medium text-zinc-900">{t.title}</div>
+                    <div className="text-sm font-medium text-zinc-900">
+                      {t.title}
+                    </div>
                     <div className="text-xs text-zinc-500 mt-1">{when}</div>
                   </button>
                 );
@@ -1274,8 +1383,12 @@ export default function Page() {
               className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
-              <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
+              <div className="text-sm font-semibold text-zinc-900 mb-1">
+                Renombrar chat
+              </div>
+              <div className="text-xs text-zinc-500 mb-3">
+                Ponle un nombre para encontrarlo rápido.
+              </div>
 
               <input
                 value={renameValue}
@@ -1317,7 +1430,11 @@ export default function Page() {
         )}
 
         {/* CHAT */}
-        <div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0">
+        <div
+          ref={scrollRef}
+          onScroll={handleChatScroll}
+          className="flex-1 overflow-y-auto min-h-0"
+        >
           <div
             className="mx-auto max-w-3xl px-3 md:px-6"
             style={{
@@ -1332,7 +1449,7 @@ export default function Page() {
                   return (
                     <div key={msg.id} className="flex justify-start">
                       <div className="max-w-[92%] md:max-w-[80%]">
-                        <div className="bg-emerald-50 text-zinc-900 border border-emerald-100 rounded-[22px] rounded-tl-[6px] px-4 py-3 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
+                        <div className="bg-blue-50 text-zinc-900 border border-blue-100 rounded-[22px] rounded-tl-[6px] px-4 py-3 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
                           <div
                             className={[
                               "prose prose-zinc max-w-none",
@@ -1375,18 +1492,21 @@ export default function Page() {
         </div>
 
         {/* INPUT + DISCLAIMER */}
-        <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl">
+        <div
+          ref={inputBarRef}
+          className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl"
+        >
           <div className="mx-auto max-w-3xl px-3 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             {/* + */}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="h-11 w-11 md:h-12 md:w-12 inline-flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
               aria-label="Adjuntar imagen"
-              disabled={isTyping || (!authLoading && authUserId && !proLoading && !isPro)}
+              disabled={isTyping || inputLocked}
               title={
                 isTyping
                   ? "Espera a que Vonu responda…"
-                  : !authLoading && authUserId && !proLoading && !isPro
+                  : inputLocked
                   ? "Disponible en Pro"
                   : "Adjuntar imagen"
               }
@@ -1397,13 +1517,23 @@ export default function Page() {
               </svg>
             </button>
 
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={onSelectImage}
+              className="hidden"
+            />
 
             {/* input */}
             <div className="flex-1 min-w-0">
               {imagePreview && (
                 <div className="mb-2 relative w-fit">
-                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="rounded-3xl border border-zinc-200 max-h-40"
+                  />
                   <button
                     onClick={() => setImagePreview(null)}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer"
@@ -1432,13 +1562,13 @@ export default function Page() {
                       sendMessage();
                     }
                   }}
-                  disabled={isTyping || (!authLoading && authUserId && !proLoading && !isPro)}
+                  disabled={isTyping || inputLocked}
                   placeholder={
                     isTyping
                       ? "Vonu está respondiendo…"
-                      : !authLoading && !authUserId
+                      : (!authLoading && !isLoggedIn)
                       ? "Inicia sesión para continuar…"
-                      : !authLoading && authUserId && !proLoading && !isPro
+                      : (!authLoading && isLoggedIn && !proLoading && !isPro)
                       ? "Disponible en Pro…"
                       : "Escribe tu mensaje…"
                   }
@@ -1464,6 +1594,7 @@ export default function Page() {
             <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">
               Orientación preventiva. No sustituye profesionales.
             </p>
+
             {!hasUserMessage && <div className="h-1" />}
           </div>
         </div>
