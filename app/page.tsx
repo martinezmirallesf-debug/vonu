@@ -744,8 +744,8 @@ export default function Page() {
       <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
         {/* Left: UNA burbuja con icono+logo dentro (sin separador) */}
         <div className="pointer-events-auto">
-          {/* CAMBIO AQUÍ: px-0.5 y -ml-1 para juntarlo un poco más */}
-          <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center gap-0 overflow-hidden px-0.5">
+          {/* (NO TOCAR LOGO) */}
+          <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center gap-0 overflow-hidden px-1">
             <button
               onClick={() => setMenuOpen((v) => !v)}
               className="h-11 w-11 flex items-center justify-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
@@ -764,7 +764,7 @@ export default function Page() {
 
             <a
               href={HOME_URL}
-              className="h-11 -ml-1 pr-2 flex items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
+              className="h-11 -ml-0.5 pr-2 flex items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
               aria-label="Ir a la home"
               title="Ir a la home"
             >
@@ -987,13 +987,13 @@ export default function Page() {
           className="flex-1 overflow-y-auto min-h-0"
         >
           <div
-            className="mx-auto max-w-3xl px-4 md:px-6"
+            className="mx-auto max-w-3xl px-3 md:px-6"
             style={{
-              paddingTop: 78,
+              paddingTop: 92, // móvil: más margen para que no “pase por debajo”
               paddingBottom: chatBottomPad,
             }}
           >
-            <div className="space-y-3 py-8">
+            <div className="space-y-3 py-8 md:pt-6">
               {messages.map((msg) => {
                 if (msg.role === "assistant") {
                   const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
@@ -1047,11 +1047,11 @@ export default function Page() {
           ref={inputBarRef}
           className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl"
         >
-          <div className="mx-auto max-w-3xl px-4 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
+          <div className="mx-auto max-w-3xl px-3 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             {/* + */}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="h-12 w-12 inline-flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer disabled:opacity-50"
+              className="h-11 w-11 md:h-12 md:w-12 inline-flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
               aria-label="Adjuntar imagen"
               disabled={isTyping}
               title={isTyping ? "Espera a que Vonu responda…" : "Adjuntar imagen"}
@@ -1087,7 +1087,7 @@ export default function Page() {
             />
 
             {/* input */}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               {imagePreview && (
                 <div className="mb-2 relative w-fit">
                   <img
@@ -1107,7 +1107,7 @@ export default function Page() {
 
               <div
                 className={[
-                  "w-full min-h-12 px-4 py-3 flex items-center",
+                  "w-full min-h-11 md:min-h-12 px-4 py-3 flex items-center",
                   "bg-zinc-100",
                   "border border-zinc-200 focus-within:border-zinc-300",
                   inputExpanded ? "rounded-3xl" : "rounded-full",
@@ -1137,7 +1137,7 @@ export default function Page() {
             <button
               onClick={sendMessage}
               disabled={!canSend}
-              className="h-12 w-12 rounded-full bg-black hover:bg-zinc-900 text-white flex items-center justify-center disabled:opacity-40 transition-colors cursor-pointer"
+              className="h-11 w-11 md:h-12 md:w-12 rounded-full bg-black hover:bg-zinc-900 text-white flex items-center justify-center disabled:opacity-40 transition-colors cursor-pointer shrink-0"
               aria-label="Enviar"
               title={canSend ? "Enviar" : "Escribe un mensaje para enviar"}
             >
@@ -1145,10 +1145,10 @@ export default function Page() {
             </button>
           </div>
 
-          <div className="mx-auto max-w-3xl px-4 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
-            <p className="text-center text-[12px] text-zinc-500 leading-5">
-              Orientación y prevención. No sustituye profesionales. Si hay riesgo
-              inmediato, contacta con emergencias.
+          <div className="mx-auto max-w-3xl px-3 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
+            <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">
+              Orientación preventiva. No sustituye profesionales. Emergencias:
+              112.
             </p>
 
             {!hasUserMessage && <div className="h-1" />}
