@@ -954,6 +954,12 @@ export default function Page() {
   const proFeatures = ["Análisis completo de mensajes, webs e imágenes", "Historial organizado", "Mejoras continuas", "Acceso desde cualquier dispositivo"];
   const selectedFeatures = plan === "free" ? freeFeatures : proFeatures;
 
+  // --- helpers UI paywall (no tamaño variable al seleccionar) ---
+  const planBtnBase =
+    "w-full rounded-3xl border px-4 py-3 text-left transition-colors cursor-pointer select-none";
+  const planBtnSelectedRing = "ring-2 ring-blue-600 ring-offset-2 ring-offset-white";
+  const planBtnH = "h-[76px] md:h-[82px]"; // altura fija => nunca “salta”
+
   return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
       {/* TOAST */}
@@ -973,14 +979,13 @@ export default function Page() {
             if (!payLoading) setPaywallOpen(false);
           }}
         >
-          <div className="h-full w-full flex items-center justify-center py-2 md:py-6">
+          <div className="h-full w-full flex items-center justify-center py-2 md:py-5">
             <div
-              className="w-full max-w-3xl rounded-[26px] md:rounded-[32px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.22)] flex flex-col"
+              className="w-full max-w-5xl rounded-[26px] md:rounded-[32px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.22)] flex flex-col"
               onClick={(e) => e.stopPropagation()}
               style={{
-                // móvil: ocupa casi todo el alto para que NO haya scroll
-                // desktop: auto (sin huecos), pero limitado por maxHeight
-                maxHeight: "calc(var(--vvh, 100dvh) - 16px)",
+                height: "calc(var(--vvh, 100dvh) - 16px)", // 👈 mismo alto en móvil/desktop (sin huecos)
+                overflow: "hidden", // 👈 NUNCA scroll en el modal completo
               }}
             >
               {/* header */}
@@ -1012,125 +1017,40 @@ export default function Page() {
                 </div>
               </div>
 
-              {/* CONTENT */}
-              <div className="flex-1 overflow-hidden p-3 md:p-6">
-                <div className="h-full flex flex-col md:flex-row gap-3 md:gap-4">
-                  {/* ===== LEFT: PLAN PILLS ===== */}
-                  <div className="shrink-0">
-                    {/* MÓVIL: 3 pills en una fila (vertical screen, sin scroll) */}
-                    <div className="grid grid-cols-3 gap-2 md:hidden">
-                      <button
-                        onClick={() => setPlan("free")}
-                        className={[
-                          "h-12 rounded-full border px-3 text-left transition-all cursor-pointer",
-                          plan === "free" ? "border-blue-700 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                        disabled={!!payLoading}
-                      >
-                        <div className="text-[11px] font-semibold text-zinc-900 leading-4">Gratis</div>
-                        <div className="text-[11px] text-zinc-500 leading-4">0€</div>
-                      </button>
-
-                      <button
-                        onClick={() => setPlan("monthly")}
-                        className={[
-                          "h-12 rounded-full border px-3 text-left transition-all cursor-pointer",
-                          plan === "monthly" ? "border-blue-700 bg-blue-600 text-white" : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                        disabled={!!payLoading}
-                      >
-                        <div className="text-[11px] font-semibold leading-4">Mensual</div>
-                        <div className={plan === "monthly" ? "text-[11px] text-white/85 leading-4" : "text-[11px] text-zinc-500 leading-4"}>4,99€</div>
-                      </button>
-
-                      <button
-                        onClick={() => setPlan("yearly")}
-                        className={[
-                          "h-12 rounded-full border px-3 text-left transition-all cursor-pointer relative overflow-hidden",
-                          plan === "yearly" ? "border-blue-700 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                        disabled={!!payLoading}
-                      >
-                        <div className="text-[11px] font-semibold text-zinc-900 leading-4">Anual</div>
-                        <div className="text-[11px] text-zinc-500 leading-4">39,99€</div>
-                      </button>
-                    </div>
-
-                    {/* DESKTOP: columna de pills grandes (redondos) */}
-                    <div className="hidden md:flex md:flex-col gap-2 w-[260px]">
-                      <button
-                        onClick={() => setPlan("free")}
-                        className={[
-                          "rounded-full border px-4 py-3 text-left transition-all cursor-pointer",
-                          plan === "free"
-                            ? "border-blue-700 bg-blue-50 shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
-                            : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                        disabled={!!payLoading}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="text-sm font-semibold text-zinc-900">Gratis</div>
-                          <div className="text-sm font-semibold text-zinc-900">0€</div>
+              {/* CONTENT (sin scroll) */}
+              <div className="flex-1 min-h-0 overflow-hidden p-3 md:p-6">
+                {/* MÓVIL: vertical / DESKTOP: horizontal */}
+                <div className="h-full min-h-0 flex flex-col md:grid md:grid-cols-[1.25fr_0.75fr] md:gap-4">
+                  {/* ===== LEFT (DESKTOP): info grande / (MÓVIL): va después ===== */}
+                  <div className="order-2 md:order-1 min-h-0 flex flex-col">
+                    <div className="flex-1 min-h-0 rounded-3xl border border-zinc-200 bg-zinc-50 p-3 md:p-5 overflow-hidden">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="text-xs font-semibold text-zinc-800">Incluye ({plan === "free" ? "Gratis" : "Pro"})</div>
+                          <div className="text-[11px] text-zinc-500 mt-1">
+                            Lo esencial, sin complicaciones.
+                          </div>
                         </div>
-                        <div className="text-xs text-zinc-500 mt-1">Plan básico</div>
-                      </button>
+                        {plan === "yearly" && (
+                          <span className="shrink-0 text-[11px] px-2 py-1 rounded-full bg-blue-600 text-white">
+                            Mejor valor
+                          </span>
+                        )}
+                      </div>
 
-                      <button
-                        onClick={() => setPlan("monthly")}
-                        className={[
-                          "rounded-full border px-4 py-3 text-left transition-all cursor-pointer",
-                          plan === "monthly"
-                            ? "border-blue-700 bg-blue-600 text-white shadow-[0_12px_30px_rgba(0,0,0,0.18)]"
-                            : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                        disabled={!!payLoading}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="text-sm font-semibold">Mensual</div>
-                          <div className="text-sm font-semibold">4,99€</div>
-                        </div>
-                        <div className={plan === "monthly" ? "text-xs text-white/80 mt-1" : "text-xs text-zinc-500 mt-1"}>Cancela cuando quieras</div>
-                      </button>
-
-                      <button
-                        onClick={() => setPlan("yearly")}
-                        className={[
-                          "rounded-full border px-4 py-3 text-left transition-all cursor-pointer relative overflow-hidden",
-                          plan === "yearly"
-                            ? "border-blue-700 bg-blue-50 shadow-[0_12px_30px_rgba(0,0,0,0.10)]"
-                            : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                        disabled={!!payLoading}
-                      >
-                        <div className="absolute top-2 right-2">
-                          <span className="text-[11px] px-2 py-1 rounded-full bg-blue-600 text-white">Mejor valor</span>
-                        </div>
-                        <div className="flex items-center justify-between pr-20">
-                          <div className="text-sm font-semibold text-zinc-900">Anual</div>
-                          <div className="text-sm font-semibold text-zinc-900">39,99€</div>
-                        </div>
-                        <div className="text-xs text-zinc-500 mt-1">Ahorra frente al mensual</div>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* ===== RIGHT: INFO CARD + ACTIONS ===== */}
-                  <div className="flex-1 min-h-0 flex flex-col">
-                    <div className="flex-1 min-h-0 rounded-3xl border border-zinc-200 bg-zinc-50 p-3 md:p-4">
-                      <div className="text-xs font-semibold text-zinc-800 mb-2">Incluye ({plan === "free" ? "Gratis" : "Pro"})</div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[12px] text-zinc-700">
+                      {/* ✅ compact en móvil, 2 cols siempre para ahorrar altura */}
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-[12px] text-zinc-700">
                         {selectedFeatures.map((x) => (
                           <div key={x} className="flex items-start gap-2">
                             <span className="mt-[2px] text-blue-700">
                               <CheckIcon />
                             </span>
-                            <span>{x}</span>
+                            <span className="leading-4">{x}</span>
                           </div>
                         ))}
                       </div>
 
-                      {/* mantener “altura estable” sin provocar scroll en móvil */}
+                      {/* altura estable sin “saltos” */}
                       <div
                         className={
                           plan === "free"
@@ -1141,6 +1061,7 @@ export default function Page() {
                         Con el plan Gratis puedes hacer <span className="font-semibold text-zinc-700">{FREE_MESSAGE_LIMIT} análisis</span>.
                       </div>
 
+                      {/* mensaje de error/estado dentro, sin empujar layout */}
                       {payMsg && (
                         <div className="mt-2 text-xs text-zinc-700 bg-white border border-zinc-200 rounded-2xl px-3 py-2">
                           {payMsg}
@@ -1148,9 +1069,93 @@ export default function Page() {
                       )}
                     </div>
 
-                    {/* acciones SIEMPRE visibles, sin scroll */}
-                    <div className="mt-3 md:mt-4 rounded-3xl border border-zinc-200 bg-white p-3 md:p-4">
-                      <div className="flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
+                    <div className="mt-3 md:mt-4 text-[11px] text-zinc-500 leading-4 px-1">
+                      Pago seguro con Stripe. Puedes cancelar desde esta misma pantalla.
+                    </div>
+                  </div>
+
+                  {/* ===== RIGHT: planes + CTA (siempre visible) ===== */}
+                  <div className="order-1 md:order-2 min-h-0 flex flex-col">
+                    {/* Plan selector */}
+                    <div className="rounded-3xl border border-zinc-200 bg-white p-3 md:p-4">
+                      <div className="text-xs font-semibold text-zinc-800 mb-2">Elige tu plan</div>
+
+                      <div className="space-y-2">
+                        {/* FREE */}
+                        <button
+                          onClick={() => setPlan("free")}
+                          className={[
+                            planBtnBase,
+                            planBtnH,
+                            plan === "free"
+                              ? `border-blue-200 bg-blue-50 ${planBtnSelectedRing}`
+                              : "border-zinc-200 bg-white hover:bg-zinc-50",
+                          ].join(" ")}
+                          disabled={!!payLoading}
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold text-zinc-900 leading-5">Gratis</div>
+                              <div className="text-[11px] text-zinc-500 leading-4">Plan básico</div>
+                            </div>
+                            <div className="text-sm font-semibold text-zinc-900">0€</div>
+                          </div>
+                        </button>
+
+                        {/* MONTHLY */}
+                        <button
+                          onClick={() => setPlan("monthly")}
+                          className={[
+                            planBtnBase,
+                            planBtnH,
+                            plan === "monthly"
+                              ? `border-blue-700 bg-blue-600 text-white ${planBtnSelectedRing}`
+                              : "border-zinc-200 bg-white hover:bg-zinc-50",
+                          ].join(" ")}
+                          disabled={!!payLoading}
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold leading-5">Mensual</div>
+                              <div className={plan === "monthly" ? "text-[11px] text-white/80 leading-4" : "text-[11px] text-zinc-500 leading-4"}>
+                                Flexible, cancela cuando quieras
+                              </div>
+                            </div>
+                            <div className="text-sm font-semibold">4,99€</div>
+                          </div>
+                        </button>
+
+                        {/* YEARLY */}
+                        <button
+                          onClick={() => setPlan("yearly")}
+                          className={[
+                            planBtnBase,
+                            planBtnH,
+                            "relative overflow-hidden",
+                            plan === "yearly"
+                              ? `border-blue-200 bg-blue-50 ${planBtnSelectedRing}`
+                              : "border-zinc-200 bg-white hover:bg-zinc-50",
+                          ].join(" ")}
+                          disabled={!!payLoading}
+                        >
+                          <div className="absolute top-2 right-2">
+                            <span className="text-[11px] px-2 py-1 rounded-full bg-blue-600 text-white">Mejor valor</span>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-3 pr-20">
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold text-zinc-900 leading-5">Anual</div>
+                              <div className="text-[11px] text-zinc-500 leading-4">Ahorra frente al mensual</div>
+                            </div>
+                            <div className="text-sm font-semibold text-zinc-900">39,99€</div>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* CTA / acciones (pegado abajo) */}
+                    <div className="mt-3 md:mt-4 rounded-3xl border border-zinc-200 bg-white p-3 md:p-4 mt-auto">
+                      <div className="flex flex-col gap-2">
                         {isPro ? (
                           <button
                             onClick={cancelSubscriptionFromHere}
@@ -1160,7 +1165,9 @@ export default function Page() {
                             Cancelar suscripción
                           </button>
                         ) : (
-                          <div className="text-[12px] text-zinc-500 px-1">Puedes quedarte en Gratis o mejorar cuando quieras.</div>
+                          <div className="text-[12px] text-zinc-500 px-1">
+                            Puedes quedarte en Gratis o mejorar cuando quieras.
+                          </div>
                         )}
 
                         <button
@@ -1173,17 +1180,17 @@ export default function Page() {
                             if (plan === "monthly" || plan === "yearly") startCheckout(plan);
                           }}
                           className={[
-                            "h-11 px-5 rounded-2xl text-sm cursor-pointer transition-colors disabled:opacity-50",
+                            "h-11 w-full px-5 rounded-2xl text-sm cursor-pointer transition-colors disabled:opacity-50",
                             plan === "free" ? "bg-zinc-900 text-white hover:bg-black" : "bg-blue-600 text-white hover:bg-blue-700",
                           ].join(" ")}
                           disabled={!!payLoading}
                         >
                           {payLoading ? "Procesando…" : plan === "free" ? "Seguir en Gratis" : "Continuar al pago"}
                         </button>
-                      </div>
 
-                      <div className="mt-2 text-[11px] text-zinc-500 leading-4">
-                        Pago seguro con Stripe. Puedes cancelar desde esta misma pantalla.
+                        <div className="text-center text-[11px] text-zinc-500 leading-4">
+                          {plan === "free" ? "Sin pagos. Acceso básico." : "Renovación automática. Cancela cuando quieras."}
+                        </div>
                       </div>
                     </div>
                   </div>
