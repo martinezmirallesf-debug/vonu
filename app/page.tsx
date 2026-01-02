@@ -54,7 +54,7 @@ function makeTitleFromText(text: string) {
 const STORAGE_KEY = "vonu_threads_v1";
 const HOME_URL = "https://vonuai.com";
 
-// ✅ Tu regla: tras 2 mensajes, pedir login/pago
+// ✅ Regla: 2 análisis gratis (2 mensajes de usuario)
 const FREE_MESSAGE_LIMIT = 2;
 
 function isDesktopPointer() {
@@ -110,25 +110,28 @@ function CheckIcon({ className }: { className?: string }) {
   );
 }
 
-// ✅ SVG nítidos (no pixelan)
+/**
+ * ✅ Google "G" nítido (SVG oficial-style, sin pixelado)
+ * Tamaño 18/20 funciona perfecto en botones.
+ */
 function GoogleIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" aria-hidden="true">
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 48 48" aria-hidden="true">
       <path
         fill="#EA4335"
-        d="M12 10.2v3.9h5.4c-.2 1.2-1.4 3.5-5.4 3.5A6.3 6.3 0 1 1 12 5.7c1.8 0 3 .7 3.7 1.3l2.5-2.4C16.7 3 14.6 2 12 2 6.5 2 2 6.5 2 12s4.5 10 10 10c5.8 0 9.6-4.1 9.6-9.8 0-.7-.1-1.2-.2-1.7H12z"
-      />
-      <path
-        fill="#34A853"
-        d="M3.7 7.6l3.2 2.3A6.3 6.3 0 0 1 12 5.7c1.8 0 3 .7 3.7 1.3l2.5-2.4C16.7 3 14.6 2 12 2 8.2 2 5 4.1 3.7 7.6z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M12 22c2.6 0 4.8-.9 6.4-2.4l-3-2.5c-.8.5-1.9 1-3.4 1a6.3 6.3 0 0 1-6-4.4l-3.2 2.4C5.1 19.8 8.3 22 12 22z"
+        d="M24 9.5c3.54 0 6.03 1.53 7.41 2.81l5.06-5.06C33.4 4.44 29.14 2.5 24 2.5 14.62 2.5 6.63 7.88 3.02 15.72l5.98 4.64C11.03 13.7 17 9.5 24 9.5z"
       />
       <path
         fill="#4285F4"
-        d="M21.6 12.2c0-.7-.1-1.2-.2-1.7H12v3.9h5.4c-.2 1.2-1.4 3.5-5.4 3.5v4.1c5.8 0 9.6-4.1 9.6-9.8z"
+        d="M46 24.5c0-1.57-.14-2.68-.44-3.84H24v7.26h12.7c-.26 2.06-1.67 5.16-4.79 7.25l6.16 4.78C42.04 39.44 46 33.66 46 24.5z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M9 28.36A14.7 14.7 0 0 1 8.23 24c0-1.51.26-2.96.74-4.36l-5.98-4.64A22.1 22.1 0 0 0 1.9 24c0 3.57.86 6.95 2.39 9.99L9 28.36z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 45.5c5.14 0 9.46-1.7 12.62-4.6l-6.16-4.78c-1.65 1.15-3.86 1.96-6.46 1.96-6.97 0-12.93-4.2-15.03-10.2l-5.98 4.64C6.6 40.12 14.6 45.5 24 45.5z"
       />
     </svg>
   );
@@ -141,6 +144,15 @@ function MicrosoftIcon({ className }: { className?: string }) {
       <path fill="#7FBA00" d="M13 2h9v9h-9z" />
       <path fill="#00A4EF" d="M2 13h9v9H2z" />
       <path fill="#FFB900" d="M13 13h9v9h-9z" />
+    </svg>
+  );
+}
+
+function AppleIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M16.7 13.2c0-2.2 1.8-3.3 1.9-3.4-1-1.5-2.6-1.7-3.1-1.7-1.3-.1-2.5.8-3.2.8-.6 0-1.6-.8-2.7-.8-1.4 0-2.7.8-3.4 2.1-1.5 2.6-.4 6.4 1.1 8.5.7 1 1.6 2.1 2.7 2 .9 0 1.3-.6 2.5-.6 1.1 0 1.5.6 2.6.6 1.1 0 1.8-1 2.5-2 .8-1.1 1.1-2.2 1.1-2.3-.1 0-2-.8-2-3.2z" />
+      <path d="M14.6 4.7c.6-.8 1-1.9.9-3-.9.1-2 .6-2.6 1.4-.6.7-1.1 1.8-.9 2.9 1 .1 2-.5 2.6-1.3z" />
     </svg>
   );
 }
@@ -275,8 +287,6 @@ export default function Page() {
     setLoginMsg(null);
     setAuthMode(mode);
     setLoginOpen(true);
-    // no borramos email si ya lo escribió
-    // setLoginEmail(""); setLoginPassword("");
   }
 
   function openPlansModal() {
@@ -285,16 +295,24 @@ export default function Page() {
     setPaywallOpen(true);
   }
 
-  // ✅ Botón “Planes” siempre funciona:
+  /**
+   * ✅ IMPORTANTE:
+   * - Ahora SIEMPRE abre el modal de planes (aunque no haya login).
+   * - Si quiere pagar y no está logueado, entonces pedimos iniciar sesión.
+   */
   function handleOpenPlansCTA() {
-    if (!isLoggedIn) {
-      openLoginModal("signin");
-      return;
-    }
     openPlansModal();
   }
 
   async function startCheckout(chosen: "monthly" | "yearly") {
+    // Si no está logueado, primero login (sin inventar: es requisito técnico para asociar customer)
+    if (!isLoggedIn) {
+      setPayMsg("Para continuar al pago, inicia sesión (así se guarda tu plan y tu historial).");
+      setPaywallOpen(false);
+      openLoginModal("signin");
+      return;
+    }
+
     setPayLoading(true);
     setPayMsg(null);
     try {
@@ -321,7 +339,7 @@ export default function Page() {
       }
 
       if (!res.ok) {
-        setPayMsg(json?.error || raw || "Error creando checkout.");
+        setPayMsg(json?.error || raw || "Error creando el checkout.");
         setPayLoading(false);
         return;
       }
@@ -335,7 +353,7 @@ export default function Page() {
 
       window.location.href = url;
     } catch (e: any) {
-      setPayMsg(e?.message ?? "Error iniciando pago.");
+      setPayMsg(e?.message ?? "Error iniciando el pago.");
       setPayLoading(false);
     }
   }
@@ -374,12 +392,12 @@ export default function Page() {
 
       window.location.href = url;
     } catch (e: any) {
-      setPayMsg(e?.message ?? "Error abriendo portal.");
+      setPayMsg(e?.message ?? "Error abriendo el portal.");
       setPayLoading(false);
     }
   }
 
-  async function signInWithOAuth(provider: "google" | "azure") {
+  async function signInWithOAuth(provider: "google" | "azure" | "apple") {
     setLoginSending(true);
     setLoginMsg(null);
     try {
@@ -418,8 +436,7 @@ export default function Page() {
       setLoginOpen(false);
       setLoginPassword("");
       setLoginMsg(null);
-      // si venía del CTA de planes, abre planes automáticamente
-      // (pequeño delay por si onAuthStateChange tarda)
+
       setTimeout(() => {
         refreshProStatus();
       }, 300);
@@ -440,7 +457,6 @@ export default function Page() {
     setLoginSending(true);
     setLoginMsg(null);
     try {
-      // keepSignedIn: Supabase puede requerir confirmación por email según config.
       const { error } = await supabaseBrowser.auth.signUp({
         email,
         password,
@@ -453,11 +469,10 @@ export default function Page() {
         return;
       }
 
-      // Si tienes “Email confirmations” activado, te llegará mail; si no, entrará directo.
-      setLoginMsg("✅ Cuenta creada. Revisa tu email si te pide confirmar, o inicia sesión.");
+      setLoginMsg("✅ Cuenta creada. Revisa tu correo si te pide confirmación, o inicia sesión.");
       setAuthMode("signin");
     } catch (e: any) {
-      setLoginMsg(e?.message ?? "Error creando cuenta.");
+      setLoginMsg(e?.message ?? "Error creando la cuenta.");
     } finally {
       setLoginSending(false);
     }
@@ -490,9 +505,9 @@ export default function Page() {
         return;
       }
 
-      setLoginMsg("✅ Email enviado. Abre tu correo y pulsa el enlace.");
+      setLoginMsg("✅ Email enviado. Abre tu correo y pulsa el enlace para entrar.");
     } catch (e: any) {
-      setLoginMsg(e?.message ?? "Error enviando email.");
+      setLoginMsg(e?.message ?? "Error enviando el email.");
     } finally {
       setLoginSending(false);
     }
@@ -787,13 +802,13 @@ export default function Page() {
 
     // a partir del 3º intento
     if (!isLoggedIn) {
-      setLoginMsg("Para seguir, inicia sesión (y así guardas tu historial).");
+      setLoginMsg("Para seguir, inicia sesión (así guardas tu historial).");
       openLoginModal("signin");
       return true;
     }
 
     if (!isPro) {
-      setPayMsg("Has llegado al límite del plan Free. Desbloquea Pro para seguir usando Vonu.");
+      setPayMsg("Has llegado al límite del plan Gratis. Desbloquea Pro para seguir usando Vonu.");
       openPlansModal();
       return true;
     }
@@ -802,18 +817,10 @@ export default function Page() {
   }
 
   async function sendMessage() {
-    // si está cargando auth no hacemos nada raro
     if (authLoading) return;
 
-    // ✅ paywall/login tras 2 mensajes (antes de todo)
     if (enforceLimitIfNeeded()) return;
 
-    // si no está logueado (pero aún no alcanzó el límite), dejamos enviar y luego ya forzará
-    if (!authUserId) {
-      // dejamos enviar hasta 2; si prefieres forzar login desde el 1º, aquí se abre.
-    }
-
-    // si está logueado pero bloqueado por paywall (por estado pro) => abre planes
     if (isBlockedByPaywall) {
       openPlansModal();
       return;
@@ -950,9 +957,7 @@ export default function Page() {
                     ...m,
                     streaming: false,
                     text:
-                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" +
-                      msg +
-                      "\n```",
+                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" + msg + "\n```",
                   }
                 : m
             ),
@@ -973,7 +978,10 @@ export default function Page() {
   const TOP_GAP_PX = 10;
   const SIDEBAR_TOP = TOP_OFFSET_PX + TOP_BUBBLE_H + TOP_GAP_PX;
 
-  const planLabel = isPro ? "Pro" : "Free";
+  const planLabel = isPro ? "Pro" : "Gratis";
+
+  // Texto del CTA superior (más estándar que “Planes”)
+  const topCtaLabel = isPro ? "Mi suscripción" : "Mejorar";
 
   return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
@@ -995,12 +1003,12 @@ export default function Page() {
           }}
         >
           <div
-            className="w-full max-w-xl rounded-[32px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.22)] p-4 md:p-5"
+            className="w-full max-w-xl rounded-[34px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.22)] p-4 md:p-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-900">Planes</div>
+                <div className="text-sm font-semibold text-zinc-900">Suscripción</div>
                 <div className="text-xs text-zinc-500 mt-1">
                   Plan actual: <span className="font-semibold text-zinc-900">{planLabel}</span>
                   {proLoading ? <span className="ml-2 text-zinc-400">· comprobando…</span> : null}
@@ -1011,7 +1019,7 @@ export default function Page() {
                 onClick={() => {
                   if (!payLoading) setPaywallOpen(false);
                 }}
-                className="h-9 w-9 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer"
+                className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer"
                 aria-label="Cerrar"
                 disabled={!!payLoading}
               >
@@ -1019,43 +1027,49 @@ export default function Page() {
               </button>
             </div>
 
+            {/* Aviso suave si no hay login */}
+            {!isLoggedIn && (
+              <div className="mt-3 rounded-3xl border border-blue-100 bg-blue-50 px-4 py-3 text-[12px] text-zinc-700 leading-5">
+                Puedes ver los planes sin iniciar sesión. Para completar el pago, Vonu te pedirá entrar para guardar tu plan y tu historial.
+              </div>
+            )}
+
             <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-2">
               {/* FREE */}
               <button
                 onClick={() => setPlan("free")}
                 className={[
-                  "rounded-3xl border p-4 text-left transition-all cursor-pointer",
+                  "rounded-[28px] border p-4 text-left transition-all cursor-pointer",
                   plan === "free"
                     ? "border-blue-700 bg-blue-50 shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
                     : "border-zinc-200 bg-white hover:bg-zinc-50",
                 ].join(" ")}
                 disabled={!!payLoading}
               >
-                <div className="text-xs font-semibold text-zinc-900">Free</div>
+                <div className="text-xs font-semibold text-zinc-900">Gratis</div>
                 <div className="mt-1 text-2xl font-semibold leading-none text-zinc-900">
                   0€ <span className="text-zinc-500 text-base font-medium">/siempre</span>
                 </div>
-                <div className="text-zinc-500 text-xs mt-1">Acceso básico</div>
+                <div className="text-zinc-500 text-xs mt-1">2 análisis incluidos</div>
               </button>
 
               {/* MONTHLY */}
               <button
                 onClick={() => setPlan("monthly")}
                 className={[
-                  "rounded-3xl border p-4 text-left transition-all cursor-pointer",
+                  "rounded-[28px] border p-4 text-left transition-all cursor-pointer",
                   plan === "monthly"
                     ? "border-blue-700 bg-blue-600 text-white shadow-[0_12px_30px_rgba(0,0,0,0.18)]"
                     : "border-zinc-200 bg-white hover:bg-zinc-50",
                 ].join(" ")}
                 disabled={!!payLoading}
               >
-                <div className="text-xs font-semibold">Monthly</div>
+                <div className="text-xs font-semibold">Mensual</div>
                 <div className="mt-1 text-2xl font-semibold leading-none">
-                  4,99€
-                  <span className={plan === "monthly" ? "text-white/80" : "text-zinc-500"}> /mes</span>
+                  4,99€ <span className={plan === "monthly" ? "text-white/80" : "text-zinc-500"}>/mes</span>
                 </div>
                 <div className={plan === "monthly" ? "text-white/80 text-xs mt-1" : "text-zinc-500 text-xs mt-1"}>
-                  Flexible, cancela cuando quieras
+                  Cancela cuando quieras
                 </div>
               </button>
 
@@ -1063,7 +1077,7 @@ export default function Page() {
               <button
                 onClick={() => setPlan("yearly")}
                 className={[
-                  "rounded-3xl border p-4 text-left transition-all cursor-pointer relative overflow-hidden",
+                  "rounded-[28px] border p-4 text-left transition-all cursor-pointer relative overflow-hidden",
                   plan === "yearly"
                     ? "border-blue-700 bg-blue-50 shadow-[0_12px_30px_rgba(0,0,0,0.10)]"
                     : "border-zinc-200 bg-white hover:bg-zinc-50",
@@ -1074,15 +1088,15 @@ export default function Page() {
                   <span className="text-[11px] px-2 py-1 rounded-full bg-blue-600 text-white">Mejor valor</span>
                 </div>
 
-                <div className="text-xs font-semibold text-zinc-900">Yearly</div>
+                <div className="text-xs font-semibold text-zinc-900">Anual</div>
                 <div className="mt-1 text-2xl font-semibold leading-none text-zinc-900">
                   39,99€ <span className="text-zinc-500">/año</span>
                 </div>
-                <div className="text-zinc-500 text-xs mt-1">Ahorra vs mensual</div>
+                <div className="text-zinc-500 text-xs mt-1">Ahorra frente al mensual</div>
               </button>
             </div>
 
-            <div className="mt-4 rounded-3xl border border-zinc-200 bg-zinc-50 p-4">
+            <div className="mt-4 rounded-[28px] border border-zinc-200 bg-zinc-50 p-4">
               <div className="text-xs font-semibold text-zinc-800 mb-2">Incluye (Pro)</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[12px] text-zinc-700">
                 {[
@@ -1111,13 +1125,13 @@ export default function Page() {
               {isPro ? (
                 <button
                   onClick={openPortal}
-                  className="h-11 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50"
+                  className="h-11 px-4 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50"
                   disabled={!!payLoading}
                 >
                   Gestionar suscripción
                 </button>
               ) : (
-                <div className="text-[12px] text-zinc-500 px-1">Puedes quedarte en Free o mejorar cuando quieras.</div>
+                <div className="text-[12px] text-zinc-500 px-1">Puedes quedarte en Gratis o mejorar cuando quieras.</div>
               )}
 
               <button
@@ -1130,12 +1144,12 @@ export default function Page() {
                   if (plan === "monthly" || plan === "yearly") startCheckout(plan);
                 }}
                 className={[
-                  "h-11 px-5 rounded-2xl text-sm cursor-pointer transition-colors disabled:opacity-50",
+                  "h-11 px-5 rounded-full text-sm cursor-pointer transition-colors disabled:opacity-50",
                   plan === "free" ? "bg-zinc-900 text-white hover:bg-black" : "bg-blue-600 text-white hover:bg-blue-700",
                 ].join(" ")}
                 disabled={!!payLoading}
               >
-                {payLoading ? "Redirigiendo…" : plan === "free" ? "Seguir en Free" : "Continuar al pago"}
+                {payLoading ? "Redirigiendo…" : plan === "free" ? "Seguir en Gratis" : "Continuar al pago"}
               </button>
             </div>
 
@@ -1146,20 +1160,20 @@ export default function Page() {
         </div>
       )}
 
-      {/* ===== LOGIN MODAL (como la captura) ===== */}
+      {/* ===== LOGIN MODAL ===== */}
       {loginOpen && (
         <div className="fixed inset-0 z-[60] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6">
           <div
-            className="w-full max-w-[380px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-6"
+            className="w-full max-w-[390px] rounded-[22px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-[18px] font-semibold text-zinc-900">
-                  {authMode === "signin" ? "Sign in" : "Create account"}
+                  {authMode === "signin" ? "Iniciar sesión" : "Crear cuenta"}
                 </div>
                 <div className="text-[12.5px] text-zinc-500 mt-1">
-                  {authMode === "signin" ? "to continue to your account" : "create your account to continue"}
+                  {authMode === "signin" ? "para continuar" : "crea tu cuenta para continuar"}
                 </div>
               </div>
 
@@ -1168,7 +1182,7 @@ export default function Page() {
                   setLoginOpen(false);
                   setLoginMsg(null);
                 }}
-                className="h-9 w-9 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer"
+                className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer"
                 aria-label="Cerrar"
                 disabled={!!loginSending}
               >
@@ -1182,7 +1196,7 @@ export default function Page() {
                 <input
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
-                  className="w-full h-11 rounded-[14px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
+                  className="w-full h-11 rounded-[16px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
                   placeholder="tuemail@ejemplo.com"
                   autoFocus
                   onKeyDown={(e) => {
@@ -1198,12 +1212,12 @@ export default function Page() {
               </div>
 
               <div>
-                <div className="text-[12px] text-zinc-600 mb-1">Password</div>
+                <div className="text-[12px] text-zinc-600 mb-1">Contraseña</div>
                 <input
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   type="password"
-                  className="w-full h-11 rounded-[14px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
+                  className="w-full h-11 rounded-[16px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
                   placeholder="••••••••"
                   onKeyDown={(e) => {
                     if (e.key === "Escape") {
@@ -1225,71 +1239,82 @@ export default function Page() {
                     onChange={(e) => setKeepSignedIn(e.target.checked)}
                     className="h-4 w-4"
                   />
-                  Keep me signed in
+                  Mantener sesión iniciada
                 </label>
 
                 <button
                   className="text-[12px] text-blue-700 hover:text-blue-800 cursor-pointer"
-                  onClick={() => setLoginMsg("Si has olvidado la contraseña, crea cuenta de nuevo o usa enlace por email abajo.")}
+                  onClick={() =>
+                    setLoginMsg("Si has olvidado la contraseña, por ahora crea una cuenta nueva o usa el enlace por email.")
+                  }
                   disabled={!!loginSending}
                 >
-                  FORGOT PASSWORD?
+                  ¿Has olvidado la contraseña?
                 </button>
               </div>
 
               {loginMsg && (
-                <div className="text-[12px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-[14px] px-3 py-2">
+                <div className="text-[12px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-[16px] px-3 py-2">
                   {loginMsg}
                 </div>
               )}
 
               <button
                 onClick={authMode === "signin" ? signInWithPassword : signUpWithPassword}
-                className="w-full h-11 rounded-[14px] bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                className="w-full h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
                 disabled={!!loginSending}
               >
-                {loginSending ? "Processing…" : authMode === "signin" ? "SIGN IN" : "CREATE ACCOUNT"}
+                {loginSending ? "Procesando…" : authMode === "signin" ? "Entrar" : "Crear cuenta"}
               </button>
 
               {/* Divider */}
               <div className="flex items-center gap-3 py-1">
                 <div className="h-px flex-1 bg-zinc-200" />
-                <div className="text-[12px] text-zinc-500">or</div>
+                <div className="text-[12px] text-zinc-500">o</div>
                 <div className="h-px flex-1 bg-zinc-200" />
               </div>
 
               {/* OAuth buttons */}
               <button
+                onClick={() => signInWithOAuth("apple")}
+                className="w-full h-11 rounded-full border border-zinc-200 bg-black hover:bg-zinc-900 text-white text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                disabled={!!loginSending}
+              >
+                <AppleIcon />
+                Continuar con Apple
+              </button>
+
+              <button
                 onClick={() => signInWithOAuth("google")}
-                className="w-full h-11 rounded-[14px] border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 disabled={!!loginSending}
               >
                 <GoogleIcon />
-                Continue with Google
+                Continuar con Google
               </button>
 
               <button
                 onClick={() => signInWithOAuth("azure")}
-                className="w-full h-11 rounded-[14px] border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 disabled={!!loginSending}
               >
                 <MicrosoftIcon />
-                Continue with Microsoft
+                Continuar con Microsoft
               </button>
 
-              {/* Magic link (opcional, pero lo dejamos como alternativa) */}
+              {/* Magic link */}
               <button
                 onClick={sendMagicLink}
-                className="w-full h-11 rounded-[14px] border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50"
+                className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50"
                 disabled={!!loginSending}
               >
-                Send me an email link instead
+                Enviarme un enlace por email
               </button>
 
               <div className="text-[12px] text-zinc-600 text-center pt-1">
                 {authMode === "signin" ? (
                   <>
-                    Don&apos;t have an account?{" "}
+                    ¿No tienes cuenta?{" "}
                     <button
                       className="text-blue-700 hover:text-blue-800 cursor-pointer"
                       onClick={() => {
@@ -1298,12 +1323,12 @@ export default function Page() {
                       }}
                       disabled={!!loginSending}
                     >
-                      Create account
+                      Crear cuenta
                     </button>
                   </>
                 ) : (
                   <>
-                    Already have an account?{" "}
+                    ¿Ya tienes cuenta?{" "}
                     <button
                       className="text-blue-700 hover:text-blue-800 cursor-pointer"
                       onClick={() => {
@@ -1312,7 +1337,7 @@ export default function Page() {
                       }}
                       disabled={!!loginSending}
                     >
-                      Sign in
+                      Iniciar sesión
                     </button>
                   </>
                 )}
@@ -1358,13 +1383,13 @@ export default function Page() {
 
         {!authLoading && (
           <div className="pointer-events-auto flex items-center gap-2">
-            {/* ✅ Planes SIEMPRE visibles */}
+            {/* ✅ CTA superior mejor nombrado */}
             <button
               onClick={handleOpenPlansCTA}
               className="h-11 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer shadow-sm border border-blue-700/10"
-              title="Planes"
+              title={topCtaLabel}
             >
-              Planes
+              {topCtaLabel}
             </button>
 
             {/* user */}
@@ -1405,7 +1430,7 @@ export default function Page() {
             menuOpen ? "translate-x-0 opacity-100" : "-translate-x-[110%] opacity-0",
           ].join(" ")}
           style={{
-            top: SIDEBAR_TOP,
+            top: 12 + 44 + 10,
             bottom: 12,
             width: isDesktopPointer() ? 360 : undefined,
             maxWidth: "calc(100vw - 24px)",
@@ -1459,7 +1484,9 @@ export default function Page() {
 
                     {!!authUserId && (
                       <div className="flex items-center justify-between gap-2">
-                        <div className="text-[11px] text-zinc-500">Plan: {proLoading ? "comprobando…" : isPro ? "Pro" : "Free"}</div>
+                        <div className="text-[11px] text-zinc-500">
+                          Plan: {proLoading ? "comprobando…" : isPro ? "Pro" : "Gratis"}
+                        </div>
                         <button
                           onClick={() => {
                             handleOpenPlansCTA();
@@ -1533,13 +1560,13 @@ export default function Page() {
               <div className="flex justify-end gap-2 mt-4">
                 <button
                   onClick={() => setRenameOpen(false)}
-                  className="h-10 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm cursor-pointer"
+                  className="h-10 px-4 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={confirmRename}
-                  className="h-10 px-4 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 text-sm transition-colors cursor-pointer"
+                  className="h-10 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 text-sm transition-colors cursor-pointer"
                 >
                   Guardar
                 </button>
@@ -1573,7 +1600,7 @@ export default function Page() {
                   return (
                     <div key={msg.id} className="flex justify-start">
                       <div className="max-w-[92%] md:max-w-[80%]">
-                        <div className="bg-blue-50 text-zinc-900 border border-blue-100 rounded-[22px] rounded-tl-[6px] px-4 py-3 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
+                        <div className="bg-blue-50 text-zinc-900 border border-blue-100 rounded-[24px] rounded-tl-[8px] px-4 py-3 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
                           <div
                             className={[
                               "prose prose-zinc max-w-none",
@@ -1603,7 +1630,7 @@ export default function Page() {
                         />
                       )}
                       {msg.text && (
-                        <div className="bg-blue-600 text-white text-[14.5px] leading-relaxed rounded-[22px] rounded-tr-[6px] px-4 py-2.5 break-words shadow-[0_1px_0_rgba(0,0,0,0.06)]">
+                        <div className="bg-blue-600 text-white text-[14.5px] leading-relaxed rounded-[24px] rounded-tr-[8px] px-4 py-2.5 break-words shadow-[0_1px_0_rgba(0,0,0,0.06)]">
                           {msg.text}
                         </div>
                       )}
@@ -1641,7 +1668,7 @@ export default function Page() {
                   <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
                   <button
                     onClick={() => setImagePreview(null)}
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer"
+                    className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm transition-colors cursor-pointer"
                     aria-label="Quitar imagen"
                   >
                     ×
@@ -1675,7 +1702,7 @@ export default function Page() {
               </div>
             </div>
 
-            {/* enviar (AZUL) */}
+            {/* enviar */}
             <button
               onClick={sendMessage}
               disabled={!!(isTyping || (!input.trim() && !imagePreview))}
