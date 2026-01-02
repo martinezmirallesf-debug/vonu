@@ -54,7 +54,7 @@ function makeTitleFromText(text: string) {
 const STORAGE_KEY = "vonu_threads_v1";
 const HOME_URL = "https://vonuai.com";
 
-// ✅ Regla: 2 análisis gratis (2 mensajes de usuario)
+// ✅ Tu regla: tras 2 análisis, pedir login/pago
 const FREE_MESSAGE_LIMIT = 2;
 
 function isDesktopPointer() {
@@ -71,12 +71,7 @@ function UserIcon({ className }: { className?: string }) {
         strokeWidth="2"
         strokeLinecap="round"
       />
-      <path
-        d="M4 22c0-4.418 3.582-8 8-8s8 3.582 8 8"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <path d="M4 22c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -85,13 +80,7 @@ function ArrowUpIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M12 19V6" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-      <path
-        d="M7 10l5-5 5 5"
-        stroke="currentColor"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M7 10l5-5 5 5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -99,39 +88,39 @@ function ArrowUpIcon({ className }: { className?: string }) {
 function CheckIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-4 w-4"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M20 6L9 17l-5-5"
-        stroke="currentColor"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
 /**
- * ✅ Google "G" nítido (SVG oficial-style, sin pixelado)
- * Tamaño 18/20 funciona perfecto en botones.
+ * ✅ GoogleIcon sin “rayitas”
+ * Truco: usar un SVG tipo “G” de 48x48 (muy usado) que evita seams y
+ * forzar width/height enteros + display:block.
  */
 function GoogleIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 48 48" aria-hidden="true">
+    <svg
+      className={className ?? "h-5 w-5"}
+      viewBox="0 0 48 48"
+      aria-hidden="true"
+      style={{ display: "block" }}
+    >
       <path
         fill="#EA4335"
-        d="M24 9.5c3.54 0 6.03 1.53 7.41 2.81l5.06-5.06C33.4 4.44 29.14 2.5 24 2.5 14.62 2.5 6.63 7.88 3.02 15.72l5.98 4.64C11.03 13.7 17 9.5 24 9.5z"
+        d="M24 9.5c3.55 0 6.19 1.54 7.61 2.83l5.2-5.2C33.78 4.25 29.36 2 24 2 14.74 2 6.98 7.44 3.14 15.33l6.64 5.15C11.74 14.33 17.38 9.5 24 9.5z"
       />
       <path
         fill="#4285F4"
-        d="M46 24.5c0-1.57-.14-2.68-.44-3.84H24v7.26h12.7c-.26 2.06-1.67 5.16-4.79 7.25l6.16 4.78C42.04 39.44 46 33.66 46 24.5z"
+        d="M46 24.5c0-1.58-.14-2.78-.46-4H24v8.02h12.25c-.25 2.02-1.62 5.06-4.67 7.11l7.16 5.54C43.06 37.3 46 31.63 46 24.5z"
       />
       <path
         fill="#FBBC05"
-        d="M9 28.36A14.7 14.7 0 0 1 8.23 24c0-1.51.26-2.96.74-4.36l-5.98-4.64A22.1 22.1 0 0 0 1.9 24c0 3.57.86 6.95 2.39 9.99L9 28.36z"
+        d="M9.78 28.9A14.88 14.88 0 0 1 9 24c0-1.7.3-3.33.78-4.9l-6.64-5.15A22.01 22.01 0 0 0 2 24c0 3.56.85 6.92 2.36 9.86l7.42-4.96z"
       />
       <path
         fill="#34A853"
-        d="M24 45.5c5.14 0 9.46-1.7 12.62-4.6l-6.16-4.78c-1.65 1.15-3.86 1.96-6.46 1.96-6.97 0-12.93-4.2-15.03-10.2l-5.98 4.64C6.6 40.12 14.6 45.5 24 45.5z"
+        d="M24 46c5.36 0 9.86-1.77 13.15-4.83l-7.16-5.54c-1.91 1.33-4.47 2.25-7.99 2.25-6.62 0-12.26-4.83-14.22-11.58l-7.42 4.96C6.98 40.56 14.74 46 24 46z"
       />
     </svg>
   );
@@ -139,7 +128,7 @@ function GoogleIcon({ className }: { className?: string }) {
 
 function MicrosoftIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" aria-hidden="true">
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" aria-hidden="true" style={{ display: "block" }}>
       <path fill="#F25022" d="M2 2h9v9H2z" />
       <path fill="#7FBA00" d="M13 2h9v9h-9z" />
       <path fill="#00A4EF" d="M2 13h9v9H2z" />
@@ -150,9 +139,9 @@ function MicrosoftIcon({ className }: { className?: string }) {
 
 function AppleIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M16.7 13.2c0-2.2 1.8-3.3 1.9-3.4-1-1.5-2.6-1.7-3.1-1.7-1.3-.1-2.5.8-3.2.8-.6 0-1.6-.8-2.7-.8-1.4 0-2.7.8-3.4 2.1-1.5 2.6-.4 6.4 1.1 8.5.7 1 1.6 2.1 2.7 2 .9 0 1.3-.6 2.5-.6 1.1 0 1.5.6 2.6.6 1.1 0 1.8-1 2.5-2 .8-1.1 1.1-2.2 1.1-2.3-.1 0-2-.8-2-3.2z" />
-      <path d="M14.6 4.7c.6-.8 1-1.9.9-3-.9.1-2 .6-2.6 1.4-.6.7-1.1 1.8-.9 2.9 1 .1 2-.5 2.6-1.3z" />
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style={{ display: "block" }}>
+      <path d="M16.7 13.3c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.6-1.3-.1-2.5.8-3.1.8-.6 0-1.6-.8-2.7-.8-1.4 0-2.7.8-3.4 2-1.4 2.4-.4 6 1 8 .7 1 1.6 2.1 2.7 2.1 1.1 0 1.5-.7 2.8-.7 1.3 0 1.6.7 2.8.7 1.2 0 2-.9 2.7-1.9.8-1.1 1.1-2.1 1.1-2.2-.1 0-2.7-1-2.7-4.2Z" />
+      <path d="M14.9 6.9c.6-.7 1-1.7.9-2.7-.9.1-2 .6-2.7 1.3-.6.7-1.1 1.7-1 2.7 1 .1 2-.5 2.8-1.3Z" />
     </svg>
   );
 }
@@ -167,6 +156,7 @@ export default function Page() {
   const [authLoading, setAuthLoading] = useState(true);
   const [authUserEmail, setAuthUserEmail] = useState<string | null>(null);
   const [authUserId, setAuthUserId] = useState<string | null>(null);
+  const [authUserName, setAuthUserName] = useState<string | null>(null);
 
   const [loginOpen, setLoginOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthCardMode>("signin");
@@ -176,6 +166,8 @@ export default function Page() {
   const [loginSending, setLoginSending] = useState(false);
   const [loginMsg, setLoginMsg] = useState<string | null>(null);
 
+  const loginEmailRef = useRef<HTMLInputElement>(null);
+
   // ===== PAYWALL / PRO =====
   const [proLoading, setProLoading] = useState(false);
   const [isPro, setIsPro] = useState(false);
@@ -184,11 +176,21 @@ export default function Page() {
   const [payLoading, setPayLoading] = useState(false);
   const [payMsg, setPayMsg] = useState<string | null>(null);
 
+  // Mensaje post-checkout
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
   const isLoggedIn = !authLoading && !!authUserId;
   const isBlockedByPaywall = !authLoading && !!authUserId && !proLoading && !isPro;
 
-  // Mensaje post-checkout
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  function deriveName(email: string | null, metaName?: string | null) {
+    const n = (metaName ?? "").trim();
+    if (n) return n;
+    if (!email) return null;
+    const base = email.split("@")[0] || "";
+    if (!base) return null;
+    const cleaned = base.replace(/[._-]+/g, " ").trim();
+    return cleaned ? cleaned.charAt(0).toUpperCase() + cleaned.slice(1) : null;
+  }
 
   async function refreshProStatus() {
     if (!authUserId) {
@@ -225,18 +227,31 @@ export default function Page() {
     (async () => {
       try {
         const { data } = await supabaseBrowser.auth.getSession();
-        setAuthUserEmail(data?.session?.user?.email ?? null);
-        setAuthUserId(data?.session?.user?.id ?? null);
+        const u = data?.session?.user;
+        const email = u?.email ?? null;
+        const id = u?.id ?? null;
+        const metaName = (u?.user_metadata?.full_name ?? u?.user_metadata?.name ?? null) as string | null;
+
+        setAuthUserEmail(email);
+        setAuthUserId(id);
+        setAuthUserName(deriveName(email, metaName));
       } catch {
         setAuthUserEmail(null);
         setAuthUserId(null);
+        setAuthUserName(null);
       } finally {
         setAuthLoading(false);
       }
 
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
-        setAuthUserEmail(session?.user?.email ?? null);
-        setAuthUserId(session?.user?.id ?? null);
+        const u = session?.user;
+        const email = u?.email ?? null;
+        const id = u?.id ?? null;
+        const metaName = (u?.user_metadata?.full_name ?? u?.user_metadata?.name ?? null) as string | null;
+
+        setAuthUserEmail(email);
+        setAuthUserId(id);
+        setAuthUserName(deriveName(email, metaName));
       });
 
       unsub = () => sub.subscription.unsubscribe();
@@ -283,6 +298,14 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted]);
 
+  // ✅ IMPORTANTE: en móvil NO hacemos autofocus al abrir login (para que no salga el teclado)
+  useEffect(() => {
+    if (!loginOpen) return;
+    if (!isDesktopPointer()) return;
+    const t = setTimeout(() => loginEmailRef.current?.focus(), 60);
+    return () => clearTimeout(t);
+  }, [loginOpen]);
+
   function openLoginModal(mode: AuthCardMode = "signin") {
     setLoginMsg(null);
     setAuthMode(mode);
@@ -295,24 +318,16 @@ export default function Page() {
     setPaywallOpen(true);
   }
 
-  /**
-   * ✅ IMPORTANTE:
-   * - Ahora SIEMPRE abre el modal de planes (aunque no haya login).
-   * - Si quiere pagar y no está logueado, entonces pedimos iniciar sesión.
-   */
+  // ✅ CTA siempre funciona
   function handleOpenPlansCTA() {
+    if (!isLoggedIn) {
+      openLoginModal("signin");
+      return;
+    }
     openPlansModal();
   }
 
   async function startCheckout(chosen: "monthly" | "yearly") {
-    // Si no está logueado, primero login (sin inventar: es requisito técnico para asociar customer)
-    if (!isLoggedIn) {
-      setPayMsg("Para continuar al pago, inicia sesión (así se guarda tu plan y tu historial).");
-      setPaywallOpen(false);
-      openLoginModal("signin");
-      return;
-    }
-
     setPayLoading(true);
     setPayMsg(null);
     try {
@@ -339,7 +354,7 @@ export default function Page() {
       }
 
       if (!res.ok) {
-        setPayMsg(json?.error || raw || "Error creando el checkout.");
+        setPayMsg(json?.error || raw || "Error creando checkout.");
         setPayLoading(false);
         return;
       }
@@ -353,12 +368,13 @@ export default function Page() {
 
       window.location.href = url;
     } catch (e: any) {
-      setPayMsg(e?.message ?? "Error iniciando el pago.");
+      setPayMsg(e?.message ?? "Error iniciando pago.");
       setPayLoading(false);
     }
   }
 
-  async function openPortal() {
+  // ✅ Cancelación transparente desde esta pantalla
+  async function cancelSubscriptionFromHere() {
     setPayLoading(true);
     setPayMsg(null);
     try {
@@ -370,7 +386,15 @@ export default function Page() {
         return;
       }
 
-      const res = await fetch("/api/stripe/portal", {
+      const ok = window.confirm(
+        "¿Seguro que quieres cancelar tu suscripción?\n\nSeguirás teniendo acceso hasta el final del periodo ya pagado."
+      );
+      if (!ok) {
+        setPayLoading(false);
+        return;
+      }
+
+      const res = await fetch("/api/stripe/cancel", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({}),
@@ -378,26 +402,23 @@ export default function Page() {
 
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setPayMsg(json?.error || "No se pudo abrir el portal.");
+        setPayMsg(json?.error || "No se pudo cancelar la suscripción.");
         setPayLoading(false);
         return;
       }
 
-      const url = json?.url as string | undefined;
-      if (!url) {
-        setPayMsg("Respuesta inválida del portal (sin URL).");
-        setPayLoading(false);
-        return;
-      }
+      setToastMsg("✅ Suscripción cancelada. Mantienes acceso hasta el final del periodo.");
+      setTimeout(() => setToastMsg(null), 4500);
 
-      window.location.href = url;
+      await refreshProStatus();
+      setPayLoading(false);
     } catch (e: any) {
-      setPayMsg(e?.message ?? "Error abriendo el portal.");
+      setPayMsg(e?.message ?? "Error cancelando suscripción.");
       setPayLoading(false);
     }
   }
 
-  async function signInWithOAuth(provider: "google" | "azure" | "apple") {
+  async function signInWithOAuth(provider: "google" | "azure") {
     setLoginSending(true);
     setLoginMsg(null);
     try {
@@ -469,45 +490,11 @@ export default function Page() {
         return;
       }
 
-      setLoginMsg("✅ Cuenta creada. Revisa tu correo si te pide confirmación, o inicia sesión.");
+      // ✅ Solo confirmación (si Supabase lo exige)
+      setLoginMsg("✅ Cuenta creada. Si te pedimos confirmación, revisa tu email para activarla.");
       setAuthMode("signin");
     } catch (e: any) {
-      setLoginMsg(e?.message ?? "Error creando la cuenta.");
-    } finally {
-      setLoginSending(false);
-    }
-  }
-
-  async function sendMagicLink() {
-    const email = loginEmail.trim().toLowerCase();
-    if (!email || !email.includes("@")) return setLoginMsg("Escribe un email válido.");
-
-    setLoginSending(true);
-    setLoginMsg(null);
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      const raw = await res.text().catch(() => "");
-      let data: any = null;
-      try {
-        data = raw ? JSON.parse(raw) : null;
-      } catch {
-        data = null;
-      }
-
-      if (!res.ok) {
-        const errMsg = data?.error || data?.message || raw || `Error enviando email (HTTP ${res.status})`;
-        setLoginMsg(errMsg);
-        return;
-      }
-
-      setLoginMsg("✅ Email enviado. Abre tu correo y pulsa el enlace para entrar.");
-    } catch (e: any) {
-      setLoginMsg(e?.message ?? "Error enviando el email.");
+      setLoginMsg(e?.message ?? "Error creando cuenta.");
     } finally {
       setLoginSending(false);
     }
@@ -518,6 +505,7 @@ export default function Page() {
       await supabaseBrowser.auth.signOut();
       setAuthUserEmail(null);
       setAuthUserId(null);
+      setAuthUserName(null);
       setIsPro(false);
       setPaywallOpen(false);
     } catch {}
@@ -668,7 +656,7 @@ export default function Page() {
     });
   }, [messages, isTyping]);
 
-  // Autofocus
+  // Autofocus (solo chat, solo escritorio)
   useEffect(() => {
     if (!mounted) return;
     if (renameOpen) return;
@@ -748,9 +736,7 @@ export default function Page() {
   function confirmRename() {
     if (!activeThread) return;
     const name = renameValue.trim() || "Consulta";
-    setThreads((prev) =>
-      prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t))
-    );
+    setThreads((prev) => prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t)));
     setRenameOpen(false);
 
     if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
@@ -800,9 +786,8 @@ export default function Page() {
     const nextUserCount = userMsgCountInThread + 1;
     if (nextUserCount <= FREE_MESSAGE_LIMIT) return false;
 
-    // a partir del 3º intento
     if (!isLoggedIn) {
-      setLoginMsg("Para seguir, inicia sesión (así guardas tu historial).");
+      setLoginMsg("Para seguir, inicia sesión (y así guardas tu historial).");
       openLoginModal("signin");
       return true;
     }
@@ -979,9 +964,14 @@ export default function Page() {
   const SIDEBAR_TOP = TOP_OFFSET_PX + TOP_BUBBLE_H + TOP_GAP_PX;
 
   const planLabel = isPro ? "Pro" : "Gratis";
+  const topCtaText = isPro ? "Tu plan" : "Mejorar";
+  const payTitle = "Planes y precios";
 
-  // Texto del CTA superior (más estándar que “Planes”)
-  const topCtaLabel = isPro ? "Mi suscripción" : "Mejorar";
+  const freeFeatures = ["2 análisis gratis", "Análisis de mensajes, enlaces e imágenes", "Historial en este dispositivo"];
+
+  const proFeatures = ["Análisis completo de mensajes, webs e imágenes", "Historial organizado", "Mejoras continuas", "Acceso desde cualquier dispositivo"];
+
+  const selectedFeatures = plan === "free" ? freeFeatures : proFeatures;
 
   return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
@@ -997,164 +987,170 @@ export default function Page() {
       {/* ===== PAYWALL MODAL ===== */}
       {paywallOpen && (
         <div
-          className="fixed inset-0 z-[70] bg-black/25 backdrop-blur-sm flex items-center justify-center px-5"
+          className="fixed inset-0 z-[70] bg-black/25 backdrop-blur-sm flex items-center justify-center px-3 md:px-5"
           onClick={() => {
             if (!payLoading) setPaywallOpen(false);
           }}
         >
           <div
-            className="w-full max-w-xl rounded-[34px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.22)] p-4 md:p-5"
+            className="w-full max-w-xl rounded-[26px] md:rounded-[32px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.22)]"
             onClick={(e) => e.stopPropagation()}
+            style={{
+              maxHeight: "calc(var(--vvh, 100dvh) - 24px)",
+              overflow: "hidden",
+            }}
           >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-sm font-semibold text-zinc-900">Suscripción</div>
-                <div className="text-xs text-zinc-500 mt-1">
-                  Plan actual: <span className="font-semibold text-zinc-900">{planLabel}</span>
-                  {proLoading ? <span className="ml-2 text-zinc-400">· comprobando…</span> : null}
-                </div>
-              </div>
-
-              <button
-                onClick={() => {
-                  if (!payLoading) setPaywallOpen(false);
-                }}
-                className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer"
-                aria-label="Cerrar"
-                disabled={!!payLoading}
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Aviso suave si no hay login */}
-            {!isLoggedIn && (
-              <div className="mt-3 rounded-3xl border border-blue-100 bg-blue-50 px-4 py-3 text-[12px] text-zinc-700 leading-5">
-                Puedes ver los planes sin iniciar sesión. Para completar el pago, Vonu te pedirá entrar para guardar tu plan y tu historial.
-              </div>
-            )}
-
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-2">
-              {/* FREE */}
-              <button
-                onClick={() => setPlan("free")}
-                className={[
-                  "rounded-[28px] border p-4 text-left transition-all cursor-pointer",
-                  plan === "free"
-                    ? "border-blue-700 bg-blue-50 shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
-                    : "border-zinc-200 bg-white hover:bg-zinc-50",
-                ].join(" ")}
-                disabled={!!payLoading}
-              >
-                <div className="text-xs font-semibold text-zinc-900">Gratis</div>
-                <div className="mt-1 text-2xl font-semibold leading-none text-zinc-900">
-                  0€ <span className="text-zinc-500 text-base font-medium">/siempre</span>
-                </div>
-                <div className="text-zinc-500 text-xs mt-1">2 análisis incluidos</div>
-              </button>
-
-              {/* MONTHLY */}
-              <button
-                onClick={() => setPlan("monthly")}
-                className={[
-                  "rounded-[28px] border p-4 text-left transition-all cursor-pointer",
-                  plan === "monthly"
-                    ? "border-blue-700 bg-blue-600 text-white shadow-[0_12px_30px_rgba(0,0,0,0.18)]"
-                    : "border-zinc-200 bg-white hover:bg-zinc-50",
-                ].join(" ")}
-                disabled={!!payLoading}
-              >
-                <div className="text-xs font-semibold">Mensual</div>
-                <div className="mt-1 text-2xl font-semibold leading-none">
-                  4,99€ <span className={plan === "monthly" ? "text-white/80" : "text-zinc-500"}>/mes</span>
-                </div>
-                <div className={plan === "monthly" ? "text-white/80 text-xs mt-1" : "text-zinc-500 text-xs mt-1"}>
-                  Cancela cuando quieras
-                </div>
-              </button>
-
-              {/* YEARLY */}
-              <button
-                onClick={() => setPlan("yearly")}
-                className={[
-                  "rounded-[28px] border p-4 text-left transition-all cursor-pointer relative overflow-hidden",
-                  plan === "yearly"
-                    ? "border-blue-700 bg-blue-50 shadow-[0_12px_30px_rgba(0,0,0,0.10)]"
-                    : "border-zinc-200 bg-white hover:bg-zinc-50",
-                ].join(" ")}
-                disabled={!!payLoading}
-              >
-                <div className="absolute top-3 right-3">
-                  <span className="text-[11px] px-2 py-1 rounded-full bg-blue-600 text-white">Mejor valor</span>
-                </div>
-
-                <div className="text-xs font-semibold text-zinc-900">Anual</div>
-                <div className="mt-1 text-2xl font-semibold leading-none text-zinc-900">
-                  39,99€ <span className="text-zinc-500">/año</span>
-                </div>
-                <div className="text-zinc-500 text-xs mt-1">Ahorra frente al mensual</div>
-              </button>
-            </div>
-
-            <div className="mt-4 rounded-[28px] border border-zinc-200 bg-zinc-50 p-4">
-              <div className="text-xs font-semibold text-zinc-800 mb-2">Incluye (Pro)</div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[12px] text-zinc-700">
-                {[
-                  "Análisis completo de mensajes, webs e imágenes",
-                  "Historial organizado",
-                  "Mejoras continuas",
-                  "Acceso desde cualquier dispositivo",
-                ].map((x) => (
-                  <div key={x} className="flex items-start gap-2">
-                    <span className="mt-[2px] text-blue-700">
-                      <CheckIcon />
-                    </span>
-                    <span>{x}</span>
+            {/* header */}
+            <div className="p-4 md:p-5 border-b border-zinc-100">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-zinc-900">{payTitle}</div>
+                  <div className="text-xs text-zinc-500 mt-1">
+                    Plan actual: <span className="font-semibold text-zinc-900">{planLabel}</span>
+                    {proLoading ? <span className="ml-2 text-zinc-400">· comprobando…</span> : null}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
 
-            {payMsg && (
-              <div className="mt-3 text-xs text-zinc-700 bg-white border border-zinc-200 rounded-2xl px-3 py-2">
-                {payMsg}
-              </div>
-            )}
-
-            <div className="mt-4 flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
-              {isPro ? (
+                {/* ✅ X igual que login */}
                 <button
-                  onClick={openPortal}
-                  className="h-11 px-4 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50"
+                  onClick={() => {
+                    if (!payLoading) setPaywallOpen(false);
+                  }}
+                  className="h-9 w-9 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer"
+                  aria-label="Cerrar"
                   disabled={!!payLoading}
                 >
-                  Gestionar suscripción
+                  ×
                 </button>
-              ) : (
-                <div className="text-[12px] text-zinc-500 px-1">Puedes quedarte en Gratis o mejorar cuando quieras.</div>
-              )}
-
-              <button
-                onClick={() => {
-                  if (plan === "free") {
-                    setPaywallOpen(false);
-                    setPayMsg(null);
-                    return;
-                  }
-                  if (plan === "monthly" || plan === "yearly") startCheckout(plan);
-                }}
-                className={[
-                  "h-11 px-5 rounded-full text-sm cursor-pointer transition-colors disabled:opacity-50",
-                  plan === "free" ? "bg-zinc-900 text-white hover:bg-black" : "bg-blue-600 text-white hover:bg-blue-700",
-                ].join(" ")}
-                disabled={!!payLoading}
-              >
-                {payLoading ? "Redirigiendo…" : plan === "free" ? "Seguir en Gratis" : "Continuar al pago"}
-              </button>
+              </div>
             </div>
 
-            <div className="mt-3 text-[11px] text-zinc-500 leading-4">
-              Pago seguro con Stripe. Puedes cancelar cuando quieras desde el portal.
+            {/* body scroll (compacto en móvil) */}
+            <div className="p-4 md:p-5 overflow-y-auto" style={{ maxHeight: "calc(var(--vvh, 100dvh) - 140px)" }}>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                {/* FREE */}
+                <button
+                  onClick={() => setPlan("free")}
+                  className={[
+                    "rounded-3xl border p-4 text-left transition-all cursor-pointer",
+                    plan === "free"
+                      ? "border-blue-700 bg-blue-50 shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
+                      : "border-zinc-200 bg-white hover:bg-zinc-50",
+                  ].join(" ")}
+                  disabled={!!payLoading}
+                >
+                  <div className="text-xs font-semibold text-zinc-900">Gratis</div>
+                  <div className="mt-1 text-2xl font-semibold leading-none text-zinc-900">
+                    0€ <span className="text-zinc-500 text-base font-medium">/siempre</span>
+                  </div>
+                  <div className="text-zinc-500 text-xs mt-1">Plan básico</div>
+                </button>
+
+                {/* MONTHLY */}
+                <button
+                  onClick={() => setPlan("monthly")}
+                  className={[
+                    "rounded-3xl border p-4 text-left transition-all cursor-pointer",
+                    plan === "monthly"
+                      ? "border-blue-700 bg-blue-600 text-white shadow-[0_12px_30px_rgba(0,0,0,0.18)]"
+                      : "border-zinc-200 bg-white hover:bg-zinc-50",
+                  ].join(" ")}
+                  disabled={!!payLoading}
+                >
+                  <div className="text-xs font-semibold">Mensual</div>
+                  <div className="mt-1 text-2xl font-semibold leading-none">
+                    4,99€ <span className={plan === "monthly" ? "text-white/80" : "text-zinc-500"}>/mes</span>
+                  </div>
+                  <div className={plan === "monthly" ? "text-white/80 text-xs mt-1" : "text-zinc-500 text-xs mt-1"}>
+                    Flexible, cancela cuando quieras
+                  </div>
+                </button>
+
+                {/* YEARLY */}
+                <button
+                  onClick={() => setPlan("yearly")}
+                  className={[
+                    "rounded-3xl border p-4 text-left transition-all cursor-pointer relative overflow-hidden",
+                    plan === "yearly"
+                      ? "border-blue-700 bg-blue-50 shadow-[0_12px_30px_rgba(0,0,0,0.10)]"
+                      : "border-zinc-200 bg-white hover:bg-zinc-50",
+                  ].join(" ")}
+                  disabled={!!payLoading}
+                >
+                  <div className="absolute top-3 right-3">
+                    <span className="text-[11px] px-2 py-1 rounded-full bg-blue-600 text-white">Mejor valor</span>
+                  </div>
+
+                  <div className="text-xs font-semibold text-zinc-900">Anual</div>
+                  <div className="mt-1 text-2xl font-semibold leading-none text-zinc-900">
+                    39,99€ <span className="text-zinc-500">/año</span>
+                  </div>
+                  <div className="text-zinc-500 text-xs mt-1">Ahorra frente al mensual</div>
+                </button>
+              </div>
+
+              {/* ✅ Características cambian según el plan */}
+              <div className="mt-4 rounded-3xl border border-zinc-200 bg-zinc-50 p-4">
+                <div className="text-xs font-semibold text-zinc-800 mb-2">Incluye ({plan === "free" ? "Gratis" : "Pro"})</div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[12px] text-zinc-700">
+                  {selectedFeatures.map((x) => (
+                    <div key={x} className="flex items-start gap-2">
+                      <span className="mt-[2px] text-blue-700">
+                        <CheckIcon />
+                      </span>
+                      <span>{x}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {plan === "free" ? (
+                  <div className="mt-3 text-[11px] text-zinc-500 leading-4">
+                    Con el plan Gratis puedes hacer <span className="font-semibold text-zinc-700">{FREE_MESSAGE_LIMIT} análisis</span>.
+                  </div>
+                ) : null}
+              </div>
+
+              {payMsg && (
+                <div className="mt-3 text-xs text-zinc-700 bg-white border border-zinc-200 rounded-2xl px-3 py-2">{payMsg}</div>
+              )}
+
+              {/* ✅ Acciones (cancelación aquí) */}
+              <div className="mt-4 flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
+                {isPro ? (
+                  <button
+                    onClick={cancelSubscriptionFromHere}
+                    className="h-11 px-4 rounded-2xl border border-red-200 hover:bg-red-50 text-sm cursor-pointer disabled:opacity-50 text-red-700"
+                    disabled={!!payLoading}
+                  >
+                    Cancelar suscripción
+                  </button>
+                ) : (
+                  <div className="text-[12px] text-zinc-500 px-1">Puedes quedarte en Gratis o mejorar cuando quieras.</div>
+                )}
+
+                <button
+                  onClick={() => {
+                    if (plan === "free") {
+                      setPaywallOpen(false);
+                      setPayMsg(null);
+                      return;
+                    }
+                    if (plan === "monthly" || plan === "yearly") startCheckout(plan);
+                  }}
+                  className={[
+                    "h-11 px-5 rounded-2xl text-sm cursor-pointer transition-colors disabled:opacity-50",
+                    plan === "free" ? "bg-zinc-900 text-white hover:bg-black" : "bg-blue-600 text-white hover:bg-blue-700",
+                  ].join(" ")}
+                  disabled={!!payLoading}
+                >
+                  {payLoading ? "Procesando…" : plan === "free" ? "Seguir en Gratis" : "Continuar al pago"}
+                </button>
+              </div>
+
+              <div className="mt-3 text-[11px] text-zinc-500 leading-4">
+                Pago seguro con Stripe. Puedes cancelar desde esta misma pantalla.
+              </div>
             </div>
           </div>
         </div>
@@ -1162,19 +1158,18 @@ export default function Page() {
 
       {/* ===== LOGIN MODAL ===== */}
       {loginOpen && (
-        <div className="fixed inset-0 z-[60] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6">
+        <div
+          className="fixed inset-0 z-[60] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6"
+          onClick={() => (!loginSending ? setLoginOpen(false) : null)}
+        >
           <div
-            className="w-full max-w-[390px] rounded-[22px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-6"
+            className="w-full max-w-[380px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-[18px] font-semibold text-zinc-900">
-                  {authMode === "signin" ? "Iniciar sesión" : "Crear cuenta"}
-                </div>
-                <div className="text-[12.5px] text-zinc-500 mt-1">
-                  {authMode === "signin" ? "para continuar" : "crea tu cuenta para continuar"}
-                </div>
+                <div className="text-[18px] font-semibold text-zinc-900">{authMode === "signin" ? "Iniciar sesión" : "Crear cuenta"}</div>
+                <div className="text-[12.5px] text-zinc-500 mt-1">{authMode === "signin" ? "para continuar" : "crea tu cuenta para continuar"}</div>
               </div>
 
               <button
@@ -1182,7 +1177,7 @@ export default function Page() {
                   setLoginOpen(false);
                   setLoginMsg(null);
                 }}
-                className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer"
+                className="h-9 w-9 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer"
                 aria-label="Cerrar"
                 disabled={!!loginSending}
               >
@@ -1194,11 +1189,13 @@ export default function Page() {
               <div>
                 <div className="text-[12px] text-zinc-600 mb-1">Email</div>
                 <input
+                  ref={loginEmailRef}
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
-                  className="w-full h-11 rounded-[16px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
+                  className="w-full h-11 rounded-[14px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
                   placeholder="tuemail@ejemplo.com"
-                  autoFocus
+                  // ✅ sin autoFocus en móvil (teclado oculto al abrir)
+                  autoFocus={false}
                   onKeyDown={(e) => {
                     if (e.key === "Escape") {
                       setLoginOpen(false);
@@ -1217,7 +1214,7 @@ export default function Page() {
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   type="password"
-                  className="w-full h-11 rounded-[16px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
+                  className="w-full h-11 rounded-[14px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
                   placeholder="••••••••"
                   onKeyDown={(e) => {
                     if (e.key === "Escape") {
@@ -1233,60 +1230,40 @@ export default function Page() {
 
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 text-[12px] text-zinc-600 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={keepSignedIn}
-                    onChange={(e) => setKeepSignedIn(e.target.checked)}
-                    className="h-4 w-4"
-                  />
-                  Mantener sesión iniciada
+                  <input type="checkbox" checked={keepSignedIn} onChange={(e) => setKeepSignedIn(e.target.checked)} className="h-4 w-4" />
+                  Mantener sesión
                 </label>
 
                 <button
                   className="text-[12px] text-blue-700 hover:text-blue-800 cursor-pointer"
-                  onClick={() =>
-                    setLoginMsg("Si has olvidado la contraseña, por ahora crea una cuenta nueva o usa el enlace por email.")
-                  }
+                  onClick={() => setLoginMsg("Si has olvidado tu contraseña, por ahora crea una cuenta nueva con otro email (lo mejoraremos).")}
                   disabled={!!loginSending}
                 >
-                  ¿Has olvidado la contraseña?
+                  ¿OLVIDASTE LA CONTRASEÑA?
                 </button>
               </div>
 
               {loginMsg && (
-                <div className="text-[12px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-[16px] px-3 py-2">
-                  {loginMsg}
-                </div>
+                <div className="text-[12px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-[14px] px-3 py-2">{loginMsg}</div>
               )}
 
               <button
                 onClick={authMode === "signin" ? signInWithPassword : signUpWithPassword}
-                className="w-full h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                className="w-full h-11 rounded-[14px] bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
                 disabled={!!loginSending}
               >
-                {loginSending ? "Procesando…" : authMode === "signin" ? "Entrar" : "Crear cuenta"}
+                {loginSending ? "Procesando…" : authMode === "signin" ? "INICIAR SESIÓN" : "CREAR CUENTA"}
               </button>
 
-              {/* Divider */}
               <div className="flex items-center gap-3 py-1">
                 <div className="h-px flex-1 bg-zinc-200" />
                 <div className="text-[12px] text-zinc-500">o</div>
                 <div className="h-px flex-1 bg-zinc-200" />
               </div>
 
-              {/* OAuth buttons */}
-              <button
-                onClick={() => signInWithOAuth("apple")}
-                className="w-full h-11 rounded-full border border-zinc-200 bg-black hover:bg-zinc-900 text-white text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-                disabled={!!loginSending}
-              >
-                <AppleIcon />
-                Continuar con Apple
-              </button>
-
               <button
                 onClick={() => signInWithOAuth("google")}
-                className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full h-11 rounded-[14px] border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 disabled={!!loginSending}
               >
                 <GoogleIcon />
@@ -1295,20 +1272,22 @@ export default function Page() {
 
               <button
                 onClick={() => signInWithOAuth("azure")}
-                className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full h-11 rounded-[14px] border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 disabled={!!loginSending}
               >
                 <MicrosoftIcon />
                 Continuar con Microsoft
               </button>
 
-              {/* Magic link */}
+              {/* Apple (UI lista, provider aún por configurar) */}
               <button
-                onClick={sendMagicLink}
-                className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50"
+                onClick={() => setLoginMsg("Apple estará disponible en breve.")}
+                className="w-full h-11 rounded-[14px] bg-black hover:bg-zinc-900 text-white text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 disabled={!!loginSending}
+                title="Próximamente"
               >
-                Enviarme un enlace por email
+                <AppleIcon />
+                Continuar con Apple
               </button>
 
               <div className="text-[12px] text-zinc-600 text-center pt-1">
@@ -1383,16 +1362,14 @@ export default function Page() {
 
         {!authLoading && (
           <div className="pointer-events-auto flex items-center gap-2">
-            {/* ✅ CTA superior mejor nombrado */}
             <button
               onClick={handleOpenPlansCTA}
               className="h-11 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer shadow-sm border border-blue-700/10"
-              title={topCtaLabel}
+              title={payTitle}
             >
-              {topCtaLabel}
+              {topCtaText}
             </button>
 
-            {/* user */}
             <button
               onClick={() => {
                 if (authUserEmail) logout();
@@ -1405,7 +1382,7 @@ export default function Page() {
                 "rounded-full",
               ].join(" ")}
               aria-label={authUserEmail ? "Cerrar sesión" : "Iniciar sesión"}
-              title={authUserEmail ? authUserEmail : "Iniciar sesión"}
+              title={authUserEmail ? `Cerrar sesión (${authUserEmail})` : "Iniciar sesión"}
             >
               <UserIcon className="h-5 w-5" />
             </button>
@@ -1430,7 +1407,7 @@ export default function Page() {
             menuOpen ? "translate-x-0 opacity-100" : "-translate-x-[110%] opacity-0",
           ].join(" ")}
           style={{
-            top: 12 + 44 + 10,
+            top: SIDEBAR_TOP,
             bottom: 12,
             width: isDesktopPointer() ? 360 : undefined,
             maxWidth: "calc(100vw - 24px)",
@@ -1444,25 +1421,16 @@ export default function Page() {
                 <div className="text-xs text-zinc-500">Tus consultas recientes</div>
               </div>
 
-              <button
-                onClick={createThreadAndActivate}
-                className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
-              >
+              <button onClick={createThreadAndActivate} className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
                 Nueva
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-2 mb-3">
-              <button
-                onClick={openRename}
-                className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer"
-              >
+              <button onClick={openRename} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer">
                 Renombrar
               </button>
-              <button
-                onClick={deleteActiveThread}
-                className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer"
-              >
+              <button onClick={deleteActiveThread} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer">
                 Borrar
               </button>
             </div>
@@ -1470,14 +1438,16 @@ export default function Page() {
             {!authLoading && (
               <div className="mb-3 rounded-3xl border border-zinc-200 bg-white px-3 py-3">
                 <div className="text-xs text-zinc-500 mb-2">Cuenta</div>
+
                 {authUserEmail ? (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-xs text-zinc-800 truncate">{authUserEmail}</div>
-                      <button
-                        onClick={logout}
-                        className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer"
-                      >
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-zinc-900 truncate">{authUserName ?? "Usuario"}</div>
+                        <div className="text-[11px] text-zinc-500 truncate">{authUserEmail}</div>
+                      </div>
+
+                      <button onClick={logout} className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer shrink-0">
                         Salir
                       </button>
                     </div>
@@ -1487,6 +1457,7 @@ export default function Page() {
                         <div className="text-[11px] text-zinc-500">
                           Plan: {proLoading ? "comprobando…" : isPro ? "Pro" : "Gratis"}
                         </div>
+
                         <button
                           onClick={() => {
                             handleOpenPlansCTA();
@@ -1497,16 +1468,13 @@ export default function Page() {
                             isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700",
                           ].join(" ")}
                         >
-                          {isPro ? "Gestionar" : "Mejorar"}
+                          {isPro ? "Ver" : "Mejorar"}
                         </button>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <button
-                    onClick={() => openLoginModal("signin")}
-                    className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
-                  >
+                  <button onClick={() => openLoginModal("signin")} className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
                     Iniciar sesión
                   </button>
                 )}
@@ -1540,7 +1508,7 @@ export default function Page() {
       <div className="flex-1 flex flex-col min-h-0">
         {/* RENAME MODAL */}
         {renameOpen && (
-          <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center px-6">
+          <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center px-6" onClick={() => setRenameOpen(false)}>
             <div className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4" onClick={(e) => e.stopPropagation()}>
               <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
               <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
@@ -1558,16 +1526,10 @@ export default function Page() {
               />
 
               <div className="flex justify-end gap-2 mt-4">
-                <button
-                  onClick={() => setRenameOpen(false)}
-                  className="h-10 px-4 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm cursor-pointer"
-                >
+                <button onClick={() => setRenameOpen(false)} className="h-10 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm cursor-pointer">
                   Cancelar
                 </button>
-                <button
-                  onClick={confirmRename}
-                  className="h-10 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 text-sm transition-colors cursor-pointer"
-                >
+                <button onClick={confirmRename} className="h-10 px-4 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 text-sm transition-colors cursor-pointer">
                   Guardar
                 </button>
               </div>
@@ -1578,9 +1540,7 @@ export default function Page() {
         {/* ERROR BAR */}
         {uiError && (
           <div className="mx-auto max-w-3xl px-6 mt-3 pt-4">
-            <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              Ha fallado la llamada a la IA. (Error: {uiError})
-            </div>
+            <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">Ha fallado la llamada a la IA. (Error: {uiError})</div>
           </div>
         )}
 
@@ -1600,7 +1560,7 @@ export default function Page() {
                   return (
                     <div key={msg.id} className="flex justify-start">
                       <div className="max-w-[92%] md:max-w-[80%]">
-                        <div className="bg-blue-50 text-zinc-900 border border-blue-100 rounded-[24px] rounded-tl-[8px] px-4 py-3 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
+                        <div className="bg-blue-50 text-zinc-900 border border-blue-100 rounded-[22px] rounded-tl-[6px] px-4 py-3 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
                           <div
                             className={[
                               "prose prose-zinc max-w-none",
@@ -1622,15 +1582,9 @@ export default function Page() {
                 return (
                   <div key={msg.id} className="flex justify-end">
                     <div className="max-w-[92%] md:max-w-[80%] space-y-2">
-                      {msg.image && (
-                        <img
-                          src={msg.image}
-                          alt="Adjunto"
-                          className="rounded-3xl border border-zinc-200 max-h-64 object-contain"
-                        />
-                      )}
+                      {msg.image && <img src={msg.image} alt="Adjunto" className="rounded-3xl border border-zinc-200 max-h-64 object-contain" />}
                       {msg.text && (
-                        <div className="bg-blue-600 text-white text-[14.5px] leading-relaxed rounded-[24px] rounded-tr-[8px] px-4 py-2.5 break-words shadow-[0_1px_0_rgba(0,0,0,0.06)]">
+                        <div className="bg-blue-600 text-white text-[14.5px] leading-relaxed rounded-[22px] rounded-tr-[6px] px-4 py-2.5 break-words shadow-[0_1px_0_rgba(0,0,0,0.06)]">
                           {msg.text}
                         </div>
                       )}
@@ -1645,7 +1599,6 @@ export default function Page() {
         {/* INPUT + DISCLAIMER */}
         <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl">
           <div className="mx-auto max-w-3xl px-3 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
-            {/* + */}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="h-11 w-11 md:h-12 md:w-12 inline-flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
@@ -1661,14 +1614,13 @@ export default function Page() {
 
             <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
 
-            {/* input */}
             <div className="flex-1 min-w-0">
               {imagePreview && (
                 <div className="mb-2 relative w-fit">
                   <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
                   <button
                     onClick={() => setImagePreview(null)}
-                    className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm transition-colors cursor-pointer"
+                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer"
                     aria-label="Quitar imagen"
                   >
                     ×
@@ -1702,7 +1654,6 @@ export default function Page() {
               </div>
             </div>
 
-            {/* enviar */}
             <button
               onClick={sendMessage}
               disabled={!!(isTyping || (!input.trim() && !imagePreview))}
@@ -1718,7 +1669,6 @@ export default function Page() {
             <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">
               Orientación preventiva. No sustituye profesionales.
             </p>
-
             {!hasUserMessage && <div className="h-1" />}
           </div>
         </div>
