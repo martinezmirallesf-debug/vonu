@@ -100,12 +100,7 @@ function CheckIcon({ className }: { className?: string }) {
  */
 function GoogleIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-5 w-5"}
-      viewBox="0 0 48 48"
-      aria-hidden="true"
-      style={{ display: "block" }}
-    >
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 48 48" aria-hidden="true" style={{ display: "block" }}>
       <path
         fill="#EA4335"
         d="M24 9.5c3.55 0 6.19 1.54 7.61 2.83l5.2-5.2C33.78 4.25 29.36 2 24 2 14.74 2 6.98 7.44 3.14 15.33l6.64 5.15C11.74 14.33 17.38 9.5 24 9.5z"
@@ -175,6 +170,9 @@ export default function Page() {
   const [plan, setPlan] = useState<"free" | "monthly" | "yearly">("yearly");
   const [payLoading, setPayLoading] = useState(false);
   const [payMsg, setPayMsg] = useState<string | null>(null);
+
+  // ✅ Si el usuario pulsa “Mejorar” estando logout, tras login abrimos planes automáticamente
+  const [openPlansAfterLogin, setOpenPlansAfterLogin] = useState(false);
 
   // Mensaje post-checkout
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -271,6 +269,24 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUserId, authLoading]);
 
+  // ✅ Tras login, si veníamos de “Mejorar”, abrir planes automáticamente
+  useEffect(() => {
+    if (authLoading) return;
+    if (!openPlansAfterLogin) return;
+    if (!isLoggedIn) return;
+
+    // Cerramos login si quedó abierto (OAuth a veces vuelve con modal aún visible)
+    setLoginOpen(false);
+
+    // Abrimos planes
+    setTimeout(() => {
+      setPayMsg(null);
+      setPlan("yearly");
+      setPaywallOpen(true);
+      setOpenPlansAfterLogin(false);
+    }, 80);
+  }, [authLoading, isLoggedIn, openPlansAfterLogin]);
+
   // Detectar retorno de Stripe (?checkout=success|cancel)
   useEffect(() => {
     if (!mounted) return;
@@ -318,9 +334,10 @@ export default function Page() {
     setPaywallOpen(true);
   }
 
-  // ✅ CTA siempre funciona
+  // ✅ CTA: si no hay sesión, login y luego abrir planes
   function handleOpenPlansCTA() {
     if (!isLoggedIn) {
+      setOpenPlansAfterLogin(true);
       openLoginModal("signin");
       return;
     }
@@ -386,9 +403,7 @@ export default function Page() {
         return;
       }
 
-      const ok = window.confirm(
-        "¿Seguro que quieres cancelar tu suscripción?\n\nSeguirás teniendo acceso hasta el final del periodo ya pagado."
-      );
+      const ok = window.confirm("¿Seguro que quieres cancelar tu suscripción?\n\nSeguirás teniendo acceso hasta el final del periodo ya pagado.");
       if (!ok) {
         setPayLoading(false);
         return;
@@ -508,6 +523,7 @@ export default function Page() {
       setAuthUserName(null);
       setIsPro(false);
       setPaywallOpen(false);
+      setOpenPlansAfterLogin(false);
     } catch {}
   }
 
@@ -788,6 +804,7 @@ export default function Page() {
 
     if (!isLoggedIn) {
       setLoginMsg("Para seguir, inicia sesión (y así guardas tu historial).");
+      setOpenPlansAfterLogin(true);
       openLoginModal("signin");
       return true;
     }
@@ -941,8 +958,7 @@ export default function Page() {
                 ? {
                     ...m,
                     streaming: false,
-                    text:
-                      "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" + msg + "\n```",
+                    text: "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" + msg + "\n```",
                   }
                 : m
             ),
@@ -1148,9 +1164,7 @@ export default function Page() {
                 </button>
               </div>
 
-              <div className="mt-3 text-[11px] text-zinc-500 leading-4">
-                Pago seguro con Stripe. Puedes cancelar desde esta misma pantalla.
-              </div>
+              <div className="mt-3 text-[11px] text-zinc-500 leading-4">Pago seguro con Stripe. Puedes cancelar desde esta misma pantalla.</div>
             </div>
           </div>
         </div>
@@ -1194,7 +1208,6 @@ export default function Page() {
                   onChange={(e) => setLoginEmail(e.target.value)}
                   className="w-full h-11 rounded-[14px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
                   placeholder="tuemail@ejemplo.com"
-                  // ✅ sin autoFocus en móvil (teclado oculto al abrir)
                   autoFocus={false}
                   onKeyDown={(e) => {
                     if (e.key === "Escape") {
@@ -1243,13 +1256,12 @@ export default function Page() {
                 </button>
               </div>
 
-              {loginMsg && (
-                <div className="text-[12px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-[14px] px-3 py-2">{loginMsg}</div>
-              )}
+              {loginMsg && <div className="text-[12px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-[14px] px-3 py-2">{loginMsg}</div>}
 
+              {/* ✅ Botones más “redonditos” */}
               <button
                 onClick={authMode === "signin" ? signInWithPassword : signUpWithPassword}
-                className="w-full h-11 rounded-[14px] bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                className="w-full h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
                 disabled={!!loginSending}
               >
                 {loginSending ? "Procesando…" : authMode === "signin" ? "INICIAR SESIÓN" : "CREAR CUENTA"}
@@ -1263,7 +1275,7 @@ export default function Page() {
 
               <button
                 onClick={() => signInWithOAuth("google")}
-                className="w-full h-11 rounded-[14px] border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 disabled={!!loginSending}
               >
                 <GoogleIcon />
@@ -1272,7 +1284,7 @@ export default function Page() {
 
               <button
                 onClick={() => signInWithOAuth("azure")}
-                className="w-full h-11 rounded-[14px] border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 disabled={!!loginSending}
               >
                 <MicrosoftIcon />
@@ -1282,7 +1294,7 @@ export default function Page() {
               {/* Apple (UI lista, provider aún por configurar) */}
               <button
                 onClick={() => setLoginMsg("Apple estará disponible en breve.")}
-                className="w-full h-11 rounded-[14px] bg-black hover:bg-zinc-900 text-white text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full h-11 rounded-full bg-black hover:bg-zinc-900 text-white text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 disabled={!!loginSending}
                 title="Próximamente"
               >
@@ -1421,7 +1433,10 @@ export default function Page() {
                 <div className="text-xs text-zinc-500">Tus consultas recientes</div>
               </div>
 
-              <button onClick={createThreadAndActivate} className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
+              <button
+                onClick={createThreadAndActivate}
+                className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
+              >
                 Nueva
               </button>
             </div>
@@ -1454,9 +1469,7 @@ export default function Page() {
 
                     {!!authUserId && (
                       <div className="flex items-center justify-between gap-2">
-                        <div className="text-[11px] text-zinc-500">
-                          Plan: {proLoading ? "comprobando…" : isPro ? "Pro" : "Gratis"}
-                        </div>
+                        <div className="text-[11px] text-zinc-500">Plan: {proLoading ? "comprobando…" : isPro ? "Pro" : "Gratis"}</div>
 
                         <button
                           onClick={() => {
@@ -1666,9 +1679,7 @@ export default function Page() {
           </div>
 
           <div className="mx-auto max-w-3xl px-3 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
-            <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">
-              Orientación preventiva. No sustituye profesionales.
-            </p>
+            <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">Orientación preventiva. No sustituye profesionales.</p>
             {!hasUserMessage && <div className="h-1" />}
           </div>
         </div>
