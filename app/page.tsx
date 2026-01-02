@@ -93,52 +93,8 @@ function CheckIcon({ className }: { className?: string }) {
   );
 }
 
-/**
- * ✅ GoogleIcon sin “rayitas”
- * Truco: usar un SVG tipo “G” de 48x48 (muy usado) que evita seams y
- * forzar width/height enteros + display:block.
- */
-function GoogleIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 48 48" aria-hidden="true" style={{ display: "block" }}>
-      <path
-        fill="#EA4335"
-        d="M24 9.5c3.55 0 6.19 1.54 7.61 2.83l5.2-5.2C33.78 4.25 29.36 2 24 2 14.74 2 6.98 7.44 3.14 15.33l6.64 5.15C11.74 14.33 17.38 9.5 24 9.5z"
-      />
-      <path
-        fill="#4285F4"
-        d="M46 24.5c0-1.58-.14-2.78-.46-4H24v8.02h12.25c-.25 2.02-1.62 5.06-4.67 7.11l7.16 5.54C43.06 37.3 46 31.63 46 24.5z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M9.78 28.9A14.88 14.88 0 0 1 9 24c0-1.7.3-3.33.78-4.9l-6.64-5.15A22.01 22.01 0 0 0 2 24c0 3.56.85 6.92 2.36 9.86l7.42-4.96z"
-      />
-      <path
-        fill="#34A853"
-        d="M24 46c5.36 0 9.86-1.77 13.15-4.83l-7.16-5.54c-1.91 1.33-4.47 2.25-7.99 2.25-6.62 0-12.26-4.83-14.22-11.58l-7.42 4.96C6.98 40.56 14.74 46 24 46z"
-      />
-    </svg>
-  );
-}
-
-function MicrosoftIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" aria-hidden="true" style={{ display: "block" }}>
-      <path fill="#F25022" d="M2 2h9v9H2z" />
-      <path fill="#7FBA00" d="M13 2h9v9h-9z" />
-      <path fill="#00A4EF" d="M2 13h9v9H2z" />
-      <path fill="#FFB900" d="M13 13h9v9h-9z" />
-    </svg>
-  );
-}
-
-function AppleIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style={{ display: "block" }}>
-      <path d="M16.7 13.3c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.6-1.3-.1-2.5.8-3.1.8-.6 0-1.6-.8-2.7-.8-1.4 0-2.7.8-3.4 2-1.4 2.4-.4 6 1 8 .7 1 1.6 2.1 2.7 2.1 1.1 0 1.5-.7 2.8-.7 1.3 0 1.6.7 2.8.7 1.2 0 2-.9 2.7-1.9.8-1.1 1.1-2.1 1.1-2.2-.1 0-2.7-1-2.7-4.2Z" />
-      <path d="M14.9 6.9c.6-.7 1-1.7.9-2.7-.9.1-2 .6-2.7 1.3-.6.7-1.1 1.7-1 2.7 1 .1 2-.5 2.8-1.3Z" />
-    </svg>
-  );
+function OAuthLogo({ src, alt }: { src: string; alt: string }) {
+  return <img src={src} alt={alt} className="h-5 w-5" style={{ display: "block" }} draggable={false} />;
 }
 
 type AuthCardMode = "signin" | "signup";
@@ -171,8 +127,8 @@ export default function Page() {
   const [payLoading, setPayLoading] = useState(false);
   const [payMsg, setPayMsg] = useState<string | null>(null);
 
-  // ✅ Si el usuario pulsa “Mejorar” estando logout, tras login abrimos planes automáticamente
-  const [openPlansAfterLogin, setOpenPlansAfterLogin] = useState(false);
+  // ✅ Si el usuario intenta pagar estando logout, guardamos el plan y tras login lanzamos checkout
+  const [pendingCheckoutPlan, setPendingCheckoutPlan] = useState<"monthly" | "yearly" | null>(null);
 
   // Mensaje post-checkout
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -269,23 +225,25 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUserId, authLoading]);
 
-  // ✅ Tras login, si veníamos de “Mejorar”, abrir planes automáticamente
+  // ✅ Si acabamos de loguearnos y había un checkout pendiente, lanzarlo automáticamente
   useEffect(() => {
     if (authLoading) return;
-    if (!openPlansAfterLogin) return;
     if (!isLoggedIn) return;
+    if (!pendingCheckoutPlan) return;
 
-    // Cerramos login si quedó abierto (OAuth a veces vuelve con modal aún visible)
+    // cerramos login por si quedó abierto
     setLoginOpen(false);
 
-    // Abrimos planes
+    // arrancamos checkout
+    const chosen = pendingCheckoutPlan;
+    setPendingCheckoutPlan(null);
+
+    // pequeño delay para que el token esté listo
     setTimeout(() => {
-      setPayMsg(null);
-      setPlan("yearly");
-      setPaywallOpen(true);
-      setOpenPlansAfterLogin(false);
-    }, 80);
-  }, [authLoading, isLoggedIn, openPlansAfterLogin]);
+      startCheckout(chosen);
+    }, 120);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, isLoggedIn, pendingCheckoutPlan]);
 
   // Detectar retorno de Stripe (?checkout=success|cancel)
   useEffect(() => {
@@ -334,13 +292,8 @@ export default function Page() {
     setPaywallOpen(true);
   }
 
-  // ✅ CTA: si no hay sesión, login y luego abrir planes
+  // ✅ CTA: SIEMPRE abre planes (aunque estés logout)
   function handleOpenPlansCTA() {
-    if (!isLoggedIn) {
-      setOpenPlansAfterLogin(true);
-      openLoginModal("signin");
-      return;
-    }
     openPlansModal();
   }
 
@@ -350,9 +303,13 @@ export default function Page() {
     try {
       const { data } = await supabaseBrowser.auth.getSession();
       const token = data?.session?.access_token;
+
+      // ✅ Si no hay sesión: pedir login y reintentar luego
       if (!token) {
-        setPayMsg("Necesitas iniciar sesión.");
         setPayLoading(false);
+        setPayMsg("Para continuar al pago, inicia sesión.");
+        setPendingCheckoutPlan(chosen);
+        openLoginModal("signin");
         return;
       }
 
@@ -523,7 +480,7 @@ export default function Page() {
       setAuthUserName(null);
       setIsPro(false);
       setPaywallOpen(false);
-      setOpenPlansAfterLogin(false);
+      setPendingCheckoutPlan(null);
     } catch {}
   }
 
@@ -804,7 +761,6 @@ export default function Page() {
 
     if (!isLoggedIn) {
       setLoginMsg("Para seguir, inicia sesión (y así guardas tu historial).");
-      setOpenPlansAfterLogin(true);
       openLoginModal("signin");
       return true;
     }
@@ -979,14 +935,12 @@ export default function Page() {
   const TOP_GAP_PX = 10;
   const SIDEBAR_TOP = TOP_OFFSET_PX + TOP_BUBBLE_H + TOP_GAP_PX;
 
-  const planLabel = isPro ? "Pro" : "Gratis";
+  const planLabel = !isLoggedIn ? "Sin sesión" : isPro ? "Pro" : "Gratis";
   const topCtaText = isPro ? "Tu plan" : "Mejorar";
   const payTitle = "Planes y precios";
 
   const freeFeatures = ["2 análisis gratis", "Análisis de mensajes, enlaces e imágenes", "Historial en este dispositivo"];
-
   const proFeatures = ["Análisis completo de mensajes, webs e imágenes", "Historial organizado", "Mejoras continuas", "Acceso desde cualquier dispositivo"];
-
   const selectedFeatures = plan === "free" ? freeFeatures : proFeatures;
 
   return (
@@ -1025,9 +979,10 @@ export default function Page() {
                     Plan actual: <span className="font-semibold text-zinc-900">{planLabel}</span>
                     {proLoading ? <span className="ml-2 text-zinc-400">· comprobando…</span> : null}
                   </div>
+                  {!isLoggedIn && <div className="text-[11px] text-zinc-500 mt-1">Puedes ver los planes. Para pagar te pediremos iniciar sesión.</div>}
                 </div>
 
-                {/* ✅ X igual que login */}
+                {/* X */}
                 <button
                   onClick={() => {
                     if (!payLoading) setPaywallOpen(false);
@@ -1041,7 +996,7 @@ export default function Page() {
               </div>
             </div>
 
-            {/* body scroll (compacto en móvil) */}
+            {/* body scroll */}
             <div className="p-4 md:p-5 overflow-y-auto" style={{ maxHeight: "calc(var(--vvh, 100dvh) - 140px)" }}>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                 {/* FREE */}
@@ -1105,7 +1060,7 @@ export default function Page() {
                 </button>
               </div>
 
-              {/* ✅ Características cambian según el plan */}
+              {/* Características */}
               <div className="mt-4 rounded-3xl border border-zinc-200 bg-zinc-50 p-4">
                 <div className="text-xs font-semibold text-zinc-800 mb-2">Incluye ({plan === "free" ? "Gratis" : "Pro"})</div>
 
@@ -1127,11 +1082,9 @@ export default function Page() {
                 ) : null}
               </div>
 
-              {payMsg && (
-                <div className="mt-3 text-xs text-zinc-700 bg-white border border-zinc-200 rounded-2xl px-3 py-2">{payMsg}</div>
-              )}
+              {payMsg && <div className="mt-3 text-xs text-zinc-700 bg-white border border-zinc-200 rounded-2xl px-3 py-2">{payMsg}</div>}
 
-              {/* ✅ Acciones (cancelación aquí) */}
+              {/* Acciones */}
               <div className="mt-4 flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
                 {isPro ? (
                   <button
@@ -1173,7 +1126,7 @@ export default function Page() {
       {/* ===== LOGIN MODAL ===== */}
       {loginOpen && (
         <div
-          className="fixed inset-0 z-[60] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6"
+          className="fixed inset-0 z-[80] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6"
           onClick={() => (!loginSending ? setLoginOpen(false) : null)}
         >
           <div
@@ -1258,7 +1211,6 @@ export default function Page() {
 
               {loginMsg && <div className="text-[12px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-[14px] px-3 py-2">{loginMsg}</div>}
 
-              {/* ✅ Botones más “redonditos” */}
               <button
                 onClick={authMode === "signin" ? signInWithPassword : signUpWithPassword}
                 className="w-full h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
@@ -1278,7 +1230,7 @@ export default function Page() {
                 className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 disabled={!!loginSending}
               >
-                <GoogleIcon />
+                <OAuthLogo src="/auth/google.svg" alt="Google" />
                 Continuar con Google
               </button>
 
@@ -1287,18 +1239,17 @@ export default function Page() {
                 className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 disabled={!!loginSending}
               >
-                <MicrosoftIcon />
+                <OAuthLogo src="/auth/microsoft.svg" alt="Microsoft" />
                 Continuar con Microsoft
               </button>
 
-              {/* Apple (UI lista, provider aún por configurar) */}
               <button
                 onClick={() => setLoginMsg("Apple estará disponible en breve.")}
                 className="w-full h-11 rounded-full bg-black hover:bg-zinc-900 text-white text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 disabled={!!loginSending}
                 title="Próximamente"
               >
-                <AppleIcon />
+                <OAuthLogo src="/auth/apple-white.svg" alt="Apple" />
                 Continuar con Apple
               </button>
 
