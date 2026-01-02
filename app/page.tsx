@@ -54,6 +54,9 @@ function makeTitleFromText(text: string) {
 const STORAGE_KEY = "vonu_threads_v1";
 const HOME_URL = "https://vonuai.com";
 
+// ✅ Tu regla: tras 2 mensajes, pedir login/pago
+const FREE_MESSAGE_LIMIT = 2;
+
 function isDesktopPointer() {
   if (typeof window === "undefined") return true;
   return window.matchMedia?.("(pointer: fine)")?.matches ?? true;
@@ -107,23 +110,33 @@ function CheckIcon({ className }: { className?: string }) {
   );
 }
 
+// ✅ SVG nítidos (no pixelan)
 function GoogleIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-4 w-4"} viewBox="0 0 24 24" aria-hidden="true">
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" aria-hidden="true">
       <path
         fill="#EA4335"
         d="M12 10.2v3.9h5.4c-.2 1.2-1.4 3.5-5.4 3.5A6.3 6.3 0 1 1 12 5.7c1.8 0 3 .7 3.7 1.3l2.5-2.4C16.7 3 14.6 2 12 2 6.5 2 2 6.5 2 12s4.5 10 10 10c5.8 0 9.6-4.1 9.6-9.8 0-.7-.1-1.2-.2-1.7H12z"
       />
-      <path fill="#34A853" d="M3.7 7.6l3.2 2.3A6.3 6.3 0 0 1 12 5.7c1.8 0 3 .7 3.7 1.3l2.5-2.4C16.7 3 14.6 2 12 2 8.2 2 5 4.1 3.7 7.6z" />
-      <path fill="#FBBC05" d="M12 22c2.6 0 4.8-.9 6.4-2.4l-3-2.5c-.8.5-1.9 1-3.4 1a6.3 6.3 0 0 1-6-4.4l-3.2 2.4C5.1 19.8 8.3 22 12 22z" />
-      <path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.2-.2-1.7H12v3.9h5.4c-.2 1.2-1.4 3.5-5.4 3.5v4.1c5.8 0 9.6-4.1 9.6-9.8z" />
+      <path
+        fill="#34A853"
+        d="M3.7 7.6l3.2 2.3A6.3 6.3 0 0 1 12 5.7c1.8 0 3 .7 3.7 1.3l2.5-2.4C16.7 3 14.6 2 12 2 8.2 2 5 4.1 3.7 7.6z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M12 22c2.6 0 4.8-.9 6.4-2.4l-3-2.5c-.8.5-1.9 1-3.4 1a6.3 6.3 0 0 1-6-4.4l-3.2 2.4C5.1 19.8 8.3 22 12 22z"
+      />
+      <path
+        fill="#4285F4"
+        d="M21.6 12.2c0-.7-.1-1.2-.2-1.7H12v3.9h5.4c-.2 1.2-1.4 3.5-5.4 3.5v4.1c5.8 0 9.6-4.1 9.6-9.8z"
+      />
     </svg>
   );
 }
 
 function MicrosoftIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-4 w-4"} viewBox="0 0 24 24" aria-hidden="true">
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" aria-hidden="true">
       <path fill="#F25022" d="M2 2h9v9H2z" />
       <path fill="#7FBA00" d="M13 2h9v9h-9z" />
       <path fill="#00A4EF" d="M2 13h9v9H2z" />
@@ -132,7 +145,7 @@ function MicrosoftIcon({ className }: { className?: string }) {
   );
 }
 
-type LoginMode = "magic" | "password";
+type AuthCardMode = "signin" | "signup";
 
 export default function Page() {
   const [mounted, setMounted] = useState(false);
@@ -144,9 +157,10 @@ export default function Page() {
   const [authUserId, setAuthUserId] = useState<string | null>(null);
 
   const [loginOpen, setLoginOpen] = useState(false);
-  const [loginMode, setLoginMode] = useState<LoginMode>("magic");
+  const [authMode, setAuthMode] = useState<AuthCardMode>("signin");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [keepSignedIn, setKeepSignedIn] = useState(true);
   const [loginSending, setLoginSending] = useState(false);
   const [loginMsg, setLoginMsg] = useState<string | null>(null);
 
@@ -257,6 +271,29 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted]);
 
+  function openLoginModal(mode: AuthCardMode = "signin") {
+    setLoginMsg(null);
+    setAuthMode(mode);
+    setLoginOpen(true);
+    // no borramos email si ya lo escribió
+    // setLoginEmail(""); setLoginPassword("");
+  }
+
+  function openPlansModal() {
+    setPayMsg(null);
+    setPlan("yearly");
+    setPaywallOpen(true);
+  }
+
+  // ✅ Botón “Planes” siempre funciona:
+  function handleOpenPlansCTA() {
+    if (!isLoggedIn) {
+      openLoginModal("signin");
+      return;
+    }
+    openPlansModal();
+  }
+
   async function startCheckout(chosen: "monthly" | "yearly") {
     setPayLoading(true);
     setPayMsg(null);
@@ -342,18 +379,97 @@ export default function Page() {
     }
   }
 
-  async function sendLoginEmailMagicLink() {
-    const email = loginEmail.trim();
-    if (!email || !email.includes("@")) {
-      setLoginMsg("Escribe un email válido.");
-      return;
+  async function signInWithOAuth(provider: "google" | "azure") {
+    setLoginSending(true);
+    setLoginMsg(null);
+    try {
+      const origin = typeof window !== "undefined" ? window.location.origin : undefined;
+
+      const { error } = await supabaseBrowser.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: origin ? `${origin}/auth/callback` : undefined,
+        },
+      });
+
+      if (error) setLoginMsg(error.message);
+    } catch (e: any) {
+      setLoginMsg(e?.message ?? "Error iniciando sesión con OAuth.");
+    } finally {
+      setLoginSending(false);
     }
+  }
+
+  async function signInWithPassword() {
+    const email = loginEmail.trim().toLowerCase();
+    const password = loginPassword;
+
+    if (!email || !email.includes("@")) return setLoginMsg("Escribe un email válido.");
+    if (!password || password.length < 6) return setLoginMsg("La contraseña debe tener al menos 6 caracteres.");
 
     setLoginSending(true);
     setLoginMsg(null);
-
     try {
-      // Mantengo tu /api/auth/login para no romper nada.
+      const { error } = await supabaseBrowser.auth.signInWithPassword({ email, password });
+      if (error) {
+        setLoginMsg(error.message);
+        return;
+      }
+      setLoginOpen(false);
+      setLoginPassword("");
+      setLoginMsg(null);
+      // si venía del CTA de planes, abre planes automáticamente
+      // (pequeño delay por si onAuthStateChange tarda)
+      setTimeout(() => {
+        refreshProStatus();
+      }, 300);
+    } catch (e: any) {
+      setLoginMsg(e?.message ?? "Error iniciando sesión con contraseña.");
+    } finally {
+      setLoginSending(false);
+    }
+  }
+
+  async function signUpWithPassword() {
+    const email = loginEmail.trim().toLowerCase();
+    const password = loginPassword;
+
+    if (!email || !email.includes("@")) return setLoginMsg("Escribe un email válido.");
+    if (!password || password.length < 6) return setLoginMsg("La contraseña debe tener al menos 6 caracteres.");
+
+    setLoginSending(true);
+    setLoginMsg(null);
+    try {
+      // keepSignedIn: Supabase puede requerir confirmación por email según config.
+      const { error } = await supabaseBrowser.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined,
+        },
+      });
+      if (error) {
+        setLoginMsg(error.message);
+        return;
+      }
+
+      // Si tienes “Email confirmations” activado, te llegará mail; si no, entrará directo.
+      setLoginMsg("✅ Cuenta creada. Revisa tu email si te pide confirmar, o inicia sesión.");
+      setAuthMode("signin");
+    } catch (e: any) {
+      setLoginMsg(e?.message ?? "Error creando cuenta.");
+    } finally {
+      setLoginSending(false);
+    }
+  }
+
+  async function sendMagicLink() {
+    const email = loginEmail.trim().toLowerCase();
+    if (!email || !email.includes("@")) return setLoginMsg("Escribe un email válido.");
+
+    setLoginSending(true);
+    setLoginMsg(null);
+    try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -374,80 +490,9 @@ export default function Page() {
         return;
       }
 
-      setLoginMsg("✅ Email enviado. Abre tu correo y pulsa el enlace para iniciar sesión.");
+      setLoginMsg("✅ Email enviado. Abre tu correo y pulsa el enlace.");
     } catch (e: any) {
       setLoginMsg(e?.message ?? "Error enviando email.");
-    } finally {
-      setLoginSending(false);
-    }
-  }
-
-  async function signInWithPassword() {
-    const email = loginEmail.trim();
-    const password = loginPassword;
-
-    if (!email || !email.includes("@")) return setLoginMsg("Escribe un email válido.");
-    if (!password || password.length < 6) return setLoginMsg("La contraseña debe tener al menos 6 caracteres.");
-
-    setLoginSending(true);
-    setLoginMsg(null);
-    try {
-      const { error } = await supabaseBrowser.auth.signInWithPassword({ email, password });
-      if (error) {
-        setLoginMsg(error.message);
-        return;
-      }
-      setLoginOpen(false);
-      setLoginMsg(null);
-      setLoginPassword("");
-    } catch (e: any) {
-      setLoginMsg(e?.message ?? "Error iniciando sesión con contraseña.");
-    } finally {
-      setLoginSending(false);
-    }
-  }
-
-  async function signUpWithPassword() {
-    const email = loginEmail.trim();
-    const password = loginPassword;
-
-    if (!email || !email.includes("@")) return setLoginMsg("Escribe un email válido.");
-    if (!password || password.length < 6) return setLoginMsg("La contraseña debe tener al menos 6 caracteres.");
-
-    setLoginSending(true);
-    setLoginMsg(null);
-    try {
-      const { error } = await supabaseBrowser.auth.signUp({ email, password });
-      if (error) {
-        setLoginMsg(error.message);
-        return;
-      }
-      setLoginMsg("✅ Cuenta creada. Ya puedes iniciar sesión con tu contraseña.");
-      setLoginMode("password");
-    } catch (e: any) {
-      setLoginMsg(e?.message ?? "Error creando cuenta.");
-    } finally {
-      setLoginSending(false);
-    }
-  }
-
-  async function signInWithOAuth(provider: "google" | "azure") {
-    setLoginSending(true);
-    setLoginMsg(null);
-    try {
-      const origin = typeof window !== "undefined" ? window.location.origin : undefined;
-
-      const { error } = await supabaseBrowser.auth.signInWithOAuth({
-        provider,
-        options: {
-          // MUY IMPORTANTE: que vuelva a tu app (idealmente a /auth/callback -> ver más abajo)
-          redirectTo: origin ? `${origin}/auth/callback` : undefined,
-        },
-      });
-
-      if (error) setLoginMsg(error.message);
-    } catch (e: any) {
-      setLoginMsg(e?.message ?? "Error iniciando sesión con OAuth.");
     } finally {
       setLoginSending(false);
     }
@@ -566,6 +611,8 @@ export default function Page() {
   const sortedThreads = useMemo(() => {
     return [...threads].sort((a, b) => b.updatedAt - a.updatedAt);
   }, [threads]);
+
+  const userMsgCountInThread = useMemo(() => messages.filter((m) => m.role === "user").length, [messages]);
 
   const canSend = useMemo(() => {
     const basicReady = !isTyping && (!!input.trim() || !!imagePreview);
@@ -733,26 +780,40 @@ export default function Page() {
     if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
-  function openLoginModal() {
-    setLoginEmail("");
-    setLoginPassword("");
-    setLoginMsg(null);
-    setLoginMode("magic");
-    setLoginOpen(true);
-  }
+  // ✅ regla: tras 2 mensajes, bloquear el siguiente y pedir login/pago
+  function enforceLimitIfNeeded(): boolean {
+    const nextUserCount = userMsgCountInThread + 1;
+    if (nextUserCount <= FREE_MESSAGE_LIMIT) return false;
 
-  function openPlansModal() {
-    setPayMsg(null);
-    setPlan("yearly");
-    setPaywallOpen(true);
+    // a partir del 3º intento
+    if (!isLoggedIn) {
+      setLoginMsg("Para seguir, inicia sesión (y así guardas tu historial).");
+      openLoginModal("signin");
+      return true;
+    }
+
+    if (!isPro) {
+      setPayMsg("Has llegado al límite del plan Free. Desbloquea Pro para seguir usando Vonu.");
+      openPlansModal();
+      return true;
+    }
+
+    return false;
   }
 
   async function sendMessage() {
-    if (!authLoading && !authUserId) {
-      openLoginModal();
-      return;
+    // si está cargando auth no hacemos nada raro
+    if (authLoading) return;
+
+    // ✅ paywall/login tras 2 mensajes (antes de todo)
+    if (enforceLimitIfNeeded()) return;
+
+    // si no está logueado (pero aún no alcanzó el límite), dejamos enviar y luego ya forzará
+    if (!authUserId) {
+      // dejamos enviar hasta 2; si prefieres forzar login desde el 1º, aquí se abre.
     }
 
+    // si está logueado pero bloqueado por paywall (por estado pro) => abre planes
     if (isBlockedByPaywall) {
       openPlansModal();
       return;
@@ -1085,14 +1146,21 @@ export default function Page() {
         </div>
       )}
 
-      {/* ===== LOGIN MODAL ===== */}
+      {/* ===== LOGIN MODAL (como la captura) ===== */}
       {loginOpen && (
         <div className="fixed inset-0 z-[60] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6">
-          <div className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="w-full max-w-[380px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-900">Iniciar sesión</div>
-                <div className="text-xs text-zinc-500 mt-1">Elige cómo quieres entrar.</div>
+                <div className="text-[18px] font-semibold text-zinc-900">
+                  {authMode === "signin" ? "Sign in" : "Create account"}
+                </div>
+                <div className="text-[12.5px] text-zinc-500 mt-1">
+                  {authMode === "signin" ? "to continue to your account" : "create your account to continue"}
+                </div>
               </div>
 
               <button
@@ -1108,119 +1176,147 @@ export default function Page() {
               </button>
             </div>
 
-            {/* Tabs */}
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <button
-                onClick={() => {
-                  setLoginMode("magic");
-                  setLoginMsg(null);
-                }}
-                className={[
-                  "h-10 rounded-2xl border text-sm transition-colors cursor-pointer",
-                  loginMode === "magic" ? "border-blue-700 bg-blue-50 text-zinc-900" : "border-zinc-200 bg-white hover:bg-zinc-50",
-                ].join(" ")}
-                disabled={!!loginSending}
-              >
-                Email link
-              </button>
-              <button
-                onClick={() => {
-                  setLoginMode("password");
-                  setLoginMsg(null);
-                }}
-                className={[
-                  "h-10 rounded-2xl border text-sm transition-colors cursor-pointer",
-                  loginMode === "password" ? "border-blue-700 bg-blue-50 text-zinc-900" : "border-zinc-200 bg-white hover:bg-zinc-50",
-                ].join(" ")}
-                disabled={!!loginSending}
-              >
-                Contraseña
-              </button>
-            </div>
-
-            {/* OAuth */}
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <button
-                onClick={() => signInWithOAuth("google")}
-                className="h-10 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-                disabled={!!loginSending}
-              >
-                <GoogleIcon />
-                Google
-              </button>
-              <button
-                onClick={() => signInWithOAuth("azure")}
-                className="h-10 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-                disabled={!!loginSending}
-              >
-                <MicrosoftIcon />
-                Microsoft
-              </button>
-            </div>
-
-            <div className="mt-3">
-              <input
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                className="w-full h-11 rounded-2xl border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
-                placeholder="tuemail@ejemplo.com"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") {
-                    setLoginOpen(false);
-                    setLoginMsg(null);
-                  }
-                }}
-              />
-
-              {loginMode === "password" && (
+            <div className="mt-5 space-y-3">
+              <div>
+                <div className="text-[12px] text-zinc-600 mb-1">Email</div>
                 <input
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  type="password"
-                  className="w-full h-11 rounded-2xl border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400 mt-2"
-                  placeholder="Contraseña"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  className="w-full h-11 rounded-[14px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
+                  placeholder="tuemail@ejemplo.com"
+                  autoFocus
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") signInWithPassword();
                     if (e.key === "Escape") {
                       setLoginOpen(false);
                       setLoginMsg(null);
                     }
+                    if (e.key === "Enter") {
+                      authMode === "signin" ? signInWithPassword() : signUpWithPassword();
+                    }
                   }}
                 />
-              )}
-            </div>
-
-            {loginMsg && (
-              <div className="mt-3 text-xs text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-2xl px-3 py-2">
-                {loginMsg}
               </div>
-            )}
 
-            <div className="flex items-center justify-between gap-2 mt-4">
-              {loginMode === "password" ? (
+              <div>
+                <div className="text-[12px] text-zinc-600 mb-1">Password</div>
+                <input
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  type="password"
+                  className="w-full h-11 rounded-[14px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
+                  placeholder="••••••••"
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      setLoginOpen(false);
+                      setLoginMsg(null);
+                    }
+                    if (e.key === "Enter") {
+                      authMode === "signin" ? signInWithPassword() : signUpWithPassword();
+                    }
+                  }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 text-[12px] text-zinc-600 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={keepSignedIn}
+                    onChange={(e) => setKeepSignedIn(e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  Keep me signed in
+                </label>
+
                 <button
-                  onClick={signUpWithPassword}
-                  className="h-10 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50"
+                  className="text-[12px] text-blue-700 hover:text-blue-800 cursor-pointer"
+                  onClick={() => setLoginMsg("Si has olvidado la contraseña, crea cuenta de nuevo o usa enlace por email abajo.")}
                   disabled={!!loginSending}
                 >
-                  Crear cuenta
+                  FORGOT PASSWORD?
                 </button>
-              ) : (
-                <div className="text-[11px] text-zinc-500 leading-4 px-1">Te enviaremos un enlace (sin contraseña).</div>
+              </div>
+
+              {loginMsg && (
+                <div className="text-[12px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-[14px] px-3 py-2">
+                  {loginMsg}
+                </div>
               )}
 
               <button
-                onClick={loginMode === "password" ? signInWithPassword : sendLoginEmailMagicLink}
-                className="h-10 px-4 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 text-sm transition-colors disabled:opacity-50 cursor-pointer"
+                onClick={authMode === "signin" ? signInWithPassword : signUpWithPassword}
+                className="w-full h-11 rounded-[14px] bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
                 disabled={!!loginSending}
               >
-                {loginSending ? "Procesando…" : loginMode === "password" ? "Entrar" : "Enviar enlace"}
+                {loginSending ? "Processing…" : authMode === "signin" ? "SIGN IN" : "CREATE ACCOUNT"}
               </button>
-            </div>
 
-            <div className="mt-3 text-[11px] text-zinc-500 leading-4">
-              Si no te llega el email, mira Spam/Promociones.
+              {/* Divider */}
+              <div className="flex items-center gap-3 py-1">
+                <div className="h-px flex-1 bg-zinc-200" />
+                <div className="text-[12px] text-zinc-500">or</div>
+                <div className="h-px flex-1 bg-zinc-200" />
+              </div>
+
+              {/* OAuth buttons */}
+              <button
+                onClick={() => signInWithOAuth("google")}
+                className="w-full h-11 rounded-[14px] border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                disabled={!!loginSending}
+              >
+                <GoogleIcon />
+                Continue with Google
+              </button>
+
+              <button
+                onClick={() => signInWithOAuth("azure")}
+                className="w-full h-11 rounded-[14px] border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                disabled={!!loginSending}
+              >
+                <MicrosoftIcon />
+                Continue with Microsoft
+              </button>
+
+              {/* Magic link (opcional, pero lo dejamos como alternativa) */}
+              <button
+                onClick={sendMagicLink}
+                className="w-full h-11 rounded-[14px] border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50"
+                disabled={!!loginSending}
+              >
+                Send me an email link instead
+              </button>
+
+              <div className="text-[12px] text-zinc-600 text-center pt-1">
+                {authMode === "signin" ? (
+                  <>
+                    Don&apos;t have an account?{" "}
+                    <button
+                      className="text-blue-700 hover:text-blue-800 cursor-pointer"
+                      onClick={() => {
+                        setAuthMode("signup");
+                        setLoginMsg(null);
+                      }}
+                      disabled={!!loginSending}
+                    >
+                      Create account
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    Already have an account?{" "}
+                    <button
+                      className="text-blue-700 hover:text-blue-800 cursor-pointer"
+                      onClick={() => {
+                        setAuthMode("signin");
+                        setLoginMsg(null);
+                      }}
+                      disabled={!!loginSending}
+                    >
+                      Sign in
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -1262,31 +1358,20 @@ export default function Page() {
 
         {!authLoading && (
           <div className="pointer-events-auto flex items-center gap-2">
-            {/* Botón Pro o Plan */}
-            {isLoggedIn && !proLoading && !isPro && (
-              <button
-                onClick={openPlansModal}
-                className="h-11 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer shadow-sm border border-blue-700/10"
-                title="Mejorar a Pro"
-              >
-                Pro
-              </button>
-            )}
+            {/* ✅ Planes SIEMPRE visibles */}
+            <button
+              onClick={handleOpenPlansCTA}
+              className="h-11 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer shadow-sm border border-blue-700/10"
+              title="Planes"
+            >
+              Planes
+            </button>
 
-            {isLoggedIn && !proLoading && isPro && (
-              <button
-                onClick={openPlansModal}
-                className="h-11 px-4 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm text-zinc-900 hover:bg-white transition-colors cursor-pointer"
-                title="Ver plan"
-              >
-                Plan
-              </button>
-            )}
-
+            {/* user */}
             <button
               onClick={() => {
                 if (authUserEmail) logout();
-                else openLoginModal();
+                else openLoginModal("signin");
               }}
               className={[
                 "h-11 w-11",
@@ -1374,13 +1459,10 @@ export default function Page() {
 
                     {!!authUserId && (
                       <div className="flex items-center justify-between gap-2">
-                        <div className="text-[11px] text-zinc-500">
-                          Plan: {proLoading ? "comprobando…" : isPro ? "Pro" : "Free"}
-                        </div>
-
+                        <div className="text-[11px] text-zinc-500">Plan: {proLoading ? "comprobando…" : isPro ? "Pro" : "Free"}</div>
                         <button
                           onClick={() => {
-                            openPlansModal();
+                            handleOpenPlansCTA();
                             setMenuOpen(false);
                           }}
                           className={[
@@ -1395,7 +1477,7 @@ export default function Page() {
                   </div>
                 ) : (
                   <button
-                    onClick={openLoginModal}
+                    onClick={() => openLoginModal("signin")}
                     className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
                   >
                     Iniciar sesión
@@ -1432,10 +1514,7 @@ export default function Page() {
         {/* RENAME MODAL */}
         {renameOpen && (
           <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center px-6">
-            <div
-              className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <div className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4" onClick={(e) => e.stopPropagation()}>
               <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
               <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
 
@@ -1544,8 +1623,8 @@ export default function Page() {
               onClick={() => fileInputRef.current?.click()}
               className="h-11 w-11 md:h-12 md:w-12 inline-flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
               aria-label="Adjuntar imagen"
-              disabled={!!(isTyping || isBlockedByPaywall)}
-              title={isTyping ? "Espera a que Vonu responda…" : isBlockedByPaywall ? "Disponible en Pro" : "Adjuntar imagen"}
+              disabled={!!isTyping}
+              title={isTyping ? "Espera a que Vonu responda…" : "Adjuntar imagen"}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M12 5V19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
@@ -1588,23 +1667,15 @@ export default function Page() {
                       sendMessage();
                     }
                   }}
-                  disabled={!!(isTyping || isBlockedByPaywall)}
-                  placeholder={
-                    isTyping
-                      ? "Vonu está respondiendo…"
-                      : !authLoading && !authUserId
-                      ? "Inicia sesión para continuar…"
-                      : isBlockedByPaywall
-                      ? "Disponible en Pro…"
-                      : "Escribe tu mensaje…"
-                  }
+                  disabled={!!isTyping}
+                  placeholder={isTyping ? "Vonu está respondiendo…" : "Escribe tu mensaje…"}
                   className="w-full resize-none bg-transparent text-sm outline-none leading-5 overflow-hidden"
                   rows={1}
                 />
               </div>
             </div>
 
-            {/* enviar (AZUL GOOGLE) */}
+            {/* enviar (AZUL) */}
             <button
               onClick={sendMessage}
               disabled={!!(isTyping || (!input.trim() && !imagePreview))}
