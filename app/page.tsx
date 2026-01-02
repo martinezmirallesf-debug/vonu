@@ -61,12 +61,7 @@ function isDesktopPointer() {
 
 function UserIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-5 w-5"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M12 12c2.761 0 5-2.239 5-5S14.761 2 12 2 7 4.239 7 7s2.239 5 5 5Z"
         stroke="currentColor"
@@ -85,18 +80,8 @@ function UserIcon({ className }: { className?: string }) {
 
 function ArrowUpIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-5 w-5"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M12 19V6"
-        stroke="currentColor"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-      />
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 19V6" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
       <path
         d="M7 10l5-5 5 5"
         stroke="currentColor"
@@ -110,12 +95,7 @@ function ArrowUpIcon({ className }: { className?: string }) {
 
 function CheckIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-4 w-4"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg className={className ?? "h-4 w-4"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M20 6L9 17l-5-5"
         stroke="currentColor"
@@ -127,6 +107,8 @@ function CheckIcon({ className }: { className?: string }) {
   );
 }
 
+type LoginMode = "magic" | "password";
+
 export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -137,7 +119,9 @@ export default function Page() {
   const [authUserId, setAuthUserId] = useState<string | null>(null);
 
   const [loginOpen, setLoginOpen] = useState(false);
+  const [loginMode, setLoginMode] = useState<LoginMode>("magic");
   const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const [loginSending, setLoginSending] = useState(false);
   const [loginMsg, setLoginMsg] = useState<string | null>(null);
 
@@ -151,6 +135,9 @@ export default function Page() {
 
   const isLoggedIn = !authLoading && !!authUserId;
   const isBlockedByPaywall = !authLoading && !!authUserId && !proLoading && !isPro;
+
+  // Mensaje post-checkout
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   async function refreshProStatus() {
     if (!authUserId) {
@@ -180,6 +167,7 @@ export default function Page() {
     }
   }
 
+  // Cargar sesión + escuchar cambios
   useEffect(() => {
     let unsub: (() => void) | null = null;
 
@@ -210,11 +198,40 @@ export default function Page() {
     };
   }, []);
 
+  // Refrescar pro al cambiar user
   useEffect(() => {
     if (authLoading) return;
     refreshProStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUserId, authLoading]);
+
+  // Detectar retorno de Stripe (?checkout=success|cancel) y refrescar Pro
+  useEffect(() => {
+    if (!mounted) return;
+    try {
+      const url = new URL(window.location.href);
+      const checkout = url.searchParams.get("checkout");
+      if (!checkout) return;
+
+      if (checkout === "success") {
+        setToastMsg("✅ Pago completado. Activando tu cuenta Pro…");
+        // limpiar query param
+        url.searchParams.delete("checkout");
+        window.history.replaceState({}, "", url.toString());
+        // refrescar estado
+        refreshProStatus().finally(() => {
+          setToastMsg("✅ Listo. Ya tienes Pro activo.");
+          setTimeout(() => setToastMsg(null), 3500);
+        });
+      } else if (checkout === "cancel") {
+        setToastMsg("Pago cancelado. Puedes intentarlo cuando quieras.");
+        url.searchParams.delete("checkout");
+        window.history.replaceState({}, "", url.toString());
+        setTimeout(() => setToastMsg(null), 3500);
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted]);
 
   async function startCheckout(chosen: "monthly" | "yearly") {
     setPayLoading(true);
@@ -307,7 +324,7 @@ export default function Page() {
     }
   }
 
-  async function sendLoginEmail() {
+  async function sendLoginEmailMagicLink() {
     const email = loginEmail.trim();
     if (!email || !email.includes("@")) {
       setLoginMsg("Escribe un email válido.");
@@ -318,6 +335,7 @@ export default function Page() {
     setLoginMsg(null);
 
     try {
+      // Si tienes /api/auth/login, lo usamos.
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -334,10 +352,7 @@ export default function Page() {
 
       if (!res.ok) {
         const errMsg =
-          data?.error ||
-          data?.message ||
-          raw ||
-          `Error enviando email (HTTP ${res.status})`;
+          data?.error || data?.message || raw || `Error enviando email (HTTP ${res.status})`;
         setLoginMsg(errMsg);
         return;
       }
@@ -345,6 +360,82 @@ export default function Page() {
       setLoginMsg("✅ Email enviado. Abre tu correo y pulsa el enlace para iniciar sesión.");
     } catch (e: any) {
       setLoginMsg(e?.message ?? "Error enviando email.");
+    } finally {
+      setLoginSending(false);
+    }
+  }
+
+  async function signInWithPassword() {
+    const email = loginEmail.trim();
+    const password = loginPassword;
+    if (!email || !email.includes("@")) {
+      setLoginMsg("Escribe un email válido.");
+      return;
+    }
+    if (!password || password.length < 6) {
+      setLoginMsg("La contraseña debe tener al menos 6 caracteres.");
+      return;
+    }
+
+    setLoginSending(true);
+    setLoginMsg(null);
+    try {
+      const { error } = await supabaseBrowser.auth.signInWithPassword({ email, password });
+      if (error) {
+        setLoginMsg(error.message);
+        return;
+      }
+      setLoginOpen(false);
+      setLoginMsg(null);
+      setLoginPassword("");
+    } catch (e: any) {
+      setLoginMsg(e?.message ?? "Error iniciando sesión con contraseña.");
+    } finally {
+      setLoginSending(false);
+    }
+  }
+
+  async function signUpWithPassword() {
+    const email = loginEmail.trim();
+    const password = loginPassword;
+    if (!email || !email.includes("@")) {
+      setLoginMsg("Escribe un email válido.");
+      return;
+    }
+    if (!password || password.length < 6) {
+      setLoginMsg("La contraseña debe tener al menos 6 caracteres.");
+      return;
+    }
+
+    setLoginSending(true);
+    setLoginMsg(null);
+    try {
+      const { error } = await supabaseBrowser.auth.signUp({ email, password });
+      if (error) {
+        setLoginMsg(error.message);
+        return;
+      }
+      setLoginMsg("✅ Cuenta creada. Ya puedes iniciar sesión con tu contraseña.");
+    } catch (e: any) {
+      setLoginMsg(e?.message ?? "Error creando cuenta.");
+    } finally {
+      setLoginSending(false);
+    }
+  }
+
+  async function signInWithOAuth(provider: "google" | "azure") {
+    setLoginSending(true);
+    setLoginMsg(null);
+    try {
+      const { error } = await supabaseBrowser.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
+        },
+      });
+      if (error) setLoginMsg(error.message);
+    } catch (e: any) {
+      setLoginMsg(e?.message ?? "Error iniciando sesión con OAuth.");
     } finally {
       setLoginSending(false);
     }
@@ -378,10 +469,7 @@ export default function Page() {
           id: t.id,
           title: typeof t.title === "string" ? t.title : "Consulta",
           updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
-          messages:
-            Array.isArray(t.messages) && t.messages.length
-              ? t.messages
-              : [initialAssistantMessage()],
+          messages: Array.isArray(t.messages) && t.messages.length ? t.messages : [initialAssistantMessage()],
         }));
 
       if (clean.length) {
@@ -473,10 +561,7 @@ export default function Page() {
     return basicReady;
   }, [isTyping, input, imagePreview, isBlockedByPaywall]);
 
-  const hasUserMessage = useMemo(
-    () => messages.some((m) => m.role === "user"),
-    [messages]
-  );
+  const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
 
   // textarea autoresize
   useEffect(() => {
@@ -566,8 +651,7 @@ export default function Page() {
       if (!el) return;
 
       const thread = threads.find((x) => x.id === id);
-      const isFresh =
-        (thread?.messages ?? []).filter((m) => m.role === "user").length === 0;
+      const isFresh = (thread?.messages ?? []).filter((m) => m.role === "user").length === 0;
 
       if (isFresh) {
         el.scrollTo({ top: 0, behavior: "auto" });
@@ -591,11 +675,7 @@ export default function Page() {
     if (!activeThread) return;
     const name = renameValue.trim() || "Consulta";
     setThreads((prev) =>
-      prev.map((t) =>
-        t.id === activeThread.id
-          ? { ...t, title: name, updatedAt: Date.now() }
-          : t
-      )
+      prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t))
     );
     setRenameOpen(false);
 
@@ -644,7 +724,9 @@ export default function Page() {
   async function sendMessage() {
     if (!authLoading && !authUserId) {
       setLoginEmail("");
+      setLoginPassword("");
       setLoginMsg(null);
+      setLoginMode("magic");
       setLoginOpen(true);
       return;
     }
@@ -814,6 +896,15 @@ export default function Page() {
 
   return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
+      {/* TOAST */}
+      {toastMsg && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[90] px-3">
+          <div className="rounded-full border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-sm px-4 py-2 text-xs text-zinc-800">
+            {toastMsg}
+          </div>
+        </div>
+      )}
+
       {/* ===== PAYWALL MODAL ===== */}
       {paywallOpen && (
         <div
@@ -945,9 +1036,7 @@ export default function Page() {
                   Gestionar suscripción
                 </button>
               ) : (
-                <div className="text-[12px] text-zinc-500 px-1">
-                  Puedes quedarte en Free o mejorar cuando quieras.
-                </div>
+                <div className="text-[12px] text-zinc-500 px-1">Puedes quedarte en Free o mejorar cuando quieras.</div>
               )}
 
               <button
@@ -979,27 +1068,106 @@ export default function Page() {
       {/* ===== LOGIN MODAL ===== */}
       {loginOpen && (
         <div className="fixed inset-0 z-[60] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6">
-          <div
-            className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="text-sm font-semibold text-zinc-900 mb-1">Iniciar sesión</div>
-            <div className="text-xs text-zinc-500 mb-3">Te enviamos un enlace por email para entrar (sin contraseña).</div>
+          <div className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-zinc-900">Iniciar sesión</div>
+                <div className="text-xs text-zinc-500 mt-1">Elige cómo quieres entrar.</div>
+              </div>
 
-            <input
-              value={loginEmail}
-              onChange={(e) => setLoginEmail(e.target.value)}
-              className="w-full h-11 rounded-2xl border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
-              placeholder="tuemail@ejemplo.com"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === "Enter") sendLoginEmail();
-                if (e.key === "Escape") {
+              <button
+                onClick={() => {
                   setLoginOpen(false);
                   setLoginMsg(null);
-                }
-              }}
-            />
+                }}
+                className="h-9 w-9 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer"
+                aria-label="Cerrar"
+                disabled={loginSending}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  setLoginMode("magic");
+                  setLoginMsg(null);
+                }}
+                className={[
+                  "h-10 rounded-2xl border text-sm transition-colors cursor-pointer",
+                  loginMode === "magic" ? "border-blue-700 bg-blue-50 text-zinc-900" : "border-zinc-200 bg-white hover:bg-zinc-50",
+                ].join(" ")}
+                disabled={loginSending}
+              >
+                Email link
+              </button>
+              <button
+                onClick={() => {
+                  setLoginMode("password");
+                  setLoginMsg(null);
+                }}
+                className={[
+                  "h-10 rounded-2xl border text-sm transition-colors cursor-pointer",
+                  loginMode === "password" ? "border-blue-700 bg-blue-50 text-zinc-900" : "border-zinc-200 bg-white hover:bg-zinc-50",
+                ].join(" ")}
+                disabled={loginSending}
+              >
+                Contraseña
+              </button>
+            </div>
+
+            {/* OAuth */}
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                onClick={() => signInWithOAuth("google")}
+                className="h-10 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50"
+                disabled={loginSending}
+              >
+                Continuar con Google
+              </button>
+              <button
+                onClick={() => signInWithOAuth("azure")}
+                className="h-10 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50"
+                disabled={loginSending}
+              >
+                Continuar con Microsoft
+              </button>
+            </div>
+
+            <div className="mt-3">
+              <input
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                className="w-full h-11 rounded-2xl border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
+                placeholder="tuemail@ejemplo.com"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setLoginOpen(false);
+                    setLoginMsg(null);
+                  }
+                }}
+              />
+
+              {loginMode === "password" && (
+                <input
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  type="password"
+                  className="w-full h-11 rounded-2xl border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400 mt-2"
+                  placeholder="Contraseña"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") signInWithPassword();
+                    if (e.key === "Escape") {
+                      setLoginOpen(false);
+                      setLoginMsg(null);
+                    }
+                  }}
+                />
+              )}
+            </div>
 
             {loginMsg && (
               <div className="mt-3 text-xs text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-2xl px-3 py-2">
@@ -1007,27 +1175,31 @@ export default function Page() {
               </div>
             )}
 
-            <div className="flex justify-end gap-2 mt-4">
+            <div className="flex items-center justify-between gap-2 mt-4">
+              {loginMode === "password" ? (
+                <button
+                  onClick={signUpWithPassword}
+                  className="h-10 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50"
+                  disabled={loginSending}
+                >
+                  Crear cuenta
+                </button>
+              ) : (
+                <div className="text-[11px] text-zinc-500 leading-4 px-1">Te enviaremos un enlace (sin contraseña).</div>
+              )}
+
               <button
-                onClick={() => {
-                  setLoginOpen(false);
-                  setLoginMsg(null);
-                }}
-                className="h-10 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm cursor-pointer"
-                disabled={loginSending}
-              >
-                Cerrar
-              </button>
-              <button
-                onClick={sendLoginEmail}
+                onClick={loginMode === "password" ? signInWithPassword : sendLoginEmailMagicLink}
                 className="h-10 px-4 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 text-sm transition-colors disabled:opacity-50 cursor-pointer"
                 disabled={loginSending}
               >
-                {loginSending ? "Enviando…" : "Enviar enlace"}
+                {loginSending ? "Enviando…" : loginMode === "password" ? "Entrar" : "Enviar enlace"}
               </button>
             </div>
 
-            <div className="mt-3 text-[11px] text-zinc-500 leading-4">Si no te llega, mira Spam/Promociones.</div>
+            <div className="mt-3 text-[11px] text-zinc-500 leading-4">
+              Si no te llega el email, mira Spam/Promociones.
+            </div>
           </div>
         </div>
       )}
@@ -1083,12 +1255,29 @@ export default function Page() {
               </button>
             )}
 
+            {/* Si es Pro: botón “Plan” para gestionar fácil */}
+            {isLoggedIn && !proLoading && isPro && (
+              <button
+                onClick={() => {
+                  setPayMsg(null);
+                  setPlan("yearly");
+                  setPaywallOpen(true);
+                }}
+                className="h-11 px-4 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm text-zinc-900 hover:bg-white transition-colors cursor-pointer"
+                title="Ver plan"
+              >
+                Plan
+              </button>
+            )}
+
             <button
               onClick={() => {
                 if (authUserEmail) logout();
                 else {
                   setLoginEmail("");
+                  setLoginPassword("");
                   setLoginMsg(null);
+                  setLoginMode("magic");
                   setLoginOpen(true);
                 }
               }}
@@ -1195,6 +1384,20 @@ export default function Page() {
                             Mejorar
                           </button>
                         )}
+
+                        {!proLoading && isPro && (
+                          <button
+                            onClick={() => {
+                              setPayMsg(null);
+                              setPlan("yearly");
+                              setPaywallOpen(true);
+                              setMenuOpen(false);
+                            }}
+                            className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 transition-colors cursor-pointer"
+                          >
+                            Gestionar
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1202,7 +1405,9 @@ export default function Page() {
                   <button
                     onClick={() => {
                       setLoginEmail("");
+                      setLoginPassword("");
                       setLoginMsg(null);
+                      setLoginMode("magic");
                       setLoginOpen(true);
                     }}
                     className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
@@ -1353,7 +1558,7 @@ export default function Page() {
               onClick={() => fileInputRef.current?.click()}
               className="h-11 w-11 md:h-12 md:w-12 inline-flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
               aria-label="Adjuntar imagen"
-              disabled={isTyping || isBlockedByPaywall}
+              disabled={!!(isTyping || isBlockedByPaywall)}
               title={isTyping ? "Espera a que Vonu responda…" : isBlockedByPaywall ? "Disponible en Pro" : "Adjuntar imagen"}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1397,7 +1602,7 @@ export default function Page() {
                       sendMessage();
                     }
                   }}
-                  disabled={isTyping || isBlockedByPaywall}
+                  disabled={!!(isTyping || isBlockedByPaywall)}
                   placeholder={
                     isTyping
                       ? "Vonu está respondiendo…"
@@ -1416,7 +1621,7 @@ export default function Page() {
             {/* enviar (AZUL GOOGLE) */}
             <button
               onClick={sendMessage}
-              disabled={isTyping || (!input.trim() && !imagePreview)}
+              disabled={!!(isTyping || (!input.trim() && !imagePreview))}
               className="h-11 w-11 md:h-12 md:w-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center disabled:opacity-40 transition-colors cursor-pointer shrink-0"
               aria-label="Enviar"
               title="Enviar"
