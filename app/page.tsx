@@ -54,7 +54,7 @@ function makeTitleFromText(text: string) {
 const STORAGE_KEY = "vonu_threads_v1";
 const HOME_URL = "https://vonuai.com";
 
-// ✅ Tu regla: tras 2 análisis, pedir login/pago
+// ✅ regla: tras 2 análisis, pedir login/pago
 const FREE_MESSAGE_LIMIT = 2;
 
 function isDesktopPointer() {
@@ -89,6 +89,35 @@ function CheckIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-4 w-4"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SparkIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 2l1.4 5.1L18 8.5l-4.6 1.4L12 15l-1.4-5.1L6 8.5l4.6-1.4L12 2Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path d="M20 14l.7 2.6L23 17.3l-2.3.7L20 20l-.7-2.6L17 16.7l2.3-.7L20 14Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+      <path d="M4 13l.7 2.6L7 16.3l-2.3.7L4 19l-.7-2.6L1 15.7l2.3-.7L4 13Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ShieldIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 2l8 4v6c0 5-3.4 9.4-8 10-4.6-.6-8-5-8-10V6l8-4Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -242,14 +271,11 @@ export default function Page() {
     if (!isLoggedIn) return;
     if (!pendingCheckoutPlan) return;
 
-    // cerramos login por si quedó abierto
     setLoginOpen(false);
 
-    // arrancamos checkout
     const chosen = pendingCheckoutPlan;
     setPendingCheckoutPlan(null);
 
-    // pequeño delay para que el token esté listo
     setTimeout(() => {
       startCheckout(chosen);
     }, 120);
@@ -303,7 +329,6 @@ export default function Page() {
     setPaywallOpen(true);
   }
 
-  // ✅ CTA: SIEMPRE abre planes (aunque estés logout)
   function handleOpenPlansCTA() {
     openPlansModal();
   }
@@ -358,7 +383,6 @@ export default function Page() {
     }
   }
 
-  // ✅ Cancelación transparente desde esta pantalla
   async function cancelSubscriptionFromHere() {
     setPayLoading(true);
     setPayMsg(null);
@@ -371,7 +395,9 @@ export default function Page() {
         return;
       }
 
-      const ok = window.confirm("¿Seguro que quieres cancelar tu suscripción?\n\nSeguirás teniendo acceso hasta el final del periodo ya pagado.");
+      const ok = window.confirm(
+        "¿Seguro que quieres cancelar tu suscripción?\n\nSeguirás teniendo acceso hasta el final del periodo ya pagado."
+      );
       if (!ok) {
         setPayLoading(false);
         return;
@@ -473,7 +499,6 @@ export default function Page() {
         return;
       }
 
-      // ✅ Solo confirmación (si Supabase lo exige)
       setLoginMsg("✅ Cuenta creada. Si te pedimos confirmación, revisa tu email para activarla.");
       setAuthMode("signin");
     } catch (e: any) {
@@ -948,25 +973,42 @@ export default function Page() {
 
   const planLabel = !isLoggedIn ? "Sin sesión" : isPro ? "Pro" : "Gratis";
   const topCtaText = isPro ? "Tu plan" : "Mejorar";
-  const payTitle = "Planes y precios";
+  const payTitle = "Vonu Pro";
 
-  // === Paywall content (copy en español + “no saltos” al seleccionar) ===
-  const freeFeatures = ["2 análisis gratis", "Mensajes, enlaces e imágenes", "Historial en este dispositivo"];
-  const proFeatures = ["Análisis completo (mensajes, webs e imágenes)", "Historial organizado", "Mejoras continuas", "Acceso desde cualquier dispositivo"];
-
-  const selectedFeatures = plan === "free" ? freeFeatures : proFeatures;
-
-  // alturas fijas para que NO cambie el tamaño al seleccionar
-  const planCardH = "h-[140px] md:h-[330px]";
-  const planCardBase =
-    "w-full rounded-[26px] border border-zinc-200 bg-white transition-colors cursor-pointer select-none overflow-hidden";
-  const planCardInner = "h-full px-5 py-5 flex flex-col";
-  const planCardSelectedRing = "ring-2 ring-blue-600 ring-offset-2 ring-offset-white";
-
-  // precios (por si luego quieres sacarlos a constantes/Stripe)
+  // === PRICING COPY ===
   const PRICE_MONTH = "4,99€";
   const PRICE_YEAR = "39,99€";
-  const PRICE_YEAR_PER_MONTH = "3,33€"; // 39,99 / 12 aprox.
+  const PRICE_YEAR_PER_MONTH = "3,33€";
+
+  const proBullets = [
+    "Análisis más profundo y claro (mensajes, webs e imágenes)",
+    "Más contexto, mejores recomendaciones",
+    "Historial organizado (cuando lo activemos en cuenta)",
+    "Mejoras continuas",
+  ];
+
+  const trustBullets = [
+    { icon: <ShieldIcon className="h-5 w-5" />, title: "Pago seguro", desc: "Procesado por Stripe." },
+    { icon: <SparkIcon className="h-5 w-5" />, title: "Mejor valor", desc: "El anual es el recomendado." },
+    { icon: <CheckIcon className="h-5 w-5" />, title: "Cancela fácil", desc: "Desde esta misma pantalla." },
+  ];
+
+  function closePaywall() {
+    if (payLoading) return;
+    setPaywallOpen(false);
+    setPayMsg(null);
+  }
+
+  // ESC para cerrar paywall
+  useEffect(() => {
+    if (!paywallOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closePaywall();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paywallOpen, payLoading]);
 
   return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
@@ -979,393 +1021,362 @@ export default function Page() {
         </div>
       )}
 
-      {/* ===== PAYWALL MODAL ===== */}
+      {/* ===== PAYWALL (FULLSCREEN TAKEOVER) ===== */}
       {paywallOpen && (
-        <div
-          className="fixed inset-0 z-[70] bg-black/25 backdrop-blur-sm px-3 md:px-5"
-          onClick={() => {
-            if (!payLoading) setPaywallOpen(false);
-          }}
-        >
-          <div className="h-full w-full flex items-center justify-center py-2 md:py-5">
-            <div
-              className="w-full max-w-6xl rounded-[28px] md:rounded-[34px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.22)] flex flex-col"
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                height: "calc(var(--vvh, 100dvh) - 16px)",
-                overflow: "hidden",
-              }}
-            >
-              {/* header */}
-              <div className="px-3 py-3 md:px-6 md:py-5 border-b border-zinc-100 shrink-0">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold text-zinc-900">{payTitle}</div>
-                    <div className="text-xs text-zinc-500 mt-1">
-                      Plan actual: <span className="font-semibold text-zinc-900">{planLabel}</span>
-                      {proLoading ? <span className="ml-2 text-zinc-400">· comprobando…</span> : null}
+        <div className="fixed inset-0 z-[70]">
+          {/* backdrop */}
+          <div
+            className="absolute inset-0 bg-gradient-to-b from-blue-50 via-white to-white"
+            onClick={closePaywall}
+            aria-hidden="true"
+          />
+
+          {/* glow */}
+          <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-[280px] w-[680px] rounded-full bg-blue-400/15 blur-3xl pointer-events-none" />
+          <div className="absolute top-[18%] -left-32 h-[260px] w-[260px] rounded-full bg-blue-600/10 blur-3xl pointer-events-none" />
+          <div className="absolute top-[38%] -right-24 h-[300px] w-[300px] rounded-full bg-zinc-900/5 blur-3xl pointer-events-none" />
+
+          {/* content */}
+          <div className="relative h-full w-full overflow-hidden">
+            <div className="h-full w-full">
+              <div
+                className="mx-auto h-full w-full max-w-6xl px-3 md:px-6"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* top bar */}
+                <div className="pt-3 md:pt-6 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-11 w-11 rounded-full bg-white/80 backdrop-blur-xl border border-zinc-200 grid place-items-center">
+                      <img src={"/vonu-icon.png?v=2"} alt="Vonu" className="h-6 w-6" draggable={false} />
                     </div>
-                    {!isLoggedIn && (
-                      <div className="text-[11px] text-zinc-500 mt-1">Puedes ver los planes. Para pagar te pediremos iniciar sesión.</div>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      if (!payLoading) setPaywallOpen(false);
-                    }}
-                    className="h-9 w-9 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer shrink-0"
-                    aria-label="Cerrar"
-                    disabled={!!payLoading}
-                  >
-                    ×
-                  </button>
-                </div>
-              </div>
-
-              {/* CONTENT (sin scroll del modal completo) */}
-              <div className="flex-1 min-h-0 overflow-hidden p-3 md:p-6">
-                {/* MOBILE layout (tipo “pantallita”): beneficios + 2 opciones + CTA */}
-                <div className="h-full min-h-0 flex flex-col md:hidden">
-                  {/* top card: beneficios */}
-                  <div className="rounded-[26px] border border-zinc-200 bg-zinc-50 p-4 shrink-0">
-                    <div className="text-sm font-semibold text-zinc-900">Desbloquea Vonu Pro</div>
-                    <div className="text-[12px] text-zinc-500 mt-1 leading-4">
-                      Más claridad, menos dudas. Analiza decisiones sensibles con calma.
-                    </div>
-
-                    <div className="mt-3 grid grid-cols-2 gap-2 text-[12px] text-zinc-700">
-                      {proFeatures.slice(0, 4).map((x) => (
-                        <div key={x} className="flex items-start gap-2">
-                          <span className="mt-[2px] text-blue-700">
-                            <CheckIcon />
-                          </span>
-                          <span className="leading-4">{x}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* espacio fijo para que no “salte” si aparece mensaje */}
-                    <div className="mt-3 min-h-[38px]">
-                      {payMsg ? (
-                        <div className="text-xs text-zinc-700 bg-white border border-zinc-200 rounded-2xl px-3 py-2">
-                          {payMsg}
-                        </div>
-                      ) : (
-                        <div className="opacity-0 select-none text-xs">placeholder</div>
-                      )}
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-zinc-900 leading-5">{payTitle}</div>
+                      <div className="text-xs text-zinc-500 leading-4">
+                        Plan actual: <span className="font-semibold text-zinc-900">{planLabel}</span>
+                        {proLoading ? <span className="ml-2 text-zinc-400">· comprobando…</span> : null}
+                      </div>
                     </div>
                   </div>
 
-                  {/* selector de plan (2 opciones “app-style”) */}
-                  <div className="mt-3 rounded-[26px] border border-zinc-200 bg-white p-3 flex-1 min-h-0 overflow-hidden">
-                    <div className="text-xs font-semibold text-zinc-800 mb-2 px-1">Elige tu plan</div>
-
-                    <div className="space-y-2">
-                      {/* YEAR */}
-                      <button
-                        onClick={() => setPlan("yearly")}
-                        className={[
-                          "w-full rounded-2xl border px-4 py-4 text-left transition-colors cursor-pointer select-none relative",
-                          "h-[84px]",
-                          plan === "yearly" ? `border-blue-200 bg-blue-50 ${planCardSelectedRing}` : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                        disabled={!!payLoading}
-                      >
-                        <div className="absolute top-2 right-2">
-                          <span className="text-[11px] px-2 py-1 rounded-full bg-blue-600 text-white">Mejor valor</span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-3 pr-20">
-                          <div className="min-w-0">
-                            <div className="text-sm font-semibold text-zinc-900 leading-5">12 meses</div>
-                            <div className="text-[11px] text-zinc-500 leading-4">≈ {PRICE_YEAR_PER_MONTH} / mes</div>
-                          </div>
-                          <div className="text-sm font-semibold text-zinc-900">{PRICE_YEAR}</div>
-                        </div>
-                      </button>
-
-                      {/* MONTH */}
-                      <button
-                        onClick={() => setPlan("monthly")}
-                        className={[
-                          "w-full rounded-2xl border px-4 py-4 text-left transition-colors cursor-pointer select-none",
-                          "h-[84px]",
-                          plan === "monthly" ? `border-blue-700 bg-blue-600 text-white ${planCardSelectedRing}` : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                        disabled={!!payLoading}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="text-sm font-semibold leading-5">1 mes</div>
-                            <div className={plan === "monthly" ? "text-[11px] text-white/80 leading-4" : "text-[11px] text-zinc-500 leading-4"}>
-                              Cancela cuando quieras
-                            </div>
-                          </div>
-                          <div className="text-sm font-semibold">{PRICE_MONTH}</div>
-                        </div>
-                      </button>
-
-                      {/* FREE small option (sin romper el layout) */}
-                      <button
-                        onClick={() => setPlan("free")}
-                        className={[
-                          "w-full rounded-2xl border px-4 py-3 text-left transition-colors cursor-pointer select-none",
-                          "h-[64px]",
-                          plan === "free" ? `border-blue-200 bg-blue-50 ${planCardSelectedRing}` : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                        disabled={!!payLoading}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="text-sm font-semibold text-zinc-900 leading-5">Seguir en Gratis</div>
-                            <div className="text-[11px] text-zinc-500 leading-4">2 análisis incluidos</div>
-                          </div>
-                          <div className="text-sm font-semibold text-zinc-900">0€</div>
-                        </div>
-                      </button>
-                    </div>
-
-                    <div className="mt-3 text-[11px] text-zinc-500 leading-4 px-1">
-                      Pago seguro con Stripe. Renovación automática en Pro. Cancela cuando quieras.
-                    </div>
-                  </div>
-
-                  {/* CTA sticky bottom (siempre visible) */}
-                  <div className="mt-3 rounded-[26px] border border-zinc-200 bg-white p-3 shrink-0">
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={() => {
-                        if (plan === "free") {
-                          setPaywallOpen(false);
-                          setPayMsg(null);
-                          return;
-                        }
-                        if (plan === "monthly" || plan === "yearly") startCheckout(plan);
-                      }}
-                      className={[
-                        "h-12 w-full rounded-2xl text-sm font-semibold cursor-pointer transition-colors disabled:opacity-50",
-                        plan === "free" ? "bg-zinc-900 text-white hover:bg-black" : "bg-blue-600 text-white hover:bg-blue-700",
-                      ].join(" ")}
+                      onClick={closePaywall}
+                      className="h-11 w-11 rounded-full bg-white/80 backdrop-blur-xl border border-zinc-200 hover:bg-white transition-colors grid place-items-center cursor-pointer disabled:opacity-50"
+                      aria-label="Cerrar"
                       disabled={!!payLoading}
+                      title="Cerrar"
                     >
-                      {payLoading ? "Procesando…" : plan === "free" ? "Volver al chat" : "Continuar"}
+                      <span className="text-zinc-700 text-[18px] leading-none">×</span>
                     </button>
-
-                    <div className="mt-2 text-center text-[11px] text-zinc-500 leading-4">
-                      {plan === "free" ? "Sin pago. Acceso básico." : "7 días de prueba si aplica. Cancela en cualquier momento."}
-                    </div>
-
-                    {isPro && (
-                      <button
-                        onClick={cancelSubscriptionFromHere}
-                        className="mt-2 h-11 w-full rounded-2xl border border-red-200 hover:bg-red-50 text-sm cursor-pointer disabled:opacity-50 text-red-700"
-                        disabled={!!payLoading}
-                      >
-                        Cancelar suscripción
-                      </button>
-                    )}
                   </div>
                 </div>
 
-                {/* DESKTOP layout (horizontal tipo Google Workspace): 3 columnas + panel info + footer CTA */}
-                <div className="hidden md:flex h-full min-h-0 flex-col">
-                  {/* top info row */}
-                  <div className="shrink-0 flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="text-[20px] font-semibold text-zinc-900">Elige el plan que mejor te encaje</div>
-                      <div className="text-[13px] text-zinc-500 mt-1">
-                        Menos incertidumbre. Más decisión segura.
-                      </div>
-                    </div>
-
-                    <div className="shrink-0 rounded-full border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-600">
-                      <span className="font-semibold text-zinc-900">Recomendado:</span> Anual
-                    </div>
-                  </div>
-
-                  {/* cards row */}
-                  <div className="mt-5 flex-1 min-h-0 overflow-hidden">
-                    <div className="h-full min-h-0 grid grid-cols-3 gap-4">
-                      {/* FREE */}
-                      <button
-                        onClick={() => setPlan("free")}
-                        className={[
-                          planCardBase,
-                          planCardH,
-                          plan === "free" ? `bg-blue-50 border-blue-200 ${planCardSelectedRing}` : "hover:bg-zinc-50",
-                        ].join(" ")}
-                        disabled={!!payLoading}
-                      >
-                        <div className={planCardInner}>
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold text-zinc-900">Gratis</div>
-                              <div className="text-[12px] text-zinc-500 mt-1">Para probar Vonu</div>
-                            </div>
-                            <div className="text-[18px] font-semibold text-zinc-900">0€</div>
+                {/* layout */}
+                <div
+                  className="mt-3 md:mt-6 rounded-[28px] md:rounded-[34px] border border-zinc-200 bg-white/80 backdrop-blur-xl shadow-[0_30px_90px_rgba(0,0,0,0.14)] overflow-hidden"
+                  style={{ height: "calc(var(--vvh, 100dvh) - 88px)" }}
+                >
+                  <div className="h-full grid grid-rows-[1fr_auto] md:grid-rows-1 md:grid-cols-[1.1fr_0.9fr]">
+                    {/* LEFT */}
+                    <div className="min-h-0 p-4 md:p-7 overflow-hidden">
+                      <div className="h-full min-h-0 flex flex-col">
+                        {/* headline */}
+                        <div className="shrink-0">
+                          <div className="inline-flex items-center gap-2 rounded-full bg-blue-600 text-white px-3 py-1 text-[11px] font-semibold">
+                            <SparkIcon className="h-4 w-4" />
+                            Mejor conversión: simple, claro, directo
                           </div>
 
-                          <div className="mt-4 space-y-2 text-[12.5px] text-zinc-700">
-                            {freeFeatures.map((x) => (
-                              <div key={x} className="flex items-start gap-2">
+                          <div className="mt-3 text-[22px] md:text-[28px] font-semibold text-zinc-900 leading-tight">
+                            Pasa de “no sé qué hacer” a “sé qué haría ahora”.
+                          </div>
+                          <div className="mt-2 text-[13px] md:text-[14px] text-zinc-600 leading-5">
+                            Vonu Pro te da más contexto, más señales y recomendaciones más concretas para decidir con calma.
+                          </div>
+
+                          {!isLoggedIn && (
+                            <div className="mt-3 rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-[12px] text-zinc-600">
+                              Puedes ver los planes. Para pagar te pediremos iniciar sesión.
+                            </div>
+                          )}
+                        </div>
+
+                        {/* bullets */}
+                        <div className="mt-5 md:mt-7 flex-1 min-h-0 overflow-y-auto pr-1">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {proBullets.map((x) => (
+                              <div key={x} className="rounded-2xl border border-zinc-200 bg-white px-3 py-3 flex gap-2">
                                 <span className="mt-[2px] text-blue-700">
                                   <CheckIcon />
                                 </span>
-                                <span className="leading-5">{x}</span>
+                                <div className="text-[12.5px] text-zinc-700 leading-5">{x}</div>
                               </div>
                             ))}
                           </div>
 
-                          {/* espacio fijo para no “saltar” */}
-                          <div className="mt-auto pt-4">
-                            <div className="h-10 rounded-2xl border border-zinc-200 bg-white grid place-items-center text-sm font-semibold text-zinc-900">
-                              Seguir en Gratis
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-
-                      {/* MONTHLY */}
-                      <button
-                        onClick={() => setPlan("monthly")}
-                        className={[
-                          planCardBase,
-                          planCardH,
-                          plan === "monthly" ? `bg-blue-600 border-blue-700 text-white ${planCardSelectedRing}` : "hover:bg-zinc-50",
-                        ].join(" ")}
-                        disabled={!!payLoading}
-                      >
-                        <div className={planCardInner}>
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold">Mensual</div>
-                              <div className={plan === "monthly" ? "text-[12px] text-white/80 mt-1" : "text-[12px] text-zinc-500 mt-1"}>
-                                Flexible
-                              </div>
-                            </div>
-                            <div className="text-[18px] font-semibold">{PRICE_MONTH}</div>
-                          </div>
-
-                          <div className="mt-4 space-y-2 text-[12.5px]">
-                            {proFeatures.slice(0, 4).map((x) => (
-                              <div key={x} className="flex items-start gap-2">
-                                <span className={plan === "monthly" ? "mt-[2px] text-white" : "mt-[2px] text-blue-700"}>
-                                  <CheckIcon />
-                                </span>
-                                <span className={plan === "monthly" ? "leading-5 text-white/95" : "leading-5 text-zinc-700"}>{x}</span>
+                          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            {trustBullets.map((t) => (
+                              <div key={t.title} className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-3">
+                                <div className="flex items-center gap-2 text-zinc-900">
+                                  <span className="text-blue-700">{t.icon}</span>
+                                  <div className="text-[12px] font-semibold">{t.title}</div>
+                                </div>
+                                <div className="mt-1 text-[11px] text-zinc-600 leading-4">{t.desc}</div>
                               </div>
                             ))}
                           </div>
 
-                          <div className="mt-auto pt-4">
-                            <div className={plan === "monthly" ? "h-10 rounded-2xl bg-white/15 border border-white/25 grid place-items-center text-sm font-semibold" : "h-10 rounded-2xl border border-zinc-200 bg-white grid place-items-center text-sm font-semibold text-zinc-900"}>
-                              Elegir Mensual
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-
-                      {/* YEARLY */}
-                      <button
-                        onClick={() => setPlan("yearly")}
-                        className={[
-                          planCardBase,
-                          planCardH,
-                          "relative",
-                          plan === "yearly" ? `bg-blue-50 border-blue-200 ${planCardSelectedRing}` : "hover:bg-zinc-50",
-                        ].join(" ")}
-                        disabled={!!payLoading}
-                      >
-                        <div className="absolute top-4 right-4">
-                          <span className="text-[11px] px-2 py-1 rounded-full bg-blue-600 text-white">Mejor valor</span>
-                        </div>
-
-                        <div className={planCardInner}>
-                          <div className="flex items-start justify-between gap-3 pr-16">
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold text-zinc-900">Anual</div>
-                              <div className="text-[12px] text-zinc-500 mt-1">Ahorra vs. mensual</div>
-                            </div>
-
-                            <div className="text-right">
-                              <div className="text-[18px] font-semibold text-zinc-900">{PRICE_YEAR}</div>
-                              <div className="text-[12px] text-zinc-500 mt-1">≈ {PRICE_YEAR_PER_MONTH}/mes</div>
+                          {/* social proof / microcopy */}
+                          <div className="mt-4 rounded-2xl border border-zinc-200 bg-white px-4 py-3">
+                            <div className="text-[12px] font-semibold text-zinc-900">¿Por qué funciona?</div>
+                            <div className="mt-1 text-[12px] text-zinc-600 leading-5">
+                              Porque reduce la incertidumbre: te devuelve <span className="font-semibold text-zinc-900">señales</span>,{" "}
+                              <span className="font-semibold text-zinc-900">riesgo real</span> y{" "}
+                              <span className="font-semibold text-zinc-900">próximo paso</span> en un formato claro.
                             </div>
                           </div>
 
-                          <div className="mt-4 space-y-2 text-[12.5px] text-zinc-700">
-                            {proFeatures.map((x) => (
-                              <div key={x} className="flex items-start gap-2">
-                                <span className="mt-[2px] text-blue-700">
-                                  <CheckIcon />
-                                </span>
-                                <span className="leading-5">{x}</span>
+                          {/* error slot stable */}
+                          <div className="mt-3 min-h-[42px]">
+                            {payMsg ? (
+                              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">
+                                {payMsg}
                               </div>
-                            ))}
-                          </div>
-
-                          <div className="mt-auto pt-4">
-                            <div className="h-10 rounded-2xl bg-blue-600 text-white grid place-items-center text-sm font-semibold">
-                              Elegir Anual
-                            </div>
+                            ) : (
+                              <div className="opacity-0 select-none text-[12px]">placeholder</div>
+                            )}
                           </div>
                         </div>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* bottom bar: CTA + texto legal (siempre visible) */}
-                  <div className="mt-5 shrink-0 rounded-[26px] border border-zinc-200 bg-white px-4 py-3 flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold text-zinc-900">
-                        {plan === "free" ? "Plan Gratis" : plan === "monthly" ? "Plan Mensual" : "Plan Anual"}{" "}
-                        <span className="text-zinc-400 font-normal">·</span>{" "}
-                        <span className="text-zinc-500 font-normal">
-                          {plan === "free" ? "0€" : plan === "monthly" ? PRICE_MONTH : PRICE_YEAR}
-                        </span>
-                      </div>
-
-                      <div className="text-[11px] text-zinc-500 mt-0.5 leading-4">
-                        Pago seguro con Stripe. Renovación automática en Pro. Cancela cuando quieras.
-                      </div>
-
-                      {/* espacio fijo para error sin mover la barra */}
-                      <div className="mt-2 min-h-[20px]">
-                        {payMsg ? <div className="text-[11px] text-zinc-700">{payMsg}</div> : <div className="opacity-0 select-none text-[11px]">placeholder</div>}
                       </div>
                     </div>
 
-                    <div className="shrink-0 flex items-center gap-2">
-                      {isPro ? (
+                    {/* RIGHT */}
+                    <div className="min-h-0 border-t md:border-t-0 md:border-l border-zinc-200 bg-white/70 p-4 md:p-7">
+                      <div className="h-full min-h-0 flex flex-col">
+                        {/* plan switch */}
+                        <div className="shrink-0">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-semibold text-zinc-900">Elige tu plan</div>
+                            {plan === "yearly" && (
+                              <div className="text-[11px] px-2 py-1 rounded-full bg-blue-600 text-white font-semibold">
+                                Recomendado
+                              </div>
+                            )}
+                          </div>
+
+                          {/* segmented control */}
+                          <div className="mt-3 rounded-full border border-zinc-200 bg-white p-1 flex gap-1">
+                            <button
+                              onClick={() => setPlan("monthly")}
+                              className={[
+                                "h-10 flex-1 rounded-full text-sm font-semibold transition-colors cursor-pointer",
+                                plan === "monthly" ? "bg-blue-600 text-white" : "bg-white text-zinc-700 hover:bg-zinc-50",
+                              ].join(" ")}
+                              disabled={!!payLoading}
+                            >
+                              Mensual
+                            </button>
+                            <button
+                              onClick={() => setPlan("yearly")}
+                              className={[
+                                "h-10 flex-1 rounded-full text-sm font-semibold transition-colors cursor-pointer relative",
+                                plan === "yearly" ? "bg-blue-600 text-white" : "bg-white text-zinc-700 hover:bg-zinc-50",
+                              ].join(" ")}
+                              disabled={!!payLoading}
+                            >
+                              Anual
+                              <span
+                                className={[
+                                  "absolute -top-2 right-2 text-[10px] px-2 py-0.5 rounded-full font-semibold",
+                                  plan === "yearly" ? "bg-white/15 text-white" : "bg-blue-50 text-blue-700 border border-blue-200",
+                                ].join(" ")}
+                              >
+                                Mejor valor
+                              </span>
+                            </button>
+                          </div>
+
+                          {/* pricing card */}
+                          <div className="mt-3 rounded-[26px] border border-zinc-200 bg-white p-4">
+                            {plan === "monthly" ? (
+                              <>
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <div className="text-[12px] text-zinc-500">Plan Mensual</div>
+                                    <div className="text-[22px] font-semibold text-zinc-900 leading-7">{PRICE_MONTH}</div>
+                                    <div className="text-[12px] text-zinc-600 mt-1">Cancela cuando quieras.</div>
+                                  </div>
+                                  <div className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-2 text-[11px] text-zinc-700">
+                                    Flexible
+                                  </div>
+                                </div>
+
+                                <div className="mt-3 space-y-2 text-[12px] text-zinc-700">
+                                  {["Acceso Pro completo", "Renovación mensual", "Cancelación fácil"].map((x) => (
+                                    <div key={x} className="flex items-start gap-2">
+                                      <span className="mt-[2px] text-blue-700">
+                                        <CheckIcon />
+                                      </span>
+                                      <span className="leading-5">{x}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </>
+                            ) : plan === "yearly" ? (
+                              <>
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <div className="text-[12px] text-zinc-500">Plan Anual</div>
+                                    <div className="text-[22px] font-semibold text-zinc-900 leading-7">{PRICE_YEAR}</div>
+                                    <div className="text-[12px] text-zinc-600 mt-1">≈ {PRICE_YEAR_PER_MONTH} / mes</div>
+                                  </div>
+                                  <div className="rounded-full bg-blue-600 text-white px-3 py-2 text-[11px] font-semibold">
+                                    Recomendado
+                                  </div>
+                                </div>
+
+                                <div className="mt-3 space-y-2 text-[12px] text-zinc-700">
+                                  {["Ahorra frente al mensual", "Acceso Pro completo", "Prioridad a mejoras"].map((x) => (
+                                    <div key={x} className="flex items-start gap-2">
+                                      <span className="mt-[2px] text-blue-700">
+                                        <CheckIcon />
+                                      </span>
+                                      <span className="leading-5">{x}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <div className="text-[12px] text-zinc-500">Plan Gratis</div>
+                                    <div className="text-[22px] font-semibold text-zinc-900 leading-7">0€</div>
+                                    <div className="text-[12px] text-zinc-600 mt-1">
+                                      Incluye <span className="font-semibold text-zinc-900">{FREE_MESSAGE_LIMIT}</span> análisis.
+                                    </div>
+                                  </div>
+                                  <div className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-2 text-[11px] text-zinc-700">
+                                    Básico
+                                  </div>
+                                </div>
+
+                                <div className="mt-3 space-y-2 text-[12px] text-zinc-700">
+                                  {["2 análisis", "Uso básico", "Sin pago"].map((x) => (
+                                    <div key={x} className="flex items-start gap-2">
+                                      <span className="mt-[2px] text-blue-700">
+                                        <CheckIcon />
+                                      </span>
+                                      <span className="leading-5">{x}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          {/* free option (subtle) */}
+                          <button
+                            onClick={() => setPlan("free")}
+                            className={[
+                              "mt-3 w-full h-11 rounded-full border text-sm font-semibold transition-colors cursor-pointer",
+                              plan === "free" ? "border-blue-200 bg-blue-50 text-zinc-900" : "border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-800",
+                            ].join(" ")}
+                            disabled={!!payLoading}
+                          >
+                            Seguir en Gratis
+                          </button>
+
+                          <div className="mt-3 text-[11px] text-zinc-500 leading-4">
+                            Pago seguro con Stripe. Renovación automática en Pro. Cancela cuando quieras.
+                          </div>
+                        </div>
+
+                        {/* CTA area */}
+                        <div className="mt-auto pt-4">
+                          <button
+                            onClick={() => {
+                              if (plan === "free") {
+                                closePaywall();
+                                return;
+                              }
+                              if (plan === "monthly" || plan === "yearly") startCheckout(plan);
+                            }}
+                            className={[
+                              "w-full h-12 rounded-full text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50",
+                              plan === "free" ? "bg-zinc-900 text-white hover:bg-black" : "bg-blue-600 text-white hover:bg-blue-700",
+                            ].join(" ")}
+                            disabled={!!payLoading}
+                          >
+                            {payLoading ? "Procesando…" : plan === "free" ? "Volver al chat" : "Continuar a Pro"}
+                          </button>
+
+                          {/* secondary actions */}
+                          <div className="mt-2 flex items-center justify-between gap-2">
+                            <button
+                              onClick={closePaywall}
+                              className="h-10 px-4 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-[12px] text-zinc-700 cursor-pointer disabled:opacity-50"
+                              disabled={!!payLoading}
+                            >
+                              Ahora no
+                            </button>
+
+                            {isPro ? (
+                              <button
+                                onClick={cancelSubscriptionFromHere}
+                                className="h-10 px-4 rounded-full border border-red-200 hover:bg-red-50 text-[12px] text-red-700 cursor-pointer disabled:opacity-50"
+                                disabled={!!payLoading}
+                              >
+                                Cancelar suscripción
+                              </button>
+                            ) : (
+                              <div className="text-[11px] text-zinc-500">
+                                <span className="font-semibold text-zinc-700">Tip:</span> el anual es el más rentable.
+                              </div>
+                            )}
+                          </div>
+
+                          {/* tiny legal */}
+                          <div className="mt-3 text-center text-[10.5px] text-zinc-400 leading-4 px-4">
+                            Orientación preventiva. No sustituye profesionales. Los pagos se gestionan de forma segura.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* MOBILE bottom sticky CTA (already inside RIGHT in grid; this row is only for very small devices) */}
+                    <div className="md:hidden border-t border-zinc-200 bg-white/80 backdrop-blur-xl px-4 py-3">
+                      <div className="flex items-center justify-between gap-2">
                         <button
-                          onClick={cancelSubscriptionFromHere}
-                          className="h-11 px-4 rounded-2xl border border-red-200 hover:bg-red-50 text-sm cursor-pointer disabled:opacity-50 text-red-700"
+                          onClick={closePaywall}
+                          className="h-11 px-4 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50"
                           disabled={!!payLoading}
                         >
-                          Cancelar suscripción
+                          Cerrar
                         </button>
-                      ) : null}
-
-                      <button
-                        onClick={() => {
-                          if (plan === "free") {
-                            setPaywallOpen(false);
-                            setPayMsg(null);
-                            return;
-                          }
-                          if (plan === "monthly" || plan === "yearly") startCheckout(plan);
-                        }}
-                        className={[
-                          "h-11 px-5 rounded-2xl text-sm font-semibold cursor-pointer transition-colors disabled:opacity-50",
-                          plan === "free" ? "bg-zinc-900 text-white hover:bg-black" : "bg-blue-600 text-white hover:bg-blue-700",
-                        ].join(" ")}
-                        disabled={!!payLoading}
-                      >
-                        {payLoading ? "Procesando…" : plan === "free" ? "Volver al chat" : "Continuar"}
-                      </button>
+                        <button
+                          onClick={() => {
+                            if (plan === "free") {
+                              closePaywall();
+                              return;
+                            }
+                            if (plan === "monthly" || plan === "yearly") startCheckout(plan);
+                          }}
+                          className={[
+                            "h-11 px-5 rounded-full text-sm font-semibold cursor-pointer transition-colors disabled:opacity-50",
+                            plan === "free" ? "bg-zinc-900 text-white hover:bg-black" : "bg-blue-600 text-white hover:bg-blue-700",
+                          ].join(" ")}
+                          disabled={!!payLoading}
+                        >
+                          {payLoading ? "Procesando…" : plan === "free" ? "Volver" : "Continuar"}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
+
+                {/* bottom spacing */}
+                <div className="h-4 md:h-6" />
               </div>
             </div>
           </div>
@@ -1474,7 +1485,6 @@ export default function Page() {
                 <div className="h-px flex-1 bg-zinc-200" />
               </div>
 
-              {/* ✅ Logos desde public/auth (ojo: mayúsculas en Vercel/Linux) */}
               <button
                 onClick={() => signInWithOAuth("google")}
                 className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
@@ -1493,7 +1503,6 @@ export default function Page() {
                 Continuar con Microsoft
               </button>
 
-              {/* Apple (UI lista, provider aún por configurar) */}
               <button
                 onClick={() => setLoginMsg("Apple estará disponible en breve.")}
                 className="w-full h-11 rounded-full bg-black hover:bg-zinc-900 text-white text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
@@ -1579,7 +1588,7 @@ export default function Page() {
             <button
               onClick={handleOpenPlansCTA}
               className="h-11 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer shadow-sm border border-blue-700/10"
-              title={payTitle}
+              title="Ver planes"
             >
               {topCtaText}
             </button>
@@ -1881,9 +1890,7 @@ export default function Page() {
           </div>
 
           <div className="mx-auto max-w-3xl px-3 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
-            <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">
-              Orientación preventiva. No sustituye profesionales.
-            </p>
+            <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">Orientación preventiva. No sustituye profesionales.</p>
             {!hasUserMessage && <div className="h-1" />}
           </div>
         </div>
