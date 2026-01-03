@@ -977,6 +977,7 @@ export default function Page() {
   const PRICE_MONTH = "4,99€";
   const PRICE_YEAR = "39,99€";
   const PRICE_YEAR_PER_MONTH = "3,33€";
+  const YEAR_SAVE_BADGE = "Ahorra 33%";
 
   function closePaywall() {
     if (payLoading) return;
@@ -1037,12 +1038,19 @@ export default function Page() {
 
                 <button
                   onClick={closePaywall}
-                  className="h-11 w-11 rounded-full bg-white/90 backdrop-blur-xl border border-zinc-200 hover:bg-white transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50 shadow-sm"
+                  className={[
+                    "h-11 w-11 aspect-square rounded-full",
+                    "bg-white/90 backdrop-blur-xl border border-zinc-200",
+                    "hover:bg-white transition-colors",
+                    "grid place-items-center",
+                    "cursor-pointer disabled:opacity-50 shadow-sm",
+                    "p-0",
+                  ].join(" ")}
                   aria-label="Cerrar"
                   disabled={!!payLoading}
                   title="Cerrar"
                 >
-                  <span className="text-zinc-700 text-[20px] leading-none">×</span>
+                  <span className="text-zinc-700 text-[20px] leading-none relative top-[-0.5px]">×</span>
                 </button>
               </div>
 
@@ -1087,7 +1095,7 @@ export default function Page() {
                           </div>
 
                           <div className="shrink-0 text-[11px] text-zinc-500">
-                            <span className="font-semibold text-zinc-800">Ahorra</span>
+                            <span className="font-semibold text-zinc-800">{YEAR_SAVE_BADGE}</span>
                           </div>
                         </div>
                       </button>
@@ -1137,9 +1145,7 @@ export default function Page() {
                               </div>
                               <div className="text-[13px] font-semibold text-zinc-900">Seguir en Gratis</div>
                             </div>
-                            <div className="mt-1 text-[12px] text-zinc-600">
-                              Incluye <span className="font-semibold text-zinc-900">{FREE_MESSAGE_LIMIT}</span> análisis.
-                            </div>
+                            <div className="mt-1 text-[12px] text-zinc-600">Análisis limitados.</div>
                           </div>
                           <div className="shrink-0 text-[12px] font-semibold text-zinc-900">0€</div>
                         </div>
@@ -1228,14 +1234,8 @@ export default function Page() {
 
       {/* ===== LOGIN MODAL ===== */}
       {loginOpen && (
-        <div
-          className="fixed inset-0 z-[80] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6"
-          onClick={() => (!loginSending ? setLoginOpen(false) : null)}
-        >
-          <div
-            className="w-full max-w-[380px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 z-[80] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6" onClick={() => (!loginSending ? setLoginOpen(false) : null)}>
+          <div className="w-full max-w-[380px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-[18px] font-semibold text-zinc-900">{authMode === "signin" ? "Iniciar sesión" : "Crear cuenta"}</div>
@@ -1247,11 +1247,11 @@ export default function Page() {
                   setLoginOpen(false);
                   setLoginMsg(null);
                 }}
-                className="h-9 w-9 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer"
+                className="h-9 w-9 aspect-square rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer p-0"
                 aria-label="Cerrar"
                 disabled={!!loginSending}
               >
-                ×
+                <span className="text-[18px] leading-none relative top-[-0.5px]">×</span>
               </button>
             </div>
 
@@ -1525,7 +1525,10 @@ export default function Page() {
                             handleOpenPlansCTA();
                             setMenuOpen(false);
                           }}
-                          className={["text-xs px-3 py-2 rounded-full transition-colors cursor-pointer", isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700"].join(" ")}
+                          className={[
+                            "text-xs px-3 py-2 rounded-full transition-colors cursor-pointer",
+                            isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700",
+                          ].join(" ")}
                         >
                           {isPro ? "Ver" : "Mejorar"}
                         </button>
