@@ -1569,56 +1569,42 @@ export default function Page() {
         {/* CHAT */}
         <div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0">
           <div className="mx-auto max-w-3xl px-3 md:px-6" style={{ paddingTop: 92, paddingBottom: chatBottomPad }}>
-            <div className="space-y-3 py-8 md:pt-6">
-              {messages.map((msg) => {
-                if (msg.role === "assistant") {
-                  const mdText = (msg.text || "") + (msg.streaming ? " ▍" : "");
-                  return (
-                    <div key={msg.id} className="flex justify-start">
-                      <div className="max-w-[92%] md:max-w-[80%]">
-                        {/* ✅ burbuja WhatsApp (pico triángulo arriba, izquierda) */}
-                        <div className="relative bg-blue-50 text-zinc-900 border border-blue-100 rounded-[22px] rounded-tl-[0px] px-4 py-3 shadow-[0_1px_0_rgba(0,0,0,0.05)] ml-2">
-                          {/* Pico izquierda */}
-                          <span className="pointer-events-none absolute top-0 left-[-10px]">
-                            <svg width="13" height="13" viewBox="0 0 13 13" className="block">
-                              <path d="M13 0H0L13 13V0Z" fill="rgb(239 246 255)" />
-                            </svg>
-                          </span>
+            {/* ✅ Nuevo layout estilo WhatsApp con pseudo-elementos (sin clases inválidas) */}
+            <div className="flex flex-col gap-4 py-8 md:pt-6">
+              {messages.map((m) => {
+                const isUser = m.role === "user";
 
-                          <div
-                            className={[
-                              "prose prose-zinc max-w-none",
-                              "text-[15px] md:text-[15.5px]",
-                              "leading-[1.6]",
-                              "prose-headings:font-semibold prose-headings:text-zinc-900",
-                              "prose-h3:text-[17px] md:prose-h3:text-[18px]",
-                              "prose-p:my-3",
-                            ].join(" ")}
-                          >
-                            <ReactMarkdown>{mdText}</ReactMarkdown>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
+                const mdText = isUser ? (m.text ?? "") : (m.text || "") + (m.streaming ? " ▍" : "");
 
                 return (
-                  <div key={msg.id} className="flex justify-end">
-                    <div className="max-w-[92%] md:max-w-[80%] space-y-2">
-                      {msg.image && <img src={msg.image} alt="Adjunto" className="rounded-3xl border border-zinc-200 max-h-64 object-contain" />}
-                      {msg.text && (
-                        <div className="relative bg-blue-600 text-white text-[14.5px] leading-relaxed rounded-[22px] rounded-tr-[0px] px-4 py-2.5 break-words shadow-[0_1px_0_rgba(0,0,0,0.06)] mr-2">
-                          {/* Pico derecha */}
-                          <span className="pointer-events-none absolute top-0 right-[-10px]">
-                            <svg width="13" height="13" viewBox="0 0 13 13" className="block">
-                              <path d="M0 0h13v13L0 0Z" fill="rgb(37 99 235)" />
-                            </svg>
-                          </span>
-
-                          {msg.text}
+                  <div key={m.id} className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
+                    <div
+                      className={[
+                        "relative max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed break-words",
+                        isUser
+                          ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none mr-2"
+                          : "bg-white text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none ml-2 border border-zinc-100",
+                        // Tail pseudo-element base
+                        "after:content-[''] after:absolute after:top-0 after:w-0 after:h-0 after:border-solid",
+                        // Tail geometry (wing/WhatsApp-like right angle)
+                        isUser
+                          ? "after:-right-[10px] after:border-t-[13px] after:border-l-[13px] after:border-t-[#dcf8c6] after:border-l-transparent after:border-r-0 after:border-b-0"
+                          : "after:-left-[10px] after:border-t-[13px] after:border-r-[13px] after:border-t-white after:border-r-transparent after:border-l-0 after:border-b-0",
+                      ].join(" ")}
+                    >
+                      {m.image && (
+                        <div className="mb-2">
+                          <img src={m.image} alt="Adjunto" className="rounded-md max-h-60 object-cover" />
                         </div>
                       )}
+
+                      {m.text && (
+                        <ReactMarkdown className="prose prose-sm max-w-none break-words">
+                          {mdText}
+                        </ReactMarkdown>
+                      )}
+
+                      {m.streaming && <span className="inline-block w-1.5 h-1.5 ml-1 bg-zinc-400 rounded-full animate-pulse" />}
                     </div>
                   </div>
                 );
