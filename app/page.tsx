@@ -1620,15 +1620,14 @@ export default function Page() {
                   return (
                     <div key={msg.id} className="flex justify-start">
                       <div className="max-w-[92%] md:max-w-[80%]">
-                        {/* ✅ burbuja con pico hacia fuera (izquierda) */}
+                        {/* ✅ burbuja estilo WhatsApp (pico curvo hacia fuera, izquierda) */}
                         <div
                           className={[
                             "relative",
                             "bg-blue-50 text-zinc-900 border border-blue-100 rounded-[22px] rounded-tl-[6px] px-4 py-3 shadow-[0_1px_0_rgba(0,0,0,0.05)]",
-                            // tail
-                            "after:content-[''] after:absolute after:bottom-2 after:left-[-6px] after:w-3 after:h-3",
-                            "after:bg-blue-50 after:border-l after:border-b after:border-blue-100",
-                            "after:rotate-45 after:rounded-[2px]",
+                            // tail (curvo tipo WhatsApp): pieza + recorte
+                            "after:content-[''] after:absolute after:bottom-2 after:left-[-10px] after:w-5 after:h-5 after:bg-blue-50 after:border after:border-blue-100 after:rounded-full",
+                            "before:content-[''] before:absolute before:bottom-2 before:left-[-14px] before:w-5 before:h-5 before:bg-white before:rounded-full",
                           ].join(" ")}
                         >
                           <div
@@ -1654,14 +1653,14 @@ export default function Page() {
                     <div className="max-w-[92%] md:max-w-[80%] space-y-2">
                       {msg.image && <img src={msg.image} alt="Adjunto" className="rounded-3xl border border-zinc-200 max-h-64 object-contain" />}
                       {msg.text && (
-                        // ✅ burbuja con pico hacia fuera (derecha)
+                        /* ✅ burbuja estilo WhatsApp (pico curvo hacia fuera, derecha) */
                         <div
                           className={[
                             "relative",
                             "bg-blue-600 text-white text-[14.5px] leading-relaxed rounded-[22px] rounded-tr-[6px] px-4 py-2.5 break-words shadow-[0_1px_0_rgba(0,0,0,0.06)]",
-                            // tail
-                            "after:content-[''] after:absolute after:bottom-2 after:right-[-6px] after:w-3 after:h-3",
-                            "after:bg-blue-600 after:rotate-45 after:rounded-[2px]",
+                            // tail (curvo tipo WhatsApp): pieza + recorte
+                            "after:content-[''] after:absolute after:bottom-2 after:right-[-10px] after:w-5 after:h-5 after:bg-blue-600 after:rounded-full",
+                            "before:content-[''] before:absolute before:bottom-2 before:right-[-14px] before:w-5 before:h-5 before:bg-white before:rounded-full",
                           ].join(" ")}
                         >
                           {msg.text}
@@ -1753,4 +1752,3 @@ export default function Page() {
     </div>
   );
 }
-
