@@ -1569,11 +1569,10 @@ export default function Page() {
         {/* CHAT */}
         <div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0">
           <div className="mx-auto max-w-3xl px-3 md:px-6" style={{ paddingTop: 92, paddingBottom: chatBottomPad }}>
-            {/* ✅ Nuevo layout estilo WhatsApp con pseudo-elementos (sin clases inválidas) */}
+            {/* ✅ Nuevo layout estilo WhatsApp con pseudo-elementos */}
             <div className="flex flex-col gap-4 py-8 md:pt-6">
               {messages.map((m) => {
                 const isUser = m.role === "user";
-
                 const mdText = isUser ? (m.text ?? "") : (m.text || "") + (m.streaming ? " ▍" : "");
 
                 return (
@@ -1584,9 +1583,7 @@ export default function Page() {
                         isUser
                           ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none mr-2"
                           : "bg-white text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none ml-2 border border-zinc-100",
-                        // Tail pseudo-element base
                         "after:content-[''] after:absolute after:top-0 after:w-0 after:h-0 after:border-solid",
-                        // Tail geometry (wing/WhatsApp-like right angle)
                         isUser
                           ? "after:-right-[10px] after:border-t-[13px] after:border-l-[13px] after:border-t-[#dcf8c6] after:border-l-transparent after:border-r-0 after:border-b-0"
                           : "after:-left-[10px] after:border-t-[13px] after:border-r-[13px] after:border-t-white after:border-r-transparent after:border-l-0 after:border-b-0",
@@ -1598,10 +1595,11 @@ export default function Page() {
                         </div>
                       )}
 
-                      {m.text && (
-                        <ReactMarkdown className="prose prose-sm max-w-none break-words">
-                          {mdText}
-                        </ReactMarkdown>
+                      {/* ✅ FIX: react-markdown no acepta className -> wrapper con clases */}
+                      {(m.text || m.streaming) && (
+                        <div className="prose prose-sm max-w-none break-words">
+                          <ReactMarkdown>{mdText}</ReactMarkdown>
+                        </div>
                       )}
 
                       {m.streaming && <span className="inline-block w-1.5 h-1.5 ml-1 bg-zinc-400 rounded-full animate-pulse" />}
