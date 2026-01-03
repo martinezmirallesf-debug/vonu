@@ -1052,19 +1052,12 @@ export default function Page() {
                 style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}
               >
                 <div className="h-full flex flex-col p-4">
-                  {/* compact badge (one-liner) */}
-                  <div className="shrink-0">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-blue-600 text-white px-3 py-1 text-[11px] font-semibold">
-                      <SparkIcon className="h-4 w-4" />
-                      Simple · claro · directo
-                    </div>
-                  </div>
-
                   {/* plans */}
-                  <div className="mt-3 rounded-[22px] border border-zinc-200 bg-white p-3">
+                  <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
                     <div className="flex items-center justify-between">
                       <div className="text-[13px] font-semibold text-zinc-900">Elige tu plan</div>
-                      {plan === "yearly" && <div className="text-[10px] px-2 py-1 rounded-full bg-blue-600 text-white font-semibold">Recomendado</div>}
+                      {/* (quitado "Recomendado" para no repetir y evitar cambios de layout) */}
+                      <div className="opacity-0 select-none text-[10px] px-2 py-1 rounded-full">placeholder</div>
                     </div>
 
                     <div className="mt-3 space-y-2">
@@ -1167,18 +1160,29 @@ export default function Page() {
                         </div>
                       ))}
                     </div>
-                    <div className="mt-2 text-[11px] text-zinc-500 leading-4">Pago seguro con Stripe. Cancela cuando quieras.</div>
+
+                    {/* línea única con escudito pequeño */}
+                    <div className="mt-2 flex items-center gap-2 text-[11px] text-zinc-500 leading-4">
+                      <span className="text-blue-700">
+                        <ShieldIcon className="h-4 w-4" />
+                      </span>
+                      <span>Pago seguro con Stripe. Cancela cuando quieras.</span>
+                    </div>
                   </div>
 
-                  {/* error/message (solo si existe, sin reservar huecos) */}
-                  {payMsg ? (
-                    <div className="mt-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">
-                      {payMsg}
-                    </div>
-                  ) : null}
+                  {/* mensaje/error (reservado para que NO mueva nada) */}
+                  <div className="mt-3 min-h-[42px]">
+                    {payMsg ? (
+                      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">
+                        {payMsg}
+                      </div>
+                    ) : (
+                      <div className="opacity-0 select-none text-[12px] px-3 py-2">placeholder</div>
+                    )}
+                  </div>
 
                   {/* CTA bottom */}
-                  <div className="mt-auto pt-4 pb-[calc(env(safe-area-inset-bottom)+6px)]">
+                  <div className="mt-auto pt-3 pb-[calc(env(safe-area-inset-bottom)+6px)]">
                     <button
                       onClick={() => {
                         if (plan === "free") {
@@ -1196,32 +1200,18 @@ export default function Page() {
                       {payLoading ? "Procesando…" : plan === "free" ? "Volver al chat" : "Continuar"}
                     </button>
 
-                    <div className="mt-2 flex items-center justify-between gap-2">
+                    {/* si es Pro, dejamos solo el botón de cancelar (sin fila extra) */}
+                    {isPro ? (
                       <button
-                        onClick={closePaywall}
-                        className="h-10 px-4 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-[12px] text-zinc-700 cursor-pointer disabled:opacity-50"
+                        onClick={cancelSubscriptionFromHere}
+                        className="mt-2 w-full h-10 rounded-full border border-red-200 hover:bg-red-50 text-[12px] text-red-700 cursor-pointer disabled:opacity-50"
                         disabled={!!payLoading}
                       >
-                        Ahora no
+                        Cancelar suscripción
                       </button>
-
-                      {isPro ? (
-                        <button
-                          onClick={cancelSubscriptionFromHere}
-                          className="h-10 px-4 rounded-full border border-red-200 hover:bg-red-50 text-[12px] text-red-700 cursor-pointer disabled:opacity-50"
-                          disabled={!!payLoading}
-                        >
-                          Cancelar suscripción
-                        </button>
-                      ) : (
-                        <div className="text-[11px] text-zinc-500 flex items-center gap-1">
-                          <span className="text-blue-700">
-                            <ShieldIcon className="h-4 w-4" />
-                          </span>
-                          <span>Seguro · Stripe</span>
-                        </div>
-                      )}
-                    </div>
+                    ) : (
+                      <div className="mt-2 opacity-0 select-none h-10">placeholder</div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1525,7 +1515,10 @@ export default function Page() {
                             handleOpenPlansCTA();
                             setMenuOpen(false);
                           }}
-                          className={["text-xs px-3 py-2 rounded-full transition-colors cursor-pointer", isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700"].join(" ")}
+                          className={[
+                            "text-xs px-3 py-2 rounded-full transition-colors cursor-pointer",
+                            isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700",
+                          ].join(" ")}
                         >
                           {isPro ? "Ver" : "Mejorar"}
                         </button>
