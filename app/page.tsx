@@ -65,12 +65,7 @@ function isDesktopPointer() {
 function UserIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M12 12c2.761 0 5-2.239 5-5S14.761 2 12 2 7 4.239 7 7s2.239 5 5 5Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <path d="M12 12c2.761 0 5-2.239 5-5S14.761 2 12 2 7 4.239 7 7s2.239 5 5 5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       <path d="M4 22c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
@@ -111,12 +106,7 @@ function SparkIcon({ className }: { className?: string }) {
 function ShieldIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M12 2l8 4v6c0 5-3.4 9.4-8 10-4.6-.6-8-5-8-10V6l8-4Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
+      <path d="M12 2l8 4v6c0 5-3.4 9.4-8 10-4.6-.6-8-5-8-10V6l8-4Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
       <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -1001,9 +991,7 @@ export default function Page() {
       {/* TOAST */}
       {toastMsg && (
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[90] px-3">
-          <div className="rounded-full border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-sm px-4 py-2 text-xs text-zinc-800">
-            {toastMsg}
-          </div>
+          <div className="rounded-full border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-sm px-4 py-2 text-xs text-zinc-800">{toastMsg}</div>
         </div>
       )}
 
@@ -1055,16 +1043,12 @@ export default function Page() {
               </div>
 
               {/* body card (NO SCROLL) */}
-              <div
-                className="mt-4 rounded-[28px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden"
-                style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}
-              >
+              <div className="mt-4 rounded-[28px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}>
                 <div className="h-full flex flex-col p-4">
                   {/* plans */}
                   <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
                     <div className="flex items-center justify-between">
                       <div className="text-[13px] font-semibold text-zinc-900">Elige tu plan</div>
-                      {/* (quitado "Recomendado" para no repetir y evitar cambios de layout) */}
                       <div className="opacity-0 select-none text-[10px] px-2 py-1 rounded-full">placeholder</div>
                     </div>
 
@@ -1153,7 +1137,7 @@ export default function Page() {
                     </div>
                   </div>
 
-                  {/* benefits (copy más directo y vendedor) */}
+                  {/* benefits */}
                   <div className="mt-3 rounded-[22px] border border-zinc-200 bg-white p-3">
                     <div className="text-[12px] font-semibold text-zinc-900">{plan === "free" ? "Gratis" : "Lo que desbloqueas con Pro"}</div>
                     <div className="mt-2 space-y-2">
@@ -1168,7 +1152,7 @@ export default function Page() {
                     </div>
                   </div>
 
-                  {/* mensaje/error (reservado para que NO mueva nada) */}
+                  {/* mensaje/error */}
                   <div className="mt-3 min-h-[42px]">
                     {payMsg ? (
                       <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">{payMsg}</div>
@@ -1196,7 +1180,6 @@ export default function Page() {
                       {payLoading ? "Procesando…" : plan === "free" ? "Volver al chat" : "Continuar con el pago"}
                     </button>
 
-                    {/* pago seguro debajo del botón (sin “cancela…”) + SIN mover layout */}
                     <div className="mt-2 min-h-[20px] flex items-center justify-center">
                       {plan !== "free" ? (
                         <div className="flex items-center gap-2 text-[11px] text-zinc-500">
@@ -1210,7 +1193,6 @@ export default function Page() {
                       )}
                     </div>
 
-                    {/* si es Pro, dejamos solo el botón de cancelar (sin fila extra) */}
                     {isPro ? (
                       <button
                         onClick={cancelSubscriptionFromHere}
@@ -1407,20 +1389,10 @@ export default function Page() {
               aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
               title={menuOpen ? "Cerrar menú" : "Menú"}
             >
-              <img
-                src={"/vonu-icon.png?v=2"}
-                alt="Menú"
-                className={`h-6 w-6 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
-                draggable={false}
-              />
+              <img src={"/vonu-icon.png?v=2"} alt="Menú" className={`h-6 w-6 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`} draggable={false} />
             </button>
 
-            <a
-              href={HOME_URL}
-              className="h-11 -ml-0.5 pr-2 flex items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
-              aria-label="Ir a la home"
-              title="Ir a la home"
-            >
+            <a href={HOME_URL} className="h-11 -ml-0.5 pr-2 flex items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95" aria-label="Ir a la home" title="Ir a la home">
               <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-4 w-auto" draggable={false} />
             </a>
           </div>
@@ -1428,11 +1400,7 @@ export default function Page() {
 
         {!authLoading && (
           <div className="pointer-events-auto flex items-center gap-2">
-            <button
-              onClick={handleOpenPlansCTA}
-              className="h-11 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer shadow-sm border border-blue-700/10"
-              title="Ver planes"
-            >
+            <button onClick={handleOpenPlansCTA} className="h-11 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer shadow-sm border border-blue-700/10" title="Ver planes">
               {topCtaText}
             </button>
 
@@ -1457,10 +1425,7 @@ export default function Page() {
       </div>
 
       {/* ===== OVERLAY + SIDEBAR ===== */}
-      <div
-        className={`fixed inset-0 z-40 transition-all duration-300 ${menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent"}`}
-        onClick={() => setMenuOpen(false)}
-      >
+      <div className={`fixed inset-0 z-40 transition-all duration-300 ${menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent"}`} onClick={() => setMenuOpen(false)}>
         <aside
           className={[
             "absolute left-3 right-3 md:right-auto",
@@ -1525,10 +1490,7 @@ export default function Page() {
                             handleOpenPlansCTA();
                             setMenuOpen(false);
                           }}
-                          className={[
-                            "text-xs px-3 py-2 rounded-full transition-colors cursor-pointer",
-                            isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700",
-                          ].join(" ")}
+                          className={["text-xs px-3 py-2 rounded-full transition-colors cursor-pointer", isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700"].join(" ")}
                         >
                           {isPro ? "Ver" : "Mejorar"}
                         </button>
@@ -1606,13 +1568,7 @@ export default function Page() {
 
         {/* CHAT */}
         <div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0">
-          <div
-            className="mx-auto max-w-3xl px-3 md:px-6"
-            style={{
-              paddingTop: 92,
-              paddingBottom: chatBottomPad,
-            }}
-          >
+          <div className="mx-auto max-w-3xl px-3 md:px-6" style={{ paddingTop: 92, paddingBottom: chatBottomPad }}>
             <div className="space-y-3 py-8 md:pt-6">
               {messages.map((msg) => {
                 if (msg.role === "assistant") {
@@ -1620,16 +1576,15 @@ export default function Page() {
                   return (
                     <div key={msg.id} className="flex justify-start">
                       <div className="max-w-[92%] md:max-w-[80%]">
-                        {/* ✅ burbuja estilo WhatsApp (pico curvo hacia fuera, izquierda) */}
-                        <div
-                          className={[
-                            "relative",
-                            "bg-blue-50 text-zinc-900 border border-blue-100 rounded-[22px] rounded-tl-[6px] px-4 py-3 shadow-[0_1px_0_rgba(0,0,0,0.05)]",
-                            // tail (curvo tipo WhatsApp): pieza + recorte
-                            "after:content-[''] after:absolute after:bottom-2 after:left-[-10px] after:w-5 after:h-5 after:bg-blue-50 after:border after:border-blue-100 after:rounded-full",
-                            "before:content-[''] before:absolute before:bottom-2 before:left-[-14px] before:w-5 before:h-5 before:bg-white before:rounded-full",
-                          ].join(" ")}
-                        >
+                        {/* ✅ burbuja WhatsApp (pico triángulo arriba, izquierda) */}
+                        <div className="relative bg-blue-50 text-zinc-900 border border-blue-100 rounded-[22px] rounded-tl-[0px] px-4 py-3 shadow-[0_1px_0_rgba(0,0,0,0.05)] ml-2">
+                          {/* Pico izquierda */}
+                          <span className="pointer-events-none absolute top-0 left-[-10px]">
+                            <svg width="13" height="13" viewBox="0 0 13 13" className="block">
+                              <path d="M13 0H0L13 13V0Z" fill="rgb(239 246 255)" />
+                            </svg>
+                          </span>
+
                           <div
                             className={[
                               "prose prose-zinc max-w-none",
@@ -1653,16 +1608,14 @@ export default function Page() {
                     <div className="max-w-[92%] md:max-w-[80%] space-y-2">
                       {msg.image && <img src={msg.image} alt="Adjunto" className="rounded-3xl border border-zinc-200 max-h-64 object-contain" />}
                       {msg.text && (
-                        /* ✅ burbuja estilo WhatsApp (pico curvo hacia fuera, derecha) */
-                        <div
-                          className={[
-                            "relative",
-                            "bg-blue-600 text-white text-[14.5px] leading-relaxed rounded-[22px] rounded-tr-[6px] px-4 py-2.5 break-words shadow-[0_1px_0_rgba(0,0,0,0.06)]",
-                            // tail (curvo tipo WhatsApp): pieza + recorte
-                            "after:content-[''] after:absolute after:bottom-2 after:right-[-10px] after:w-5 after:h-5 after:bg-blue-600 after:rounded-full",
-                            "before:content-[''] before:absolute before:bottom-2 before:right-[-14px] before:w-5 before:h-5 before:bg-white before:rounded-full",
-                          ].join(" ")}
-                        >
+                        <div className="relative bg-blue-600 text-white text-[14.5px] leading-relaxed rounded-[22px] rounded-tr-[0px] px-4 py-2.5 break-words shadow-[0_1px_0_rgba(0,0,0,0.06)] mr-2">
+                          {/* Pico derecha */}
+                          <span className="pointer-events-none absolute top-0 right-[-10px]">
+                            <svg width="13" height="13" viewBox="0 0 13 13" className="block">
+                              <path d="M0 0h13v13L0 0Z" fill="rgb(37 99 235)" />
+                            </svg>
+                          </span>
+
                           {msg.text}
                         </div>
                       )}
@@ -1696,11 +1649,7 @@ export default function Page() {
               {imagePreview && (
                 <div className="mb-2 relative w-fit">
                   <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
-                  <button
-                    onClick={() => setImagePreview(null)}
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer"
-                    aria-label="Quitar imagen"
-                  >
+                  <button onClick={() => setImagePreview(null)} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer" aria-label="Quitar imagen">
                     ×
                   </button>
                 </div>
