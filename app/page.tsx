@@ -1580,13 +1580,13 @@ export default function Page() {
                     <div
                       className={[
                         "relative max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed break-words",
+                        // burbuja
                         isUser
                           ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none mr-2"
-                          : "bg-white text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none ml-2 border border-zinc-100",
-                        "after:content-[''] after:absolute after:top-0 after:w-0 after:h-0 after:border-solid",
-                        isUser
-                          ? "after:-right-[10px] after:border-t-[13px] after:border-l-[13px] after:border-t-[#dcf8c6] after:border-l-transparent after:border-r-0 after:border-b-0"
-                          : "after:-left-[10px] after:border-t-[13px] after:border-r-[13px] after:border-t-white after:border-r-transparent after:border-l-0 after:border-b-0",
+                          : "bg-[#e8f0fe] text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none ml-2",
+                        // cola (rombo rotado 45º) + sombra
+                        "after:content-[''] after:absolute after:w-3 after:h-3 after:rotate-45 after:shadow-sm after:top-[10px]",
+                        isUser ? "after:right-[-6px] after:bg-[#dcf8c6]" : "after:left-[-6px] after:bg-[#e8f0fe]",
                       ].join(" ")}
                     >
                       {m.image && (
