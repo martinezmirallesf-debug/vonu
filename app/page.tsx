@@ -1037,12 +1037,12 @@ export default function Page() {
 
                 <button
                   onClick={closePaywall}
-                  className="h-11 w-11 rounded-full bg-white/90 backdrop-blur-xl border border-zinc-200 hover:bg-white transition-colors grid place-items-center cursor-pointer disabled:opacity-50 shadow-sm"
+                  className="h-11 w-11 rounded-full bg-white/90 backdrop-blur-xl border border-zinc-200 hover:bg-white transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50 shadow-sm"
                   aria-label="Cerrar"
                   disabled={!!payLoading}
                   title="Cerrar"
                 >
-                  <span className="text-zinc-700 text-[18px] leading-none">×</span>
+                  <span className="text-zinc-700 text-[20px] leading-none">×</span>
                 </button>
               </div>
 
@@ -1147,11 +1147,11 @@ export default function Page() {
                     </div>
                   </div>
 
-                  {/* compact benefits (no repetición, no tarjetas extra) */}
+                  {/* benefits (copy más directo y vendedor) */}
                   <div className="mt-3 rounded-[22px] border border-zinc-200 bg-white p-3">
-                    <div className="text-[12px] font-semibold text-zinc-900">Incluye en Pro</div>
+                    <div className="text-[12px] font-semibold text-zinc-900">Lo que desbloqueas con Pro</div>
                     <div className="mt-2 space-y-2">
-                      {["Más señales y contexto", "Recomendación más concreta", "Decidir con calma"].map((x) => (
+                      {["Análisis ilimitados", "Más consejos y contexto", "Decidir con calma"].map((x) => (
                         <div key={x} className="flex items-start gap-2">
                           <span className="mt-[2px] text-blue-700">
                             <CheckIcon />
@@ -1160,22 +1160,12 @@ export default function Page() {
                         </div>
                       ))}
                     </div>
-
-                    {/* línea única con escudito pequeño */}
-                    <div className="mt-2 flex items-center gap-2 text-[11px] text-zinc-500 leading-4">
-                      <span className="text-blue-700">
-                        <ShieldIcon className="h-4 w-4" />
-                      </span>
-                      <span>Pago seguro con Stripe. Cancela cuando quieras.</span>
-                    </div>
                   </div>
 
                   {/* mensaje/error (reservado para que NO mueva nada) */}
                   <div className="mt-3 min-h-[42px]">
                     {payMsg ? (
-                      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">
-                        {payMsg}
-                      </div>
+                      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">{payMsg}</div>
                     ) : (
                       <div className="opacity-0 select-none text-[12px] px-3 py-2">placeholder</div>
                     )}
@@ -1197,8 +1187,22 @@ export default function Page() {
                       ].join(" ")}
                       disabled={!!payLoading}
                     >
-                      {payLoading ? "Procesando…" : plan === "free" ? "Volver al chat" : "Continuar"}
+                      {payLoading ? "Procesando…" : plan === "free" ? "Volver al chat" : "Continuar con el pago"}
                     </button>
+
+                    {/* pago seguro debajo del botón (sin “cancela…”) + SIN mover layout */}
+                    <div className="mt-2 min-h-[20px] flex items-center justify-center">
+                      {plan !== "free" ? (
+                        <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+                          <span className="text-blue-700">
+                            <ShieldIcon className="h-4 w-4" />
+                          </span>
+                          <span>Pago seguro con Stripe.</span>
+                        </div>
+                      ) : (
+                        <div className="opacity-0 select-none text-[11px]">placeholder</div>
+                      )}
+                    </div>
 
                     {/* si es Pro, dejamos solo el botón de cancelar (sin fila extra) */}
                     {isPro ? (
@@ -1224,8 +1228,14 @@ export default function Page() {
 
       {/* ===== LOGIN MODAL ===== */}
       {loginOpen && (
-        <div className="fixed inset-0 z-[80] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6" onClick={() => (!loginSending ? setLoginOpen(false) : null)}>
-          <div className="w-full max-w-[380px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-6" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-[80] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6"
+          onClick={() => (!loginSending ? setLoginOpen(false) : null)}
+        >
+          <div
+            className="w-full max-w-[380px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-[18px] font-semibold text-zinc-900">{authMode === "signin" ? "Iniciar sesión" : "Crear cuenta"}</div>
@@ -1515,10 +1525,7 @@ export default function Page() {
                             handleOpenPlansCTA();
                             setMenuOpen(false);
                           }}
-                          className={[
-                            "text-xs px-3 py-2 rounded-full transition-colors cursor-pointer",
-                            isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700",
-                          ].join(" ")}
+                          className={["text-xs px-3 py-2 rounded-full transition-colors cursor-pointer", isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700"].join(" ")}
                         >
                           {isPro ? "Ver" : "Mejorar"}
                         </button>
