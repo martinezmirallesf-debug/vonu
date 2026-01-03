@@ -1584,8 +1584,8 @@ export default function Page() {
                         isUser
                           ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none mr-2"
                           : "bg-[#e8f0fe] text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none ml-2",
-                        // cola (rombo rotado 45º) + sombra
-                        "after:content-[''] after:absolute after:w-3 after:h-3 after:rotate-45 after:shadow-sm after:top-[10px]",
+                        // cola (rombo rotado 45º) SIN sombra y alineado arriba
+                        "after:content-[''] after:absolute after:w-3 after:h-3 after:rotate-45 after:top-[3px]",
                         isUser ? "after:right-[-6px] after:bg-[#dcf8c6]" : "after:left-[-6px] after:bg-[#e8f0fe]",
                       ].join(" ")}
                     >
