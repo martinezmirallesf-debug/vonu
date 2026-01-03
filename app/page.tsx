@@ -970,7 +970,7 @@ export default function Page() {
   const SIDEBAR_TOP = TOP_OFFSET_PX + TOP_BUBBLE_H + TOP_GAP_PX;
 
   const planLabel = !isLoggedIn ? "Sin sesión" : isPro ? "Pro" : "Gratis";
-  const topCtaText = isPro ? "Tu plan" : "Mejorar";
+  const topCtaText = isPro ? "Tu plan" : "Pro"; // ✅ antes: "Mejorar"
   const payTitle = "Vonu Pro";
 
   // === PRICING COPY ===
@@ -1143,7 +1143,7 @@ export default function Page() {
                               <div className="h-5 w-5 rounded-full border border-zinc-300 grid place-items-center bg-white">
                                 <div className={["h-2.5 w-2.5 rounded-full", plan === "free" ? "bg-blue-600" : "bg-transparent"].join(" ")} />
                               </div>
-                              <div className="text-[13px] font-semibold text-zinc-900">Seguir en Gratis</div>
+                              <div className="text-[13px] font-semibold text-zinc-900">Seguir gratis</div>
                             </div>
                             <div className="mt-1 text-[12px] text-zinc-600">Análisis limitados.</div>
                           </div>
@@ -1155,9 +1155,9 @@ export default function Page() {
 
                   {/* benefits (copy más directo y vendedor) */}
                   <div className="mt-3 rounded-[22px] border border-zinc-200 bg-white p-3">
-                    <div className="text-[12px] font-semibold text-zinc-900">Lo que desbloqueas con Pro</div>
+                    <div className="text-[12px] font-semibold text-zinc-900">{plan === "free" ? "Gratis" : "Lo que desbloqueas con Pro"}</div>
                     <div className="mt-2 space-y-2">
-                      {["Análisis ilimitados", "Más consejos y contexto", "Decidir con calma"].map((x) => (
+                      {(plan === "free" ? ["Analisis Limitados", "Decidir con calma"] : ["Análisis ilimitados", "Más consejos y contexto", "Decidir con calma"]).map((x) => (
                         <div key={x} className="flex items-start gap-2">
                           <span className="mt-[2px] text-blue-700">
                             <CheckIcon />
