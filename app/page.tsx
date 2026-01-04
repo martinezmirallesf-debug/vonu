@@ -160,8 +160,9 @@ export default function Page() {
   const isBlockedByPaywall = !authLoading && !!authUserId && !proLoading && !isPro;
 
   // ===== Copy marketing (visible) =====
-  const PLUS_LABEL = (
-    <span>
+  const PLUS_TEXT = "Plus+";
+  const PLUS_NODE = (
+    <span className="inline-flex items-start">
       Plus
       <sup className="ml-0.5 text-[10px] relative -top-[2px]">+</sup>
     </span>
@@ -423,12 +424,12 @@ export default function Page() {
       if (!checkout) return;
 
       if (checkout === "success") {
-        setToastMsg("✅ Pago completado. Activando tu cuenta Plus…");
+        setToastMsg(`✅ Pago completado. Activando tu cuenta ${PLUS_TEXT}…`);
         url.searchParams.delete("checkout");
         window.history.replaceState({}, "", url.toString());
 
         refreshProStatus().finally(() => {
-          setToastMsg("✅ Listo. Ya tienes Plus activo.");
+          setToastMsg(`✅ Listo. Ya tienes ${PLUS_TEXT} activo.`);
           setTimeout(() => setToastMsg(null), 3500);
         });
       } else if (checkout === "cancel") {
@@ -934,7 +935,7 @@ export default function Page() {
     }
 
     if (!isPro) {
-      setPayMsg("Has llegado al límite del plan Gratis. Desbloquea Plus para seguir usando Vonu.");
+      setPayMsg(`Has llegado al límite del plan Gratis. Desbloquea ${PLUS_TEXT} para seguir usando Vonu.`);
       openPlansModal();
       return true;
     }
@@ -1103,8 +1104,14 @@ export default function Page() {
   const TOP_GAP_PX = 10;
   const SIDEBAR_TOP = TOP_OFFSET_PX + TOP_BUBBLE_H + TOP_GAP_PX;
 
-  const planLabel = !isLoggedIn ? "Sin sesión" : isPro ? "Plus" : "Gratis";
-  const payTitle = "Vonu Plus";
+  const planLabel = !isLoggedIn ? "Sin sesión" : isPro ? PLUS_NODE : "Gratis";
+  const planLabelText = !isLoggedIn ? "Sin sesión" : isPro ? PLUS_TEXT : "Gratis";
+  const payTitleNode = (
+    <span className="inline-flex items-center gap-1">
+      Vonu {PLUS_NODE}
+    </span>
+  );
+  const payTitleText = `Vonu ${PLUS_TEXT}`;
 
   // === PRICING COPY ===
   const PRICE_MONTH = "4,99€";
@@ -1161,7 +1168,7 @@ export default function Page() {
                     <img src={"/vonu-icon.png?v=2"} alt="Vonu" className="h-6 w-6" draggable={false} />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[14px] font-semibold text-zinc-900 leading-5">{payTitle}</div>
+                    <div className="text-[14px] font-semibold text-zinc-900 leading-5">{payTitleNode}</div>
                     <div className="text-[11px] text-zinc-500 leading-4">
                       Plan: <span className="font-semibold text-zinc-900">{planLabel}</span>
                       {proLoading ? <span className="ml-2 text-zinc-400">· comprobando…</span> : null}
@@ -1287,7 +1294,7 @@ export default function Page() {
 
                   {/* benefits */}
                   <div className="mt-3 rounded-[22px] border border-zinc-200 bg-white p-3">
-                    <div className="text-[12px] font-semibold text-zinc-900">{plan === "free" ? "Gratis" : "Lo que desbloqueas con Plus"}</div>
+                    <div className="text-[12px] font-semibold text-zinc-900">{plan === "free" ? "Gratis" : <>Lo que desbloqueas con {PLUS_NODE}</>}</div>
                     <div className="mt-2 space-y-2">
                       {(plan === "free" ? ["Analisis Limitados", "Decidir con calma"] : ["Análisis ilimitados", "Más consejos y contexto", "Decidir con calma"]).map((x) => (
                         <div key={x} className="flex items-start gap-2">
@@ -1398,7 +1405,7 @@ export default function Page() {
                   <div className="mt-1 text-[14px] font-semibold text-zinc-900 truncate">{authUserName ?? "Usuario"}</div>
                   <div className="text-[12px] text-zinc-600 truncate">{authUserEmail ?? "Email no disponible"}</div>
                   <div className="mt-2 text-[12px] text-zinc-600">
-                    Plan: <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? "Plus" : "Gratis"}</span>
+                    Plan: <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? PLUS_NODE : "Gratis"}</span>
                   </div>
                 </div>
 
@@ -1625,7 +1632,7 @@ export default function Page() {
               className="h-11 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer shadow-sm border border-blue-700/10"
               title="Ver planes"
             >
-              {isPro ? "Tu plan" : "Plus"}
+              {isPro ? "Tu plan" : PLUS_NODE}
             </button>
 
             {/* ✅ CAMBIO: nunca desloguear al click. Siempre abrir modal */}
@@ -1638,7 +1645,7 @@ export default function Page() {
                 "rounded-full",
               ].join(" ")}
               aria-label={isLoggedIn ? "Ver cuenta" : "Iniciar sesión"}
-              title={isLoggedIn ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : isPro ? "Plus" : "Gratis"}` : "Iniciar sesión"}
+              title={isLoggedIn ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : planLabelText}` : "Iniciar sesión"}
             >
               {/* pequeño estado visual */}
               <span
@@ -1716,7 +1723,7 @@ export default function Page() {
 
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-[11px] text-zinc-500">
-                        Plan: <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? "Plus" : "Gratis"}</span>
+                        Plan: <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? PLUS_NODE : "Gratis"}</span>
                       </div>
 
                       <button
