@@ -88,21 +88,6 @@ function CheckIcon({ className }: { className?: string }) {
   );
 }
 
-function SparkIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M12 2l1.4 5.1L18 8.5l-4.6 1.4L12 15l-1.4-5.1L6 8.5l4.6-1.4L12 2Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <path d="M20 14l.7 2.6L23 17.3l-2.3.7L20 20l-.7-2.6L17 16.7l2.3-.7L20 14Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M4 13l.7 2.6L7 16.3l-2.3.7L4 19l-.7-2.6L1 15.7l2.3-.7L4 13Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function ShieldIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -207,28 +192,32 @@ export default function Page() {
     }
   }
 
+  async function refreshAuthSession() {
+    try {
+      const { data } = await supabaseBrowser.auth.getSession();
+      const u = data?.session?.user;
+      const email = u?.email ?? null;
+      const id = u?.id ?? null;
+      const metaName = (u?.user_metadata?.full_name ?? u?.user_metadata?.name ?? null) as string | null;
+
+      setAuthUserEmail(email);
+      setAuthUserId(id);
+      setAuthUserName(deriveName(email, metaName));
+    } catch {
+      setAuthUserEmail(null);
+      setAuthUserId(null);
+      setAuthUserName(null);
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
   // Cargar sesión + escuchar cambios
   useEffect(() => {
     let unsub: (() => void) | null = null;
 
     (async () => {
-      try {
-        const { data } = await supabaseBrowser.auth.getSession();
-        const u = data?.session?.user;
-        const email = u?.email ?? null;
-        const id = u?.id ?? null;
-        const metaName = (u?.user_metadata?.full_name ?? u?.user_metadata?.name ?? null) as string | null;
-
-        setAuthUserEmail(email);
-        setAuthUserId(id);
-        setAuthUserName(deriveName(email, metaName));
-      } catch {
-        setAuthUserEmail(null);
-        setAuthUserId(null);
-        setAuthUserName(null);
-      } finally {
-        setAuthLoading(false);
-      }
+      await refreshAuthSession();
 
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
         const u = session?.user;
@@ -249,6 +238,26 @@ export default function Page() {
         unsub?.();
       } catch {}
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ✅ Refrescar sesión al volver al tab / focus (muy útil tras OAuth)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const onFocus = () => refreshAuthSession();
+    const onVis = () => {
+      if (document.visibilityState === "visible") refreshAuthSession();
+    };
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Refrescar pro al cambiar user
@@ -963,7 +972,7 @@ export default function Page() {
   const SIDEBAR_TOP = TOP_OFFSET_PX + TOP_BUBBLE_H + TOP_GAP_PX;
 
   const planLabel = !isLoggedIn ? "Sin sesión" : isPro ? "Pro" : "Gratis";
-  const topCtaText = isPro ? "Tu plan" : "Pro"; // ✅ antes: "Mejorar"
+  const topCtaText = isPro ? "Tu plan" : "Pro";
   const payTitle = "Vonu Pro";
 
   // === PRICING COPY ===
@@ -994,7 +1003,9 @@ export default function Page() {
       {/* TOAST */}
       {toastMsg && (
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[90] px-3">
-          <div className="rounded-full border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-sm px-4 py-2 text-xs text-zinc-800">{toastMsg}</div>
+          <div className="rounded-full border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-sm px-4 py-2 text-xs text-zinc-800">
+            {toastMsg}
+          </div>
         </div>
       )}
 
@@ -1046,7 +1057,10 @@ export default function Page() {
               </div>
 
               {/* body card (NO SCROLL) */}
-              <div className="mt-4 rounded-[28px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}>
+              <div
+                className="mt-4 rounded-[28px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden"
+                style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}
+              >
                 <div className="h-full flex flex-col p-4">
                   {/* plans */}
                   <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
@@ -1219,160 +1233,219 @@ export default function Page() {
 
       {/* ===== LOGIN MODAL ===== */}
       {loginOpen && (
-        <div className="fixed inset-0 z-[80] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6" onClick={() => (!loginSending ? setLoginOpen(false) : null)}>
+        <div
+          className="fixed inset-0 z-[80] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6"
+          onClick={() => (!loginSending ? setLoginOpen(false) : null)}
+        >
           <div className="w-full max-w-[380px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-[18px] font-semibold text-zinc-900">{authMode === "signin" ? "Iniciar sesión" : "Crear cuenta"}</div>
-                <div className="text-[12.5px] text-zinc-500 mt-1">{authMode === "signin" ? "para continuar" : "crea tu cuenta para continuar"}</div>
-              </div>
+            {/* ✅ Si ya hay sesión, mostramos estado claro */}
+            {isLoggedIn ? (
+              <>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[18px] font-semibold text-zinc-900">Sesión iniciada</div>
+                    <div className="text-[12.5px] text-zinc-500 mt-1">Estás dentro. Aquí tienes tu estado.</div>
+                  </div>
 
-              <button
-                onClick={() => {
-                  setLoginOpen(false);
-                  setLoginMsg(null);
-                }}
-                className="h-9 w-9 aspect-square rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer p-0"
-                aria-label="Cerrar"
-                disabled={!!loginSending}
-              >
-                <span className="text-[18px] leading-none relative top-[-0.5px]">×</span>
-              </button>
-            </div>
-
-            <div className="mt-5 space-y-3">
-              <div>
-                <div className="text-[12px] text-zinc-600 mb-1">Email</div>
-                <input
-                  ref={loginEmailRef}
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  className="w-full h-11 rounded-[14px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
-                  placeholder="tuemail@ejemplo.com"
-                  autoFocus={false}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") {
+                  <button
+                    onClick={() => {
                       setLoginOpen(false);
                       setLoginMsg(null);
-                    }
-                    if (e.key === "Enter") {
-                      authMode === "signin" ? signInWithPassword() : signUpWithPassword();
-                    }
-                  }}
-                />
-              </div>
+                    }}
+                    className="h-9 w-9 aspect-square rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer p-0"
+                    aria-label="Cerrar"
+                  >
+                    <span className="text-[18px] leading-none relative top-[-0.5px]">×</span>
+                  </button>
+                </div>
 
-              <div>
-                <div className="text-[12px] text-zinc-600 mb-1">Contraseña</div>
-                <input
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  type="password"
-                  className="w-full h-11 rounded-[14px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
-                  placeholder="••••••••"
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") {
+                <div className="mt-5 rounded-[16px] border border-zinc-200 bg-zinc-50 px-4 py-3">
+                  <div className="text-[12px] text-zinc-500">Cuenta</div>
+                  <div className="mt-1 text-[14px] font-semibold text-zinc-900 truncate">{authUserName ?? "Usuario"}</div>
+                  <div className="text-[12px] text-zinc-600 truncate">{authUserEmail ?? "Email no disponible"}</div>
+                  <div className="mt-2 text-[12px] text-zinc-600">
+                    Plan: <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? "Pro" : "Gratis"}</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={async () => {
+                      await logout();
+                      setLoginMsg(null);
+                      setLoginOpen(false);
+                    }}
+                    className="flex-1 h-11 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm font-semibold transition-colors cursor-pointer"
+                  >
+                    Cerrar sesión
+                  </button>
+                  <button
+                    onClick={() => {
                       setLoginOpen(false);
                       setLoginMsg(null);
-                    }
-                    if (e.key === "Enter") {
-                      authMode === "signin" ? signInWithPassword() : signUpWithPassword();
-                    }
-                  }}
-                />
-              </div>
+                    }}
+                    className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors cursor-pointer"
+                  >
+                    Volver
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[18px] font-semibold text-zinc-900">{authMode === "signin" ? "Iniciar sesión" : "Crear cuenta"}</div>
+                    <div className="text-[12.5px] text-zinc-500 mt-1">{authMode === "signin" ? "para continuar" : "crea tu cuenta para continuar"}</div>
+                  </div>
 
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 text-[12px] text-zinc-600 cursor-pointer select-none">
-                  <input type="checkbox" checked={keepSignedIn} onChange={(e) => setKeepSignedIn(e.target.checked)} className="h-4 w-4" />
-                  Mantener sesión
-                </label>
+                  <button
+                    onClick={() => {
+                      setLoginOpen(false);
+                      setLoginMsg(null);
+                    }}
+                    className="h-9 w-9 aspect-square rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer p-0"
+                    aria-label="Cerrar"
+                    disabled={!!loginSending}
+                  >
+                    <span className="text-[18px] leading-none relative top-[-0.5px]">×</span>
+                  </button>
+                </div>
 
-                <button
-                  className="text-[12px] text-blue-700 hover:text-blue-800 cursor-pointer"
-                  onClick={() => setLoginMsg("Si has olvidado tu contraseña, por ahora crea una cuenta nueva con otro email (lo mejoraremos).")}
-                  disabled={!!loginSending}
-                >
-                  ¿OLVIDASTE LA CONTRASEÑA?
-                </button>
-              </div>
-
-              {loginMsg && <div className="text-[12px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-[14px] px-3 py-2">{loginMsg}</div>}
-
-              <button
-                onClick={authMode === "signin" ? signInWithPassword : signUpWithPassword}
-                className="w-full h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
-                disabled={!!loginSending}
-              >
-                {loginSending ? "Procesando…" : authMode === "signin" ? "INICIAR SESIÓN" : "CREAR CUENTA"}
-              </button>
-
-              <div className="flex items-center gap-3 py-1">
-                <div className="h-px flex-1 bg-zinc-200" />
-                <div className="text-[12px] text-zinc-500">o</div>
-                <div className="h-px flex-1 bg-zinc-200" />
-              </div>
-
-              <button
-                onClick={() => signInWithOAuth("google")}
-                className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-                disabled={!!loginSending}
-              >
-                <OAuthLogo src="/auth/Google.png" alt="Google" />
-                Continuar con Google
-              </button>
-
-              <button
-                onClick={() => signInWithOAuth("azure")}
-                className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-                disabled={!!loginSending}
-              >
-                <OAuthLogo src="/auth/Microsoft.png" alt="Microsoft" />
-                Continuar con Microsoft
-              </button>
-
-              <button
-                onClick={() => setLoginMsg("Apple estará disponible en breve.")}
-                className="w-full h-11 rounded-full bg-black hover:bg-zinc-900 text-white text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-                disabled={!!loginSending}
-                title="Próximamente"
-              >
-                <OAuthLogo src="/auth/Apple.png" alt="Apple" invert />
-                Continuar con Apple
-              </button>
-
-              <div className="text-[12px] text-zinc-600 text-center pt-1">
-                {authMode === "signin" ? (
-                  <>
-                    ¿No tienes cuenta?{" "}
-                    <button
-                      className="text-blue-700 hover:text-blue-800 cursor-pointer"
-                      onClick={() => {
-                        setAuthMode("signup");
-                        setLoginMsg(null);
+                <div className="mt-5 space-y-3">
+                  <div>
+                    <div className="text-[12px] text-zinc-600 mb-1">Email</div>
+                    <input
+                      ref={loginEmailRef}
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      className="w-full h-11 rounded-[14px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
+                      placeholder="tuemail@ejemplo.com"
+                      autoFocus={false}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setLoginOpen(false);
+                          setLoginMsg(null);
+                        }
+                        if (e.key === "Enter") {
+                          authMode === "signin" ? signInWithPassword() : signUpWithPassword();
+                        }
                       }}
+                    />
+                  </div>
+
+                  <div>
+                    <div className="text-[12px] text-zinc-600 mb-1">Contraseña</div>
+                    <input
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      type="password"
+                      className="w-full h-11 rounded-[14px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
+                      placeholder="••••••••"
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setLoginOpen(false);
+                          setLoginMsg(null);
+                        }
+                        if (e.key === "Enter") {
+                          authMode === "signin" ? signInWithPassword() : signUpWithPassword();
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 text-[12px] text-zinc-600 cursor-pointer select-none">
+                      <input type="checkbox" checked={keepSignedIn} onChange={(e) => setKeepSignedIn(e.target.checked)} className="h-4 w-4" />
+                      Mantener sesión
+                    </label>
+
+                    <button
+                      className="text-[12px] text-blue-700 hover:text-blue-800 cursor-pointer"
+                      onClick={() => setLoginMsg("Si has olvidado tu contraseña, por ahora crea una cuenta nueva con otro email (lo mejoraremos).")}
                       disabled={!!loginSending}
                     >
-                      Crear cuenta
+                      ¿OLVIDASTE LA CONTRASEÑA?
                     </button>
-                  </>
-                ) : (
-                  <>
-                    ¿Ya tienes cuenta?{" "}
-                    <button
-                      className="text-blue-700 hover:text-blue-800 cursor-pointer"
-                      onClick={() => {
-                        setAuthMode("signin");
-                        setLoginMsg(null);
-                      }}
-                      disabled={!!loginSending}
-                    >
-                      Iniciar sesión
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
+                  </div>
+
+                  {loginMsg && <div className="text-[12px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-[14px] px-3 py-2">{loginMsg}</div>}
+
+                  <button
+                    onClick={authMode === "signin" ? signInWithPassword : signUpWithPassword}
+                    className="w-full h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                    disabled={!!loginSending}
+                  >
+                    {loginSending ? "Procesando…" : authMode === "signin" ? "INICIAR SESIÓN" : "CREAR CUENTA"}
+                  </button>
+
+                  <div className="flex items-center gap-3 py-1">
+                    <div className="h-px flex-1 bg-zinc-200" />
+                    <div className="text-[12px] text-zinc-500">o</div>
+                    <div className="h-px flex-1 bg-zinc-200" />
+                  </div>
+
+                  <button
+                    onClick={() => signInWithOAuth("google")}
+                    className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                    disabled={!!loginSending}
+                  >
+                    <OAuthLogo src="/auth/Google.png" alt="Google" />
+                    Continuar con Google
+                  </button>
+
+                  <button
+                    onClick={() => signInWithOAuth("azure")}
+                    className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                    disabled={!!loginSending}
+                  >
+                    <OAuthLogo src="/auth/Microsoft.png" alt="Microsoft" />
+                    Continuar con Microsoft
+                  </button>
+
+                  <button
+                    onClick={() => setLoginMsg("Apple estará disponible en breve.")}
+                    className="w-full h-11 rounded-full bg-black hover:bg-zinc-900 text-white text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                    disabled={!!loginSending}
+                    title="Próximamente"
+                  >
+                    <OAuthLogo src="/auth/Apple.png" alt="Apple" invert />
+                    Continuar con Apple
+                  </button>
+
+                  <div className="text-[12px] text-zinc-600 text-center pt-1">
+                    {authMode === "signin" ? (
+                      <>
+                        ¿No tienes cuenta?{" "}
+                        <button
+                          className="text-blue-700 hover:text-blue-800 cursor-pointer"
+                          onClick={() => {
+                            setAuthMode("signup");
+                            setLoginMsg(null);
+                          }}
+                          disabled={!!loginSending}
+                        >
+                          Crear cuenta
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        ¿Ya tienes cuenta?{" "}
+                        <button
+                          className="text-blue-700 hover:text-blue-800 cursor-pointer"
+                          onClick={() => {
+                            setAuthMode("signin");
+                            setLoginMsg(null);
+                          }}
+                          disabled={!!loginSending}
+                        >
+                          Iniciar sesión
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -1409,18 +1482,26 @@ export default function Page() {
 
             <button
               onClick={() => {
-                if (authUserEmail) logout();
+                if (isLoggedIn) logout();
                 else openLoginModal("signin");
               }}
               className={[
-                "h-11 w-11",
+                "relative h-11 w-11",
                 "bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm",
                 "flex items-center justify-center text-zinc-900 hover:bg-white transition-colors cursor-pointer",
                 "rounded-full",
               ].join(" ")}
-              aria-label={authUserEmail ? "Cerrar sesión" : "Iniciar sesión"}
-              title={authUserEmail ? `Cerrar sesión (${authUserEmail})` : "Iniciar sesión"}
+              aria-label={isLoggedIn ? "Cerrar sesión" : "Iniciar sesión"}
+              title={isLoggedIn ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : isPro ? "Pro" : "Gratis"}` : "Iniciar sesión"}
             >
+              {/* pequeño estado visual */}
+              <span
+                className={[
+                  "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white",
+                  isLoggedIn ? "bg-emerald-500" : "bg-zinc-300",
+                ].join(" ")}
+                aria-hidden="true"
+              />
               <UserIcon className="h-5 w-5" />
             </button>
           </div>
@@ -1471,12 +1552,12 @@ export default function Page() {
               <div className="mb-3 rounded-3xl border border-zinc-200 bg-white px-3 py-3">
                 <div className="text-xs text-zinc-500 mb-2">Cuenta</div>
 
-                {authUserEmail ? (
+                {isLoggedIn ? (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
                         <div className="text-sm font-semibold text-zinc-900 truncate">{authUserName ?? "Usuario"}</div>
-                        <div className="text-[11px] text-zinc-500 truncate">{authUserEmail}</div>
+                        <div className="text-[11px] text-zinc-500 truncate">{authUserEmail ?? "Email no disponible"}</div>
                       </div>
 
                       <button onClick={logout} className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer shrink-0">
@@ -1484,21 +1565,21 @@ export default function Page() {
                       </button>
                     </div>
 
-                    {!!authUserId && (
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-[11px] text-zinc-500">Plan: {proLoading ? "comprobando…" : isPro ? "Pro" : "Gratis"}</div>
-
-                        <button
-                          onClick={() => {
-                            handleOpenPlansCTA();
-                            setMenuOpen(false);
-                          }}
-                          className={["text-xs px-3 py-2 rounded-full transition-colors cursor-pointer", isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700"].join(" ")}
-                        >
-                          {isPro ? "Ver" : "Mejorar"}
-                        </button>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-[11px] text-zinc-500">
+                        Plan: <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? "Pro" : "Gratis"}</span>
                       </div>
-                    )}
+
+                      <button
+                        onClick={() => {
+                          handleOpenPlansCTA();
+                          setMenuOpen(false);
+                        }}
+                        className={["text-xs px-3 py-2 rounded-full transition-colors cursor-pointer", isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700"].join(" ")}
+                      >
+                        {isPro ? "Ver" : "Mejorar"}
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <button onClick={() => openLoginModal("signin")} className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
@@ -1572,7 +1653,6 @@ export default function Page() {
         {/* CHAT */}
         <div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0">
           <div className="mx-auto max-w-3xl px-3 md:px-6" style={{ paddingTop: 92, paddingBottom: chatBottomPad }}>
-            {/* ✅ Nuevo layout estilo WhatsApp con pseudo-elementos */}
             <div className="flex flex-col gap-4 py-8 md:pt-6">
               {messages.map((m) => {
                 const isUser = m.role === "user";
@@ -1583,11 +1663,7 @@ export default function Page() {
                     <div
                       className={[
                         "relative max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed break-words",
-                        // burbuja
-                        isUser
-                          ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none mr-2"
-                          : "bg-[#e8f0fe] text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none ml-2",
-                        // cola (rombo rotado 45º) SIN sombra y alineado arriba
+                        isUser ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none mr-2" : "bg-[#e8f0fe] text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none ml-2",
                         "after:content-[''] after:absolute after:w-3 after:h-3 after:rotate-45 after:top-[3px]",
                         isUser ? "after:right-[-6px] after:bg-[#dcf8c6]" : "after:left-[-6px] after:bg-[#e8f0fe]",
                       ].join(" ")}
@@ -1598,7 +1674,6 @@ export default function Page() {
                         </div>
                       )}
 
-                      {/* ✅ FIX: react-markdown no acepta className -> wrapper con clases */}
                       {(m.text || m.streaming) && (
                         <div className="prose prose-sm max-w-none break-words">
                           <ReactMarkdown>{mdText}</ReactMarkdown>
