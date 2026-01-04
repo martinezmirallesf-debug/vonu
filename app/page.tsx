@@ -1096,7 +1096,6 @@ export default function Page() {
   const SIDEBAR_TOP = TOP_OFFSET_PX + TOP_BUBBLE_H + TOP_GAP_PX;
 
   const planLabel = !isLoggedIn ? "Sin sesión" : isPro ? "Pro" : "Gratis";
-  const topCtaText = isPro ? "Tu plan" : "Pro";
   const payTitle = "Vonu Pro";
 
   // === PRICING COPY ===
@@ -1357,8 +1356,14 @@ export default function Page() {
 
       {/* ===== LOGIN MODAL ===== */}
       {loginOpen && (
-        <div className="fixed inset-0 z-[80] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6" onClick={() => (!loginSending ? setLoginOpen(false) : null)}>
-          <div className="w-full max-w-[380px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-6" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-[80] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6"
+          onClick={() => (!loginSending ? setLoginOpen(false) : null)}
+        >
+          <div
+            className="w-full max-w-[380px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* ✅ Si ya hay sesión, mostramos estado claro */}
             {isLoggedIn ? (
               <>
@@ -1801,7 +1806,8 @@ export default function Page() {
 
         {/* INPUT + DISCLAIMER */}
         <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl">
-          <div className="mx-auto max-w-3xl px-3 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
+          {/* ✅ móvil: menos margen lateral para que ocupe casi todo el ancho */}
+          <div className="mx-auto max-w-3xl px-2 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             <button
               onClick={() => fileInputRef.current?.click()}
               className="h-11 w-11 md:h-12 md:w-12 inline-flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
@@ -1821,7 +1827,11 @@ export default function Page() {
               {imagePreview && (
                 <div className="mb-2 relative w-fit">
                   <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
-                  <button onClick={() => setImagePreview(null)} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer" aria-label="Quitar imagen">
+                  <button
+                    onClick={() => setImagePreview(null)}
+                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer"
+                    aria-label="Quitar imagen"
+                  >
                     ×
                   </button>
                 </div>
@@ -1853,10 +1863,11 @@ export default function Page() {
               </div>
             </div>
 
+            {/* ✅ estilo tipo ChatGPT: botón negro, flecha blanca */}
             <button
               onClick={sendMessage}
               disabled={!!(isTyping || (!input.trim() && !imagePreview))}
-              className="h-11 w-11 md:h-12 md:w-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center disabled:opacity-40 transition-colors cursor-pointer shrink-0"
+              className="h-11 w-11 md:h-12 md:w-12 rounded-full bg-zinc-900 hover:bg-black text-white flex items-center justify-center disabled:opacity-40 transition-colors cursor-pointer shrink-0"
               aria-label="Enviar"
               title="Enviar"
             >
@@ -1864,8 +1875,11 @@ export default function Page() {
             </button>
           </div>
 
-          <div className="mx-auto max-w-3xl px-3 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
-            <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">Orientación preventiva. No sustituye profesionales.</p>
+          {/* ✅ disclaimer más corto y con mejor “una sola línea” en móvil */}
+          <div className="mx-auto max-w-3xl px-2 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
+            <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">
+              Orientación preventiva · No sustituye profesionales.
+            </p>
             {!hasUserMessage && <div className="h-1" />}
           </div>
         </div>
