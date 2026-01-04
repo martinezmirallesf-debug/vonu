@@ -217,7 +217,15 @@ export default function Page() {
     }
   }
 
-  // ✅ CLAVE: capturar retorno OAuth (Google/Microsoft/Apple) y guardar sesión (Supabase v2)
+  function decodeMaybe(x: string) {
+    try {
+      return decodeURIComponent(x);
+    } catch {
+      return x;
+    }
+  }
+
+  // ✅ CLAVE: capturar retorno de OAuth (Google/Microsoft/Apple) y guardar sesión (Supabase v2)
   async function handleOAuthReturnIfPresent() {
     if (typeof window === "undefined") return;
 
@@ -225,17 +233,23 @@ export default function Page() {
       const url = new URL(window.location.href);
 
       const checkout = url.searchParams.get("checkout"); // preservar Stripe
-      const code = url.searchParams.get("code");
-      const hasError = !!(url.searchParams.get("error") || url.searchParams.get("error_description"));
+
+      // errores pueden venir en query o en hash (depende del proveedor)
+      const qError = url.searchParams.get("error");
+      const qErrorDesc = url.searchParams.get("error_description");
 
       const hash = typeof window.location.hash === "string" ? window.location.hash : "";
       const hashParams = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
-      const access_token = hashParams.get("access_token");
-      const refresh_token = hashParams.get("refresh_token");
+      const hError = hashParams.get("error");
+      const hErrorDesc = hashParams.get("error_description");
 
-      if (hasError) {
-        const desc = url.searchParams.get("error_description") || url.searchParams.get("error") || "Error de OAuth.";
-        setLoginMsg(decodeURIComponent(desc));
+      const errorRaw = qError ?? hError;
+      const errorDescRaw = qErrorDesc ?? hErrorDesc;
+
+      // Si hay error OAuth, lo mostramos (AZURE suele devolver aquí el AADSTS....)
+      if (errorRaw || errorDescRaw) {
+        const desc = errorDescRaw || errorRaw || "Error de OAuth.";
+        setLoginMsg(decodeMaybe(desc));
 
         // limpiar params OAuth (preservando checkout)
         url.searchParams.delete("code");
@@ -244,13 +258,16 @@ export default function Page() {
         url.searchParams.delete("error_description");
         if (checkout) url.searchParams.set("checkout", checkout);
 
-        // limpiar hash también
         const cleanUrl = `${url.pathname}${url.searchParams.toString() ? `?${url.searchParams.toString()}` : ""}`;
         window.history.replaceState({}, "", cleanUrl);
         return;
       }
 
+      const code = url.searchParams.get("code");
       const hasCode = !!code;
+
+      const access_token = hashParams.get("access_token");
+      const refresh_token = hashParams.get("refresh_token");
       const hasHashTokens = !!access_token && !!refresh_token;
 
       if (!hasCode && !hasHashTokens) return;
@@ -258,7 +275,9 @@ export default function Page() {
       // 1) PKCE: ?code=...
       if (hasCode && code) {
         const { error } = await supabaseBrowser.auth.exchangeCodeForSession(code);
-        if (error) setLoginMsg(error.message);
+        if (error) {
+          setLoginMsg(error.message);
+        }
       }
 
       // 2) Implicit: #access_token=...&refresh_token=...
@@ -267,7 +286,9 @@ export default function Page() {
           access_token,
           refresh_token,
         });
-        if (error) setLoginMsg(error.message);
+        if (error) {
+          setLoginMsg(error.message);
+        }
       }
 
       // limpiar params OAuth (preservando checkout)
@@ -280,6 +301,17 @@ export default function Page() {
       // reconstruir URL limpia (sin hash)
       const clean = `${url.pathname}${url.searchParams.toString() ? `?${url.searchParams.toString()}` : ""}`;
       window.history.replaceState({}, "", clean);
+
+      // ✅ Verificación explícita: ¿hay sesión de verdad?
+      const { data: after } = await supabaseBrowser.auth.getSession();
+      if (!after?.session?.user) {
+        setLoginMsg(
+          "No se pudo completar el login con Microsoft.\n\n" +
+            "Casi siempre es un problema de configuración (Tenant/Redirect URI/Permisos).\n" +
+            "Revisa Azure + Supabase y vuelve a probar."
+        );
+        return;
+      }
 
       // refrescar estado
       await refreshAuthSession();
@@ -521,11 +553,13 @@ export default function Page() {
     setLoginSending(true);
     setLoginMsg(null);
     try {
-      // ✅ IMPORTANTÍSIMO: redirigir a la HOME (/) para que ESTA página absorba el callback
       const { error } = await supabaseBrowser.auth.signInWithOAuth({
         provider,
         options: {
+          // ✅ IMPORTANTÍSIMO: redirigir a la HOME (/) para que ESTA página absorba el callback
           redirectTo: `${SITE_URL}/`,
+          // ✅ ayuda a Microsoft a elegir cuenta (si tienes varias)
+          ...(provider === "azure" ? { queryParams: { prompt: "select_account" } } : {}),
         },
       });
 
@@ -1455,7 +1489,7 @@ export default function Page() {
                     </button>
                   </div>
 
-                  {loginMsg && <div className="text-[12px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-[14px] px-3 py-2">{loginMsg}</div>}
+                  {loginMsg && <div className="whitespace-pre-wrap text-[12px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-[14px] px-3 py-2">{loginMsg}</div>}
 
                   <button
                     onClick={authMode === "signin" ? signInWithPassword : signUpWithPassword}
@@ -1578,7 +1612,7 @@ export default function Page() {
               className="h-11 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer shadow-sm border border-blue-700/10"
               title="Ver planes"
             >
-              {topCtaText}
+              {isPro ? "Tu plan" : "Pro"}
             </button>
 
             <button
@@ -1787,11 +1821,7 @@ export default function Page() {
               {imagePreview && (
                 <div className="mb-2 relative w-fit">
                   <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
-                  <button
-                    onClick={() => setImagePreview(null)}
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer"
-                    aria-label="Quitar imagen"
-                  >
+                  <button onClick={() => setImagePreview(null)} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer" aria-label="Quitar imagen">
                     ×
                   </button>
                 </div>
