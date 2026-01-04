@@ -133,6 +133,9 @@ export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
+  // ✅ URL canónica para redirects (evita errores en Supabase OAuth por preview/origin)
+  const SITE_URL = ((process.env.NEXT_PUBLIC_SITE_URL as string | undefined) || "https://app.vonuai.com").replace(/\/$/, "");
+
   // ===== AUTH =====
   const [authLoading, setAuthLoading] = useState(true);
   const [authUserEmail, setAuthUserEmail] = useState<string | null>(null);
@@ -419,12 +422,11 @@ export default function Page() {
     setLoginSending(true);
     setLoginMsg(null);
     try {
-      const origin = typeof window !== "undefined" ? window.location.origin : undefined;
-
+      // ✅ FIX: usar URL canónica, no origin (evita mismatch con redirect URLs permitidas en Supabase)
       const { error } = await supabaseBrowser.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: origin ? `${origin}/auth/callback` : undefined,
+          redirectTo: `${SITE_URL}/auth/callback`,
         },
       });
 
@@ -479,7 +481,8 @@ export default function Page() {
         email,
         password,
         options: {
-          emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined,
+          // ✅ FIX: usar URL canónica, no origin
+          emailRedirectTo: `${SITE_URL}/auth/callback`,
         },
       });
       if (error) {
