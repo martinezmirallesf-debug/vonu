@@ -164,7 +164,7 @@ export default function Page() {
   const PLUS_NODE = (
     <span className="inline-flex items-baseline">
       Plus
-      <sup className="-ml-[2px] text-[12px] font-bold leading-none relative -top-[4px]">+</sup>
+      <sup className="ml-[1px] text-[12px] font-bold leading-none relative -top-[5px]">+</sup>
     </span>
   );
 
