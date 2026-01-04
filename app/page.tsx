@@ -65,8 +65,18 @@ function isDesktopPointer() {
 function UserIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 12c2.761 0 5-2.239 5-5S14.761 2 12 2 7 4.239 7 7s2.239 5 5 5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M4 22c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M12 12c2.761 0 5-2.239 5-5S14.761 2 12 2 7 4.239 7 7s2.239 5 5 5Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M4 22c0-4.418 3.582-8 8-8s8 3.582 8 8"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -75,7 +85,13 @@ function ArrowUpIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M12 19V6" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-      <path d="M7 10l5-5 5 5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M7 10l5-5 5 5"
+        stroke="currentColor"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -83,7 +99,13 @@ function ArrowUpIcon({ className }: { className?: string }) {
 function CheckIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-4 w-4"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M20 6L9 17l-5-5"
+        stroke="currentColor"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -91,8 +113,19 @@ function CheckIcon({ className }: { className?: string }) {
 function ShieldIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 2l8 4v6c0 5-3.4 9.4-8 10-4.6-.6-8-5-8-10V6l8-4Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M12 2l8 4v6c0 5-3.4 9.4-8 10-4.6-.6-8-5-8-10V6l8-4Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 12l2 2 4-4"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -212,11 +245,63 @@ export default function Page() {
     }
   }
 
+  // ✅ MUY IMPORTANTE: intercambiar ?code=... por sesión (Azure/Apple suelen usar PKCE)
+  async function handleOAuthCodeExchangeIfPresent() {
+    if (typeof window === "undefined") return;
+
+    try {
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+      const errorDesc = url.searchParams.get("error_description") || url.searchParams.get("error");
+      const checkout = url.searchParams.get("checkout"); // lo respetamos (Stripe)
+
+      // Si hay error de OAuth, mostramos algo y limpiamos params de oauth
+      if (errorDesc && (url.searchParams.get("error") || url.searchParams.get("error_description"))) {
+        setLoginMsg(decodeURIComponent(errorDesc));
+        // limpiamos parámetros de OAuth pero preservamos checkout si existiera
+        url.searchParams.delete("code");
+        url.searchParams.delete("state");
+        url.searchParams.delete("error");
+        url.searchParams.delete("error_description");
+        window.history.replaceState({}, "", url.toString());
+        return;
+      }
+
+      // Si no hay code, nada
+      if (!code) return;
+
+      // Intercambiamos el code por sesión
+      const { error } = await supabaseBrowser.auth.exchangeCodeForSession(code);
+      if (error) {
+        setLoginMsg(error.message);
+      }
+
+      // Limpiar parámetros de OAuth (preservando checkout si estaba)
+      url.searchParams.delete("code");
+      url.searchParams.delete("state");
+      url.searchParams.delete("error");
+      url.searchParams.delete("error_description");
+      if (checkout) url.searchParams.set("checkout", checkout);
+
+      window.history.replaceState({}, "", url.toString());
+
+      // Refrescamos sesión y plan
+      await refreshAuthSession();
+      await refreshProStatus();
+    } catch {
+      // si falla no rompemos nada
+    }
+  }
+
   // Cargar sesión + escuchar cambios
   useEffect(() => {
     let unsub: (() => void) | null = null;
 
     (async () => {
+      // 1) si venimos de OAuth con ?code=..., intercambiamos y luego refrescamos
+      await handleOAuthCodeExchangeIfPresent();
+
+      // 2) cargar sesión
       await refreshAuthSession();
 
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
@@ -228,6 +313,11 @@ export default function Page() {
         setAuthUserEmail(email);
         setAuthUserId(id);
         setAuthUserName(deriveName(email, metaName));
+
+        // ⚡ cuando cambia sesión, re-chequeamos pro (así Google/Azure quedan iguales)
+        setTimeout(() => {
+          refreshProStatus();
+        }, 50);
       });
 
       unsub = () => sub.subscription.unsubscribe();
@@ -431,7 +521,6 @@ export default function Page() {
     setLoginSending(true);
     setLoginMsg(null);
     try {
-      // ✅ FIX: usar URL canónica, no origin (evita mismatch con redirect URLs permitidas en Supabase)
       const { error } = await supabaseBrowser.auth.signInWithOAuth({
         provider,
         options: {
@@ -490,7 +579,6 @@ export default function Page() {
         email,
         password,
         options: {
-          // ✅ FIX: usar URL canónica, no origin
           emailRedirectTo: `${SITE_URL}/auth/callback`,
         },
       });
@@ -1233,10 +1321,7 @@ export default function Page() {
 
       {/* ===== LOGIN MODAL ===== */}
       {loginOpen && (
-        <div
-          className="fixed inset-0 z-[80] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6"
-          onClick={() => (!loginSending ? setLoginOpen(false) : null)}
-        >
+        <div className="fixed inset-0 z-[80] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6" onClick={() => (!loginSending ? setLoginOpen(false) : null)}>
           <div className="w-full max-w-[380px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-6" onClick={(e) => e.stopPropagation()}>
             {/* ✅ Si ya hay sesión, mostramos estado claro */}
             {isLoggedIn ? (
@@ -1465,10 +1550,20 @@ export default function Page() {
               aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
               title={menuOpen ? "Cerrar menú" : "Menú"}
             >
-              <img src={"/vonu-icon.png?v=2"} alt="Menú" className={`h-6 w-6 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`} draggable={false} />
+              <img
+                src={"/vonu-icon.png?v=2"}
+                alt="Menú"
+                className={`h-6 w-6 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
+                draggable={false}
+              />
             </button>
 
-            <a href={HOME_URL} className="h-11 -ml-0.5 pr-2 flex items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95" aria-label="Ir a la home" title="Ir a la home">
+            <a
+              href={HOME_URL}
+              className="h-11 -ml-0.5 pr-2 flex items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
+              aria-label="Ir a la home"
+              title="Ir a la home"
+            >
               <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-4 w-auto" draggable={false} />
             </a>
           </div>
@@ -1476,7 +1571,11 @@ export default function Page() {
 
         {!authLoading && (
           <div className="pointer-events-auto flex items-center gap-2">
-            <button onClick={handleOpenPlansCTA} className="h-11 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer shadow-sm border border-blue-700/10" title="Ver planes">
+            <button
+              onClick={handleOpenPlansCTA}
+              className="h-11 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer shadow-sm border border-blue-700/10"
+              title="Ver planes"
+            >
               {topCtaText}
             </button>
 
@@ -1492,7 +1591,11 @@ export default function Page() {
                 "rounded-full",
               ].join(" ")}
               aria-label={isLoggedIn ? "Cerrar sesión" : "Iniciar sesión"}
-              title={isLoggedIn ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : isPro ? "Pro" : "Gratis"}` : "Iniciar sesión"}
+              title={
+                isLoggedIn
+                  ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : isPro ? "Pro" : "Gratis"}`
+                  : "Iniciar sesión"
+              }
             >
               {/* pequeño estado visual */}
               <span
@@ -1509,7 +1612,10 @@ export default function Page() {
       </div>
 
       {/* ===== OVERLAY + SIDEBAR ===== */}
-      <div className={`fixed inset-0 z-40 transition-all duration-300 ${menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent"}`} onClick={() => setMenuOpen(false)}>
+      <div
+        className={`fixed inset-0 z-40 transition-all duration-300 ${menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent"}`}
+        onClick={() => setMenuOpen(false)}
+      >
         <aside
           className={[
             "absolute left-3 right-3 md:right-auto",
@@ -1534,16 +1640,25 @@ export default function Page() {
                 <div className="text-xs text-zinc-500">Tus consultas recientes</div>
               </div>
 
-              <button onClick={createThreadAndActivate} className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
+              <button
+                onClick={createThreadAndActivate}
+                className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
+              >
                 Nueva
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-2 mb-3">
-              <button onClick={openRename} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer">
+              <button
+                onClick={openRename}
+                className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer"
+              >
                 Renombrar
               </button>
-              <button onClick={deleteActiveThread} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer">
+              <button
+                onClick={deleteActiveThread}
+                className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer"
+              >
                 Borrar
               </button>
             </div>
@@ -1560,14 +1675,18 @@ export default function Page() {
                         <div className="text-[11px] text-zinc-500 truncate">{authUserEmail ?? "Email no disponible"}</div>
                       </div>
 
-                      <button onClick={logout} className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer shrink-0">
+                      <button
+                        onClick={logout}
+                        className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer shrink-0"
+                      >
                         Salir
                       </button>
                     </div>
 
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-[11px] text-zinc-500">
-                        Plan: <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? "Pro" : "Gratis"}</span>
+                        Plan:{" "}
+                        <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? "Pro" : "Gratis"}</span>
                       </div>
 
                       <button
@@ -1575,14 +1694,20 @@ export default function Page() {
                           handleOpenPlansCTA();
                           setMenuOpen(false);
                         }}
-                        className={["text-xs px-3 py-2 rounded-full transition-colors cursor-pointer", isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700"].join(" ")}
+                        className={[
+                          "text-xs px-3 py-2 rounded-full transition-colors cursor-pointer",
+                          isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700",
+                        ].join(" ")}
                       >
                         {isPro ? "Ver" : "Mejorar"}
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <button onClick={() => openLoginModal("signin")} className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
+                  <button
+                    onClick={() => openLoginModal("signin")}
+                    className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
+                  >
                     Iniciar sesión
                   </button>
                 )}
@@ -1598,7 +1723,9 @@ export default function Page() {
                   <button
                     key={t.id}
                     onClick={() => activateThread(t.id)}
-                    className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"}`}
+                    className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${
+                      active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"
+                    }`}
                   >
                     <div className="text-sm font-medium text-zinc-900">{t.title}</div>
                     <div className="text-xs text-zinc-500 mt-1">{when}</div>
@@ -1646,7 +1773,9 @@ export default function Page() {
         {/* ERROR BAR */}
         {uiError && (
           <div className="mx-auto max-w-3xl px-6 mt-3 pt-4">
-            <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">Ha fallado la llamada a la IA. (Error: {uiError})</div>
+            <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              Ha fallado la llamada a la IA. (Error: {uiError})
+            </div>
           </div>
         )}
 
@@ -1711,7 +1840,11 @@ export default function Page() {
               {imagePreview && (
                 <div className="mb-2 relative w-fit">
                   <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
-                  <button onClick={() => setImagePreview(null)} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer" aria-label="Quitar imagen">
+                  <button
+                    onClick={() => setImagePreview(null)}
+                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer"
+                    aria-label="Quitar imagen"
+                  >
                     ×
                   </button>
                 </div>
