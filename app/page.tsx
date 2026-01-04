@@ -71,12 +71,7 @@ function UserIcon({ className }: { className?: string }) {
         strokeWidth="2"
         strokeLinecap="round"
       />
-      <path
-        d="M4 22c0-4.418 3.582-8 8-8s8 3.582 8 8"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <path d="M4 22c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -85,13 +80,7 @@ function ArrowUpIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M12 19V6" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-      <path
-        d="M7 10l5-5 5 5"
-        stroke="currentColor"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M7 10l5-5 5 5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -99,13 +88,7 @@ function ArrowUpIcon({ className }: { className?: string }) {
 function CheckIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-4 w-4"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M20 6L9 17l-5-5"
-        stroke="currentColor"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -113,19 +96,8 @@ function CheckIcon({ className }: { className?: string }) {
 function ShieldIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M12 2l8 4v6c0 5-3.4 9.4-8 10-4.6-.6-8-5-8-10V6l8-4Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9 12l2 2 4-4"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M12 2l8 4v6c0 5-3.4 9.4-8 10-4.6-.6-8-5-8-10V6l8-4Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+      <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -245,51 +217,64 @@ export default function Page() {
     }
   }
 
-  // ✅ MUY IMPORTANTE: intercambiar ?code=... por sesión (Azure/Apple suelen usar PKCE)
-  async function handleOAuthCodeExchangeIfPresent() {
+  // ✅ CLAVE: capturar retorno de OAuth (Google/Microsoft/Apple) y guardar sesión
+  async function handleOAuthReturnIfPresent() {
     if (typeof window === "undefined") return;
 
     try {
       const url = new URL(window.location.href);
-      const code = url.searchParams.get("code");
-      const errorDesc = url.searchParams.get("error_description") || url.searchParams.get("error");
-      const checkout = url.searchParams.get("checkout"); // lo respetamos (Stripe)
 
-      // Si hay error de OAuth, mostramos algo y limpiamos params de oauth
-      if (errorDesc && (url.searchParams.get("error") || url.searchParams.get("error_description"))) {
-        setLoginMsg(decodeURIComponent(errorDesc));
-        // limpiamos parámetros de OAuth pero preservamos checkout si existiera
+      const checkout = url.searchParams.get("checkout"); // preservar Stripe
+      const hasCode = !!url.searchParams.get("code");
+      const hasError = !!(url.searchParams.get("error") || url.searchParams.get("error_description"));
+      const hasHashTokens = typeof window.location.hash === "string" && window.location.hash.includes("access_token");
+
+      if (hasError) {
+        const desc = url.searchParams.get("error_description") || url.searchParams.get("error") || "Error de OAuth.";
+        setLoginMsg(decodeURIComponent(desc));
+
+        // limpiar params OAuth (preservando checkout)
         url.searchParams.delete("code");
         url.searchParams.delete("state");
         url.searchParams.delete("error");
         url.searchParams.delete("error_description");
-        window.history.replaceState({}, "", url.toString());
+        if (checkout) url.searchParams.set("checkout", checkout);
+
+        // limpiar hash también
+        window.history.replaceState({}, "", `${url.pathname}${url.search ? url.search : ""}`);
         return;
       }
 
-      // Si no hay code, nada
-      if (!code) return;
+      // Si hay señal de retorno OAuth (code o hash), intentamos "absorber" la sesión desde la URL
+      if (hasCode || hasHashTokens) {
+        const { data, error } = await supabaseBrowser.auth.getSessionFromUrl({ storeSession: true });
+        if (error) setLoginMsg(error.message);
 
-      // Intercambiamos el code por sesión
-      const { error } = await supabaseBrowser.auth.exchangeCodeForSession(code);
-      if (error) {
-        setLoginMsg(error.message);
+        // limpiar params OAuth (preservando checkout)
+        url.searchParams.delete("code");
+        url.searchParams.delete("state");
+        url.searchParams.delete("error");
+        url.searchParams.delete("error_description");
+        if (checkout) url.searchParams.set("checkout", checkout);
+
+        // reconstruir URL limpia (sin hash tokens)
+        const clean = `${url.pathname}${url.searchParams.toString() ? `?${url.searchParams.toString()}` : ""}`;
+        window.history.replaceState({}, "", clean);
+
+        // refrescar estado (por si onAuthStateChange tarda)
+        await refreshAuthSession();
+        await refreshProStatus();
+
+        // si abrió login modal antes, lo cerramos
+        setLoginOpen(false);
+
+        // si realmente hay sesión, y veníamos con checkout pendiente, el useEffect ya lo lanzará
+        if (data?.session?.user) {
+          setLoginMsg(null);
+        }
       }
-
-      // Limpiar parámetros de OAuth (preservando checkout si estaba)
-      url.searchParams.delete("code");
-      url.searchParams.delete("state");
-      url.searchParams.delete("error");
-      url.searchParams.delete("error_description");
-      if (checkout) url.searchParams.set("checkout", checkout);
-
-      window.history.replaceState({}, "", url.toString());
-
-      // Refrescamos sesión y plan
-      await refreshAuthSession();
-      await refreshProStatus();
     } catch {
-      // si falla no rompemos nada
+      // no romper UI
     }
   }
 
@@ -298,10 +283,10 @@ export default function Page() {
     let unsub: (() => void) | null = null;
 
     (async () => {
-      // 1) si venimos de OAuth con ?code=..., intercambiamos y luego refrescamos
-      await handleOAuthCodeExchangeIfPresent();
+      // 1) absorber retorno OAuth si existe
+      await handleOAuthReturnIfPresent();
 
-      // 2) cargar sesión
+      // 2) cargar sesión normal
       await refreshAuthSession();
 
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
@@ -314,10 +299,10 @@ export default function Page() {
         setAuthUserId(id);
         setAuthUserName(deriveName(email, metaName));
 
-        // ⚡ cuando cambia sesión, re-chequeamos pro (así Google/Azure quedan iguales)
+        // ⚡ cuando cambia sesión, re-chequeamos pro (así Google/Microsoft quedan iguales)
         setTimeout(() => {
           refreshProStatus();
-        }, 50);
+        }, 80);
       });
 
       unsub = () => sub.subscription.unsubscribe();
@@ -521,10 +506,11 @@ export default function Page() {
     setLoginSending(true);
     setLoginMsg(null);
     try {
+      // ✅ IMPORTANTÍSIMO: redirigir a la HOME (/) para que ESTA página absorba el callback
       const { error } = await supabaseBrowser.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${SITE_URL}/auth/callback`,
+          redirectTo: `${SITE_URL}/`,
         },
       });
 
@@ -579,7 +565,8 @@ export default function Page() {
         email,
         password,
         options: {
-          emailRedirectTo: `${SITE_URL}/auth/callback`,
+          // ✅ también lo llevamos a la home, por coherencia
+          emailRedirectTo: `${SITE_URL}/`,
         },
       });
       if (error) {
@@ -1591,11 +1578,7 @@ export default function Page() {
                 "rounded-full",
               ].join(" ")}
               aria-label={isLoggedIn ? "Cerrar sesión" : "Iniciar sesión"}
-              title={
-                isLoggedIn
-                  ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : isPro ? "Pro" : "Gratis"}`
-                  : "Iniciar sesión"
-              }
+              title={isLoggedIn ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : isPro ? "Pro" : "Gratis"}` : "Iniciar sesión"}
             >
               {/* pequeño estado visual */}
               <span
@@ -1640,25 +1623,16 @@ export default function Page() {
                 <div className="text-xs text-zinc-500">Tus consultas recientes</div>
               </div>
 
-              <button
-                onClick={createThreadAndActivate}
-                className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
-              >
+              <button onClick={createThreadAndActivate} className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
                 Nueva
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-2 mb-3">
-              <button
-                onClick={openRename}
-                className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer"
-              >
+              <button onClick={openRename} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer">
                 Renombrar
               </button>
-              <button
-                onClick={deleteActiveThread}
-                className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer"
-              >
+              <button onClick={deleteActiveThread} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer">
                 Borrar
               </button>
             </div>
@@ -1675,18 +1649,14 @@ export default function Page() {
                         <div className="text-[11px] text-zinc-500 truncate">{authUserEmail ?? "Email no disponible"}</div>
                       </div>
 
-                      <button
-                        onClick={logout}
-                        className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer shrink-0"
-                      >
+                      <button onClick={logout} className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer shrink-0">
                         Salir
                       </button>
                     </div>
 
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-[11px] text-zinc-500">
-                        Plan:{" "}
-                        <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? "Pro" : "Gratis"}</span>
+                        Plan: <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? "Pro" : "Gratis"}</span>
                       </div>
 
                       <button
@@ -1704,10 +1674,7 @@ export default function Page() {
                     </div>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => openLoginModal("signin")}
-                    className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
-                  >
+                  <button onClick={() => openLoginModal("signin")} className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
                     Iniciar sesión
                   </button>
                 )}
@@ -1723,9 +1690,7 @@ export default function Page() {
                   <button
                     key={t.id}
                     onClick={() => activateThread(t.id)}
-                    className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${
-                      active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"
-                    }`}
+                    className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"}`}
                   >
                     <div className="text-sm font-medium text-zinc-900">{t.title}</div>
                     <div className="text-xs text-zinc-500 mt-1">{when}</div>
@@ -1773,9 +1738,7 @@ export default function Page() {
         {/* ERROR BAR */}
         {uiError && (
           <div className="mx-auto max-w-3xl px-6 mt-3 pt-4">
-            <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              Ha fallado la llamada a la IA. (Error: {uiError})
-            </div>
+            <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">Ha fallado la llamada a la IA. (Error: {uiError})</div>
           </div>
         )}
 
@@ -1840,11 +1803,7 @@ export default function Page() {
               {imagePreview && (
                 <div className="mb-2 relative w-fit">
                   <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
-                  <button
-                    onClick={() => setImagePreview(null)}
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer"
-                    aria-label="Quitar imagen"
-                  >
+                  <button onClick={() => setImagePreview(null)} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer" aria-label="Quitar imagen">
                     ×
                   </button>
                 </div>
