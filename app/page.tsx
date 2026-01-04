@@ -142,7 +142,7 @@ export default function Page() {
 
   const loginEmailRef = useRef<HTMLInputElement>(null);
 
-  // ===== PAYWALL / PRO =====
+  // ===== PAYWALL / PRO (interno) =====
   const [proLoading, setProLoading] = useState(false);
   const [isPro, setIsPro] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -158,6 +158,14 @@ export default function Page() {
 
   const isLoggedIn = !authLoading && !!authUserId;
   const isBlockedByPaywall = !authLoading && !!authUserId && !proLoading && !isPro;
+
+  // ===== Copy marketing (visible) =====
+  const PLUS_LABEL = (
+    <span>
+      Plus
+      <sup className="ml-0.5 text-[10px] relative -top-[2px]">+</sup>
+    </span>
+  );
 
   function deriveName(email: string | null, metaName?: string | null) {
     const n = (metaName ?? "").trim();
@@ -415,12 +423,12 @@ export default function Page() {
       if (!checkout) return;
 
       if (checkout === "success") {
-        setToastMsg("✅ Pago completado. Activando tu cuenta Pro…");
+        setToastMsg("✅ Pago completado. Activando tu cuenta Plus…");
         url.searchParams.delete("checkout");
         window.history.replaceState({}, "", url.toString());
 
         refreshProStatus().finally(() => {
-          setToastMsg("✅ Listo. Ya tienes Pro activo.");
+          setToastMsg("✅ Listo. Ya tienes Plus activo.");
           setTimeout(() => setToastMsg(null), 3500);
         });
       } else if (checkout === "cancel") {
@@ -926,7 +934,7 @@ export default function Page() {
     }
 
     if (!isPro) {
-      setPayMsg("Has llegado al límite del plan Gratis. Desbloquea Pro para seguir usando Vonu.");
+      setPayMsg("Has llegado al límite del plan Gratis. Desbloquea Plus para seguir usando Vonu.");
       openPlansModal();
       return true;
     }
@@ -1095,8 +1103,8 @@ export default function Page() {
   const TOP_GAP_PX = 10;
   const SIDEBAR_TOP = TOP_OFFSET_PX + TOP_BUBBLE_H + TOP_GAP_PX;
 
-  const planLabel = !isLoggedIn ? "Sin sesión" : isPro ? "Pro" : "Gratis";
-  const payTitle = "Vonu Pro";
+  const planLabel = !isLoggedIn ? "Sin sesión" : isPro ? "Plus" : "Gratis";
+  const payTitle = "Vonu Plus";
 
   // === PRICING COPY ===
   const PRICE_MONTH = "4,99€";
@@ -1279,7 +1287,7 @@ export default function Page() {
 
                   {/* benefits */}
                   <div className="mt-3 rounded-[22px] border border-zinc-200 bg-white p-3">
-                    <div className="text-[12px] font-semibold text-zinc-900">{plan === "free" ? "Gratis" : "Lo que desbloqueas con Pro"}</div>
+                    <div className="text-[12px] font-semibold text-zinc-900">{plan === "free" ? "Gratis" : "Lo que desbloqueas con Plus"}</div>
                     <div className="mt-2 space-y-2">
                       {(plan === "free" ? ["Analisis Limitados", "Decidir con calma"] : ["Análisis ilimitados", "Más consejos y contexto", "Decidir con calma"]).map((x) => (
                         <div key={x} className="flex items-start gap-2">
@@ -1390,7 +1398,7 @@ export default function Page() {
                   <div className="mt-1 text-[14px] font-semibold text-zinc-900 truncate">{authUserName ?? "Usuario"}</div>
                   <div className="text-[12px] text-zinc-600 truncate">{authUserEmail ?? "Email no disponible"}</div>
                   <div className="mt-2 text-[12px] text-zinc-600">
-                    Plan: <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? "Pro" : "Gratis"}</span>
+                    Plan: <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? "Plus" : "Gratis"}</span>
                   </div>
                 </div>
 
@@ -1617,22 +1625,20 @@ export default function Page() {
               className="h-11 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer shadow-sm border border-blue-700/10"
               title="Ver planes"
             >
-              {isPro ? "Tu plan" : "Pro"}
+              {isPro ? "Tu plan" : "Plus"}
             </button>
 
+            {/* ✅ CAMBIO: nunca desloguear al click. Siempre abrir modal */}
             <button
-              onClick={() => {
-                if (isLoggedIn) logout();
-                else openLoginModal("signin");
-              }}
+              onClick={() => openLoginModal("signin")}
               className={[
                 "relative h-11 w-11",
                 "bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm",
                 "flex items-center justify-center text-zinc-900 hover:bg-white transition-colors cursor-pointer",
                 "rounded-full",
               ].join(" ")}
-              aria-label={isLoggedIn ? "Cerrar sesión" : "Iniciar sesión"}
-              title={isLoggedIn ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : isPro ? "Pro" : "Gratis"}` : "Iniciar sesión"}
+              aria-label={isLoggedIn ? "Ver cuenta" : "Iniciar sesión"}
+              title={isLoggedIn ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : isPro ? "Plus" : "Gratis"}` : "Iniciar sesión"}
             >
               {/* pequeño estado visual */}
               <span
@@ -1710,7 +1716,7 @@ export default function Page() {
 
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-[11px] text-zinc-500">
-                        Plan: <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? "Pro" : "Gratis"}</span>
+                        Plan: <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? "Plus" : "Gratis"}</span>
                       </div>
 
                       <button
@@ -1877,9 +1883,7 @@ export default function Page() {
 
           {/* ✅ disclaimer más corto y con mejor “una sola línea” en móvil */}
           <div className="mx-auto max-w-3xl px-2 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
-            <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">
-              Orientación preventiva · No sustituye profesionales.
-            </p>
+            <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">Orientación preventiva · No sustituye profesionales.</p>
             {!hasUserMessage && <div className="h-1" />}
           </div>
         </div>
