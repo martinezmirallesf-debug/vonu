@@ -162,9 +162,9 @@ export default function Page() {
   // ===== Copy marketing (visible) =====
   const PLUS_TEXT = "Plus+";
   const PLUS_NODE = (
-    <span className="inline-flex items-start">
+    <span className="inline-flex items-baseline">
       Plus
-      <sup className="ml-0.5 text-[10px] relative -top-[2px]">+</sup>
+      <sup className="-ml-[2px] text-[12px] font-bold leading-none relative -top-[4px]">+</sup>
     </span>
   );
 
@@ -1876,7 +1876,6 @@ export default function Page() {
               </div>
             </div>
 
-            {/* ✅ estilo tipo ChatGPT: botón negro, flecha blanca */}
             <button
               onClick={sendMessage}
               disabled={!!(isTyping || (!input.trim() && !imagePreview))}
@@ -1888,7 +1887,6 @@ export default function Page() {
             </button>
           </div>
 
-          {/* ✅ disclaimer más corto y con mejor “una sola línea” en móvil */}
           <div className="mx-auto max-w-3xl px-2 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
             <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">Orientación preventiva · No sustituye profesionales.</p>
             {!hasUserMessage && <div className="h-1" />}
