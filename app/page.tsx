@@ -217,7 +217,7 @@ export default function Page() {
     }
   }
 
-  // ✅ CLAVE: capturar retorno de OAuth (Google/Microsoft/Apple) y guardar sesión
+  // ✅ CLAVE: capturar retorno OAuth (Google/Microsoft/Apple) y guardar sesión (Supabase v2)
   async function handleOAuthReturnIfPresent() {
     if (typeof window === "undefined") return;
 
@@ -225,9 +225,13 @@ export default function Page() {
       const url = new URL(window.location.href);
 
       const checkout = url.searchParams.get("checkout"); // preservar Stripe
-      const hasCode = !!url.searchParams.get("code");
+      const code = url.searchParams.get("code");
       const hasError = !!(url.searchParams.get("error") || url.searchParams.get("error_description"));
-      const hasHashTokens = typeof window.location.hash === "string" && window.location.hash.includes("access_token");
+
+      const hash = typeof window.location.hash === "string" ? window.location.hash : "";
+      const hashParams = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
+      const access_token = hashParams.get("access_token");
+      const refresh_token = hashParams.get("refresh_token");
 
       if (hasError) {
         const desc = url.searchParams.get("error_description") || url.searchParams.get("error") || "Error de OAuth.";
@@ -241,38 +245,49 @@ export default function Page() {
         if (checkout) url.searchParams.set("checkout", checkout);
 
         // limpiar hash también
-        window.history.replaceState({}, "", `${url.pathname}${url.search ? url.search : ""}`);
+        const cleanUrl = `${url.pathname}${url.searchParams.toString() ? `?${url.searchParams.toString()}` : ""}`;
+        window.history.replaceState({}, "", cleanUrl);
         return;
       }
 
-      // Si hay señal de retorno OAuth (code o hash), intentamos "absorber" la sesión desde la URL
-      if (hasCode || hasHashTokens) {
-        const { data, error } = await supabaseBrowser.auth.getSessionFromUrl({ storeSession: true });
+      const hasCode = !!code;
+      const hasHashTokens = !!access_token && !!refresh_token;
+
+      if (!hasCode && !hasHashTokens) return;
+
+      // 1) PKCE: ?code=...
+      if (hasCode && code) {
+        const { error } = await supabaseBrowser.auth.exchangeCodeForSession(code);
         if (error) setLoginMsg(error.message);
-
-        // limpiar params OAuth (preservando checkout)
-        url.searchParams.delete("code");
-        url.searchParams.delete("state");
-        url.searchParams.delete("error");
-        url.searchParams.delete("error_description");
-        if (checkout) url.searchParams.set("checkout", checkout);
-
-        // reconstruir URL limpia (sin hash tokens)
-        const clean = `${url.pathname}${url.searchParams.toString() ? `?${url.searchParams.toString()}` : ""}`;
-        window.history.replaceState({}, "", clean);
-
-        // refrescar estado (por si onAuthStateChange tarda)
-        await refreshAuthSession();
-        await refreshProStatus();
-
-        // si abrió login modal antes, lo cerramos
-        setLoginOpen(false);
-
-        // si realmente hay sesión, y veníamos con checkout pendiente, el useEffect ya lo lanzará
-        if (data?.session?.user) {
-          setLoginMsg(null);
-        }
       }
+
+      // 2) Implicit: #access_token=...&refresh_token=...
+      if (!hasCode && hasHashTokens && access_token && refresh_token) {
+        const { error } = await supabaseBrowser.auth.setSession({
+          access_token,
+          refresh_token,
+        });
+        if (error) setLoginMsg(error.message);
+      }
+
+      // limpiar params OAuth (preservando checkout)
+      url.searchParams.delete("code");
+      url.searchParams.delete("state");
+      url.searchParams.delete("error");
+      url.searchParams.delete("error_description");
+      if (checkout) url.searchParams.set("checkout", checkout);
+
+      // reconstruir URL limpia (sin hash)
+      const clean = `${url.pathname}${url.searchParams.toString() ? `?${url.searchParams.toString()}` : ""}`;
+      window.history.replaceState({}, "", clean);
+
+      // refrescar estado
+      await refreshAuthSession();
+      await refreshProStatus();
+
+      // si abrió login modal antes, lo cerramos
+      setLoginOpen(false);
+      setLoginMsg(null);
     } catch {
       // no romper UI
     }
@@ -1704,37 +1719,6 @@ export default function Page() {
 
       {/* MAIN */}
       <div className="flex-1 flex flex-col min-h-0">
-        {/* RENAME MODAL */}
-        {renameOpen && (
-          <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center px-6" onClick={() => setRenameOpen(false)}>
-            <div className="w-full max-w-md rounded-3xl bg-white border border-zinc-200 shadow-xl p-4" onClick={(e) => e.stopPropagation()}>
-              <div className="text-sm font-semibold text-zinc-900 mb-1">Renombrar chat</div>
-              <div className="text-xs text-zinc-500 mb-3">Ponle un nombre para encontrarlo rápido.</div>
-
-              <input
-                value={renameValue}
-                onChange={(e) => setRenameValue(e.target.value)}
-                className="w-full h-11 rounded-2xl border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
-                placeholder="Ej: SMS del banco"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") confirmRename();
-                  if (e.key === "Escape") setRenameOpen(false);
-                }}
-              />
-
-              <div className="flex justify-end gap-2 mt-4">
-                <button onClick={() => setRenameOpen(false)} className="h-10 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-sm cursor-pointer">
-                  Cancelar
-                </button>
-                <button onClick={confirmRename} className="h-10 px-4 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 text-sm transition-colors cursor-pointer">
-                  Guardar
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* ERROR BAR */}
         {uiError && (
           <div className="mx-auto max-w-3xl px-6 mt-3 pt-4">
@@ -1803,7 +1787,11 @@ export default function Page() {
               {imagePreview && (
                 <div className="mb-2 relative w-fit">
                   <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
-                  <button onClick={() => setImagePreview(null)} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer" aria-label="Quitar imagen">
+                  <button
+                    onClick={() => setImagePreview(null)}
+                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer"
+                    aria-label="Quitar imagen"
+                  >
                     ×
                   </button>
                 </div>
