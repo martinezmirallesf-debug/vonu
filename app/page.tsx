@@ -234,7 +234,7 @@ export default function Page() {
     }
   }
 
-  // ✅ CLAVE: capturar retorno de OAuth (Google/Microsoft/Apple) y guardar sesión (Supabase v2)
+  // ✅ CLAVE: capturar retorno de OAuth (Google/Microsoft) y guardar sesión (Supabase v2)
   async function handleOAuthReturnIfPresent() {
     if (typeof window === "undefined") return;
 
@@ -1543,15 +1543,7 @@ export default function Page() {
                     Continuar con Microsoft
                   </button>
 
-                  <button
-                    onClick={() => setLoginMsg("Apple estará disponible en breve.")}
-                    className="w-full h-11 rounded-full bg-black hover:bg-zinc-900 text-white text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-                    disabled={!!loginSending}
-                    title="Próximamente"
-                  >
-                    <OAuthLogo src="/auth/Apple.png" alt="Apple" invert />
-                    Continuar con Apple
-                  </button>
+                  {/* ✅ Apple eliminado */}
 
                   <div className="text-[12px] text-zinc-600 text-center pt-1">
                     {authMode === "signin" ? (
@@ -1876,10 +1868,11 @@ export default function Page() {
               </div>
             </div>
 
+            {/* ✅ ÚNICO CAMBIO: botón enviar en azul (tono web) */}
             <button
               onClick={sendMessage}
               disabled={!!(isTyping || (!input.trim() && !imagePreview))}
-              className="h-11 w-11 md:h-12 md:w-12 rounded-full bg-zinc-900 hover:bg-black text-white flex items-center justify-center disabled:opacity-40 transition-colors cursor-pointer shrink-0"
+              className="h-11 w-11 md:h-12 md:w-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center disabled:opacity-40 transition-colors cursor-pointer shrink-0"
               aria-label="Enviar"
               title="Enviar"
             >
