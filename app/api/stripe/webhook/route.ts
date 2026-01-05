@@ -4,6 +4,9 @@ import { headers } from "next/headers";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 function toISOFromUnixSeconds(sec?: number | null) {
   if (!sec) return null;
   return new Date(sec * 1000).toISOString();
@@ -12,7 +15,7 @@ function toISOFromUnixSeconds(sec?: number | null) {
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("Missing STRIPE_SECRET_KEY in env");
-  // ✅ Importante: NO fijamos apiVersion para evitar errores de types en build
+  // ✅ No fijamos apiVersion para evitar líos de types/build
   return new Stripe(key);
 }
 
@@ -30,7 +33,6 @@ function getSupabaseAdmin() {
 
 export async function POST(req: Request) {
   try {
-    // ✅ Esto evita que el build “reviente” por envs: solo se valida al recibir request real
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!webhookSecret) {
       return NextResponse.json(
@@ -39,9 +41,13 @@ export async function POST(req: Request) {
       );
     }
 
+    // ✅ FIX: headers() devuelve Promise en tu versión -> hay que await
     const sig = (await headers()).get("stripe-signature");
     if (!sig) {
-      return NextResponse.json({ error: "Missing stripe-signature header" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing stripe-signature header" },
+        { status: 400 }
+      );
     }
 
     const rawBody = await req.text();
@@ -53,15 +59,42 @@ export async function POST(req: Request) {
       event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
     } catch (err: any) {
       return NextResponse.json(
-        { error: `Webhook signature verification failed: ${err?.message ?? "unknown"}` },
+        {
+          error: `Webhook signature verification failed: ${
+            err?.message ?? "unknown"
+          }`,
+        },
         { status: 400 }
       );
     }
 
-    // ✅ Creamos Supabase admin SOLO aquí (runtime), no al importar el módulo
     const supabaseAdmin = getSupabaseAdmin();
 
-    // ---- Helpers de upsert ----
+    // ---- Helpers ----
+    async function resolveUserIdFromCustomer(stripeCustomerId: string | null) {
+      if (!stripeCustomerId) return null;
+
+      const { data, error } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("stripe_customer_id", stripeCustomerId)
+        .maybeSingle();
+
+      if (error) return null;
+      return (data?.id as string | undefined) ?? null;
+    }
+
+    async function getExistingUserIdBySubscription(stripeSubscriptionId: string) {
+      const { data, error } = await supabaseAdmin
+        .from("subscriptions")
+        .select("user_id")
+        .eq("stripe_subscription_id", stripeSubscriptionId)
+        .maybeSingle();
+
+      if (error) return null;
+      return (data?.user_id as string | null) ?? null;
+    }
+
     async function upsertSubscriptionRow(params: {
       userId: string | null;
       stripeCustomerId: string | null;
@@ -70,11 +103,24 @@ export async function POST(req: Request) {
       currentPeriodEndIso: string | null;
       priceId: string | null;
     }) {
+      // ✅ Nunca machacamos user_id con null:
+      // 1) si viene userId -> usamos ese
+      // 2) si no viene, intentamos resolver por customer
+      // 3) si tampoco, conservamos el existente (si lo hay)
+      let userId = params.userId;
+
+      if (!userId) {
+        userId = await resolveUserIdFromCustomer(params.stripeCustomerId);
+      }
+      if (!userId) {
+        userId = await getExistingUserIdBySubscription(params.stripeSubscriptionId);
+      }
+
       const { error } = await supabaseAdmin
         .from("subscriptions")
         .upsert(
           {
-            user_id: params.userId,
+            user_id: userId, // 👈 ya NO será null si existía
             stripe_customer_id: params.stripeCustomerId,
             stripe_subscription_id: params.stripeSubscriptionId,
             status: params.status,
@@ -96,21 +142,23 @@ export async function POST(req: Request) {
           typeof session.subscription === "string" ? session.subscription : null;
 
         if (!subscriptionId) {
-          // No es suscripción (o no venía), ignoramos sin fallar
-          return NextResponse.json({ ok: true, ignored: "no_subscription_in_session" });
+          return NextResponse.json({
+            ok: true,
+            ignored: "no_subscription_in_session",
+          });
         }
 
         const stripeCustomerId =
           typeof session.customer === "string" ? session.customer : null;
 
-        // 🟦 Esto será null hasta que metas metadata en el checkout (lo hacemos después)
+        // ✅ Aquí sí debe venir porque lo metes en /checkout
         const userId = (session.metadata?.supabase_user_id as string) || null;
 
-        // Recuperamos la subscripción real para sacar status/period_end/price_id
         const sub = await stripe.subscriptions.retrieve(subscriptionId);
 
-        const currentPeriodEndIso = toISOFromUnixSeconds((sub as any).current_period_end ?? null);
-
+        const currentPeriodEndIso = toISOFromUnixSeconds(
+          (sub as any).current_period_end ?? null
+        );
         const priceId =
           (sub.items?.data?.[0]?.price?.id as string | undefined) ?? null;
 
@@ -123,7 +171,12 @@ export async function POST(req: Request) {
           priceId,
         });
 
-        return NextResponse.json({ ok: true, event: event.type, userId, subscriptionId });
+        return NextResponse.json({
+          ok: true,
+          event: event.type,
+          userId,
+          subscriptionId,
+        });
       }
 
       case "customer.subscription.created":
@@ -132,16 +185,17 @@ export async function POST(req: Request) {
         const sub = event.data.object as Stripe.Subscription;
 
         const stripeSubscriptionId = sub.id;
-        const stripeCustomerId = typeof sub.customer === "string" ? sub.customer : null;
+        const stripeCustomerId =
+          typeof sub.customer === "string" ? sub.customer : null;
 
-        const currentPeriodEndIso = toISOFromUnixSeconds((sub as any).current_period_end ?? null);
-
+        const currentPeriodEndIso = toISOFromUnixSeconds(
+          (sub as any).current_period_end ?? null
+        );
         const priceId =
           (sub.items?.data?.[0]?.price?.id as string | undefined) ?? null;
 
-        // Aquí normalmente no tenemos userId si no lo guardas tú
         await upsertSubscriptionRow({
-          userId: null,
+          userId: null, // ✅ lo resolverá por customer o conservará el existente
           stripeCustomerId,
           stripeSubscriptionId,
           status: sub.status ?? null,
@@ -149,7 +203,11 @@ export async function POST(req: Request) {
           priceId,
         });
 
-        return NextResponse.json({ ok: true, event: event.type, subscriptionId: stripeSubscriptionId });
+        return NextResponse.json({
+          ok: true,
+          event: event.type,
+          subscriptionId: stripeSubscriptionId,
+        });
       }
 
       default: {
