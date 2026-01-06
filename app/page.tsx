@@ -168,9 +168,11 @@ export default function Page() {
     </span>
   );
 
-  function deriveName(email: string | null, metaName?: string | null) {
-    const n = (metaName ?? "").trim();
+  // ✅ FIX: soportar nombre/email desde Microsoft (identity_data) si user_metadata viene vacío
+  function deriveName(email: string | null, metaName?: string | null, identityName?: string | null) {
+    const n = (metaName ?? "").trim() || (identityName ?? "").trim();
     if (n) return n;
+
     if (!email) return null;
     const base = email.split("@")[0] || "";
     if (!base) return null;
@@ -210,13 +212,28 @@ export default function Page() {
     try {
       const { data } = await supabaseBrowser.auth.getSession();
       const u = data?.session?.user;
-      const email = u?.email ?? null;
+
+      const identities = (u as any)?.identities ?? [];
+      const identityData = identities?.[0]?.identity_data ?? null;
+
+      const identityEmail =
+        (identityData?.email as string | undefined) ??
+        (identityData?.preferred_username as string | undefined) ??
+        null;
+
+      const identityName =
+        (identityData?.name as string | undefined) ??
+        (identityData?.full_name as string | undefined) ??
+        (identityData?.displayName as string | undefined) ??
+        null;
+
+      const email = (u?.email ?? identityEmail ?? null) as string | null;
       const id = u?.id ?? null;
       const metaName = (u?.user_metadata?.full_name ?? u?.user_metadata?.name ?? null) as string | null;
 
       setAuthUserEmail(email);
       setAuthUserId(id);
-      setAuthUserName(deriveName(email, metaName));
+      setAuthUserName(deriveName(email, metaName, identityName));
     } catch {
       setAuthUserEmail(null);
       setAuthUserId(null);
@@ -347,13 +364,28 @@ export default function Page() {
 
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
         const u = session?.user;
-        const email = u?.email ?? null;
+
+        const identities = (u as any)?.identities ?? [];
+        const identityData = identities?.[0]?.identity_data ?? null;
+
+        const identityEmail =
+          (identityData?.email as string | undefined) ??
+          (identityData?.preferred_username as string | undefined) ??
+          null;
+
+        const identityName =
+          (identityData?.name as string | undefined) ??
+          (identityData?.full_name as string | undefined) ??
+          (identityData?.displayName as string | undefined) ??
+          null;
+
+        const email = (u?.email ?? identityEmail ?? null) as string | null;
         const id = u?.id ?? null;
         const metaName = (u?.user_metadata?.full_name ?? u?.user_metadata?.name ?? null) as string | null;
 
         setAuthUserEmail(email);
         setAuthUserId(id);
-        setAuthUserName(deriveName(email, metaName));
+        setAuthUserName(deriveName(email, metaName, identityName));
 
         // ⚡ cuando cambia sesión, re-chequeamos pro (así Google/Microsoft quedan iguales)
         setTimeout(() => {
