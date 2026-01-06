@@ -103,9 +103,14 @@ function ShieldIcon({ className }: { className?: string }) {
 }
 
 // ✅ Indicador "pensando": 3 puntos (solo cuando aún NO hay texto)
+// Reservamos ancho fijo para que no "mueva" el layout al aparecer/desaparecer
 function TypingDots() {
   return (
-    <span className="ml-1 inline-flex items-center gap-1 align-middle">
+    <span
+      className="ml-1 inline-flex items-center gap-1 align-middle"
+      style={{ width: 18, justifyContent: "flex-start" }}
+      aria-hidden="true"
+    >
       <span className="w-1.5 h-1.5 rounded-full bg-zinc-600/70 animate-pulse" style={{ animationDelay: "0ms" }} />
       <span className="w-1.5 h-1.5 rounded-full bg-zinc-600/70 animate-pulse" style={{ animationDelay: "180ms" }} />
       <span className="w-1.5 h-1.5 rounded-full bg-zinc-600/70 animate-pulse" style={{ animationDelay: "360ms" }} />
@@ -113,19 +118,20 @@ function TypingDots() {
   );
 }
 
-// ✅ Indicador "escribiendo": la barrita/cursor (cuando ya hay texto parcial) — BLINK real y visible
+// ✅ Indicador "escribiendo": cursor tipo antiguo (bloque) con blink estable
 function TypingCaret() {
   return (
     <span
       aria-hidden="true"
-      className="ml-0.5 inline-block align-baseline"
+      className="inline-block align-baseline"
       style={{
-        width: 2,
+        marginLeft: 2,
+        width: 8,
         height: "1em",
-        backgroundColor: "rgba(24,24,27,0.80)",
-        borderRadius: 9999,
-        transform: "translateY(1px)",
-        animation: "vonu-blink 1s steps(1, end) infinite",
+        backgroundColor: "rgba(24,24,27,0.85)",
+        borderRadius: 2,
+        transform: "translateY(2px)",
+        animation: "vonu-blink 0.95s steps(1, end) infinite",
       }}
     />
   );
@@ -1942,10 +1948,23 @@ export default function Page() {
 
                       {(m.text || m.streaming) && (
                         <div className="prose prose-sm max-w-none break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0">
-                          {/* ✅ Mientras streaming: texto plano para que el indicador quede inline */}
+                          {/* ✅ Streaming: texto plano pero SIN respetar saltos de línea todavía (evita saltos de párrafo mientras escribe) */}
                           {isStreaming ? (
-                            <span className="whitespace-pre-wrap">
-                              {mdText}
+                            <span
+                              className="break-words"
+                              style={{
+                                whiteSpace: "pre-wrap",
+                                wordBreak: "break-word",
+                              }}
+                            >
+                              {(() => {
+                                const raw = mdText ?? "";
+                                const normalized = raw
+                                  .replace(/\r\n/g, "\n")
+                                  .replace(/\n{2,}/g, "\n")
+                                  .replace(/\n/g, " ");
+                                return normalized;
+                              })()}
                               {!hasText ? <TypingDots /> : <TypingCaret />}
                             </span>
                           ) : (
