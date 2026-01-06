@@ -6,6 +6,23 @@ import { getUserFromRequest } from "@/app/lib/authServer";
 
 export const runtime = "nodejs";
 
+function getAppUrl(req: NextRequest) {
+  // Prioridad:
+  // 1) NEXT_PUBLIC_APP_URL (ideal: https://app.vonuai.com)
+  // 2) NEXT_PUBLIC_SITE_URL (si lo usas)
+  // 3) Origin de la request (fallback útil para previews)
+  // 4) localhost
+  const envUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "";
+
+  const origin = req.headers.get("origin") || "";
+
+  const base = (envUrl || origin || "http://localhost:3000").replace(/\/$/, "");
+  return base;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -15,24 +32,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
-    // ✅ Tus envs (como me dijiste):
-    // STRIPE_PRICE_MONTHLY, STRIPE_PRICE_YEARLY
+    // Env IDs
     const priceMonthly = process.env.STRIPE_PRICE_MONTHLY;
     const priceYearly = process.env.STRIPE_PRICE_YEARLY;
 
     if (!priceMonthly || !priceYearly) {
       return NextResponse.json(
-        {
-          error:
-            "Missing STRIPE_PRICE_MONTHLY or STRIPE_PRICE_YEARLY in env (Vercel + .env.local)",
-        },
+        { error: "Missing STRIPE_PRICE_MONTHLY or STRIPE_PRICE_YEARLY in env" },
         { status: 500 }
       );
     }
 
     const priceId = plan === "yearly" ? priceYearly : priceMonthly;
 
-    // ✅ Auth real
+    // Auth
     const { user, error } = await getUserFromRequest(req);
     if (!user) {
       return NextResponse.json(
@@ -44,7 +57,7 @@ export async function POST(req: NextRequest) {
     const stripe = getStripe();
     const sbAdmin = getSupabaseAdmin();
 
-    // 1) Leer profile para stripe_customer_id
+    // Profile (stripe_customer_id + email)
     const { data: profile, error: pErr } = await sbAdmin
       .from("profiles")
       .select("stripe_customer_id,email")
@@ -55,7 +68,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: pErr.message }, { status: 500 });
     }
 
-    // 2) Si no hay customer, crearlo y guardarlo
+    // Create customer if missing
     let customerId = profile?.stripe_customer_id ?? null;
 
     if (!customerId) {
@@ -82,12 +95,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      "http://localhost:3000";
+    const appUrl = getAppUrl(req);
 
-    // 3) Crear sesión de checkout
+    // Create checkout session
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
@@ -95,6 +105,10 @@ export async function POST(req: NextRequest) {
       success_url: `${appUrl}/?checkout=success`,
       cancel_url: `${appUrl}/?checkout=cancel`,
       allow_promotion_codes: true,
+
+      // Esto ayuda con "pagar con Wallets" y datos de cliente (si Stripe lo necesita)
+      customer_update: { address: "auto", name: "auto" },
+
       metadata: { supabase_user_id: user.id, plan },
     });
 
