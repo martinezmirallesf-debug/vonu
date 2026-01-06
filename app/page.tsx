@@ -678,7 +678,6 @@ export default function Page() {
         options: {
           redirectTo: `${SITE_URL}/`,
 
-          // ✅ Google: pedir scopes estándar para asegurar email/profile
           ...(provider === "google"
             ? {
                 queryParams: { prompt: "select_account" },
@@ -686,7 +685,6 @@ export default function Page() {
               }
             : {}),
 
-          // ✅ Azure: pedir claims estándar para que lleguen name + email/preferred_username
           ...(provider === "azure"
             ? {
                 queryParams: { prompt: "select_account" },
@@ -910,6 +908,7 @@ export default function Page() {
     shouldStickToBottomRef.current = distToBottom < threshold;
   }
 
+  // ✅ FIX: mientras streamea, NO usar smooth (evita el "bote" constante)
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -917,7 +916,7 @@ export default function Page() {
 
     el.scrollTo({
       top: el.scrollHeight,
-      behavior: "smooth",
+      behavior: isTyping ? "auto" : "smooth",
     });
   }, [messages, isTyping]);
 
@@ -1058,7 +1057,7 @@ export default function Page() {
     }
 
     if (!isPro) {
-      setPayMsg(`Has llegado al límite del plan Gratis. Desbloquea ${PLUS_TEXT} para seguir usando Vonu.`);
+      setPayMsg(`Has llegado al límite del plan Gratis. Desbloquea Plus+ para seguir usando Vonu.`);
       openPlansModal();
       return true;
     }
@@ -1765,9 +1764,7 @@ export default function Page() {
 
       {/* ===== OVERLAY + SIDEBAR ===== */}
       <div
-        className={`fixed inset-0 z-40 transition-all duration-300 ${
-          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent"
-        }`}
+        className={`fixed inset-0 z-40 transition-all duration-300 ${menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent"}`}
         onClick={() => setMenuOpen(false)}
       >
         <aside
@@ -1835,10 +1832,7 @@ export default function Page() {
                           handleOpenPlansCTA();
                           setMenuOpen(false);
                         }}
-                        className={[
-                          "text-xs px-3 py-2 rounded-full transition-colors cursor-pointer",
-                          isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700",
-                        ].join(" ")}
+                        className={["text-xs px-3 py-2 rounded-full transition-colors cursor-pointer", isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700"].join(" ")}
                       >
                         {isPro ? "Ver" : "Mejorar"}
                       </button>
@@ -1861,9 +1855,7 @@ export default function Page() {
                   <button
                     key={t.id}
                     onClick={() => activateThread(t.id)}
-                    className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${
-                      active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"
-                    }`}
+                    className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"}`}
                   >
                     <div className="text-sm font-medium text-zinc-900">{t.title}</div>
                     <div className="text-xs text-zinc-500 mt-1">{when}</div>
@@ -1888,7 +1880,7 @@ export default function Page() {
             <div className="flex flex-col gap-4 py-8 md:pt-6">
               {messages.map((m) => {
                 const isUser = m.role === "user";
-                const mdText = isUser ? (m.text ?? "") : (m.text || "") + (m.streaming ? " ▍" : "");
+                const mdText = isUser ? (m.text ?? "") : (m.text || "");
 
                 return (
                   <div key={m.id} className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
@@ -1909,12 +1901,11 @@ export default function Page() {
                       )}
 
                       {(m.text || m.streaming) && (
-                        <div className="prose prose-sm max-w-none break-words">
+                        <div className="prose prose-sm max-w-none break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0">
                           <ReactMarkdown>{mdText}</ReactMarkdown>
+                          {m.streaming && <span className="ml-1 inline-block align-baseline text-zinc-600 animate-pulse">▍</span>}
                         </div>
                       )}
-
-                      {m.streaming && <span className="inline-block w-1.5 h-1.5 ml-1 bg-zinc-400 rounded-full animate-pulse" />}
                     </div>
                   </div>
                 );
