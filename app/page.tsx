@@ -102,7 +102,7 @@ function ShieldIcon({ className }: { className?: string }) {
   );
 }
 
-// ✅ FIX: indicador de “está escribiendo” con puntos (sin palito/cursor)
+// ✅ Indicador "pensando": 3 puntos (solo cuando aún NO hay texto)
 function TypingDots() {
   return (
     <span className="ml-1 inline-flex items-center gap-1 align-middle">
@@ -110,6 +110,16 @@ function TypingDots() {
       <span className="w-1.5 h-1.5 rounded-full bg-zinc-600/70 animate-pulse" style={{ animationDelay: "180ms" }} />
       <span className="w-1.5 h-1.5 rounded-full bg-zinc-600/70 animate-pulse" style={{ animationDelay: "360ms" }} />
     </span>
+  );
+}
+
+// ✅ Indicador "escribiendo": la barrita/cursor (cuando ya hay texto parcial)
+function TypingCaret() {
+  return (
+    <span
+      className="ml-0.5 inline-block w-[2px] h-[1em] bg-zinc-700/70 align-[-2px] animate-pulse"
+      aria-hidden="true"
+    />
   );
 }
 
@@ -1893,6 +1903,9 @@ export default function Page() {
                 const isUser = m.role === "user";
                 const mdText = isUser ? (m.text ?? "") : (m.text || "");
 
+                const isStreaming = !!m.streaming;
+                const hasText = (m.text ?? "").length > 0;
+
                 return (
                   <div key={m.id} className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
                     <div
@@ -1913,8 +1926,15 @@ export default function Page() {
 
                       {(m.text || m.streaming) && (
                         <div className="prose prose-sm max-w-none break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0">
-                          <ReactMarkdown>{mdText}</ReactMarkdown>
-                          {m.streaming && <TypingDots />}
+                          {/* ✅ Mientras streaming: texto plano para que el indicador quede inline */}
+                          {isStreaming ? (
+                            <span className="whitespace-pre-wrap">
+                              {mdText}
+                              {!hasText ? <TypingDots /> : <TypingCaret />}
+                            </span>
+                          ) : (
+                            <ReactMarkdown>{mdText}</ReactMarkdown>
+                          )}
                         </div>
                       )}
                     </div>
