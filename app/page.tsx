@@ -284,7 +284,6 @@ export default function Page() {
       const existing = (metaName ?? "").trim();
       if (existing) return; // ya hay nombre en metadata
 
-      // Guardamos en metadata para que en próximos renders/sesiones salga bien
       await supabaseBrowser.auth.updateUser({
         data: {
           full_name: name,
@@ -356,13 +355,8 @@ export default function Page() {
       const errorRaw = qError ?? hError ?? qErrorCode ?? hErrorCode;
       const errorDescRaw = qErrorDesc ?? hErrorDesc ?? qErrorMsg ?? hErrorMsg;
 
-      // Si hay error OAuth, lo mostramos
       if (errorRaw || errorDescRaw) {
-        const desc =
-          decodeMaybe(errorDescRaw || "") ||
-          decodeMaybe(errorRaw || "") ||
-          "Error de OAuth.";
-
+        const desc = decodeMaybe(errorDescRaw || "") || decodeMaybe(errorRaw || "") || "Error de OAuth.";
         const extra = qErrorCode || hErrorCode ? `\n\nCódigo: ${qErrorCode || hErrorCode}` : "";
 
         setLoginMsg(desc + extra);
@@ -421,7 +415,6 @@ export default function Page() {
       url.searchParams.delete("error_message");
       if (checkout) url.searchParams.set("checkout", checkout);
 
-      // reconstruir URL limpia (sin hash)
       const clean = `${url.pathname}${url.searchParams.toString() ? `?${url.searchParams.toString()}` : ""}`;
       window.history.replaceState({}, "", clean);
 
@@ -431,8 +424,8 @@ export default function Page() {
         setLoginOpen(true);
         setLoginMsg(
           "No se pudo completar el login.\n\n" +
-            "Si Google vuelve con error_code, suele ser configuración del provider o redirect URL.\n" +
-            "Revisa Supabase Auth (Google) y URL Configuration."
+            "Si Google vuelve con error_code, suele ser configuración del provider o un trigger/constraint en DB.\n" +
+            "Revisa Supabase Auth (Google), URL Configuration y logs de DB."
         );
         return;
       }
@@ -491,7 +484,7 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ Refrescar sesión al volver al tab / focus (muy útil tras OAuth)
+  // ✅ Refrescar sesión al volver al tab / focus
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -561,7 +554,7 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted]);
 
-  // ✅ IMPORTANTE: en móvil NO hacemos autofocus al abrir login (para que no salga el teclado)
+  // ✅ móvil: NO autofocus al abrir login
   useEffect(() => {
     if (!loginOpen) return;
     if (!isDesktopPointer()) return;
@@ -592,7 +585,6 @@ export default function Page() {
       const { data } = await supabaseBrowser.auth.getSession();
       const token = data?.session?.access_token;
 
-      // ✅ Si no hay sesión: pedir login y reintentar luego
       if (!token) {
         setPayLoading(false);
         setPayMsg("Para continuar al pago, inicia sesión.");
@@ -684,8 +676,15 @@ export default function Page() {
       const { error } = await supabaseBrowser.auth.signInWithOAuth({
         provider,
         options: {
-          // ✅ IMPORTANTÍSIMO: redirigir al MISMO origin donde empezó el login (evita PKCE cross-domain)
           redirectTo: `${SITE_URL}/`,
+
+          // ✅ Google: pedir scopes estándar para asegurar email/profile
+          ...(provider === "google"
+            ? {
+                queryParams: { prompt: "select_account" },
+                scopes: "openid email profile",
+              }
+            : {}),
 
           // ✅ Azure: pedir claims estándar para que lleguen name + email/preferred_username
           ...(provider === "azure"
@@ -748,7 +747,6 @@ export default function Page() {
         email,
         password,
         options: {
-          // ✅ también lo llevamos a la home, por coherencia
           emailRedirectTo: `${SITE_URL}/`,
         },
       });
@@ -1274,18 +1272,14 @@ export default function Page() {
       {/* ===== PAYWALL (FULLSCREEN TAKEOVER) ===== */}
       {paywallOpen && (
         <div className="fixed inset-0 z-[70]">
-          {/* backdrop */}
           <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-white to-white" onClick={closePaywall} aria-hidden="true" />
 
-          {/* soft glows */}
           <div className="absolute -top-28 left-1/2 -translate-x-1/2 h-[320px] w-[680px] rounded-full bg-blue-500/15 blur-3xl pointer-events-none" />
           <div className="absolute top-[26%] -left-28 h-[240px] w-[240px] rounded-full bg-blue-600/10 blur-3xl pointer-events-none" />
           <div className="absolute top-[48%] -right-24 h-[280px] w-[280px] rounded-full bg-zinc-900/5 blur-3xl pointer-events-none" />
 
-          {/* content */}
           <div className="relative h-full w-full" onClick={(e) => e.stopPropagation()}>
             <div className="mx-auto h-full w-full max-w-md px-4">
-              {/* header */}
               <div className="pt-4 flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="h-11 w-11 rounded-full bg-white/90 backdrop-blur-xl border border-zinc-200 grid place-items-center shadow-sm">
@@ -1318,13 +1312,11 @@ export default function Page() {
                 </button>
               </div>
 
-              {/* body card (NO SCROLL) */}
               <div
                 className="mt-4 rounded-[28px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden"
                 style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}
               >
                 <div className="h-full flex flex-col p-4">
-                  {/* plans */}
                   <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
                     <div className="flex items-center justify-between">
                       <div className="text-[13px] font-semibold text-zinc-900">Elige tu plan</div>
@@ -1332,7 +1324,6 @@ export default function Page() {
                     </div>
 
                     <div className="mt-3 space-y-2">
-                      {/* yearly */}
                       <button
                         onClick={() => setPlan("yearly")}
                         disabled={!!payLoading}
@@ -1363,7 +1354,6 @@ export default function Page() {
                         </div>
                       </button>
 
-                      {/* monthly */}
                       <button
                         onClick={() => setPlan("monthly")}
                         disabled={!!payLoading}
@@ -1391,7 +1381,6 @@ export default function Page() {
                         </div>
                       </button>
 
-                      {/* free */}
                       <button
                         onClick={() => setPlan("free")}
                         disabled={!!payLoading}
@@ -1416,7 +1405,6 @@ export default function Page() {
                     </div>
                   </div>
 
-                  {/* benefits */}
                   <div className="mt-3 rounded-[22px] border border-zinc-200 bg-white p-3">
                     <div className="text-[12px] font-semibold text-zinc-900">{plan === "free" ? "Gratis" : <>Lo que desbloqueas con {PLUS_NODE}</>}</div>
                     <div className="mt-2 space-y-2">
@@ -1431,7 +1419,6 @@ export default function Page() {
                     </div>
                   </div>
 
-                  {/* mensaje/error */}
                   <div className="mt-3 min-h-[42px]">
                     {payMsg ? (
                       <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">{payMsg}</div>
@@ -1440,7 +1427,6 @@ export default function Page() {
                     )}
                   </div>
 
-                  {/* CTA bottom */}
                   <div className="mt-auto pt-3 pb-[calc(env(safe-area-inset-bottom)+6px)]">
                     <button
                       onClick={() => {
@@ -1495,15 +1481,8 @@ export default function Page() {
 
       {/* ===== LOGIN MODAL ===== */}
       {loginOpen && (
-        <div
-          className="fixed inset-0 z-[80] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6"
-          onClick={() => (!loginSending ? setLoginOpen(false) : null)}
-        >
-          <div
-            className="w-full max-w-[380px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* ✅ Si ya hay sesión, mostramos estado claro */}
+        <div className="fixed inset-0 z-[80] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6" onClick={() => (!loginSending ? setLoginOpen(false) : null)}>
+          <div className="w-full max-w-[380px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-6" onClick={(e) => e.stopPropagation()}>
             {isLoggedIn ? (
               <>
                 <div className="flex items-start justify-between gap-3">
@@ -1898,14 +1877,12 @@ export default function Page() {
 
       {/* MAIN */}
       <div className="flex-1 flex flex-col min-h-0">
-        {/* ERROR BAR */}
         {uiError && (
           <div className="mx-auto max-w-3xl px-6 mt-3 pt-4">
             <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">Ha fallado la llamada a la IA. (Error: {uiError})</div>
           </div>
         )}
 
-        {/* CHAT */}
         <div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0">
           <div className="mx-auto max-w-3xl px-3 md:px-6" style={{ paddingTop: 92, paddingBottom: chatBottomPad }}>
             <div className="flex flex-col gap-4 py-8 md:pt-6">
@@ -1946,9 +1923,7 @@ export default function Page() {
           </div>
         </div>
 
-        {/* INPUT + DISCLAIMER */}
         <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl">
-          {/* ✅ móvil: menos margen lateral para que ocupe casi todo el ancho */}
           <div className="mx-auto max-w-3xl px-2 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
             <button
               onClick={() => fileInputRef.current?.click()}
@@ -2005,7 +1980,6 @@ export default function Page() {
               </div>
             </div>
 
-            {/* ✅ botón enviar en azul (tono web) */}
             <button
               onClick={sendMessage}
               disabled={!!(isTyping || (!input.trim() && !imagePreview))}
