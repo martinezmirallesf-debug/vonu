@@ -106,11 +106,7 @@ function ShieldIcon({ className }: { className?: string }) {
 // Reservamos ancho fijo para que no "mueva" el layout al aparecer/desaparecer
 function TypingDots() {
   return (
-    <span
-      className="ml-1 inline-flex items-center gap-1 align-middle"
-      style={{ width: 18, justifyContent: "flex-start" }}
-      aria-hidden="true"
-    >
+    <span className="ml-1 inline-flex items-center gap-1 align-middle" style={{ width: 18, justifyContent: "flex-start" }} aria-hidden="true">
       <span className="w-1.5 h-1.5 rounded-full bg-zinc-600/70 animate-pulse" style={{ animationDelay: "0ms" }} />
       <span className="w-1.5 h-1.5 rounded-full bg-zinc-600/70 animate-pulse" style={{ animationDelay: "180ms" }} />
       <span className="w-1.5 h-1.5 rounded-full bg-zinc-600/70 animate-pulse" style={{ animationDelay: "360ms" }} />
@@ -118,7 +114,7 @@ function TypingDots() {
   );
 }
 
-// ✅ Indicador "escribiendo": cursor tipo antiguo (bloque) con blink estable
+// ✅ Indicador "escribiendo": cursor fijo (SIN parpadeo) para que no “titile”
 function TypingCaret() {
   return (
     <span
@@ -131,7 +127,7 @@ function TypingCaret() {
         backgroundColor: "rgba(24,24,27,0.85)",
         borderRadius: 2,
         transform: "translateY(2px)",
-        animation: "vonu-blink 0.95s steps(1, end) infinite",
+        // ❌ sin animation
       }}
     />
   );
@@ -204,6 +200,16 @@ function deriveName(email: string | null, metaName?: string | null, identityName
   if (!base) return null;
   const cleaned = base.replace(/[._-]+/g, " ").trim();
   return cleaned ? cleaned.charAt(0).toUpperCase() + cleaned.slice(1) : null;
+}
+
+// ✅ IMPORTANT: normalizamos el texto del assistant SIEMPRE (streaming y final)
+// para que NO haya “salto raro” al terminar (mismo layout antes y después).
+function normalizeAssistantText(text: string) {
+  const raw = text ?? "";
+  return raw
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{2,}/g, "\n") // evita salto de párrafo
+    .replace(/\n/g, " "); // mantiene una sola “línea” visual estable
 }
 
 export default function Page() {
@@ -1294,14 +1300,6 @@ export default function Page() {
 
   return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
-      {/* ✅ Keyframes cursor (una sola vez) */}
-      <style>{`
-        @keyframes vonu-blink {
-          0%, 49% { opacity: 1; }
-          50%, 100% { opacity: 0; }
-        }
-      `}</style>
-
       {/* TOAST */}
       {toastMsg && (
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[90] px-3">
@@ -1923,7 +1921,10 @@ export default function Page() {
             <div className="flex flex-col gap-4 py-8 md:pt-6">
               {messages.map((m) => {
                 const isUser = m.role === "user";
-                const mdText = isUser ? (m.text ?? "") : (m.text || "");
+                const rawText = isUser ? (m.text ?? "") : (m.text || "");
+
+                // ✅ Texto final y streaming con el MISMO tratamiento (cero saltos raros)
+                const mdText = isUser ? rawText : normalizeAssistantText(rawText);
 
                 const isStreaming = !!m.streaming;
                 const hasText = (m.text ?? "").length > 0;
@@ -1948,7 +1949,6 @@ export default function Page() {
 
                       {(m.text || m.streaming) && (
                         <div className="prose prose-sm max-w-none break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0">
-                          {/* ✅ Streaming: texto plano pero SIN respetar saltos de línea todavía (evita saltos de párrafo mientras escribe) */}
                           {isStreaming ? (
                             <span
                               className="break-words"
@@ -1957,14 +1957,7 @@ export default function Page() {
                                 wordBreak: "break-word",
                               }}
                             >
-                              {(() => {
-                                const raw = mdText ?? "";
-                                const normalized = raw
-                                  .replace(/\r\n/g, "\n")
-                                  .replace(/\n{2,}/g, "\n")
-                                  .replace(/\n/g, " ");
-                                return normalized;
-                              })()}
+                              {mdText}
                               {!hasText ? <TypingDots /> : <TypingCaret />}
                             </span>
                           ) : (
