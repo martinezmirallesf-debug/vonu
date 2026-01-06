@@ -119,6 +119,58 @@ function OAuthLogo({ src, alt, invert }: { src: string; alt: string; invert?: bo
 
 type AuthCardMode = "signin" | "signup";
 
+type IdentityData = {
+  email?: string;
+  preferred_username?: string;
+  name?: string;
+  full_name?: string;
+  displayName?: string;
+  given_name?: string;
+  family_name?: string;
+  [k: string]: any;
+};
+
+function pickFirstNonEmpty(...vals: Array<string | null | undefined>) {
+  for (const v of vals) {
+    const t = (v ?? "").trim();
+    if (t) return t;
+  }
+  return null;
+}
+
+function buildNameFromParts(given?: string, family?: string) {
+  const g = (given ?? "").trim();
+  const f = (family ?? "").trim();
+  const both = `${g} ${f}`.trim();
+  return both || null;
+}
+
+function bestIdentityFromUser(u: any): { identityData: IdentityData | null; provider: string | null } {
+  const identities = (u as any)?.identities ?? [];
+  if (!Array.isArray(identities) || identities.length === 0) return { identityData: null, provider: null };
+
+  // Preferimos azure si existe, si no el primero
+  const azure = identities.find((x: any) => x?.provider === "azure");
+  const chosen = azure ?? identities[0];
+
+  const identityData = (chosen?.identity_data ?? null) as IdentityData | null;
+  const provider = (chosen?.provider ?? null) as string | null;
+
+  return { identityData, provider };
+}
+
+// ✅ FIX: soportar nombre/email desde Microsoft (identity_data / user_metadata) y persistirlo
+function deriveName(email: string | null, metaName?: string | null, identityName?: string | null) {
+  const n = pickFirstNonEmpty(metaName, identityName);
+  if (n) return n;
+
+  if (!email) return null;
+  const base = email.split("@")[0] || "";
+  if (!base) return null;
+  const cleaned = base.replace(/[._-]+/g, " ").trim();
+  return cleaned ? cleaned.charAt(0).toUpperCase() + cleaned.slice(1) : null;
+}
+
 export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -168,18 +220,6 @@ export default function Page() {
     </span>
   );
 
-  // ✅ FIX: soportar nombre/email desde Microsoft (identity_data) si user_metadata viene vacío
-  function deriveName(email: string | null, metaName?: string | null, identityName?: string | null) {
-    const n = (metaName ?? "").trim() || (identityName ?? "").trim();
-    if (n) return n;
-
-    if (!email) return null;
-    const base = email.split("@")[0] || "";
-    if (!base) return null;
-    const cleaned = base.replace(/[._-]+/g, " ").trim();
-    return cleaned ? cleaned.charAt(0).toUpperCase() + cleaned.slice(1) : null;
-  }
-
   async function refreshProStatus() {
     if (!authUserId) {
       setIsPro(false);
@@ -208,32 +248,68 @@ export default function Page() {
     }
   }
 
+  function computeProfileFromUser(u: any) {
+    const { identityData } = bestIdentityFromUser(u);
+
+    const metaName = pickFirstNonEmpty(u?.user_metadata?.full_name, u?.user_metadata?.name) as string | null;
+    const metaEmail = pickFirstNonEmpty(u?.user_metadata?.email) as string | null;
+
+    const identityEmail = pickFirstNonEmpty(identityData?.email, identityData?.preferred_username) as string | null;
+
+    const identityName =
+      pickFirstNonEmpty(
+        identityData?.name,
+        identityData?.full_name,
+        identityData?.displayName,
+        buildNameFromParts(identityData?.given_name, identityData?.family_name)
+      ) ?? null;
+
+    const email = (u?.email ?? metaEmail ?? identityEmail ?? null) as string | null;
+    const id = (u?.id ?? null) as string | null;
+
+    const name = deriveName(email, metaName, identityName);
+
+    return { id, email, name, metaName, identityName };
+  }
+
+  // ✅ Persistimos nombre en user_metadata si Azure no lo guarda (muy común)
+  async function persistNameIfMissing(u: any) {
+    try {
+      const { name, metaName } = computeProfileFromUser(u);
+      if (!name) return;
+
+      const existing = (metaName ?? "").trim();
+      if (existing) return; // ya hay nombre en metadata
+
+      // Guardamos en metadata para que en próximos renders/sesiones salga bien
+      await supabaseBrowser.auth.updateUser({
+        data: {
+          full_name: name,
+          name,
+        },
+      });
+    } catch {
+      // no romper UI
+    }
+  }
+
   async function refreshAuthSession() {
     try {
       const { data } = await supabaseBrowser.auth.getSession();
       const u = data?.session?.user;
 
-      const identities = (u as any)?.identities ?? [];
-      const identityData = identities?.[0]?.identity_data ?? null;
+      if (!u) {
+        setAuthUserEmail(null);
+        setAuthUserId(null);
+        setAuthUserName(null);
+        return;
+      }
 
-      const identityEmail =
-        (identityData?.email as string | undefined) ??
-        (identityData?.preferred_username as string | undefined) ??
-        null;
+      const profile = computeProfileFromUser(u);
 
-      const identityName =
-        (identityData?.name as string | undefined) ??
-        (identityData?.full_name as string | undefined) ??
-        (identityData?.displayName as string | undefined) ??
-        null;
-
-      const email = (u?.email ?? identityEmail ?? null) as string | null;
-      const id = u?.id ?? null;
-      const metaName = (u?.user_metadata?.full_name ?? u?.user_metadata?.name ?? null) as string | null;
-
-      setAuthUserEmail(email);
-      setAuthUserId(id);
-      setAuthUserName(deriveName(email, metaName, identityName));
+      setAuthUserEmail(profile.email);
+      setAuthUserId(profile.id);
+      setAuthUserName(profile.name);
     } catch {
       setAuthUserEmail(null);
       setAuthUserId(null);
@@ -339,6 +415,9 @@ export default function Page() {
         return;
       }
 
+      // ✅ Persistir name en metadata si viene vacío (muy útil para Azure)
+      await persistNameIfMissing(after.session.user);
+
       // refrescar estado
       await refreshAuthSession();
       await refreshProStatus();
@@ -362,30 +441,24 @@ export default function Page() {
       // 2) cargar sesión normal
       await refreshAuthSession();
 
-      const { data: sub } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
+      const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
         const u = session?.user;
 
-        const identities = (u as any)?.identities ?? [];
-        const identityData = identities?.[0]?.identity_data ?? null;
+        if (!u) {
+          setAuthUserEmail(null);
+          setAuthUserId(null);
+          setAuthUserName(null);
+          return;
+        }
 
-        const identityEmail =
-          (identityData?.email as string | undefined) ??
-          (identityData?.preferred_username as string | undefined) ??
-          null;
+        // ✅ Persistimos nombre si Azure no lo dejó en metadata
+        await persistNameIfMissing(u);
 
-        const identityName =
-          (identityData?.name as string | undefined) ??
-          (identityData?.full_name as string | undefined) ??
-          (identityData?.displayName as string | undefined) ??
-          null;
+        const profile = computeProfileFromUser(u);
 
-        const email = (u?.email ?? identityEmail ?? null) as string | null;
-        const id = u?.id ?? null;
-        const metaName = (u?.user_metadata?.full_name ?? u?.user_metadata?.name ?? null) as string | null;
-
-        setAuthUserEmail(email);
-        setAuthUserId(id);
-        setAuthUserName(deriveName(email, metaName, identityName));
+        setAuthUserEmail(profile.email);
+        setAuthUserId(profile.id);
+        setAuthUserName(profile.name);
 
         // ⚡ cuando cambia sesión, re-chequeamos pro (así Google/Microsoft quedan iguales)
         setTimeout(() => {
@@ -599,8 +672,14 @@ export default function Page() {
         options: {
           // ✅ IMPORTANTÍSIMO: redirigir a la HOME (/) para que ESTA página absorba el callback
           redirectTo: `${SITE_URL}/`,
-          // ✅ ayuda a Microsoft a elegir cuenta (si tienes varias)
-          ...(provider === "azure" ? { queryParams: { prompt: "select_account" } } : {}),
+
+          // ✅ Azure: pedir claims estándar para que lleguen name + email/preferred_username
+          ...(provider === "azure"
+            ? {
+                queryParams: { prompt: "select_account" },
+                scopes: "openid email profile",
+              }
+            : {}),
         },
       });
 
@@ -1687,7 +1766,9 @@ export default function Page() {
 
       {/* ===== OVERLAY + SIDEBAR ===== */}
       <div
-        className={`fixed inset-0 z-40 transition-all duration-300 ${menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent"}`}
+        className={`fixed inset-0 z-40 transition-all duration-300 ${
+          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent"
+        }`}
         onClick={() => setMenuOpen(false)}
       >
         <aside
@@ -1781,7 +1862,9 @@ export default function Page() {
                   <button
                     key={t.id}
                     onClick={() => activateThread(t.id)}
-                    className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"}`}
+                    className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${
+                      active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"
+                    }`}
                   >
                     <div className="text-sm font-medium text-zinc-900">{t.title}</div>
                     <div className="text-xs text-zinc-500 mt-1">{when}</div>
@@ -1815,7 +1898,9 @@ export default function Page() {
                     <div
                       className={[
                         "relative max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed break-words",
-                        isUser ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none mr-2" : "bg-[#e8f0fe] text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none ml-2",
+                        isUser
+                          ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none mr-2"
+                          : "bg-[#e8f0fe] text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none ml-2",
                         "after:content-[''] after:absolute after:w-3 after:h-3 after:rotate-45 after:top-[3px]",
                         isUser ? "after:right-[-6px] after:bg-[#dcf8c6]" : "after:left-[-6px] after:bg-[#e8f0fe]",
                       ].join(" ")}
@@ -1900,7 +1985,7 @@ export default function Page() {
               </div>
             </div>
 
-            {/* ✅ ÚNICO CAMBIO: botón enviar en azul (tono web) */}
+            {/* ✅ botón enviar en azul (tono web) */}
             <button
               onClick={sendMessage}
               disabled={!!(isTyping || (!input.trim() && !imagePreview))}
