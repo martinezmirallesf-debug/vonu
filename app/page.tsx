@@ -175,8 +175,11 @@ export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // ✅ URL canónica para redirects (evita errores en Supabase OAuth por preview/origin)
-  const SITE_URL = ((process.env.NEXT_PUBLIC_SITE_URL as string | undefined) || "https://app.vonuai.com").replace(/\/$/, "");
+  // ✅ FIX: usar el origin real del navegador para evitar PKCE cross-domain (vonuai.com vs app.vonuai.com vs preview)
+  const SITE_URL =
+    typeof window !== "undefined"
+      ? window.location.origin.replace(/\/$/, "")
+      : ((process.env.NEXT_PUBLIC_SITE_URL as string | undefined) || "https://app.vonuai.com").replace(/\/$/, "");
 
   // ===== AUTH =====
   const [authLoading, setAuthLoading] = useState(true);
@@ -352,6 +355,7 @@ export default function Page() {
       if (errorRaw || errorDescRaw) {
         const desc = errorDescRaw || errorRaw || "Error de OAuth.";
         setLoginMsg(decodeMaybe(desc));
+        setLoginOpen(true);
 
         // limpiar params OAuth (preservando checkout)
         url.searchParams.delete("code");
@@ -378,6 +382,8 @@ export default function Page() {
       if (hasCode && code) {
         const { error } = await supabaseBrowser.auth.exchangeCodeForSession(code);
         if (error) {
+          // ✅ mostrarlo en UI (si falla PKCE por origin distinto, aquí lo verás)
+          setLoginOpen(true);
           setLoginMsg(error.message);
         }
       }
@@ -389,6 +395,7 @@ export default function Page() {
           refresh_token,
         });
         if (error) {
+          setLoginOpen(true);
           setLoginMsg(error.message);
         }
       }
@@ -407,10 +414,11 @@ export default function Page() {
       // ✅ Verificación explícita: ¿hay sesión de verdad?
       const { data: after } = await supabaseBrowser.auth.getSession();
       if (!after?.session?.user) {
+        setLoginOpen(true);
         setLoginMsg(
-          "No se pudo completar el login con Microsoft.\n\n" +
-            "Casi siempre es un problema de configuración (Tenant/Redirect URI/Permisos).\n" +
-            "Revisa Azure + Supabase y vuelve a probar."
+          "No se pudo completar el login.\n\n" +
+            "Esto suele pasar si el login empieza en un dominio y vuelve a otro (PKCE), o si falta un Redirect URL permitido.\n" +
+            "Revisa Supabase (URL Configuration) y vuelve a probar."
         );
         return;
       }
@@ -670,7 +678,7 @@ export default function Page() {
       const { error } = await supabaseBrowser.auth.signInWithOAuth({
         provider,
         options: {
-          // ✅ IMPORTANTÍSIMO: redirigir a la HOME (/) para que ESTA página absorba el callback
+          // ✅ IMPORTANTÍSIMO: redirigir al MISMO origin donde empezó el login (evita PKCE cross-domain)
           redirectTo: `${SITE_URL}/`,
 
           // ✅ Azure: pedir claims estándar para que lleguen name + email/preferred_username
