@@ -102,6 +102,17 @@ function ShieldIcon({ className }: { className?: string }) {
   );
 }
 
+// ✅ FIX: indicador de “está escribiendo” con puntos (sin palito/cursor)
+function TypingDots() {
+  return (
+    <span className="ml-1 inline-flex items-center gap-1 align-middle">
+      <span className="w-1.5 h-1.5 rounded-full bg-zinc-600/70 animate-pulse" style={{ animationDelay: "0ms" }} />
+      <span className="w-1.5 h-1.5 rounded-full bg-zinc-600/70 animate-pulse" style={{ animationDelay: "180ms" }} />
+      <span className="w-1.5 h-1.5 rounded-full bg-zinc-600/70 animate-pulse" style={{ animationDelay: "360ms" }} />
+    </span>
+  );
+}
+
 function OAuthLogo({ src, alt, invert }: { src: string; alt: string; invert?: boolean }) {
   return (
     <img
@@ -1903,7 +1914,7 @@ export default function Page() {
                       {(m.text || m.streaming) && (
                         <div className="prose prose-sm max-w-none break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0">
                           <ReactMarkdown>{mdText}</ReactMarkdown>
-                          {m.streaming && <span className="ml-1 inline-block align-baseline text-zinc-600 animate-pulse">▍</span>}
+                          {m.streaming && <TypingDots />}
                         </div>
                       )}
                     </div>
