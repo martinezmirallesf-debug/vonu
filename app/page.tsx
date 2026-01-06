@@ -113,12 +113,20 @@ function TypingDots() {
   );
 }
 
-// ✅ Indicador "escribiendo": la barrita/cursor (cuando ya hay texto parcial)
+// ✅ Indicador "escribiendo": la barrita/cursor (cuando ya hay texto parcial) — BLINK real y visible
 function TypingCaret() {
   return (
     <span
-      className="ml-0.5 inline-block w-[2px] h-[1em] bg-zinc-700/70 align-[-2px] animate-pulse"
       aria-hidden="true"
+      className="ml-0.5 inline-block align-baseline"
+      style={{
+        width: 2,
+        height: "1em",
+        backgroundColor: "rgba(24,24,27,0.80)",
+        borderRadius: 9999,
+        transform: "translateY(1px)",
+        animation: "vonu-blink 1s steps(1, end) infinite",
+      }}
     />
   );
 }
@@ -1280,6 +1288,14 @@ export default function Page() {
 
   return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
+      {/* ✅ Keyframes cursor (una sola vez) */}
+      <style>{`
+        @keyframes vonu-blink {
+          0%, 49% { opacity: 1; }
+          50%, 100% { opacity: 0; }
+        }
+      `}</style>
+
       {/* TOAST */}
       {toastMsg && (
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[90] px-3">
