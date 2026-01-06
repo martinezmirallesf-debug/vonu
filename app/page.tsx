@@ -339,22 +339,33 @@ export default function Page() {
 
       const checkout = url.searchParams.get("checkout"); // preservar Stripe
 
-      // errores pueden venir en query o en hash (depende del proveedor)
+      // ✅ Supabase puede devolver error / error_description O error_code / error_message
       const qError = url.searchParams.get("error");
       const qErrorDesc = url.searchParams.get("error_description");
+      const qErrorCode = url.searchParams.get("error_code");
+      const qErrorMsg = url.searchParams.get("error_message");
 
       const hash = typeof window.location.hash === "string" ? window.location.hash : "";
       const hashParams = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
+
       const hError = hashParams.get("error");
       const hErrorDesc = hashParams.get("error_description");
+      const hErrorCode = hashParams.get("error_code");
+      const hErrorMsg = hashParams.get("error_message");
 
-      const errorRaw = qError ?? hError;
-      const errorDescRaw = qErrorDesc ?? hErrorDesc;
+      const errorRaw = qError ?? hError ?? qErrorCode ?? hErrorCode;
+      const errorDescRaw = qErrorDesc ?? hErrorDesc ?? qErrorMsg ?? hErrorMsg;
 
-      // Si hay error OAuth, lo mostramos (AZURE suele devolver aquí el AADSTS....)
+      // Si hay error OAuth, lo mostramos
       if (errorRaw || errorDescRaw) {
-        const desc = errorDescRaw || errorRaw || "Error de OAuth.";
-        setLoginMsg(decodeMaybe(desc));
+        const desc =
+          decodeMaybe(errorDescRaw || "") ||
+          decodeMaybe(errorRaw || "") ||
+          "Error de OAuth.";
+
+        const extra = qErrorCode || hErrorCode ? `\n\nCódigo: ${qErrorCode || hErrorCode}` : "";
+
+        setLoginMsg(desc + extra);
         setLoginOpen(true);
 
         // limpiar params OAuth (preservando checkout)
@@ -362,6 +373,8 @@ export default function Page() {
         url.searchParams.delete("state");
         url.searchParams.delete("error");
         url.searchParams.delete("error_description");
+        url.searchParams.delete("error_code");
+        url.searchParams.delete("error_message");
         if (checkout) url.searchParams.set("checkout", checkout);
 
         const cleanUrl = `${url.pathname}${url.searchParams.toString() ? `?${url.searchParams.toString()}` : ""}`;
@@ -382,7 +395,6 @@ export default function Page() {
       if (hasCode && code) {
         const { error } = await supabaseBrowser.auth.exchangeCodeForSession(code);
         if (error) {
-          // ✅ mostrarlo en UI (si falla PKCE por origin distinto, aquí lo verás)
           setLoginOpen(true);
           setLoginMsg(error.message);
         }
@@ -405,6 +417,8 @@ export default function Page() {
       url.searchParams.delete("state");
       url.searchParams.delete("error");
       url.searchParams.delete("error_description");
+      url.searchParams.delete("error_code");
+      url.searchParams.delete("error_message");
       if (checkout) url.searchParams.set("checkout", checkout);
 
       // reconstruir URL limpia (sin hash)
@@ -417,20 +431,17 @@ export default function Page() {
         setLoginOpen(true);
         setLoginMsg(
           "No se pudo completar el login.\n\n" +
-            "Esto suele pasar si el login empieza en un dominio y vuelve a otro (PKCE), o si falta un Redirect URL permitido.\n" +
-            "Revisa Supabase (URL Configuration) y vuelve a probar."
+            "Si Google vuelve con error_code, suele ser configuración del provider o redirect URL.\n" +
+            "Revisa Supabase Auth (Google) y URL Configuration."
         );
         return;
       }
 
-      // ✅ Persistir name en metadata si viene vacío (muy útil para Azure)
       await persistNameIfMissing(after.session.user);
 
-      // refrescar estado
       await refreshAuthSession();
       await refreshProStatus();
 
-      // si abrió login modal antes, lo cerramos
       setLoginOpen(false);
       setLoginMsg(null);
     } catch {
@@ -443,10 +454,7 @@ export default function Page() {
     let unsub: (() => void) | null = null;
 
     (async () => {
-      // 1) absorber retorno OAuth si existe
       await handleOAuthReturnIfPresent();
-
-      // 2) cargar sesión normal
       await refreshAuthSession();
 
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
@@ -459,7 +467,6 @@ export default function Page() {
           return;
         }
 
-        // ✅ Persistimos nombre si Azure no lo dejó en metadata
         await persistNameIfMissing(u);
 
         const profile = computeProfileFromUser(u);
@@ -468,7 +475,6 @@ export default function Page() {
         setAuthUserId(profile.id);
         setAuthUserName(profile.name);
 
-        // ⚡ cuando cambia sesión, re-chequeamos pro (así Google/Microsoft quedan iguales)
         setTimeout(() => {
           refreshProStatus();
         }, 80);
@@ -1230,7 +1236,6 @@ export default function Page() {
       Vonu {PLUS_NODE}
     </span>
   );
-  const payTitleText = `Vonu ${PLUS_TEXT}`;
 
   // === PRICING COPY ===
   const PRICE_MONTH = "4,99€";
@@ -1662,8 +1667,6 @@ export default function Page() {
                     Continuar con Microsoft
                   </button>
 
-                  {/* ✅ Apple eliminado */}
-
                   <div className="text-[12px] text-zinc-600 text-center pt-1">
                     {authMode === "signin" ? (
                       <>
@@ -1736,40 +1739,49 @@ export default function Page() {
           </div>
         </div>
 
-        {!authLoading && (
-          <div className="pointer-events-auto flex items-center gap-2">
-            <button
-              onClick={handleOpenPlansCTA}
-              className="h-11 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer shadow-sm border border-blue-700/10"
-              title="Ver planes"
-            >
-              {isPro ? "Tu plan" : PLUS_NODE}
-            </button>
+        {/* ✅ CAMBIO: renderizar SIEMPRE (si authLoading, quedan deshabilitados) */}
+        <div className="pointer-events-auto flex items-center gap-2">
+          <button
+            onClick={handleOpenPlansCTA}
+            disabled={authLoading}
+            className={[
+              "h-11 px-4 rounded-full transition-colors cursor-pointer shadow-sm border",
+              authLoading ? "bg-zinc-200 text-zinc-500 border-zinc-200 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 border-blue-700/10",
+            ].join(" ")}
+            title={authLoading ? "Cargando…" : "Ver planes"}
+          >
+            {authLoading ? "…" : isPro ? "Tu plan" : PLUS_NODE}
+          </button>
 
-            {/* ✅ CAMBIO: nunca desloguear al click. Siempre abrir modal */}
-            <button
-              onClick={() => openLoginModal("signin")}
+          <button
+            onClick={() => openLoginModal("signin")}
+            disabled={authLoading}
+            className={[
+              "relative h-11 w-11",
+              "bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm",
+              "flex items-center justify-center text-zinc-900 hover:bg-white transition-colors cursor-pointer",
+              "rounded-full",
+              authLoading ? "opacity-60 cursor-not-allowed" : "",
+            ].join(" ")}
+            aria-label={isLoggedIn ? "Ver cuenta" : "Iniciar sesión"}
+            title={
+              authLoading
+                ? "Cargando…"
+                : isLoggedIn
+                  ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : planLabelText}`
+                  : "Iniciar sesión"
+            }
+          >
+            <span
               className={[
-                "relative h-11 w-11",
-                "bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm",
-                "flex items-center justify-center text-zinc-900 hover:bg-white transition-colors cursor-pointer",
-                "rounded-full",
+                "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white",
+                authLoading ? "bg-zinc-300" : isLoggedIn ? "bg-emerald-500" : "bg-zinc-300",
               ].join(" ")}
-              aria-label={isLoggedIn ? "Ver cuenta" : "Iniciar sesión"}
-              title={isLoggedIn ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : planLabelText}` : "Iniciar sesión"}
-            >
-              {/* pequeño estado visual */}
-              <span
-                className={[
-                  "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white",
-                  isLoggedIn ? "bg-emerald-500" : "bg-zinc-300",
-                ].join(" ")}
-                aria-hidden="true"
-              />
-              <UserIcon className="h-5 w-5" />
-            </button>
-          </div>
-        )}
+              aria-hidden="true"
+            />
+            <UserIcon className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       {/* ===== OVERLAY + SIDEBAR ===== */}
