@@ -127,7 +127,6 @@ function TypingCaret() {
         backgroundColor: "rgba(24,24,27,0.85)",
         borderRadius: 2,
         transform: "translateY(2px)",
-        // ❌ sin animation
       }}
     />
   );
@@ -264,15 +263,14 @@ export default function Page() {
     </span>
   );
 
+  // ✅ FIX CLAVE: refreshProStatus NO depende de authUserId.
+  // Al volver al tab/app, el token existe aunque el estado esté "stale".
   async function refreshProStatus() {
-    if (!authUserId) {
-      setIsPro(false);
-      return;
-    }
     setProLoading(true);
     try {
       const { data } = await supabaseBrowser.auth.getSession();
       const token = data?.session?.access_token;
+
       if (!token) {
         setIsPro(false);
         return;
@@ -281,6 +279,7 @@ export default function Page() {
       const res = await fetch("/api/subscription/status", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
       });
 
       const json = await res.json().catch(() => ({}));
@@ -490,6 +489,7 @@ export default function Page() {
     (async () => {
       await handleOAuthReturnIfPresent();
       await refreshAuthSession();
+      await refreshProStatus();
 
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
         const u = session?.user;
@@ -498,6 +498,7 @@ export default function Page() {
           setAuthUserEmail(null);
           setAuthUserId(null);
           setAuthUserName(null);
+          setIsPro(false);
           return;
         }
 
@@ -525,26 +526,26 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ FIX: al volver al tab/app, refrescar sesión + usuario + PRO (evita “parece gratis hasta refrescar”)
+  // ✅ FIX: al volver al tab/app, refrescar sesión Y pro (esto arregla tu problema)
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const resync = async () => {
+    let busy = false;
+
+    const refreshAll = async () => {
+      if (busy) return;
+      busy = true;
       try {
-        // refresca tokens si hace falta (especialmente tras volver de Stripe / background)
-        await supabaseBrowser.auth.refreshSession();
-      } catch {}
-
-      // vuelve a leer user
-      await refreshAuthSession();
-
-      // 🔑 clave: vuelve a consultar PRO
-      await refreshProStatus();
+        await refreshAuthSession();
+        await refreshProStatus();
+      } finally {
+        busy = false;
+      }
     };
 
-    const onFocus = () => resync();
+    const onFocus = () => refreshAll();
     const onVis = () => {
-      if (document.visibilityState === "visible") resync();
+      if (document.visibilityState === "visible") refreshAll();
     };
 
     window.addEventListener("focus", onFocus);
@@ -650,6 +651,7 @@ export default function Page() {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        cache: "no-store",
         body: JSON.stringify({ plan: chosen }),
       });
 
@@ -702,6 +704,7 @@ export default function Page() {
       const res = await fetch("/api/stripe/cancel", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        cache: "no-store",
         body: JSON.stringify({}),
       });
 
@@ -1189,6 +1192,7 @@ export default function Page() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        cache: "no-store",
         body: JSON.stringify({
           messages: convoForApi,
           userText,
