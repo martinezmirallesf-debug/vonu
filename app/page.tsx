@@ -525,13 +525,26 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ Refrescar sesión al volver al tab / focus
+  // ✅ FIX: al volver al tab/app, refrescar sesión + usuario + PRO (evita “parece gratis hasta refrescar”)
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const onFocus = () => refreshAuthSession();
+    const resync = async () => {
+      try {
+        // refresca tokens si hace falta (especialmente tras volver de Stripe / background)
+        await supabaseBrowser.auth.refreshSession();
+      } catch {}
+
+      // vuelve a leer user
+      await refreshAuthSession();
+
+      // 🔑 clave: vuelve a consultar PRO
+      await refreshProStatus();
+    };
+
+    const onFocus = () => resync();
     const onVis = () => {
-      if (document.visibilityState === "visible") refreshAuthSession();
+      if (document.visibilityState === "visible") resync();
     };
 
     window.addEventListener("focus", onFocus);
