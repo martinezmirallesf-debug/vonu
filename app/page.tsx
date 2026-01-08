@@ -275,7 +275,10 @@ export default function Page() {
   const [proLoading, setProLoading] = useState(false);
   const [isPro, setIsPro] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
-  const [plan, setPlan] = useState<"free" | "monthly" | "yearly">("yearly");
+
+  // ✅ COMPACT: quitamos opción "free" dentro del paywall (para evitar scroll)
+  const [plan, setPlan] = useState<"monthly" | "yearly">("yearly");
+
   const [payLoading, setPayLoading] = useState(false);
   const [payMsg, setPayMsg] = useState<string | null>(null);
 
@@ -1933,15 +1936,15 @@ export default function Page() {
           <div className="absolute top-[48%] -right-24 h-[280px] w-[280px] rounded-full bg-zinc-900/5 blur-3xl pointer-events-none" />
 
           <div className="relative h-full w-full" onClick={(e) => e.stopPropagation()}>
-            {/* ✅ FIX: layout en columna + card flexible para que NO corte el footer en móvil */}
-            <div className="mx-auto h-full w-full max-w-md px-4 pb-[env(safe-area-inset-bottom)] flex flex-col min-h-0">
-              <div className="pt-4 flex items-center justify-between">
+            {/* ✅ COMPACT: sin scroll, todo cabe en pantalla */}
+            <div className="mx-auto h-full w-full max-w-md px-3 pb-[env(safe-area-inset-bottom)] flex flex-col min-h-0">
+              <div className="pt-3 flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="h-11 w-11 rounded-full bg-white/90 backdrop-blur-xl border border-zinc-200 grid place-items-center shadow-sm">
+                  <div className="h-10 w-10 rounded-full bg-white/90 backdrop-blur-xl border border-zinc-200 grid place-items-center shadow-sm">
                     <img src={"/vonu-icon.png?v=2"} alt="Vonu" className="h-6 w-6" draggable={false} />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[14px] font-semibold text-zinc-900 leading-5">{payTitleNode}</div>
+                    <div className="text-[13px] font-semibold text-zinc-900 leading-5">{payTitleNode}</div>
                     <div className="text-[11px] text-zinc-500 leading-4">
                       Plan: <span className="font-semibold text-zinc-900">{planLabel}</span>
                       {proLoading ? <span className="ml-2 text-zinc-400">· comprobando…</span> : null}
@@ -1952,7 +1955,7 @@ export default function Page() {
                 <button
                   onClick={closePaywall}
                   className={[
-                    "h-11 w-11 aspect-square rounded-full",
+                    "h-10 w-10 aspect-square rounded-full",
                     "bg-white/90 backdrop-blur-xl border border-zinc-200",
                     "hover:bg-white transition-colors",
                     "grid place-items-center",
@@ -1967,151 +1970,96 @@ export default function Page() {
                 </button>
               </div>
 
-              {/* ✅ FIX: card ocupa el resto; dentro: scroll + footer fijo */}
-              <div className="mt-4 flex-1 min-h-0 rounded-[28px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden">
-                <div className="h-full flex flex-col min-h-0">
-                  {/* CONTENIDO (scrolleable) */}
-                  <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
-                    <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="text-[13px] font-semibold text-zinc-900">Elige tu plan</div>
-                        <div className="opacity-0 select-none text-[10px] px-2 py-1 rounded-full">placeholder</div>
+              <div className="mt-3 flex-1 min-h-0 rounded-[26px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden">
+                <div className="h-full flex flex-col p-3">
+                  <div className="rounded-[20px] border border-zinc-200 bg-white p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-[13px] font-semibold text-zinc-900">Desbloquea {PLUS_NODE}</div>
+                        <div className="mt-0.5 text-[12px] text-zinc-600 leading-4">Análisis ilimitados y más contexto para decidir con calma.</div>
                       </div>
-
-                      <div className="mt-3 space-y-2">
-                        <button
-                          onClick={() => setPlan("yearly")}
-                          disabled={!!payLoading}
-                          className={[
-                            "w-full text-left rounded-[20px] border p-3 transition-colors cursor-pointer",
-                            plan === "yearly" ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50",
-                          ].join(" ")}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <div className="h-5 w-5 rounded-full border border-zinc-300 grid place-items-center bg-white">
-                                  <div className={["h-2.5 w-2.5 rounded-full", plan === "yearly" ? "bg-blue-600" : "bg-transparent"].join(" ")} />
-                                </div>
-                                <div className="text-[13px] font-semibold text-zinc-900">Anual</div>
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-600 text-white font-semibold">Mejor valor</span>
-                              </div>
-
-                              <div className="mt-1 flex items-baseline gap-2">
-                                <div className="text-[20px] font-semibold text-zinc-900 leading-6">{PRICE_YEAR}</div>
-                                <div className="text-[12px] text-zinc-600">≈ {PRICE_YEAR_PER_MONTH}/mes</div>
-                              </div>
-                            </div>
-
-                            <div className="shrink-0 text-[11px] text-zinc-500">
-                              <span className="font-semibold text-zinc-800">{YEAR_SAVE_BADGE}</span>
-                            </div>
-                          </div>
-                        </button>
-
-                        <button
-                          onClick={() => setPlan("monthly")}
-                          disabled={!!payLoading}
-                          className={[
-                            "w-full text-left rounded-[20px] border p-3 transition-colors cursor-pointer",
-                            plan === "monthly" ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50",
-                          ].join(" ")}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <div className="h-5 w-5 rounded-full border border-zinc-300 grid place-items-center bg-white">
-                                  <div className={["h-2.5 w-2.5 rounded-full", plan === "monthly" ? "bg-blue-600" : "bg-transparent"].join(" ")} />
-                                </div>
-                                <div className="text-[13px] font-semibold text-zinc-900">Mensual</div>
-                              </div>
-
-                              <div className="mt-1 flex items-baseline gap-2">
-                                <div className="text-[20px] font-semibold text-zinc-900 leading-6">{PRICE_MONTH}</div>
-                                <div className="text-[12px] text-zinc-600">cancela cuando quieras</div>
-                              </div>
-                            </div>
-
-                            <div className="shrink-0 text-[11px] text-zinc-500">Flexible</div>
-                          </div>
-                        </button>
-
-                        <button
-                          onClick={() => setPlan("free")}
-                          disabled={!!payLoading}
-                          className={[
-                            "w-full text-left rounded-[20px] border p-3 transition-colors cursor-pointer",
-                            plan === "free" ? "border-blue-200 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50",
-                          ].join(" ")}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <div className="h-5 w-5 rounded-full border border-zinc-300 grid place-items-center bg-white">
-                                  <div className={["h-2.5 w-2.5 rounded-full", plan === "free" ? "bg-blue-600" : "bg-transparent"].join(" ")} />
-                                </div>
-                                <div className="text-[13px] font-semibold text-zinc-900">Seguir gratis</div>
-                              </div>
-                              <div className="mt-1 text-[12px] text-zinc-600">Análisis limitados.</div>
-                            </div>
-                            <div className="shrink-0 text-[12px] font-semibold text-zinc-900">0€</div>
-                          </div>
-                        </button>
-                      </div>
+                      <span className="shrink-0 text-[10px] px-2 py-1 rounded-full bg-blue-600 text-white font-semibold">Pago seguro</span>
                     </div>
 
-                    <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
-                      <div className="text-[12px] font-semibold text-zinc-900">{plan === "free" ? "Gratis" : <>Lo que desbloqueas con {PLUS_NODE}</>}</div>
-                      <div className="mt-2 space-y-2">
-                        {(plan === "free" ? ["Analisis Limitados", "Decidir con calma"] : ["Análisis ilimitados", "Más consejos y contexto", "Decidir con calma"]).map((x) => (
-                          <div key={x} className="flex items-start gap-2">
-                            <span className="mt-[2px] text-blue-700">
-                              <CheckIcon />
-                            </span>
-                            <div className="text-[12px] text-zinc-700 leading-5">{x}</div>
-                          </div>
-                        ))}
-                      </div>
+                    {/* Selector compacto */}
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => setPlan("yearly")}
+                        disabled={!!payLoading}
+                        className={[
+                          "rounded-[16px] border px-3 py-2 text-left transition-colors cursor-pointer",
+                          plan === "yearly" ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50",
+                        ].join(" ")}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-[12px] font-semibold text-zinc-900">Anual</div>
+                          <div className="text-[10px] text-blue-700 font-semibold">{YEAR_SAVE_BADGE}</div>
+                        </div>
+                        <div className="mt-1 text-[11px] text-zinc-600">≈ {PRICE_YEAR_PER_MONTH}/mes</div>
+                      </button>
+
+                      <button
+                        onClick={() => setPlan("monthly")}
+                        disabled={!!payLoading}
+                        className={[
+                          "rounded-[16px] border px-3 py-2 text-left transition-colors cursor-pointer",
+                          plan === "monthly" ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50",
+                        ].join(" ")}
+                      >
+                        <div className="text-[12px] font-semibold text-zinc-900">Mensual</div>
+                        <div className="mt-1 text-[11px] text-zinc-600">Cancela cuando quieras</div>
+                      </button>
                     </div>
 
-                    {payMsg ? (
-                      <div className="rounded-[22px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">{payMsg}</div>
-                    ) : (
-                      <div className="opacity-0 select-none text-[12px] px-3 py-2">placeholder</div>
-                    )}
+                    {/* Precio compacto */}
+                    <div className="mt-3 flex items-baseline justify-between">
+                      <div className="text-[22px] font-semibold text-zinc-900 leading-6">{plan === "yearly" ? PRICE_YEAR : PRICE_MONTH}</div>
+                      <div className="text-[11px] text-zinc-500">{plan === "yearly" ? "cobro anual" : "cobro mensual"}</div>
+                    </div>
+
+                    {/* Beneficios compactos */}
+                    <div className="mt-3 grid gap-1">
+                      {["Análisis ilimitados", "Más consejos y contexto"].map((x) => (
+                        <div key={x} className="flex items-start gap-2">
+                          <span className="mt-[2px] text-blue-700">
+                            <CheckIcon className="h-4 w-4" />
+                          </span>
+                          <div className="text-[12px] text-zinc-700 leading-5">{x}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
-                  {/* FOOTER (siempre visible) */}
-                  <div className="shrink-0 px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-0">
+                  {payMsg ? (
+                    <div className="mt-2 rounded-[18px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">{payMsg}</div>
+                  ) : (
+                    <div className="mt-2 opacity-0 select-none text-[12px] px-3 py-2">placeholder</div>
+                  )}
+
+                  {/* Footer compacto fijo (sin scroll) */}
+                  <div className="mt-auto pt-2 pb-[calc(env(safe-area-inset-bottom)+8px)]">
                     <button
-                      onClick={() => {
-                        if (plan === "free") {
-                          closePaywall();
-                          return;
-                        }
-                        if (plan === "monthly" || plan === "yearly") startCheckout(plan);
-                      }}
-                      className={[
-                        "w-full h-12 rounded-full text-[14px] font-semibold transition-colors cursor-pointer disabled:opacity-50",
-                        plan === "free" ? "bg-zinc-900 text-white hover:bg-black" : "bg-blue-600 text-white hover:bg-blue-700",
-                      ].join(" ")}
+                      onClick={() => startCheckout(plan)}
+                      className="w-full h-11 rounded-full text-[14px] font-semibold transition-colors cursor-pointer disabled:opacity-50 bg-blue-600 text-white hover:bg-blue-700"
                       disabled={!!payLoading}
                     >
-                      {payLoading ? "Procesando…" : plan === "free" ? "Volver al chat" : "Continuar con el pago"}
+                      {payLoading ? "Procesando…" : "Continuar con el pago"}
                     </button>
 
-                    <div className="mt-2 min-h-[20px] flex items-center justify-center">
-                      {plan !== "free" ? (
-                        <div className="flex items-center gap-2 text-[11px] text-zinc-500">
-                          <span className="text-blue-700">
-                            <ShieldIcon className="h-4 w-4" />
-                          </span>
-                          <span>Pago seguro con Stripe.</span>
-                        </div>
-                      ) : (
-                        <div className="opacity-0 select-none text-[11px]">placeholder</div>
-                      )}
+                    <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
+                      <span className="text-blue-700">
+                        <ShieldIcon className="h-4 w-4" />
+                      </span>
+                      <span>Pago seguro con Stripe.</span>
                     </div>
+
+                    <button
+                      onClick={closePaywall}
+                      className="mt-2 w-full h-10 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-[12px] font-semibold text-zinc-800 cursor-pointer disabled:opacity-50"
+                      disabled={!!payLoading}
+                    >
+                      Volver al chat
+                    </button>
 
                     {isPro ? (
                       <button
@@ -2121,14 +2069,10 @@ export default function Page() {
                       >
                         Cancelar suscripción
                       </button>
-                    ) : (
-                      <div className="mt-2 opacity-0 select-none h-10">placeholder</div>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </div>
-
-              {/* ✅ sin h-4 abajo */}
             </div>
           </div>
         </div>
