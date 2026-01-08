@@ -1933,7 +1933,8 @@ export default function Page() {
           <div className="absolute top-[48%] -right-24 h-[280px] w-[280px] rounded-full bg-zinc-900/5 blur-3xl pointer-events-none" />
 
           <div className="relative h-full w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="mx-auto h-full w-full max-w-md px-4 pb-[env(safe-area-inset-bottom)]">
+            {/* ✅ FIX: layout en columna + card flexible para que NO corte el footer en móvil */}
+            <div className="mx-auto h-full w-full max-w-md px-4 pb-[env(safe-area-inset-bottom)] flex flex-col min-h-0">
               <div className="pt-4 flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="h-11 w-11 rounded-full bg-white/90 backdrop-blur-xl border border-zinc-200 grid place-items-center shadow-sm">
@@ -1966,122 +1967,122 @@ export default function Page() {
                 </button>
               </div>
 
-              <div
-                className="mt-4 rounded-[28px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden"
-                style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}
-              >
-                <div className="h-full flex flex-col p-4">
-                  <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="text-[13px] font-semibold text-zinc-900">Elige tu plan</div>
-                      <div className="opacity-0 select-none text-[10px] px-2 py-1 rounded-full">placeholder</div>
+              {/* ✅ FIX: card ocupa el resto; dentro: scroll + footer fijo */}
+              <div className="mt-4 flex-1 min-h-0 rounded-[28px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden">
+                <div className="h-full flex flex-col min-h-0">
+                  {/* CONTENIDO (scrolleable) */}
+                  <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
+                    <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="text-[13px] font-semibold text-zinc-900">Elige tu plan</div>
+                        <div className="opacity-0 select-none text-[10px] px-2 py-1 rounded-full">placeholder</div>
+                      </div>
+
+                      <div className="mt-3 space-y-2">
+                        <button
+                          onClick={() => setPlan("yearly")}
+                          disabled={!!payLoading}
+                          className={[
+                            "w-full text-left rounded-[20px] border p-3 transition-colors cursor-pointer",
+                            plan === "yearly" ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50",
+                          ].join(" ")}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <div className="h-5 w-5 rounded-full border border-zinc-300 grid place-items-center bg-white">
+                                  <div className={["h-2.5 w-2.5 rounded-full", plan === "yearly" ? "bg-blue-600" : "bg-transparent"].join(" ")} />
+                                </div>
+                                <div className="text-[13px] font-semibold text-zinc-900">Anual</div>
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-600 text-white font-semibold">Mejor valor</span>
+                              </div>
+
+                              <div className="mt-1 flex items-baseline gap-2">
+                                <div className="text-[20px] font-semibold text-zinc-900 leading-6">{PRICE_YEAR}</div>
+                                <div className="text-[12px] text-zinc-600">≈ {PRICE_YEAR_PER_MONTH}/mes</div>
+                              </div>
+                            </div>
+
+                            <div className="shrink-0 text-[11px] text-zinc-500">
+                              <span className="font-semibold text-zinc-800">{YEAR_SAVE_BADGE}</span>
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          onClick={() => setPlan("monthly")}
+                          disabled={!!payLoading}
+                          className={[
+                            "w-full text-left rounded-[20px] border p-3 transition-colors cursor-pointer",
+                            plan === "monthly" ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50",
+                          ].join(" ")}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <div className="h-5 w-5 rounded-full border border-zinc-300 grid place-items-center bg-white">
+                                  <div className={["h-2.5 w-2.5 rounded-full", plan === "monthly" ? "bg-blue-600" : "bg-transparent"].join(" ")} />
+                                </div>
+                                <div className="text-[13px] font-semibold text-zinc-900">Mensual</div>
+                              </div>
+
+                              <div className="mt-1 flex items-baseline gap-2">
+                                <div className="text-[20px] font-semibold text-zinc-900 leading-6">{PRICE_MONTH}</div>
+                                <div className="text-[12px] text-zinc-600">cancela cuando quieras</div>
+                              </div>
+                            </div>
+
+                            <div className="shrink-0 text-[11px] text-zinc-500">Flexible</div>
+                          </div>
+                        </button>
+
+                        <button
+                          onClick={() => setPlan("free")}
+                          disabled={!!payLoading}
+                          className={[
+                            "w-full text-left rounded-[20px] border p-3 transition-colors cursor-pointer",
+                            plan === "free" ? "border-blue-200 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50",
+                          ].join(" ")}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <div className="h-5 w-5 rounded-full border border-zinc-300 grid place-items-center bg-white">
+                                  <div className={["h-2.5 w-2.5 rounded-full", plan === "free" ? "bg-blue-600" : "bg-transparent"].join(" ")} />
+                                </div>
+                                <div className="text-[13px] font-semibold text-zinc-900">Seguir gratis</div>
+                              </div>
+                              <div className="mt-1 text-[12px] text-zinc-600">Análisis limitados.</div>
+                            </div>
+                            <div className="shrink-0 text-[12px] font-semibold text-zinc-900">0€</div>
+                          </div>
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="mt-3 space-y-2">
-                      <button
-                        onClick={() => setPlan("yearly")}
-                        disabled={!!payLoading}
-                        className={[
-                          "w-full text-left rounded-[20px] border p-3 transition-colors cursor-pointer",
-                          plan === "yearly" ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <div className="h-5 w-5 rounded-full border border-zinc-300 grid place-items-center bg-white">
-                                <div className={["h-2.5 w-2.5 rounded-full", plan === "yearly" ? "bg-blue-600" : "bg-transparent"].join(" ")} />
-                              </div>
-                              <div className="text-[13px] font-semibold text-zinc-900">Anual</div>
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-600 text-white font-semibold">Mejor valor</span>
-                            </div>
-
-                            <div className="mt-1 flex items-baseline gap-2">
-                              <div className="text-[20px] font-semibold text-zinc-900 leading-6">{PRICE_YEAR}</div>
-                              <div className="text-[12px] text-zinc-600">≈ {PRICE_YEAR_PER_MONTH}/mes</div>
-                            </div>
+                    <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
+                      <div className="text-[12px] font-semibold text-zinc-900">{plan === "free" ? "Gratis" : <>Lo que desbloqueas con {PLUS_NODE}</>}</div>
+                      <div className="mt-2 space-y-2">
+                        {(plan === "free" ? ["Analisis Limitados", "Decidir con calma"] : ["Análisis ilimitados", "Más consejos y contexto", "Decidir con calma"]).map((x) => (
+                          <div key={x} className="flex items-start gap-2">
+                            <span className="mt-[2px] text-blue-700">
+                              <CheckIcon />
+                            </span>
+                            <div className="text-[12px] text-zinc-700 leading-5">{x}</div>
                           </div>
-
-                          <div className="shrink-0 text-[11px] text-zinc-500">
-                            <span className="font-semibold text-zinc-800">{YEAR_SAVE_BADGE}</span>
-                          </div>
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => setPlan("monthly")}
-                        disabled={!!payLoading}
-                        className={[
-                          "w-full text-left rounded-[20px] border p-3 transition-colors cursor-pointer",
-                          plan === "monthly" ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <div className="h-5 w-5 rounded-full border border-zinc-300 grid place-items-center bg-white">
-                                <div className={["h-2.5 w-2.5 rounded-full", plan === "monthly" ? "bg-blue-600" : "bg-transparent"].join(" ")} />
-                              </div>
-                              <div className="text-[13px] font-semibold text-zinc-900">Mensual</div>
-                            </div>
-
-                            <div className="mt-1 flex items-baseline gap-2">
-                              <div className="text-[20px] font-semibold text-zinc-900 leading-6">{PRICE_MONTH}</div>
-                              <div className="text-[12px] text-zinc-600">cancela cuando quieras</div>
-                            </div>
-                          </div>
-
-                          <div className="shrink-0 text-[11px] text-zinc-500">Flexible</div>
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => setPlan("free")}
-                        disabled={!!payLoading}
-                        className={[
-                          "w-full text-left rounded-[20px] border p-3 transition-colors cursor-pointer",
-                          plan === "free" ? "border-blue-200 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <div className="h-5 w-5 rounded-full border border-zinc-300 grid place-items-center bg-white">
-                                <div className={["h-2.5 w-2.5 rounded-full", plan === "free" ? "bg-blue-600" : "bg-transparent"].join(" ")} />
-                              </div>
-                              <div className="text-[13px] font-semibold text-zinc-900">Seguir gratis</div>
-                            </div>
-                            <div className="mt-1 text-[12px] text-zinc-600">Análisis limitados.</div>
-                          </div>
-                          <div className="shrink-0 text-[12px] font-semibold text-zinc-900">0€</div>
-                        </div>
-                      </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="mt-3 rounded-[22px] border border-zinc-200 bg-white p-3">
-                    <div className="text-[12px] font-semibold text-zinc-900">{plan === "free" ? "Gratis" : <>Lo que desbloqueas con {PLUS_NODE}</>}</div>
-                    <div className="mt-2 space-y-2">
-                      {(plan === "free" ? ["Analisis Limitados", "Decidir con calma"] : ["Análisis ilimitados", "Más consejos y contexto", "Decidir con calma"]).map((x) => (
-                        <div key={x} className="flex items-start gap-2">
-                          <span className="mt-[2px] text-blue-700">
-                            <CheckIcon />
-                          </span>
-                          <div className="text-[12px] text-zinc-700 leading-5">{x}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-3 min-h-[42px]">
                     {payMsg ? (
-                      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">{payMsg}</div>
+                      <div className="rounded-[22px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">{payMsg}</div>
                     ) : (
                       <div className="opacity-0 select-none text-[12px] px-3 py-2">placeholder</div>
                     )}
                   </div>
 
-                  <div className="mt-auto pt-3 pb-[calc(env(safe-area-inset-bottom)+10px)]">
+                  {/* FOOTER (siempre visible) */}
+                  <div className="shrink-0 px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-0">
                     <button
                       onClick={() => {
                         if (plan === "free") {
@@ -2127,7 +2128,7 @@ export default function Page() {
                 </div>
               </div>
 
-              {/* ✅ quitado el h-4 que provocaba “raya/gap” abajo */}
+              {/* ✅ sin h-4 abajo */}
             </div>
           </div>
         </div>
@@ -2604,14 +2605,7 @@ export default function Page() {
 
             {micMsg && <div className="mb-2 text-[12px] text-zinc-600 bg-white border border-zinc-200 rounded-2xl px-3 py-2">{micMsg}</div>}
 
-            <div
-              className={[
-                "w-full",
-                "rounded-[26px] border border-zinc-200 bg-white shadow-sm",
-                "px-2.5 py-2",
-                "flex items-end gap-2",
-              ].join(" ")}
-            >
+            <div className={["w-full", "rounded-[26px] border border-zinc-200 bg-white shadow-sm", "px-2.5 py-2", "flex items-end gap-2"].join(" ")}>
               {/* LEFT ICONS (dentro) */}
               <div className="flex items-center gap-1 pb-0.5">
                 <button
