@@ -211,6 +211,36 @@ function normalizeAssistantText(text: string) {
     .replace(/\n/g, " "); // mantiene una sola “línea” visual estable
 }
 
+function MicIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M7 11a5 5 0 0 0 10 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M12 16v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M9 20h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PencilIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 20h9"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -886,6 +916,360 @@ export default function Page() {
   const [inputBarH, setInputBarH] = useState<number>(140);
   const shouldStickToBottomRef = useRef(true);
 
+  // ===== MIC (SpeechRecognition) =====
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [micMsg, setMicMsg] = useState<string | null>(null);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    setSpeechSupported(!!SR);
+  }, []);
+
+  function stopMic() {
+    try {
+      recognitionRef.current?.stop?.();
+    } catch {}
+  }
+
+  async function toggleMic() {
+    if (isTyping) return;
+
+    const SR = typeof window !== "undefined" ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) : null;
+    if (!SR) {
+      setMicMsg("Tu navegador no soporta dictado por voz. Prueba Chrome/Edge en Android o Desktop.");
+      setTimeout(() => setMicMsg(null), 2400);
+      return;
+    }
+
+    if (isListening) {
+      stopMic();
+      return;
+    }
+
+    try {
+      setMicMsg(null);
+
+      const rec = new SR();
+      recognitionRef.current = rec;
+
+      rec.continuous = false;
+      rec.interimResults = true;
+
+      // idioma automático: si el usuario escribe “valencià” o “valenciano” podría cambiar,
+      // pero de momento lo dejamos en es-ES como base (funciona también bastante bien con inglés dictado).
+      rec.lang = "es-ES";
+
+      rec.onstart = () => {
+        setIsListening(true);
+      };
+
+      rec.onerror = (_e: any) => {
+        setIsListening(false);
+        setMicMsg("No se pudo usar el micrófono. Revisa permisos del navegador.");
+        setTimeout(() => setMicMsg(null), 2600);
+      };
+
+      rec.onend = () => {
+        setIsListening(false);
+      };
+
+      rec.onresult = (event: any) => {
+        let finalText = "";
+        let interim = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const res = event.results[i];
+          const txt = res?.[0]?.transcript ?? "";
+          if (res.isFinal) finalText += txt;
+          else interim += txt;
+        }
+
+        const combined = (finalText || interim || "").trim();
+        if (!combined) return;
+
+        setInput((prev) => {
+          const base = prev.trim();
+          if (!base) return combined;
+          const sep = base.endsWith(".") || base.endsWith("?") || base.endsWith("!") ? " " : " ";
+          return base + sep + combined;
+        });
+      };
+
+      rec.start();
+    } catch {
+      setIsListening(false);
+      setMicMsg("No se pudo iniciar el dictado. Revisa permisos del navegador.");
+      setTimeout(() => setMicMsg(null), 2600);
+    }
+  }
+
+  // ===== WHITEBOARD =====
+  const [boardOpen, setBoardOpen] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasWrapRef = useRef<HTMLDivElement>(null);
+
+  const [boardTool, setBoardTool] = useState<"pen" | "eraser">("pen");
+  const [boardColor, setBoardColor] = useState<string>("#111827"); // zinc-900-ish
+  const [boardSize, setBoardSize] = useState<number>(6);
+  const [boardMsg, setBoardMsg] = useState<string | null>(null);
+
+  const isDrawingRef = useRef(false);
+  const lastPtRef = useRef<{ x: number; y: number } | null>(null);
+  const historyRef = useRef<ImageData[]>([]);
+  const hasInitRef = useRef(false);
+
+  function getCtx() {
+    const c = canvasRef.current;
+    if (!c) return null;
+    return c.getContext("2d");
+  }
+
+  function resetCanvasWhite() {
+    const c = canvasRef.current;
+    const ctx = getCtx();
+    if (!c || !ctx) return;
+
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.restore();
+  }
+
+  function pushHistory() {
+    const c = canvasRef.current;
+    const ctx = getCtx();
+    if (!c || !ctx) return;
+
+    try {
+      const img = ctx.getImageData(0, 0, c.width, c.height);
+      historyRef.current.push(img);
+      // limitar para no reventar memoria
+      if (historyRef.current.length > 30) historyRef.current.shift();
+    } catch {}
+  }
+
+  function undoBoard() {
+    const c = canvasRef.current;
+    const ctx = getCtx();
+    if (!c || !ctx) return;
+
+    if (historyRef.current.length <= 1) {
+      // dejar blanco
+      resetCanvasWhite();
+      historyRef.current = [];
+      pushHistory();
+      return;
+    }
+
+    // quitamos el estado actual
+    historyRef.current.pop();
+    const prev = historyRef.current[historyRef.current.length - 1];
+    if (!prev) return;
+
+    try {
+      ctx.putImageData(prev, 0, 0);
+    } catch {}
+  }
+
+  function clearBoard() {
+    resetCanvasWhite();
+    historyRef.current = [];
+    pushHistory();
+  }
+
+  function resizeBoardCanvas() {
+    const c = canvasRef.current;
+    const wrap = canvasWrapRef.current;
+    if (!c || !wrap) return;
+
+    const rect = wrap.getBoundingClientRect();
+    const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+
+    const nextW = Math.max(280, Math.floor(rect.width));
+    const nextH = Math.max(320, Math.floor(rect.height));
+
+    // guardamos lo anterior para no perderlo al resize
+    const ctx = getCtx();
+    const prev = ctx ? (() => {
+      try {
+        return ctx.getImageData(0, 0, c.width, c.height);
+      } catch {
+        return null;
+      }
+    })() : null;
+
+    c.width = Math.floor(nextW * dpr);
+    c.height = Math.floor(nextH * dpr);
+    c.style.width = `${nextW}px`;
+    c.style.height = `${nextH}px`;
+
+    const ctx2 = getCtx();
+    if (!ctx2) return;
+
+    ctx2.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx2.lineCap = "round";
+    ctx2.lineJoin = "round";
+
+    // si no teníamos nada, fondo blanco
+    if (!prev || !hasInitRef.current) {
+      resetCanvasWhite();
+      hasInitRef.current = true;
+      historyRef.current = [];
+      pushHistory();
+      return;
+    }
+
+    // si había contenido, lo re-aplicamos escalado (aprox) pintándolo a un canvas temporal
+    try {
+      const tmp = document.createElement("canvas");
+      tmp.width = prev.width;
+      tmp.height = prev.height;
+      const tctx = tmp.getContext("2d");
+      if (tctx) {
+        tctx.putImageData(prev, 0, 0);
+        // dibujar tmp sobre canvas actual, ajustando al tamaño visible
+        ctx2.save();
+        // ctx2 ya está en coords CSS (por setTransform)
+        ctx2.fillStyle = "#fff";
+        ctx2.fillRect(0, 0, nextW, nextH);
+        ctx2.drawImage(tmp, 0, 0, nextW, nextH);
+        ctx2.restore();
+      }
+    } catch {
+      resetCanvasWhite();
+    }
+
+    historyRef.current = [];
+    pushHistory();
+  }
+
+  function openBoard() {
+    setBoardMsg(null);
+    setBoardOpen(true);
+  }
+
+  function closeBoard() {
+    setBoardOpen(false);
+    setBoardMsg(null);
+    isDrawingRef.current = false;
+    lastPtRef.current = null;
+
+    if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+  }
+
+  // init/resize board when open
+  useEffect(() => {
+    if (!boardOpen) return;
+    if (typeof window === "undefined") return;
+
+    // pequeño delay para que el modal tenga layout
+    const t = setTimeout(() => {
+      resizeBoardCanvas();
+    }, 30);
+
+    const onResize = () => resizeBoardCanvas();
+    window.addEventListener("resize", onResize);
+
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [boardOpen]);
+
+  function canvasPointFromEvent(e: any) {
+    const c = canvasRef.current;
+    if (!c) return null;
+    const rect = c.getBoundingClientRect();
+
+    const x = (e.clientX - rect.left);
+    const y = (e.clientY - rect.top);
+
+    return { x, y };
+  }
+
+  function drawLine(a: { x: number; y: number }, b: { x: number; y: number }, pressure?: number) {
+    const ctx = getCtx();
+    if (!ctx) return;
+
+    const size = boardTool === "eraser" ? Math.max(10, boardSize * 2) : boardSize;
+    const p = typeof pressure === "number" ? Math.max(0.15, Math.min(1, pressure)) : 1;
+
+    ctx.save();
+
+    ctx.globalCompositeOperation = boardTool === "eraser" ? "destination-out" : "source-over";
+    ctx.strokeStyle = boardTool === "eraser" ? "rgba(0,0,0,1)" : boardColor;
+    ctx.lineWidth = size * p;
+
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function onCanvasPointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    const c = canvasRef.current;
+    if (!c) return;
+
+    e.preventDefault();
+    (e.currentTarget as any).setPointerCapture?.(e.pointerId);
+
+    const pt = canvasPointFromEvent(e);
+    if (!pt) return;
+
+    isDrawingRef.current = true;
+    lastPtRef.current = pt;
+
+    // para que el primer toque deje “punto”
+    drawLine(pt, { x: pt.x + 0.01, y: pt.y + 0.01 }, (e as any).pressure);
+  }
+
+  function onCanvasPointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (!isDrawingRef.current) return;
+    e.preventDefault();
+
+    const pt = canvasPointFromEvent(e);
+    const last = lastPtRef.current;
+    if (!pt || !last) return;
+
+    drawLine(last, pt, (e as any).pressure);
+    lastPtRef.current = pt;
+  }
+
+  function endStroke() {
+    if (!isDrawingRef.current) return;
+    isDrawingRef.current = false;
+    lastPtRef.current = null;
+
+    // guardamos estado para undo
+    pushHistory();
+  }
+
+  function exportBoardToChat() {
+    const c = canvasRef.current;
+    if (!c) return;
+
+    try {
+      const dataUrl = c.toDataURL("image/png");
+      setImagePreview(dataUrl);
+      setBoardMsg("✅ Añadida al chat como imagen.");
+      setTimeout(() => {
+        setBoardOpen(false);
+        setBoardMsg(null);
+        if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+      }, 450);
+    } catch {
+      setBoardMsg("No se pudo exportar la pizarra.");
+      setTimeout(() => setBoardMsg(null), 1800);
+    }
+  }
+
   // VisualViewport
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -985,6 +1369,7 @@ export default function Page() {
     if (isTyping) return;
     if (loginOpen) return;
     if (paywallOpen) return;
+    if (boardOpen) return;
     if (!isDesktopPointer()) return;
 
     const t = setTimeout(() => {
@@ -992,7 +1377,7 @@ export default function Page() {
     }, 60);
 
     return () => clearTimeout(t);
-  }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId, loginOpen, paywallOpen]);
+  }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId, loginOpen, paywallOpen, boardOpen]);
 
   function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -1304,16 +1689,18 @@ export default function Page() {
     setPayMsg(null);
   }
 
-  // ESC para cerrar paywall
+  // ESC para cerrar paywall / board
   useEffect(() => {
-    if (!paywallOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closePaywall();
+      if (e.key === "Escape") {
+        if (paywallOpen) closePaywall();
+        if (boardOpen) closeBoard();
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paywallOpen, payLoading]);
+  }, [paywallOpen, payLoading, boardOpen]);
 
   return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
@@ -1322,6 +1709,181 @@ export default function Page() {
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[90] px-3">
           <div className="rounded-full border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-sm px-4 py-2 text-xs text-zinc-800">
             {toastMsg}
+          </div>
+        </div>
+      )}
+
+      {/* ===== WHITEBOARD ===== */}
+      {boardOpen && (
+        <div className="fixed inset-0 z-[75]">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={closeBoard} aria-hidden="true" />
+
+          <div className="relative h-full w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="mx-auto h-full w-full max-w-4xl px-3 md:px-6">
+              <div className="pt-4 flex items-center justify-between">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="h-11 w-11 rounded-full bg-white/90 backdrop-blur-xl border border-zinc-200 grid place-items-center shadow-sm">
+                    <img src={"/vonu-icon.png?v=2"} alt="Vonu" className="h-6 w-6" draggable={false} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[14px] font-semibold text-zinc-900 leading-5">Pizarra</div>
+                    <div className="text-[11px] text-zinc-500 leading-4">
+                      Dibuja con dedo o lápiz · luego “Enviar al chat”
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={closeBoard}
+                  className={[
+                    "h-11 w-11 aspect-square rounded-full",
+                    "bg-white/90 backdrop-blur-xl border border-zinc-200",
+                    "hover:bg-white transition-colors",
+                    "grid place-items-center",
+                    "cursor-pointer disabled:opacity-50 shadow-sm",
+                    "p-0",
+                  ].join(" ")}
+                  aria-label="Cerrar pizarra"
+                  title="Cerrar"
+                >
+                  <span className="text-zinc-700 text-[20px] leading-none relative top-[-0.5px]">×</span>
+                </button>
+              </div>
+
+              <div
+                className="mt-4 rounded-[28px] border border-zinc-200 bg-white/90 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden"
+                style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}
+              >
+                <div className="h-full flex flex-col p-3 md:p-4">
+                  {/* Toolbar */}
+                  <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
+                    <div className="flex flex-wrap items-center gap-2 justify-between">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setBoardTool("pen")}
+                          className={[
+                            "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors",
+                            boardTool === "pen" ? "bg-blue-600 text-white border-blue-700/10" : "bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50",
+                          ].join(" ")}
+                        >
+                          Lápiz
+                        </button>
+
+                        <button
+                          onClick={() => setBoardTool("eraser")}
+                          className={[
+                            "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors",
+                            boardTool === "eraser" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50",
+                          ].join(" ")}
+                        >
+                          Goma
+                        </button>
+
+                        <button
+                          onClick={undoBoard}
+                          className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors"
+                          title="Deshacer"
+                        >
+                          Deshacer
+                        </button>
+
+                        <button
+                          onClick={clearBoard}
+                          className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors"
+                          title="Borrar todo"
+                        >
+                          Borrar
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {/* Colores */}
+                        <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 h-10">
+                          {["#111827", "#2563EB", "#DC2626", "#16A34A", "#111827"].slice(0, 4).map((c) => (
+                            <button
+                              key={c}
+                              onClick={() => {
+                                setBoardTool("pen");
+                                setBoardColor(c);
+                              }}
+                              className={[
+                                "h-7 w-7 rounded-full border",
+                                boardColor === c && boardTool === "pen" ? "border-zinc-900" : "border-zinc-200",
+                              ].join(" ")}
+                              style={{ backgroundColor: c }}
+                              aria-label={`Color ${c}`}
+                              title="Color"
+                            />
+                          ))}
+                        </div>
+
+                        {/* Grosor */}
+                        <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 h-10">
+                          <div className="text-[11px] text-zinc-600">Grosor</div>
+                          <input
+                            type="range"
+                            min={2}
+                            max={18}
+                            value={boardSize}
+                            onChange={(e) => setBoardSize(parseInt(e.target.value || "6", 10))}
+                            className="w-[120px]"
+                          />
+                        </div>
+
+                        <button
+                          onClick={exportBoardToChat}
+                          className="h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                        >
+                          Enviar al chat
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <div className="mt-3 min-h-[28px]">
+                    {boardMsg ? (
+                      <div className="rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-[12px] text-zinc-700">{boardMsg}</div>
+                    ) : (
+                      <div className="opacity-0 select-none text-[12px] px-3 py-2">placeholder</div>
+                    )}
+                  </div>
+
+                  {/* Canvas */}
+                  <div className="mt-2 flex-1 min-h-0">
+                    <div
+                      ref={canvasWrapRef}
+                      className="h-full w-full rounded-[22px] border border-zinc-200 bg-white overflow-hidden"
+                    >
+                      <canvas
+                        ref={canvasRef}
+                        className="h-full w-full"
+                        style={{ touchAction: "none", display: "block" }}
+                        onPointerDown={onCanvasPointerDown}
+                        onPointerMove={onCanvasPointerMove}
+                        onPointerUp={endStroke}
+                        onPointerCancel={endStroke}
+                        onPointerLeave={endStroke}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-3 pb-[calc(env(safe-area-inset-bottom)+6px)] flex items-center justify-between">
+                    <div className="text-[11px] text-zinc-500">
+                      Tip: escribe grande en tablet (dedo o lápiz). Puedes enviar varias pizarras seguidas.
+                    </div>
+                    <button
+                      onClick={closeBoard}
+                      className="h-10 px-5 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-[12px] font-semibold transition-colors"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="h-4" />
+            </div>
           </div>
         </div>
       )}
@@ -1992,6 +2554,18 @@ export default function Page() {
 
         <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl">
           <div className="mx-auto max-w-3xl px-2 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
+            {/* PIZARRA */}
+            <button
+              onClick={openBoard}
+              className="h-11 w-11 md:h-12 md:w-12 inline-flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
+              aria-label="Abrir pizarra"
+              disabled={!!isTyping}
+              title={isTyping ? "Espera a que Vonu responda…" : "Pizarra"}
+            >
+              <PencilIcon className="h-5 w-5" />
+            </button>
+
+            {/* ADJUNTAR */}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="h-11 w-11 md:h-12 md:w-12 inline-flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
@@ -2021,9 +2595,15 @@ export default function Page() {
                 </div>
               )}
 
+              {micMsg && (
+                <div className="mb-2 text-[12px] text-zinc-600 bg-white border border-zinc-200 rounded-2xl px-3 py-2">
+                  {micMsg}
+                </div>
+              )}
+
               <div
                 className={[
-                  "w-full min-h-11 md:min-h-12 px-4 py-3 flex items-center",
+                  "w-full min-h-11 md:min-h-12 px-4 py-3 flex items-center gap-2",
                   "bg-zinc-100",
                   "border border-zinc-200 focus-within:border-zinc-300",
                   inputExpanded ? "rounded-3xl" : "rounded-full",
@@ -2040,10 +2620,35 @@ export default function Page() {
                     }
                   }}
                   disabled={!!isTyping}
-                  placeholder={isTyping ? "Vonu está respondiendo…" : "Escribe tu mensaje…"}
+                  placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
                   className="w-full resize-none bg-transparent text-sm outline-none leading-5 overflow-hidden"
                   rows={1}
                 />
+
+                <button
+                  onClick={toggleMic}
+                  disabled={!!isTyping || !speechSupported}
+                  className={[
+                    "h-9 w-9 rounded-full border transition-colors shrink-0 flex items-center justify-center",
+                    !speechSupported
+                      ? "border-zinc-200 text-zinc-400 bg-white/60 cursor-not-allowed"
+                      : isListening
+                        ? "border-red-200 bg-red-50 text-red-700"
+                        : "border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-900",
+                  ].join(" ")}
+                  aria-label={isListening ? "Parar micrófono" : "Hablar"}
+                  title={!speechSupported ? "Dictado no soportado en este navegador" : isListening ? "Parar" : "Dictar por voz"}
+                >
+                  <div className="relative">
+                    <MicIcon className="h-5 w-5" />
+                    {isListening && (
+                      <span
+                        className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </div>
+                </button>
               </div>
             </div>
 
