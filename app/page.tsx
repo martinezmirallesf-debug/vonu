@@ -225,18 +225,22 @@ function MicIcon({ className }: { className?: string }) {
 function PencilIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M12 20h9"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <path d="M12 20h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       <path
         d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5Z"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+function PlusIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 5v14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+      <path d="M5 12h14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
     </svg>
   );
 }
@@ -294,7 +298,6 @@ export default function Page() {
   );
 
   // ✅ FIX CLAVE: refreshProStatus NO depende de authUserId.
-  // Al volver al tab/app, el token existe aunque el estado esté "stale".
   async function refreshProStatus() {
     setProLoading(true);
     try {
@@ -556,7 +559,7 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ FIX: al volver al tab/app, refrescar sesión Y pro (esto arregla tu problema)
+  // ✅ FIX: al volver al tab/app, refrescar sesión Y pro
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -957,9 +960,6 @@ export default function Page() {
 
       rec.continuous = false;
       rec.interimResults = true;
-
-      // idioma automático: si el usuario escribe “valencià” o “valenciano” podría cambiar,
-      // pero de momento lo dejamos en es-ES como base (funciona también bastante bien con inglés dictado).
       rec.lang = "es-ES";
 
       rec.onstart = () => {
@@ -993,8 +993,7 @@ export default function Page() {
         setInput((prev) => {
           const base = prev.trim();
           if (!base) return combined;
-          const sep = base.endsWith(".") || base.endsWith("?") || base.endsWith("!") ? " " : " ";
-          return base + sep + combined;
+          return base + " " + combined;
         });
       };
 
@@ -1048,7 +1047,6 @@ export default function Page() {
     try {
       const img = ctx.getImageData(0, 0, c.width, c.height);
       historyRef.current.push(img);
-      // limitar para no reventar memoria
       if (historyRef.current.length > 30) historyRef.current.shift();
     } catch {}
   }
@@ -1059,14 +1057,12 @@ export default function Page() {
     if (!c || !ctx) return;
 
     if (historyRef.current.length <= 1) {
-      // dejar blanco
       resetCanvasWhite();
       historyRef.current = [];
       pushHistory();
       return;
     }
 
-    // quitamos el estado actual
     historyRef.current.pop();
     const prev = historyRef.current[historyRef.current.length - 1];
     if (!prev) return;
@@ -1093,15 +1089,16 @@ export default function Page() {
     const nextW = Math.max(280, Math.floor(rect.width));
     const nextH = Math.max(320, Math.floor(rect.height));
 
-    // guardamos lo anterior para no perderlo al resize
     const ctx = getCtx();
-    const prev = ctx ? (() => {
-      try {
-        return ctx.getImageData(0, 0, c.width, c.height);
-      } catch {
-        return null;
-      }
-    })() : null;
+    const prev = ctx
+      ? (() => {
+          try {
+            return ctx.getImageData(0, 0, c.width, c.height);
+          } catch {
+            return null;
+          }
+        })()
+      : null;
 
     c.width = Math.floor(nextW * dpr);
     c.height = Math.floor(nextH * dpr);
@@ -1115,7 +1112,6 @@ export default function Page() {
     ctx2.lineCap = "round";
     ctx2.lineJoin = "round";
 
-    // si no teníamos nada, fondo blanco
     if (!prev || !hasInitRef.current) {
       resetCanvasWhite();
       hasInitRef.current = true;
@@ -1124,7 +1120,6 @@ export default function Page() {
       return;
     }
 
-    // si había contenido, lo re-aplicamos escalado (aprox) pintándolo a un canvas temporal
     try {
       const tmp = document.createElement("canvas");
       tmp.width = prev.width;
@@ -1132,9 +1127,7 @@ export default function Page() {
       const tctx = tmp.getContext("2d");
       if (tctx) {
         tctx.putImageData(prev, 0, 0);
-        // dibujar tmp sobre canvas actual, ajustando al tamaño visible
         ctx2.save();
-        // ctx2 ya está en coords CSS (por setTransform)
         ctx2.fillStyle = "#fff";
         ctx2.fillRect(0, 0, nextW, nextH);
         ctx2.drawImage(tmp, 0, 0, nextW, nextH);
@@ -1162,12 +1155,10 @@ export default function Page() {
     if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
-  // init/resize board when open
   useEffect(() => {
     if (!boardOpen) return;
     if (typeof window === "undefined") return;
 
-    // pequeño delay para que el modal tenga layout
     const t = setTimeout(() => {
       resizeBoardCanvas();
     }, 30);
@@ -1186,8 +1177,8 @@ export default function Page() {
     if (!c) return null;
     const rect = c.getBoundingClientRect();
 
-    const x = (e.clientX - rect.left);
-    const y = (e.clientY - rect.top);
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
     return { x, y };
   }
@@ -1226,7 +1217,6 @@ export default function Page() {
     isDrawingRef.current = true;
     lastPtRef.current = pt;
 
-    // para que el primer toque deje “punto”
     drawLine(pt, { x: pt.x + 0.01, y: pt.y + 0.01 }, (e as any).pressure);
   }
 
@@ -1246,8 +1236,6 @@ export default function Page() {
     if (!isDrawingRef.current) return;
     isDrawingRef.current = false;
     lastPtRef.current = null;
-
-    // guardamos estado para undo
     pushHistory();
   }
 
@@ -1437,6 +1425,7 @@ export default function Page() {
     if (!activeThread) return;
     setRenameValue(activeThread.title);
     setRenameOpen(true);
+    setMenuOpen(false);
   }
 
   function confirmRename() {
@@ -1689,18 +1678,22 @@ export default function Page() {
     setPayMsg(null);
   }
 
-  // ESC para cerrar paywall / board
+  // ESC para cerrar paywall / board / rename
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         if (paywallOpen) closePaywall();
         if (boardOpen) closeBoard();
+        if (renameOpen) setRenameOpen(false);
+      }
+      if (renameOpen && e.key === "Enter") {
+        confirmRename();
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paywallOpen, payLoading, boardOpen]);
+  }, [paywallOpen, payLoading, boardOpen, renameOpen, renameValue, activeThreadId]);
 
   return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
@@ -1709,6 +1702,64 @@ export default function Page() {
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[90] px-3">
           <div className="rounded-full border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-sm px-4 py-2 text-xs text-zinc-800">
             {toastMsg}
+          </div>
+        </div>
+      )}
+
+      {/* ===== RENAME MODAL (FIX: ahora sí funciona) ===== */}
+      {renameOpen && (
+        <div
+          className="fixed inset-0 z-[85] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6"
+          onClick={() => setRenameOpen(false)}
+        >
+          <div
+            className="w-full max-w-[420px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-[16px] font-semibold text-zinc-900">Renombrar conversación</div>
+                <div className="text-[12.5px] text-zinc-500 mt-1">Ponle un nombre para encontrarla rápido.</div>
+              </div>
+
+              <button
+                onClick={() => setRenameOpen(false)}
+                className="h-9 w-9 aspect-square rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer p-0"
+                aria-label="Cerrar"
+              >
+                <span className="text-[18px] leading-none relative top-[-0.5px]">×</span>
+              </button>
+            </div>
+
+            <div className="mt-4">
+              <div className="text-[12px] text-zinc-600 mb-1">Nombre</div>
+              <input
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                className="w-full h-11 rounded-[14px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
+                placeholder="Ej: Estafa Wallapop, Inglés vocabulario…"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setRenameOpen(false);
+                  if (e.key === "Enter") confirmRename();
+                }}
+              />
+            </div>
+
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={() => setRenameOpen(false)}
+                className="flex-1 h-11 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm font-semibold transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmRename}
+                className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors cursor-pointer"
+              >
+                Guardar
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1727,9 +1778,7 @@ export default function Page() {
                   </div>
                   <div className="min-w-0">
                     <div className="text-[14px] font-semibold text-zinc-900 leading-5">Pizarra</div>
-                    <div className="text-[11px] text-zinc-500 leading-4">
-                      Dibuja con dedo o lápiz · luego “Enviar al chat”
-                    </div>
+                    <div className="text-[11px] text-zinc-500 leading-4">Dibuja con dedo o lápiz · luego “Enviar al chat”</div>
                   </div>
                 </div>
 
@@ -1799,17 +1848,14 @@ export default function Page() {
                       <div className="flex items-center gap-2">
                         {/* Colores */}
                         <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 h-10">
-                          {["#111827", "#2563EB", "#DC2626", "#16A34A", "#111827"].slice(0, 4).map((c) => (
+                          {["#111827", "#2563EB", "#DC2626", "#16A34A"].map((c) => (
                             <button
                               key={c}
                               onClick={() => {
                                 setBoardTool("pen");
                                 setBoardColor(c);
                               }}
-                              className={[
-                                "h-7 w-7 rounded-full border",
-                                boardColor === c && boardTool === "pen" ? "border-zinc-900" : "border-zinc-200",
-                              ].join(" ")}
+                              className={["h-7 w-7 rounded-full border", boardColor === c && boardTool === "pen" ? "border-zinc-900" : "border-zinc-200"].join(" ")}
                               style={{ backgroundColor: c }}
                               aria-label={`Color ${c}`}
                               title="Color"
@@ -1830,10 +1876,7 @@ export default function Page() {
                           />
                         </div>
 
-                        <button
-                          onClick={exportBoardToChat}
-                          className="h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-                        >
+                        <button onClick={exportBoardToChat} className="h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors">
                           Enviar al chat
                         </button>
                       </div>
@@ -1851,10 +1894,7 @@ export default function Page() {
 
                   {/* Canvas */}
                   <div className="mt-2 flex-1 min-h-0">
-                    <div
-                      ref={canvasWrapRef}
-                      className="h-full w-full rounded-[22px] border border-zinc-200 bg-white overflow-hidden"
-                    >
+                    <div ref={canvasWrapRef} className="h-full w-full rounded-[22px] border border-zinc-200 bg-white overflow-hidden">
                       <canvas
                         ref={canvasRef}
                         className="h-full w-full"
@@ -1869,13 +1909,8 @@ export default function Page() {
                   </div>
 
                   <div className="pt-3 pb-[calc(env(safe-area-inset-bottom)+6px)] flex items-center justify-between">
-                    <div className="text-[11px] text-zinc-500">
-                      Tip: escribe grande en tablet (dedo o lápiz). Puedes enviar varias pizarras seguidas.
-                    </div>
-                    <button
-                      onClick={closeBoard}
-                      className="h-10 px-5 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-[12px] font-semibold transition-colors"
-                    >
+                    <div className="text-[11px] text-zinc-500">Tip: escribe grande en tablet (dedo o lápiz). Puedes enviar varias pizarras seguidas.</div>
+                    <button onClick={closeBoard} className="h-10 px-5 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-[12px] font-semibold transition-colors">
                       Cerrar
                     </button>
                   </div>
@@ -1898,7 +1933,7 @@ export default function Page() {
           <div className="absolute top-[48%] -right-24 h-[280px] w-[280px] rounded-full bg-zinc-900/5 blur-3xl pointer-events-none" />
 
           <div className="relative h-full w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="mx-auto h-full w-full max-w-md px-4">
+            <div className="mx-auto h-full w-full max-w-md px-4 pb-[env(safe-area-inset-bottom)]">
               <div className="pt-4 flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="h-11 w-11 rounded-full bg-white/90 backdrop-blur-xl border border-zinc-200 grid place-items-center shadow-sm">
@@ -2046,7 +2081,7 @@ export default function Page() {
                     )}
                   </div>
 
-                  <div className="mt-auto pt-3 pb-[calc(env(safe-area-inset-bottom)+6px)]">
+                  <div className="mt-auto pt-3 pb-[calc(env(safe-area-inset-bottom)+10px)]">
                     <button
                       onClick={() => {
                         if (plan === "free") {
@@ -2092,7 +2127,7 @@ export default function Page() {
                 </div>
               </div>
 
-              <div className="h-4" />
+              {/* ✅ quitado el h-4 que provocaba “raya/gap” abajo */}
             </div>
           </div>
         </div>
@@ -2366,8 +2401,8 @@ export default function Page() {
               authLoading
                 ? "Cargando…"
                 : isLoggedIn
-                  ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : planLabelText}`
-                  : "Iniciar sesión"
+                ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : planLabelText}`
+                : "Iniciar sesión"
             }
           >
             <span
@@ -2502,7 +2537,6 @@ export default function Page() {
                 const isUser = m.role === "user";
                 const rawText = isUser ? (m.text ?? "") : (m.text || "");
 
-                // ✅ Texto final y streaming con el MISMO tratamiento (cero saltos raros)
                 const mdText = isUser ? rawText : normalizeAssistantText(rawText);
 
                 const isStreaming = !!m.streaming;
@@ -2552,63 +2586,59 @@ export default function Page() {
           </div>
         </div>
 
+        {/* ===== INPUT BAR (nuevo estilo como tu captura) ===== */}
         <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl">
-          <div className="mx-auto max-w-3xl px-2 md:px-6 pt-3 pb-2 flex items-end gap-2 md:gap-3">
-            {/* PIZARRA */}
-            <button
-              onClick={openBoard}
-              className="h-11 w-11 md:h-12 md:w-12 inline-flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
-              aria-label="Abrir pizarra"
-              disabled={!!isTyping}
-              title={isTyping ? "Espera a que Vonu responda…" : "Pizarra"}
+          <div className="mx-auto max-w-3xl px-2 md:px-6 pt-3 pb-2">
+            {imagePreview && (
+              <div className="mb-2 relative w-fit">
+                <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
+                <button
+                  onClick={() => setImagePreview(null)}
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer"
+                  aria-label="Quitar imagen"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+            {micMsg && <div className="mb-2 text-[12px] text-zinc-600 bg-white border border-zinc-200 rounded-2xl px-3 py-2">{micMsg}</div>}
+
+            <div
+              className={[
+                "w-full",
+                "rounded-[26px] border border-zinc-200 bg-white shadow-sm",
+                "px-2.5 py-2",
+                "flex items-end gap-2",
+              ].join(" ")}
             >
-              <PencilIcon className="h-5 w-5" />
-            </button>
+              {/* LEFT ICONS (dentro) */}
+              <div className="flex items-center gap-1 pb-0.5">
+                <button
+                  onClick={openBoard}
+                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
+                  aria-label="Pizarra"
+                  title="Pizarra"
+                  disabled={!!isTyping}
+                >
+                  <PencilIcon className="h-5 w-5 text-zinc-800" />
+                </button>
 
-            {/* ADJUNTAR */}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="h-11 w-11 md:h-12 md:w-12 inline-flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
-              aria-label="Adjuntar imagen"
-              disabled={!!isTyping}
-              title={isTyping ? "Espera a que Vonu responda…" : "Adjuntar imagen"}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 5V19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                <path d="M5 12H19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-              </svg>
-            </button>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
+                  aria-label="Adjuntar"
+                  title="Adjuntar imagen"
+                  disabled={!!isTyping}
+                >
+                  <PlusIcon className="h-5 w-5 text-zinc-800" />
+                </button>
 
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
+              </div>
 
-            <div className="flex-1 min-w-0">
-              {imagePreview && (
-                <div className="mb-2 relative w-fit">
-                  <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
-                  <button
-                    onClick={() => setImagePreview(null)}
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer"
-                    aria-label="Quitar imagen"
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
-
-              {micMsg && (
-                <div className="mb-2 text-[12px] text-zinc-600 bg-white border border-zinc-200 rounded-2xl px-3 py-2">
-                  {micMsg}
-                </div>
-              )}
-
-              <div
-                className={[
-                  "w-full min-h-11 md:min-h-12 px-4 py-3 flex items-center gap-2",
-                  "bg-zinc-100",
-                  "border border-zinc-200 focus-within:border-zinc-300",
-                  inputExpanded ? "rounded-3xl" : "rounded-full",
-                ].join(" ")}
-              >
+              {/* TEXTAREA */}
+              <div className="flex-1 min-w-0 px-1">
                 <textarea
                   ref={textareaRef}
                   value={input}
@@ -2621,46 +2651,52 @@ export default function Page() {
                   }}
                   disabled={!!isTyping}
                   placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
-                  className="w-full resize-none bg-transparent text-sm outline-none leading-5 overflow-hidden"
+                  className={[
+                    "w-full resize-none bg-transparent outline-none",
+                    "text-[15px] leading-5",
+                    "overflow-hidden",
+                    inputExpanded ? "py-2" : "py-2",
+                  ].join(" ")}
                   rows={1}
                 />
+              </div>
 
+              {/* RIGHT ICONS (micro + enviar) */}
+              <div className="flex items-center gap-2 pb-0.5">
                 <button
                   onClick={toggleMic}
                   disabled={!!isTyping || !speechSupported}
                   className={[
-                    "h-9 w-9 rounded-full border transition-colors shrink-0 flex items-center justify-center",
+                    "h-10 w-10 rounded-full border transition-colors shrink-0 flex items-center justify-center",
                     !speechSupported
                       ? "border-zinc-200 text-zinc-400 bg-white/60 cursor-not-allowed"
                       : isListening
-                        ? "border-red-200 bg-red-50 text-red-700"
-                        : "border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-900",
+                      ? "border-red-200 bg-red-50 text-red-700"
+                      : "border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-900",
                   ].join(" ")}
                   aria-label={isListening ? "Parar micrófono" : "Hablar"}
                   title={!speechSupported ? "Dictado no soportado en este navegador" : isListening ? "Parar" : "Dictar por voz"}
                 >
                   <div className="relative">
                     <MicIcon className="h-5 w-5" />
-                    {isListening && (
-                      <span
-                        className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500"
-                        aria-hidden="true"
-                      />
-                    )}
+                    {isListening && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />}
                   </div>
+                </button>
+
+                <button
+                  onClick={sendMessage}
+                  disabled={!canSend}
+                  className={[
+                    "h-10 w-10 rounded-full flex items-center justify-center shrink-0 transition-colors cursor-pointer",
+                    !canSend ? "bg-zinc-200 text-zinc-500 cursor-not-allowed" : "bg-black text-white hover:bg-zinc-900",
+                  ].join(" ")}
+                  aria-label="Enviar"
+                  title="Enviar"
+                >
+                  <ArrowUpIcon className="h-5 w-5" />
                 </button>
               </div>
             </div>
-
-            <button
-              onClick={sendMessage}
-              disabled={!!(isTyping || (!input.trim() && !imagePreview))}
-              className="h-11 w-11 md:h-12 md:w-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center disabled:opacity-40 transition-colors cursor-pointer shrink-0"
-              aria-label="Enviar"
-              title="Enviar"
-            >
-              <ArrowUpIcon className="h-5 w-5" />
-            </button>
           </div>
 
           <div className="mx-auto max-w-3xl px-2 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
