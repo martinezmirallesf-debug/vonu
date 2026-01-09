@@ -1703,7 +1703,72 @@ export default function Page() {
   }, [paywallOpen, payLoading, boardOpen, renameOpen, renameValue, activeThreadId]);
 
   // ✅ Gemini-like en móvil: cuando es multiline, el contenedor se “pega” más a los laterales
-  const mobileEdgePad = inputExpanded ? "px-0" : "px-2";
+  // (dejamos 4px para que el borde NO se salga visualmente en pantallas con safe-area / zoom)
+  const mobileEdgePad = inputExpanded ? "px-1" : "px-2";
+
+  // ✅ Botones (redonditos) reutilizables para input (colapsado y expandido)
+  const InputLeftButtons = (
+    <>
+      <button
+        type="button"
+        onClick={openBoard}
+        className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
+        aria-label="Pizarra"
+        title="Pizarra"
+        disabled={!!isTyping}
+      >
+        <PencilIcon className="h-5 w-5 text-zinc-800" />
+      </button>
+
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
+        aria-label="Adjuntar"
+        title="Adjuntar imagen"
+        disabled={!!isTyping}
+      >
+        <PlusIcon className="h-5 w-5 text-zinc-800" />
+      </button>
+
+      <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
+    </>
+  );
+
+  const InputRightButtons = (
+    <>
+      <button
+        type="button"
+        onClick={toggleMic}
+        disabled={!!isTyping || !speechSupported}
+        className={[
+          "h-10 w-10 rounded-full transition-colors shrink-0 grid place-items-center p-0",
+          !speechSupported ? "text-zinc-300 cursor-not-allowed" : isListening ? "bg-red-50 text-red-700" : "hover:bg-zinc-50 text-zinc-900",
+        ].join(" ")}
+        aria-label={isListening ? "Parar micrófono" : "Hablar"}
+        title={!speechSupported ? "Dictado no soportado en este navegador" : isListening ? "Parar" : "Dictar por voz"}
+      >
+        <div className="relative">
+          <MicIcon className="h-5 w-5" />
+          {isListening && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />}
+        </div>
+      </button>
+
+      <button
+        type="button"
+        onClick={sendMessage}
+        disabled={!canSend}
+        className={[
+          "h-10 w-10 rounded-full shrink-0 transition-colors cursor-pointer grid place-items-center p-0",
+          !canSend ? "bg-zinc-200 text-zinc-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700",
+        ].join(" ")}
+        aria-label="Enviar"
+        title="Enviar"
+      >
+        <ArrowUpIcon className="h-5 w-5" />
+      </button>
+    </>
+  );
 
   return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
@@ -1728,6 +1793,7 @@ export default function Page() {
               </div>
 
               <button
+                type="button"
                 onClick={() => setRenameOpen(false)}
                 className="h-9 w-9 aspect-square rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer p-0"
                 aria-label="Cerrar"
@@ -1753,12 +1819,17 @@ export default function Page() {
 
             <div className="mt-4 flex gap-2">
               <button
+                type="button"
                 onClick={() => setRenameOpen(false)}
                 className="flex-1 h-11 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm font-semibold transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
-              <button onClick={confirmRename} className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors cursor-pointer">
+              <button
+                type="button"
+                onClick={confirmRename}
+                className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors cursor-pointer"
+              >
                 Guardar
               </button>
             </div>
@@ -1785,6 +1856,7 @@ export default function Page() {
                 </div>
 
                 <button
+                  type="button"
                   onClick={closeBoard}
                   className={[
                     "h-11 w-11 aspect-square rounded-full",
@@ -1812,6 +1884,7 @@ export default function Page() {
                       <div className="flex items-center gap-2">
                         {/* ✅ Selección: rectangular con esquinas redondeadas (no “pill”) */}
                         <button
+                          type="button"
                           onClick={() => setBoardTool("pen")}
                           className={[
                             "h-10 px-4 rounded-2xl text-[12px] font-semibold border transition-colors",
@@ -1822,6 +1895,7 @@ export default function Page() {
                         </button>
 
                         <button
+                          type="button"
                           onClick={() => setBoardTool("eraser")}
                           className={[
                             "h-10 px-4 rounded-2xl text-[12px] font-semibold border transition-colors",
@@ -1832,6 +1906,7 @@ export default function Page() {
                         </button>
 
                         <button
+                          type="button"
                           onClick={undoBoard}
                           className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors"
                           title="Deshacer"
@@ -1840,6 +1915,7 @@ export default function Page() {
                         </button>
 
                         <button
+                          type="button"
                           onClick={clearBoard}
                           className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors"
                           title="Borrar todo"
@@ -1853,12 +1929,15 @@ export default function Page() {
                         <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 h-10">
                           {["#111827", "#2563EB", "#DC2626", "#16A34A"].map((c) => (
                             <button
+                              type="button"
                               key={c}
                               onClick={() => {
                                 setBoardTool("pen");
                                 setBoardColor(c);
                               }}
-                              className={["h-7 w-7 rounded-full border", boardColor === c && boardTool === "pen" ? "border-zinc-900" : "border-zinc-200"].join(" ")}
+                              className={["h-7 w-7 rounded-full border grid place-items-center", boardColor === c && boardTool === "pen" ? "border-zinc-900" : "border-zinc-200"].join(
+                                " "
+                              )}
                               style={{ backgroundColor: c }}
                               aria-label={`Color ${c}`}
                               title="Color"
@@ -1879,10 +1958,11 @@ export default function Page() {
                           />
                         </div>
 
-                        {/* Desktop: Enviar al chat aquí */}
+                        {/* Desktop: Enviar al chat aquí (✅ centrado perfecto) */}
                         <button
+                          type="button"
                           onClick={exportBoardToChat}
-                          className="hidden md:inline-flex h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                          className="hidden md:inline-flex h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors items-center justify-center leading-none"
                         >
                           Enviar al chat
                         </button>
@@ -1918,10 +1998,11 @@ export default function Page() {
                   <div className="pt-2 pb-[calc(env(safe-area-inset-bottom)+6px)] flex items-center justify-between gap-3">
                     <div className="text-[11px] text-zinc-500">Tip: escribe grande en tablet (dedo o lápiz). Puedes enviar varias pizarras seguidas.</div>
 
-                    {/* Mobile: Enviar al chat abajo (y quitamos “Cerrar”) */}
+                    {/* Mobile: Enviar al chat abajo (✅ centrado perfecto) */}
                     <button
+                      type="button"
                       onClick={exportBoardToChat}
-                      className="md:hidden h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors shrink-0"
+                      className="md:hidden inline-flex h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors shrink-0 items-center justify-center leading-none"
                     >
                       Enviar al chat
                     </button>
@@ -1962,6 +2043,7 @@ export default function Page() {
                 </div>
 
                 <button
+                  type="button"
                   onClick={closePaywall}
                   className={[
                     "h-10 w-10 aspect-square rounded-full",
@@ -1988,6 +2070,7 @@ export default function Page() {
                     <div className="mt-2 grid gap-2">
                       {/* ANUAL */}
                       <button
+                        type="button"
                         onClick={() => setPlan("yearly")}
                         disabled={!!payLoading}
                         className={[
@@ -2021,6 +2104,7 @@ export default function Page() {
 
                       {/* MENSUAL */}
                       <button
+                        type="button"
                         onClick={() => setPlan("monthly")}
                         disabled={!!payLoading}
                         className={[
@@ -2051,6 +2135,7 @@ export default function Page() {
 
                       {/* SEGUIR GRATIS */}
                       <button
+                        type="button"
                         onClick={() => setPlan("free")}
                         disabled={!!payLoading}
                         className={[
@@ -2102,6 +2187,7 @@ export default function Page() {
                   {/* Footer fijo, sin scroll */}
                   <div className="mt-auto pt-1 pb-[calc(env(safe-area-inset-bottom)+8px)]">
                     <button
+                      type="button"
                       onClick={() => {
                         if (payLoading) return;
                         if (plan === "free") {
@@ -2129,6 +2215,7 @@ export default function Page() {
 
                     {isPro ? (
                       <button
+                        type="button"
                         onClick={cancelSubscriptionFromHere}
                         className="mt-2 w-full h-10 rounded-full border border-red-200 hover:bg-red-50 text-[12px] text-red-700 cursor-pointer disabled:opacity-50"
                         disabled={!!payLoading}
@@ -2159,6 +2246,7 @@ export default function Page() {
                   </div>
 
                   <button
+                    type="button"
                     onClick={() => {
                       setLoginOpen(false);
                       setLoginMsg(null);
@@ -2181,6 +2269,7 @@ export default function Page() {
 
                 <div className="mt-4 flex gap-2">
                   <button
+                    type="button"
                     onClick={async () => {
                       await logout();
                       setLoginMsg(null);
@@ -2191,6 +2280,7 @@ export default function Page() {
                     Cerrar sesión
                   </button>
                   <button
+                    type="button"
                     onClick={() => {
                       setLoginOpen(false);
                       setLoginMsg(null);
@@ -2210,6 +2300,7 @@ export default function Page() {
                   </div>
 
                   <button
+                    type="button"
                     onClick={() => {
                       setLoginOpen(false);
                       setLoginMsg(null);
@@ -2271,6 +2362,7 @@ export default function Page() {
                     </label>
 
                     <button
+                      type="button"
                       className="text-[12px] text-blue-700 hover:text-blue-800 cursor-pointer"
                       onClick={() => setLoginMsg("Si has olvidado tu contraseña, por ahora crea una cuenta nueva con otro email (lo mejoraremos).")}
                       disabled={!!loginSending}
@@ -2282,6 +2374,7 @@ export default function Page() {
                   {loginMsg && <div className="whitespace-pre-wrap text-[12px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-[14px] px-3 py-2">{loginMsg}</div>}
 
                   <button
+                    type="button"
                     onClick={authMode === "signin" ? signInWithPassword : signUpWithPassword}
                     className="w-full h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
                     disabled={!!loginSending}
@@ -2296,6 +2389,7 @@ export default function Page() {
                   </div>
 
                   <button
+                    type="button"
                     onClick={() => signInWithOAuth("google")}
                     className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                     disabled={!!loginSending}
@@ -2305,6 +2399,7 @@ export default function Page() {
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => signInWithOAuth("azure")}
                     className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                     disabled={!!loginSending}
@@ -2318,6 +2413,7 @@ export default function Page() {
                       <>
                         ¿No tienes cuenta?{" "}
                         <button
+                          type="button"
                           className="text-blue-700 hover:text-blue-800 cursor-pointer"
                           onClick={() => {
                             setAuthMode("signup");
@@ -2332,6 +2428,7 @@ export default function Page() {
                       <>
                         ¿Ya tienes cuenta?{" "}
                         <button
+                          type="button"
                           className="text-blue-700 hover:text-blue-800 cursor-pointer"
                           onClick={() => {
                             setAuthMode("signin");
@@ -2361,6 +2458,7 @@ export default function Page() {
         <div className="pointer-events-auto">
           <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center gap-0 overflow-hidden px-1">
             <button
+              type="button"
               onClick={() => setMenuOpen((v) => !v)}
               className="h-11 w-11 grid place-items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
               aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
@@ -2383,6 +2481,7 @@ export default function Page() {
         {/* ✅ CAMBIO: renderizar SIEMPRE (si authLoading, quedan deshabilitados) */}
         <div className="pointer-events-auto flex items-center gap-2">
           <button
+            type="button"
             onClick={handleOpenPlansCTA}
             disabled={authLoading}
             className={[
@@ -2395,6 +2494,7 @@ export default function Page() {
           </button>
 
           <button
+            type="button"
             onClick={() => openLoginModal("signin")}
             disabled={authLoading}
             className={[
@@ -2448,16 +2548,16 @@ export default function Page() {
                 <div className="text-xs text-zinc-500">Tus consultas recientes</div>
               </div>
 
-              <button onClick={createThreadAndActivate} className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
+              <button type="button" onClick={createThreadAndActivate} className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
                 Nueva
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-2 mb-3">
-              <button onClick={openRename} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer">
+              <button type="button" onClick={openRename} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer">
                 Renombrar
               </button>
-              <button onClick={deleteActiveThread} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer">
+              <button type="button" onClick={deleteActiveThread} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer">
                 Borrar
               </button>
             </div>
@@ -2474,7 +2574,7 @@ export default function Page() {
                         <div className="text-[11px] text-zinc-500 truncate">{authUserEmail ?? "Email no disponible"}</div>
                       </div>
 
-                      <button onClick={logout} className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer shrink-0">
+                      <button type="button" onClick={logout} className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer shrink-0">
                         Salir
                       </button>
                     </div>
@@ -2485,18 +2585,22 @@ export default function Page() {
                       </div>
 
                       <button
+                        type="button"
                         onClick={() => {
                           handleOpenPlansCTA();
                           setMenuOpen(false);
                         }}
-                        className={["text-xs px-3 py-2 rounded-full transition-colors cursor-pointer", isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700"].join(" ")}
+                        className={[
+                          "text-xs px-3 py-2 rounded-full transition-colors cursor-pointer",
+                          isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700",
+                        ].join(" ")}
                       >
                         {isPro ? "Ver" : "Mejorar"}
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <button onClick={() => openLoginModal("signin")} className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
+                  <button type="button" onClick={() => openLoginModal("signin")} className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
                     Iniciar sesión
                   </button>
                 )}
@@ -2510,6 +2614,7 @@ export default function Page() {
 
                 return (
                   <button
+                    type="button"
                     key={t.id}
                     onClick={() => activateThread(t.id)}
                     className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"}`}
@@ -2594,6 +2699,7 @@ export default function Page() {
               <div className="mb-2 relative w-fit">
                 <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
                 <button
+                  type="button"
                   onClick={() => setImagePreview(null)}
                   className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer grid place-items-center"
                   aria-label="Quitar imagen"
@@ -2605,96 +2711,79 @@ export default function Page() {
 
             {micMsg && <div className="mb-2 text-[12px] text-zinc-600 bg-white border border-zinc-200 rounded-2xl px-3 py-2">{micMsg}</div>}
 
-            {/* ✅ INPUT: textarea rellena laterales al crecer (estilo Gemini) */}
+            {/* ✅ INPUT: en multiline, layout tipo Gemini (texto full width + fila de botones abajo) */}
             <div
               className={[
-                "w-full relative border border-zinc-200 bg-white",
+                "w-full relative border border-zinc-200 bg-white box-border",
                 inputExpanded ? "rounded-[22px]" : "rounded-[26px]",
-                // en multiline quitamos padding lateral interno para que “se pegue” más a los bordes
-                inputExpanded ? "px-1.5 py-2" : "px-2.5 py-2",
+                "overflow-hidden",
               ].join(" ")}
             >
-              {/* LEFT ICONS (overlay) */}
-              <div className="absolute left-2.5 bottom-2 flex items-center gap-1">
-                <button
-                  onClick={openBoard}
-                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
-                  aria-label="Pizarra"
-                  title="Pizarra"
-                  disabled={!!isTyping}
-                >
-                  <PencilIcon className="h-5 w-5 text-zinc-800" />
-                </button>
+              {inputExpanded ? (
+                <>
+                  {/* ✅ TEXTO (arriba) -> ocupa casi todo el ancho como Gemini */}
+                  <textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                      }
+                    }}
+                    disabled={!!isTyping}
+                    placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
+                    className={[
+                      "w-full resize-none bg-transparent outline-none",
+                      "text-[15px] leading-5",
+                      "overflow-y-auto",
+                      "px-4 pt-3 pb-2",
+                    ].join(" ")}
+                    rows={1}
+                  />
 
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
-                  aria-label="Adjuntar"
-                  title="Adjuntar imagen"
-                  disabled={!!isTyping}
-                >
-                  <PlusIcon className="h-5 w-5 text-zinc-800" />
-                </button>
-
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
-              </div>
-
-              {/* RIGHT ICONS (overlay) */}
-              <div className="absolute right-2.5 bottom-2 flex items-center gap-2">
-                {/* ✅ Mic: igual que + / pizarra (sin círculo/borde extra) */}
-                <button
-                  onClick={toggleMic}
-                  disabled={!!isTyping || !speechSupported}
-                  className={[
-                    "h-10 w-10 rounded-full transition-colors shrink-0 grid place-items-center p-0",
-                    !speechSupported ? "text-zinc-300 cursor-not-allowed" : isListening ? "bg-red-50 text-red-700" : "hover:bg-zinc-50 text-zinc-900",
-                  ].join(" ")}
-                  aria-label={isListening ? "Parar micrófono" : "Hablar"}
-                  title={!speechSupported ? "Dictado no soportado en este navegador" : isListening ? "Parar" : "Dictar por voz"}
-                >
-                  <div className="relative">
-                    <MicIcon className="h-5 w-5" />
-                    {isListening && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />}
+                  {/* ✅ FILA DE ACCIONES (abajo) -> botones redonditos y bien centrados */}
+                  <div className="px-2.5 pb-2.5">
+                    <div className="h-px bg-zinc-100 mb-2" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1">{InputLeftButtons}</div>
+                      <div className="flex items-center gap-2">{InputRightButtons}</div>
+                    </div>
                   </div>
-                </button>
+                </>
+              ) : (
+                <>
+                  {/* LEFT ICONS (overlay) */}
+                  <div className="absolute left-2.5 bottom-2 flex items-center gap-1">{InputLeftButtons}</div>
 
-                <button
-                  onClick={sendMessage}
-                  disabled={!canSend}
-                  className={[
-                    "h-10 w-10 rounded-full shrink-0 transition-colors cursor-pointer grid place-items-center p-0",
-                    !canSend ? "bg-zinc-200 text-zinc-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700",
-                  ].join(" ")}
-                  aria-label="Enviar"
-                  title="Enviar"
-                >
-                  <ArrowUpIcon className="h-5 w-5" />
-                </button>
-              </div>
+                  {/* RIGHT ICONS (overlay) */}
+                  <div className="absolute right-2.5 bottom-2 flex items-center gap-2">{InputRightButtons}</div>
 
-              {/* TEXTAREA (full width; con padding para “rodear” los iconos) */}
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                  }
-                }}
-                disabled={!!isTyping}
-                placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
-                className={[
-                  "w-full resize-none bg-transparent outline-none",
-                  "text-[15px] leading-5",
-                  // ✅ en multiline permitimos que el contenido crezca (sin cortar)
-                  "overflow-y-auto",
-                  "pl-[92px] pr-[108px]",
-                  "py-2",
-                ].join(" ")}
-                rows={1}
-              />
+                  {/* TEXTAREA (single line) */}
+                  <textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                      }
+                    }}
+                    disabled={!!isTyping}
+                    placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
+                    className={[
+                      "w-full resize-none bg-transparent outline-none",
+                      "text-[15px] leading-5",
+                      "overflow-y-auto",
+                      "pl-[92px] pr-[108px]",
+                      "py-2",
+                    ].join(" ")}
+                    rows={1}
+                  />
+                </>
+              )}
             </div>
           </div>
 
