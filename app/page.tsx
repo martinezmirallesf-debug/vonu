@@ -1,8 +1,11 @@
 // app/page.tsx
+
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import ReactMarkdown from "react-markdown";
+
 import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
 type Message = {
@@ -52,6 +55,7 @@ function makeTitleFromText(text: string) {
 }
 
 const STORAGE_KEY = "vonu_threads_v1";
+
 const HOME_URL = "https://vonuai.com";
 
 // ✅ regla: tras 2 análisis, pedir login/pago
@@ -157,7 +161,6 @@ type IdentityData = {
   displayName?: string;
   given_name?: string;
   family_name?: string;
-  [k: string]: any;
 };
 
 function pickFirstNonEmpty(...vals: Array<string | null | undefined>) {
@@ -178,14 +181,11 @@ function buildNameFromParts(given?: string, family?: string) {
 function bestIdentityFromUser(u: any): { identityData: IdentityData | null; provider: string | null } {
   const identities = (u as any)?.identities ?? [];
   if (!Array.isArray(identities) || identities.length === 0) return { identityData: null, provider: null };
-
   // Preferimos azure si existe, si no el primero
   const azure = identities.find((x: any) => x?.provider === "azure");
   const chosen = azure ?? identities[0];
-
   const identityData = (chosen?.identity_data ?? null) as IdentityData | null;
   const provider = (chosen?.provider ?? null) as string | null;
-
   return { identityData, provider };
 }
 
@@ -193,7 +193,6 @@ function bestIdentityFromUser(u: any): { identityData: IdentityData | null; prov
 function deriveName(email: string | null, metaName?: string | null, identityName?: string | null) {
   const n = pickFirstNonEmpty(metaName, identityName);
   if (n) return n;
-
   if (!email) return null;
   const base = email.split("@")[0] || "";
   if (!base) return null;
@@ -263,12 +262,12 @@ export default function Page() {
 
   const [loginOpen, setLoginOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthCardMode>("signin");
+
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [keepSignedIn, setKeepSignedIn] = useState(true);
   const [loginSending, setLoginSending] = useState(false);
   const [loginMsg, setLoginMsg] = useState<string | null>(null);
-
   const loginEmailRef = useRef<HTMLInputElement>(null);
 
   // ===== PAYWALL / PRO (interno) =====
@@ -278,7 +277,6 @@ export default function Page() {
 
   // ✅ Paywall como en la foto: anual / mensual / seguir gratis
   const [plan, setPlan] = useState<"monthly" | "yearly" | "free">("yearly");
-
   const [payLoading, setPayLoading] = useState(false);
   const [payMsg, setPayMsg] = useState<string | null>(null);
 
@@ -336,12 +334,8 @@ export default function Page() {
     const identityEmail = pickFirstNonEmpty(identityData?.email, identityData?.preferred_username) as string | null;
 
     const identityName =
-      pickFirstNonEmpty(
-        identityData?.name,
-        identityData?.full_name,
-        identityData?.displayName,
-        buildNameFromParts(identityData?.given_name, identityData?.family_name)
-      ) ?? null;
+      pickFirstNonEmpty(identityData?.name, identityData?.full_name, identityData?.displayName, buildNameFromParts(identityData?.given_name, identityData?.family_name)) ??
+      null;
 
     const email = (u?.email ?? metaEmail ?? identityEmail ?? null) as string | null;
     const id = (u?.id ?? null) as string | null;
@@ -591,6 +585,7 @@ export default function Page() {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVis);
     };
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -694,6 +689,7 @@ export default function Page() {
 
       const raw = await res.text().catch(() => "");
       let json: any = null;
+
       try {
         json = raw ? JSON.parse(raw) : null;
       } catch {
@@ -811,6 +807,7 @@ export default function Page() {
         setLoginMsg(error.message);
         return;
       }
+
       setLoginOpen(false);
       setLoginPassword("");
       setLoginMsg(null);
@@ -1584,10 +1581,7 @@ export default function Page() {
       }
 
       const data = await res.json();
-      const fullText =
-        typeof data?.text === "string" && data.text.trim()
-          ? data.text
-          : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
+      const fullText = typeof data?.text === "string" && data.text.trim() ? data.text : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
 
       await sleep(90);
 
@@ -1664,6 +1658,7 @@ export default function Page() {
 
   const planLabel = !isLoggedIn ? "Sin sesión" : isPro ? PLUS_NODE : "Gratis";
   const planLabelText = !isLoggedIn ? "Sin sesión" : isPro ? PLUS_TEXT : "Gratis";
+
   const payTitleNode = (
     <span className="inline-flex items-center gap-1">
       Vonu {PLUS_NODE}
@@ -1705,18 +1700,13 @@ export default function Page() {
       {/* TOAST */}
       {toastMsg && (
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[90] px-3">
-          <div className="rounded-full border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-sm px-4 py-2 text-xs text-zinc-800">
-            {toastMsg}
-          </div>
+          <div className="rounded-full border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-sm px-4 py-2 text-xs text-zinc-800">{toastMsg}</div>
         </div>
       )}
 
       {/* ===== RENAME MODAL (FIX: ahora sí funciona) ===== */}
       {renameOpen && (
-        <div
-          className="fixed inset-0 z-[85] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6"
-          onClick={() => setRenameOpen(false)}
-        >
+        <div className="fixed inset-0 z-[85] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6" onClick={() => setRenameOpen(false)}>
           <div
             className="w-full max-w-[420px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-5"
             onClick={(e) => e.stopPropagation()}
@@ -1758,10 +1748,7 @@ export default function Page() {
               >
                 Cancelar
               </button>
-              <button
-                onClick={confirmRename}
-                className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors cursor-pointer"
-              >
+              <button onClick={confirmRename} className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors cursor-pointer">
                 Guardar
               </button>
             </div>
@@ -1804,10 +1791,7 @@ export default function Page() {
                 </button>
               </div>
 
-              <div
-                className="mt-4 rounded-[28px] border border-zinc-200 bg-white/90 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden"
-                style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}
-              >
+              <div className="mt-4 rounded-[28px] border border-zinc-200 bg-white/90 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}>
                 <div className="h-full flex flex-col p-3 md:p-4">
                   {/* Toolbar */}
                   <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
@@ -1869,7 +1853,7 @@ export default function Page() {
                         </div>
 
                         {/* Grosor */}
-                        <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 h-10">
+                        <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-2 sm:px-3 h-10">
                           <div className="text-[11px] text-zinc-600">Grosor</div>
                           <input
                             type="range"
@@ -1877,11 +1861,15 @@ export default function Page() {
                             max={18}
                             value={boardSize}
                             onChange={(e) => setBoardSize(parseInt(e.target.value || "6", 10))}
-                            className="w-[120px]"
+                            className="w-[92px] sm:w-[120px]"
                           />
                         </div>
 
-                        <button onClick={exportBoardToChat} className="h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors">
+                        {/* Desktop: Enviar al chat aquí */}
+                        <button
+                          onClick={exportBoardToChat}
+                          className="hidden md:inline-flex h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                        >
                           Enviar al chat
                         </button>
                       </div>
@@ -1889,7 +1877,7 @@ export default function Page() {
                   </div>
 
                   {/* Status */}
-                  <div className="mt-3 min-h-[28px]">
+                  <div className="mt-3 min-h-0 md:min-h-[28px]">
                     {boardMsg ? (
                       <div className="rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-[12px] text-zinc-700">{boardMsg}</div>
                     ) : (
@@ -1913,10 +1901,15 @@ export default function Page() {
                     </div>
                   </div>
 
-                  <div className="pt-3 pb-[calc(env(safe-area-inset-bottom)+6px)] flex items-center justify-between">
+                  <div className="pt-2 pb-[calc(env(safe-area-inset-bottom)+6px)] flex items-center justify-between gap-3">
                     <div className="text-[11px] text-zinc-500">Tip: escribe grande en tablet (dedo o lápiz). Puedes enviar varias pizarras seguidas.</div>
-                    <button onClick={closeBoard} className="h-10 px-5 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-[12px] font-semibold transition-colors">
-                      Cerrar
+
+                    {/* Mobile: Enviar al chat abajo (y quitamos “Cerrar”) */}
+                    <button
+                      onClick={exportBoardToChat}
+                      className="md:hidden h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors shrink-0"
+                    >
+                      Enviar al chat
                     </button>
                   </div>
                 </div>
@@ -1991,12 +1984,7 @@ export default function Page() {
                       >
                         {/* radio */}
                         <div className="pt-[2px]">
-                          <div
-                            className={[
-                              "h-5 w-5 rounded-full border grid place-items-center",
-                              plan === "yearly" ? "border-blue-600" : "border-zinc-300",
-                            ].join(" ")}
-                          >
+                          <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "yearly" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
                             {plan === "yearly" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
                           </div>
                         </div>
@@ -2005,9 +1993,7 @@ export default function Page() {
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2 min-w-0">
                               <div className="text-[12.5px] font-semibold text-zinc-900">Anual</div>
-                              <span className="text-[10px] px-2 py-[2px] rounded-full bg-blue-600 text-white font-semibold">
-                                {BEST_VALUE_BADGE}
-                              </span>
+                              <span className="text-[10px] px-2 py-[2px] rounded-full bg-blue-600 text-white font-semibold">{BEST_VALUE_BADGE}</span>
                             </div>
                             <div className="text-[11px] text-zinc-500">{YEAR_SAVE_BADGE}</div>
                           </div>
@@ -2031,12 +2017,7 @@ export default function Page() {
                       >
                         {/* radio */}
                         <div className="pt-[2px]">
-                          <div
-                            className={[
-                              "h-5 w-5 rounded-full border grid place-items-center",
-                              plan === "monthly" ? "border-blue-600" : "border-zinc-300",
-                            ].join(" ")}
-                          >
+                          <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "monthly" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
                             {plan === "monthly" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
                           </div>
                         </div>
@@ -2066,12 +2047,7 @@ export default function Page() {
                       >
                         {/* radio */}
                         <div className="pt-[2px]">
-                          <div
-                            className={[
-                              "h-5 w-5 rounded-full border grid place-items-center",
-                              plan === "free" ? "border-blue-600" : "border-zinc-300",
-                            ].join(" ")}
-                          >
+                          <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "free" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
                             {plan === "free" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
                           </div>
                         </div>
@@ -2376,12 +2352,7 @@ export default function Page() {
               aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
               title={menuOpen ? "Cerrar menú" : "Menú"}
             >
-              <img
-                src={"/vonu-icon.png?v=2"}
-                alt="Menú"
-                className={`h-6 w-6 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`}
-                draggable={false}
-              />
+              <img src={"/vonu-icon.png?v=2"} alt="Menú" className={`h-6 w-6 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`} draggable={false} />
             </button>
 
             <a
@@ -2558,7 +2529,7 @@ export default function Page() {
             <div className="flex flex-col gap-4 py-8 md:pt-6">
               {messages.map((m) => {
                 const isUser = m.role === "user";
-                const rawText = isUser ? (m.text ?? "") : (m.text || "");
+                const rawText = isUser ? (m.text ?? "") : m.text || "";
 
                 const mdText = isUser ? rawText : normalizeAssistantText(rawText);
 
@@ -2570,9 +2541,7 @@ export default function Page() {
                     <div
                       className={[
                         "relative max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed break-words",
-                        isUser
-                          ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none mr-2"
-                          : "bg-[#e8f0fe] text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none ml-2",
+                        isUser ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none mr-2" : "bg-[#e8f0fe] text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none ml-2",
                         "after:content-[''] after:absolute after:w-3 after:h-3 after:rotate-45 after:top-[3px]",
                         isUser ? "after:right-[-6px] after:bg-[#dcf8c6]" : "after:left-[-6px] after:bg-[#e8f0fe]",
                       ].join(" ")}
@@ -2627,9 +2596,10 @@ export default function Page() {
 
             {micMsg && <div className="mb-2 text-[12px] text-zinc-600 bg-white border border-zinc-200 rounded-2xl px-3 py-2">{micMsg}</div>}
 
-            <div className={["w-full", "rounded-[26px] border border-zinc-200 bg-white shadow-sm", "px-2.5 py-2", "flex items-end gap-2"].join(" ")}>
-              {/* LEFT ICONS (dentro) */}
-              <div className="flex items-center gap-1 pb-0.5">
+            {/* ✅ INPUT: sin sombra, y textarea rellena laterales al crecer (estilo Gemini) */}
+            <div className={["w-full", "relative rounded-[26px] border border-zinc-200 bg-white", "px-2.5 py-2"].join(" ")}>
+              {/* LEFT ICONS (overlay) */}
+              <div className="absolute left-2.5 bottom-2 flex items-center gap-1">
                 <button
                   onClick={openBoard}
                   className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
@@ -2653,32 +2623,8 @@ export default function Page() {
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
               </div>
 
-              {/* TEXTAREA */}
-              <div className="flex-1 min-w-0 px-1">
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      sendMessage();
-                    }
-                  }}
-                  disabled={!!isTyping}
-                  placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
-                  className={[
-                    "w-full resize-none bg-transparent outline-none",
-                    "text-[15px] leading-5",
-                    "overflow-hidden",
-                    inputExpanded ? "py-2" : "py-2",
-                  ].join(" ")}
-                  rows={1}
-                />
-              </div>
-
-              {/* RIGHT ICONS (micro + enviar) */}
-              <div className="flex items-center gap-2 pb-0.5">
+              {/* RIGHT ICONS (overlay) */}
+              <div className="absolute right-2.5 bottom-2 flex items-center gap-2">
                 <button
                   onClick={toggleMic}
                   disabled={!!isTyping || !speechSupported}
@@ -2704,7 +2650,7 @@ export default function Page() {
                   disabled={!canSend}
                   className={[
                     "h-10 w-10 rounded-full flex items-center justify-center shrink-0 transition-colors cursor-pointer",
-                    !canSend ? "bg-zinc-200 text-zinc-500 cursor-not-allowed" : "bg-black text-white hover:bg-zinc-900",
+                    !canSend ? "bg-zinc-200 text-zinc-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700",
                   ].join(" ")}
                   aria-label="Enviar"
                   title="Enviar"
@@ -2712,6 +2658,29 @@ export default function Page() {
                   <ArrowUpIcon className="h-5 w-5" />
                 </button>
               </div>
+
+              {/* TEXTAREA (full width; con padding para “rodear” los iconos) */}
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
+                disabled={!!isTyping}
+                placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
+                className={[
+                  "w-full resize-none bg-transparent outline-none",
+                  "text-[15px] leading-5",
+                  "overflow-hidden",
+                  "pl-[92px] pr-[108px]",
+                  inputExpanded ? "py-2" : "py-2",
+                ].join(" ")}
+                rows={1}
+              />
             </div>
           </div>
 
