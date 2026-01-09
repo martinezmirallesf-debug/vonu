@@ -276,8 +276,8 @@ export default function Page() {
   const [isPro, setIsPro] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
 
-  // ✅ COMPACT: quitamos opción "free" dentro del paywall (para evitar scroll)
-  const [plan, setPlan] = useState<"monthly" | "yearly">("yearly");
+  // ✅ Paywall como en la foto: anual / mensual / seguir gratis
+  const [plan, setPlan] = useState<"monthly" | "yearly" | "free">("yearly");
 
   const [payLoading, setPayLoading] = useState(false);
   const [payMsg, setPayMsg] = useState<string | null>(null);
@@ -661,7 +661,8 @@ export default function Page() {
 
   function openPlansModal() {
     setPayMsg(null);
-    setPlan("yearly");
+    // si ya es Pro, por defecto marcamos "Seguir gratis" (como en la captura: plan actual arriba, pero selección en gratis)
+    setPlan(isPro ? "free" : "yearly");
     setPaywallOpen(true);
   }
 
@@ -1674,6 +1675,7 @@ export default function Page() {
   const PRICE_YEAR = "39,99€";
   const PRICE_YEAR_PER_MONTH = "3,33€";
   const YEAR_SAVE_BADGE = "Ahorra 33%";
+  const BEST_VALUE_BADGE = "Mejor valor";
 
   function closePaywall() {
     if (payLoading) return;
@@ -1936,9 +1938,9 @@ export default function Page() {
           <div className="absolute top-[48%] -right-24 h-[280px] w-[280px] rounded-full bg-zinc-900/5 blur-3xl pointer-events-none" />
 
           <div className="relative h-full w-full" onClick={(e) => e.stopPropagation()}>
-            {/* ✅ COMPACT: sin scroll, todo cabe en pantalla */}
+            {/* ✅ SIN SCROLL: todo cabe */}
             <div className="mx-auto h-full w-full max-w-md px-3 pb-[env(safe-area-inset-bottom)] flex flex-col min-h-0">
-              <div className="pt-3 flex items-center justify-between">
+              <div className="pt-2 flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="h-10 w-10 rounded-full bg-white/90 backdrop-blur-xl border border-zinc-200 grid place-items-center shadow-sm">
                     <img src={"/vonu-icon.png?v=2"} alt="Vonu" className="h-6 w-6" draggable={false} />
@@ -1970,58 +1972,128 @@ export default function Page() {
                 </button>
               </div>
 
-              <div className="mt-3 flex-1 min-h-0 rounded-[26px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden">
+              <div className="mt-2 flex-1 min-h-0 rounded-[26px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden">
                 <div className="h-full flex flex-col p-3">
+                  {/* ===== como la foto: Elige tu plan + 3 opciones ===== */}
                   <div className="rounded-[20px] border border-zinc-200 bg-white p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-[13px] font-semibold text-zinc-900">Desbloquea {PLUS_NODE}</div>
-                        <div className="mt-0.5 text-[12px] text-zinc-600 leading-4">Análisis ilimitados y más contexto para decidir con calma.</div>
-                      </div>
-                      <span className="shrink-0 text-[10px] px-2 py-1 rounded-full bg-blue-600 text-white font-semibold">Pago seguro</span>
-                    </div>
+                    <div className="text-[12.5px] font-semibold text-zinc-900">Elige tu plan</div>
 
-                    {/* Selector compacto */}
-                    <div className="mt-3 grid grid-cols-2 gap-2">
+                    <div className="mt-2 grid gap-2">
+                      {/* ANUAL */}
                       <button
                         onClick={() => setPlan("yearly")}
                         disabled={!!payLoading}
                         className={[
-                          "rounded-[16px] border px-3 py-2 text-left transition-colors cursor-pointer",
-                          plan === "yearly" ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50",
+                          "w-full rounded-[18px] border transition-colors text-left",
+                          "px-3 py-2.5 flex items-start gap-3",
+                          plan === "yearly" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
                         ].join(" ")}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="text-[12px] font-semibold text-zinc-900">Anual</div>
-                          <div className="text-[10px] text-blue-700 font-semibold">{YEAR_SAVE_BADGE}</div>
+                        {/* radio */}
+                        <div className="pt-[2px]">
+                          <div
+                            className={[
+                              "h-5 w-5 rounded-full border grid place-items-center",
+                              plan === "yearly" ? "border-blue-600" : "border-zinc-300",
+                            ].join(" ")}
+                          >
+                            {plan === "yearly" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
+                          </div>
                         </div>
-                        <div className="mt-1 text-[11px] text-zinc-600">≈ {PRICE_YEAR_PER_MONTH}/mes</div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="text-[12.5px] font-semibold text-zinc-900">Anual</div>
+                              <span className="text-[10px] px-2 py-[2px] rounded-full bg-blue-600 text-white font-semibold">
+                                {BEST_VALUE_BADGE}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-zinc-500">{YEAR_SAVE_BADGE}</div>
+                          </div>
+
+                          <div className="mt-1 flex items-baseline gap-2">
+                            <div className="text-[20px] font-semibold text-zinc-900 leading-6">{PRICE_YEAR}</div>
+                            <div className="text-[11px] text-zinc-600">≈ {PRICE_YEAR_PER_MONTH}/mes</div>
+                          </div>
+                        </div>
                       </button>
 
+                      {/* MENSUAL */}
                       <button
                         onClick={() => setPlan("monthly")}
                         disabled={!!payLoading}
                         className={[
-                          "rounded-[16px] border px-3 py-2 text-left transition-colors cursor-pointer",
-                          plan === "monthly" ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50",
+                          "w-full rounded-[18px] border transition-colors text-left",
+                          "px-3 py-2.5 flex items-start gap-3",
+                          plan === "monthly" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
                         ].join(" ")}
                       >
-                        <div className="text-[12px] font-semibold text-zinc-900">Mensual</div>
-                        <div className="mt-1 text-[11px] text-zinc-600">Cancela cuando quieras</div>
+                        {/* radio */}
+                        <div className="pt-[2px]">
+                          <div
+                            className={[
+                              "h-5 w-5 rounded-full border grid place-items-center",
+                              plan === "monthly" ? "border-blue-600" : "border-zinc-300",
+                            ].join(" ")}
+                          >
+                            {plan === "monthly" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
+                          </div>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-[12.5px] font-semibold text-zinc-900">Mensual</div>
+                            <div className="text-[11px] text-zinc-500">Flexible</div>
+                          </div>
+
+                          <div className="mt-1 flex items-baseline gap-2">
+                            <div className="text-[20px] font-semibold text-zinc-900 leading-6">{PRICE_MONTH}</div>
+                            <div className="text-[11px] text-zinc-600">cancela cuando quieras</div>
+                          </div>
+                        </div>
+                      </button>
+
+                      {/* SEGUIR GRATIS */}
+                      <button
+                        onClick={() => setPlan("free")}
+                        disabled={!!payLoading}
+                        className={[
+                          "w-full rounded-[18px] border transition-colors text-left",
+                          "px-3 py-2.5 flex items-start gap-3",
+                          plan === "free" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
+                        ].join(" ")}
+                      >
+                        {/* radio */}
+                        <div className="pt-[2px]">
+                          <div
+                            className={[
+                              "h-5 w-5 rounded-full border grid place-items-center",
+                              plan === "free" ? "border-blue-600" : "border-zinc-300",
+                            ].join(" ")}
+                          >
+                            {plan === "free" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
+                          </div>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-[12.5px] font-semibold text-zinc-900">Seguir gratis</div>
+                            <div className="text-[12px] font-semibold text-zinc-900">0€</div>
+                          </div>
+                          <div className="mt-1 text-[11px] text-zinc-600">Análisis limitados.</div>
+                        </div>
                       </button>
                     </div>
+                  </div>
 
-                    {/* Precio compacto */}
-                    <div className="mt-3 flex items-baseline justify-between">
-                      <div className="text-[22px] font-semibold text-zinc-900 leading-6">{plan === "yearly" ? PRICE_YEAR : PRICE_MONTH}</div>
-                      <div className="text-[11px] text-zinc-500">{plan === "yearly" ? "cobro anual" : "cobro mensual"}</div>
-                    </div>
-
-                    {/* Beneficios compactos */}
-                    <div className="mt-3 grid gap-1">
-                      {["Análisis ilimitados", "Más consejos y contexto"].map((x) => (
+                  {/* ===== Bloque GRATIS como la foto ===== */}
+                  <div className="mt-2 rounded-[20px] border border-zinc-200 bg-white p-3">
+                    <div className="text-[12.5px] font-semibold text-zinc-900">Gratis</div>
+                    <div className="mt-2 grid gap-1.5">
+                      {["Análisis limitados", "Decidir con calma"].map((x) => (
                         <div key={x} className="flex items-start gap-2">
-                          <span className="mt-[2px] text-blue-700">
+                          <span className="mt-[1px] text-blue-700">
                             <CheckIcon className="h-4 w-4" />
                           </span>
                           <div className="text-[12px] text-zinc-700 leading-5">{x}</div>
@@ -2030,20 +2102,32 @@ export default function Page() {
                     </div>
                   </div>
 
+                  {/* Mensaje error/pago (compacto) */}
                   {payMsg ? (
-                    <div className="mt-2 rounded-[18px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">{payMsg}</div>
+                    <div className="mt-2 rounded-[16px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">{payMsg}</div>
                   ) : (
                     <div className="mt-2 opacity-0 select-none text-[12px] px-3 py-2">placeholder</div>
                   )}
 
-                  {/* Footer compacto fijo (sin scroll) */}
-                  <div className="mt-auto pt-2 pb-[calc(env(safe-area-inset-bottom)+8px)]">
+                  {/* Footer fijo, sin scroll */}
+                  <div className="mt-auto pt-1 pb-[calc(env(safe-area-inset-bottom)+8px)]">
                     <button
-                      onClick={() => startCheckout(plan)}
-                      className="w-full h-11 rounded-full text-[14px] font-semibold transition-colors cursor-pointer disabled:opacity-50 bg-blue-600 text-white hover:bg-blue-700"
+                      onClick={() => {
+                        if (payLoading) return;
+                        if (plan === "free") {
+                          closePaywall();
+                          return;
+                        }
+                        // anual: yearly / mensual: monthly
+                        startCheckout(plan);
+                      }}
+                      className={[
+                        "w-full h-11 rounded-full text-[14px] font-semibold transition-colors cursor-pointer disabled:opacity-50",
+                        "bg-black text-white hover:bg-zinc-900",
+                      ].join(" ")}
                       disabled={!!payLoading}
                     >
-                      {payLoading ? "Procesando…" : "Continuar con el pago"}
+                      {payLoading ? "Procesando…" : plan === "free" ? "Volver al chat" : "Continuar con el pago"}
                     </button>
 
                     <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
@@ -2052,14 +2136,6 @@ export default function Page() {
                       </span>
                       <span>Pago seguro con Stripe.</span>
                     </div>
-
-                    <button
-                      onClick={closePaywall}
-                      className="mt-2 w-full h-10 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-[12px] font-semibold text-zinc-800 cursor-pointer disabled:opacity-50"
-                      disabled={!!payLoading}
-                    >
-                      Volver al chat
-                    </button>
 
                     {isPro ? (
                       <button
@@ -2073,6 +2149,8 @@ export default function Page() {
                   </div>
                 </div>
               </div>
+
+              <div className="h-2" />
             </div>
           </div>
         </div>
