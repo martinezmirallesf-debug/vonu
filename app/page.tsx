@@ -334,8 +334,12 @@ export default function Page() {
     const identityEmail = pickFirstNonEmpty(identityData?.email, identityData?.preferred_username) as string | null;
 
     const identityName =
-      pickFirstNonEmpty(identityData?.name, identityData?.full_name, identityData?.displayName, buildNameFromParts(identityData?.given_name, identityData?.family_name)) ??
-      null;
+      pickFirstNonEmpty(
+        identityData?.name,
+        identityData?.full_name,
+        identityData?.displayName,
+        buildNameFromParts(identityData?.given_name, identityData?.family_name)
+      ) ?? null;
 
     const email = (u?.email ?? metaEmail ?? identityEmail ?? null) as string | null;
     const id = (u?.id ?? null) as string | null;
@@ -1581,7 +1585,10 @@ export default function Page() {
       }
 
       const data = await res.json();
-      const fullText = typeof data?.text === "string" && data.text.trim() ? data.text : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
+      const fullText =
+        typeof data?.text === "string" && data.text.trim()
+          ? data.text
+          : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
 
       await sleep(90);
 
@@ -1695,6 +1702,9 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paywallOpen, payLoading, boardOpen, renameOpen, renameValue, activeThreadId]);
 
+  // ✅ Gemini-like en móvil: cuando es multiline, el contenedor se “pega” más a los laterales
+  const mobileEdgePad = inputExpanded ? "px-0" : "px-2";
+
   return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
       {/* TOAST */}
@@ -1791,16 +1801,20 @@ export default function Page() {
                 </button>
               </div>
 
-              <div className="mt-4 rounded-[28px] border border-zinc-200 bg-white/90 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}>
+              <div
+                className="mt-4 rounded-[28px] border border-zinc-200 bg-white/90 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden"
+                style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}
+              >
                 <div className="h-full flex flex-col p-3 md:p-4">
                   {/* Toolbar */}
                   <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
                     <div className="flex flex-wrap items-center gap-2 justify-between">
                       <div className="flex items-center gap-2">
+                        {/* ✅ Selección: rectangular con esquinas redondeadas (no “pill”) */}
                         <button
                           onClick={() => setBoardTool("pen")}
                           className={[
-                            "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors",
+                            "h-10 px-4 rounded-2xl text-[12px] font-semibold border transition-colors",
                             boardTool === "pen" ? "bg-blue-600 text-white border-blue-700/10" : "bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50",
                           ].join(" ")}
                         >
@@ -1810,7 +1824,7 @@ export default function Page() {
                         <button
                           onClick={() => setBoardTool("eraser")}
                           className={[
-                            "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors",
+                            "h-10 px-4 rounded-2xl text-[12px] font-semibold border transition-colors",
                             boardTool === "eraser" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50",
                           ].join(" ")}
                         >
@@ -2348,7 +2362,7 @@ export default function Page() {
           <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center gap-0 overflow-hidden px-1">
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              className="h-11 w-11 flex items-center justify-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
+              className="h-11 w-11 grid place-items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
               aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
               title={menuOpen ? "Cerrar menú" : "Menú"}
             >
@@ -2386,18 +2400,12 @@ export default function Page() {
             className={[
               "relative h-11 w-11",
               "bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm",
-              "flex items-center justify-center text-zinc-900 hover:bg-white transition-colors cursor-pointer",
+              "grid place-items-center text-zinc-900 hover:bg-white transition-colors cursor-pointer",
               "rounded-full",
               authLoading ? "opacity-60 cursor-not-allowed" : "",
             ].join(" ")}
             aria-label={isLoggedIn ? "Ver cuenta" : "Iniciar sesión"}
-            title={
-              authLoading
-                ? "Cargando…"
-                : isLoggedIn
-                ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : planLabelText}`
-                : "Iniciar sesión"
-            }
+            title={authLoading ? "Cargando…" : isLoggedIn ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : planLabelText}` : "Iniciar sesión"}
           >
             <span
               className={[
@@ -2580,13 +2588,14 @@ export default function Page() {
 
         {/* ===== INPUT BAR (nuevo estilo como tu captura) ===== */}
         <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl">
-          <div className="mx-auto max-w-3xl px-2 md:px-6 pt-3 pb-2">
+          {/* ✅ en móvil: cuando multiline, menos padding lateral (tipo Gemini) */}
+          <div className={`mx-auto max-w-3xl ${mobileEdgePad} md:px-6 pt-3 pb-2`}>
             {imagePreview && (
               <div className="mb-2 relative w-fit">
                 <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
                 <button
                   onClick={() => setImagePreview(null)}
-                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer"
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer grid place-items-center"
                   aria-label="Quitar imagen"
                 >
                   ×
@@ -2596,13 +2605,20 @@ export default function Page() {
 
             {micMsg && <div className="mb-2 text-[12px] text-zinc-600 bg-white border border-zinc-200 rounded-2xl px-3 py-2">{micMsg}</div>}
 
-            {/* ✅ INPUT: sin sombra, y textarea rellena laterales al crecer (estilo Gemini) */}
-            <div className={["w-full", "relative rounded-[26px] border border-zinc-200 bg-white", "px-2.5 py-2"].join(" ")}>
+            {/* ✅ INPUT: textarea rellena laterales al crecer (estilo Gemini) */}
+            <div
+              className={[
+                "w-full relative border border-zinc-200 bg-white",
+                inputExpanded ? "rounded-[22px]" : "rounded-[26px]",
+                // en multiline quitamos padding lateral interno para que “se pegue” más a los bordes
+                inputExpanded ? "px-1.5 py-2" : "px-2.5 py-2",
+              ].join(" ")}
+            >
               {/* LEFT ICONS (overlay) */}
               <div className="absolute left-2.5 bottom-2 flex items-center gap-1">
                 <button
                   onClick={openBoard}
-                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
+                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
                   aria-label="Pizarra"
                   title="Pizarra"
                   disabled={!!isTyping}
@@ -2612,7 +2628,7 @@ export default function Page() {
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
+                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
                   aria-label="Adjuntar"
                   title="Adjuntar imagen"
                   disabled={!!isTyping}
@@ -2625,16 +2641,13 @@ export default function Page() {
 
               {/* RIGHT ICONS (overlay) */}
               <div className="absolute right-2.5 bottom-2 flex items-center gap-2">
+                {/* ✅ Mic: igual que + / pizarra (sin círculo/borde extra) */}
                 <button
                   onClick={toggleMic}
                   disabled={!!isTyping || !speechSupported}
                   className={[
-                    "h-10 w-10 rounded-full border transition-colors shrink-0 flex items-center justify-center",
-                    !speechSupported
-                      ? "border-zinc-200 text-zinc-400 bg-white/60 cursor-not-allowed"
-                      : isListening
-                      ? "border-red-200 bg-red-50 text-red-700"
-                      : "border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-900",
+                    "h-10 w-10 rounded-full transition-colors shrink-0 grid place-items-center p-0",
+                    !speechSupported ? "text-zinc-300 cursor-not-allowed" : isListening ? "bg-red-50 text-red-700" : "hover:bg-zinc-50 text-zinc-900",
                   ].join(" ")}
                   aria-label={isListening ? "Parar micrófono" : "Hablar"}
                   title={!speechSupported ? "Dictado no soportado en este navegador" : isListening ? "Parar" : "Dictar por voz"}
@@ -2649,7 +2662,7 @@ export default function Page() {
                   onClick={sendMessage}
                   disabled={!canSend}
                   className={[
-                    "h-10 w-10 rounded-full flex items-center justify-center shrink-0 transition-colors cursor-pointer",
+                    "h-10 w-10 rounded-full shrink-0 transition-colors cursor-pointer grid place-items-center p-0",
                     !canSend ? "bg-zinc-200 text-zinc-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700",
                   ].join(" ")}
                   aria-label="Enviar"
@@ -2675,16 +2688,17 @@ export default function Page() {
                 className={[
                   "w-full resize-none bg-transparent outline-none",
                   "text-[15px] leading-5",
-                  "overflow-hidden",
+                  // ✅ en multiline permitimos que el contenido crezca (sin cortar)
+                  "overflow-y-auto",
                   "pl-[92px] pr-[108px]",
-                  inputExpanded ? "py-2" : "py-2",
+                  "py-2",
                 ].join(" ")}
                 rows={1}
               />
             </div>
           </div>
 
-          <div className="mx-auto max-w-3xl px-2 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
+          <div className={`mx-auto max-w-3xl ${mobileEdgePad} md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]`}>
             <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">Orientación preventiva · No sustituye profesionales.</p>
             {!hasUserMessage && <div className="h-1" />}
           </div>
