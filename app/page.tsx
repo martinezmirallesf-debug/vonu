@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import ReactMarkdown from "react-markdown";
 
@@ -334,12 +334,8 @@ export default function Page() {
     const identityEmail = pickFirstNonEmpty(identityData?.email, identityData?.preferred_username) as string | null;
 
     const identityName =
-      pickFirstNonEmpty(
-        identityData?.name,
-        identityData?.full_name,
-        identityData?.displayName,
-        buildNameFromParts(identityData?.given_name, identityData?.family_name)
-      ) ?? null;
+      pickFirstNonEmpty(identityData?.name, identityData?.full_name, identityData?.displayName, buildNameFromParts(identityData?.given_name, identityData?.family_name)) ??
+      null;
 
     const email = (u?.email ?? metaEmail ?? identityEmail ?? null) as string | null;
     const id = (u?.id ?? null) as string | null;
@@ -1296,18 +1292,6 @@ export default function Page() {
     return () => ro.disconnect();
   }, []);
 
-  // ✅ FIX: cuando el input crece (multilínea), mantener el chat “anclado” abajo sin mover pantalla
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    if (!shouldStickToBottomRef.current) return;
-
-    el.scrollTo({
-      top: el.scrollHeight,
-      behavior: "auto",
-    });
-  }, [inputBarH]);
-
   // asegurar thread activo
   useEffect(() => {
     if (!activeThreadId && threads[0]?.id) setActiveThreadId(threads[0].id);
@@ -1334,24 +1318,15 @@ export default function Page() {
 
   const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
 
-  // ✅ textarea autoresize (SUAVE + sin desmontar/remontar el textarea)
-  const TEXTAREA_MAX_H = 140;
-  const TEXTAREA_EXPAND_THRESHOLD = 52;
-
-  useLayoutEffect(() => {
+  // textarea autoresize
+  useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
 
-    // Important: en móvil, poner "auto" evita saltos y bugs de foco al crecer
-    el.style.height = "auto";
-
-    const scrollH = el.scrollHeight || 0;
-    const next = Math.min(scrollH, TEXTAREA_MAX_H);
-
-    el.style.height = `${Math.max(40, next)}px`;
-    el.style.overflowY = scrollH > TEXTAREA_MAX_H ? "auto" : "hidden";
-
-    setInputExpanded(next > TEXTAREA_EXPAND_THRESHOLD);
+    el.style.height = "0px";
+    const next = Math.min(el.scrollHeight, 140);
+    el.style.height = next + "px";
+    setInputExpanded(next > 52);
   }, [input]);
 
   function handleChatScroll() {
@@ -1606,10 +1581,7 @@ export default function Page() {
       }
 
       const data = await res.json();
-      const fullText =
-        typeof data?.text === "string" && data.text.trim()
-          ? data.text
-          : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
+      const fullText = typeof data?.text === "string" && data.text.trim() ? data.text : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
 
       await sleep(90);
 
@@ -1723,74 +1695,6 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paywallOpen, payLoading, boardOpen, renameOpen, renameValue, activeThreadId]);
 
-  // ✅ móvil: padding lateral mínimo (input casi a ancho completo)
-  const mobileEdgePad = "px-1";
-
-  // ✅ Botones (redonditos) reutilizables para input
-  const InputLeftButtons = (
-    <>
-      <button
-        type="button"
-        onClick={openBoard}
-        className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
-        aria-label="Pizarra"
-        title="Pizarra"
-        disabled={!!isTyping}
-      >
-        <PencilIcon className="h-5 w-5 text-zinc-800" />
-      </button>
-
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
-        aria-label="Adjuntar"
-        title="Adjuntar imagen"
-        disabled={!!isTyping}
-      >
-        <PlusIcon className="h-5 w-5 text-zinc-800" />
-      </button>
-
-      <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
-    </>
-  );
-
-  const InputRightButtons = (
-    <>
-      <button
-        type="button"
-        onClick={toggleMic}
-        disabled={!!isTyping || !speechSupported}
-        className={[
-          "h-10 w-10 rounded-full transition-colors shrink-0 grid place-items-center p-0",
-          !speechSupported ? "text-zinc-300 cursor-not-allowed" : isListening ? "bg-red-50 text-red-700" : "hover:bg-zinc-50 text-zinc-900",
-        ].join(" ")}
-        aria-label={isListening ? "Parar micrófono" : "Hablar"}
-        title={!speechSupported ? "Dictado no soportado en este navegador" : isListening ? "Parar" : "Dictar por voz"}
-      >
-        <div className="relative">
-          <MicIcon className="h-5 w-5" />
-          {isListening && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />}
-        </div>
-      </button>
-
-      {/* ✅ Botón enviar estilo ChatGPT: redondo negro + flecha blanca */}
-      <button
-        type="button"
-        onClick={sendMessage}
-        disabled={!canSend}
-        className={[
-          "h-10 w-10 rounded-full shrink-0 transition-colors cursor-pointer grid place-items-center p-0",
-          !canSend ? "bg-zinc-200 text-zinc-500 cursor-not-allowed" : "bg-zinc-900 text-white hover:bg-zinc-800",
-        ].join(" ")}
-        aria-label="Enviar"
-        title="Enviar"
-      >
-        <ArrowUpIcon className="h-5 w-5" />
-      </button>
-    </>
-  );
-
   return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
       {/* TOAST */}
@@ -1799,25 +1703,6 @@ export default function Page() {
           <div className="rounded-full border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-sm px-4 py-2 text-xs text-zinc-800">{toastMsg}</div>
         </div>
       )}
-
-      {/* ✅ HEADER FIJO EN MÓVIL (evita que el chat pase por debajo del logo) */}
-      <div className="fixed top-0 left-0 right-0 z-50 md:hidden bg-white/85 backdrop-blur-xl border-b border-zinc-100">
-        <div className="h-[56px] px-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="h-9 w-9 rounded-full bg-white border border-zinc-200 grid place-items-center shadow-sm">
-              <img src={"/vonu-icon.png?v=2"} alt="Vonu" className="h-5 w-5" draggable={false} />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[13px] font-semibold text-zinc-900 leading-5">Vonu</div>
-              <div className="text-[11px] text-zinc-500 leading-4 truncate">Decisiones seguras</div>
-            </div>
-          </div>
-
-          <div className="text-[11px] text-zinc-600 shrink-0">
-            {planLabelText}
-          </div>
-        </div>
-      </div>
 
       {/* ===== RENAME MODAL (FIX: ahora sí funciona) ===== */}
       {renameOpen && (
@@ -1833,7 +1718,6 @@ export default function Page() {
               </div>
 
               <button
-                type="button"
                 onClick={() => setRenameOpen(false)}
                 className="h-9 w-9 aspect-square rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer p-0"
                 aria-label="Cerrar"
@@ -1859,17 +1743,12 @@ export default function Page() {
 
             <div className="mt-4 flex gap-2">
               <button
-                type="button"
                 onClick={() => setRenameOpen(false)}
                 className="flex-1 h-11 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm font-semibold transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
-              <button
-                type="button"
-                onClick={confirmRename}
-                className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors cursor-pointer"
-              >
+              <button onClick={confirmRename} className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors cursor-pointer">
                 Guardar
               </button>
             </div>
@@ -1896,7 +1775,6 @@ export default function Page() {
                 </div>
 
                 <button
-                  type="button"
                   onClick={closeBoard}
                   className={[
                     "h-11 w-11 aspect-square rounded-full",
@@ -1913,21 +1791,16 @@ export default function Page() {
                 </button>
               </div>
 
-              <div
-                className="mt-4 rounded-[28px] border border-zinc-200 bg-white/90 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden"
-                style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}
-              >
+              <div className="mt-4 rounded-[28px] border border-zinc-200 bg-white/90 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}>
                 <div className="h-full flex flex-col p-3 md:p-4">
                   {/* Toolbar */}
                   <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
                     <div className="flex flex-wrap items-center gap-2 justify-between">
                       <div className="flex items-center gap-2">
-                        {/* ✅ Selección: rectangular con esquinas redondeadas (no “pill”) */}
                         <button
-                          type="button"
                           onClick={() => setBoardTool("pen")}
                           className={[
-                            "h-10 px-4 rounded-2xl text-[12px] font-semibold border transition-colors",
+                            "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors",
                             boardTool === "pen" ? "bg-blue-600 text-white border-blue-700/10" : "bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50",
                           ].join(" ")}
                         >
@@ -1935,10 +1808,9 @@ export default function Page() {
                         </button>
 
                         <button
-                          type="button"
                           onClick={() => setBoardTool("eraser")}
                           className={[
-                            "h-10 px-4 rounded-2xl text-[12px] font-semibold border transition-colors",
+                            "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors",
                             boardTool === "eraser" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50",
                           ].join(" ")}
                         >
@@ -1946,7 +1818,6 @@ export default function Page() {
                         </button>
 
                         <button
-                          type="button"
                           onClick={undoBoard}
                           className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors"
                           title="Deshacer"
@@ -1955,7 +1826,6 @@ export default function Page() {
                         </button>
 
                         <button
-                          type="button"
                           onClick={clearBoard}
                           className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors"
                           title="Borrar todo"
@@ -1969,13 +1839,12 @@ export default function Page() {
                         <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 h-10">
                           {["#111827", "#2563EB", "#DC2626", "#16A34A"].map((c) => (
                             <button
-                              type="button"
                               key={c}
                               onClick={() => {
                                 setBoardTool("pen");
                                 setBoardColor(c);
                               }}
-                              className={["h-7 w-7 rounded-full border grid place-items-center", boardColor === c && boardTool === "pen" ? "border-zinc-900" : "border-zinc-200"].join(" ")}
+                              className={["h-7 w-7 rounded-full border", boardColor === c && boardTool === "pen" ? "border-zinc-900" : "border-zinc-200"].join(" ")}
                               style={{ backgroundColor: c }}
                               aria-label={`Color ${c}`}
                               title="Color"
@@ -1996,11 +1865,10 @@ export default function Page() {
                           />
                         </div>
 
-                        {/* Desktop: Enviar al chat aquí (✅ centrado perfecto) */}
+                        {/* Desktop: Enviar al chat aquí */}
                         <button
-                          type="button"
                           onClick={exportBoardToChat}
-                          className="hidden md:inline-flex h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors items-center justify-center leading-none"
+                          className="hidden md:inline-flex h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors"
                         >
                           Enviar al chat
                         </button>
@@ -2036,11 +1904,10 @@ export default function Page() {
                   <div className="pt-2 pb-[calc(env(safe-area-inset-bottom)+6px)] flex items-center justify-between gap-3">
                     <div className="text-[11px] text-zinc-500">Tip: escribe grande en tablet (dedo o lápiz). Puedes enviar varias pizarras seguidas.</div>
 
-                    {/* Mobile: Enviar al chat abajo (✅ centrado perfecto) */}
+                    {/* Mobile: Enviar al chat abajo (y quitamos “Cerrar”) */}
                     <button
-                      type="button"
                       onClick={exportBoardToChat}
-                      className="md:hidden inline-flex h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors shrink-0 items-center justify-center leading-none"
+                      className="md:hidden h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors shrink-0"
                     >
                       Enviar al chat
                     </button>
@@ -2081,7 +1948,6 @@ export default function Page() {
                 </div>
 
                 <button
-                  type="button"
                   onClick={closePaywall}
                   className={[
                     "h-10 w-10 aspect-square rounded-full",
@@ -2100,13 +1966,164 @@ export default function Page() {
               </div>
 
               <div className="mt-2 flex-1 min-h-0 rounded-[26px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden">
-                {/* ... (paywall unchanged) ... */}
-                {/* (Para no tocar lo que ya iba bien, se queda igual que tu versión. El bloque completo sigue igual.) */}
+                <div className="h-full flex flex-col p-3">
+                  {/* ===== como la foto: Elige tu plan + 3 opciones ===== */}
+                  <div className="rounded-[20px] border border-zinc-200 bg-white p-3">
+                    <div className="text-[12.5px] font-semibold text-zinc-900">Elige tu plan</div>
 
-                {/* === PAYWALL CONTENT (sin cambios) === */}
-                {/* 🔻 */}
-                {/* (Por límite de espacio visual en el chat, no repito aquí el paywall: en tu archivo permanece tal cual.) */}
-                {/* 🔺 */}
+                    <div className="mt-2 grid gap-2">
+                      {/* ANUAL */}
+                      <button
+                        onClick={() => setPlan("yearly")}
+                        disabled={!!payLoading}
+                        className={[
+                          "w-full rounded-[18px] border transition-colors text-left",
+                          "px-3 py-2.5 flex items-start gap-3",
+                          plan === "yearly" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
+                        ].join(" ")}
+                      >
+                        {/* radio */}
+                        <div className="pt-[2px]">
+                          <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "yearly" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
+                            {plan === "yearly" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
+                          </div>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="text-[12.5px] font-semibold text-zinc-900">Anual</div>
+                              <span className="text-[10px] px-2 py-[2px] rounded-full bg-blue-600 text-white font-semibold">{BEST_VALUE_BADGE}</span>
+                            </div>
+                            <div className="text-[11px] text-zinc-500">{YEAR_SAVE_BADGE}</div>
+                          </div>
+
+                          <div className="mt-1 flex items-baseline gap-2">
+                            <div className="text-[20px] font-semibold text-zinc-900 leading-6">{PRICE_YEAR}</div>
+                            <div className="text-[11px] text-zinc-600">≈ {PRICE_YEAR_PER_MONTH}/mes</div>
+                          </div>
+                        </div>
+                      </button>
+
+                      {/* MENSUAL */}
+                      <button
+                        onClick={() => setPlan("monthly")}
+                        disabled={!!payLoading}
+                        className={[
+                          "w-full rounded-[18px] border transition-colors text-left",
+                          "px-3 py-2.5 flex items-start gap-3",
+                          plan === "monthly" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
+                        ].join(" ")}
+                      >
+                        {/* radio */}
+                        <div className="pt-[2px]">
+                          <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "monthly" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
+                            {plan === "monthly" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
+                          </div>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-[12.5px] font-semibold text-zinc-900">Mensual</div>
+                            <div className="text-[11px] text-zinc-500">Flexible</div>
+                          </div>
+
+                          <div className="mt-1 flex items-baseline gap-2">
+                            <div className="text-[20px] font-semibold text-zinc-900 leading-6">{PRICE_MONTH}</div>
+                            <div className="text-[11px] text-zinc-600">cancela cuando quieras</div>
+                          </div>
+                        </div>
+                      </button>
+
+                      {/* SEGUIR GRATIS */}
+                      <button
+                        onClick={() => setPlan("free")}
+                        disabled={!!payLoading}
+                        className={[
+                          "w-full rounded-[18px] border transition-colors text-left",
+                          "px-3 py-2.5 flex items-start gap-3",
+                          plan === "free" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
+                        ].join(" ")}
+                      >
+                        {/* radio */}
+                        <div className="pt-[2px]">
+                          <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "free" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
+                            {plan === "free" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
+                          </div>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-[12.5px] font-semibold text-zinc-900">Seguir gratis</div>
+                            <div className="text-[12px] font-semibold text-zinc-900">0€</div>
+                          </div>
+                          <div className="mt-1 text-[11px] text-zinc-600">Análisis limitados.</div>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ===== Bloque GRATIS como la foto ===== */}
+                  <div className="mt-2 rounded-[20px] border border-zinc-200 bg-white p-3">
+                    <div className="text-[12.5px] font-semibold text-zinc-900">Gratis</div>
+                    <div className="mt-2 grid gap-1.5">
+                      {["Análisis limitados", "Decidir con calma"].map((x) => (
+                        <div key={x} className="flex items-start gap-2">
+                          <span className="mt-[1px] text-blue-700">
+                            <CheckIcon className="h-4 w-4" />
+                          </span>
+                          <div className="text-[12px] text-zinc-700 leading-5">{x}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Mensaje error/pago (compacto) */}
+                  {payMsg ? (
+                    <div className="mt-2 rounded-[16px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">{payMsg}</div>
+                  ) : (
+                    <div className="mt-2 opacity-0 select-none text-[12px] px-3 py-2">placeholder</div>
+                  )}
+
+                  {/* Footer fijo, sin scroll */}
+                  <div className="mt-auto pt-1 pb-[calc(env(safe-area-inset-bottom)+8px)]">
+                    <button
+                      onClick={() => {
+                        if (payLoading) return;
+                        if (plan === "free") {
+                          closePaywall();
+                          return;
+                        }
+                        // anual: yearly / mensual: monthly
+                        startCheckout(plan);
+                      }}
+                      className={[
+                        "w-full h-11 rounded-full text-[14px] font-semibold transition-colors cursor-pointer disabled:opacity-50",
+                        "bg-black text-white hover:bg-zinc-900",
+                      ].join(" ")}
+                      disabled={!!payLoading}
+                    >
+                      {payLoading ? "Procesando…" : plan === "free" ? "Volver al chat" : "Continuar con el pago"}
+                    </button>
+
+                    <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
+                      <span className="text-blue-700">
+                        <ShieldIcon className="h-4 w-4" />
+                      </span>
+                      <span>Pago seguro con Stripe.</span>
+                    </div>
+
+                    {isPro ? (
+                      <button
+                        onClick={cancelSubscriptionFromHere}
+                        className="mt-2 w-full h-10 rounded-full border border-red-200 hover:bg-red-50 text-[12px] text-red-700 cursor-pointer disabled:opacity-50"
+                        disabled={!!payLoading}
+                      >
+                        Cancelar suscripción
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
               </div>
 
               <div className="h-2" />
@@ -2116,8 +2133,209 @@ export default function Page() {
       )}
 
       {/* ===== LOGIN MODAL ===== */}
-      {/* (sin cambios: se mantiene tal cual) */}
-      {/* ... */}
+      {loginOpen && (
+        <div className="fixed inset-0 z-[80] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6" onClick={() => (!loginSending ? setLoginOpen(false) : null)}>
+          <div className="w-full max-w-[380px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-6" onClick={(e) => e.stopPropagation()}>
+            {isLoggedIn ? (
+              <>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[18px] font-semibold text-zinc-900">Sesión iniciada</div>
+                    <div className="text-[12.5px] text-zinc-500 mt-1">Estás dentro. Aquí tienes tu estado.</div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setLoginOpen(false);
+                      setLoginMsg(null);
+                    }}
+                    className="h-9 w-9 aspect-square rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer p-0"
+                    aria-label="Cerrar"
+                  >
+                    <span className="text-[18px] leading-none relative top-[-0.5px]">×</span>
+                  </button>
+                </div>
+
+                <div className="mt-5 rounded-[16px] border border-zinc-200 bg-zinc-50 px-4 py-3">
+                  <div className="text-[12px] text-zinc-500">Cuenta</div>
+                  <div className="mt-1 text-[14px] font-semibold text-zinc-900 truncate">{authUserName ?? "Usuario"}</div>
+                  <div className="text-[12px] text-zinc-600 truncate">{authUserEmail ?? "Email no disponible"}</div>
+                  <div className="mt-2 text-[12px] text-zinc-600">
+                    Plan: <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? PLUS_NODE : "Gratis"}</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={async () => {
+                      await logout();
+                      setLoginMsg(null);
+                      setLoginOpen(false);
+                    }}
+                    className="flex-1 h-11 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm font-semibold transition-colors cursor-pointer"
+                  >
+                    Cerrar sesión
+                  </button>
+                  <button
+                    onClick={() => {
+                      setLoginOpen(false);
+                      setLoginMsg(null);
+                    }}
+                    className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors cursor-pointer"
+                  >
+                    Volver
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[18px] font-semibold text-zinc-900">{authMode === "signin" ? "Iniciar sesión" : "Crear cuenta"}</div>
+                    <div className="text-[12.5px] text-zinc-500 mt-1">{authMode === "signin" ? "para continuar" : "crea tu cuenta para continuar"}</div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setLoginOpen(false);
+                      setLoginMsg(null);
+                    }}
+                    className="h-9 w-9 aspect-square rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer p-0"
+                    aria-label="Cerrar"
+                    disabled={!!loginSending}
+                  >
+                    <span className="text-[18px] leading-none relative top-[-0.5px]">×</span>
+                  </button>
+                </div>
+
+                <div className="mt-5 space-y-3">
+                  <div>
+                    <div className="text-[12px] text-zinc-600 mb-1">Email</div>
+                    <input
+                      ref={loginEmailRef}
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      className="w-full h-11 rounded-[14px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
+                      placeholder="tuemail@ejemplo.com"
+                      autoFocus={false}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setLoginOpen(false);
+                          setLoginMsg(null);
+                        }
+                        if (e.key === "Enter") {
+                          authMode === "signin" ? signInWithPassword() : signUpWithPassword();
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <div className="text-[12px] text-zinc-600 mb-1">Contraseña</div>
+                    <input
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      type="password"
+                      className="w-full h-11 rounded-[14px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
+                      placeholder="••••••••"
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setLoginOpen(false);
+                          setLoginMsg(null);
+                        }
+                        if (e.key === "Enter") {
+                          authMode === "signin" ? signInWithPassword() : signUpWithPassword();
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 text-[12px] text-zinc-600 cursor-pointer select-none">
+                      <input type="checkbox" checked={keepSignedIn} onChange={(e) => setKeepSignedIn(e.target.checked)} className="h-4 w-4" />
+                      Mantener sesión
+                    </label>
+
+                    <button
+                      className="text-[12px] text-blue-700 hover:text-blue-800 cursor-pointer"
+                      onClick={() => setLoginMsg("Si has olvidado tu contraseña, por ahora crea una cuenta nueva con otro email (lo mejoraremos).")}
+                      disabled={!!loginSending}
+                    >
+                      ¿OLVIDASTE LA CONTRASEÑA?
+                    </button>
+                  </div>
+
+                  {loginMsg && <div className="whitespace-pre-wrap text-[12px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-[14px] px-3 py-2">{loginMsg}</div>}
+
+                  <button
+                    onClick={authMode === "signin" ? signInWithPassword : signUpWithPassword}
+                    className="w-full h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                    disabled={!!loginSending}
+                  >
+                    {loginSending ? "Procesando…" : authMode === "signin" ? "INICIAR SESIÓN" : "CREAR CUENTA"}
+                  </button>
+
+                  <div className="flex items-center gap-3 py-1">
+                    <div className="h-px flex-1 bg-zinc-200" />
+                    <div className="text-[12px] text-zinc-500">o</div>
+                    <div className="h-px flex-1 bg-zinc-200" />
+                  </div>
+
+                  <button
+                    onClick={() => signInWithOAuth("google")}
+                    className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                    disabled={!!loginSending}
+                  >
+                    <OAuthLogo src="/auth/Google.png" alt="Google" />
+                    Continuar con Google
+                  </button>
+
+                  <button
+                    onClick={() => signInWithOAuth("azure")}
+                    className="w-full h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                    disabled={!!loginSending}
+                  >
+                    <OAuthLogo src="/auth/Microsoft.png" alt="Microsoft" />
+                    Continuar con Microsoft
+                  </button>
+
+                  <div className="text-[12px] text-zinc-600 text-center pt-1">
+                    {authMode === "signin" ? (
+                      <>
+                        ¿No tienes cuenta?{" "}
+                        <button
+                          className="text-blue-700 hover:text-blue-800 cursor-pointer"
+                          onClick={() => {
+                            setAuthMode("signup");
+                            setLoginMsg(null);
+                          }}
+                          disabled={!!loginSending}
+                        >
+                          Crear cuenta
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        ¿Ya tienes cuenta?{" "}
+                        <button
+                          className="text-blue-700 hover:text-blue-800 cursor-pointer"
+                          onClick={() => {
+                            setAuthMode("signin");
+                            setLoginMsg(null);
+                          }}
+                          disabled={!!loginSending}
+                        >
+                          Iniciar sesión
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ===== TOP FADE ===== */}
       <div className="fixed top-0 left-0 right-0 z-40 pointer-events-none">
@@ -2125,12 +2343,178 @@ export default function Page() {
       </div>
 
       {/* ===== TOP BUBBLES ===== */}
-      {/* (sin cambios) */}
-      {/* ... */}
+      <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
+        <div className="pointer-events-auto">
+          <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center gap-0 overflow-hidden px-1">
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="h-11 w-11 flex items-center justify-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
+              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+              title={menuOpen ? "Cerrar menú" : "Menú"}
+            >
+              <img src={"/vonu-icon.png?v=2"} alt="Menú" className={`h-6 w-6 transition-transform duration-300 ease-out ${menuOpen ? "rotate-90" : "rotate-0"}`} draggable={false} />
+            </button>
+
+            <a
+              href={HOME_URL}
+              className="h-11 -ml-0.5 pr-2 flex items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
+              aria-label="Ir a la home"
+              title="Ir a la home"
+            >
+              <img src={"/vonu-wordmark.png?v=2"} alt="Vonu" className="h-4 w-auto" draggable={false} />
+            </a>
+          </div>
+        </div>
+
+        {/* ✅ CAMBIO: renderizar SIEMPRE (si authLoading, quedan deshabilitados) */}
+        <div className="pointer-events-auto flex items-center gap-2">
+          <button
+            onClick={handleOpenPlansCTA}
+            disabled={authLoading}
+            className={[
+              "h-11 px-4 rounded-full transition-colors cursor-pointer shadow-sm border",
+              authLoading ? "bg-zinc-200 text-zinc-500 border-zinc-200 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 border-blue-700/10",
+            ].join(" ")}
+            title={authLoading ? "Cargando…" : "Ver planes"}
+          >
+            {authLoading ? "…" : isPro ? "Tu plan" : PLUS_NODE}
+          </button>
+
+          <button
+            onClick={() => openLoginModal("signin")}
+            disabled={authLoading}
+            className={[
+              "relative h-11 w-11",
+              "bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm",
+              "flex items-center justify-center text-zinc-900 hover:bg-white transition-colors cursor-pointer",
+              "rounded-full",
+              authLoading ? "opacity-60 cursor-not-allowed" : "",
+            ].join(" ")}
+            aria-label={isLoggedIn ? "Ver cuenta" : "Iniciar sesión"}
+            title={
+              authLoading
+                ? "Cargando…"
+                : isLoggedIn
+                ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : planLabelText}`
+                : "Iniciar sesión"
+            }
+          >
+            <span
+              className={[
+                "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white",
+                authLoading ? "bg-zinc-300" : isLoggedIn ? "bg-emerald-500" : "bg-zinc-300",
+              ].join(" ")}
+              aria-hidden="true"
+            />
+            <UserIcon className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
 
       {/* ===== OVERLAY + SIDEBAR ===== */}
-      {/* (sin cambios) */}
-      {/* ... */}
+      <div
+        className={`fixed inset-0 z-40 transition-all duration-300 ${menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent"}`}
+        onClick={() => setMenuOpen(false)}
+      >
+        <aside
+          className={[
+            "absolute left-3 right-3 md:right-auto",
+            "bg-white/92 backdrop-blur-xl",
+            "rounded-[28px] shadow-[0_18px_60px_rgba(0,0,0,0.18)] border border-zinc-200/80",
+            "p-4",
+            "transform transition-all duration-300 ease-out",
+            menuOpen ? "translate-x-0 opacity-100" : "-translate-x-[110%] opacity-0",
+          ].join(" ")}
+          style={{
+            top: SIDEBAR_TOP,
+            bottom: 12,
+            width: isDesktopPointer() ? 360 : undefined,
+            maxWidth: "calc(100vw - 24px)",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="h-full flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="text-sm font-semibold text-zinc-800">Historial</div>
+                <div className="text-xs text-zinc-500">Tus consultas recientes</div>
+              </div>
+
+              <button onClick={createThreadAndActivate} className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
+                Nueva
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <button onClick={openRename} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer">
+                Renombrar
+              </button>
+              <button onClick={deleteActiveThread} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer">
+                Borrar
+              </button>
+            </div>
+
+            {!authLoading && (
+              <div className="mb-3 rounded-3xl border border-zinc-200 bg-white px-3 py-3">
+                <div className="text-xs text-zinc-500 mb-2">Cuenta</div>
+
+                {isLoggedIn ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-zinc-900 truncate">{authUserName ?? "Usuario"}</div>
+                        <div className="text-[11px] text-zinc-500 truncate">{authUserEmail ?? "Email no disponible"}</div>
+                      </div>
+
+                      <button onClick={logout} className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer shrink-0">
+                        Salir
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-[11px] text-zinc-500">
+                        Plan: <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? PLUS_NODE : "Gratis"}</span>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          handleOpenPlansCTA();
+                          setMenuOpen(false);
+                        }}
+                        className={["text-xs px-3 py-2 rounded-full transition-colors cursor-pointer", isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700"].join(" ")}
+                      >
+                        {isPro ? "Ver" : "Mejorar"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => openLoginModal("signin")} className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
+                    Iniciar sesión
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-2 overflow-y-auto pr-1 flex-1">
+              {sortedThreads.map((t) => {
+                const active = t.id === activeThreadId;
+                const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
+
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => activateThread(t.id)}
+                    className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"}`}
+                  >
+                    <div className="text-sm font-medium text-zinc-900">{t.title}</div>
+                    <div className="text-xs text-zinc-500 mt-1">{when}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </aside>
+      </div>
 
       {/* MAIN */}
       <div className="flex-1 flex flex-col min-h-0">
@@ -2141,8 +2525,7 @@ export default function Page() {
         )}
 
         <div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0">
-          {/* ✅ padding top responsive: móvil deja espacio al header fijo */}
-          <div className="mx-auto max-w-3xl px-3 md:px-6 pt-[76px] md:pt-[92px]" style={{ paddingBottom: chatBottomPad }}>
+          <div className="mx-auto max-w-3xl px-3 md:px-6" style={{ paddingTop: 92, paddingBottom: chatBottomPad }}>
             <div className="flex flex-col gap-4 py-8 md:pt-6">
               {messages.map((m) => {
                 const isUser = m.role === "user";
@@ -2195,16 +2578,15 @@ export default function Page() {
           </div>
         </div>
 
-        {/* ===== INPUT BAR (FIXED: sin desmontar textarea + sin líneas internas + sin clipping) ===== */}
+        {/* ===== INPUT BAR (nuevo estilo como tu captura) ===== */}
         <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl">
-          <div className={`mx-auto max-w-3xl ${mobileEdgePad} md:px-6 pt-3 pb-2`}>
+          <div className="mx-auto max-w-3xl px-2 md:px-6 pt-3 pb-2">
             {imagePreview && (
               <div className="mb-2 relative w-fit">
                 <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
                 <button
-                  type="button"
                   onClick={() => setImagePreview(null)}
-                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer grid place-items-center"
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer"
                   aria-label="Quitar imagen"
                 >
                   ×
@@ -2214,57 +2596,96 @@ export default function Page() {
 
             {micMsg && <div className="mb-2 text-[12px] text-zinc-600 bg-white border border-zinc-200 rounded-2xl px-3 py-2">{micMsg}</div>}
 
-            <div
-              className={[
-                "w-full border border-zinc-200 bg-white",
-                "rounded-[26px]",
-                "overflow-hidden",
-                "transition-[border-radius] duration-200 ease-out",
-                inputExpanded ? "rounded-[22px]" : "rounded-[26px]",
-              ].join(" ")}
-            >
-              {/* ✅ menos margen interno en móvil, más “a ancho completo” */}
-              <div className="flex items-end gap-2 px-2 py-2">
-                <div className="flex items-end gap-1 shrink-0">{InputLeftButtons}</div>
-
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      sendMessage();
-                    }
-                  }}
+            {/* ✅ INPUT: sin sombra, y textarea rellena laterales al crecer (estilo Gemini) */}
+            <div className={["w-full", "relative rounded-[26px] border border-zinc-200 bg-white", "px-2.5 py-2"].join(" ")}>
+              {/* LEFT ICONS (overlay) */}
+              <div className="absolute left-2.5 bottom-2 flex items-center gap-1">
+                <button
+                  onClick={openBoard}
+                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
+                  aria-label="Pizarra"
+                  title="Pizarra"
                   disabled={!!isTyping}
-                  placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
-                  className={[
-                    "flex-1 resize-none bg-transparent outline-none",
-                    "text-[15px] leading-5",
-                    "px-2 py-2",
-                    "min-h-[40px]",
-                    "transition-[height] duration-200 ease-out",
-                  ].join(" ")}
-                  rows={1}
-                />
+                >
+                  <PencilIcon className="h-5 w-5 text-zinc-800" />
+                </button>
 
-                <div className="flex items-end gap-2 shrink-0">{InputRightButtons}</div>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
+                  aria-label="Adjuntar"
+                  title="Adjuntar imagen"
+                  disabled={!!isTyping}
+                >
+                  <PlusIcon className="h-5 w-5 text-zinc-800" />
+                </button>
+
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
               </div>
+
+              {/* RIGHT ICONS (overlay) */}
+              <div className="absolute right-2.5 bottom-2 flex items-center gap-2">
+                <button
+                  onClick={toggleMic}
+                  disabled={!!isTyping || !speechSupported}
+                  className={[
+                    "h-10 w-10 rounded-full border transition-colors shrink-0 flex items-center justify-center",
+                    !speechSupported
+                      ? "border-zinc-200 text-zinc-400 bg-white/60 cursor-not-allowed"
+                      : isListening
+                      ? "border-red-200 bg-red-50 text-red-700"
+                      : "border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-900",
+                  ].join(" ")}
+                  aria-label={isListening ? "Parar micrófono" : "Hablar"}
+                  title={!speechSupported ? "Dictado no soportado en este navegador" : isListening ? "Parar" : "Dictar por voz"}
+                >
+                  <div className="relative">
+                    <MicIcon className="h-5 w-5" />
+                    {isListening && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />}
+                  </div>
+                </button>
+
+                <button
+                  onClick={sendMessage}
+                  disabled={!canSend}
+                  className={[
+                    "h-10 w-10 rounded-full flex items-center justify-center shrink-0 transition-colors cursor-pointer",
+                    !canSend ? "bg-zinc-200 text-zinc-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700",
+                  ].join(" ")}
+                  aria-label="Enviar"
+                  title="Enviar"
+                >
+                  <ArrowUpIcon className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* TEXTAREA (full width; con padding para “rodear” los iconos) */}
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
+                disabled={!!isTyping}
+                placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
+                className={[
+                  "w-full resize-none bg-transparent outline-none",
+                  "text-[15px] leading-5",
+                  "overflow-hidden",
+                  "pl-[92px] pr-[108px]",
+                  inputExpanded ? "py-2" : "py-2",
+                ].join(" ")}
+                rows={1}
+              />
             </div>
           </div>
 
-          {/* ✅ Disclaimer más corto + más ancho + no rompe a 2 líneas */}
-          <div className={`mx-auto max-w-3xl ${mobileEdgePad} md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]`}>
-            <p
-              className={[
-                "text-center text-[11px] md:text-[12px] text-zinc-500 leading-4 md:leading-5",
-                "whitespace-nowrap overflow-hidden text-ellipsis",
-              ].join(" ")}
-              title="Orientación preventiva · No sustituye a profesionales."
-            >
-              Orientación preventiva · No sustituye a profesionales.
-            </p>
+          <div className="mx-auto max-w-3xl px-2 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
+            <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">Orientación preventiva · No sustituye profesionales.</p>
             {!hasUserMessage && <div className="h-1" />}
           </div>
         </div>
