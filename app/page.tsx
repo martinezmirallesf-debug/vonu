@@ -524,6 +524,9 @@ export default function Page() {
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
         const u = session?.user;
 
+        // ✅ FIX: aseguramos que authLoading se apaga también aquí (evita estados “colgados” tras OAuth)
+        setAuthLoading(false);
+
         if (!u) {
           setAuthUserEmail(null);
           setAuthUserId(null);
@@ -862,6 +865,7 @@ export default function Page() {
       setIsPro(false);
       setPaywallOpen(false);
       setPendingCheckoutPlan(null);
+      setAuthLoading(false);
     } catch {}
   }
 
@@ -1665,6 +1669,14 @@ export default function Page() {
     </span>
   );
 
+  // ✅ UI estado botones top-right (plan + cuenta)
+  const topPlanLabel = authLoading ? "…" : isPro ? PLUS_NODE : isLoggedIn ? "Gratis" : PLUS_NODE;
+  const userInitial = (() => {
+    const base = (authUserName ?? authUserEmail ?? "").trim();
+    if (!base) return "U";
+    return base.charAt(0).toUpperCase();
+  })();
+
   // === PRICING COPY ===
   const PRICE_MONTH = "4,99€";
   const PRICE_YEAR = "39,99€";
@@ -1770,7 +1782,8 @@ export default function Page() {
                   </div>
                   <div className="min-w-0">
                     <div className="text-[14px] font-semibold text-zinc-900 leading-5">Pizarra</div>
-                    <div className="text-[11px] text-zinc-500 leading-4">Dibuja con dedo o lápiz · luego “Enviar al chat”</div>
+                    {/* ✅ FIX: texto en negro (antes no se veía bien) */}
+                    <div className="text-[11px] text-zinc-900 leading-4">Dibuja con dedo o lápiz · luego “Enviar al chat”</div>
                   </div>
                 </div>
 
@@ -1791,7 +1804,10 @@ export default function Page() {
                 </button>
               </div>
 
-              <div className="mt-4 rounded-[28px] border border-zinc-200 bg-white/90 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}>
+              <div
+                className="mt-4 rounded-[28px] border border-zinc-200 bg-white/90 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden"
+                style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}
+              >
                 <div className="h-full flex flex-col p-3 md:p-4">
                   {/* Toolbar */}
                   <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
@@ -1902,7 +1918,8 @@ export default function Page() {
                   </div>
 
                   <div className="pt-2 pb-[calc(env(safe-area-inset-bottom)+6px)] flex items-center justify-between gap-3">
-                    <div className="text-[11px] text-zinc-500">Tip: escribe grande en tablet (dedo o lápiz). Puedes enviar varias pizarras seguidas.</div>
+                    {/* ✅ FIX: tip en negro */}
+                    <div className="text-[11px] text-zinc-900">Tip: escribe grande en tablet (dedo o lápiz). Puedes enviar varias pizarras seguidas.</div>
 
                     {/* Mobile: Enviar al chat abajo (y quitamos “Cerrar”) */}
                     <button
@@ -2375,9 +2392,9 @@ export default function Page() {
               "h-11 px-4 rounded-full transition-colors cursor-pointer shadow-sm border",
               authLoading ? "bg-zinc-200 text-zinc-500 border-zinc-200 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 border-blue-700/10",
             ].join(" ")}
-            title={authLoading ? "Cargando…" : "Ver planes"}
+            title={authLoading ? "Cargando…" : isPro ? "Tienes Plus+" : isLoggedIn ? "Plan Gratis" : "Ver planes"}
           >
-            {authLoading ? "…" : isPro ? "Tu plan" : PLUS_NODE}
+            {topPlanLabel}
           </button>
 
           <button
@@ -2391,9 +2408,7 @@ export default function Page() {
               authLoading ? "opacity-60 cursor-not-allowed" : "",
             ].join(" ")}
             aria-label={isLoggedIn ? "Ver cuenta" : "Iniciar sesión"}
-            title={
-              authLoading ? "Cargando…" : isLoggedIn ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : planLabelText}` : "Iniciar sesión"
-            }
+            title={authLoading ? "Cargando…" : isLoggedIn ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : planLabelText}` : "Iniciar sesión"}
           >
             <span
               className={[
@@ -2402,7 +2417,7 @@ export default function Page() {
               ].join(" ")}
               aria-hidden="true"
             />
-            <UserIcon className="h-5 w-5" />
+            {isLoggedIn ? <span className="text-[13px] font-semibold">{userInitial}</span> : <UserIcon className="h-5 w-5" />}
           </button>
         </div>
       </div>
@@ -2450,8 +2465,28 @@ export default function Page() {
               </button>
             </div>
 
+            {/* LISTA (scroll) */}
+            <div className="space-y-2 overflow-y-auto pr-1 flex-1">
+              {sortedThreads.map((t) => {
+                const active = t.id === activeThreadId;
+                const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
+
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => activateThread(t.id)}
+                    className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"}`}
+                  >
+                    <div className="text-sm font-medium text-zinc-900">{t.title}</div>
+                    <div className="text-xs text-zinc-500 mt-1">{when}</div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* ✅ Cuenta al FINAL (abajo) con plan */}
             {!authLoading && (
-              <div className="mb-3 rounded-3xl border border-zinc-200 bg-white px-3 py-3">
+              <div className="mt-3 rounded-3xl border border-zinc-200 bg-white px-3 py-3">
                 <div className="text-xs text-zinc-500 mb-2">Cuenta</div>
 
                 {isLoggedIn ? (
@@ -2490,24 +2525,6 @@ export default function Page() {
                 )}
               </div>
             )}
-
-            <div className="space-y-2 overflow-y-auto pr-1 flex-1">
-              {sortedThreads.map((t) => {
-                const active = t.id === activeThreadId;
-                const when = mounted ? new Date(t.updatedAt).toLocaleString() : "";
-
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => activateThread(t.id)}
-                    className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"}`}
-                  >
-                    <div className="text-sm font-medium text-zinc-900">{t.title}</div>
-                    <div className="text-xs text-zinc-500 mt-1">{when}</div>
-                  </button>
-                );
-              })}
-            </div>
           </div>
         </aside>
       </div>
