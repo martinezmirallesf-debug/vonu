@@ -118,7 +118,7 @@ function TypingDots() {
   );
 }
 
-// ✅ Indicador "escribiendo": cursor fijo (SIN parpadeo) para que no "titile"
+// ✅ Indicador "escribiendo": cursor fijo (SIN parpadeo) para que no “titile”
 function TypingCaret() {
   return (
     <span
@@ -201,13 +201,13 @@ function deriveName(email: string | null, metaName?: string | null, identityName
 }
 
 // ✅ IMPORTANT: normalizamos el texto del assistant SIEMPRE (streaming y final)
-// para que NO haya "salto raro" al terminar (mismo layout antes y después).
+// para que NO haya “salto raro” al terminar (mismo layout antes y después).
 function normalizeAssistantText(text: string) {
   const raw = text ?? "";
   return raw
     .replace(/\r\n/g, "\n")
     .replace(/\n{2,}/g, "\n") // evita salto de párrafo
-    .replace(/\n/g, " "); // mantiene una sola "línea" visual estable
+    .replace(/\n/g, " "); // mantiene una sola “línea” visual estable
 }
 
 function MicIcon({ className }: { className?: string }) {
@@ -1770,7 +1770,7 @@ export default function Page() {
                   </div>
                   <div className="min-w-0">
                     <div className="text-[14px] font-semibold text-zinc-900 leading-5">Pizarra</div>
-                    <div className="text-[11px] text-zinc-500 leading-4">Dibuja con dedo o lápiz · luego "Enviar al chat"</div>
+                    <div className="text-[11px] text-zinc-500 leading-4">Dibuja con dedo o lápiz · luego “Enviar al chat”</div>
                   </div>
                 </div>
 
@@ -1800,7 +1800,7 @@ export default function Page() {
                         <button
                           onClick={() => setBoardTool("pen")}
                           className={[
-                            "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors flex items-center justify-center",
+                            "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors",
                             boardTool === "pen" ? "bg-blue-600 text-white border-blue-700/10" : "bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50",
                           ].join(" ")}
                         >
@@ -1810,7 +1810,7 @@ export default function Page() {
                         <button
                           onClick={() => setBoardTool("eraser")}
                           className={[
-                            "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors flex items-center justify-center",
+                            "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors",
                             boardTool === "eraser" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50",
                           ].join(" ")}
                         >
@@ -1819,7 +1819,7 @@ export default function Page() {
 
                         <button
                           onClick={undoBoard}
-                          className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors flex items-center justify-center"
+                          className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors"
                           title="Deshacer"
                         >
                           Deshacer
@@ -1827,7 +1827,7 @@ export default function Page() {
 
                         <button
                           onClick={clearBoard}
-                          className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors flex items-center justify-center"
+                          className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors"
                           title="Borrar todo"
                         >
                           Borrar
@@ -1844,15 +1844,11 @@ export default function Page() {
                                 setBoardTool("pen");
                                 setBoardColor(c);
                               }}
-                              className={["h-7 w-7 rounded-full border grid place-items-center", boardColor === c && boardTool === "pen" ? "border-zinc-900" : "border-zinc-200"].join(" ")}
+                              className={["h-7 w-7 rounded-full border grid place-items-center p-0", boardColor === c && boardTool === "pen" ? "border-zinc-900" : "border-zinc-200"].join(" ")}
                               style={{ backgroundColor: c }}
                               aria-label={`Color ${c}`}
                               title="Color"
-                            >
-                              {boardColor === c && boardTool === "pen" && (
-                                <div className="h-2 w-2 rounded-full bg-white/90" />
-                              )}
-                            </button>
+                            />
                           ))}
                         </div>
 
@@ -1908,10 +1904,10 @@ export default function Page() {
                   <div className="pt-2 pb-[calc(env(safe-area-inset-bottom)+6px)] flex items-center justify-between gap-3">
                     <div className="text-[11px] text-zinc-500">Tip: escribe grande en tablet (dedo o lápiz). Puedes enviar varias pizarras seguidas.</div>
 
-                    {/* Mobile: Enviar al chat abajo (y quitamos "Cerrar") */}
+                    {/* Mobile: Enviar al chat abajo (y quitamos “Cerrar”) */}
                     <button
                       onClick={exportBoardToChat}
-                      className="md:hidden h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors shrink-0 flex items-center justify-center"
+                      className="md:hidden inline-flex h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors shrink-0 items-center justify-center"
                     >
                       Enviar al chat
                     </button>
@@ -1997,7 +1993,7 @@ export default function Page() {
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2 min-w-0">
                               <div className="text-[12.5px] font-semibold text-zinc-900">Anual</div>
-                              <span className="text-[10px] px-2 py-[2px] rounded-full bg-blue-600 text-white font-semibold flex items-center justify-center">{BEST_VALUE_BADGE}</span>
+                              <span className="text-[10px] px-2 py-[2px] rounded-full bg-blue-600 text-white font-semibold">{BEST_VALUE_BADGE}</span>
                             </div>
                             <div className="text-[11px] text-zinc-500">{YEAR_SAVE_BADGE}</div>
                           </div>
@@ -2073,7 +2069,7 @@ export default function Page() {
                     <div className="mt-2 grid gap-1.5">
                       {["Análisis limitados", "Decidir con calma"].map((x) => (
                         <div key={x} className="flex items-start gap-2">
-                          <span className="mt-[1px] text-blue-700 grid place-items-center">
+                          <span className="mt-[1px] text-blue-700">
                             <CheckIcon className="h-4 w-4" />
                           </span>
                           <div className="text-[12px] text-zinc-700 leading-5">{x}</div>
@@ -2103,7 +2099,7 @@ export default function Page() {
                       }}
                       className={[
                         "w-full h-11 rounded-full text-[14px] font-semibold transition-colors cursor-pointer disabled:opacity-50",
-                        "bg-black text-white hover:bg-zinc-900 flex items-center justify-center",
+                        "bg-black text-white hover:bg-zinc-900",
                       ].join(" ")}
                       disabled={!!payLoading}
                     >
@@ -2111,7 +2107,7 @@ export default function Page() {
                     </button>
 
                     <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
-                      <span className="text-blue-700 grid place-items-center">
+                      <span className="text-blue-700">
                         <ShieldIcon className="h-4 w-4" />
                       </span>
                       <span>Pago seguro con Stripe.</span>
@@ -2120,7 +2116,7 @@ export default function Page() {
                     {isPro ? (
                       <button
                         onClick={cancelSubscriptionFromHere}
-                        className="mt-2 w-full h-10 rounded-full border border-red-200 hover:bg-red-50 text-[12px] text-red-700 cursor-pointer disabled:opacity-50 flex items-center justify-center"
+                        className="mt-2 w-full h-10 rounded-full border border-red-200 hover:bg-red-50 text-[12px] text-red-700 cursor-pointer disabled:opacity-50"
                         disabled={!!payLoading}
                       >
                         Cancelar suscripción
@@ -2176,7 +2172,7 @@ export default function Page() {
                       setLoginMsg(null);
                       setLoginOpen(false);
                     }}
-                    className="flex-1 h-11 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center"
+                    className="flex-1 h-11 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm font-semibold transition-colors cursor-pointer"
                   >
                     Cerrar sesión
                   </button>
@@ -2185,7 +2181,7 @@ export default function Page() {
                       setLoginOpen(false);
                       setLoginMsg(null);
                     }}
-                    className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center"
+                    className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors cursor-pointer"
                   >
                     Volver
                   </button>
@@ -2273,7 +2269,7 @@ export default function Page() {
 
                   <button
                     onClick={authMode === "signin" ? signInWithPassword : signUpWithPassword}
-                    className="w-full h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center"
+                    className="w-full h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
                     disabled={!!loginSending}
                   >
                     {loginSending ? "Procesando…" : authMode === "signin" ? "INICIAR SESIÓN" : "CREAR CUENTA"}
@@ -2352,7 +2348,7 @@ export default function Page() {
           <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center gap-0 overflow-hidden px-1">
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              className="h-11 w-11 flex items-center justify-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
+              className="h-11 w-11 grid place-items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95 p-0"
               aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
               title={menuOpen ? "Cerrar menú" : "Menú"}
             >
@@ -2376,7 +2372,7 @@ export default function Page() {
             onClick={handleOpenPlansCTA}
             disabled={authLoading}
             className={[
-              "h-11 px-4 rounded-full transition-colors cursor-pointer shadow-sm border flex items-center justify-center",
+              "h-11 px-4 rounded-full transition-colors cursor-pointer shadow-sm border",
               authLoading ? "bg-zinc-200 text-zinc-500 border-zinc-200 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 border-blue-700/10",
             ].join(" ")}
             title={authLoading ? "Cargando…" : "Ver planes"}
@@ -2390,22 +2386,18 @@ export default function Page() {
             className={[
               "relative h-11 w-11",
               "bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm",
-              "flex items-center justify-center text-zinc-900 hover:bg-white transition-colors cursor-pointer",
-              "rounded-full",
+              "grid place-items-center text-zinc-900 hover:bg-white transition-colors cursor-pointer",
+              "rounded-full p-0",
               authLoading ? "opacity-60 cursor-not-allowed" : "",
             ].join(" ")}
             aria-label={isLoggedIn ? "Ver cuenta" : "Iniciar sesión"}
             title={
-              authLoading
-                ? "Cargando…"
-                : isLoggedIn
-                ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : planLabelText}`
-                : "Iniciar sesión"
+              authLoading ? "Cargando…" : isLoggedIn ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : planLabelText}` : "Iniciar sesión"
             }
           >
             <span
               className={[
-                "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white grid place-items-center",
+                "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white",
                 authLoading ? "bg-zinc-300" : isLoggedIn ? "bg-emerald-500" : "bg-zinc-300",
               ].join(" ")}
               aria-hidden="true"
@@ -2444,16 +2436,16 @@ export default function Page() {
                 <div className="text-xs text-zinc-500">Tus consultas recientes</div>
               </div>
 
-              <button onClick={createThreadAndActivate} className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer flex items-center justify-center">
+              <button onClick={createThreadAndActivate} className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
                 Nueva
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-2 mb-3">
-              <button onClick={openRename} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer flex items-center justify-center">
+              <button onClick={openRename} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer">
                 Renombrar
               </button>
-              <button onClick={deleteActiveThread} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer flex items-center justify-center">
+              <button onClick={deleteActiveThread} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer">
                 Borrar
               </button>
             </div>
@@ -2470,7 +2462,7 @@ export default function Page() {
                         <div className="text-[11px] text-zinc-500 truncate">{authUserEmail ?? "Email no disponible"}</div>
                       </div>
 
-                      <button onClick={logout} className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer shrink-0 flex items-center justify-center">
+                      <button onClick={logout} className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer shrink-0">
                         Salir
                       </button>
                     </div>
@@ -2485,14 +2477,14 @@ export default function Page() {
                           handleOpenPlansCTA();
                           setMenuOpen(false);
                         }}
-                        className={["text-xs px-3 py-2 rounded-full transition-colors cursor-pointer flex items-center justify-center", isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700"].join(" ")}
+                        className={["text-xs px-3 py-2 rounded-full transition-colors cursor-pointer", isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700"].join(" ")}
                       >
                         {isPro ? "Ver" : "Mejorar"}
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <button onClick={() => openLoginModal("signin")} className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer flex items-center justify-center">
+                  <button onClick={() => openLoginModal("signin")} className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
                     Iniciar sesión
                   </button>
                 )}
@@ -2584,13 +2576,13 @@ export default function Page() {
 
         {/* ===== INPUT BAR (nuevo estilo como tu captura) ===== */}
         <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl">
-          <div className="mx-auto max-w-3xl px-2 md:px-6 pt-3 pb-2">
+          <div className="mx-auto max-w-3xl px-3 md:px-6 pt-3 pb-2">
             {imagePreview && (
               <div className="mb-2 relative w-fit">
                 <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
                 <button
                   onClick={() => setImagePreview(null)}
-                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer grid place-items-center"
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer grid place-items-center p-0"
                   aria-label="Quitar imagen"
                 >
                   ×
@@ -2600,13 +2592,13 @@ export default function Page() {
 
             {micMsg && <div className="mb-2 text-[12px] text-zinc-600 bg-white border border-zinc-200 rounded-2xl px-3 py-2">{micMsg}</div>}
 
-            {/* ✅ FIX 1: Input que rellena laterales al crecer (tipo Gemini) */}
-            <div className={["w-full", "relative rounded-[26px] border border-zinc-200 bg-white", "pl-2.5 pr-2.5 py-2"].join(" ")}>
+            {/* ✅ INPUT: textarea “tipo Gemini”: el TEXTO ocupa laterales; iconos anclados abajo */}
+            <div className={["w-full", "relative rounded-[26px] border border-zinc-200 bg-white", "overflow-hidden"].join(" ")}>
               {/* LEFT ICONS (overlay) */}
               <div className="absolute left-2.5 bottom-2 flex items-center gap-1">
                 <button
                   onClick={openBoard}
-                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
+                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
                   aria-label="Pizarra"
                   title="Pizarra"
                   disabled={!!isTyping}
@@ -2616,7 +2608,7 @@ export default function Page() {
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
+                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
                   aria-label="Adjuntar"
                   title="Adjuntar imagen"
                   disabled={!!isTyping}
@@ -2633,7 +2625,7 @@ export default function Page() {
                   onClick={toggleMic}
                   disabled={!!isTyping || !speechSupported}
                   className={[
-                    "h-10 w-10 rounded-full border transition-colors shrink-0 flex items-center justify-center",
+                    "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
                     !speechSupported
                       ? "border-zinc-200 text-zinc-400 bg-white/60 cursor-not-allowed"
                       : isListening
@@ -2643,7 +2635,7 @@ export default function Page() {
                   aria-label={isListening ? "Parar micrófono" : "Hablar"}
                   title={!speechSupported ? "Dictado no soportado en este navegador" : isListening ? "Parar" : "Dictar por voz"}
                 >
-                  <div className="relative grid place-items-center">
+                  <div className="relative">
                     <MicIcon className="h-5 w-5" />
                     {isListening && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />}
                   </div>
@@ -2653,8 +2645,8 @@ export default function Page() {
                   onClick={sendMessage}
                   disabled={!canSend}
                   className={[
-                    "h-10 w-10 rounded-full flex items-center justify-center shrink-0 transition-colors cursor-pointer",
-                    !canSend ? "bg-zinc-200 text-zinc-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700",
+                    "h-10 w-10 rounded-full shrink-0 transition-colors grid place-items-center p-0",
+                    !canSend ? "bg-zinc-200 text-zinc-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer",
                   ].join(" ")}
                   aria-label="Enviar"
                   title="Enviar"
@@ -2663,7 +2655,7 @@ export default function Page() {
                 </button>
               </div>
 
-              {/* ✅ FIX 2: TEXTAREA que rellena laterales (sin padding centrado) */}
+              {/* TEXTAREA: full-width real (sin huecos laterales), con padding inferior para no pisar iconos */}
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -2677,18 +2669,19 @@ export default function Page() {
                 disabled={!!isTyping}
                 placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
                 className={[
-                  "w-full resize-none bg-transparent outline-none",
+                  "block w-full resize-none bg-transparent outline-none",
                   "text-[15px] leading-5",
+                  "px-4 pt-2",
+                  "pb-[56px]", // espacio para iconos inferiores
                   "overflow-hidden",
-                  "pl-[92px] pr-[108px]", // Padding para dejar espacio a los iconos
-                  inputExpanded ? "py-2" : "py-2",
+                  inputExpanded ? "min-h-[56px]" : "min-h-[44px]",
                 ].join(" ")}
                 rows={1}
               />
             </div>
           </div>
 
-          <div className="mx-auto max-w-3xl px-2 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
+          <div className="mx-auto max-w-3xl px-3 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
             <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">Orientación preventiva · No sustituye profesionales.</p>
             {!hasUserMessage && <div className="h-1" />}
           </div>
