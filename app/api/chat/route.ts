@@ -1,100 +1,101 @@
-// app/api/chat/route.ts - VERSIÓN QUE USA TUS NOMBRES EXACTOS
 import { NextResponse } from "next/server";
 
-export const runtime = "edge";
+export const runtime = "nodejs"; // necesario si luego quieres usar SDK/streams en Node
+export const dynamic = "force-dynamic";
+
+type IncomingMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+function stripDataUrlPrefix(dataUrl: string) {
+  // acepta: data:image/png;base64,xxxxx
+  const m = dataUrl.match(/^data:(.+);base64,(.*)$/);
+  if (!m) return { mime: null, base64: dataUrl };
+  return { mime: m[1] ?? null, base64: m[2] ?? "" };
+}
+
+function safeJsonParse<T>(txt: string): T | null {
+  try {
+    return JSON.parse(txt) as T;
+  } catch {
+    return null;
+  }
+}
+
+// ⚠️ Aquí puedes conectar tu IA real.
+// Ahora mismo, este handler devuelve una respuesta “placeholder” útil,
+// para que tu UI funcione sin romperse.
+async function runModel({
+  messages,
+  userText,
+  imageBase64,
+}: {
+  messages: IncomingMessage[];
+  userText: string;
+  imageBase64?: string | null;
+}): Promise<string> {
+  // Si todavía no tienes OpenAI/IA conectada, devolvemos un texto decente.
+  const hasImage = !!imageBase64;
+  const lastUser = userText?.trim() || (hasImage ? "He adjuntado una imagen." : "");
+  const ctx = messages
+    .slice(-8)
+    .map((m) => `${m.role === "user" ? "Usuario" : "Asistente"}: ${m.content}`)
+    .join(" · ");
+
+  return (
+    "✅ Recibido.\n\n" +
+    `**Tu mensaje:** ${lastUser || "(vacío)"}\n` +
+    (hasImage ? "\n**Imagen:** sí (adjunta)\n" : "\n**Imagen:** no\n") +
+    "\n" +
+    "Para dejar esto listo con IA real, conecta aquí tu proveedor (OpenAI / etc.) y devuelve `text`.\n\n" +
+    "_Contexto reciente (debug):_\n" +
+    "```\n" +
+    (ctx || "(sin contexto)") +
+    "\n```"
+  );
+}
 
 export async function POST(req: Request) {
   try {
-    // 1. OBTENER VARIABLES DE TU .env.local
-    const supabaseFunctionUrl = process.env.SUPABASE_EDGE_FUNCTION_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const openaiApiKey = process.env.OPENAI_API_KEY;
+    const raw = await req.text();
+    const body = safeJsonParse<{
+      messages?: IncomingMessage[];
+      userText?: string;
+      imageBase64?: string | null;
+    }>(raw);
 
-    console.log("DEBUG - Variables encontradas:");
-    console.log("- SUPABASE_EDGE_FUNCTION_URL:", supabaseFunctionUrl ? "✓" : "✗");
-    console.log("- NEXT_PUBLIC_SUPABASE_ANON_KEY:", supabaseAnonKey ? "✓" : "✗");
-    console.log("- OPENAI_API_KEY:", openaiApiKey ? "✓" : "✗");
-
-    // 2. VALIDAR
-    if (!supabaseFunctionUrl || !supabaseAnonKey) {
-      return NextResponse.json(
-        {
-          error: "Configuración incompleta",
-          message: `Faltan: ${!supabaseFunctionUrl ? 'SUPABASE_EDGE_FUNCTION_URL' : ''} ${!supabaseAnonKey ? 'NEXT_PUBLIC_SUPABASE_ANON_KEY' : ''}`,
-          hint: "Verifica tu .env.local"
-        },
-        { status: 500 }
-      );
+    if (!body) {
+      return NextResponse.json({ error: "Body inválido (no es JSON)." }, { status: 400 });
     }
 
-    // 3. PROCESAR REQUEST
-    const body = await req.json();
-    const { messages = [], userText = "", imageBase64 = null } = body;
+    const messages = Array.isArray(body.messages) ? body.messages : [];
+    const userText = typeof body.userText === "string" ? body.userText : "";
+    const imageBase64 = typeof body.imageBase64 === "string" ? body.imageBase64 : null;
 
-    // 4. LLAMAR A SUPABASE
-    const response = await fetch(supabaseFunctionUrl, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${supabaseAnonKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ messages, userText, imageBase64 }),
+    // Validación mínima
+    for (const m of messages) {
+      if (!m || (m.role !== "user" && m.role !== "assistant") || typeof m.content !== "string") {
+        return NextResponse.json({ error: "Formato de `messages` inválido." }, { status: 400 });
+      }
+    }
+
+    // Si viene imagen en dataURL, la dejamos limpia para cuando conectes el modelo
+    let cleanedImageBase64: string | null = null;
+    if (imageBase64) {
+      const { base64 } = stripDataUrlPrefix(imageBase64);
+      cleanedImageBase64 = base64?.trim() ? base64.trim() : null;
+    }
+
+    const text = await runModel({
+      messages,
+      userText,
+      imageBase64: cleanedImageBase64,
     });
 
-    if (response.ok) {
-      const data = await response.json();
-      return NextResponse.json(data);
-    }
-
-    // 5. FALLBACK A OPENAI
-    if (openaiApiKey) {
-      console.log("Usando fallback OpenAI...");
-      const chatMessages = [
-        {
-          role: "system",
-          content: "Eres Vonu. Español natural. Ayuda con decisiones."
-        },
-        ...messages.slice(-4),
-        { role: "user", content: userText || "Hola" }
-      ];
-
-      const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${openaiApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: chatMessages,
-          temperature: 0.4,
-        }),
-      });
-
-      const data = await openaiResponse.json();
-      return NextResponse.json({ 
-        text: data.choices?.[0]?.message?.content || "Sin respuesta",
-        warning: "Fallback OpenAI"
-      });
-    }
-
-    // 6. ERROR FINAL
-    return NextResponse.json(
-      { 
-        error: "Todos los servicios fallaron",
-        message: "Configura OPENAI_API_KEY para fallback"
-      },
-      { status: 503 }
-    );
-
-  } catch (error: any) {
-    console.error("ERROR CRÍTICO:", error);
-    return NextResponse.json(
-      { 
-        error: "Error interno",
-        details: error.message 
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ text }, { status: 200 });
+  } catch (e: any) {
+    const msg = typeof e?.message === "string" ? e.message : "Error desconocido en /api/chat";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
