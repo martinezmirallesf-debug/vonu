@@ -1,7 +1,7 @@
 // app/api/chat/route.ts
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs"; // importante: usar Node (no Edge) para evitar líos con libs/env
+export const runtime = "edge"; // Usamos Edge Runtime para mejor performance
 
 type IncomingMessage = {
   role: "user" | "assistant";
@@ -14,106 +14,120 @@ type Body = {
   imageBase64?: string | null;
 };
 
-function okJson(data: any, status = 200) {
-  return NextResponse.json(data, { status });
-}
+// Configuración
+const SUPABASE_EDGE_FUNCTION_URL = process.env.SUPABASE_EDGE_FUNCTION_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
-function errJson(message: string, status = 400, extra?: any) {
-  return NextResponse.json({ error: message, ...extra }, { status });
+// Validar configuración
+function validateConfig() {
+  const errors = [];
+  if (!SUPABASE_EDGE_FUNCTION_URL) errors.push("SUPABASE_EDGE_FUNCTION_URL");
+  if (!SUPABASE_ANON_KEY) errors.push("SUPABASE_ANON_KEY");
+  
+  if (errors.length > 0) {
+    throw new Error(`Faltan variables de entorno: ${errors.join(", ")}`);
+  }
 }
 
 export async function POST(req: Request) {
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return errJson("Falta OPENAI_API_KEY en variables de entorno.", 500);
+    // Validar configuración
+    validateConfig();
+    
+    // Parsear body
+    let body: Body;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Body inválido. Se espera JSON." },
+        { status: 400 }
+      );
     }
 
-    const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
-
-    const body = (await req.json().catch(() => null)) as Body | null;
-    if (!body) return errJson("Body inválido (JSON).", 400);
-
-    const messages = Array.isArray(body.messages) ? body.messages : [];
-    const userText = typeof body.userText === "string" ? body.userText : "";
-    const imageBase64 = typeof body.imageBase64 === "string" ? body.imageBase64 : null;
-
-    // Construimos el mensaje final del usuario (texto + imagen opcional)
-    // Nota: Chat Completions soporta contenido multimodal como array.
-    const userContent: any[] = [];
-
-    const cleanText = (userText || "").trim();
-    if (cleanText) {
-      userContent.push({ type: "text", text: cleanText });
-    } else {
-      // si no hay texto pero hay imagen, dejamos una instrucción mínima
-      if (imageBase64) userContent.push({ type: "text", text: "Analiza la imagen adjunta." });
+    // Validar campos mínimos
+    const { messages = [], userText = "", imageBase64 = null } = body;
+    
+    if (!userText && !imageBase64 && messages.length === 0) {
+      return NextResponse.json(
+        { error: "Se requiere al menos userText o imageBase64" },
+        { status: 400 }
+      );
     }
 
-    if (imageBase64) {
-      userContent.push({
-        type: "image_url",
-        image_url: { url: imageBase64 },
-      });
-    }
+    // Preparar payload para Supabase
+    const payload = {
+      messages: Array.isArray(messages) ? messages : [],
+      userText: typeof userText === "string" ? userText : "",
+      imageBase64: typeof imageBase64 === "string" ? imageBase64 : null,
+    };
 
-    // Pasamos el historial (texto) + añadimos el último mensaje multimodal
-    const chatMessages: any[] = [
-      {
-        role: "system",
-        content:
-          "Eres Vonu, un asistente preventivo para tomar decisiones seguras. " +
-          "Responde en español, claro y accionable. " +
-          "Evalúa riesgo real y próximos pasos. " +
-          "No pidas datos sensibles (contraseñas, códigos, banca).",
-      },
-      ...messages
-        .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
-        .map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
-      {
-        role: "user",
-        content: userContent.length ? userContent : [{ type: "text", text: "Ayúdame con esto." }],
-      },
-    ];
-
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    // Llamar al Edge Function de Supabase
+    const response = await fetch(SUPABASE_EDGE_FUNCTION_URL!, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
         "Content-Type": "application/json",
+        "x-client-info": "nextjs-proxy/v1",
       },
-      body: JSON.stringify({
-        model,
-        messages: chatMessages,
-        temperature: 0.4,
-      }),
+      body: JSON.stringify(payload),
     });
 
-    const raw = await res.text().catch(() => "");
-    let json: any = null;
-    try {
-      json = raw ? JSON.parse(raw) : null;
-    } catch {
-      json = null;
+    // Manejar respuesta
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { error: await response.text() };
+      }
+      
+      return NextResponse.json(
+        {
+          error: `Error del servidor (${response.status})`,
+          details: errorData,
+        },
+        { status: response.status }
+      );
     }
 
-    if (!res.ok) {
-      return errJson("Error llamando a OpenAI.", 500, {
-        status: res.status,
-        statusText: res.statusText,
-        details: json || raw || null,
-      });
+    // Devolver respuesta exitosa
+    const data = await response.json();
+    return NextResponse.json(data);
+    
+  } catch (error: any) {
+    console.error("Error en proxy API:", error);
+    
+    // Manejar errores de configuración
+    if (error.message?.includes("variables de entorno")) {
+      return NextResponse.json(
+        {
+          error: "Error de configuración",
+          message: error.message,
+          hint: "Verifica SUPABASE_EDGE_FUNCTION_URL y SUPABASE_ANON_KEY en .env.local",
+        },
+        { status: 500 }
+      );
     }
 
-    const text =
-      (json?.choices?.[0]?.message?.content as string | undefined)?.trim() ||
-      "He recibido una respuesta vacía. ¿Puedes darme un poco más de contexto?";
-
-    return okJson({ text });
-  } catch (e: any) {
-    return errJson(e?.message || "Error interno.", 500);
+    return NextResponse.json(
+      {
+        error: "Error interno del servidor",
+        message: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
   }
+}
+
+// Opcional: Manejar OPTIONS para CORS
+export async function OPTIONS(req: Request) {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
 }
