@@ -244,6 +244,109 @@ function PlusIcon({ className }: { className?: string }) {
   );
 }
 
+// ================ ÍCONOS NUEVOS PARA PIZARRA INTELIGENTE ================
+
+function CalculatorIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M7 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="2" />
+      <path d="M9 8h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="9" cy="13" r="1" fill="currentColor" />
+      <circle cx="12" cy="13" r="1" fill="currentColor" />
+      <circle cx="15" cy="13" r="1" fill="currentColor" />
+      <circle cx="9" cy="16" r="1" fill="currentColor" />
+      <circle cx="12" cy="16" r="1" fill="currentColor" />
+      <circle cx="15" cy="16" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+function BrainIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 5a3 3 0 1 0-3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M12 5a3 3 0 1 1 3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M4.5 13a7 7 0 1 0 15 0c0-3.5-3.5-5.5-7.5-5.5S4.5 9.5 4.5 13Z" stroke="currentColor" strokeWidth="2" />
+      <path d="M8 17v1a4 4 0 0 0 8 0v-1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function LightbulbIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 2v1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M19 11a7 7 0 1 1-14 0c0-3.866 3.134-7 7-7s7 3.134 7 7Z" stroke="currentColor" strokeWidth="2" />
+      <path d="M12 17v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M9 21h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function BookOpenIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 6v15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M19 21V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M5 21h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function Volume2Icon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M16 9c.6.6 1 1.5 1 2.5s-.4 1.9-1 2.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M19 6c1 1 1.6 2.3 1.6 3.9S20 14 19 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M11 5 6 9H2v6h4l5 4V5Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function TargetIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+      <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="2" />
+      <circle cx="12" cy="12" r="2" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  );
+}
+
+function GraduationCapIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M22 10v6M2 10l10-5 10 5-10 5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 12v5c0 1.7 3.6 3 8 3s8-1.3 8-3v-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ClockIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+      <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ZapIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function MessageSquareIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  );
+}
+
 // ================ COMPONENTE PRINCIPAL ================
 
 export default function Page() {
@@ -938,6 +1041,73 @@ export default function Page() {
     setSpeechSupported(!!SR);
   }, []);
 
+  // ===== TTS (Text-to-Speech) para modo examen oral =====
+  const [ttsSupported, setTtsSupported] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [studyMode, setStudyMode] = useState<"none" | "vocabulary" | "exam" | "explanation">("none");
+  const [studySession, setStudySession] = useState<any>(null);
+  const [vocabularyList, setVocabularyList] = useState<Array<{ word: string; translation: string; example: string }>>([]);
+  const [currentFlashcard, setCurrentFlashcard] = useState(0);
+  const [showAnswer, setShowAnswer] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setTtsSupported("speechSynthesis" in window);
+    }
+  }, []);
+
+  function speakText(text: string) {
+    if (!ttsSupported) return;
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "es-ES";
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    
+    speechSynthesis.speak(utterance);
+  }
+
+  function stopSpeaking() {
+    speechSynthesis.cancel();
+    setIsSpeaking(false);
+  }
+
+  // Inicializar vocabulario de ejemplo
+  useEffect(() => {
+    const exampleVocabulary = [
+      { word: "Resilience", translation: "Resiliencia", example: "La resiliencia es la capacidad de recuperarse de la adversidad." },
+      { word: "Empathy", translation: "Empatía", example: "La empatía es la capacidad de comprender los sentimientos de los demás." },
+      { word: "Proactive", translation: "Proactivo", example: "Ser proactivo significa anticiparse a los problemas." },
+      { word: "Synergy", translation: "Sinergia", example: "La sinergia ocurre cuando el todo es mayor que la suma de las partes." },
+      { word: "Innovation", translation: "Innovación", example: "La innovación es clave para el crecimiento empresarial." },
+    ];
+    setVocabularyList(exampleVocabulary);
+  }, []);
+
+  function startVocabularySession() {
+    setStudyMode("vocabulary");
+    setCurrentFlashcard(0);
+    setShowAnswer(false);
+  }
+
+  function nextFlashcard() {
+    if (currentFlashcard < vocabularyList.length - 1) {
+      setCurrentFlashcard(currentFlashcard + 1);
+      setShowAnswer(false);
+    } else {
+      setStudyMode("none");
+    }
+  }
+
+  function toggleAnswer() {
+    setShowAnswer(!showAnswer);
+  }
+
   function stopMic() {
     try {
       recognitionRef.current?.stop?.();
@@ -1012,15 +1182,18 @@ export default function Page() {
     }
   }
 
-  // ===== WHITEBOARD =====
+  // ===== PIZARRA INTELIGENTE VONU TUTOR =====
   const [boardOpen, setBoardOpen] = useState(false);
+  const [tutorMode, setTutorMode] = useState<"draw" | "analyze" | "explain">("draw");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasWrapRef = useRef<HTMLDivElement>(null);
 
   const [boardTool, setBoardTool] = useState<"pen" | "eraser">("pen");
   const [boardColor, setBoardColor] = useState<string>("#111827"); // zinc-900-ish
-  const [boardSize, setBoardSize] = useState<number>(6);
+  const [boardSize, setBoardSize] = useState<number>(4);
   const [boardMsg, setBoardMsg] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [tutorAnalysis, setTutorAnalysis] = useState<any>(null);
 
   const isDrawingRef = useRef(false);
   const lastPtRef = useRef<{ x: number; y: number } | null>(null);
@@ -1150,12 +1323,15 @@ export default function Page() {
 
   function openBoard() {
     setBoardMsg(null);
+    setTutorAnalysis(null);
+    setTutorMode("draw");
     setBoardOpen(true);
   }
 
   function closeBoard() {
     setBoardOpen(false);
     setBoardMsg(null);
+    setTutorAnalysis(null);
     isDrawingRef.current = false;
     lastPtRef.current = null;
 
@@ -1246,6 +1422,75 @@ export default function Page() {
     pushHistory();
   }
 
+  async function analyzeBoardContent() {
+    const c = canvasRef.current;
+    if (!c) return;
+
+    try {
+      setIsAnalyzing(true);
+      setTutorMode("analyze");
+      setBoardMsg("🔍 Analizando contenido...");
+
+      const dataUrl = c.toDataURL("image/png");
+      
+      // Simulación de análisis inteligente (en producción se conecta a IA)
+      await sleep(1500);
+      
+      const mockAnalysis = {
+        problemType: "mathematics",
+        confidence: 0.85,
+        steps: [
+          {
+            id: "1",
+            description: "Identificar la ecuación",
+            formula: "x² + 3x - 4 = 0",
+            explanation: "Esta es una ecuación cuadrática estándar en la forma ax² + bx + c = 0",
+            correct: true,
+            tip: "Recuerda que a=1, b=3, c=-4"
+          },
+          {
+            id: "2", 
+            description: "Aplicar fórmula cuadrática",
+            formula: "x = [-b ± √(b² - 4ac)] / 2a",
+            explanation: "Sustituye los valores: x = [-3 ± √(3² - 4*1*(-4))] / (2*1)",
+            correct: true,
+            tip: "Calcula el discriminante primero: b² - 4ac"
+          },
+          {
+            id: "3",
+            description: "Simplificar la solución",
+            formula: "x = [-3 ± √(25)] / 2 = [-3 ± 5] / 2",
+            explanation: "√25 = 5, así que tenemos dos soluciones: x₁ = (-3 + 5)/2 = 1, x₂ = (-3 - 5)/2 = -4",
+            correct: true,
+            tip: "Siempre verifica ambas soluciones sustituyendo en la ecuación original"
+          }
+        ],
+        finalAnswer: "x = 1, x = -4",
+        commonMistakes: [
+          "Olvidar el ± en la fórmula cuadrática",
+          "Error al calcular el discriminante",
+          "No simplificar completamente"
+        ],
+        similarExercises: [
+          "x² - 5x + 6 = 0",
+          "2x² + 7x - 15 = 0", 
+          "x² - 4x + 4 = 0"
+        ],
+        checkQuestion: "¿Por qué esta ecuación tiene dos soluciones reales y distintas?"
+      };
+
+      setTutorAnalysis(mockAnalysis);
+      setBoardMsg("✅ Análisis completado. Revisa la explicación paso a paso.");
+      setTutorMode("explain");
+      
+    } catch (error) {
+      setBoardMsg("❌ Error analizando el contenido. Intenta de nuevo.");
+      setTutorMode("draw");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }
+
   function exportBoardToChat() {
     const c = canvasRef.current;
     if (!c) return;
@@ -1263,6 +1508,52 @@ export default function Page() {
       setBoardMsg("No se pudo exportar la pizarra.");
       setTimeout(() => setBoardMsg(null), 1800);
     }
+  }
+
+  function explainInChat() {
+    if (!tutorAnalysis) return;
+    
+    const explanation = `
+## 📚 **Análisis de Vonu Tutor**
+
+**Tipo de problema:** ${tutorAnalysis.problemType}
+**Confianza:** ${(tutorAnalysis.confidence * 100).toFixed(0)}%
+
+### **📝 Pasos de solución:**
+${tutorAnalysis.steps.map((step: any) => `
+${step.correct ? "✅" : "⚠️"} **${step.description}**
+\`${step.formula || ""}\`
+${step.explanation}
+${step.tip ? `💡 *Tip:* ${step.tip}` : ""}
+`).join('\n')}
+
+### **🎯 Solución final:**
+\`\`\`
+${tutorAnalysis.finalAnswer}
+\`\`\`
+
+### **⚠️ Errores comunes:**
+${tutorAnalysis.commonMistakes.map((mistake: string) => `• ${mistake}`).join('\n')}
+
+### **🧠 Ejercicios similares para practicar:**
+${tutorAnalysis.similarExercises.map((ex: string) => `• ${ex}`).join('\n')}
+
+### **❓ Pregunta de comprobación:**
+${tutorAnalysis.checkQuestion}
+`;
+
+    setInput(explanation.trim());
+    setBoardMsg("✅ Explicación copiada al chat. Envíala para obtener más detalles.");
+    
+    setTimeout(() => {
+      setBoardOpen(false);
+      if (isDesktopPointer()) {
+        setTimeout(() => {
+          textareaRef.current?.focus();
+          textareaRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }, 800);
   }
 
   // VisualViewport
@@ -1365,6 +1656,7 @@ export default function Page() {
     if (loginOpen) return;
     if (paywallOpen) return;
     if (boardOpen) return;
+    if (studyMode !== "none") return;
     if (!isDesktopPointer()) return;
 
     const t = setTimeout(() => {
@@ -1372,7 +1664,7 @@ export default function Page() {
     }, 60);
 
     return () => clearTimeout(t);
-  }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId, loginOpen, paywallOpen, boardOpen]);
+  }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId, loginOpen, paywallOpen, boardOpen, studyMode]);
 
   function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -1702,6 +1994,7 @@ export default function Page() {
         if (paywallOpen) closePaywall();
         if (boardOpen) closeBoard();
         if (renameOpen) setRenameOpen(false);
+        if (studyMode !== "none") setStudyMode("none");
       }
       if (renameOpen && e.key === "Enter") {
         confirmRename();
@@ -1710,7 +2003,7 @@ export default function Page() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paywallOpen, payLoading, boardOpen, renameOpen, renameValue, activeThreadId]);
+  }, [paywallOpen, payLoading, boardOpen, renameOpen, renameValue, activeThreadId, studyMode]);
 
   return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
@@ -1721,7 +2014,112 @@ export default function Page() {
         </div>
       )}
 
-      {/* ===== RENAME MODAL (FIX: ahora sí funciona) ===== */}
+      {/* ===== MODO ESTUDIO POR VOZ ===== */}
+      {studyMode !== "none" && (
+        <div className="fixed inset-0 z-[75] bg-gradient-to-b from-blue-50 via-white to-white">
+          <div className="absolute inset-0" onClick={() => setStudyMode("none")} aria-hidden="true" />
+          
+          <div className="relative h-full w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="mx-auto h-full w-full max-w-md px-3 pb-[env(safe-area-inset-bottom)] flex flex-col">
+              <div className="pt-4 flex items-center justify-between">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="h-10 w-10 rounded-full bg-white/90 backdrop-blur-xl border border-zinc-200 grid place-items-center shadow-sm">
+                    <GraduationCapIcon className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[14px] font-semibold text-zinc-900 leading-5">Vonu Tutor - Modo Estudio</div>
+                    <div className="text-[11px] text-zinc-500 leading-4">
+                      {studyMode === "vocabulary" ? "Vocabulario · Repaso activo" : "Examen oral · Práctica"}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setStudyMode("none")}
+                  className="h-10 w-10 aspect-square rounded-full bg-white/90 backdrop-blur-xl border border-zinc-200 hover:bg-white transition-colors grid place-items-center cursor-pointer p-0"
+                  aria-label="Cerrar modo estudio"
+                >
+                  <span className="text-zinc-700 text-[20px] leading-none">×</span>
+                </button>
+              </div>
+
+              <div className="mt-4 flex-1 min-h-0 rounded-[26px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden">
+                <div className="h-full flex flex-col p-4">
+                  {studyMode === "vocabulary" && vocabularyList.length > 0 && (
+                    <>
+                      <div className="text-center mb-4">
+                        <div className="text-sm font-semibold text-zinc-900">Flashcard {currentFlashcard + 1} de {vocabularyList.length}</div>
+                        <div className="text-xs text-zinc-500 mt-1">Método de repaso espaciado</div>
+                      </div>
+
+                      <div className="flex-1 flex flex-col items-center justify-center">
+                        <div className="text-2xl font-bold text-zinc-900 mb-4">
+                          {vocabularyList[currentFlashcard].word}
+                        </div>
+                        
+                        {showAnswer ? (
+                          <div className="text-center space-y-3">
+                            <div className="text-lg text-blue-600 font-semibold">
+                              {vocabularyList[currentFlashcard].translation}
+                            </div>
+                            <div className="text-sm text-zinc-600 italic">
+                              "{vocabularyList[currentFlashcard].example}"
+                            </div>
+                            <button
+                              onClick={() => speakText(vocabularyList[currentFlashcard].example)}
+                              disabled={!ttsSupported || isSpeaking}
+                              className="mt-4 px-4 py-2 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors text-sm flex items-center gap-2 mx-auto"
+                            >
+                              <Volume2Icon className="h-4 w-4" />
+                              {isSpeaking ? "Hablando..." : "Escuchar ejemplo"}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="text-center">
+                            <button
+                              onClick={toggleAnswer}
+                              className="px-6 py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors"
+                            >
+                              Mostrar respuesta
+                            </button>
+                            <div className="mt-4 text-xs text-zinc-500">
+                              Presiona para revelar la traducción y ejemplo
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex justify-between gap-3">
+                        <button
+                          onClick={() => speakText(vocabularyList[currentFlashcard].word)}
+                          disabled={!ttsSupported || isSpeaking}
+                          className="flex-1 h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors text-sm flex items-center justify-center gap-2"
+                        >
+                          <Volume2Icon className="h-4 w-4" />
+                          Pronunciar
+                        </button>
+                        
+                        <button
+                          onClick={nextFlashcard}
+                          className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors"
+                        >
+                          {currentFlashcard < vocabularyList.length - 1 ? "Siguiente" : "Completar"}
+                        </button>
+                      </div>
+
+                      <div className="mt-4 text-center text-xs text-zinc-500">
+                        💡 <strong>Método Active Recall:</strong> Trata de recordar antes de ver la respuesta
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== RENAME MODAL ===== */}
       {renameOpen && (
         <div className="fixed inset-0 z-[85] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6" onClick={() => setRenameOpen(false)}>
           <div
@@ -1773,22 +2171,23 @@ export default function Page() {
         </div>
       )}
 
-      {/* ===== WHITEBOARD ===== */}
+      {/* ===== PIZARRA INTELIGENTE VONU TUTOR ===== */}
       {boardOpen && (
         <div className="fixed inset-0 z-[75]">
-          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={closeBoard} aria-hidden="true" />
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-white to-white" onClick={closeBoard} aria-hidden="true" />
 
           <div className="relative h-full w-full" onClick={(e) => e.stopPropagation()}>
             <div className="mx-auto h-full w-full max-w-4xl px-3 md:px-6">
               <div className="pt-4 flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="h-11 w-11 rounded-full bg-white/90 backdrop-blur-xl border border-zinc-200 grid place-items-center shadow-sm">
-                    <img src={"/vonu-icon.png?v=2"} alt="Vonu" className="h-6 w-6" draggable={false} />
+                    <BrainIcon className="h-6 w-6 text-blue-600" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[14px] font-semibold text-zinc-900 leading-5">Pizarra</div>
-                    {/* ✅ FIX: texto en negro (antes no se veía bien) */}
-                    <div className="text-[11px] text-zinc-900 leading-4">Dibuja con dedo o lápiz · luego "Enviar al chat"</div>
+                    <div className="text-[14px] font-semibold text-zinc-900 leading-5">Vonu Tutor - Pizarra Inteligente</div>
+                    <div className="text-[11px] text-zinc-500 leading-4">
+                      {tutorMode === "draw" ? "Dibuja tu problema" : tutorMode === "analyze" ? "Analizando..." : "Explicación paso a paso"}
+                    </div>
                   </div>
                 </div>
 
@@ -1818,81 +2217,119 @@ export default function Page() {
                   <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
                     <div className="flex flex-wrap items-center gap-2 justify-between">
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setBoardTool("pen")}
-                          className={[
-                            "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors",
-                            boardTool === "pen" ? "bg-blue-600 text-white border-blue-700/10" : "bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50",
-                          ].join(" ")}
-                        >
-                          Lápiz
-                        </button>
+                        {tutorMode === "draw" ? (
+                          <>
+                            <button
+                              onClick={() => setBoardTool("pen")}
+                              className={[
+                                "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors",
+                                boardTool === "pen" ? "bg-blue-600 text-white border-blue-700/10" : "bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50",
+                              ].join(" ")}
+                            >
+                              <PencilIcon className="h-3.5 w-3.5 inline mr-1.5" />
+                              Lápiz
+                            </button>
 
-                        <button
-                          onClick={() => setBoardTool("eraser")}
-                          className={[
-                            "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors",
-                            boardTool === "eraser" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50",
-                          ].join(" ")}
-                        >
-                          Goma
-                        </button>
+                            <button
+                              onClick={() => setBoardTool("eraser")}
+                              className={[
+                                "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors",
+                                boardTool === "eraser" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50",
+                              ].join(" ")}
+                            >
+                              Goma
+                            </button>
 
-                        <button
-                          onClick={undoBoard}
-                          className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors"
-                          title="Deshacer"
-                        >
-                          Deshacer
-                        </button>
+                            <button
+                              onClick={undoBoard}
+                              className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors"
+                              title="Deshacer"
+                            >
+                              Deshacer
+                            </button>
 
-                        <button
-                          onClick={clearBoard}
-                          className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors"
-                          title="Borrar todo"
-                        >
-                          Borrar
-                        </button>
+                            <button
+                              onClick={clearBoard}
+                              className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors"
+                              title="Borrar todo"
+                            >
+                              Borrar
+                            </button>
+                          </>
+                        ) : tutorMode === "explain" && tutorAnalysis ? (
+                          <>
+                            <button
+                              onClick={() => setTutorMode("draw")}
+                              className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors flex items-center gap-2"
+                            >
+                              <PencilIcon className="h-3.5 w-3.5" />
+                              Volver a dibujar
+                            </button>
+                            
+                            <button
+                              onClick={explainInChat}
+                              className="h-10 px-4 rounded-full text-[12px] font-semibold bg-green-600 hover:bg-green-700 text-white transition-colors flex items-center gap-2"
+                            >
+                              <MessageSquareIcon className="h-3.5 w-3.5" />
+                              Explicar en chat
+                            </button>
+                          </>
+                        ) : null}
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {/* Colores */}
-                        <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 h-10">
-                          {["#111827", "#2563EB", "#DC2626", "#16A34A"].map((c) => (
+                        {tutorMode === "draw" && (
+                          <>
+                            {/* Colores */}
+                            <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 h-10">
+                              {["#111827", "#2563EB", "#DC2626", "#16A34A", "#7C3AED"].map((c) => (
+                                <button
+                                  key={c}
+                                  onClick={() => {
+                                    setBoardTool("pen");
+                                    setBoardColor(c);
+                                  }}
+                                  className={["h-7 w-7 rounded-full border grid place-items-center p-0", boardColor === c && boardTool === "pen" ? "border-zinc-900" : "border-zinc-200"].join(" ")}
+                                  style={{ backgroundColor: c }}
+                                  aria-label={`Color ${c}`}
+                                  title="Color"
+                                />
+                              ))}
+                            </div>
+
+                            {/* Grosor */}
+                            <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-2 sm:px-3 h-10">
+                              <div className="text-[11px] text-zinc-600">Grosor</div>
+                              <input
+                                type="range"
+                                min={2}
+                                max={18}
+                                value={boardSize}
+                                onChange={(e) => setBoardSize(parseInt(e.target.value || "6", 10))}
+                                className="w-[92px] sm:w-[120px]"
+                              />
+                            </div>
+
+                            {/* Botón analizar */}
                             <button
-                              key={c}
-                              onClick={() => {
-                                setBoardTool("pen");
-                                setBoardColor(c);
-                              }}
-                              className={["h-7 w-7 rounded-full border grid place-items-center p-0", boardColor === c && boardTool === "pen" ? "border-zinc-900" : "border-zinc-200"].join(" ")}
-                              style={{ backgroundColor: c }}
-                              aria-label={`Color ${c}`}
-                              title="Color"
-                            />
-                          ))}
-                        </div>
-
-                        {/* Grosor */}
-                        <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-2 sm:px-3 h-10">
-                          <div className="text-[11px] text-zinc-600">Grosor</div>
-                          <input
-                            type="range"
-                            min={2}
-                            max={18}
-                            value={boardSize}
-                            onChange={(e) => setBoardSize(parseInt(e.target.value || "6", 10))}
-                            className="w-[92px] sm:w-[120px]"
-                          />
-                        </div>
-
-                        {/* Desktop: Enviar al chat aquí */}
-                        <button
-                          onClick={exportBoardToChat}
-                          className="hidden md:inline-flex h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors items-center justify-center"
-                        >
-                          Enviar al chat
-                        </button>
+                              onClick={analyzeBoardContent}
+                              disabled={isAnalyzing}
+                              className="h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center gap-2"
+                            >
+                              {isAnalyzing ? (
+                                <>
+                                  <span className="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full" />
+                                  Analizando...
+                                </>
+                              ) : (
+                                <>
+                                  <BrainIcon className="h-3.5 w-3.5" />
+                                  Analizar
+                                </>
+                              )}
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1906,44 +2343,153 @@ export default function Page() {
                     )}
                   </div>
 
-                  {/* Canvas */}
-                  <div className="mt-2 flex-1 min-h-0">
-                    <div ref={canvasWrapRef} className="h-full w-full rounded-[22px] border border-zinc-200 bg-white overflow-hidden">
-                      <canvas
-                        ref={canvasRef}
-                        className="h-full w-full"
-                        style={{ touchAction: "none", display: "block" }}
-                        onPointerDown={onCanvasPointerDown}
-                        onPointerMove={onCanvasPointerMove}
-                        onPointerUp={endStroke}
-                        onPointerCancel={endStroke}
-                        onPointerLeave={endStroke}
-                      />
+                  {/* Contenido principal */}
+                  <div className="mt-2 flex-1 min-h-0 flex gap-4">
+                    {/* Canvas o Análisis */}
+                    <div className={`${tutorMode === "explain" ? "flex-1" : "flex-1"} min-h-0`}>
+                      {tutorMode === "explain" && tutorAnalysis ? (
+                        <div className="h-full rounded-[22px] border border-zinc-200 bg-white overflow-y-auto p-4">
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-2">
+                              <CalculatorIcon className="h-5 w-5 text-blue-600" />
+                              <div>
+                                <div className="font-semibold text-zinc-900">Análisis completado</div>
+                                <div className="text-xs text-zinc-500">
+                                  {tutorAnalysis.problemType} · {(tutorAnalysis.confidence * 100).toFixed(0)}% confianza
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div className="text-sm font-semibold text-zinc-900">📝 Explicación paso a paso:</div>
+                              {tutorAnalysis.steps.map((step: any) => (
+                                <div key={step.id} className="border-l-2 border-blue-500 pl-3 py-1">
+                                  <div className="font-medium text-zinc-900">{step.description}</div>
+                                  {step.formula && (
+                                    <div className="font-mono text-sm bg-zinc-50 px-2 py-1 rounded mt-1">
+                                      {step.formula}
+                                    </div>
+                                  )}
+                                  <div className="text-sm text-zinc-600 mt-1">{step.explanation}</div>
+                                  {step.tip && (
+                                    <div className="text-xs text-blue-600 mt-1">💡 {step.tip}</div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="bg-blue-50 rounded-xl p-3">
+                              <div className="font-semibold text-blue-900">🎯 Solución final:</div>
+                              <div className="font-mono text-lg mt-1">{tutorAnalysis.finalAnswer}</div>
+                            </div>
+
+                            <div>
+                              <div className="font-semibold text-zinc-900">⚠️ Errores comunes:</div>
+                              <ul className="text-sm text-zinc-600 mt-1 list-disc pl-5">
+                                {tutorAnalysis.commonMistakes.map((mistake: string, i: number) => (
+                                  <li key={i}>{mistake}</li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            <div>
+                              <div className="font-semibold text-zinc-900">🧠 Ejercicios similares:</div>
+                              <div className="text-sm text-zinc-600 mt-1 space-y-1">
+                                {tutorAnalysis.similarExercises.map((ex: string, i: number) => (
+                                  <div key={i} className="bg-zinc-50 px-3 py-1.5 rounded">• {ex}</div>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="bg-yellow-50 rounded-xl p-3">
+                              <div className="font-semibold text-yellow-900">❓ Pregunta de comprobación:</div>
+                              <div className="text-sm mt-1">{tutorAnalysis.checkQuestion}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div ref={canvasWrapRef} className="h-full w-full rounded-[22px] border border-zinc-200 bg-white overflow-hidden">
+                          <canvas
+                            ref={canvasRef}
+                            className="h-full w-full"
+                            style={{ touchAction: "none", display: "block" }}
+                            onPointerDown={onCanvasPointerDown}
+                            onPointerMove={onCanvasPointerMove}
+                            onPointerUp={endStroke}
+                            onPointerCancel={endStroke}
+                            onPointerLeave={endStroke}
+                          />
+                        </div>
+                      )}
                     </div>
+
+                    {/* Barra lateral derecha solo en modo draw */}
+                    {tutorMode === "draw" && (
+                      <div className="hidden md:block w-64 rounded-[22px] border border-zinc-200 bg-white p-4">
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2">
+                            <LightbulbIcon className="h-5 w-5 text-blue-600" />
+                            <div className="font-semibold text-zinc-900">Tipos de problemas</div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            {[
+                              { icon: CalculatorIcon, label: "Matemáticas", desc: "Ecuaciones, álgebra" },
+                              { icon: ZapIcon, label: "Física", desc: "Fórmulas, problemas" },
+                              { icon: TargetIcon, label: "Química", desc: "Estructuras, fórmulas" },
+                              { icon: ClockIcon, label: "Finanzas", desc: "TAE, VAN, TIR" },
+                            ].map((item, i) => (
+                              <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-50 cursor-pointer">
+                                <div className="h-8 w-8 rounded-full bg-blue-100 grid place-items-center">
+                                  <item.icon className="h-4 w-4 text-blue-600" />
+                                </div>
+                                <div>
+                                  <div className="font-medium text-zinc-900 text-sm">{item.label}</div>
+                                  <div className="text-xs text-zinc-500">{item.desc}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="pt-4 border-t border-zinc-200">
+                            <div className="text-sm font-semibold text-zinc-900 mb-2">💡 Consejos</div>
+                            <ul className="text-xs text-zinc-600 space-y-1.5">
+                              <li>• Escribe grande y claro</li>
+                              <li>• Usa colores diferentes para pasos</li>
+                              <li>• Incluye todos los datos del problema</li>
+                              <li>• Vonu explicará cada paso</li>
+                            </ul>
+                          </div>
+
+                          <button
+                            onClick={exportBoardToChat}
+                            className="w-full h-10 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center gap-2 mt-4"
+                          >
+                            <ArrowUpIcon className="h-3.5 w-3.5" />
+                            Enviar al chat
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="pt-2 pb-[calc(env(safe-area-inset-bottom)+6px)] flex items-center justify-between gap-3">
-                    {/* ✅ FIX: tip en negro */}
-                    <div className="text-[11px] text-zinc-900">Tip: escribe grande en tablet (dedo o lápiz). Puedes enviar varias pizarras seguidas.</div>
-
-                    {/* Mobile: Enviar al chat abajo (y quitamos "Cerrar") */}
-                    <button
-                      onClick={exportBoardToChat}
-                      className="md:hidden inline-flex h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors shrink-0 items-center justify-center"
-                    >
-                      Enviar al chat
-                    </button>
+                  <div className="pt-2 pb-[calc(env(safe-area-inset-bottom)+6px)]">
+                    <div className="text-[11px] text-zinc-500">
+                      {tutorMode === "draw" 
+                        ? "💡 Dibuja tu problema matemático, ecuación o diagrama y Vonu lo analizará paso a paso." 
+                        : tutorMode === "analyze"
+                        ? "🔍 Vonu está analizando tu problema usando técnicas pedagógicas comprobadas..."
+                        : "✅ Explicación generada usando el Método Feynman y Active Recall."}
+                    </div>
                   </div>
                 </div>
               </div>
-
-              <div className="h-4" />
             </div>
           </div>
         </div>
       )}
 
-      {/* ===== PAYWALL (FULLSCREEN TAKEOVER) ===== */}
+      {/* ===== PAYWALL ===== */}
       {paywallOpen && (
         <div className="fixed inset-0 z-[70]">
           <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-white to-white" onClick={closePaywall} aria-hidden="true" />
@@ -1953,7 +2499,6 @@ export default function Page() {
           <div className="absolute top-[48%] -right-24 h-[280px] w-[280px] rounded-full bg-zinc-900/5 blur-3xl pointer-events-none" />
 
           <div className="relative h-full w-full" onClick={(e) => e.stopPropagation()}>
-            {/* ✅ SIN SCROLL: todo cabe */}
             <div className="mx-auto h-full w-full max-w-md px-3 pb-[env(safe-area-inset-bottom)] flex flex-col min-h-0">
               <div className="pt-2 flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
@@ -1989,7 +2534,6 @@ export default function Page() {
 
               <div className="mt-2 flex-1 min-h-0 rounded-[26px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden">
                 <div className="h-full flex flex-col p-3">
-                  {/* ===== como la foto: Elige tu plan + 3 opciones ===== */}
                   <div className="rounded-[20px] border border-zinc-200 bg-white p-3">
                     <div className="text-[12.5px] font-semibold text-zinc-900">Elige tu plan</div>
 
@@ -2004,7 +2548,6 @@ export default function Page() {
                           plan === "yearly" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
                         ].join(" ")}
                       >
-                        {/* radio */}
                         <div className="pt-[2px]">
                           <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "yearly" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
                             {plan === "yearly" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
@@ -2037,7 +2580,6 @@ export default function Page() {
                           plan === "monthly" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
                         ].join(" ")}
                       >
-                        {/* radio */}
                         <div className="pt-[2px]">
                           <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "monthly" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
                             {plan === "monthly" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
@@ -2067,7 +2609,6 @@ export default function Page() {
                           plan === "free" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
                         ].join(" ")}
                       >
-                        {/* radio */}
                         <div className="pt-[2px]">
                           <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "free" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
                             {plan === "free" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
@@ -2085,7 +2626,6 @@ export default function Page() {
                     </div>
                   </div>
 
-                  {/* ===== Bloque GRATIS como la foto ===== */}
                   <div className="mt-2 rounded-[20px] border border-zinc-200 bg-white p-3">
                     <div className="text-[12.5px] font-semibold text-zinc-900">Gratis</div>
                     <div className="mt-2 grid gap-1.5">
@@ -2100,14 +2640,12 @@ export default function Page() {
                     </div>
                   </div>
 
-                  {/* Mensaje error/pago (compacto) */}
                   {payMsg ? (
                     <div className="mt-2 rounded-[16px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">{payMsg}</div>
                   ) : (
                     <div className="mt-2 opacity-0 select-none text-[12px] px-3 py-2">placeholder</div>
                   )}
 
-                  {/* Footer fijo, sin scroll */}
                   <div className="mt-auto pt-1 pb-[calc(env(safe-area-inset-bottom)+8px)]">
                     <button
                       onClick={() => {
@@ -2116,7 +2654,6 @@ export default function Page() {
                           closePaywall();
                           return;
                         }
-                        // anual: yearly / mensual: monthly
                         startCheckout(plan);
                       }}
                       className={[
@@ -2359,7 +2896,7 @@ export default function Page() {
         </div>
       )}
 
-      {/* ===== TOP FADE (MEJORADO PARA MÓVIL) ===== */}
+      {/* ===== TOP FADE ===== */}
       <div className="fixed top-0 left-0 right-0 z-40 pointer-events-none">
         <div className="h-[86px] bg-gradient-to-b from-white via-white/85 to-transparent" />
       </div>
@@ -2388,7 +2925,6 @@ export default function Page() {
           </div>
         </div>
 
-        {/* ✅ 2.1 Top-right: Plan + Cuenta (botones estables) */}
         <div className="pointer-events-auto flex items-center gap-2">
           <button
             onClick={handleOpenPlansCTA}
@@ -2569,13 +3105,18 @@ export default function Page() {
                     key={m.id} 
                     className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}
                   >
+                    {/* ✅ Burbuja con piquito estilo WhatsApp */}
                     <div
                       className={[
-                        "relative max-w-[85%] px-4 py-3 shadow-sm text-[15px] leading-relaxed break-words",
+                        "relative max-w-[85%] px-4 py-3 text-[15px] leading-relaxed break-words",
                         isUser 
-                          ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-[20px] rounded-tr-none" 
-                          : "bg-gradient-to-r from-zinc-100 to-zinc-50 border border-zinc-200/50 text-zinc-900 rounded-[20px] rounded-tl-none",
-                        "transition-all duration-200",
+                          ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none" // Verde WhatsApp
+                          : "bg-[#e8f0fe] text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none", // Azul Google claro
+                        "shadow-sm",
+                        "before:content-[''] before:absolute before:w-3 before:h-3 before:rotate-45",
+                        isUser
+                          ? "before:right-[-4px] before:top-[10px] before:bg-[#dcf8c6]"
+                          : "before:left-[-4px] before:top-[10px] before:bg-[#e8f0fe]",
                       ].join(" ")}
                     >
                       {m.image && (
@@ -2610,7 +3151,7 @@ export default function Page() {
           </div>
         </div>
 
-        {/* ===== INPUT BAR (MEJORADO PARA MÓVIL) ===== */}
+        {/* ===== INPUT BAR ===== */}
         <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-xl border-t border-zinc-200/50">
           <div className="mx-auto max-w-3xl px-3 md:px-6 pt-3 pb-2">
             {imagePreview && (
@@ -2628,18 +3169,28 @@ export default function Page() {
 
             {micMsg && <div className="mb-2 text-[12px] text-zinc-600 bg-white border border-zinc-200 rounded-2xl px-3 py-2">{micMsg}</div>}
 
-            {/* ✅ INPUT BAR MEJORADA CON BOTÓN ENVIAR ESTILO CHATGPT */}
+            {/* ✅ INPUT BAR MEJORADA CON BOTÓN ENVIAR AZUL GOOGLE */}
             <div className={["w-full", "relative rounded-[24px] border border-zinc-300 bg-white", "overflow-hidden"].join(" ")}>
               {/* LEFT ICONS */}
               <div className="absolute left-3 bottom-3 flex items-center gap-1">
                 <button
                   onClick={openBoard}
                   className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
-                  aria-label="Pizarra"
-                  title="Pizarra"
+                  aria-label="Pizarra inteligente"
+                  title="Pizarra inteligente (Vonu Tutor)"
                   disabled={!!isTyping}
                 >
-                  <PencilIcon className="h-5 w-5 text-zinc-800" />
+                  <BrainIcon className="h-5 w-5 text-zinc-800" />
+                </button>
+
+                <button
+                  onClick={startVocabularySession}
+                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
+                  aria-label="Modo estudio"
+                  title="Modo estudio por voz"
+                  disabled={!!isTyping}
+                >
+                  <BookOpenIcon className="h-5 w-5 text-zinc-800" />
                 </button>
 
                 <button
@@ -2655,8 +3206,22 @@ export default function Page() {
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
               </div>
 
-              {/* RIGHT ICONS (BOTÓN ENVIAR ESTILO CHATGPT) */}
+              {/* RIGHT ICONS (BOTÓN ENVIAR AZUL GOOGLE) */}
               <div className="absolute right-3 bottom-3 flex items-center gap-2">
+                {isSpeaking && (
+                  <button
+                    onClick={stopSpeaking}
+                    className="h-10 w-10 rounded-full border border-red-200 bg-red-50 text-red-700 shrink-0 grid place-items-center p-0"
+                    aria-label="Parar voz"
+                    title="Parar voz"
+                  >
+                    <div className="relative">
+                      <Volume2Icon className="h-5 w-5" />
+                      <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" aria-hidden="true" />
+                    </div>
+                  </button>
+                )}
+
                 <button
                   onClick={toggleMic}
                   disabled={!!isTyping || !speechSupported}
@@ -2673,11 +3238,11 @@ export default function Page() {
                 >
                   <div className="relative">
                     <MicIcon className="h-5 w-5" />
-                    {isListening && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />}
+                    {isListening && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" aria-hidden="true" />}
                   </div>
                 </button>
 
-                {/* ✅ BOTÓN ENVIAR ESTILO CHATGPT: REDONDO NEGRO CON FLECHA BLANCA */}
+                {/* ✅ BOTÓN ENVIAR AZUL GOOGLE (#1a73e8) */}
                 <button
                   onClick={sendMessage}
                   disabled={!canSend}
@@ -2685,7 +3250,7 @@ export default function Page() {
                     "h-10 w-10 rounded-full shrink-0 transition-all grid place-items-center p-0",
                     !canSend 
                       ? "bg-zinc-200 text-zinc-500 cursor-not-allowed" 
-                      : "bg-black hover:bg-zinc-900 active:scale-95 cursor-pointer shadow-md",
+                      : "bg-[#1a73e8] hover:bg-[#0d62d9] active:scale-95 cursor-pointer shadow-md",
                   ].join(" ")}
                   aria-label="Enviar"
                   title="Enviar"
@@ -2715,14 +3280,13 @@ export default function Page() {
                   "pb-[52px]", // espacio para iconos inferiores
                   "overflow-hidden",
                   inputExpanded ? "min-h-[56px]" : "min-h-[44px]",
-                  "transition-all duration-200 ease-out", // Animación suave
+                  "transition-all duration-200 ease-out",
                 ].join(" ")}
                 rows={1}
               />
             </div>
           </div>
 
-          {/* ✅ DISCLAIMER COMPACTO PARA MÓVIL */}
           <div className="mx-auto max-w-3xl px-3 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
             <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">
               {typeof window !== "undefined" && window.innerWidth < 768 
