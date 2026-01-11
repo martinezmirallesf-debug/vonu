@@ -118,7 +118,7 @@ function TypingDots() {
   );
 }
 
-// ✅ Indicador "escribiendo": cursor fijo (SIN parpadeo) para que no “titile”
+// ✅ Indicador "escribiendo": cursor fijo (SIN parpadeo) para que no "titile"
 function TypingCaret() {
   return (
     <span
@@ -201,13 +201,13 @@ function deriveName(email: string | null, metaName?: string | null, identityName
 }
 
 // ✅ IMPORTANT: normalizamos el texto del assistant SIEMPRE (streaming y final)
-// para que NO haya “salto raro” al terminar (mismo layout antes y después).
+// para que NO haya "salto raro" al terminar (mismo layout antes y después).
 function normalizeAssistantText(text: string) {
   const raw = text ?? "";
   return raw
     .replace(/\r\n/g, "\n")
     .replace(/\n{2,}/g, "\n") // evita salto de párrafo
-    .replace(/\n/g, " "); // mantiene una sola “línea” visual estable
+    .replace(/\n/g, " "); // mantiene una sola "línea" visual estable
 }
 
 function MicIcon({ className }: { className?: string }) {
@@ -241,104 +241,6 @@ function PlusIcon({ className }: { className?: string }) {
       <path d="M12 5v14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
       <path d="M5 12h14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
     </svg>
-  );
-}
-
-// ================ COMPONENTES NUEVOS ================
-
-// ✅ 1) Componente Avatar para chat (estilo iMessage/WhatsApp/ChatGPT)
-function ChatAvatar({ role, name, className = "" }: { role: "user" | "assistant"; name?: string; className?: string }) {
-  const size = "h-8 w-8 md:h-9 md:w-9";
-  
-  if (role === "assistant") {
-    return (
-      <div 
-        className={`${size} rounded-full bg-white border border-zinc-200 shadow-sm grid place-items-center flex-shrink-0 ${className}`}
-        aria-label="Avatar de Vonu"
-        title="Vonu AI"
-      >
-        <img 
-          src="/vonu-icon.png?v=2" 
-          alt="Vonu" 
-          className="h-5 w-5 md:h-6 md:w-6" 
-          draggable={false}
-        />
-      </div>
-    );
-  }
-  
-  // User avatar con inicial
-  const initial = (name || "U").charAt(0).toUpperCase();
-  const bgColor = "bg-gradient-to-br from-blue-500 to-blue-600";
-  
-  return (
-    <div 
-      className={`${size} rounded-full ${bgColor} border border-blue-600/20 text-white grid place-items-center flex-shrink-0 ${className}`}
-      aria-label="Tu avatar"
-      title={name ? `Usuario: ${name}` : "Usuario"}
-    >
-      <span className="text-[13px] md:text-[14px] font-semibold leading-none">{initial}</span>
-    </div>
-  );
-}
-
-// ✅ 2) Componente TopAccountButton (avatar bonito para top-right)
-function TopAccountButton({ 
-  isLoggedIn, 
-  authLoading, 
-  authUserName, 
-  authUserEmail,
-  proLoading,
-  isPro,
-  onClick 
-}: { 
-  isLoggedIn: boolean;
-  authLoading: boolean;
-  authUserName: string | null;
-  authUserEmail: string | null;
-  proLoading: boolean;
-  isPro: boolean;
-  onClick: () => void;
-}) {
-  const userInitial = useMemo(() => {
-    const base = (authUserName ?? authUserEmail ?? "").trim();
-    if (!base) return "U";
-    return base.charAt(0).toUpperCase();
-  }, [authUserName, authUserEmail]);
-  
-  const statusColor = authLoading ? "bg-zinc-300" : isLoggedIn ? "bg-emerald-500" : "bg-zinc-300";
-  const planLabelText = !isLoggedIn ? "Sin sesión" : isPro ? "Plus+" : "Gratis";
-  
-  return (
-    <button
-      onClick={onClick}
-      disabled={authLoading}
-      className={[
-        "relative h-11 w-11",
-        "bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm",
-        "grid place-items-center text-zinc-900 hover:bg-white transition-colors",
-        "rounded-full p-0",
-        authLoading ? "opacity-60 cursor-not-allowed" : "cursor-pointer",
-      ].join(" ")}
-      aria-label={isLoggedIn ? "Ver cuenta" : "Iniciar sesión"}
-      title={authLoading ? "Cargando…" : isLoggedIn ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : planLabelText}` : "Iniciar sesión"}
-    >
-      <span
-        className={[
-          "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white grid place-items-center",
-          statusColor,
-        ].join(" ")}
-        aria-hidden="true"
-      />
-      
-      {isLoggedIn ? (
-        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 border border-blue-600/20 grid place-items-center">
-          <span className="text-[14px] font-semibold text-white leading-none">{userInitial}</span>
-        </div>
-      ) : (
-        <UserIcon className="h-5 w-5" />
-      )}
-    </button>
   );
 }
 
@@ -1476,6 +1378,12 @@ export default function Page() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // ✅ FASE 0: Limitar tamaño de imagen (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setUiError("La imagen es demasiado grande. Máximo 5MB.");
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
@@ -1681,6 +1589,8 @@ export default function Page() {
 
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
+        // ✅ FASE 0: Logging básico de errores
+        console.error("[CHAT API ERROR]", res.status, txt);
         throw new Error(`HTTP ${res.status} ${res.statusText} ${txt}`);
       }
 
@@ -2449,12 +2359,12 @@ export default function Page() {
         </div>
       )}
 
-      {/* ===== TOP FADE ===== */}
+      {/* ===== TOP FADE (MEJORADO PARA MÓVIL) ===== */}
       <div className="fixed top-0 left-0 right-0 z-40 pointer-events-none">
         <div className="h-[86px] bg-gradient-to-b from-white via-white/85 to-transparent" />
       </div>
 
-      {/* ===== TOP BUBBLES ===== */}
+      {/* ===== TOP BUBBLES CON HEADER FIJO ===== */}
       <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
         <div className="pointer-events-auto">
           <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center gap-0 overflow-hidden px-1">
@@ -2493,15 +2403,37 @@ export default function Page() {
             {topPlanLabel}
           </button>
 
-          <TopAccountButton
-            isLoggedIn={isLoggedIn}
-            authLoading={authLoading}
-            authUserName={authUserName}
-            authUserEmail={authUserEmail}
-            proLoading={proLoading}
-            isPro={isPro}
+          <button
             onClick={() => openLoginModal("signin")}
-          />
+            disabled={authLoading}
+            className={[
+              "relative h-11 w-11",
+              "bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm",
+              "grid place-items-center text-zinc-900 hover:bg-white transition-colors",
+              "rounded-full p-0",
+              authLoading ? "opacity-60 cursor-not-allowed" : "cursor-pointer",
+            ].join(" ")}
+            aria-label={isLoggedIn ? "Ver cuenta" : "Iniciar sesión"}
+            title={authLoading ? "Cargando…" : isLoggedIn ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : planLabelText}` : "Iniciar sesión"}
+          >
+            <span
+              className={[
+                "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white grid place-items-center",
+                authLoading ? "bg-zinc-300" : isLoggedIn ? "bg-emerald-500" : "bg-zinc-300",
+              ].join(" ")}
+              aria-hidden="true"
+            />
+            
+            {isLoggedIn ? (
+              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 border border-blue-600/20 grid place-items-center">
+                <span className="text-[14px] font-semibold text-white leading-none">
+                  {(authUserName ?? authUserEmail ?? "").trim().charAt(0).toUpperCase() || "U"}
+                </span>
+              </div>
+            ) : (
+              <UserIcon className="h-5 w-5" />
+            )}
+          </button>
         </div>
       </div>
 
@@ -2635,21 +2567,15 @@ export default function Page() {
                 return (
                   <div 
                     key={m.id} 
-                    className={`flex w-full ${isUser ? "justify-end" : "justify-start"} items-end gap-2`}
+                    className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}
                   >
-                    {!isUser && (
-                      <ChatAvatar 
-                        role="assistant" 
-                        className="mb-[2px]" 
-                      />
-                    )}
-                    
                     <div
                       className={[
-                        "relative max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed break-words",
-                        isUser ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none" : "bg-[#e8f0fe] text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none",
-                        "after:content-[''] after:absolute after:w-3 after:h-3 after:rotate-45 after:top-[10px]",
-                        isUser ? "after:right-[-4px] after:bg-[#dcf8c6]" : "after:left-[-4px] after:bg-[#e8f0fe]",
+                        "relative max-w-[85%] px-4 py-3 shadow-sm text-[15px] leading-relaxed break-words",
+                        isUser 
+                          ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-[20px] rounded-tr-none" 
+                          : "bg-gradient-to-r from-zinc-100 to-zinc-50 border border-zinc-200/50 text-zinc-900 rounded-[20px] rounded-tl-none",
+                        "transition-all duration-200",
                       ].join(" ")}
                     >
                       {m.image && (
@@ -2677,14 +2603,6 @@ export default function Page() {
                         </div>
                       )}
                     </div>
-
-                    {isUser && (
-                      <ChatAvatar 
-                        role="user" 
-                        name={authUserName || undefined}
-                        className="mb-[2px]" 
-                      />
-                    )}
                   </div>
                 );
               })}
@@ -2692,8 +2610,8 @@ export default function Page() {
           </div>
         </div>
 
-        {/* ===== INPUT BAR (con fixes de botones) ===== */}
-        <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl">
+        {/* ===== INPUT BAR (MEJORADO PARA MÓVIL) ===== */}
+        <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-xl border-t border-zinc-200/50">
           <div className="mx-auto max-w-3xl px-3 md:px-6 pt-3 pb-2">
             {imagePreview && (
               <div className="mb-2 relative w-fit">
@@ -2710,10 +2628,10 @@ export default function Page() {
 
             {micMsg && <div className="mb-2 text-[12px] text-zinc-600 bg-white border border-zinc-200 rounded-2xl px-3 py-2">{micMsg}</div>}
 
-            {/* ✅ 2.2 Input bar: Send / Mic / Pencil / Attach con fixes */}
-            <div className={["w-full", "relative rounded-[26px] border border-zinc-200 bg-white", "overflow-hidden"].join(" ")}>
-              {/* LEFT ICONS (overlay) */}
-              <div className="absolute left-2.5 bottom-2 flex items-center gap-1">
+            {/* ✅ INPUT BAR MEJORADA CON BOTÓN ENVIAR ESTILO CHATGPT */}
+            <div className={["w-full", "relative rounded-[24px] border border-zinc-300 bg-white", "overflow-hidden"].join(" ")}>
+              {/* LEFT ICONS */}
+              <div className="absolute left-3 bottom-3 flex items-center gap-1">
                 <button
                   onClick={openBoard}
                   className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
@@ -2737,8 +2655,8 @@ export default function Page() {
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
               </div>
 
-              {/* RIGHT ICONS (overlay) */}
-              <div className="absolute right-2.5 bottom-2 flex items-center gap-2">
+              {/* RIGHT ICONS (BOTÓN ENVIAR ESTILO CHATGPT) */}
+              <div className="absolute right-3 bottom-3 flex items-center gap-2">
                 <button
                   onClick={toggleMic}
                   disabled={!!isTyping || !speechSupported}
@@ -2759,21 +2677,24 @@ export default function Page() {
                   </div>
                 </button>
 
+                {/* ✅ BOTÓN ENVIAR ESTILO CHATGPT: REDONDO NEGRO CON FLECHA BLANCA */}
                 <button
                   onClick={sendMessage}
                   disabled={!canSend}
                   className={[
-                    "h-10 w-10 rounded-full shrink-0 transition-colors grid place-items-center p-0",
-                    !canSend ? "bg-zinc-200 text-zinc-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer",
+                    "h-10 w-10 rounded-full shrink-0 transition-all grid place-items-center p-0",
+                    !canSend 
+                      ? "bg-zinc-200 text-zinc-500 cursor-not-allowed" 
+                      : "bg-black hover:bg-zinc-900 active:scale-95 cursor-pointer shadow-md",
                   ].join(" ")}
                   aria-label="Enviar"
                   title="Enviar"
                 >
-                  <ArrowUpIcon className="h-5 w-5" />
+                  <ArrowUpIcon className="h-5 w-5 text-white" />
                 </button>
               </div>
 
-              {/* TEXTAREA: full-width real, con padding inferior para no pisar iconos */}
+              {/* TEXTAREA */}
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -2790,18 +2711,25 @@ export default function Page() {
                 className={[
                   "block w-full resize-none bg-transparent outline-none",
                   "text-[15px] leading-5",
-                  "px-4 pt-2",
-                  "pb-[56px]", // espacio para iconos inferiores
+                  "px-4 pt-3",
+                  "pb-[52px]", // espacio para iconos inferiores
                   "overflow-hidden",
                   inputExpanded ? "min-h-[56px]" : "min-h-[44px]",
+                  "transition-all duration-200 ease-out", // Animación suave
                 ].join(" ")}
                 rows={1}
               />
             </div>
           </div>
 
+          {/* ✅ DISCLAIMER COMPACTO PARA MÓVIL */}
           <div className="mx-auto max-w-3xl px-3 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
-            <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">Orientación preventiva · No sustituye profesionales.</p>
+            <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">
+              {typeof window !== "undefined" && window.innerWidth < 768 
+                ? "Orientación preventiva · No sustituye profesionales."
+                : "Orientación preventiva · No sustituye profesionales regulados."
+              }
+            </p>
             {!hasUserMessage && <div className="h-1" />}
           </div>
         </div>
