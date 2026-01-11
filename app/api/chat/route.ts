@@ -1,100 +1,107 @@
-// app/api/chat/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "nodejs"; // importante si en tu deploy te da problemas con fetch/streams
-export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
-function requiredEnv(name: string) {
-  const v = process.env[name];
-  if (!v || !v.trim()) {
-    throw new Error(`Missing env: ${name}`);
-  }
-  return v.trim();
+function cleanUrl(u: string) {
+  return (u || "").trim().replace(/\/$/, "");
 }
 
-export async function POST(req: Request) {
+function json(data: unknown, status = 200) {
+  return NextResponse.json(data, { status });
+}
+
+export async function POST(req: NextRequest) {
   try {
-    const SUPABASE_EDGE_FUNCTION_URL =
-      process.env.SUPABASE_EDGE_FUNCTION_URL?.trim() ||
-      ""; // ej: https://xxxxx.supabase.co/functions/v1
+    const supabaseUrl =
+      cleanUrl(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "");
 
-    const SUPABASE_ANON_KEY =
-      process.env.SUPABASE_ANON_KEY?.trim() ||
-      ""; // anon public
+    const supabaseAnonKey =
+      (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+        process.env.SUPABASE_ANON_KEY ||
+        process.env.SUPABASE_ANON_KEY_FALLBACK ||
+        "").trim();
 
-    if (!SUPABASE_EDGE_FUNCTION_URL || !SUPABASE_ANON_KEY) {
-      return NextResponse.json(
+    // Si no defines SUPABASE_EDGE_FUNCTION_URL, lo construimos automáticamente:
+    // https://xxxx.supabase.co/functions/v1/quick-service
+    const edgeUrl =
+      cleanUrl(process.env.SUPABASE_EDGE_FUNCTION_URL || "") ||
+      (supabaseUrl ? `${supabaseUrl}/functions/v1/quick-service` : "");
+
+    const missing: string[] = [];
+    if (!supabaseUrl) missing.push("NEXT_PUBLIC_SUPABASE_URL");
+    if (!supabaseAnonKey) missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+    if (!edgeUrl) missing.push("SUPABASE_EDGE_FUNCTION_URL (o NEXT_PUBLIC_SUPABASE_URL para construirla)");
+
+    if (missing.length) {
+      return json(
         {
           error: "Error de configuración",
-          message:
-            "Faltan variables de entorno: SUPABASE_EDGE_FUNCTION_URL, SUPABASE_ANON_KEY",
+          message: `Faltan variables de entorno: ${missing.join(", ")}`,
           hint:
-            "Verifica SUPABASE_EDGE_FUNCTION_URL y SUPABASE_ANON_KEY en .env.local",
+            "Verifica tu .env.local. Recomendado: NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY. (SUPABASE_EDGE_FUNCTION_URL es opcional).",
         },
-        { status: 500 }
+        500
       );
     }
 
     const body = await req.json().catch(() => ({}));
-    const messages = Array.isArray(body?.messages) ? body.messages : [];
-    const userText = typeof body?.userText === "string" ? body.userText : "";
-    const imageBase64 =
-      typeof body?.imageBase64 === "string" ? body.imageBase64 : null;
 
-    // Pasamos al edge: token del usuario si viene en header (desde cliente)
-    // En tu page.tsx ahora llamas /api/chat sin auth. Aun así,
-    // intentamos reenviar Authorization si un día lo añades.
-    const authHeader = req.headers.get("authorization");
+    // Opcional: si quieres pasar el JWT del usuario (cuando esté logueado),
+    // lo intentamos leer de Authorization, pero no es obligatorio.
+    const authHeader = req.headers.get("authorization") || "";
 
-    const edgeUrl = `${SUPABASE_EDGE_FUNCTION_URL.replace(/\/$/, "")}/quick-service`;
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      apikey: supabaseAnonKey,
+      Authorization: authHeader.startsWith("Bearer ") ? authHeader : `Bearer ${supabaseAnonKey}`,
+    };
 
-    const edgeRes = await fetch(edgeUrl, {
+    const resp = await fetch(edgeUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: authHeader || `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({
-        messages,
-        userText,
-        imageBase64,
-      }),
+      headers,
+      body: JSON.stringify(body),
       cache: "no-store",
     });
 
-    const raw = await edgeRes.text().catch(() => "");
-    let json: any = null;
+    const raw = await resp.text().catch(() => "");
+    let data: any = null;
     try {
-      json = raw ? JSON.parse(raw) : null;
+      data = raw ? JSON.parse(raw) : null;
     } catch {
-      json = null;
+      data = null;
     }
 
-    if (!edgeRes.ok) {
-      return NextResponse.json(
+    if (!resp.ok) {
+      return json(
         {
-          error: "IA_ERROR",
-          message: `Edge function error (${edgeRes.status})`,
-          details: json || raw,
+          error: "Edge Function error",
+          status: resp.status,
+          statusText: resp.statusText,
+          details: data || raw || null,
         },
-        { status: 500 }
+        500
       );
     }
 
-    // Tu UI espera { text }
-    const text =
-      (typeof json?.text === "string" && json.text.trim()) ||
-      "He recibido una respuesta vacía. ¿Puedes darme un poco más de contexto?";
+    // Tu UI espera { text: string }
+    if (!data || typeof data.text !== "string") {
+      return json(
+        {
+          error: "Respuesta inválida del Edge Function",
+          details: data ?? raw ?? null,
+        },
+        500
+      );
+    }
 
-    return NextResponse.json({ text });
+    return json(data, 200);
   } catch (e: any) {
-    return NextResponse.json(
+    return json(
       {
-        error: "SERVER_ERROR",
-        message: e?.message || "Error interno",
+        error: "Error interno /api/chat",
+        message: e?.message ?? String(e),
       },
-      { status: 500 }
+      500
     );
   }
 }
