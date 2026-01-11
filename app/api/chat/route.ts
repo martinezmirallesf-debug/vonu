@@ -1,133 +1,100 @@
-// app/api/chat/route.ts
+// app/api/chat/route.ts - VERSIÓN QUE USA TUS NOMBRES EXACTOS
 import { NextResponse } from "next/server";
 
-export const runtime = "edge"; // Usamos Edge Runtime para mejor performance
-
-type IncomingMessage = {
-  role: "user" | "assistant";
-  content: string;
-};
-
-type Body = {
-  messages?: IncomingMessage[];
-  userText?: string;
-  imageBase64?: string | null;
-};
-
-// Configuración
-const SUPABASE_EDGE_FUNCTION_URL = process.env.SUPABASE_EDGE_FUNCTION_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
-
-// Validar configuración
-function validateConfig() {
-  const errors = [];
-  if (!SUPABASE_EDGE_FUNCTION_URL) errors.push("SUPABASE_EDGE_FUNCTION_URL");
-  if (!SUPABASE_ANON_KEY) errors.push("SUPABASE_ANON_KEY");
-  
-  if (errors.length > 0) {
-    throw new Error(`Faltan variables de entorno: ${errors.join(", ")}`);
-  }
-}
+export const runtime = "edge";
 
 export async function POST(req: Request) {
   try {
-    // Validar configuración
-    validateConfig();
-    
-    // Parsear body
-    let body: Body;
-    try {
-      body = await req.json();
-    } catch {
-      return NextResponse.json(
-        { error: "Body inválido. Se espera JSON." },
-        { status: 400 }
-      );
-    }
+    // 1. OBTENER VARIABLES DE TU .env.local
+    const supabaseFunctionUrl = process.env.SUPABASE_EDGE_FUNCTION_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const openaiApiKey = process.env.OPENAI_API_KEY;
 
-    // Validar campos mínimos
-    const { messages = [], userText = "", imageBase64 = null } = body;
-    
-    if (!userText && !imageBase64 && messages.length === 0) {
-      return NextResponse.json(
-        { error: "Se requiere al menos userText o imageBase64" },
-        { status: 400 }
-      );
-    }
+    console.log("DEBUG - Variables encontradas:");
+    console.log("- SUPABASE_EDGE_FUNCTION_URL:", supabaseFunctionUrl ? "✓" : "✗");
+    console.log("- NEXT_PUBLIC_SUPABASE_ANON_KEY:", supabaseAnonKey ? "✓" : "✗");
+    console.log("- OPENAI_API_KEY:", openaiApiKey ? "✓" : "✗");
 
-    // Preparar payload para Supabase
-    const payload = {
-      messages: Array.isArray(messages) ? messages : [],
-      userText: typeof userText === "string" ? userText : "",
-      imageBase64: typeof imageBase64 === "string" ? imageBase64 : null,
-    };
-
-    // Llamar al Edge Function de Supabase
-    const response = await fetch(SUPABASE_EDGE_FUNCTION_URL!, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-        "Content-Type": "application/json",
-        "x-client-info": "nextjs-proxy/v1",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    // Manejar respuesta
-    if (!response.ok) {
-      let errorData;
-      try {
-        errorData = await response.json();
-      } catch {
-        errorData = { error: await response.text() };
-      }
-      
+    // 2. VALIDAR
+    if (!supabaseFunctionUrl || !supabaseAnonKey) {
       return NextResponse.json(
         {
-          error: `Error del servidor (${response.status})`,
-          details: errorData,
-        },
-        { status: response.status }
-      );
-    }
-
-    // Devolver respuesta exitosa
-    const data = await response.json();
-    return NextResponse.json(data);
-    
-  } catch (error: any) {
-    console.error("Error en proxy API:", error);
-    
-    // Manejar errores de configuración
-    if (error.message?.includes("variables de entorno")) {
-      return NextResponse.json(
-        {
-          error: "Error de configuración",
-          message: error.message,
-          hint: "Verifica SUPABASE_EDGE_FUNCTION_URL y SUPABASE_ANON_KEY en .env.local",
+          error: "Configuración incompleta",
+          message: `Faltan: ${!supabaseFunctionUrl ? 'SUPABASE_EDGE_FUNCTION_URL' : ''} ${!supabaseAnonKey ? 'NEXT_PUBLIC_SUPABASE_ANON_KEY' : ''}`,
+          hint: "Verifica tu .env.local"
         },
         { status: 500 }
       );
     }
 
+    // 3. PROCESAR REQUEST
+    const body = await req.json();
+    const { messages = [], userText = "", imageBase64 = null } = body;
+
+    // 4. LLAMAR A SUPABASE
+    const response = await fetch(supabaseFunctionUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${supabaseAnonKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ messages, userText, imageBase64 }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return NextResponse.json(data);
+    }
+
+    // 5. FALLBACK A OPENAI
+    if (openaiApiKey) {
+      console.log("Usando fallback OpenAI...");
+      const chatMessages = [
+        {
+          role: "system",
+          content: "Eres Vonu. Español natural. Ayuda con decisiones."
+        },
+        ...messages.slice(-4),
+        { role: "user", content: userText || "Hola" }
+      ];
+
+      const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openaiApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: chatMessages,
+          temperature: 0.4,
+        }),
+      });
+
+      const data = await openaiResponse.json();
+      return NextResponse.json({ 
+        text: data.choices?.[0]?.message?.content || "Sin respuesta",
+        warning: "Fallback OpenAI"
+      });
+    }
+
+    // 6. ERROR FINAL
     return NextResponse.json(
-      {
-        error: "Error interno del servidor",
-        message: error instanceof Error ? error.message : String(error),
+      { 
+        error: "Todos los servicios fallaron",
+        message: "Configura OPENAI_API_KEY para fallback"
+      },
+      { status: 503 }
+    );
+
+  } catch (error: any) {
+    console.error("ERROR CRÍTICO:", error);
+    return NextResponse.json(
+      { 
+        error: "Error interno",
+        details: error.message 
       },
       { status: 500 }
     );
   }
-}
-
-// Opcional: Manejar OPTIONS para CORS
-export async function OPTIONS(req: Request) {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    },
-  });
 }
