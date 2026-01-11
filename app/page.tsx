@@ -244,6 +244,106 @@ function PlusIcon({ className }: { className?: string }) {
   );
 }
 
+// ================ COMPONENTES NUEVOS ================
+
+// ✅ 1) Componente Avatar para chat (estilo iMessage/WhatsApp/ChatGPT)
+function ChatAvatar({ role, name, className = "" }: { role: "user" | "assistant"; name?: string; className?: string }) {
+  const size = "h-8 w-8 md:h-9 md:w-9";
+  
+  if (role === "assistant") {
+    return (
+      <div 
+        className={`${size} rounded-full bg-white border border-zinc-200 shadow-sm grid place-items-center flex-shrink-0 ${className}`}
+        aria-label="Avatar de Vonu"
+        title="Vonu AI"
+      >
+        <img 
+          src="/vonu-icon.png?v=2" 
+          alt="Vonu" 
+          className="h-5 w-5 md:h-6 md:w-6" 
+          draggable={false}
+        />
+      </div>
+    );
+  }
+  
+  // User avatar con inicial
+  const initial = (name || "U").charAt(0).toUpperCase();
+  const bgColor = "bg-gradient-to-br from-blue-500 to-blue-600";
+  
+  return (
+    <div 
+      className={`${size} rounded-full ${bgColor} border border-blue-600/20 text-white grid place-items-center flex-shrink-0 ${className}`}
+      aria-label="Tu avatar"
+      title={name ? `Usuario: ${name}` : "Usuario"}
+    >
+      <span className="text-[13px] md:text-[14px] font-semibold leading-none">{initial}</span>
+    </div>
+  );
+}
+
+// ✅ 2) Componente TopAccountButton (avatar bonito para top-right)
+function TopAccountButton({ 
+  isLoggedIn, 
+  authLoading, 
+  authUserName, 
+  authUserEmail,
+  proLoading,
+  isPro,
+  onClick 
+}: { 
+  isLoggedIn: boolean;
+  authLoading: boolean;
+  authUserName: string | null;
+  authUserEmail: string | null;
+  proLoading: boolean;
+  isPro: boolean;
+  onClick: () => void;
+}) {
+  const userInitial = useMemo(() => {
+    const base = (authUserName ?? authUserEmail ?? "").trim();
+    if (!base) return "U";
+    return base.charAt(0).toUpperCase();
+  }, [authUserName, authUserEmail]);
+  
+  const statusColor = authLoading ? "bg-zinc-300" : isLoggedIn ? "bg-emerald-500" : "bg-zinc-300";
+  const planLabelText = !isLoggedIn ? "Sin sesión" : isPro ? "Plus+" : "Gratis";
+  
+  return (
+    <button
+      onClick={onClick}
+      disabled={authLoading}
+      className={[
+        "relative h-11 w-11",
+        "bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm",
+        "grid place-items-center text-zinc-900 hover:bg-white transition-colors",
+        "rounded-full p-0",
+        authLoading ? "opacity-60 cursor-not-allowed" : "cursor-pointer",
+      ].join(" ")}
+      aria-label={isLoggedIn ? "Ver cuenta" : "Iniciar sesión"}
+      title={authLoading ? "Cargando…" : isLoggedIn ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : planLabelText}` : "Iniciar sesión"}
+    >
+      <span
+        className={[
+          "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white grid place-items-center",
+          statusColor,
+        ].join(" ")}
+        aria-hidden="true"
+      />
+      
+      {isLoggedIn ? (
+        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 border border-blue-600/20 grid place-items-center">
+          <span className="text-[14px] font-semibold text-white leading-none">{userInitial}</span>
+        </div>
+      ) : (
+        <UserIcon className="h-5 w-5" />
+      )}
+    </button>
+  );
+}
+
+// ================ COMPONENTE PRINCIPAL ================
+
 export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -524,7 +624,7 @@ export default function Page() {
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
         const u = session?.user;
 
-        // ✅ FIX: aseguramos que authLoading se apaga también aquí (evita estados “colgados” tras OAuth)
+        // ✅ FIX: aseguramos que authLoading se apaga también aquí (evita estados "colgados" tras OAuth)
         setAuthLoading(false);
 
         if (!u) {
@@ -1671,11 +1771,6 @@ export default function Page() {
 
   // ✅ UI estado botones top-right (plan + cuenta)
   const topPlanLabel = authLoading ? "…" : isPro ? PLUS_NODE : isLoggedIn ? "Gratis" : PLUS_NODE;
-  const userInitial = (() => {
-    const base = (authUserName ?? authUserEmail ?? "").trim();
-    if (!base) return "U";
-    return base.charAt(0).toUpperCase();
-  })();
 
   // === PRICING COPY ===
   const PRICE_MONTH = "4,99€";
@@ -1783,7 +1878,7 @@ export default function Page() {
                   <div className="min-w-0">
                     <div className="text-[14px] font-semibold text-zinc-900 leading-5">Pizarra</div>
                     {/* ✅ FIX: texto en negro (antes no se veía bien) */}
-                    <div className="text-[11px] text-zinc-900 leading-4">Dibuja con dedo o lápiz · luego “Enviar al chat”</div>
+                    <div className="text-[11px] text-zinc-900 leading-4">Dibuja con dedo o lápiz · luego "Enviar al chat"</div>
                   </div>
                 </div>
 
@@ -1921,7 +2016,7 @@ export default function Page() {
                     {/* ✅ FIX: tip en negro */}
                     <div className="text-[11px] text-zinc-900">Tip: escribe grande en tablet (dedo o lápiz). Puedes enviar varias pizarras seguidas.</div>
 
-                    {/* Mobile: Enviar al chat abajo (y quitamos “Cerrar”) */}
+                    {/* Mobile: Enviar al chat abajo (y quitamos "Cerrar") */}
                     <button
                       onClick={exportBoardToChat}
                       className="md:hidden inline-flex h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors shrink-0 items-center justify-center"
@@ -2189,7 +2284,7 @@ export default function Page() {
                       setLoginMsg(null);
                       setLoginOpen(false);
                     }}
-                    className="flex-1 h-11 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm font-semibold transition-colors cursor-pointer"
+                    className="flex-1 h-11 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center"
                   >
                     Cerrar sesión
                   </button>
@@ -2198,7 +2293,7 @@ export default function Page() {
                       setLoginOpen(false);
                       setLoginMsg(null);
                     }}
-                    className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors cursor-pointer"
+                    className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center"
                   >
                     Volver
                   </button>
@@ -2286,7 +2381,7 @@ export default function Page() {
 
                   <button
                     onClick={authMode === "signin" ? signInWithPassword : signUpWithPassword}
-                    className="w-full h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                    className="w-full h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center"
                     disabled={!!loginSending}
                   >
                     {loginSending ? "Procesando…" : authMode === "signin" ? "INICIAR SESIÓN" : "CREAR CUENTA"}
@@ -2383,13 +2478,14 @@ export default function Page() {
           </div>
         </div>
 
-        {/* ✅ CAMBIO: renderizar SIEMPRE (si authLoading, quedan deshabilitados) */}
+        {/* ✅ 2.1 Top-right: Plan + Cuenta (botones estables) */}
         <div className="pointer-events-auto flex items-center gap-2">
           <button
             onClick={handleOpenPlansCTA}
             disabled={authLoading}
             className={[
-              "h-11 px-4 rounded-full transition-colors cursor-pointer shadow-sm border",
+              "h-11 min-w-[92px] px-4 rounded-full transition-colors cursor-pointer shadow-sm border",
+              "flex items-center justify-center",
               authLoading ? "bg-zinc-200 text-zinc-500 border-zinc-200 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 border-blue-700/10",
             ].join(" ")}
             title={authLoading ? "Cargando…" : isPro ? "Tienes Plus+" : isLoggedIn ? "Plan Gratis" : "Ver planes"}
@@ -2397,28 +2493,15 @@ export default function Page() {
             {topPlanLabel}
           </button>
 
-          <button
+          <TopAccountButton
+            isLoggedIn={isLoggedIn}
+            authLoading={authLoading}
+            authUserName={authUserName}
+            authUserEmail={authUserEmail}
+            proLoading={proLoading}
+            isPro={isPro}
             onClick={() => openLoginModal("signin")}
-            disabled={authLoading}
-            className={[
-              "relative h-11 w-11",
-              "bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm",
-              "grid place-items-center text-zinc-900 hover:bg-white transition-colors cursor-pointer",
-              "rounded-full p-0",
-              authLoading ? "opacity-60 cursor-not-allowed" : "",
-            ].join(" ")}
-            aria-label={isLoggedIn ? "Ver cuenta" : "Iniciar sesión"}
-            title={authLoading ? "Cargando…" : isLoggedIn ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${proLoading ? "..." : planLabelText}` : "Iniciar sesión"}
-          >
-            <span
-              className={[
-                "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white",
-                authLoading ? "bg-zinc-300" : isLoggedIn ? "bg-emerald-500" : "bg-zinc-300",
-              ].join(" ")}
-              aria-hidden="true"
-            />
-            {isLoggedIn ? <span className="text-[13px] font-semibold">{userInitial}</span> : <UserIcon className="h-5 w-5" />}
-          </button>
+          />
         </div>
       </div>
 
@@ -2451,16 +2534,16 @@ export default function Page() {
                 <div className="text-xs text-zinc-500">Tus consultas recientes</div>
               </div>
 
-              <button onClick={createThreadAndActivate} className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
+              <button onClick={createThreadAndActivate} className="text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer flex items-center justify-center">
                 Nueva
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-2 mb-3">
-              <button onClick={openRename} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer">
+              <button onClick={openRename} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer flex items-center justify-center">
                 Renombrar
               </button>
-              <button onClick={deleteActiveThread} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer">
+              <button onClick={deleteActiveThread} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer flex items-center justify-center">
                 Borrar
               </button>
             </div>
@@ -2497,7 +2580,7 @@ export default function Page() {
                         <div className="text-[11px] text-zinc-500 truncate">{authUserEmail ?? "Email no disponible"}</div>
                       </div>
 
-                      <button onClick={logout} className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer shrink-0">
+                      <button onClick={logout} className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer shrink-0 flex items-center justify-center">
                         Salir
                       </button>
                     </div>
@@ -2512,14 +2595,14 @@ export default function Page() {
                           handleOpenPlansCTA();
                           setMenuOpen(false);
                         }}
-                        className={["text-xs px-3 py-2 rounded-full transition-colors cursor-pointer", isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700"].join(" ")}
+                        className={["text-xs px-3 py-2 rounded-full transition-colors cursor-pointer flex items-center justify-center", isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700"].join(" ")}
                       >
                         {isPro ? "Ver" : "Mejorar"}
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <button onClick={() => openLoginModal("signin")} className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
+                  <button onClick={() => openLoginModal("signin")} className="w-full text-xs px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer flex items-center justify-center">
                     Iniciar sesión
                   </button>
                 )}
@@ -2550,13 +2633,23 @@ export default function Page() {
                 const hasText = (m.text ?? "").length > 0;
 
                 return (
-                  <div key={m.id} className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
+                  <div 
+                    key={m.id} 
+                    className={`flex w-full ${isUser ? "justify-end" : "justify-start"} items-end gap-2`}
+                  >
+                    {!isUser && (
+                      <ChatAvatar 
+                        role="assistant" 
+                        className="mb-[2px]" 
+                      />
+                    )}
+                    
                     <div
                       className={[
                         "relative max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed break-words",
-                        isUser ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none mr-2" : "bg-[#e8f0fe] text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none ml-2",
-                        "after:content-[''] after:absolute after:w-3 after:h-3 after:rotate-45 after:top-[3px]",
-                        isUser ? "after:right-[-6px] after:bg-[#dcf8c6]" : "after:left-[-6px] after:bg-[#e8f0fe]",
+                        isUser ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none" : "bg-[#e8f0fe] text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none",
+                        "after:content-[''] after:absolute after:w-3 after:h-3 after:rotate-45 after:top-[10px]",
+                        isUser ? "after:right-[-4px] after:bg-[#dcf8c6]" : "after:left-[-4px] after:bg-[#e8f0fe]",
                       ].join(" ")}
                     >
                       {m.image && (
@@ -2584,6 +2677,14 @@ export default function Page() {
                         </div>
                       )}
                     </div>
+
+                    {isUser && (
+                      <ChatAvatar 
+                        role="user" 
+                        name={authUserName || undefined}
+                        className="mb-[2px]" 
+                      />
+                    )}
                   </div>
                 );
               })}
@@ -2591,7 +2692,7 @@ export default function Page() {
           </div>
         </div>
 
-        {/* ===== INPUT BAR (nuevo estilo como tu captura) ===== */}
+        {/* ===== INPUT BAR (con fixes de botones) ===== */}
         <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl">
           <div className="mx-auto max-w-3xl px-3 md:px-6 pt-3 pb-2">
             {imagePreview && (
@@ -2609,7 +2710,7 @@ export default function Page() {
 
             {micMsg && <div className="mb-2 text-[12px] text-zinc-600 bg-white border border-zinc-200 rounded-2xl px-3 py-2">{micMsg}</div>}
 
-            {/* ✅ INPUT: textarea “tipo Gemini”: el TEXTO ocupa laterales; iconos anclados abajo */}
+            {/* ✅ 2.2 Input bar: Send / Mic / Pencil / Attach con fixes */}
             <div className={["w-full", "relative rounded-[26px] border border-zinc-200 bg-white", "overflow-hidden"].join(" ")}>
               {/* LEFT ICONS (overlay) */}
               <div className="absolute left-2.5 bottom-2 flex items-center gap-1">
@@ -2672,15 +2773,16 @@ export default function Page() {
                 </button>
               </div>
 
-              {/* TEXTAREA: full-width real (sin huecos laterales), con padding inferior para no pisar iconos */}
+              {/* TEXTAREA: full-width real, con padding inferior para no pisar iconos */}
               <textarea
                 ref={textareaRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
+                  if (isTyping) return;
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    sendMessage();
+                    if (canSend) sendMessage();
                   }
                 }}
                 disabled={!!isTyping}
