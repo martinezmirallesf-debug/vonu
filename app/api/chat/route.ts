@@ -1,101 +1,70 @@
+// app/api/chat/route.ts
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs"; // necesario si luego quieres usar SDK/streams en Node
-export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
-type IncomingMessage = {
-  role: "user" | "assistant";
-  content: string;
-};
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-function stripDataUrlPrefix(dataUrl: string) {
-  // acepta: data:image/png;base64,xxxxx
-  const m = dataUrl.match(/^data:(.+);base64,(.*)$/);
-  if (!m) return { mime: null, base64: dataUrl };
-  return { mime: m[1] ?? null, base64: m[2] ?? "" };
-}
+// Tu function real (según tu screenshot)
+const FUNCTION_NAME = "quick-service";
 
-function safeJsonParse<T>(txt: string): T | null {
-  try {
-    return JSON.parse(txt) as T;
-  } catch {
-    return null;
-  }
-}
-
-// ⚠️ Aquí puedes conectar tu IA real.
-// Ahora mismo, este handler devuelve una respuesta “placeholder” útil,
-// para que tu UI funcione sin romperse.
-async function runModel({
-  messages,
-  userText,
-  imageBase64,
-}: {
-  messages: IncomingMessage[];
-  userText: string;
-  imageBase64?: string | null;
-}): Promise<string> {
-  // Si todavía no tienes OpenAI/IA conectada, devolvemos un texto decente.
-  const hasImage = !!imageBase64;
-  const lastUser = userText?.trim() || (hasImage ? "He adjuntado una imagen." : "");
-  const ctx = messages
-    .slice(-8)
-    .map((m) => `${m.role === "user" ? "Usuario" : "Asistente"}: ${m.content}`)
-    .join(" · ");
-
-  return (
-    "✅ Recibido.\n\n" +
-    `**Tu mensaje:** ${lastUser || "(vacío)"}\n` +
-    (hasImage ? "\n**Imagen:** sí (adjunta)\n" : "\n**Imagen:** no\n") +
-    "\n" +
-    "Para dejar esto listo con IA real, conecta aquí tu proveedor (OpenAI / etc.) y devuelve `text`.\n\n" +
-    "_Contexto reciente (debug):_\n" +
-    "```\n" +
-    (ctx || "(sin contexto)") +
-    "\n```"
-  );
+function json(data: any, status = 200) {
+  return NextResponse.json(data, { status });
 }
 
 export async function POST(req: Request) {
   try {
-    const raw = await req.text();
-    const body = safeJsonParse<{
-      messages?: IncomingMessage[];
-      userText?: string;
-      imageBase64?: string | null;
-    }>(raw);
-
-    if (!body) {
-      return NextResponse.json({ error: "Body inválido (no es JSON)." }, { status: 400 });
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      return json(
+        {
+          error: "Error de configuración",
+          message: "Faltan NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY",
+          hint: "Revisa .env.local o variables en Vercel",
+        },
+        500
+      );
     }
 
-    const messages = Array.isArray(body.messages) ? body.messages : [];
-    const userText = typeof body.userText === "string" ? body.userText : "";
-    const imageBase64 = typeof body.imageBase64 === "string" ? body.imageBase64 : null;
+    const body = await req.json().catch(() => ({}));
 
-    // Validación mínima
-    for (const m of messages) {
-      if (!m || (m.role !== "user" && m.role !== "assistant") || typeof m.content !== "string") {
-        return NextResponse.json({ error: "Formato de `messages` inválido." }, { status: 400 });
-      }
-    }
+    const userText = typeof body?.userText === "string" ? body.userText : "";
+    const imageBase64 = typeof body?.imageBase64 === "string" ? body.imageBase64 : null;
+    const messages = Array.isArray(body?.messages) ? body.messages : [];
 
-    // Si viene imagen en dataURL, la dejamos limpia para cuando conectes el modelo
-    let cleanedImageBase64: string | null = null;
-    if (imageBase64) {
-      const { base64 } = stripDataUrlPrefix(imageBase64);
-      cleanedImageBase64 = base64?.trim() ? base64.trim() : null;
-    }
+    const url = `${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/${FUNCTION_NAME}`;
 
-    const text = await runModel({
-      messages,
-      userText,
-      imageBase64: cleanedImageBase64,
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userText, imageBase64, messages }),
+      cache: "no-store",
     });
 
-    return NextResponse.json({ text }, { status: 200 });
+    const raw = await resp.text().catch(() => "");
+    let data: any = null;
+    try {
+      data = raw ? JSON.parse(raw) : null;
+    } catch {
+      data = null;
+    }
+
+    if (!resp.ok) {
+      return json(
+        {
+          error: `Supabase function error (${resp.status})`,
+          details: data ?? raw ?? null,
+        },
+        500
+      );
+    }
+
+    return json(data ?? { text: "Respuesta vacía desde Supabase." }, 200);
   } catch (e: any) {
-    const msg = typeof e?.message === "string" ? e.message : "Error desconocido en /api/chat";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return json({ error: "Internal error in /api/chat", message: e?.message ?? String(e) }, 500);
   }
 }
