@@ -1,3 +1,4 @@
+// app/api/chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -12,16 +13,16 @@ function json(data: unknown, status = 200) {
 
 export async function POST(req: NextRequest) {
   try {
-    const supabaseUrl =
-      cleanUrl(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "");
+    const supabaseUrl = cleanUrl(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "");
 
-    const supabaseAnonKey =
-      (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-        process.env.SUPABASE_ANON_KEY ||
-        process.env.SUPABASE_ANON_KEY_FALLBACK ||
-        "").trim();
+    const supabaseAnonKey = (
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_ANON_KEY_FALLBACK ||
+      ""
+    ).trim();
 
-    // Si no defines SUPABASE_EDGE_FUNCTION_URL, lo construimos automáticamente:
+    // Si no defines SUPABASE_EDGE_FUNCTION_URL, lo construimos:
     // https://xxxx.supabase.co/functions/v1/quick-service
     const edgeUrl =
       cleanUrl(process.env.SUPABASE_EDGE_FUNCTION_URL || "") ||
@@ -37,14 +38,30 @@ export async function POST(req: NextRequest) {
         {
           error: "Error de configuración",
           message: `Faltan variables de entorno: ${missing.join(", ")}`,
-          hint:
-            "Verifica tu .env.local. Recomendado: NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY. (SUPABASE_EDGE_FUNCTION_URL es opcional).",
+          hint: "Verifica tu .env.local. Recomendado: NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY. (SUPABASE_EDGE_FUNCTION_URL es opcional).",
         },
         500
       );
     }
 
-    const body = await req.json().catch(() => ({}));
+    // body desde el cliente
+    const body = (await req.json().catch(() => ({}))) as any;
+
+    // ✅ Normalizamos campos clave (para que quick-service reciba siempre algo consistente)
+    const normalized = {
+      messages: Array.isArray(body?.messages) ? body.messages : [],
+      userText: typeof body?.userText === "string" ? body.userText : "",
+      imageBase64: typeof body?.imageBase64 === "string" ? body.imageBase64 : null,
+      mode: body?.mode === "tutor" ? "tutor" : "chat",
+      tutorLevel:
+        body?.tutorLevel === "kid" || body?.tutorLevel === "teen" || body?.tutorLevel === "adult"
+          ? body.tutorLevel
+          : "adult",
+      // ✅ opcional: por si más adelante añades cosas
+      ...Object.fromEntries(
+        Object.entries(body || {}).filter(([k]) => !["messages", "userText", "imageBase64", "mode", "tutorLevel"].includes(k))
+      ),
+    };
 
     // Opcional: si quieres pasar el JWT del usuario (cuando esté logueado),
     // lo intentamos leer de Authorization, pero no es obligatorio.
@@ -59,7 +76,7 @@ export async function POST(req: NextRequest) {
     const resp = await fetch(edgeUrl, {
       method: "POST",
       headers,
-      body: JSON.stringify(body),
+      body: JSON.stringify(normalized),
       cache: "no-store",
     });
 

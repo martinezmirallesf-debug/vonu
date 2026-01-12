@@ -16,12 +16,23 @@ type Message = {
   streaming?: boolean;
 };
 
+type ThreadMode = "chat" | "tutor";
+
+type TutorLevel = "kid" | "teen" | "adult" | "unknown";
+
+type TutorProfile = {
+  level: TutorLevel;
+};
+
 type ChatThread = {
   id: string;
   title: string;
   updatedAt: number;
+  mode: ThreadMode; // 👈 modo por conversación
+  tutorProfile?: TutorProfile;
   messages: Message[];
 };
+
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -44,9 +55,12 @@ function makeNewThread(): ChatThread {
     id,
     title: "Nueva consulta",
     updatedAt: Date.now(),
+    mode: "chat",
+    tutorProfile: { level: "adult" },
     messages: [initialAssistantMessage()],
   };
 }
+
 
 function makeTitleFromText(text: string) {
   const t = text.trim().replace(/\s+/g, " ");
@@ -54,7 +68,7 @@ function makeTitleFromText(text: string) {
   return t.length > 34 ? t.slice(0, 34) + "…" : t;
 }
 
-const STORAGE_KEY = "vonu_threads_v1";
+const STORAGE_KEY = "vonu_threads_v2";
 
 const HOME_URL = "https://vonuai.com";
 
@@ -206,9 +220,68 @@ function normalizeAssistantText(text: string) {
   const raw = text ?? "";
   return raw
     .replace(/\r\n/g, "\n")
-    .replace(/\n{2,}/g, "\n") // evita salto de párrafo
-    .replace(/\n/g, " "); // mantiene una sola “línea” visual estable
+    .replace(/\n{2,}/g, "\n")
+    .replace(/\n/g, " ");
 }
+
+// ===== TUTOR (detección ligera frontend) =====
+function looksLikeTutorIntent(text: string) {
+  const t = (text || "").toLowerCase();
+
+  // señales fuertes (estudio/explicación)
+  const strong = [
+    "explícame",
+    "explicame",
+    "paso a paso",
+    "ejercicio",
+    "problema",
+    "ecuación",
+    "ecuaciones",
+    "derivada",
+    "integral",
+    "mates",
+    "matem",
+    "física",
+    "química",
+    "historia",
+    "geografía",
+    "resumen",
+    "repaso",
+    "examen",
+    "selectividad",
+    "vocabulario",
+    "inglés",
+    "grammar",
+    "gramática",
+    "traduce",
+    "pronunciación",
+    "hazme preguntas",
+    "test",
+    "quiz",
+    "flashcards",
+  ];
+
+  return strong.some((k) => t.includes(k));
+}
+
+function inferTutorLevel(text: string): TutorLevel {
+  const t = (text || "").toLowerCase();
+
+  // kid
+  const kid = ["primaria", "tabla", "sumas", "restas", "multiplic", "divisiones", "dictado", "ortografía", "deberes"];
+  if (kid.some((k) => t.includes(k))) return "kid";
+
+  // teen
+  const teen = ["eso", "bachiller", "selectividad", "evau", "trigonometr", "derivad", "integral", "funciones", "química", "física"];
+  if (teen.some((k) => t.includes(k))) return "teen";
+
+  // adult / unknown
+  const adult = ["universidad", "ingeniería", "álgebra lineal", "calculo", "estadística", "programación", "finanzas", "contabilidad"];
+  if (adult.some((k) => t.includes(k))) return "adult";
+
+  return "unknown";
+}
+
 
 function MicIcon({ className }: { className?: string }) {
   return (
@@ -870,39 +943,52 @@ export default function Page() {
   }
 
   // -------- Persistencia local --------
-  const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
-  const [activeThreadId, setActiveThreadId] = useState<string>("");
+const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
+const [activeThreadId, setActiveThreadId] = useState<string>("");
+const activeThreadIdRef = useRef<string>("");
 
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+useEffect(() => {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
 
-      const parsed = JSON.parse(raw) as ChatThread[];
-      if (!Array.isArray(parsed) || parsed.length === 0) return;
+    const parsed = JSON.parse(raw) as any[];
+    if (!Array.isArray(parsed) || parsed.length === 0) return;
 
-      const clean = parsed
-        .filter((t) => t && typeof t.id === "string")
-        .map((t) => ({
-          id: t.id,
-          title: typeof t.title === "string" ? t.title : "Consulta",
-          updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
-          messages: Array.isArray(t.messages) && t.messages.length ? t.messages : [initialAssistantMessage()],
-        }));
+    const clean: ChatThread[] = parsed
+      .filter((t) => t && typeof t.id === "string")
+      .map((t) => ({
+        id: String(t.id),
+        title: typeof t.title === "string" ? t.title : "Consulta",
+        updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
 
-      if (clean.length) {
-        setThreads(clean);
-        setActiveThreadId(clean[0].id);
-      }
-    } catch {}
-  }, []);
+        // 🔒 tipado estricto
+        mode: (t?.mode === "tutor" ? "tutor" : "chat") as ThreadMode,
 
-  useEffect(() => {
-    if (!mounted) return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(threads));
-    } catch {}
-  }, [threads, mounted]);
+        tutorProfile: {
+          level:
+            t?.tutorProfile?.level === "kid" || t?.tutorProfile?.level === "teen" || t?.tutorProfile?.level === "adult"
+              ? (t.tutorProfile.level as TutorLevel)
+              : ("adult" as TutorLevel),
+        },
+
+        messages: Array.isArray(t.messages) && t.messages.length ? (t.messages as Message[]) : [initialAssistantMessage()],
+      }));
+
+    if (clean.length) {
+      setThreads(clean);
+      setActiveThreadId(clean[0].id);
+    }
+  } catch {}
+}, []);
+
+useEffect(() => {
+  if (!mounted) return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(threads));
+  } catch {}
+}, [threads, mounted]);
+
 
   // -------- UI --------
   const [input, setInput] = useState("");
@@ -1302,6 +1388,9 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threads.length]);
 
+  useEffect(() => {
+  activeThreadIdRef.current = activeThreadId;
+}, [activeThreadId]);
   const activeThread = useMemo(() => {
     return threads.find((t) => t.id === activeThreadId) ?? threads[0];
   }, [threads, activeThreadId]);
@@ -1513,9 +1602,42 @@ export default function Page() {
 
     if (!canSend) return;
     if (!activeThread) return;
+    const targetThreadId = activeThread.id;
+activeThreadIdRef.current = targetThreadId;
 
     const userText = input.trim();
-    const imageBase64 = imagePreview;
+const imageBase64 = imagePreview;
+
+setUiError(null);
+
+// ===== Tutor auto-activación (solo si está en chat y la intención es fuerte) =====
+const threadModeNow: ThreadMode = activeThread.mode ?? "chat";
+let nextMode: ThreadMode = threadModeNow;
+
+let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
+
+if (threadModeNow === "chat" && looksLikeTutorIntent(userText)) {
+  nextMode = "tutor";
+  const inferred = inferTutorLevel(userText);
+  nextTutorLevel = inferred === "unknown" ? (nextTutorLevel || "adult") : inferred;
+
+  setThreads((prev) =>
+    prev.map((t) =>
+      t.id === targetThreadId
+        ? {
+            ...t,
+            updatedAt: Date.now(),
+            mode: "tutor",
+            tutorProfile: { level: nextTutorLevel },
+          }
+        : t
+    )
+  );
+
+  setToastMsg("✅ He activado Modo Tutor para esta conversación.");
+  setTimeout(() => setToastMsg(null), 2200);
+}
+
 
     setUiError(null);
 
@@ -1537,20 +1659,19 @@ export default function Page() {
     shouldStickToBottomRef.current = true;
 
     setThreads((prev) =>
-      prev.map((t) => {
-        if (t.id !== activeThread.id) return t;
+  prev.map((t) => {
+    if (t.id !== targetThreadId) return t;
 
-        const hasUserAlready = t.messages.some((m) => m.role === "user");
-        const newTitle = hasUserAlready ? t.title : makeTitleFromText(userText || "Imagen");
+    return {
+      ...t,
+      updatedAt: Date.now(),
+      // ✅ guardamos los mensajes en el thread
+      messages: [...t.messages, userMsg, assistantMsg],
+    };
+  })
+);
 
-        return {
-          ...t,
-          title: newTitle,
-          updatedAt: Date.now(),
-          messages: [...t.messages, userMsg, assistantMsg],
-        };
-      })
-    );
+
 
     setInput("");
     setImagePreview(null);
@@ -1559,7 +1680,7 @@ export default function Page() {
     try {
       await sleep(220);
 
-      const threadNow = threads.find((x) => x.id === activeThread.id) ?? activeThread;
+      const threadNow = threads.find((x) => x.id === targetThreadId) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
         .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
@@ -1572,11 +1693,14 @@ export default function Page() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
-        body: JSON.stringify({
-          messages: convoForApi,
-          userText,
-          imageBase64,
-        }),
+       body: JSON.stringify({
+  messages: convoForApi,
+  userText,
+  imageBase64,
+  mode: nextMode,
+  tutorLevel: nextTutorLevel,
+}),
+
       });
 
       if (!res.ok) {
@@ -1589,48 +1713,71 @@ export default function Page() {
 
       await sleep(90);
 
-      let i = 0;
-      const speedMs = fullText.length > 900 ? 7 : 11;
+      const isTutor = nextMode === "tutor";
 
-      const interval = setInterval(() => {
-        i++;
-        const partial = fullText.slice(0, i);
+if (isTutor) {
+  // ✅ Tutor: menos streaming, más estable (mostramos dots y luego el bloque completo)
+  await sleep(220);
 
-        setThreads((prev) =>
-          prev.map((t) => {
-            if (t.id !== activeThread.id) return t;
-            return {
-              ...t,
-              updatedAt: Date.now(),
-              messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
-            };
-          })
-        );
+  setThreads((prev) =>
+    prev.map((t) => {
+      if (t.id !== targetThreadId) return t;
+      return {
+        ...t,
+        updatedAt: Date.now(),
+        messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: fullText, streaming: false } : m)),
+      };
+    })
+  );
 
-        if (i >= fullText.length) {
-          clearInterval(interval);
+  setIsTyping(false);
+  if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+} else {
+  // ✅ Chat normal: streaming letra a letra como ahora
+  let i = 0;
+  const speedMs = fullText.length > 900 ? 7 : 11;
 
-          setThreads((prev) =>
-            prev.map((t) => {
-              if (t.id !== activeThread.id) return t;
-              return {
-                ...t,
-                updatedAt: Date.now(),
-                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
-              };
-            })
-          );
+  const interval = setInterval(() => {
+    i++;
+    const partial = fullText.slice(0, i);
 
-          setIsTyping(false);
-          if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
-        }
-      }, speedMs);
+    setThreads((prev) =>
+      prev.map((t) => {
+        if (t.id !== targetThreadId) return t;
+        return {
+          ...t,
+          updatedAt: Date.now(),
+          messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
+        };
+      })
+    );
+
+    if (i >= fullText.length) {
+      clearInterval(interval);
+
+      setThreads((prev) =>
+        prev.map((t) => {
+          if (t.id !== targetThreadId) return t;
+          return {
+            ...t,
+            updatedAt: Date.now(),
+            messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
+          };
+        })
+      );
+
+      setIsTyping(false);
+      if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+    }
+  }, speedMs);
+}
+
     } catch (err: any) {
       const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
-          if (t.id !== activeThread.id) return t;
+          if (t.id !== targetThreadId) return t;
           return {
             ...t,
             updatedAt: Date.now(),
@@ -2456,14 +2603,66 @@ export default function Page() {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              <button onClick={openRename} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer">
-                Renombrar
-              </button>
-              <button onClick={deleteActiveThread} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer">
-                Borrar
-              </button>
-            </div>
+            <div className="grid grid-cols-3 gap-2 mb-3">
+  <button
+    onClick={openRename}
+    className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer"
+  >
+    Renombrar
+  </button>
+
+  <button
+    onClick={() => {
+      if (!activeThread) return;
+
+      const current: ThreadMode = activeThread.mode ?? "chat";
+      const next: ThreadMode = current === "tutor" ? "chat" : "tutor";
+
+      setThreads((prev) =>
+        prev.map((t) => {
+          if (t.id !== activeThread.id) return t;
+
+          const nextLevel: TutorLevel =
+            t.tutorProfile?.level && t.tutorProfile.level !== "unknown"
+              ? t.tutorProfile.level
+              : "adult";
+
+          return {
+            ...t,
+            updatedAt: Date.now(),
+            mode: next,
+            tutorProfile: { level: nextLevel },
+          };
+        })
+      );
+
+      setToastMsg(
+        next === "tutor"
+          ? "✅ Modo Tutor activado para esta conversación."
+          : "Modo Tutor desactivado."
+      );
+      setTimeout(() => setToastMsg(null), 2200);
+      setMenuOpen(false);
+    }}
+    className={[
+      "text-xs px-3 py-3 rounded-2xl border cursor-pointer transition-colors",
+      activeThread?.mode === "tutor"
+        ? "bg-blue-600 text-white border-blue-700/10 hover:bg-blue-700"
+        : "bg-white border-zinc-200 hover:bg-zinc-50",
+    ].join(" ")}
+  >
+    {activeThread?.mode === "tutor" ? "Tutor ✓" : "Tutor"}
+  </button>
+
+  <button
+    onClick={deleteActiveThread}
+    className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer"
+  >
+    Borrar
+  </button>
+</div>
+
+
 
             {/* LISTA (scroll) */}
             <div className="space-y-2 overflow-y-auto pr-1 flex-1">
@@ -2540,11 +2739,25 @@ export default function Page() {
         <div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0">
           <div className="mx-auto max-w-3xl px-3 md:px-6" style={{ paddingTop: 92, paddingBottom: chatBottomPad }}>
             <div className="flex flex-col gap-4 py-8 md:pt-6">
-              {messages.map((m) => {
+  {activeThread?.mode === "tutor" ? (
+    <div className="self-start ml-2 -mt-2">
+      <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[12px] text-blue-800 font-semibold">
+        🎓 Modo Tutor
+        <span className="text-[11px] font-normal text-blue-700/80">
+          nivel: {activeThread?.tutorProfile?.level ?? "adult"}
+        </span>
+      </div>
+    </div>
+  ) : null}
+
+  {messages.map((m) => {
+
                 const isUser = m.role === "user";
                 const rawText = isUser ? (m.text ?? "") : m.text || "";
 
-                const mdText = isUser ? rawText : normalizeAssistantText(rawText);
+                const isTutorThread = (activeThread?.mode ?? "chat") === "tutor";
+const mdText = isUser ? rawText : isTutorThread ? rawText : normalizeAssistantText(rawText);
+
 
                 const isStreaming = !!m.streaming;
                 const hasText = (m.text ?? "").length > 0;
