@@ -4,9 +4,22 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import ReactMarkdown from "react-markdown";
-
 import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
+
+import ReactMarkdown from "react-markdown";
+import type { Components } from "react-markdown";
+type WhiteboardBlockProps = {
+  value: string;
+  onOpenCanvas?: () => void;
+};
+
+/**
+ * Pizarra "tipo cole" (solo visual):
+ * - Fondo oscuro (pizarra)
+ * - Letras tipo "tiza"
+ * - Animación línea a línea (como si escribiera el profe)
+ */
+
 
 type Message = {
   id: string;
@@ -370,6 +383,134 @@ export default function Page() {
       <sup className="ml-[1px] text-[12px] font-bold leading-none relative -top-[5px]">+</sup>
     </span>
   );
+function WhiteboardBlock({
+  value,
+  onOpenCanvas,
+}: {
+  value: string;
+  onOpenCanvas: () => void;
+}) {
+  const lines = (value || "")
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((l) => l.trimEnd());
+
+  // ✅ animación: ir revelando líneas (como “profe escribiendo”)
+  const [shown, setShown] = useState(0);
+
+  useEffect(() => {
+    setShown(0);
+    const total = lines.length;
+
+    // si es muy largo, aceleramos un poco
+    const speed = total > 14 ? 70 : 110;
+
+    const t = setInterval(() => {
+      setShown((s) => {
+        const next = Math.min(total, s + 1);
+        if (next >= total) clearInterval(t);
+        return next;
+      });
+    }, speed);
+
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  return (
+    <div className="my-2 rounded-2xl border border-zinc-200 overflow-hidden">
+      <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-zinc-200 bg-white">
+        <div className="text-[12px] font-semibold text-zinc-900">🧑‍🏫 Pizarra</div>
+
+        <button
+          onClick={onOpenCanvas}
+          className="h-8 px-3 rounded-full bg-black hover:bg-zinc-900 text-white text-[12px] font-semibold"
+        >
+          Abrir pizarra
+        </button>
+      </div>
+
+      <div
+        className="px-4 py-4 text-[14px] leading-7"
+        style={{
+          backgroundColor: "#0b0f0d",
+          color: "#f8fafc",
+          fontFamily:
+            '"Chalkboard SE","Bradley Hand","Comic Sans MS","Segoe Print",ui-sans-serif,system-ui',
+          textShadow: "0 0 1px rgba(255,255,255,.20)",
+          backgroundImage:
+            "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)",
+          backgroundSize: "26px 26px, 38px 38px",
+          backgroundPosition: "0 0, 13px 19px",
+        }}
+      >
+        {lines.slice(0, shown).map((l, i) => (
+          <div
+            key={i}
+            className="whitespace-pre-wrap break-words"
+            style={{
+              opacity: 0.92,
+              animation: "chalkIn 240ms ease-out both",
+              filter: "drop-shadow(0px 0px 0.4px rgba(255,255,255,0.25))",
+            }}
+          >
+            {l || " "}
+          </div>
+        ))}
+        {/* cursor “tiza” al final mientras escribe */}
+        {shown < lines.length ? (
+          <span
+            aria-hidden="true"
+            style={{
+              display: "inline-block",
+              width: 10,
+              height: 18,
+              marginLeft: 4,
+              background: "rgba(248,250,252,0.85)",
+              borderRadius: 2,
+              transform: "translateY(3px)",
+            }}
+          />
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+const mdComponents: any = {
+  code({ className, children, node, ...props }: any) {
+    const isInline = node?.tagName !== "pre";
+    const lang = (className || "").replace("language-", "").trim();
+
+    // ✅ PIZARRA DEL TUTOR: ```whiteboard
+    if (!isInline && lang === "whiteboard") {
+      return (
+        <WhiteboardBlock
+          value={String(children ?? "")}
+          onOpenCanvas={() => openBoard()}
+        />
+      );
+    }
+
+    // Código en bloque normal
+    if (!isInline) {
+      return (
+        <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
+          <code className="text-[12.5px]" {...props}>
+            {String(children ?? "")}
+          </code>
+        </pre>
+      );
+    }
+
+    // Inline code
+    return (
+      <code className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]" {...props}>
+        {String(children ?? "")}
+      </code>
+    );
+  },
+};
 
   // ✅ FIX CLAVE: refreshProStatus NO depende de authUserId.
   async function refreshProStatus() {
@@ -1102,7 +1243,9 @@ useEffect(() => {
   const canvasWrapRef = useRef<HTMLDivElement>(null);
 
   const [boardTool, setBoardTool] = useState<"pen" | "eraser">("pen");
-  const [boardColor, setBoardColor] = useState<string>("#111827"); // zinc-900-ish
+  const BOARD_BG = "#0b0f0d"; // negro pizarra
+const [boardColor, setBoardColor] = useState<string>("#f8fafc"); // blanco tiza
+
   const [boardSize, setBoardSize] = useState<number>(6);
   const [boardMsg, setBoardMsg] = useState<string | null>(null);
 
@@ -1118,17 +1261,21 @@ useEffect(() => {
   }
 
   function resetCanvasWhite() {
-    const c = canvasRef.current;
-    const ctx = getCtx();
-    if (!c || !ctx) return;
+  const c = canvasRef.current;
+  const ctx = getCtx();
+  if (!c || !ctx) return;
 
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, c.width, c.height);
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, c.width, c.height);
-    ctx.restore();
-  }
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, c.width, c.height);
+
+  // ✅ fondo negro pizarra
+  ctx.fillStyle = BOARD_BG;
+  ctx.fillRect(0, 0, c.width, c.height);
+
+  ctx.restore();
+}
+
 
   function pushHistory() {
     const c = canvasRef.current;
@@ -1275,25 +1422,55 @@ useEffect(() => {
   }
 
   function drawLine(a: { x: number; y: number }, b: { x: number; y: number }, pressure?: number) {
-    const ctx = getCtx();
-    if (!ctx) return;
+  const ctx = getCtx();
+  if (!ctx) return;
 
-    const size = boardTool === "eraser" ? Math.max(10, boardSize * 2) : boardSize;
-    const p = typeof pressure === "number" ? Math.max(0.15, Math.min(1, pressure)) : 1;
+  const p = typeof pressure === "number" ? Math.max(0.2, Math.min(1, pressure)) : 1;
 
-    ctx.save();
+  // ✅ tamaño más “chalk”
+  const base = boardTool === "eraser" ? Math.max(14, boardSize * 2.2) : Math.max(3, boardSize);
+  const size = base * p;
 
-    ctx.globalCompositeOperation = boardTool === "eraser" ? "destination-out" : "source-over";
-    ctx.strokeStyle = boardTool === "eraser" ? "rgba(0,0,0,1)" : boardColor;
-    ctx.lineWidth = size * p;
+  ctx.save();
 
-    ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(b.x, b.y);
-    ctx.stroke();
+  // ✅ en pizarra negra: la goma pinta negro (NO destination-out)
+  ctx.globalCompositeOperation = "source-over";
+  ctx.strokeStyle = boardTool === "eraser" ? BOARD_BG : boardColor;
+  ctx.lineWidth = size;
 
-    ctx.restore();
+  // ✅ efecto tiza (ligero glow + textura)
+  if (boardTool !== "eraser") {
+    ctx.globalAlpha = 0.92;
+    ctx.shadowColor = "rgba(255,255,255,0.35)";
+    ctx.shadowBlur = 1.6;
+  } else {
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
   }
+
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.stroke();
+
+  // ✅ “polvo de tiza” sutil (micro puntos)
+  if (boardTool !== "eraser") {
+    const dust = Math.max(1, Math.floor(size / 5));
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 0.10;
+    ctx.fillStyle = boardColor;
+    for (let i = 0; i < dust; i++) {
+      const rx = b.x + (Math.random() - 0.5) * (size * 1.2);
+      const ry = b.y + (Math.random() - 0.5) * (size * 1.2);
+      ctx.fillRect(rx, ry, 1, 1);
+    }
+  }
+
+  ctx.restore();
+}
 
   function onCanvasPointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
     const c = canvasRef.current;
@@ -1856,6 +2033,21 @@ if (isTutor) {
 
   return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
+      <style jsx global>{`
+  @keyframes chalkIn {
+    from {
+      opacity: 0;
+      transform: translateY(2px);
+      filter: blur(0.4px);
+    }
+    to {
+      opacity: 0.92;
+      transform: translateY(0px);
+      filter: blur(0px);
+    }
+  }
+`}</style>
+
       {/* TOAST */}
       {toastMsg && (
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[90] px-3">
@@ -2000,7 +2192,7 @@ if (isTutor) {
                       <div className="flex items-center gap-2">
                         {/* Colores */}
                         <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 h-10">
-                          {["#111827", "#2563EB", "#DC2626", "#16A34A"].map((c) => (
+                          {["#f8fafc", "#fde047", "#60a5fa", "#fb7185", "#4ade80"].map((c) => (
                             <button
                               key={c}
                               onClick={() => {
@@ -2050,7 +2242,18 @@ if (isTutor) {
 
                   {/* Canvas */}
                   <div className="mt-2 flex-1 min-h-0">
-                    <div ref={canvasWrapRef} className="h-full w-full rounded-[22px] border border-zinc-200 bg-white overflow-hidden">
+                    <div
+  ref={canvasWrapRef}
+  className="h-full w-full rounded-[22px] border border-zinc-200 overflow-hidden"
+  style={{
+    backgroundColor: "#0b0f0d",
+    backgroundImage:
+      "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)",
+    backgroundSize: "26px 26px, 38px 38px",
+    backgroundPosition: "0 0, 13px 19px",
+  }}
+>
+
                       <canvas
                         ref={canvasRef}
                         className="h-full w-full"
@@ -2792,7 +2995,9 @@ const mdText = isUser ? rawText : isTutorThread ? rawText : normalizeAssistantTe
                               {!hasText ? <TypingDots /> : <TypingCaret />}
                             </span>
                           ) : (
-                            <ReactMarkdown>{mdText}</ReactMarkdown>
+                            <ReactMarkdown components={mdComponents}>
+  {mdText}
+</ReactMarkdown>
                           )}
                         </div>
                       )}
