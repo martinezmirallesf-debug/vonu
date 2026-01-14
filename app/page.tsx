@@ -495,8 +495,12 @@ const mdComponents: any = {
 
     // ✅ EXCALIDRAW: ```excalidraw
     if (!isInline && lang === "excalidraw") {
-      return <ExcalidrawBlock sceneJSON={content} />;
-    }
+  const content = Array.isArray(children)
+    ? children.join("")
+    : String(children ?? "");
+
+  return <ExcalidrawBlock sceneJSON={content} />;
+}
 
     // ✅ WHITEBOARD: ```whiteboard
     if (!isInline && lang === "whiteboard") {
