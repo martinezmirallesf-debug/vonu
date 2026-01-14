@@ -1366,10 +1366,10 @@ const [boardColor, setBoardColor] = useState<string>("#f8fafc"); // blanco tiza
       if (tctx) {
         tctx.putImageData(prev, 0, 0);
         ctx2.save();
-        ctx2.fillStyle = "#fff";
-        ctx2.fillRect(0, 0, nextW, nextH);
-        ctx2.drawImage(tmp, 0, 0, nextW, nextH);
-        ctx2.restore();
+ctx2.fillStyle = BOARD_BG; // ✅ negro pizarra
+ctx2.fillRect(0, 0, nextW, nextH);
+ctx2.drawImage(tmp, 0, 0, nextW, nextH);
+ctx2.restore();
       }
     } catch {
       resetCanvasWhite();
@@ -2115,16 +2115,18 @@ if (isTutor) {
           <div className="relative h-full w-full" onClick={(e) => e.stopPropagation()}>
             <div className="mx-auto h-full w-full max-w-4xl px-3 md:px-6">
               <div className="pt-4 flex items-center justify-between">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="h-11 w-11 rounded-full bg-white/90 backdrop-blur-xl border border-zinc-200 grid place-items-center shadow-sm">
-                    <img src={"/vonu-icon.png?v=2"} alt="Vonu" className="h-6 w-6" draggable={false} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[14px] font-semibold text-zinc-900 leading-5">Pizarra</div>
-                    {/* ✅ FIX: texto en negro (antes no se veía bien) */}
-                    <div className="text-[11px] text-zinc-900 leading-4">Dibuja con dedo o lápiz · luego “Enviar al chat”</div>
-                  </div>
-                </div>
+                <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-2 h-10 max-w-full">
+  <div className="hidden sm:block text-[11px] text-zinc-600">Grosor</div>
+  <input
+    type="range"
+    min={2}
+    max={18}
+    value={boardSize}
+    onChange={(e) => setBoardSize(parseInt(e.target.value || "6", 10))}
+    className="w-[86px] sm:w-[120px] md:w-[140px]"
+  />
+</div>
+
 
                 <button
                   onClick={closeBoard}
@@ -2150,8 +2152,8 @@ if (isTutor) {
                 <div className="h-full flex flex-col p-3 md:p-4">
                   {/* Toolbar */}
                   <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
-                    <div className="flex flex-wrap items-center gap-2 justify-between">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 justify-between md:flex-nowrap flex-wrap">
+                      <div className="flex items-center gap-2 flex-nowrap">
                         <button
                           onClick={() => setBoardTool("pen")}
                           className={[
@@ -2969,7 +2971,7 @@ const mdText = isUser ? rawText : isTutorThread ? rawText : normalizeAssistantTe
                   <div key={m.id} className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
                     <div
                       className={[
-                        "relative max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed break-words",
+                        "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed overflow-hidden break-words",
                         isUser ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none mr-2" : "bg-[#e8f0fe] text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none ml-2",
                         "after:content-[''] after:absolute after:w-3 after:h-3 after:rotate-45 after:top-[3px]",
                         isUser ? "after:right-[-6px] after:bg-[#dcf8c6]" : "after:left-[-6px] after:bg-[#e8f0fe]",
@@ -2977,12 +2979,13 @@ const mdText = isUser ? rawText : isTutorThread ? rawText : normalizeAssistantTe
                     >
                       {m.image && (
                         <div className="mb-2">
-                          <img src={m.image} alt="Adjunto" className="rounded-md max-h-60 object-cover" />
+                          <img src={m.image} alt="Adjunto" className="rounded-md max-h-60 max-w-full object-cover" />
                         </div>
                       )}
 
                       {(m.text || m.streaming) && (
-                        <div className="prose prose-sm max-w-none break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0">
+                        <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0">
+
                           {isStreaming ? (
                             <span
                               className="break-words"
