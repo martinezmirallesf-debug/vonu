@@ -491,33 +491,35 @@ const mdComponents: any = {
     const m = cn.match(/language-([a-zA-Z0-9_-]+)/);
     const lang = (m?.[1] || "").toLowerCase();
 
-    const content = String(children ?? "").replace(/\n$/, "");
+    // ✅ Convertimos children a string UNA sola vez
+    const content = Array.isArray(children)
+      ? children.join("")
+      : String(children ?? "");
+    
+    // (quita el salto final si existe)
+    const clean = content.replace(/\n$/, "");
 
     // ✅ EXCALIDRAW: ```excalidraw
     if (!isInline && lang === "excalidraw") {
-  const content = Array.isArray(children)
-    ? children.join("")
-    : String(children ?? "");
-
-  return <ExcalidrawBlock sceneJSON={content} />;
-}
+      return <ExcalidrawBlock sceneJSON={clean} />;
+    }
 
     // ✅ WHITEBOARD: ```whiteboard
     if (!isInline && lang === "whiteboard") {
       return (
         <WhiteboardBlock
-          value={content}
+          value={clean}
           onOpenCanvas={() => openBoard()}
         />
       );
     }
 
-    // Bloque normal
+    // Bloques normales (código)
     if (!isInline) {
       return (
         <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
           <code className="text-[12.5px]" {...props}>
-            {content}
+            {clean}
           </code>
         </pre>
       );
@@ -525,12 +527,13 @@ const mdComponents: any = {
 
     // Inline code
     return (
-      <code className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]" {...props}>
-        {content}
+      <code className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]">
+        {clean}
       </code>
     );
   },
 };
+
 
 
   // ✅ FIX CLAVE: refreshProStatus NO depende de authUserId.
