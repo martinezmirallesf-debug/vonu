@@ -7,7 +7,8 @@ import dynamic from "next/dynamic";
 const Excalidraw = dynamic(async () => (await import("@excalidraw/excalidraw")).Excalidraw, { ssr: false });
 
 type Props = {
-  sceneJSON: string;
+  sceneJSON?: string; // ✅ soporta sceneJSON
+  value?: string;     // ✅ y soporta value (por si algún sitio lo llama así)
   className?: string;
 };
 
@@ -21,22 +22,22 @@ function safeJsonParse(input: string): any | null {
   }
 }
 
-export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
-  const parsed = useMemo(() => safeJsonParse(sceneJSON), [sceneJSON]);
+export default function ExcalidrawBlock({ sceneJSON, value, className }: Props) {
+  const raw = (sceneJSON ?? value ?? "").trim();
 
-  // ✅ Soportamos varios formatos:
-  // - { elements: [...], appState: {...} }
-  // - { type: "excalidraw", elements: [...], appState: {...} }
-  // - { elements: [...] } (mínimo)
+  const parsed = useMemo(() => safeJsonParse(raw), [raw]);
+
   const initialData = useMemo(() => {
     if (!parsed) return null;
 
-    const elements = Array.isArray(parsed?.elements) ? parsed.elements : Array.isArray(parsed) ? parsed : [];
+    const elements = Array.isArray(parsed?.elements)
+      ? parsed.elements
+      : Array.isArray(parsed)
+      ? parsed
+      : [];
+
     const appState = typeof parsed?.appState === "object" && parsed.appState ? parsed.appState : {};
 
-    // Excalidraw tiene tipos internos bastante estrictos.
-    // Para evitar “No overload matches this call”, casteamos initialData como any
-    // (el runtime funciona perfecto si el JSON es válido).
     return {
       elements,
       appState: {
@@ -51,7 +52,6 @@ export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
 
   return (
     <div className={className ?? ""}>
-      {/* Marco madera */}
       <div
         className="rounded-[26px] overflow-hidden border border-zinc-200 shadow-[0_18px_60px_rgba(0,0,0,0.10)]"
         style={{
@@ -59,13 +59,11 @@ export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
           padding: 10,
         }}
       >
-        {/* Header */}
         <div className="flex items-center justify-between gap-3 px-3 py-2 bg-white/85 backdrop-blur-xl border-b border-white/20">
           <div className="text-[12px] font-semibold text-zinc-900">✍️ Pizarra (Excalidraw)</div>
           <div className="text-[11px] text-zinc-600">solo lectura</div>
         </div>
 
-        {/* Pizarra */}
         <div
           className="rounded-[18px] border border-white/10 overflow-hidden"
           style={{
@@ -90,12 +88,12 @@ export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
               <div className="p-4 text-[12.5px] text-white/80">
                 No se pudo leer el JSON de Excalidraw.
                 <br />
-                Asegúrate de que el bloque ```excalidraw``` contenga un JSON válido con <code>elements</code>.
+                Asegúrate de que el bloque <b>```excalidraw```</b> contenga un JSON válido con <code>elements</code>.
+                <div className="mt-3 text-white/60 break-words whitespace-pre-wrap">{raw.slice(0, 600)}</div>
               </div>
             )}
           </div>
 
-          {/* Posatizas */}
           <div className="px-3 pb-3">
             <div
               className="h-6 rounded-full border border-white/10"

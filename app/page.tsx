@@ -481,30 +481,39 @@ function WhiteboardBlock({
 }
 
 const mdComponents: any = {
-  code({ className, children, node, ...props }: any) {
-    const isInline = node?.tagName !== "pre";
-    const lang = (className || "").replace("language-", "").trim();
-// ✅ EXCALIDRAW: ```excalidraw
-if (!isInline && lang === "excalidraw") {
-  return <ExcalidrawBlock sceneJSON={String(children ?? "")} />;
-}
+  code({ inline, className, children, ...props }: any) {
+    const isInline = !!inline;
 
-    // ✅ PIZARRA DEL TUTOR: ```whiteboard
+    // className a veces viene como string o como array
+    const cn = Array.isArray(className) ? className.join(" ") : (className || "");
+
+    // detectar language-xxxx de forma robusta
+    const m = cn.match(/language-([a-zA-Z0-9_-]+)/);
+    const lang = (m?.[1] || "").toLowerCase();
+
+    const content = String(children ?? "").replace(/\n$/, "");
+
+    // ✅ EXCALIDRAW: ```excalidraw
+    if (!isInline && lang === "excalidraw") {
+      return <ExcalidrawBlock sceneJSON={content} />;
+    }
+
+    // ✅ WHITEBOARD: ```whiteboard
     if (!isInline && lang === "whiteboard") {
       return (
         <WhiteboardBlock
-          value={String(children ?? "")}
+          value={content}
           onOpenCanvas={() => openBoard()}
         />
       );
     }
 
-    // Código en bloque normal
+    // Bloque normal
     if (!isInline) {
       return (
         <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
           <code className="text-[12.5px]" {...props}>
-            {String(children ?? "")}
+            {content}
           </code>
         </pre>
       );
@@ -513,11 +522,12 @@ if (!isInline && lang === "excalidraw") {
     // Inline code
     return (
       <code className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]" {...props}>
-        {String(children ?? "")}
+        {content}
       </code>
     );
   },
 };
+
 
   // ✅ FIX CLAVE: refreshProStatus NO depende de authUserId.
   async function refreshProStatus() {
