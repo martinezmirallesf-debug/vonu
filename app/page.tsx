@@ -3,6 +3,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Architects_Daughter } from "next/font/google";
+import ExcalidrawBlock from "@/app/components/ExcalidrawBlock";
 
 import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
@@ -481,6 +483,10 @@ const mdComponents: any = {
   code({ className, children, node, ...props }: any) {
     const isInline = node?.tagName !== "pre";
     const lang = (className || "").replace("language-", "").trim();
+// ✅ EXCALIDRAW: ```excalidraw
+if (!isInline && lang === "excalidraw") {
+  return <ExcalidrawBlock sceneJSON={String(children ?? "")} />;
+}
 
     // ✅ PIZARRA DEL TUTOR: ```whiteboard
     if (!isInline && lang === "whiteboard") {
