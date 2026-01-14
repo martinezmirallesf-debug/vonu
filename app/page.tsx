@@ -4,11 +4,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Architects_Daughter } from "next/font/google";
-import ExcalidrawBlock from "@/app/components/ExcalidrawBlock";
 
 import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
 import ReactMarkdown from "react-markdown";
+import ExcalidrawBlock from "@/app/components/ExcalidrawBlock";
+
 import type { Components } from "react-markdown";
 type WhiteboardBlockProps = {
   value: string;
