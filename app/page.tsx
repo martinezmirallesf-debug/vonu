@@ -480,7 +480,7 @@ function WhiteboardBlock({
   );
 }
 
-const mdComponents: any = {
+const mdComponents: Components = {
   code({ inline, className, children, ...props }: any) {
     const isInline = !!inline;
 
@@ -500,10 +500,10 @@ const mdComponents: any = {
     const clean = content.replace(/\n$/, "");
 
     // ✅ EXCALIDRAW: ```excalidraw
-    if (!isInline && lang === "excalidraw") {
-  const clean = String(children ?? "").replace(/\n$/, "");
+if (!isInline && lang === "excalidraw") {
   return <ExcalidrawBlock sceneJSON={clean} />;
 }
+
 
     // ✅ WHITEBOARD: ```whiteboard
     if (!isInline && lang === "whiteboard") {
