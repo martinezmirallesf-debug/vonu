@@ -506,7 +506,7 @@ if (!isInline && lang === "excalidraw") {
 
 
     // ✅ WHITEBOARD: ```whiteboard
-    if (!isInline && lang === "whiteboard") {
+    if (!isInline && (lang === "whiteboard" || lang === "pizarra")) {
       return (
         <WhiteboardBlock
           value={clean}
