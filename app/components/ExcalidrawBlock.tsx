@@ -4,7 +4,10 @@ import { useMemo } from "react";
 import dynamic from "next/dynamic";
 
 // Import dinámico (Excalidraw no debe renderizarse en SSR)
-const Excalidraw = dynamic(async () => (await import("@excalidraw/excalidraw")).Excalidraw, { ssr: false });
+const Excalidraw = dynamic(
+  async () => (await import("@excalidraw/excalidraw")).Excalidraw,
+  { ssr: false }
+);
 
 type Props = {
   sceneJSON: string;
@@ -21,36 +24,40 @@ function safeJsonParse(input: string): any | null {
   }
 }
 
-// Normaliza elementos para evitar canvas gigantes por:
-// - y/x no numéricos
-// - valores absurdos
-// - elementos sin width/height
+// Normaliza elementos para evitar canvas gigantes
 function normalizeElements(raw: any[]): any[] {
   if (!Array.isArray(raw)) return [];
 
-  // Si vienen elementos con y/x enormes, los "recolocamos" en un stack vertical razonable
-  const MAX_ABS = 5000; // umbral seguro
-  let cursorY = 80;
+  const MAX_W = 1200;
+  const MAX_H = 800;
 
-  return raw.map((el: any, i: number) => {
-    const x = typeof el?.x === "number" && Math.abs(el.x) < MAX_ABS ? el.x : 60;
-    const y =
-      typeof el?.y === "number" && Math.abs(el.y) < MAX_ABS
-        ? el.y
-        : cursorY + i * 36;
+  // 1) Filtra cosas raras
+  const cleaned = raw
+    .filter((el) => el && typeof el === "object")
+    .filter((el) => typeof (el as any).type === "string")
+    .filter((el) => !(el as any).isDeleted)
+    .map((el: any) => {
+      const x = typeof el.x === "number" ? el.x : 0;
+      const y = typeof el.y === "number" ? el.y : 0;
+      const width = typeof el.width === "number" ? el.width : 300;
+      const height = typeof el.height === "number" ? el.height : 28;
+      return { ...el, x, y, width, height };
+    })
+    // 2) Si trae coords gigantes, fuera
+    .filter((el: any) => Math.abs(el.x) < 100000 && Math.abs(el.y) < 100000)
+    .filter((el: any) => el.width > 0 && el.height > 0);
 
-    // Asegura mínimos para textos
-    const width =
-      typeof el?.width === "number" && el.width > 0 && el.width < 4000 ? el.width : 300;
-    const height =
-      typeof el?.height === "number" && el.height > 0 && el.height < 2000 ? el.height : 28;
+  // 3) Recoloca todo visible en vertical
+  return cleaned.slice(0, 80).map((el: any, i: number) => {
+    const safeX = 60;
+    const safeY = 80 + i * 36;
 
     return {
       ...el,
-      x,
-      y,
-      width,
-      height,
+      x: safeX,
+      y: safeY,
+      width: Math.min(Math.max(el.width || 300, 80), MAX_W),
+      height: Math.min(Math.max(el.height || 28, 20), MAX_H),
     };
   });
 }
@@ -65,64 +72,69 @@ export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
     // { type:"excalidraw", elements:[...], appState:{...} }
     // { elements:[...], appState:{...} }
     const rawElements = Array.isArray(parsed?.elements) ? parsed.elements : [];
-let elements = normalizeElements(rawElements);
+    let elements = normalizeElements(rawElements);
 
-// ✅ Si no vienen elementos, ponemos 1 texto de debug para verlo sí o sí
-if (!elements.length) {
-  elements = [
-    {
-      id: "debug-1",
-      type: "text",
-      x: 60,
-      y: 80,
-      width: 520,
-      height: 28,
-      angle: 0,
-      strokeColor: "#e9efe9",
-      backgroundColor: "transparent",
-      fillStyle: "solid",
-      strokeWidth: 1,
-      strokeStyle: "solid",
-      roughness: 1,
-      opacity: 100,
-      groupIds: [],
-      frameId: null,
-      roundness: null,
-      seed: 1,
-      version: 1,
-      versionNonce: 1,
-      isDeleted: false,
-      boundElements: null,
-      updated: Date.now(),
-      link: null,
-      locked: true,
-      text: "⚠️ DEBUG: El JSON llegó, pero elements está vacío.",
-      fontSize: 20,
-      fontFamily: 1,
-      textAlign: "left",
-      verticalAlign: "top",
-      baseline: 18,
-      containerId: null,
-      originalText: "⚠️ DEBUG: El JSON llegó, pero elements está vacío.",
-      lineHeight: 1.25,
-    },
-  ];
-}
+    // ✅ Si no vienen elementos, ponemos 1 texto de debug
+    if (!elements.length) {
+      elements = [
+        {
+          id: "debug-1",
+          type: "text",
+          x: 60,
+          y: 80,
+          width: 720,
+          height: 28,
+          angle: 0,
+          strokeColor: "#e9efe9",
+          backgroundColor: "transparent",
+          fillStyle: "solid",
+          strokeWidth: 1,
+          strokeStyle: "solid",
+          roughness: 1,
+          opacity: 100,
+          groupIds: [],
+          frameId: null,
+          roundness: null,
+          seed: 1,
+          version: 1,
+          versionNonce: 1,
+          isDeleted: false,
+          boundElements: null,
+          updated: Date.now(),
+          link: null,
+          locked: true,
+          text: "⚠️ DEBUG: El JSON llegó, pero elements está vacío (o inválido).",
+          fontSize: 20,
+          fontFamily: 1,
+          textAlign: "left",
+          verticalAlign: "top",
+          baseline: 18,
+          containerId: null,
+          originalText: "⚠️ DEBUG: El JSON llegó, pero elements está vacío (o inválido).",
+          lineHeight: 1.25,
+        },
+      ];
+    }
 
-    const appState = typeof parsed?.appState === "object" && parsed.appState ? parsed.appState : {};
+    const appState =
+      typeof parsed?.appState === "object" && parsed.appState ? parsed.appState : {};
 
     return {
       elements,
       appState: {
-  viewBackgroundColor: "#0b0f0d",
-  zenModeEnabled: true,
-  gridSize: null,
-  ...appState,
-},
+        viewBackgroundColor: "#0b0f0d",
+        zenModeEnabled: true,
+        gridSize: null,
 
+        // ✅ forzamos vista segura (aunque TS se queje, va como any)
+        scrollX: 0,
+        scrollY: 0,
+        zoom: { value: 1 },
 
-      // 🔥 MUY IMPORTANTE: NO usar scrollToContent aquí
-      // scrollToContent: true,
+        // lo del JSON al final
+        ...appState,
+      },
+      scrollToContent: true,
     } as any;
   }, [parsed]);
 

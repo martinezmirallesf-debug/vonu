@@ -501,8 +501,9 @@ const mdComponents: any = {
 
     // ✅ EXCALIDRAW: ```excalidraw
     if (!isInline && lang === "excalidraw") {
-      return <ExcalidrawBlock sceneJSON={clean} />;
-    }
+  const clean = String(children ?? "").replace(/\n$/, "");
+  return <ExcalidrawBlock sceneJSON={clean} />;
+}
 
     // ✅ WHITEBOARD: ```whiteboard
     if (!isInline && lang === "whiteboard") {
