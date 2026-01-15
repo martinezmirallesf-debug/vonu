@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import dynamic from "next/dynamic";
 
-// Import dinámico (Excalidraw no debe renderizarse en SSR)
 const Excalidraw = dynamic(
   async () => (await import("@excalidraw/excalidraw")).Excalidraw,
   { ssr: false }
@@ -18,46 +17,55 @@ function safeJsonParse(input: string): any | null {
   try {
     const trimmed = (input || "").trim();
     if (!trimmed) return null;
+
+    // A veces viene con ``` o texto alrededor; intentamos extraer el primer { ... }
+    const firstBrace = trimmed.indexOf("{");
+    const lastBrace = trimmed.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      const maybe = trimmed.slice(firstBrace, lastBrace + 1);
+      return JSON.parse(maybe);
+    }
+
     return JSON.parse(trimmed);
   } catch {
     return null;
   }
 }
 
-// Normaliza elementos para evitar canvas gigantes
+function clamp(n: any, min: number, max: number) {
+  const v = typeof n === "number" && isFinite(n) ? n : min;
+  return Math.max(min, Math.min(max, v));
+}
+
 function normalizeElements(raw: any[]): any[] {
   if (!Array.isArray(raw)) return [];
 
+  const MAX = 2000; // coords máximas razonables
   const MAX_W = 1200;
   const MAX_H = 800;
 
-  // 1) Filtra cosas raras
+  // Limpieza básica
   const cleaned = raw
     .filter((el) => el && typeof el === "object")
-    .filter((el) => typeof (el as any).type === "string")
-    .filter((el) => !(el as any).isDeleted)
-    .map((el: any) => {
-      const x = typeof el.x === "number" ? el.x : 0;
-      const y = typeof el.y === "number" ? el.y : 0;
-      const width = typeof el.width === "number" ? el.width : 300;
-      const height = typeof el.height === "number" ? el.height : 28;
-      return { ...el, x, y, width, height };
-    })
-    // 2) Si trae coords gigantes, fuera
-    .filter((el: any) => Math.abs(el.x) < 100000 && Math.abs(el.y) < 100000)
-    .filter((el: any) => el.width > 0 && el.height > 0);
+    .filter((el) => typeof el.type === "string")
+    .filter((el) => !el.isDeleted);
 
-  // 3) Recoloca todo visible en vertical
-  return cleaned.slice(0, 80).map((el: any, i: number) => {
+  // Recolocamos en “stack” visible
+  return cleaned.slice(0, 120).map((el, i) => {
+    const w = clamp(el.width, 80, MAX_W);
+    const h = clamp(el.height, 20, MAX_H);
+
+    // ignoramos coords del JSON si son raras
     const safeX = 60;
     const safeY = 80 + i * 36;
 
+    // Si el elemento es tipo flecha/linea puede necesitar puntos; no tocamos demás props
     return {
       ...el,
-      x: safeX,
-      y: safeY,
-      width: Math.min(Math.max(el.width || 300, 80), MAX_W),
-      height: Math.min(Math.max(el.height || 28, 20), MAX_H),
+      x: clamp(safeX, -MAX, MAX),
+      y: clamp(safeY, -MAX, MAX),
+      width: w,
+      height: h,
     };
   });
 }
@@ -65,16 +73,18 @@ function normalizeElements(raw: any[]): any[] {
 export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
   const parsed = useMemo(() => safeJsonParse(sceneJSON), [sceneJSON]);
 
+  const debugRaw = useMemo(() => {
+    const s = (sceneJSON || "").trim();
+    return s.length > 1600 ? s.slice(0, 1600) + "\n…(cortado)" : s;
+  }, [sceneJSON]);
+
   const initialData = useMemo(() => {
     if (!parsed) return null;
 
-    // Formatos soportados:
-    // { type:"excalidraw", elements:[...], appState:{...} }
-    // { elements:[...], appState:{...} }
     const rawElements = Array.isArray(parsed?.elements) ? parsed.elements : [];
     let elements = normalizeElements(rawElements);
 
-    // ✅ Si no vienen elementos, ponemos 1 texto de debug
+    // DEBUG VISIBLE si no vienen elements
     if (!elements.length) {
       elements = [
         {
@@ -82,15 +92,15 @@ export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
           type: "text",
           x: 60,
           y: 80,
-          width: 720,
-          height: 28,
+          width: 560,
+          height: 40,
           angle: 0,
           strokeColor: "#e9efe9",
           backgroundColor: "transparent",
           fillStyle: "solid",
           strokeWidth: 1,
           strokeStyle: "solid",
-          roughness: 1,
+          roughness: 0,
           opacity: 100,
           groupIds: [],
           frameId: null,
@@ -103,63 +113,60 @@ export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
           updated: Date.now(),
           link: null,
           locked: true,
-          text: "⚠️ DEBUG: El JSON llegó, pero elements está vacío (o inválido).",
+          text: "⚠️ DEBUG: llega JSON pero NO hay elements[]",
           fontSize: 20,
           fontFamily: 1,
           textAlign: "left",
           verticalAlign: "top",
           baseline: 18,
           containerId: null,
-          originalText: "⚠️ DEBUG: El JSON llegó, pero elements está vacío (o inválido).",
+          originalText: "⚠️ DEBUG: llega JSON pero NO hay elements[]",
           lineHeight: 1.25,
         },
       ];
     }
 
-    const appState =
-      typeof parsed?.appState === "object" && parsed.appState ? parsed.appState : {};
-
+    // IMPORTANTÍSIMO:
+    // - NO usamos appState del JSON (puede traer scrollX/scrollY/zoom raros)
+    // - NO usamos scrollToContent (es lo que suele provocar canvas gigante si hay coords absurdas)
     return {
       elements,
       appState: {
         viewBackgroundColor: "#0b0f0d",
         zenModeEnabled: true,
         gridSize: null,
-
-        // ✅ forzamos vista segura (aunque TS se queje, va como any)
         scrollX: 0,
         scrollY: 0,
         zoom: { value: 1 },
-
-        // lo del JSON al final
-        ...appState,
       },
-      scrollToContent: true,
+      // ❌ NO scrollToContent
+      // scrollToContent: true,
     } as any;
   }, [parsed]);
 
   return (
     <div className={className ?? ""}>
-      {/* Marco madera */}
       <div
         className="rounded-[26px] overflow-hidden border border-zinc-200 shadow-[0_18px_60px_rgba(0,0,0,0.10)]"
         style={{
-          background: "linear-gradient(135deg, rgba(107,86,60,0.90), rgba(78,62,44,0.95))",
+          background:
+            "linear-gradient(135deg, rgba(107,86,60,0.90), rgba(78,62,44,0.95))",
           padding: 10,
         }}
       >
-        {/* Header */}
         <div className="flex items-center justify-between gap-3 px-3 py-2 bg-white/85 backdrop-blur-xl border-b border-white/20">
-          <div className="text-[12px] font-semibold text-zinc-900">✍️ Pizarra (Excalidraw)</div>
+          <div className="text-[12px] font-semibold text-zinc-900">
+            ✍️ Pizarra (Excalidraw)
+          </div>
           <div className="text-[11px] text-zinc-600">solo lectura</div>
         </div>
 
-        {/* Pizarra */}
         <div
           className="rounded-[18px] border border-white/10 overflow-hidden"
           style={{
             backgroundColor: "#0b0f0d",
-            boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05), inset 0 18px 40px rgba(0,0,0,0.45)",
+            boxShadow:
+              "inset 0 0 0 1px rgba(255,255,255,0.05), inset 0 18px 40px rgba(0,0,0,0.45)",
             backgroundImage:
               "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)",
             backgroundSize: "26px 26px, 38px 38px",
@@ -177,20 +184,30 @@ export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
               />
             ) : (
               <div className="p-4 text-[12.5px] text-white/80">
-                No se pudo leer el JSON de Excalidraw.
-                <br />
-                Asegúrate de que el bloque <code>```excalidraw```</code> contenga un JSON válido con <code>elements</code>.
+                <div className="font-semibold mb-2">
+                  No se pudo leer el JSON de Excalidraw.
+                </div>
+
+                <div className="mb-2">
+                  Copia lo que hay dentro del bloque{" "}
+                  <code>```excalidraw```</code>:
+                </div>
+
+                <pre className="mt-2 p-3 rounded-xl bg-black/40 overflow-auto text-[11px] leading-relaxed border border-white/10">
+                  {debugRaw || "(vacío)"}
+                </pre>
               </div>
             )}
           </div>
 
-          {/* Posatizas */}
           <div className="px-3 pb-3">
             <div
               className="h-6 rounded-full border border-white/10"
               style={{
-                background: "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.35))",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 18px rgba(0,0,0,0.25)",
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.35))",
+                boxShadow:
+                  "inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 18px rgba(0,0,0,0.25)",
               }}
             />
           </div>
