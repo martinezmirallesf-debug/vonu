@@ -36,28 +36,22 @@ function clamp(n: any, min: number, max: number) {
 
 function normalizeElements(raw: any[]): any[] {
   if (!Array.isArray(raw)) return [];
-
   const MAX_W = 1200;
   const MAX_H = 800;
 
-  const cleaned = raw
+  return raw
     .filter((el) => el && typeof el === "object")
     .filter((el) => typeof el.type === "string")
-    .filter((el) => !el.isDeleted);
-
-  return cleaned.slice(0, 120).map((el, i) => {
-    // Recolocamos en stack visible SIEMPRE (evitamos coords raras)
-    const safeX = 60;
-    const safeY = 80 + i * 36;
-
-    return {
+    .filter((el) => !el.isDeleted)
+    .slice(0, 120)
+    .map((el, i) => ({
       ...el,
-      x: safeX,
-      y: safeY,
+      // Recolocamos SIEMPRE en un stack visible
+      x: 60,
+      y: 80 + i * 36,
       width: clamp(el.width, 80, MAX_W),
       height: clamp(el.height, 20, MAX_H),
-    };
-  });
+    }));
 }
 
 export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
@@ -65,68 +59,93 @@ export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
 
   const elements = useMemo(() => {
     const rawElements = Array.isArray(parsed?.elements) ? parsed.elements : [];
-    const norm = normalizeElements(rawElements);
+    const norm = normalizeElements(rawImportantTypesOnly(rawElements));
 
-    // Si viniera vacío, metemos algo para comprobar que pinta
-    if (!norm.length) {
-      return [
-        {
-          id: "debug-1",
-          type: "text",
-          x: 60,
-          y: 80,
-          width: 560,
-          height: 40,
-          angle: 0,
-          strokeColor: "#e9efe9",
-          backgroundColor: "transparent",
-          fillStyle: "solid",
-          strokeWidth: 1,
-          strokeStyle: "solid",
-          roughness: 0,
-          opacity: 100,
-          groupIds: [],
-          frameId: null,
-          roundness: null,
-          seed: 1,
-          version: 1,
-          versionNonce: 1,
-          isDeleted: false,
-          boundElements: null,
-          updated: Date.now(),
-          link: null,
-          locked: true,
-          text: "⚠️ DEBUG: llega JSON pero elements[] vacío",
-          fontSize: 20,
-          fontFamily: 1,
-          textAlign: "left",
-          verticalAlign: "top",
-          baseline: 18,
-          containerId: null,
-          originalText: "⚠️ DEBUG: llega JSON pero elements[] vacío",
-          lineHeight: 1.25,
-        },
-      ];
-    }
+    if (norm.length) return norm;
 
-    return norm;
+    // Debug visible
+    return [
+      {
+        id: "debug-1",
+        type: "text",
+        x: 60,
+        y: 80,
+        width: 560,
+        height: 40,
+        angle: 0,
+        strokeColor: "#e9efe9",
+        backgroundColor: "transparent",
+        fillStyle: "solid",
+        strokeWidth: 1,
+        strokeStyle: "solid",
+        roughness: 0,
+        opacity: 100,
+        groupIds: [],
+        frameId: null,
+        roundness: null,
+        seed: 1,
+        version: 1,
+        versionNonce: 1,
+        isDeleted: false,
+        boundElements: null,
+        updated: Date.now(),
+        link: null,
+        locked: true,
+        text: "DEBUG: ExcalidrawBlock montado ✅",
+        fontSize: 20,
+        fontFamily: 1,
+        textAlign: "left",
+        verticalAlign: "top",
+        baseline: 18,
+        containerId: null,
+        originalText: "DEBUG: ExcalidrawBlock montado ✅",
+        lineHeight: 1.25,
+      },
+    ];
   }, [parsed]);
 
+  // ✅ IMPORTANTÍSIMO: esperar a que el contenedor tenga tamaño real
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [ready, setReady] = useState(false);
   const [api, setApi] = useState<any>(null);
   const didInitRef = useRef(false);
 
-  // ✅ CLAVE: en vez de dejar que Excalidraw calcule el “infinite canvas” con initialData,
-  // le metemos la escena y forzamos vista/zoom DESPUÉS de montar.
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+
+    let raf = 0;
+
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const r = el.getBoundingClientRect();
+        // con que tenga algo de altura ya montamos
+        if (r.width > 200 && r.height > 200) setReady(true);
+      });
+    });
+
+    ro.observe(el);
+
+    // primer tick
+    raf = requestAnimationFrame(() => {
+      const r = el.getBoundingClientRect();
+      if (r.width > 200 && r.height > 200) setReady(true);
+    });
+
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, []);
+
   useEffect(() => {
     if (!api) return;
     if (didInitRef.current) return;
-
     didInitRef.current = true;
 
     try {
       api.updateScene({ elements });
-
-      // 🔥 Forzamos un estado “sano”
       api.updateScene({
         appState: {
           viewBackgroundColor: "#0b0f0d",
@@ -138,14 +157,12 @@ export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
         },
       });
 
-      // ✅ centramos SOLO en un marco seguro (sin infinito)
-      // Ojo: scrollToContent a veces es el detonante si hay bounds raros,
-      // pero como YA recolocamos todo, aquí sí es seguro:
+      // ✅ Después de montar, re-centramos (seguro porque recolocamos)
       setTimeout(() => {
         try {
           api.scrollToContent?.(api.getSceneElements?.(), { fitToViewport: true });
         } catch {}
-      }, 50);
+      }, 80);
     } catch {}
   }, [api, elements]);
 
@@ -166,11 +183,13 @@ export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
           <div className="text-[11px] text-zinc-600">solo lectura</div>
         </div>
 
-        {/* ✅ SUPER IMPORTANTE: recortar cualquier cosa gigante */}
+        {/* ✅ WRAPPER CONTROLADO (recorta y limita) */}
         <div
+          ref={wrapRef}
           className="rounded-[18px] border border-white/10 overflow-hidden"
           style={{
             height: 380,
+            maxHeight: 380,
             backgroundColor: "#0b0f0d",
             boxShadow:
               "inset 0 0 0 1px rgba(255,255,255,0.05), inset 0 18px 40px rgba(0,0,0,0.45)",
@@ -178,9 +197,29 @@ export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
               "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)",
             backgroundSize: "26px 26px, 38px 38px",
             backgroundPosition: "0 0, 13px 19px",
+            position: "relative",
           }}
         >
-          {parsed ? (
+          {/* ✅ CSS nuclear: si el canvas intenta infinito, lo capamos */}
+          <style jsx>{`
+            :global(.excalidraw__canvas) {
+              max-height: 380px !important;
+              height: 380px !important;
+            }
+            :global(.excalidraw__canvas-wrapper) {
+              height: 380px !important;
+              max-height: 380px !important;
+              overflow: hidden !important;
+            }
+          `}</style>
+
+          {!parsed ? (
+            <div className="p-4 text-[12.5px] text-white/80">
+              No se pudo leer el JSON de Excalidraw.
+            </div>
+          ) : !ready ? (
+            <div className="p-4 text-[12.5px] text-white/80">Cargando pizarra…</div>
+          ) : (
             <Excalidraw
               excalidrawAPI={(x: any) => setApi(x)}
               viewModeEnabled={true}
@@ -188,10 +227,6 @@ export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
               gridModeEnabled={false}
               theme="dark"
             />
-          ) : (
-            <div className="p-4 text-[12.5px] text-white/80">
-              No se pudo leer el JSON de Excalidraw.
-            </div>
           )}
         </div>
 
@@ -209,4 +244,16 @@ export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
       </div>
     </div>
   );
+}
+
+/**
+ * ✅ IMPORTANTE:
+ * Por si el JSON trae tipos “peligrosos” (freedraw/arrow/line con puntos gigantes),
+ * aquí filtramos y solo dejamos tipos seguros.
+ * Si con esto se ve, ya sabemos que el problema era un elemento con points raros.
+ */
+function rawImportantTypesOnly(raw: any[]): any[] {
+  if (!Array.isArray(raw)) return [];
+  const SAFE = new Set(["text", "rectangle", "ellipse", "diamond", "image"]);
+  return raw.filter((el) => SAFE.has(String(el?.type || "")));
 }
