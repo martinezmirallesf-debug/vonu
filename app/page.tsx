@@ -3013,7 +3013,6 @@ return (
     </div>
   </div>
 );
-// ✅ AQUÍ ESTÁ EL TRUCO: cierra el map y luego los divs del fondo
 })}
             </div>
           </div>
