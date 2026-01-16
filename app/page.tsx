@@ -482,57 +482,30 @@ function WhiteboardBlock({
   );
 }
 
-const mdComponents: Components = {
-  code({ inline, className, children, ...props }: any) {
-    const isInline = !!inline;
+const mdComponents = {
+  // ... (tus otros componentes como p, a, etc.)
 
-    // className a veces viene como string o como array
-    const cn = Array.isArray(className) ? className.join(" ") : (className || "");
+  code({ node, inline, className, children, ...props }: any) {
+    const match = /language-(\w+)/.exec(className || "");
+    const lang = match ? match[1] : "";
+    const content = String(children).replace(/\n$/, "");
 
-    // detectar language-xxxx de forma robusta
-    const m = cn.match(/language-([a-zA-Z0-9_-]+)/);
-    const lang = (m?.[1] || "").toLowerCase();
-
-    // ✅ Convertimos children a string UNA sola vez
-    const content = Array.isArray(children)
-      ? children.join("")
-      : String(children ?? "");
-    
-    // (quita el salto final si existe)
-    const clean = content.replace(/\n$/, "");
-
-    // ✅ EXCALIDRAW: ```excalidraw
-if (!isInline && lang === "excalidraw") {
-  return <ExcalidrawBlock sceneJSON={clean} />;
-}
-
-
-
-    // ✅ WHITEBOARD: ```whiteboard
-    if (!isInline && (lang === "whiteboard" || lang === "pizarra")) {
+    // ✅ Si el bloque de código dice ```excalidraw
+    if (!inline && lang === "excalidraw") {
       return (
-        <WhiteboardBlock
-          value={clean}
-          onOpenCanvas={() => openBoard()}
-        />
+        <div className="w-full my-6 clear-both overflow-visible">
+          <ExcalidrawBlock sceneJSON={content} />
+        </div>
       );
     }
 
-    // Bloques normales (código)
-    if (!isInline) {
-      return (
-        <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
-          <code className="text-[12.5px]" {...props}>
-            {clean}
-          </code>
-        </pre>
-      );
-    }
-
-    // Inline code
+    // Si es código normal (o no tiene lenguaje definido)
     return (
-      <code className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]">
-        {clean}
+      <code 
+        className={`${className} bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-sm font-mono`} 
+        {...props}
+      >
+        {children}
       </code>
     );
   },
@@ -3019,8 +2992,11 @@ const mdText = isUser
                         <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0">
 
                           {isStreaming ? (
-  <span>
-    {mdText}
+  <span className="whitespace-pre-wrap">
+    {/* Si el texto contiene "elements", es probable que sea una pizarra. 
+      No mostramos el código feo mientras se escribe.
+    */}
+    {mdText.includes('"elements"') ? "✍️ Dibujando en la pizarra..." : mdText}
     {!hasText ? <TypingDots /> : <TypingCaret />}
   </span>
 ) : (
