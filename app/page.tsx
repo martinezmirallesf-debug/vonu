@@ -236,9 +236,11 @@ function normalizeAssistantText(text: string) {
   const raw = text ?? "";
   return raw
     .replace(/\r\n/g, "\n")
-    .replace(/\n{2,}/g, "\n")
-    .replace(/\n/g, " ");
+    // deja markdown vivir: mantenemos saltos de línea
+    // solo compactamos “demasiados” saltos seguidos
+    .replace(/\n{3,}/g, "\n\n");
 }
+
 
 // ===== TUTOR (detección ligera frontend) =====
 function looksLikeTutorIntent(text: string) {
