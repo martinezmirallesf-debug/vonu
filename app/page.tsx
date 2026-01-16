@@ -449,7 +449,7 @@ function WhiteboardBlock({
       >
         {lines.slice(0, shown).map((l, i) => (
           <div
-            key={i}
+            key={`${i}-${l?.slice?.(0, 10) ?? ""}`}
             className="whitespace-pre-wrap break-words"
             style={{
               opacity: 0.92,
@@ -501,8 +501,7 @@ const mdComponents: Components = {
 
     // ✅ EXCALIDRAW: ```excalidraw
 if (!isInline && lang === "excalidraw") {
-  const clean = String(children ?? "").replace(/\n$/, "");
-  return <ExcalidrawBlock sceneJSON={clean} />;
+  return <ExcalidrawBlock sceneJSON={clean} className="my-2" />;
 }
 
 
