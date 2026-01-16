@@ -63,10 +63,9 @@ export async function POST(req: NextRequest) {
       mode === "tutor"
         ? [
             {
-              role: "system",
-              content: tutorExcalidrawInstructions({ level: tutorLevel }),
-            },
-            ...incomingMessages,
+  role: "system",
+  content: tutorExcalidrawInstructions,
+}
           ]
         : incomingMessages;
 
