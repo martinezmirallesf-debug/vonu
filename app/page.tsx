@@ -501,7 +501,7 @@ const mdComponents: Components = {
 
     // ✅ EXCALIDRAW: ```excalidraw
 if (!isInline && lang === "excalidraw") {
-  return <ExcalidrawBlock sceneJSON={clean} className="my-2" />;
+  return <ExcalidrawBlock sceneJSON={clean} />;
 }
 
 
@@ -2987,7 +2987,11 @@ if (isTutor) {
                 const rawText = isUser ? (m.text ?? "") : m.text || "";
 
                 const isTutorThread = (activeThread?.mode ?? "chat") === "tutor";
-const mdText = isUser ? rawText : isTutorThread ? rawText : normalizeAssistantText(rawText);
+const mdText = isUser
+  ? rawText
+  : m.streaming
+  ? rawText // 🔒 SIN normalizar ni markdown mientras streamea
+  : normalizeAssistantText(rawText);
 
 
                 const isStreaming = !!m.streaming;
@@ -3013,21 +3017,15 @@ const mdText = isUser ? rawText : isTutorThread ? rawText : normalizeAssistantTe
                         <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0">
 
                           {isStreaming ? (
-                            <span
-                              className="break-words"
-                              style={{
-                                whiteSpace: "pre-wrap",
-                                wordBreak: "break-word",
-                              }}
-                            >
-                              {mdText}
-                              {!hasText ? <TypingDots /> : <TypingCaret />}
-                            </span>
-                          ) : (
-                            <ReactMarkdown components={mdComponents}>
-  {mdText}
-</ReactMarkdown>
-                          )}
+  <span>
+    {mdText}
+    {!hasText ? <TypingDots /> : <TypingCaret />}
+  </span>
+) : (
+  <ReactMarkdown components={mdComponents}>
+    {mdText}
+  </ReactMarkdown>
+)}
                         </div>
                       )}
                     </div>
