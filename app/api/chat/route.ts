@@ -1,5 +1,6 @@
 // app/api/chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { TUTOR_EXCALIDRAW_SYSTEM_PROMPT } from "@/app/lib/TutorExcalidrawPrompt";
 
 export const runtime = "nodejs";
 
@@ -47,16 +48,35 @@ export async function POST(req: NextRequest) {
     // body desde el cliente
     const body = (await req.json().catch(() => ({}))) as any;
 
+    const mode = body?.mode === "tutor" ? "tutor" : "chat";
+    const tutorLevel =
+      body?.tutorLevel === "kid" || body?.tutorLevel === "teen" || body?.tutorLevel === "adult"
+        ? body.tutorLevel
+        : "adult";
+
+    // ✅ Messages siempre array
+    const incomingMessages = Array.isArray(body?.messages) ? body.messages : [];
+
+    // ✅ Si estamos en tutor, metemos un "system" al principio con el contrato Excalidraw
+    // (si el Edge Function respeta system messages, esto lo arregla de verdad)
+    const messages =
+      mode === "tutor"
+        ? [
+            {
+              role: "system",
+              content: TUTOR_EXCALIDRAW_SYSTEM_PROMPT,
+            },
+            ...incomingMessages,
+          ]
+        : incomingMessages;
+
     // ✅ Normalizamos campos clave (para que quick-service reciba siempre algo consistente)
     const normalized = {
-      messages: Array.isArray(body?.messages) ? body.messages : [],
+      messages,
       userText: typeof body?.userText === "string" ? body.userText : "",
       imageBase64: typeof body?.imageBase64 === "string" ? body.imageBase64 : null,
-      mode: body?.mode === "tutor" ? "tutor" : "chat",
-      tutorLevel:
-        body?.tutorLevel === "kid" || body?.tutorLevel === "teen" || body?.tutorLevel === "adult"
-          ? body.tutorLevel
-          : "adult",
+      mode,
+      tutorLevel,
       // ✅ opcional: por si más adelante añades cosas
       ...Object.fromEntries(
         Object.entries(body || {}).filter(([k]) => !["messages", "userText", "imageBase64", "mode", "tutorLevel"].includes(k))
