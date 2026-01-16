@@ -1,6 +1,6 @@
 // app/api/chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { tutorExcalidrawInstructions } from "@/app/lib/TutorExcalidrawPrompt";
+import tutorExcalidrawInstructions from "@/app/lib/TutorExcalidrawPrompt";
 
 export const runtime = "nodejs";
 
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         ? [
             {
               role: "system",
-              content: TUTOR_EXCALIDRAW_SYSTEM_PROMPT,
+              content: tutorExcalidrawInstructions({ level: tutorLevel }),
             },
             ...incomingMessages,
           ]
