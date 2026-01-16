@@ -501,8 +501,7 @@ const mdComponents: Components = {
 
     // ✅ EXCALIDRAW: ```excalidraw
 if (!isInline && lang === "excalidraw") {
-  console.log("EXCALIDRAW CLEAN JSON =>", clean);
-  return <ExcalidrawBlock sceneJSON={clean} />;
+  return <ExcalidrawBlock sceneJSON={clean} className="my-2" />;
 }
 
 

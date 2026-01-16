@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import dynamic from "next/dynamic";
 
-// Excalidraw no puede renderizar en SSR
+// Excalidraw debe ir sin SSR
 const Excalidraw = dynamic(
   async () => (await import("@excalidraw/excalidraw")).Excalidraw,
   { ssr: false }
@@ -18,141 +18,90 @@ function safeJsonParse(input: string): any | null {
   try {
     const trimmed = (input || "").trim();
     if (!trimmed) return null;
-
-    // A veces llegan fences o backticks accidentales: los quitamos si viniesen
-    const cleaned = trimmed
-      .replace(/^```[a-zA-Z0-9_-]*\s*/i, "")
-      .replace(/```$/i, "")
-      .trim();
-
-    return JSON.parse(cleaned);
+    return JSON.parse(trimmed);
   } catch {
     return null;
   }
 }
 
-function isFiniteNumber(n: any) {
+function isNumber(n: any) {
   return typeof n === "number" && Number.isFinite(n);
 }
 
-function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n));
-}
-
-function sanitizePoints(points: any, MAX: number) {
-  if (!Array.isArray(points) || points.length < 2) {
-    return [
-      [0, 0],
-      [120, 0],
-    ];
-  }
-
-  const fixed = points
-    .filter((p) => Array.isArray(p) && p.length >= 2)
-    .map((p) => {
-      const x = isFiniteNumber(p[0]) ? clamp(p[0], -MAX, MAX) : 0;
-      const y = isFiniteNumber(p[1]) ? clamp(p[1], -MAX, MAX) : 0;
-      return [x, y];
-    });
-
-  if (fixed.length < 2) {
-    return [
-      [0, 0],
-      [120, 0],
-    ];
-  }
-  return fixed;
-}
-
-// Normaliza elementos para que Excalidraw NO calcule un “contenido infinito”
-// (que es lo que te está creando el canvas 33 millones px)
+// Normaliza y recoloca todo para que SIEMPRE sea visible
 function normalizeElements(raw: any[]): any[] {
   if (!Array.isArray(raw)) return [];
 
-  const MAX_POS = 1200; // límites razonables
-  const MAX_W = 1400;
-  const MAX_H = 900;
+  const MAX_ELEMS = 120;
 
+  // 1) filtrar basura
   const cleaned = raw
     .filter((el) => el && typeof el === "object")
     .filter((el) => typeof el.type === "string")
     .filter((el) => !el.isDeleted)
-    .slice(0, 120) // limita cantidad por seguridad
-    .map((el, i) => {
-      // x/y
-      const x0 = isFiniteNumber(el.x) ? clamp(el.x, -MAX_POS, MAX_POS) : 0;
-      const y0 = isFiniteNumber(el.y) ? clamp(el.y, -MAX_POS, MAX_POS) : 0;
+    .slice(0, MAX_ELEMS)
+    .map((el) => {
+      const x = isNumber(el.x) ? el.x : 0;
+      const y = isNumber(el.y) ? el.y : 0;
+      const width = isNumber(el.width) && el.width > 0 ? el.width : 260;
+      const height = isNumber(el.height) && el.height > 0 ? el.height : 48;
 
-      // width/height
-      const w0 = isFiniteNumber(el.width) ? clamp(el.width, 20, MAX_W) : 300;
-      const h0 = isFiniteNumber(el.height) ? clamp(el.height, 20, MAX_H) : 60;
-
-      // puntos (líneas, flechas, free draw, etc.)
-      const hasPoints = Array.isArray(el.points);
-      const points = hasPoints ? sanitizePoints(el.points, MAX_POS) : undefined;
-
-      // recolocación en “stack” visible para evitar que algo quede fuera
-      const safeX = 60;
-      const safeY = 70 + i * 36;
-
-      const out: any = {
-        ...el,
-        x: safeX,
-        y: safeY,
-        width: w0,
-        height: h0,
-      };
-
-      if (hasPoints) out.points = points;
-
-      // si trae coords raras en boundElements, frameId, etc no pasa nada
-      // lo importante es x/y/points/size en rango.
-
-      return out;
+      return { ...el, x, y, width, height };
     });
 
-  return cleaned;
+  if (!cleaned.length) return [];
+
+  // 2) calcular bounding box y trasladar a zona visible
+  let minX = Infinity,
+    minY = Infinity;
+
+  for (const el of cleaned) {
+    if (isNumber(el.x)) minX = Math.min(minX, el.x);
+    if (isNumber(el.y)) minY = Math.min(minY, el.y);
+  }
+
+  // margen de seguridad dentro del viewport
+  const OFFSET_X = 80;
+  const OFFSET_Y = 90;
+
+  const tx = isFinite(minX) ? OFFSET_X - minX : 0;
+  const ty = isFinite(minY) ? OFFSET_Y - minY : 0;
+
+  return cleaned.map((el) => ({
+    ...el,
+    x: (isNumber(el.x) ? el.x : 0) + tx,
+    y: (isNumber(el.y) ? el.y : 0) + ty,
+  }));
 }
 
 export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
-  // 1) Parsear JSON
   const parsed = useMemo(() => safeJsonParse(sceneJSON), [sceneJSON]);
 
-  // 2) Montar SOLO cuando el contenedor tenga tamaño real
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-
-    const ro = new ResizeObserver(() => {
-      const r = el.getBoundingClientRect();
-      // necesitamos ancho real para evitar cálculos raros en Excalidraw
-      if (r.width > 240) setReady(true);
-    });
-
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  // 3) Preparar initialData SIEMPRE “limpio”
   const initialData = useMemo(() => {
     if (!parsed) return null;
 
-    const rawElements = Array.isArray(parsed?.elements) ? parsed.elements : [];
+    // soporta:
+    // - { elements:[...], appState:{...} }
+    // - { type:"excalidraw", elements:[...], appState:{...} }
+    // - [ ...elements ]
+    const rawElements = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed?.elements)
+      ? parsed.elements
+      : [];
+
     let elements = normalizeElements(rawElements);
 
-    // Debug visible si llegan 0 elementos
+    // DEBUG visible si llega vacío
     if (!elements.length) {
       elements = [
         {
           id: "debug-1",
           type: "text",
-          x: 60,
+          x: 80,
           y: 90,
           width: 520,
-          height: 28,
+          height: 40,
           angle: 0,
           strokeColor: "#e9efe9",
           backgroundColor: "transparent",
@@ -172,47 +121,56 @@ export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
           updated: Date.now(),
           link: null,
           locked: true,
-          text: "⚠️ DEBUG: JSON leído, pero elements venía vacío.",
+          text: "⚠️ DEBUG: JSON ok, pero no hay elements visibles.",
           fontSize: 20,
           fontFamily: 1,
           textAlign: "left",
           verticalAlign: "top",
           baseline: 18,
           containerId: null,
-          originalText: "⚠️ DEBUG: JSON leído, pero elements venía vacío.",
+          originalText: "⚠️ DEBUG: JSON ok, pero no hay elements visibles.",
           lineHeight: 1.25,
         },
       ];
     }
 
-    const incomingAppState =
+    const appState =
       typeof parsed?.appState === "object" && parsed.appState ? parsed.appState : {};
 
-    // IMPORTANTE:
-    // - metemos primero lo que venga del JSON
-    // - y DESPUÉS pisamos con valores seguros (para que no nos cuelen scroll/zoom basura)
-    const safeAppState = {
-      ...incomingAppState,
-      viewBackgroundColor: "#0b0f0d",
-      zenModeEnabled: true,
-      gridSize: null,
-      // valores seguros (pisan lo anterior)
-      scrollX: 0,
-      scrollY: 0,
-      zoom: { value: 1 },
-    };
-
+    // OJO: primero metemos appState del JSON y DESPUÉS forzamos lo nuestro
     return {
       elements,
-      appState: safeAppState,
-      // MUY IMPORTANTE: esto es lo que suele disparar “canvas infinito” si el contenido está raro
-      // Lo dejamos en false y ya tienes el stack visible.
-      scrollToContent: false,
+      appState: {
+        ...appState,
+
+        viewBackgroundColor: "#0b0f0d",
+        zenModeEnabled: true,
+        gridSize: null,
+
+        // blindaje anti “me manda fuera”
+        scrollX: 0,
+        scrollY: 0,
+        zoom: { value: 1 },
+      },
+      scrollToContent: true,
     } as any;
   }, [parsed]);
 
   return (
     <div className={className ?? ""}>
+      {/* ✅ fuerza CSS: el canvas NO puede ponerse gigante */}
+      <style jsx global>{`
+        .vonu-excalidraw-wrap .excalidraw,
+        .vonu-excalidraw-wrap .excalidraw__container,
+        .vonu-excalidraw-wrap .excalidraw__canvas-wrapper {
+          height: 100% !important;
+        }
+        .vonu-excalidraw-wrap canvas.excalidraw__canvas {
+          height: 100% !important;
+          max-height: 100% !important;
+        }
+      `}</style>
+
       {/* Marco madera */}
       <div
         className="rounded-[26px] overflow-hidden border border-zinc-200 shadow-[0_18px_60px_rgba(0,0,0,0.10)]"
@@ -239,22 +197,9 @@ export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
             backgroundPosition: "0 0, 13px 19px",
           }}
         >
-          {/* contenedor medible */}
-          <div ref={wrapRef} style={{ height: 380, width: "100%" }}>
-            {initialData && ready ? (
-              <>
-                {/* FIX CSS: aunque Excalidraw intente pintar enorme, lo recortamos SIEMPRE */}
-                <style jsx>{`
-                  :global(.excalidraw__canvas-wrapper) {
-                    height: 380px !important;
-                    max-height: 380px !important;
-                    overflow: hidden !important;
-                  }
-                  :global(canvas.excalidraw__canvas) {
-                    max-height: 380px !important;
-                  }
-                `}</style>
-
+          <div className="vonu-excalidraw-wrap" style={{ height: 380 }}>
+            {initialData ? (
+              <div style={{ height: "100%", width: "100%" }}>
                 <Excalidraw
                   initialData={initialData}
                   viewModeEnabled={true}
@@ -262,20 +207,18 @@ export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
                   gridModeEnabled={false}
                   theme="dark"
                 />
-              </>
+              </div>
             ) : (
               <div className="p-4 text-[12.5px] text-white/80">
-                {parsed ? "Cargando pizarra…" : "No se pudo leer el JSON de Excalidraw."}
+                No se pudo leer el JSON de Excalidraw.
                 <br />
-                <span className="text-white/70">
-                  Asegúrate de que el bloque <code>```excalidraw```</code> contenga un JSON válido con <code>elements</code>.
-                </span>
+                Asegúrate de que el bloque <code>```excalidraw```</code> contenga un JSON válido con <code>elements</code>.
               </div>
             )}
           </div>
 
           {/* Posatizas */}
-          <div className="px-3 pb-3 pt-3">
+          <div className="px-3 pb-3">
             <div
               className="h-6 rounded-full border border-white/10"
               style={{
