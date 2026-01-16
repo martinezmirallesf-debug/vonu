@@ -483,26 +483,30 @@ function WhiteboardBlock({
 }
 
 const mdComponents = {
-  // ... (tus otros componentes como p, a, etc.)
-
+  // Mantenemos tus estilos de texto existentes
+  p: ({ children }: any) => <p className="mb-2 last:mb-0">{children}</p>,
+  ul: ({ children }: any) => <ul className="list-dist ml-4 mb-2">{children}</ul>,
+  ol: ({ children }: any) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
+  
+  // 💡 ESTA ES LA PARTE MAGICA:
   code({ node, inline, className, children, ...props }: any) {
     const match = /language-(\w+)/.exec(className || "");
     const lang = match ? match[1] : "";
     const content = String(children).replace(/\n$/, "");
 
-    // ✅ Si el bloque de código dice ```excalidraw
+    // Si el lenguaje es "excalidraw", renderizamos nuestra pizarra real
     if (!inline && lang === "excalidraw") {
       return (
-        <div className="w-full my-6 clear-both overflow-visible">
+        <div className="my-6">
           <ExcalidrawBlock sceneJSON={content} />
         </div>
       );
     }
 
-    // Si es código normal (o no tiene lenguaje definido)
+    // Si no es excalidraw, se ve como código normal
     return (
       <code 
-        className={`${className} bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-sm font-mono`} 
+        className={`${className} bg-black/5 px-1 rounded text-pink-600`} 
         {...props}
       >
         {children}
@@ -2969,46 +2973,45 @@ const mdText = isUser
   : normalizeAssistantText(rawText);
 
 
-                const isStreaming = !!m.streaming;
-                const hasText = (m.text ?? "").length > 0;
+                // ✅ SUSTITUYE TU SELECCIÓN POR ESTE BLOQUE EXACTO
+const isStreaming = !!m.streaming;
+const hasText = (m.text ?? "").length > 0;
 
-                return (
-                  <div key={m.id} className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
-                    <div
-                      className={[
-                        "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed overflow-hidden break-words",
-                        isUser ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none mr-2" : "bg-[#e8f0fe] text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none ml-2",
-                        "after:content-[''] after:absolute after:w-3 after:h-3 after:rotate-45 after:top-[3px]",
-                        isUser ? "after:right-[-6px] after:bg-[#dcf8c6]" : "after:left-[-6px] after:bg-[#e8f0fe]",
-                      ].join(" ")}
-                    >
-                      {m.image && (
-                        <div className="mb-2">
-                          <img src={m.image} alt="Adjunto" className="rounded-md max-h-60 max-w-full object-cover" />
-                        </div>
-                      )}
+return (
+  <div key={m.id} className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
+    <div
+      className={[
+        "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed overflow-hidden break-words",
+        isUser ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none mr-2" : "bg-[#e8f0fe] text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none ml-2",
+        "after:content-[''] after:absolute after:w-3 after:h-3 after:rotate-45 after:top-[3px]",
+        isUser ? "after:right-[-6px] after:bg-[#dcf8c6]" : "after:left-[-6px] after:bg-[#e8f0fe]",
+      ].join(" ")}
+    >
+      {m.image && (
+        <div className="mb-2">
+          <img src={m.image} alt="Adjunto" className="rounded-md max-h-60 max-w-full object-cover" />
+        </div>
+      )}
 
-                      {(m.text || m.streaming) && (
-                        <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0">
-
-                          {isStreaming ? (
-  <span className="whitespace-pre-wrap">
-    {/* Si el texto contiene "elements", es probable que sea una pizarra. 
-      No mostramos el código feo mientras se escribe.
-    */}
-    {mdText.includes('"elements"') ? "✍️ Dibujando en la pizarra..." : mdText}
-    {!hasText ? <TypingDots /> : <TypingCaret />}
-  </span>
-) : (
-  <ReactMarkdown components={mdComponents}>
-    {mdText}
-  </ReactMarkdown>
-)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
+      {(m.text || m.streaming) && (
+        <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0">
+          {isStreaming ? (
+            <span className="whitespace-pre-wrap">
+              {mdText.includes('"elements"') || mdText.includes('```excalidraw')
+                ? "✍️ Preparando dibujo en la pizarra..." 
+                : mdText}
+              {!hasText ? <TypingDots /> : <TypingCaret />}
+            </span>
+          ) : (
+            <ReactMarkdown components={mdComponents}>
+              {mdText}
+            </ReactMarkdown>
+          )}
+        </div>
+      )}
+    </div>
+  </div>
+);
               })}
             </div>
           </div>
