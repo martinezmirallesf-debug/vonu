@@ -1,6 +1,6 @@
 // app/api/chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { TUTOR_EXCALIDRAW_SYSTEM_PROMPT } from "@/app/lib/TutorExcalidrawPrompt";
+import { tutorExcalidrawInstructions } from "@/app/lib/TutorExcalidrawPrompt";
 
 export const runtime = "nodejs";
 
