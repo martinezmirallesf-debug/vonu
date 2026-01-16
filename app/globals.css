@@ -55,3 +55,9 @@
   line-height: 1;
   margin-left: 4px;
 }
+/* Evita flashes claros dentro del contenedor Excalidraw */
+.excalidraw,
+.excalidraw .App-menu_top,
+.excalidraw .layer-ui__wrapper {
+  background: transparent !important;
+}

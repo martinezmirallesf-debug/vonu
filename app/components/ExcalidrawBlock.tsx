@@ -1,101 +1,114 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import React, { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 
-// ✅ Import dinámico para evitar SSR/hydration flicker
+// Import dinámico (evita SSR + reduce parpadeos raros)
 const Excalidraw = dynamic(
-  async () => {
-    const mod = await import("@excalidraw/excalidraw");
-    return mod.Excalidraw;
-  },
+  async () => (await import("@excalidraw/excalidraw")).Excalidraw,
   { ssr: false }
 );
 
 type Props = {
-  sceneJSON: string; // viene del markdown ```excalidraw ... ```
+  sceneJSON: string;
+  className?: string;
+  height?: number; // por si quieres cambiarlo
 };
 
-function safeParse(json: string): any | null {
+function safeParseScene(raw: string): any | null {
   try {
-    const t = (json || "").trim();
-    if (!t) return null;
-    return JSON.parse(t);
+    let s = (raw || "").trim();
+
+    // Si viene con ```json o ```excalidraw, lo limpiamos
+    s = s.replace(/^```[a-zA-Z0-9_-]*\n/, "");
+    s = s.replace(/\n```$/, "");
+    s = s.trim();
+
+    if (!s) return null;
+
+    const parsed = JSON.parse(s);
+
+    // Excalidraw suele venir como { elements, appState, files }
+    // o como objeto exportado con "type": "excalidraw"
+    return parsed;
   } catch {
     return null;
   }
 }
 
-export default function ExcalidrawBlock({ sceneJSON }: Props) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+export default function ExcalidrawBlock({ sceneJSON, className, height = 380 }: Props) {
+  const parsed = useMemo(() => safeParseScene(sceneJSON), [sceneJSON]);
 
-  // ✅ Parse UNA vez por cambio real de texto
-  const parsed = useMemo(() => safeParse(sceneJSON), [sceneJSON]);
-
-  // ✅ Guardamos initialData en state para que NO se regenere cada render
-  const [initialData, setInitialData] = useState<any | null>(null);
-
+  // Solo montamos Excalidraw cuando hay data válida (evita “flash”)
+  const [ready, setReady] = useState(false);
   useEffect(() => {
-    if (!parsed) {
-      setInitialData(null);
-      return;
-    }
-
-    // Excalidraw espera { elements, appState, files }
-    const next = {
-      elements: Array.isArray(parsed.elements) ? parsed.elements : [],
-      appState: {
-        viewBackgroundColor: "#0b0f0d",
-        ...((parsed.appState && typeof parsed.appState === "object") ? parsed.appState : {}),
-      },
-      files: (parsed.files && typeof parsed.files === "object") ? parsed.files : {},
-    };
-
-    setInitialData(next);
+    setReady(false);
+    const t = setTimeout(() => setReady(true), 0);
+    return () => clearTimeout(t);
   }, [parsed]);
 
-  // ✅ Key estable: solo cambia si cambia el JSON
-  const stableKey = useMemo(() => {
-    const s = (sceneJSON || "").trim();
-    if (!s) return "excalidraw-empty";
-    // hash simple (suficiente para key)
-    let h = 0;
-    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-    return `excalidraw-${h}`;
-  }, [sceneJSON]);
+  const initialData = useMemo(() => {
+    if (!parsed) return null;
+
+    const elements = Array.isArray(parsed.elements) ? parsed.elements : [];
+    const files = parsed.files && typeof parsed.files === "object" ? parsed.files : {};
+
+    const appStateFromJson =
+      parsed.appState && typeof parsed.appState === "object" ? parsed.appState : {};
+
+    // ✅ IMPORTANTE: “pisamos” lo raro que puede venir del JSON y rompe el tamaño/zoom
+    const appState = {
+      ...appStateFromJson,
+      viewModeEnabled: true,
+      zenModeEnabled: true,
+      gridSize: null,
+      theme: "dark",
+      // Estos 3 son CLAVE para que no se vuelva loco con “scroll/zoom”
+      scrollX: 0,
+      scrollY: 0,
+      zoom: { value: 1 },
+      // ✅ fondo oscuro estable (evita blanco/negro)
+      viewBackgroundColor: "#0b0f0d",
+    };
+
+    return { elements, appState, files };
+  }, [parsed]);
+
+  if (!parsed) {
+    // Fallback si el JSON está roto (no lo ocultamos para que puedas detectarlo)
+    return (
+      <div className={className ?? ""}>
+        <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700">
+          ⚠️ No se pudo leer el dibujo (JSON inválido).
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="my-2 rounded-2xl border border-zinc-200 overflow-hidden bg-white">
-      <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-zinc-200 bg-white">
-        <div className="text-[12px] font-semibold text-zinc-900">🧑‍🏫 Pizarra (Excalidraw)</div>
-        <div className="text-[12px] text-zinc-500">solo lectura</div>
-      </div>
-
-      {/* ✅ Altura ESTABLE para que Excalidraw no mida infinito */}
+    <div className={className ?? ""}>
       <div
-        className="w-full"
+        className="rounded-[26px] overflow-hidden border border-zinc-200 shadow-[0_18px_60px_rgba(0,0,0,0.10)]"
         style={{
-          height: 420,
-          backgroundColor: "#0b0f0d",
+          height,
+          background: "#0b0f0d",
         }}
       >
-        {!mounted ? null : !initialData ? (
-          <div className="h-full w-full grid place-items-center text-[12px] text-white/70">
-            Cargando pizarra…
-          </div>
-        ) : (
-          <div className="h-full w-full" key={stableKey}>
+        {/* ✅ wrapper con altura real (esto evita el canvas gigante 33554432) */}
+        <div className="h-full w-full" style={{ position: "relative" }}>
+          {ready && initialData ? (
             <Excalidraw
               initialData={initialData}
-              viewModeEnabled
-              zenModeEnabled
-              gridModeEnabled={false}
+              viewModeEnabled={true}
+              zenModeEnabled={true}
               theme="dark"
-              
             />
-          </div>
-        )}
+          ) : (
+            <div className="h-full w-full grid place-items-center text-[12px] text-zinc-400">
+              Cargando pizarra…
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
