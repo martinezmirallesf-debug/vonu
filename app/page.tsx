@@ -2974,6 +2974,7 @@ const mdText = isUser
 
 
                 // ✅ SUSTITUYE TU SELECCIÓN POR ESTE BLOQUE EXACTO
+// ... justo después de definir mdText
 const isStreaming = !!m.streaming;
 const hasText = (m.text ?? "").length > 0;
 
@@ -2998,7 +2999,7 @@ return (
           {isStreaming ? (
             <span className="whitespace-pre-wrap">
               {mdText.includes('"elements"') || mdText.includes('```excalidraw')
-                ? "✍️ Preparando dibujo en la pizarra..." 
+                ? "✍️ El tutor está dibujando en la pizarra..." 
                 : mdText}
               {!hasText ? <TypingDots /> : <TypingCaret />}
             </span>
@@ -3012,7 +3013,8 @@ return (
     </div>
   </div>
 );
-              })}
+// ✅ AQUÍ ESTÁ EL TRUCO: cierra el map y luego los divs del fondo
+})}
             </div>
           </div>
         </div>
