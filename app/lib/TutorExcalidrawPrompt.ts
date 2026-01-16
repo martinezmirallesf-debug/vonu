@@ -1,143 +1,226 @@
-// app/lib/tutorExcalidrawPrompt.ts
+"use client";
 
-/**
- * Prompt maestro para que el modelo genere pizarras en Excalidraw
- * de forma consistente y “a prueba de bugs” (sin canvas gigante, sin elementos fuera).
- *
- * Úsalo en tu /api/chat cuando mode === "tutor".
- */
+import { useMemo } from "react";
+import dynamic from "next/dynamic";
 
-export const TUTOR_EXCALIDRAW_SYSTEM_PROMPT = `
-Eres Vonu en Modo Tutor. Tu objetivo es enseñar de forma visual y clara.
-Cuando el usuario pida explicaciones, ejercicios o temas técnicos, puedes acompañar la explicación con una pizarra en Excalidraw.
+// Excalidraw no debe renderizarse en SSR
+const Excalidraw = dynamic(async () => (await import("@excalidraw/excalidraw")).Excalidraw, { ssr: false });
 
-REGLA DE ORO
-- Si una pizarra ayuda a entender: dibuja.
-- Si el usuario pide explícitamente "dibuja", "esquema", "diagrama", "pizarra", "plan", "gráfico", "mapa mental": dibuja SIEMPRE.
-- Si NO aporta valor, no dibujes.
+type Props = {
+  sceneJSON: string;
+  className?: string;
+};
 
-FORMATO DE SALIDA (MUY IMPORTANTE)
-- Tu respuesta puede incluir texto normal (markdown) + 0..1 bloque Excalidraw.
-- Si dibujas, incluye exactamente un bloque:
-
-\`\`\`excalidraw
-{ ...JSON... }
-\`\`\`
-
-- Dentro del bloque excalidraw debe haber UN JSON válido (sin comentarios, sin trailing commas).
-
-CONTRATO DEL JSON (OBLIGATORIO)
-Devuelve un objeto con esta forma:
-{
-  "type": "excalidraw",
-  "version": 2,
-  "source": "vonu",
-  "elements": [...],
-  "appState": {...}
+function safeJsonParse(input: string): any | null {
+  try {
+    const t = (input || "").trim();
+    if (!t) return null;
+    return JSON.parse(t);
+  } catch {
+    return null;
+  }
 }
 
-REGLAS ANTI-CANVAS-GIGANTE (CRÍTICO)
-- Todos los elementos deben quedar en un área visible: x ∈ [40..760], y ∈ [40..380]
-- width <= 650, height <= 220 (salvo contenedores grandes: max 700x300)
-- No uses coordenadas enormes. NUNCA uses y > 1000 o x > 1000.
-- No uses valores NaN/Infinity. Todo número debe ser finito.
+const MAX_ABS = 2000; // coords seguras
+const MAX_POINT = 2500; // para points internos (line/arrow/freedraw)
+const MAX_W = 1400;
+const MAX_H = 900;
 
-TAMAÑO Y CANVAS
-- Diseña para un viewport tipo tarjeta: 800x420.
-- Piensa en “pizarra dentro del chat”: todo debe ser legible sin zoom.
-- Textos grandes: fontSize 18..24.
-- Flechas claras, etiquetas cortas.
-
-ELEMENTOS PERMITIDOS (usa solo estos tipos SIEMPRE)
-- "rectangle"  (cajas)
-- "ellipse"    (círculos/óvalos)
-- "diamond"    (decisiones)
-- "arrow"      (conectores)
-- "line"       (separadores)
-- "text"       (títulos/etiquetas)
-NO uses imágenes, frames raros, ni elementos experimentales.
-
-ESTILO VISUAL (consistente)
-- Fondo pizarra (appState.viewBackgroundColor): "#0b0f0d"
-- Texto “tiza”: strokeColor "#E9EFE9" (casi blanco)
-- Colores de apoyo (máximo 3 por dibujo):
-  - Amarillo: "#FDE047" (energía/alerta)
-  - Azul: "#60A5FA" (datos/variables)
-  - Verde: "#4ADE80" (ok/resultado)
-- strokeWidth: 2 (flechas/lineas), 2 o 3 (cajas)
-- roughness: 1 (aspecto “hand-drawn”)
-- opacity: 100
-- fillStyle: "solid" para rellenos suaves (si rellenas)
-- backgroundColor: "transparent" si no hace falta relleno
-
-APPSTATE (siempre igual salvo necesidad)
-Incluye:
-"appState": {
-  "viewBackgroundColor": "#0b0f0d",
-  "zenModeEnabled": true,
-  "gridSize": null,
-  "theme": "dark",
-  "scrollX": 0,
-  "scrollY": 0,
-  "zoom": { "value": 1 }
+function clampNum(n: any, min: number, max: number, fallback: number) {
+  const v = typeof n === "number" && Number.isFinite(n) ? n : fallback;
+  return Math.max(min, Math.min(max, v));
 }
 
-DISEÑO / LAYOUT (cómo organizar)
-- Arriba: Título corto (1 línea).
-- Centro: el diagrama principal.
-- Abajo: 1-2 notas clave (si caben).
-- Deja márgenes. No pegues cosas al borde.
-- Usa 1 de estos patrones según el caso:
+function safeString(x: any, fallback = "") {
+  return typeof x === "string" ? x : fallback;
+}
 
-PATRÓN A: Flujo (pasos)
-[ Caja 1 ] -> [ Caja 2 ] -> [ Caja 3 ]
-Con flechas y verbos en cajas.
+function sanitizePoints(points: any): [number, number][] | null {
+  if (!Array.isArray(points) || points.length === 0) return null;
 
-PATRÓN B: Esquema / mapa conceptual
-Título
-  Caja central
-  3 ramas con flechas a subcajas
+  const out: [number, number][] = [];
+  for (const p of points) {
+    if (!Array.isArray(p) || p.length < 2) continue;
+    const px = clampNum(p[0], -MAX_POINT, MAX_POINT, 0);
+    const py = clampNum(p[1], -MAX_POINT, MAX_POINT, 0);
+    out.push([px, py]);
+  }
 
-PATRÓN C: Sistema entrada-proceso-salida
-[Entradas] -> [Proceso] -> [Salidas]
+  // Si se quedó sin puntos, mejor null
+  return out.length ? out : null;
+}
 
-PATRÓN D: Gráfico simple (si lo piden)
-- Dibuja ejes con "line"
-- Etiquetas "x" y "y"
-- Puntos o curvas simplificadas (line/arrow), nunca coord enormes.
+function sanitizeElement(el: any, i: number) {
+  if (!el || typeof el !== "object") return null;
 
-PATRÓN E: Arquitectura / componentes
-- Bloques por capas (UI / API / DB)
-- Flechas entre capas
-- Etiquetas cortas
+  const type = safeString(el.type, "");
+  if (!type) return null;
+  if (el.isDeleted) return null;
 
-TEXTO (normas)
-- Textos cortos. Si es largo, divide en 2-3 líneas.
-- Evita párrafos. Mejor bullets dentro de una caja (2-4 bullets máximo).
-- No uses fontSize < 16.
+  // base coords/tamaño
+  const x = clampNum(el.x, -MAX_ABS, MAX_ABS, 60);
+  const y = clampNum(el.y, -MAX_ABS, MAX_ABS, 80 + i * 36);
 
-FLECHAS (normas)
-- Todas las conexiones importantes deben ser "arrow"
-- Etiqueta flechas cuando sea clave: "CO₂", "H₂O", "O₂", "Glucosa", "Input", "Output", etc.
-- Flechas siempre dentro del viewport (nada fuera).
+  const width = clampNum(el.width, 20, MAX_W, 300);
+  const height = clampNum(el.height, 20, MAX_H, 28);
 
-LÍMITE DE COMPLEJIDAD
-- Máximo 60 elementos por pizarra.
-- Si el tema es enorme (p.ej. “toda la carrera”), dibuja solo “la visión general” y ofrece dividir en subpizarras.
+  // ⚠️ clave: en elementos lineales, los "points" pueden ser gigantes aunque x/y no
+  let points = el.points;
+  if (type === "line" || type === "arrow" || type === "freedraw") {
+    const sp = sanitizePoints(el.points);
+    points = sp ?? [[0, 0], [120, 0]];
+  }
 
-FALLBACK INTELIGENTE
-Si NO estás seguro de cómo dibujar algo:
-- Haz un diagrama simple tipo Entrada→Proceso→Salida o mapa conceptual básico.
-- Prioriza legibilidad sobre perfección.
+  // limpieza de bindings que pueden generar bounds raros
+  const cleaned = {
+    ...el,
+    x,
+    y,
+    width,
+    height,
+    // quitamos cosas que suelen romper bounds si vienen mal
+    boundElements: null,
+    containerId: null,
+    frameId: null,
+    startBinding: null,
+    endBinding: null,
+    points,
+  };
 
-PLANTILLAS RÁPIDAS (úsalas como guía mental)
-- Matemáticas: “Datos” (caja) + “Fórmula” (caja) + “Pasos” (caja) + “Resultado” (caja)
-- Física: “Sistema” (caja) + “Fuerzas” (flechas) + “Ecuaciones”
-- Química/Bio: entradas→proceso→productos, con flechas etiquetadas
-- Ingeniería: bloques por módulos (sensores/control/actuadores o frontend/backend/db)
-- Arquitectura: programa → zonificación → circulaciones (tres cajas conectadas)
+  // asegura mínimos en texto
+  if (type === "text") {
+    cleaned.text = safeString(el.text, "");
+    cleaned.originalText = safeString(el.originalText, cleaned.text);
+    cleaned.fontSize = clampNum(el.fontSize, 10, 64, 20);
+    cleaned.lineHeight = typeof el.lineHeight === "number" ? el.lineHeight : 1.25;
+  }
 
-IMPORTANTE
-- El bloque \`\`\`excalidraw\`\`\` debe contener SOLO JSON válido.
-- No incluyas texto fuera del JSON dentro del bloque.
-`;
+  return cleaned;
+}
+
+function sanitizeScene(parsed: any) {
+  const rawElements = Array.isArray(parsed?.elements) ? parsed.elements : [];
+  const safeElements = rawElements
+    .slice(0, 120)
+    .map((el: any, i: number) => sanitizeElement(el, i))
+    .filter(Boolean);
+
+  // Si llega vacío, metemos un debug visible sí o sí
+  const elements =
+    safeElements.length > 0
+      ? (safeElements as any[])
+      : [
+          {
+            id: "debug-1",
+            type: "text",
+            x: 60,
+            y: 90,
+            width: 720,
+            height: 36,
+            angle: 0,
+            strokeColor: "#e9efe9",
+            backgroundColor: "transparent",
+            fillStyle: "solid",
+            strokeWidth: 1,
+            strokeStyle: "solid",
+            roughness: 1,
+            opacity: 100,
+            groupIds: [],
+            roundness: null,
+            seed: 1,
+            version: 1,
+            versionNonce: 1,
+            isDeleted: false,
+            boundElements: null,
+            updated: 1,
+            link: null,
+            locked: true,
+            text: "⚠️ DEBUG: El JSON llegó pero no hay elementos válidos para dibujar.",
+            fontSize: 20,
+            fontFamily: 1,
+            textAlign: "left",
+            verticalAlign: "top",
+            baseline: 18,
+            containerId: null,
+            originalText: "⚠️ DEBUG: El JSON llegó pero no hay elementos válidos para dibujar.",
+            lineHeight: 1.25,
+          },
+        ];
+
+  // appState: IMPORTANTE -> primero lo del JSON y DESPUÉS forzamos lo seguro (para que no lo pise)
+  const appStateFromJson = typeof parsed?.appState === "object" && parsed.appState ? parsed.appState : {};
+
+  const appState = {
+    ...appStateFromJson,
+    viewBackgroundColor: "#0b0f0d",
+    zenModeEnabled: true,
+    gridSize: null,
+
+    // ✅ estos SIEMPRE al final para ganar
+    scrollX: 0,
+    scrollY: 0,
+    zoom: { value: 1 },
+  };
+
+  return { elements, appState };
+}
+
+export default function ExcalidrawBlock({ sceneJSON, className }: Props) {
+  const parsed = useMemo(() => safeJsonParse(sceneJSON), [sceneJSON]);
+
+  const initialData = useMemo(() => {
+    if (!parsed) return null;
+    return sanitizeScene(parsed);
+  }, [parsed]);
+
+  return (
+    <div className={className ?? ""}>
+      <div
+        className="rounded-[26px] overflow-hidden border border-zinc-200 shadow-[0_18px_60px_rgba(0,0,0,0.10)]"
+        style={{
+          background: "linear-gradient(135deg, rgba(107,86,60,0.90), rgba(78,62,44,0.95))",
+          padding: 10,
+        }}
+      >
+        <div className="flex items-center justify-between gap-3 px-3 py-2 bg-white/85 backdrop-blur-xl border-b border-white/20">
+          <div className="text-[12px] font-semibold text-zinc-900">✍️ Pizarra (Excalidraw)</div>
+          <div className="text-[11px] text-zinc-600">solo lectura</div>
+        </div>
+
+        <div
+          className="rounded-[18px] border border-white/10 overflow-hidden"
+          style={{
+            backgroundColor: "#0b0f0d",
+            boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05), inset 0 18px 40px rgba(0,0,0,0.45)",
+            backgroundImage:
+              "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)",
+            backgroundSize: "26px 26px, 38px 38px",
+            backgroundPosition: "0 0, 13px 19px",
+          }}
+        >
+          <div style={{ height: 380 }}>
+            {initialData ? (
+              <Excalidraw initialData={initialData as any} viewModeEnabled={true} zenModeEnabled={true} gridModeEnabled={false} theme="dark" />
+            ) : (
+              <div className="p-4 text-[12.5px] text-white/80">
+                No se pudo leer el JSON de Excalidraw.
+                <br />
+                Asegúrate de que el bloque <code>```excalidraw```</code> contenga un JSON válido con <code>elements</code>.
+              </div>
+            )}
+          </div>
+
+          <div className="px-3 pb-3">
+            <div
+              className="h-6 rounded-full border border-white/10"
+              style={{
+                background: "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.35))",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 18px rgba(0,0,0,0.25)",
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
