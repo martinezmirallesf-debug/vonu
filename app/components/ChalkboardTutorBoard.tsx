@@ -276,8 +276,8 @@ export default function ChalkboardTutorBoard({
   value,
   className,
   backgroundSrc = "/boards/chalkboard-classic.webp",
-  width = 1000,
-  height = 600,
+  width = 2350,
+  height = 1500,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -380,10 +380,10 @@ export default function ChalkboardTutorBoard({
 
     // --- 2) Dibuja texto “normal” (encima) ---
     // Layout simple: empieza arriba izquierda
-    let x = 70;
-    let y = 70;
-    const baseSize = 30;
-    const lineGap = 10;
+    let x = 160;
+let y = 150;
+const baseSize = 64;
+const lineGap = 18;
 
     parsed.lines.forEach((line, i) => {
       const isTitle = i === 0 || /^\s*\[white\].+\[\/white\]\s*$/i.test(line.trim());
