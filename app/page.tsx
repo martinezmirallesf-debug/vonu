@@ -8,7 +8,7 @@ import { Architects_Daughter } from "next/font/google";
 import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
 import ReactMarkdown from "react-markdown";
-import ChalkboardPretty from "@/app/components/ChalkboardPretty";
+import WhiteboardBlock from "@/app/components/WhiteboardBlock";
 
 import type { Components } from "react-markdown";
 type WhiteboardBlockProps = {
@@ -1366,9 +1366,9 @@ ctx2.restore();
     const clean = content.replace(/\n$/, "");
 
     // ✅ si el tutor devuelve ```pizarra o ```whiteboard → renderiza la pizarra bonita
-    if (!isInline && (lang === "pizarra" || lang === "whiteboard")) {
-      return <WhiteboardBlock value={clean} onOpenCanvas={openBoard} />;
-    }
+    if (!isInline && lang === "pizarra") {
+  return <WhiteboardBlock value={clean} onOpenCanvas={openBoard} />;
+}
 
     // bloque normal (code block)
     if (!isInline) {
