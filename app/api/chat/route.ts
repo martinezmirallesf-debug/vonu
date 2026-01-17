@@ -1,6 +1,5 @@
 // app/api/chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import tutorExcalidrawInstructions from "@/app/lib/TutorExcalidrawPrompt";
 
 export const runtime = "nodejs";
 
@@ -45,45 +44,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // body desde el cliente
     const body = (await req.json().catch(() => ({}))) as any;
 
-    const mode = body?.mode === "tutor" ? "tutor" : "chat";
-    const tutorLevel =
-      body?.tutorLevel === "kid" || body?.tutorLevel === "teen" || body?.tutorLevel === "adult"
-        ? body.tutorLevel
-        : "adult";
-
-    // ✅ Messages siempre array
-    const incomingMessages = Array.isArray(body?.messages) ? body.messages : [];
-
-    // ✅ Si estamos en tutor, metemos un "system" al principio con el contrato Excalidraw
-    // (si el Edge Function respeta system messages, esto lo arregla de verdad)
-    const messages =
-      mode === "tutor"
-        ? [
-            {
-  role: "system",
-  content: tutorExcalidrawInstructions,
-}
-          ]
-        : incomingMessages;
-
-    // ✅ Normalizamos campos clave (para que quick-service reciba siempre algo consistente)
+    // ✅ Normalizamos campos clave (quick-service siempre recibe algo consistente)
     const normalized = {
-      messages,
+      messages: Array.isArray(body?.messages) ? body.messages : [],
       userText: typeof body?.userText === "string" ? body.userText : "",
       imageBase64: typeof body?.imageBase64 === "string" ? body.imageBase64 : null,
-      mode,
-      tutorLevel,
-      // ✅ opcional: por si más adelante añades cosas
+      mode: body?.mode === "tutor" ? "tutor" : "chat",
+      tutorLevel:
+        body?.tutorLevel === "kid" || body?.tutorLevel === "teen" || body?.tutorLevel === "adult"
+          ? body.tutorLevel
+          : "adult",
       ...Object.fromEntries(
         Object.entries(body || {}).filter(([k]) => !["messages", "userText", "imageBase64", "mode", "tutorLevel"].includes(k))
       ),
     };
 
-    // Opcional: si quieres pasar el JWT del usuario (cuando esté logueado),
-    // lo intentamos leer de Authorization, pero no es obligatorio.
     const authHeader = req.headers.get("authorization") || "";
 
     const headers: Record<string, string> = {

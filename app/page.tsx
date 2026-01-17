@@ -2,13 +2,13 @@
 
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Architects_Daughter } from "next/font/google";
 
 import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
 import ReactMarkdown from "react-markdown";
-import ExcalidrawBlock from "@/app/components/ExcalidrawBlock";
+import ChalkboardPretty from "@/app/components/ChalkboardPretty";
 
 import type { Components } from "react-markdown";
 type WhiteboardBlockProps = {
@@ -481,40 +481,6 @@ function WhiteboardBlock({
     </div>
   );
 }
-
-const mdComponents = {
-  // Mantenemos tus estilos de texto existentes
-  p: ({ children }: any) => <p className="mb-2 last:mb-0">{children}</p>,
-  ul: ({ children }: any) => <ul className="list-dist ml-4 mb-2">{children}</ul>,
-  ol: ({ children }: any) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
-  
-  // 💡 ESTA ES LA PARTE MAGICA:
-  code({ node, inline, className, children, ...props }: any) {
-    const match = /language-(\w+)/.exec(className || "");
-    const lang = match ? match[1] : "";
-    const content = String(children).replace(/\n$/, "");
-
-    // Si el lenguaje es "excalidraw", renderizamos nuestra pizarra real
-    if (!inline && lang === "excalidraw") {
-      return (
-        <div className="my-6">
-          <ExcalidrawBlock sceneJSON={content} />
-        </div>
-      );
-    }
-
-    // Si no es excalidraw, se ve como código normal
-    return (
-      <code 
-        className={`${className} bg-black/5 px-1 rounded text-pink-600`} 
-        {...props}
-      >
-        {children}
-      </code>
-    );
-  },
-};
-
 
 
   // ✅ FIX CLAVE: refreshProStatus NO depende de authUserId.
@@ -1384,10 +1350,46 @@ ctx2.restore();
     pushHistory();
   }
 
-  function openBoard() {
-    setBoardMsg(null);
-    setBoardOpen(true);
-  }
+  const openBoard = useCallback(() => {
+  setBoardMsg(null);
+  setBoardOpen(true);
+}, []);
+const mdComponents: Components = {
+  code({ inline, className, children, ...props }: any) {
+    const isInline = !!inline;
+
+    const cn = typeof className === "string" ? className : "";
+    const m = cn.match(/language-([a-zA-Z0-9_-]+)/);
+    const lang = (m?.[1] || "").toLowerCase();
+
+    const content = Array.isArray(children) ? children.join("") : String(children ?? "");
+    const clean = content.replace(/\n$/, "");
+
+    // ✅ si el tutor devuelve ```pizarra o ```whiteboard → renderiza la pizarra bonita
+    if (!isInline && (lang === "pizarra" || lang === "whiteboard")) {
+      return <WhiteboardBlock value={clean} onOpenCanvas={openBoard} />;
+    }
+
+    // bloque normal
+    if (!isInline) {
+      return (
+        <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
+          <code className="text-[12.5px]" {...props}>
+            {clean}
+          </code>
+        </pre>
+      );
+    }
+
+    // inline code
+    return (
+      <code className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]">
+        {clean}
+      </code>
+    );
+  },
+};
+
 
   function closeBoard() {
     setBoardOpen(false);
