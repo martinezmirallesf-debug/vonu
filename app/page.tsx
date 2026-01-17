@@ -1354,7 +1354,7 @@ ctx2.restore();
   setBoardMsg(null);
   setBoardOpen(true);
 }, []);
-const mdComponents: Components = {
+  const mdComponents: Components = {
   code({ inline, className, children, ...props }: any) {
     const isInline = !!inline;
 
@@ -1370,7 +1370,7 @@ const mdComponents: Components = {
       return <WhiteboardBlock value={clean} onOpenCanvas={openBoard} />;
     }
 
-    // bloque normal
+    // bloque normal (code block)
     if (!isInline) {
       return (
         <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
@@ -1389,6 +1389,8 @@ const mdComponents: Components = {
     );
   },
 };
+
+
 
 
   function closeBoard() {
