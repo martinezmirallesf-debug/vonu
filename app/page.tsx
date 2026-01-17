@@ -1367,7 +1367,7 @@ ctx2.restore();
 
     // ✅ si el tutor devuelve ```pizarra o ```whiteboard → renderiza la pizarra bonita
     if (!isInline && (lang === "pizarra" || lang === "whiteboard")) {
-  return <ChalkboardTutorBoard value={clean} title="Pizarra" onOpenCanvas={openBoard} />;
+  return <ChalkboardTutorBoard value={clean} />;
 }
 
     // bloque normal (code block)
