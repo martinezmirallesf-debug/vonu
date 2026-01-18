@@ -3,10 +3,10 @@
 import React, { useEffect, useMemo, useRef } from "react";
 
 type Props = {
-  value: string;                // contenido dentro de ```pizarra
+  value: string; // contenido dentro de ```pizarra
   className?: string;
-  backgroundSrc?: string;       // por defecto tu imagen
-  width?: number;               // canvas lógico (1000x600 recomendado)
+  backgroundSrc?: string; // por defecto tu imagen
+  width?: number; // tamaño canvas real (px)
   height?: number;
 };
 
@@ -21,6 +21,11 @@ const COLOR_MAP: Record<ColorName, string> = {
   orange: "#ffb36b",
   red: "#ff6b6b",
 };
+
+// El modelo “piensa” en este lienzo.
+// Importante: en analyze.ts le dices “1000x600”.
+const VIRTUAL_W = 1000;
+const VIRTUAL_H = 600;
 
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
@@ -60,8 +65,8 @@ type DrawCmd =
   | { kind: "tri"; x: number; y: number; w: number; h: number; color: string; lw: number };
 
 type ParsedBoard = {
-  lines: string[];      // líneas de texto “normales”
-  cmds: DrawCmd[];      // comandos de dibujo
+  lines: string[]; // líneas de texto “normales”
+  cmds: DrawCmd[]; // comandos de dibujo
 };
 
 function parseCommand(line: string): DrawCmd | null {
@@ -85,18 +90,16 @@ function parseCommand(line: string): DrawCmd | null {
     for (const token of parts.slice(2)) {
       const [k, v] = token.split("=");
       if (!v) continue;
-      if (k === "size") size = clamp(parseNumber(v, 26), 14, 64);
+      if (k === "size") size = clamp(parseNumber(v, 26), 12, 72);
       if (k === "color") color = parseColorToken(v);
     }
 
     return { kind: "text", x, y, size, color, text: inside || "" };
   }
 
-  // Normal commands
   const parts = raw.split(/\s+/);
   const cmd = parts[0].slice(1).toLowerCase();
 
-  // helper: args + kv
   const nums: number[] = [];
   const kv: Record<string, string> = {};
   for (const t of parts.slice(1)) {
@@ -109,7 +112,7 @@ function parseCommand(line: string): DrawCmd | null {
   }
 
   const color = parseColorToken(kv["color"]);
-  const lw = clamp(parseNumber(kv["w"], 3), 1, 10);
+  const lw = clamp(parseNumber(kv["w"], 3), 1, 12);
 
   if (cmd === "rect") {
     const [x, y, w, h] = nums;
@@ -139,6 +142,16 @@ function parseCommand(line: string): DrawCmd | null {
   return null;
 }
 
+function looksLikeAsciiJunk(line: string) {
+  // evita que el modelo “dibuje” con ASCII y te rompa la pizarra
+  const t = (line || "").trim();
+  if (!t) return false;
+  const hasBox = /(\+[-=]{2,}\+)|(\|[-=]{2,}\|)/.test(t);
+  const hasManyPipes = (t.match(/\|/g)?.length ?? 0) >= 3;
+  const hasManyDashes = (t.match(/[-=]/g)?.length ?? 0) >= 6;
+  return hasBox || (hasManyPipes && hasManyDashes);
+}
+
 function parseBoard(value: string): ParsedBoard {
   const rawLines = (value || "").replace(/\r\n/g, "\n").split("\n");
   const lines: string[] = [];
@@ -150,7 +163,9 @@ function parseBoard(value: string): ParsedBoard {
 
     const c = parseCommand(trimmed);
     if (c) cmds.push(c);
-    else lines.push(l);
+    else {
+      if (!looksLikeAsciiJunk(l)) lines.push(l);
+    }
   }
 
   return { lines, cmds };
@@ -160,7 +175,6 @@ function parseBoard(value: string): ParsedBoard {
 type Seg = { text: string; color: string };
 
 function parseColorTags(line: string): Seg[] {
-  // soporta [yellow]hola[/yellow] repetidas veces
   const out: Seg[] = [];
   let rest = line;
 
@@ -181,30 +195,42 @@ function parseColorTags(line: string): Seg[] {
 
   if (rest) out.push({ text: rest, color: COLOR_MAP.white });
 
-  return out.filter(s => s.text.length > 0);
+  return out.filter((s) => s.text.length > 0);
 }
 
 function drawChalkStroke(ctx: CanvasRenderingContext2D, fn: () => void) {
   ctx.save();
-
-  // “tiza”: glow suave + un pelín de rugosidad con micro trazos
   ctx.globalAlpha = 0.95;
   ctx.shadowColor = "rgba(255,255,255,0.22)";
   ctx.shadowBlur = 1.2;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-
   fn();
-
-  // “polvo” muy sutil
-  ctx.shadowBlur = 0;
-  ctx.globalAlpha = 0.10;
-  // polvo: puntitos en el último path no lo podemos recuperar, así que lo dejamos para texto/lineas solo en llamadas específicas
-
   ctx.restore();
 }
 
-function drawArrow(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, color: string, lw: number) {
+function drawLineDust(ctx: CanvasRenderingContext2D, x: number, y: number, lw: number, color: string) {
+  const dust = Math.max(1, Math.floor(lw / 2));
+  ctx.save();
+  ctx.globalAlpha = 0.10;
+  ctx.fillStyle = color;
+  for (let i = 0; i < dust; i++) {
+    const rx = x + (Math.random() - 0.5) * (lw * 3);
+    const ry = y + (Math.random() - 0.5) * (lw * 3);
+    ctx.fillRect(rx, ry, 1, 1);
+  }
+  ctx.restore();
+}
+
+function drawArrow(
+  ctx: CanvasRenderingContext2D,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  color: string,
+  lw: number,
+) {
   const ang = Math.atan2(y2 - y1, x2 - x1);
   const head = 12 + lw * 1.4;
 
@@ -226,35 +252,51 @@ function drawArrow(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: nu
   });
 }
 
-function drawLineDust(ctx: CanvasRenderingContext2D, x: number, y: number, lw: number, color: string) {
-  // polvo sutil alrededor del punto
-  const dust = Math.max(1, Math.floor(lw / 2));
-  ctx.save();
-  ctx.globalAlpha = 0.10;
-  ctx.fillStyle = color;
-  for (let i = 0; i < dust; i++) {
-    const rx = x + (Math.random() - 0.5) * (lw * 3);
-    const ry = y + (Math.random() - 0.5) * (lw * 3);
-    ctx.fillRect(rx, ry, 1, 1);
-  }
-  ctx.restore();
+function setChalkFont(ctx: CanvasRenderingContext2D, fontSize: number) {
+  ctx.font = `${fontSize}px "Architects Daughter", "Patrick Hand", system-ui, -apple-system, Segoe UI, Roboto, Arial`;
 }
 
-function drawTextLine(
+function wrapSegmentsToLines(
   ctx: CanvasRenderingContext2D,
   segs: Seg[],
-  x: number,
-  y: number,
-  fontSize: number,
-) {
+  maxWidth: number,
+): Seg[][] {
+  // “wrap” por palabras (manteniendo colores)
+  const lines: Seg[][] = [];
+  let current: Seg[] = [];
+  let currentW = 0;
+
+  const pushLine = () => {
+    if (current.length) lines.push(current);
+    current = [];
+    currentW = 0;
+  };
+
+  for (const seg of segs) {
+    const words = seg.text.split(/(\s+)/); // mantiene espacios como tokens
+    for (const w of words) {
+      const wWidth = ctx.measureText(w).width;
+      if (currentW + wWidth > maxWidth && currentW > 0) {
+        // salto de línea
+        pushLine();
+      }
+      current.push({ text: w, color: seg.color });
+      currentW += wWidth;
+    }
+  }
+
+  pushLine();
+  return lines;
+}
+
+function drawSegLine(ctx: CanvasRenderingContext2D, segs: Seg[], x: number, y: number, fontSize: number) {
   ctx.save();
   ctx.textBaseline = "top";
-
-  // Usa la fuente si la tienes cargada en CSS (Architects Daughter), si no, fallback.
-  ctx.font = `${fontSize}px "Architects Daughter", "Patrick Hand", system-ui, -apple-system, Segoe UI, Roboto, Arial`;
+  setChalkFont(ctx, fontSize);
 
   let cursorX = x;
   for (const seg of segs) {
+    if (!seg.text) continue;
     ctx.fillStyle = seg.color;
     ctx.globalAlpha = 0.95;
     ctx.shadowColor = "rgba(255,255,255,0.22)";
@@ -262,9 +304,8 @@ function drawTextLine(
 
     ctx.fillText(seg.text, cursorX, y);
 
-    // polvo cerca del final del texto (sutil)
     const w = ctx.measureText(seg.text).width;
-    drawLineDust(ctx, cursorX + w, y + fontSize * 0.7, 4, seg.color);
+    drawLineDust(ctx, cursorX + w, y + fontSize * 0.7, Math.max(3, Math.floor(fontSize / 10)), seg.color);
 
     cursorX += w;
   }
@@ -280,7 +321,6 @@ export default function ChalkboardTutorBoard({
   height = 1500,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
   const parsed = useMemo(() => parseBoard(value), [value]);
 
   useEffect(() => {
@@ -289,115 +329,197 @@ export default function ChalkboardTutorBoard({
     const ctx = c.getContext("2d");
     if (!ctx) return;
 
-    // Limpia
     ctx.clearRect(0, 0, width, height);
+
+    // ✅ Márgenes seguros (dentro del marco de madera)
+    // Ajusta si quieres: cuanto más grande, más “dentro” se dibuja.
+    const PAD_X = Math.round(width * 0.06);  // ~141px en 2350
+    const PAD_Y = Math.round(height * 0.09); // ~135px en 1500
+
+    const innerW = width - PAD_X * 2;
+    const innerH = height - PAD_Y * 2;
+
+    const sx = innerW / VIRTUAL_W;
+    const sy = innerH / VIRTUAL_H;
+    const s = Math.min(sx, sy); // escala uniforme para que no se deforme
+
+    const offsetX = PAD_X + (innerW - VIRTUAL_W * s) / 2;
+    const offsetY = PAD_Y + (innerH - VIRTUAL_H * s) / 2;
+
+    const tx = (x: number) => offsetX + x * s;
+    const ty = (y: number) => offsetY + y * s;
+    const tlw = (lw: number) => clamp(lw * s, 1, 18);
+    const tsize = (fs: number) => clamp(fs * s, 14, 96);
+
+    const clampX = (x: number) => clamp(x, 0, VIRTUAL_W);
+    const clampY = (y: number) => clamp(y, 0, VIRTUAL_H);
 
     // --- 1) Dibuja comandos (cajas, flechas, etc.) ---
     for (const cmd of parsed.cmds) {
       if (cmd.kind === "rect") {
+        const x = tx(clampX(cmd.x));
+        const y = ty(clampY(cmd.y));
+        const w = cmd.w * s;
+        const h = cmd.h * s;
+
         ctx.strokeStyle = cmd.color;
-        ctx.lineWidth = cmd.lw;
-        drawChalkStroke(ctx, () => {
-          ctx.strokeRect(cmd.x, cmd.y, cmd.w, cmd.h);
-        });
-        drawLineDust(ctx, cmd.x + cmd.w, cmd.y + cmd.h, cmd.lw, cmd.color);
+        ctx.lineWidth = tlw(cmd.lw);
+        drawChalkStroke(ctx, () => ctx.strokeRect(x, y, w, h));
+        drawLineDust(ctx, x + w, y + h, ctx.lineWidth, cmd.color);
       }
 
       if (cmd.kind === "circle") {
+        const x = tx(clampX(cmd.x));
+        const y = ty(clampY(cmd.y));
+        const r = cmd.r * s;
+
         ctx.strokeStyle = cmd.color;
-        ctx.lineWidth = cmd.lw;
+        ctx.lineWidth = tlw(cmd.lw);
         drawChalkStroke(ctx, () => {
           ctx.beginPath();
-          ctx.arc(cmd.x, cmd.y, cmd.r, 0, Math.PI * 2);
+          ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.stroke();
         });
-        drawLineDust(ctx, cmd.x + cmd.r, cmd.y, cmd.lw, cmd.color);
+        drawLineDust(ctx, x + r, y, ctx.lineWidth, cmd.color);
       }
 
       if (cmd.kind === "line") {
+        const x1 = tx(clampX(cmd.x1));
+        const y1 = ty(clampY(cmd.y1));
+        const x2 = tx(clampX(cmd.x2));
+        const y2 = ty(clampY(cmd.y2));
+
         ctx.strokeStyle = cmd.color;
-        ctx.lineWidth = cmd.lw;
+        ctx.lineWidth = tlw(cmd.lw);
         drawChalkStroke(ctx, () => {
           ctx.beginPath();
-          ctx.moveTo(cmd.x1, cmd.y1);
-          ctx.lineTo(cmd.x2, cmd.y2);
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
           ctx.stroke();
         });
-        drawLineDust(ctx, cmd.x2, cmd.y2, cmd.lw, cmd.color);
+        drawLineDust(ctx, x2, y2, ctx.lineWidth, cmd.color);
       }
 
       if (cmd.kind === "arrow") {
-        drawArrow(ctx, cmd.x1, cmd.y1, cmd.x2, cmd.y2, cmd.color, cmd.lw);
-        drawLineDust(ctx, cmd.x2, cmd.y2, cmd.lw, cmd.color);
+        const x1 = tx(clampX(cmd.x1));
+        const y1 = ty(clampY(cmd.y1));
+        const x2 = tx(clampX(cmd.x2));
+        const y2 = ty(clampY(cmd.y2));
+
+        drawArrow(ctx, x1, y1, x2, y2, cmd.color, tlw(cmd.lw));
+        drawLineDust(ctx, x2, y2, tlw(cmd.lw), cmd.color);
       }
 
       if (cmd.kind === "underline") {
+        const x1 = tx(clampX(cmd.x1));
+        const y = ty(clampY(cmd.y));
+        const x2 = tx(clampX(cmd.x2));
+
         ctx.strokeStyle = cmd.color;
-        ctx.lineWidth = cmd.lw;
+        ctx.lineWidth = tlw(cmd.lw);
         drawChalkStroke(ctx, () => {
           ctx.beginPath();
-          ctx.moveTo(cmd.x1, cmd.y);
-          ctx.lineTo(cmd.x2, cmd.y);
+          ctx.moveTo(x1, y);
+          ctx.lineTo(x2, y);
           ctx.stroke();
         });
-        drawLineDust(ctx, cmd.x2, cmd.y, cmd.lw, cmd.color);
+        drawLineDust(ctx, x2, y, ctx.lineWidth, cmd.color);
       }
 
       if (cmd.kind === "text") {
-        drawTextLine(ctx, [{ text: cmd.text, color: cmd.color }], cmd.x, cmd.y, cmd.size);
+        const x = tx(clampX(cmd.x));
+        const y = ty(clampY(cmd.y));
+        const size = tsize(cmd.size);
+
+        drawSegLine(ctx, [{ text: cmd.text, color: cmd.color }], x, y, size);
       }
 
       if (cmd.kind === "tri") {
         // triángulo rectángulo con ángulo recto en (x,y): cateto horizontal w, vertical h
-        const x = cmd.x, y = cmd.y;
-        const x2 = x + cmd.w, y2 = y;
-        const x3 = x, y3 = y + cmd.h;
+        const x = clampX(cmd.x);
+        const y = clampY(cmd.y);
+        const w = cmd.w;
+        const h = cmd.h;
+
+        const X = tx(x);
+        const Y = ty(y);
+        const X2 = tx(x + w);
+        const Y2 = ty(y);
+        const X3 = tx(x);
+        const Y3 = ty(y + h);
 
         ctx.strokeStyle = cmd.color;
-        ctx.lineWidth = cmd.lw;
+        ctx.lineWidth = tlw(cmd.lw);
+
         drawChalkStroke(ctx, () => {
           ctx.beginPath();
-          ctx.moveTo(x, y);
-          ctx.lineTo(x2, y2);
-          ctx.lineTo(x3, y3);
+          ctx.moveTo(X, Y);
+          ctx.lineTo(X2, Y2);
+          ctx.lineTo(X3, Y3);
           ctx.closePath();
           ctx.stroke();
         });
 
-        // marca ángulo recto pequeña
+        // marca ángulo recto
         drawChalkStroke(ctx, () => {
+          const k = 18 * s;
           ctx.beginPath();
-          ctx.moveTo(x + 22, y);
-          ctx.lineTo(x + 22, y + 22);
-          ctx.lineTo(x, y + 22);
+          ctx.moveTo(X + k, Y);
+          ctx.lineTo(X + k, Y + k);
+          ctx.lineTo(X, Y + k);
           ctx.stroke();
         });
 
-        drawLineDust(ctx, x2, y2, cmd.lw, cmd.color);
-        drawLineDust(ctx, x3, y3, cmd.lw, cmd.color);
+        drawLineDust(ctx, X2, Y2, ctx.lineWidth, cmd.color);
+        drawLineDust(ctx, X3, Y3, ctx.lineWidth, cmd.color);
       }
     }
 
-    // --- 2) Dibuja texto “normal” (encima) ---
-    // Layout simple: empieza arriba izquierda
-    let x = 160;
-let y = 150;
-const baseSize = 64;
-const lineGap = 18;
+    // --- 2) Texto normal (encima) con WRAP + límites ---
+    const startX = tx(60);
+    let cursorY = ty(50);
+
+    const maxTextW = innerW - (startX - (offsetX)) - (60 * s); // margen derecho virtual aprox
+    const titleSize = clamp(46 * s, 28, 92);
+    const bodySize = clamp(38 * s, 22, 74);
+    const lineGap = clamp(10 * s, 6, 18);
+
+    // Si el contenido es muy largo, reducimos un poco el cuerpo
+    const tooManyLines = parsed.lines.length >= 18;
+    const bodySize2 = tooManyLines ? clamp(bodySize * 0.90, 18, 64) : bodySize;
 
     parsed.lines.forEach((line, i) => {
-      const isTitle = i === 0 || /^\s*\[white\].+\[\/white\]\s*$/i.test(line.trim());
-      const size = isTitle ? baseSize + 6 : baseSize;
-      const segs = parseColorTags(line);
-      drawTextLine(ctx, segs, x, y, size);
-      y += size + lineGap;
+      const raw = line.trim();
+      const isTitle = i === 0;
+
+      // título: si viene con [white]...[/white] lo dejamos
+      const size = isTitle ? titleSize : bodySize2;
+      const segs = parseColorTags(raw);
+
+      ctx.save();
+      setChalkFont(ctx, size);
+
+      const wrapped = wrapSegmentsToLines(ctx, segs, maxTextW);
+
+      for (const segLine of wrapped) {
+        // límite inferior: no pintes fuera de la pizarra
+        const bottomLimit = offsetY + VIRTUAL_H * s - 40 * s;
+        if (cursorY + size > bottomLimit) return;
+
+        drawSegLine(ctx, segLine, startX, cursorY, size);
+        cursorY += size + lineGap;
+      }
+
+      // espacio extra tras el título
+      if (isTitle) cursorY += clamp(8 * s, 6, 18);
+
+      ctx.restore();
     });
   }, [parsed, width, height]);
 
   return (
     <div className={className ?? ""}>
       <div className="relative w-full overflow-hidden rounded-[26px] border border-zinc-200 shadow-[0_18px_60px_rgba(0,0,0,0.10)]">
-        {/* Fondo imagen */}
         <img
           src={backgroundSrc}
           alt="Pizarra"
@@ -405,13 +527,7 @@ const lineGap = 18;
           draggable={false}
         />
 
-        {/* Canvas encima (coordenadas 1000x600) */}
-        <canvas
-          ref={canvasRef}
-          width={width}
-          height={height}
-          className="absolute inset-0 w-full h-full"
-        />
+        <canvas ref={canvasRef} width={width} height={height} className="absolute inset-0 w-full h-full" />
       </div>
     </div>
   );
