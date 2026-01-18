@@ -6,11 +6,11 @@ type Props = {
   value: string;
   className?: string;
   backgroundSrc?: string;
-  width?: number;  // lógico (1000)
-  height?: number; // lógico (600)
+  width?: number;  // logical 1000
+  height?: number; // logical 600
 };
 
-type ColorName = "white" | "yellow" | "cyan" | "pink" | "green" | "orange" | "red";
+type ColorName = "white" | "yellow" | "cyan" | "pink" | "green" | "orange" | "red" | "blue" | "lightgreen";
 
 const COLOR_MAP: Record<ColorName, string> = {
   white: "#e9efe9",
@@ -20,36 +20,95 @@ const COLOR_MAP: Record<ColorName, string> = {
   green: "#8cff9a",
   orange: "#ffb36b",
   red: "#ff6b6b",
+
+  // compat “fill lightgreen / fill blue”
+  blue: "#79a7ff",
+  lightgreen: "#9dffb8",
 };
 
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
+
 function parseNumber(s: string, fallback = 0) {
   const n = Number(s);
   return Number.isFinite(n) ? n : fallback;
 }
+
 function parseColorToken(v: string | undefined): string {
   if (!v) return COLOR_MAP.white;
   const key = v.toLowerCase() as ColorName;
-  return COLOR_MAP[key] ?? v;
+  return COLOR_MAP[key] ?? v; // allow hex
 }
 
 type DrawCmd =
-  | { kind: "rect"; x: number; y: number; w: number; h: number; color: string; lw: number }
-  | { kind: "circle"; x: number; y: number; r: number; color: string; lw: number }
+  | { kind: "rect"; x: number; y: number; w: number; h: number; color: string; lw: number; fill?: string | null }
+  | { kind: "circle"; x: number; y: number; r: number; color: string; lw: number; fill?: string | null }
   | { kind: "line"; x1: number; y1: number; x2: number; y2: number; color: string; lw: number }
   | { kind: "arrow"; x1: number; y1: number; x2: number; y2: number; color: string; lw: number }
   | { kind: "underline"; x1: number; y: number; x2: number; color: string; lw: number }
   | { kind: "text"; x: number; y: number; size: number; color: string; text: string }
   | { kind: "tri"; x: number; y: number; w: number; h: number; color: string; lw: number };
 
-type ParsedBoard = { lines: string[]; cmds: DrawCmd[] };
+type ParsedBoard = {
+  lines: string[];
+  cmds: DrawCmd[];
+};
 
+// ---------- compat parsers ----------
+
+// Extract numbers from "(a,b,c)" etc.
+function numsFromParen(raw: string): number[] {
+  const m = raw.match(/\(([^)]*)\)/);
+  if (!m) return [];
+  return m[1]
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .map((x) => parseNumber(x, 0));
+}
+
+// Extract bracket tags: [size 66] [fill yellow] [arrow] [w 5] [color red]
+function tagsFromBrackets(raw: string): string[] {
+  const tags: string[] = [];
+  const re = /\[([^\]]+)\]/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(raw))) {
+    if (m[1]) tags.push(m[1].trim());
+  }
+  return tags;
+}
+
+function parseBracketTags(tags: string[]) {
+  const out: { size?: number; color?: string; w?: number; fill?: string | null; arrow?: boolean } = {};
+  for (const t of tags) {
+    const parts = t.split(/\s+/).filter(Boolean);
+    if (!parts.length) continue;
+
+    // [arrow]
+    if (parts[0].toLowerCase() === "arrow") out.arrow = true;
+
+    // [size 66]
+    if (parts[0].toLowerCase() === "size" && parts[1]) out.size = clamp(parseNumber(parts[1], 38), 14, 90);
+
+    // [w 5]
+    if (parts[0].toLowerCase() === "w" && parts[1]) out.w = clamp(parseNumber(parts[1], 4), 1, 12);
+
+    // [color red]
+    if (parts[0].toLowerCase() === "color" && parts[1]) out.color = parseColorToken(parts[1]);
+
+    // [fill yellow]
+    if (parts[0].toLowerCase() === "fill" && parts[1]) out.fill = parseColorToken(parts[1]);
+  }
+  return out;
+}
+
+// ---------- your original DSL parser + compat ----------
 function parseCommand(line: string): DrawCmd | null {
   const raw = line.trim();
   if (!raw.startsWith("@")) return null;
 
+  // ===== 1) Original DSL: @text x y size=.. color=.. |TEXT|
   if (raw.toLowerCase().startsWith("@text ")) {
     const pipeA = raw.indexOf("|");
     const pipeB = raw.lastIndexOf("|");
@@ -73,6 +132,57 @@ function parseCommand(line: string): DrawCmd | null {
     return { kind: "text", x, y, size, color, text: inside || "" };
   }
 
+  // ===== 2) Compat format: @text(400,50) [size 66] TEXT
+  if (raw.toLowerCase().startsWith("@text(")) {
+    const nums = numsFromParen(raw);
+    const tags = parseBracketTags(tagsFromBrackets(raw));
+    const after = raw.replace(/@text\([^)]*\)/i, "").replace(/\[[^\]]*\]/g, "").trim();
+
+    const x = nums[0] ?? 60;
+    const y = nums[1] ?? 60;
+    const size = tags.size ?? 38;
+    const color = tags.color ?? COLOR_MAP.white;
+
+    return { kind: "text", x, y, size, color, text: after };
+  }
+
+  // Compat: @line(...) [arrow]
+  if (raw.toLowerCase().startsWith("@line(")) {
+    const nums = numsFromParen(raw);
+    const tags = parseBracketTags(tagsFromBrackets(raw));
+    const color = tags.color ?? COLOR_MAP.white;
+    const lw = tags.w ?? 4;
+
+    const [x1, y1, x2, y2] = nums;
+    if (tags.arrow) return { kind: "arrow", x1, y1, x2, y2, color, lw };
+    return { kind: "line", x1, y1, x2, y2, color, lw };
+  }
+
+  // Compat: @circle(...) [fill ...]
+  if (raw.toLowerCase().startsWith("@circle(")) {
+    const nums = numsFromParen(raw);
+    const tags = parseBracketTags(tagsFromBrackets(raw));
+    const color = tags.color ?? COLOR_MAP.white;
+    const lw = tags.w ?? 4;
+    const fill = tags.fill ?? null;
+
+    const [x, y, r] = nums;
+    return { kind: "circle", x, y, r, color, lw, fill };
+  }
+
+  // Compat: @rect(...) [fill ...]
+  if (raw.toLowerCase().startsWith("@rect(")) {
+    const nums = numsFromParen(raw);
+    const tags = parseBracketTags(tagsFromBrackets(raw));
+    const color = tags.color ?? COLOR_MAP.white;
+    const lw = tags.w ?? 4;
+    const fill = tags.fill ?? null;
+
+    const [x, y, w, h] = nums;
+    return { kind: "rect", x, y, w, h, color, lw, fill };
+  }
+
+  // ===== 3) Original non-text commands: @rect x y w h color=.. w=..
   const parts = raw.split(/\s+/);
   const cmd = parts[0].slice(1).toLowerCase();
 
@@ -135,6 +245,7 @@ function parseBoard(value: string): ParsedBoard {
   return { lines, cmds };
 }
 
+// --- tags [color]text[/color] ---
 type Seg = { text: string; color: string };
 
 function parseColorTags(line: string): Seg[] {
@@ -230,7 +341,6 @@ function drawTextLine(ctx: CanvasRenderingContext2D, segs: Seg[], x: number, y: 
 }
 
 async function ensureFontsReady() {
-  // Evita que el primer render use fallback font y “no parezca profe”
   try {
     // @ts-ignore
     if (document?.fonts?.ready) {
@@ -251,7 +361,6 @@ export default function ChalkboardTutorBoard({
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
   const parsed = useMemo(() => parseBoard(value), [value]);
-
   const [box, setBox] = useState({ w: 0, h: 0 });
 
   useEffect(() => {
@@ -280,24 +389,28 @@ export default function ChalkboardTutorBoard({
 
       const dpr = typeof window !== "undefined" ? (window.devicePixelRatio || 1) : 1;
 
-      // Tamaño real en pantalla (px)
       const dispW = box.w || width;
       const dispH = box.h || Math.round((dispW * height) / width);
 
-      // Canvas en pixels (hi-dpi)
       c.width = Math.floor(dispW * dpr);
       c.height = Math.floor(dispH * dpr);
 
-      // Escala: de coordenadas lógicas (1000x600) -> pantalla
       const sx = dispW / width;
       const sy = dispH / height;
 
       ctx.setTransform(dpr * sx, 0, 0, dpr * sy, 0, 0);
       ctx.clearRect(0, 0, width, height);
 
-      // 1) comandos
+      // 1) commands
       for (const cmd of parsed.cmds) {
         if (cmd.kind === "rect") {
+          if (cmd.fill) {
+            ctx.save();
+            ctx.globalAlpha = 0.18;
+            ctx.fillStyle = cmd.fill;
+            ctx.fillRect(cmd.x, cmd.y, cmd.w, cmd.h);
+            ctx.restore();
+          }
           ctx.strokeStyle = cmd.color;
           ctx.lineWidth = cmd.lw;
           drawChalkStroke(ctx, () => ctx.strokeRect(cmd.x, cmd.y, cmd.w, cmd.h));
@@ -305,6 +418,15 @@ export default function ChalkboardTutorBoard({
         }
 
         if (cmd.kind === "circle") {
+          if (cmd.fill) {
+            ctx.save();
+            ctx.globalAlpha = 0.18;
+            ctx.fillStyle = cmd.fill;
+            ctx.beginPath();
+            ctx.arc(cmd.x, cmd.y, cmd.r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
           ctx.strokeStyle = cmd.color;
           ctx.lineWidth = cmd.lw;
           drawChalkStroke(ctx, () => {
@@ -378,7 +500,7 @@ export default function ChalkboardTutorBoard({
         }
       }
 
-      // 2) texto “normal”
+      // 2) normal lines
       let x = 80;
       let y = 70;
 
@@ -410,10 +532,7 @@ export default function ChalkboardTutorBoard({
           className="block w-full h-auto select-none pointer-events-none"
           draggable={false}
         />
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full"
-        />
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
       </div>
     </div>
   );
