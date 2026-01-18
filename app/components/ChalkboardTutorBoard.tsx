@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-console.log("✅ ChalkboardTutorBoard ACTIVO (wobble check)");
+console.log("✅ ChalkboardTutorBoard ACTIVO (wobble + image + clip)");
 
 type Props = {
   value: string;
@@ -9,6 +9,12 @@ type Props = {
   backgroundSrc?: string;
   width?: number; // logical 1000
   height?: number; // logical 600
+
+  // ✅ NUEVO: imagen generada (b64 png sin data: prefix)
+  boardImageB64?: string | null;
+
+  // ✅ NUEVO: placement lógico en 1000x600
+  boardImagePlacement?: { x: number; y: number; w: number; h: number } | null;
 };
 
 type ColorName =
@@ -56,8 +62,7 @@ type DrawCmd =
   | { kind: "arrow"; x1: number; y1: number; x2: number; y2: number; color: string; lw: number }
   | { kind: "underline"; x1: number; y: number; x2: number; color: string; lw: number }
   | { kind: "text"; x: number; y: number; size: number; color: string; text: string }
-  | { kind: "tri"; x: number; y: number; w: number; h: number; color: string; lw: number }
-  | { kind: "image"; x: number; y: number; w: number; h: number; dataUrl: string }; // ✅ NUEVO
+  | { kind: "tri"; x: number; y: number; w: number; h: number; color: string; lw: number };
 
 type ParsedBoard = {
   lines: string[];
@@ -100,33 +105,9 @@ function parseBracketTags(tags: string[]) {
   return out;
 }
 
-function extractPipedText(raw: string): string {
-  const a = raw.indexOf("|");
-  const b = raw.lastIndexOf("|");
-  if (a !== -1 && b !== -1 && b > a) return raw.slice(a + 1, b);
-  return "";
-}
-
 function parseCommand(line: string): DrawCmd | null {
   const raw = line.trim();
   if (!raw.startsWith("@")) return null;
-
-  // ✅ NUEVO: @image x y w h |dataUrl|
-  if (raw.toLowerCase().startsWith("@image ")) {
-    const pipeInside = extractPipedText(raw);
-    const head = (raw.includes("|") ? raw.slice(0, raw.indexOf("|")) : raw).trim();
-    const parts = head.split(/\s+/).slice(1);
-
-    const x = parseNumber(parts[0], 60);
-    const y = parseNumber(parts[1], 60);
-    const w = parseNumber(parts[2], 300);
-    const h = parseNumber(parts[3], 200);
-
-    const dataUrl = (pipeInside || "").trim();
-    if (!dataUrl) return null;
-
-    return { kind: "image", x, y, w, h, dataUrl };
-  }
 
   // Original DSL: @text x y size=.. color=.. |TEXT|
   if (raw.toLowerCase().startsWith("@text ")) {
@@ -152,7 +133,7 @@ function parseCommand(line: string): DrawCmd | null {
     return { kind: "text", x, y, size, color, text: inside || "" };
   }
 
-  // Compat: @text(400,50) [size 66] TEXT
+  // Compat: @text(400,50) [size 66] TEXT  (NO lo queremos, pero lo dejamos por compat)
   if (raw.toLowerCase().startsWith("@text(")) {
     const nums = numsFromParen(raw);
     const tags = parseBracketTags(tagsFromBrackets(raw));
@@ -300,14 +281,7 @@ function drawChalkStroke(ctx: CanvasRenderingContext2D, fn: () => void) {
   ctx.restore();
 }
 
-function drawLineDust(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  lw: number,
-  color: string,
-  rng: () => number
-) {
+function drawLineDust(ctx: CanvasRenderingContext2D, x: number, y: number, lw: number, color: string, rng: () => number) {
   const dust = Math.max(1, Math.floor(lw / 2));
   ctx.save();
   ctx.globalAlpha = 0.10;
@@ -390,31 +364,14 @@ function drawWobblyLine(
   drawOnce(0.55, 1.5);
 }
 
-function drawWobblyRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  color: string,
-  lw: number,
-  rng: () => number
-) {
+function drawWobblyRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string, lw: number, rng: () => number) {
   drawWobblyLine(ctx, x, y, x + w, y, color, lw, rng);
   drawWobblyLine(ctx, x + w, y, x + w, y + h, color, lw, rng);
   drawWobblyLine(ctx, x + w, y + h, x, y + h, color, lw, rng);
   drawWobblyLine(ctx, x, y + h, x, y, color, lw, rng);
 }
 
-function drawWobblyCircle(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  r: number,
-  color: string,
-  lw: number,
-  rng: () => number
-) {
+function drawWobblyCircle(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, color: string, lw: number, rng: () => number) {
   const steps = 40;
   const jitter = clamp(lw * 0.45, 1.0, 4.0);
 
@@ -444,16 +401,7 @@ function drawWobblyCircle(
   drawOnce(0.55, 1.2);
 }
 
-function drawArrow(
-  ctx: CanvasRenderingContext2D,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-  color: string,
-  lw: number,
-  rng: () => number
-) {
+function drawArrow(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, color: string, lw: number, rng: () => number) {
   drawWobblyLine(ctx, x1, y1, x2, y2, color, lw, rng);
 
   const ang = Math.atan2(y2 - y1, x2 - x1);
@@ -468,14 +416,7 @@ function drawArrow(
   drawWobblyLine(ctx, x2, y2, ax2, ay2, color, lw, rng);
 }
 
-function drawTextLine(
-  ctx: CanvasRenderingContext2D,
-  segs: Seg[],
-  x: number,
-  y: number,
-  fontSize: number,
-  rng: () => number
-) {
+function drawTextLine(ctx: CanvasRenderingContext2D, segs: Seg[], x: number, y: number, fontSize: number, rng: () => number) {
   ctx.save();
   ctx.textBaseline = "top";
   ctx.font = `${fontSize}px "Architects Daughter", "Patrick Hand", system-ui, -apple-system, Segoe UI, Roboto, Arial`;
@@ -510,45 +451,16 @@ async function ensureFontsReady() {
   } catch {}
 }
 
-// ✅ NUEVO: cache de imágenes por dataUrl (para no recargar ni parpadear)
-const IMAGE_CACHE = new Map<string, HTMLImageElement>();
-
-function loadImage(dataUrl: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    if (IMAGE_CACHE.has(dataUrl)) return resolve(IMAGE_CACHE.get(dataUrl)!);
-
-    const im = new Image();
-    im.onload = () => {
-      IMAGE_CACHE.set(dataUrl, im);
-      resolve(im);
-    };
-    im.onerror = (e) => reject(e);
-    im.src = dataUrl;
+// ✅ cargar imagen b64 -> HTMLImageElement
+async function loadB64Image(b64: string): Promise<HTMLImageElement | null> {
+  if (!b64) return null;
+  const src = b64.startsWith("data:image") ? b64 : `data:image/png;base64,${b64}`;
+  return await new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
   });
-}
-
-function drawImageContain(
-  ctx: CanvasRenderingContext2D,
-  im: HTMLImageElement,
-  x: number,
-  y: number,
-  w: number,
-  h: number
-) {
-  const iw = im.naturalWidth || 1;
-  const ih = im.naturalHeight || 1;
-  const s = Math.min(w / iw, h / ih);
-  const dw = iw * s;
-  const dh = ih * s;
-  const dx = x + (w - dw) / 2;
-  const dy = y + (h - dh) / 2;
-
-  ctx.save();
-  ctx.globalAlpha = 0.98;
-  ctx.shadowColor = "rgba(255,255,255,0.18)";
-  ctx.shadowBlur = 3;
-  ctx.drawImage(im, dx, dy, dw, dh);
-  ctx.restore();
 }
 
 export default function ChalkboardTutorBoard({
@@ -557,6 +469,8 @@ export default function ChalkboardTutorBoard({
   backgroundSrc = "/boards/chalkboard-classic.webp",
   width = 1000,
   height = 600,
+  boardImageB64 = null,
+  boardImagePlacement = null,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -564,8 +478,8 @@ export default function ChalkboardTutorBoard({
   const parsed = useMemo(() => parseBoard(value), [value]);
   const [box, setBox] = useState({ w: 0, h: 0 });
 
-  // ✅ NUEVO: estado para saber si las imágenes de este board ya están cargadas
-  const [imagesReady, setImagesReady] = useState(false);
+  // ✅ cache de imagen (evita recargar en cada render)
+  const imgCacheRef = useRef<{ b64: string | null; img: HTMLImageElement | null }>({ b64: null, img: null });
 
   useEffect(() => {
     if (!wrapRef.current) return;
@@ -581,30 +495,6 @@ export default function ChalkboardTutorBoard({
     return () => ro.disconnect();
   }, []);
 
-  // ✅ NUEVO: precargar todas las @image antes de pintar (evita “sale a veces”)
-  useEffect(() => {
-    let cancelled = false;
-    const imgs = parsed.cmds.filter((c) => c.kind === "image") as Array<Extract<DrawCmd, { kind: "image" }>>;
-    if (!imgs.length) {
-      setImagesReady(true);
-      return;
-    }
-
-    setImagesReady(false);
-    Promise.all(imgs.map((c) => loadImage(c.dataUrl)))
-      .then(() => {
-        if (!cancelled) setImagesReady(true);
-      })
-      .catch(() => {
-        // si falla alguna, igualmente dejamos que renderice (verás placeholder vacío)
-        if (!cancelled) setImagesReady(true);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [parsed]);
-
   useEffect(() => {
     const c = canvasRef.current;
     if (!c) return;
@@ -614,6 +504,19 @@ export default function ChalkboardTutorBoard({
 
     const draw = async () => {
       await ensureFontsReady();
+
+      // ✅ precarga imagen si hay
+      let rightImg: HTMLImageElement | null = null;
+      if (boardImageB64) {
+        if (imgCacheRef.current.b64 !== boardImageB64) {
+          imgCacheRef.current.b64 = boardImageB64;
+          imgCacheRef.current.img = await loadB64Image(boardImageB64);
+        }
+        rightImg = imgCacheRef.current.img;
+      } else {
+        imgCacheRef.current.b64 = null;
+        imgCacheRef.current.img = null;
+      }
 
       const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
 
@@ -629,9 +532,32 @@ export default function ChalkboardTutorBoard({
       ctx.setTransform(dpr * sx, 0, 0, dpr * sy, 0, 0);
       ctx.clearRect(0, 0, width, height);
 
+      // ✅ CLIP: evita pintar en el marco de madera (ajusta si quieres)
+      const INSET_X = 58;
+      const INSET_Y = 44;
+      const CLIP_W = width - INSET_X * 2;
+      const CLIP_H = height - INSET_Y * 2;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(INSET_X, INSET_Y, CLIP_W, CLIP_H);
+      ctx.clip();
+
       // rng base por board (estable)
       const baseSeed = hashStr(value || "board");
       const rngBase = mulberry32(baseSeed);
+
+      // ✅ 0) imagen derecha (si existe)
+      if (rightImg && boardImagePlacement) {
+        const { x, y, w, h } = boardImagePlacement;
+        ctx.save();
+        ctx.globalAlpha = 0.96;
+        // leve “tiza” extra
+        ctx.shadowColor = "rgba(255,255,255,0.22)";
+        ctx.shadowBlur = 1.2;
+        ctx.drawImage(rightImg, x, y, w, h);
+        ctx.restore();
+      }
 
       // 1) commands
       for (const cmd of parsed.cmds) {
@@ -695,21 +621,12 @@ export default function ChalkboardTutorBoard({
           drawWobblyLine(ctx, x2, y2, x3, y3, cmd.color, cmd.lw, rng);
           drawWobblyLine(ctx, x3, y3, x, y, cmd.color, cmd.lw, rng);
 
+          // ángulo recto
           drawWobblyLine(ctx, x + 18, y, x + 18, y + 18, cmd.color, Math.max(2, cmd.lw - 1), rng);
           drawWobblyLine(ctx, x + 18, y + 18, x, y + 18, cmd.color, Math.max(2, cmd.lw - 1), rng);
 
           drawLineDust(ctx, x2, y2, cmd.lw, cmd.color, rng);
           drawLineDust(ctx, x3, y3, cmd.lw, cmd.color, rng);
-        }
-
-        // ✅ NUEVO: pintar imagen transparente (ya precargada)
-        if (cmd.kind === "image") {
-          try {
-            const im = IMAGE_CACHE.get(cmd.dataUrl) || (await loadImage(cmd.dataUrl));
-            drawImageContain(ctx, im, cmd.x, cmd.y, cmd.w, cmd.h);
-          } catch {
-            // si falla, no hacemos nada (no rompe el render)
-          }
         }
       }
 
@@ -726,21 +643,22 @@ export default function ChalkboardTutorBoard({
         const size = isTitle ? titleSize : textSize;
         const segs = parseColorTags(line);
 
+        // rng estable por línea
         const rng = mulberry32(hashStr("line:" + i + ":" + line + ":" + baseSeed));
         drawTextLine(ctx, segs, x, y, size, rng);
 
         y += size + lineGap;
       });
 
-      // debug minúsculo para confirmar que ESTA versión está activa (puedes quitarlo luego)
+      // debug puntito
       const debugRng = mulberry32(hashStr("debug:" + baseSeed));
       drawTextLine(ctx, [{ text: "·", color: COLOR_MAP.yellow }], 960, 560, 26, debugRng);
+
+      ctx.restore(); // ✅ fin clip
     };
 
-    // si hay imágenes y aún no están listas, esperamos a que imagesReady cambie
-    if (!imagesReady) return;
     draw();
-  }, [parsed, width, height, box.w, box.h, value, imagesReady]);
+  }, [parsed, width, height, box.w, box.h, value, boardImageB64, boardImagePlacement]);
 
   return (
     <div className={className ?? ""}>

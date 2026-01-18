@@ -30,6 +30,10 @@ type Message = {
   text?: string;
   image?: string;
   streaming?: boolean;
+
+  // ✅ NUEVO: imagen de pizarra (IA) y su colocación
+  boardImageB64?: string | null;
+  boardImagePlacement?: { x: number; y: number; w: number; h: number } | null;
 };
 
 type ThreadMode = "chat" | "tutor";
@@ -1354,41 +1358,53 @@ ctx2.restore();
   setBoardMsg(null);
   setBoardOpen(true);
 }, []);
-  const mdComponents: Components = {
-  code({ inline, className, children, ...props }: any) {
-    const isInline = !!inline;
+  function makeMdComponents(
+  boardImageB64?: string | null,
+  boardImagePlacement?: { x: number; y: number; w: number; h: number } | null
+): Components {
+  return {
+    code({ inline, className, children, ...props }: any) {
+      const isInline = !!inline;
 
-    const cn = typeof className === "string" ? className : "";
-    const m = cn.match(/language-([a-zA-Z0-9_-]+)/);
-    const lang = (m?.[1] || "").toLowerCase();
+      const cn = typeof className === "string" ? className : "";
+      const m = cn.match(/language-([a-zA-Z0-9_-]+)/);
+      const lang = (m?.[1] || "").toLowerCase();
 
-    const content = Array.isArray(children) ? children.join("") : String(children ?? "");
-    const clean = content.replace(/\n$/, "");
+      const content = Array.isArray(children) ? children.join("") : String(children ?? "");
+      const clean = content.replace(/\n$/, "");
 
-    // ✅ si el tutor devuelve ```pizarra o ```whiteboard → renderiza la pizarra bonita
-    if (!isInline && (lang === "pizarra" || lang === "whiteboard")) {
-  return <ChalkboardTutorBoard value={clean} />;
+      // ✅ si el tutor devuelve ```pizarra o ```whiteboard → renderiza la pizarra bonita
+      if (!isInline && (lang === "pizarra" || lang === "whiteboard")) {
+        return (
+          <ChalkboardTutorBoard
+            value={clean}
+            boardImageB64={boardImageB64 ?? null}
+            boardImagePlacement={boardImagePlacement ?? null}
+          />
+        );
+      }
+
+      // bloque normal (code block)
+      if (!isInline) {
+        return (
+          <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
+            <code className="text-[12.5px]" {...props}>
+              {clean}
+            </code>
+          </pre>
+        );
+      }
+
+      // inline code
+      return (
+        <code className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]">
+          {clean}
+        </code>
+      );
+    },
+  };
 }
 
-    // bloque normal (code block)
-    if (!isInline) {
-      return (
-        <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
-          <code className="text-[12.5px]" {...props}>
-            {clean}
-          </code>
-        </pre>
-      );
-    }
-
-    // inline code
-    return (
-      <code className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]">
-        {clean}
-      </code>
-    );
-  },
-};
 
 
 
@@ -1895,7 +1911,25 @@ if (threadModeNow === "chat" && looksLikeTutorIntent(userText)) {
       }
 
       const data = await res.json();
-      const fullText = typeof data?.text === "string" && data.text.trim() ? data.text : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
+
+const fullText =
+  typeof data?.text === "string" && data.text.trim()
+    ? data.text
+    : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
+
+// ✅ NUEVO: imagen de pizarra (si viene)
+const boardImageB64 =
+  typeof data?.board_image_b64 === "string" && data.board_image_b64
+    ? data.board_image_b64
+    : null;
+
+const boardImagePlacement =
+  data?.board_image_placement &&
+  typeof data.board_image_placement?.x === "number" &&
+  typeof data.board_image_placement?.y === "number"
+    ? (data.board_image_placement as { x: number; y: number; w: number; h: number })
+    : null;
+
 
       await sleep(90);
 
@@ -1911,7 +1945,12 @@ if (isTutor) {
       return {
         ...t,
         updatedAt: Date.now(),
-        messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: fullText, streaming: false } : m)),
+        messages: t.messages.map((m) =>
+  m.id === assistantId
+    ? { ...m, text: fullText, streaming: false, boardImageB64, boardImagePlacement }
+    : m
+),
+
       };
     })
   );
@@ -1947,7 +1986,11 @@ if (isTutor) {
           return {
             ...t,
             updatedAt: Date.now(),
-            messages: t.messages.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m)),
+            messages: t.messages.map((m) =>
+  m.id === assistantId
+    ? { ...m, streaming: false, boardImageB64, boardImagePlacement }
+    : m
+),
           };
         })
       );
@@ -3008,9 +3051,9 @@ return (
               {!hasText ? <TypingDots /> : <TypingCaret />}
             </span>
           ) : (
-            <ReactMarkdown components={mdComponents}>
-              {mdText}
-            </ReactMarkdown>
+            <ReactMarkdown components={makeMdComponents(m.boardImageB64, m.boardImagePlacement)}>
+  {mdText}
+</ReactMarkdown>
           )}
         </div>
       )}
