@@ -56,7 +56,8 @@ type DrawCmd =
   | { kind: "arrow"; x1: number; y1: number; x2: number; y2: number; color: string; lw: number }
   | { kind: "underline"; x1: number; y: number; x2: number; color: string; lw: number }
   | { kind: "text"; x: number; y: number; size: number; color: string; text: string }
-  | { kind: "tri"; x: number; y: number; w: number; h: number; color: string; lw: number };
+  | { kind: "tri"; x: number; y: number; w: number; h: number; color: string; lw: number }
+  | { kind: "image"; x: number; y: number; w: number; h: number; dataUrl: string }; // ✅ NUEVO
 
 type ParsedBoard = {
   lines: string[];
@@ -99,9 +100,33 @@ function parseBracketTags(tags: string[]) {
   return out;
 }
 
+function extractPipedText(raw: string): string {
+  const a = raw.indexOf("|");
+  const b = raw.lastIndexOf("|");
+  if (a !== -1 && b !== -1 && b > a) return raw.slice(a + 1, b);
+  return "";
+}
+
 function parseCommand(line: string): DrawCmd | null {
   const raw = line.trim();
   if (!raw.startsWith("@")) return null;
+
+  // ✅ NUEVO: @image x y w h |dataUrl|
+  if (raw.toLowerCase().startsWith("@image ")) {
+    const pipeInside = extractPipedText(raw);
+    const head = (raw.includes("|") ? raw.slice(0, raw.indexOf("|")) : raw).trim();
+    const parts = head.split(/\s+/).slice(1);
+
+    const x = parseNumber(parts[0], 60);
+    const y = parseNumber(parts[1], 60);
+    const w = parseNumber(parts[2], 300);
+    const h = parseNumber(parts[3], 200);
+
+    const dataUrl = (pipeInside || "").trim();
+    if (!dataUrl) return null;
+
+    return { kind: "image", x, y, w, h, dataUrl };
+  }
 
   // Original DSL: @text x y size=.. color=.. |TEXT|
   if (raw.toLowerCase().startsWith("@text ")) {
@@ -275,7 +300,14 @@ function drawChalkStroke(ctx: CanvasRenderingContext2D, fn: () => void) {
   ctx.restore();
 }
 
-function drawLineDust(ctx: CanvasRenderingContext2D, x: number, y: number, lw: number, color: string, rng: () => number) {
+function drawLineDust(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  lw: number,
+  color: string,
+  rng: () => number
+) {
   const dust = Math.max(1, Math.floor(lw / 2));
   ctx.save();
   ctx.globalAlpha = 0.10;
@@ -341,7 +373,6 @@ function drawWobblyLine(
         const bx = x1 + dx * t;
         const by = y1 + dy * t;
 
-        // ruido perpendicular (mano)
         const wob = (rng() - 0.5) * (jitter + extra);
         const px = bx + nx * wob;
         const py = by + ny * wob;
@@ -355,19 +386,35 @@ function drawWobblyLine(
     ctx.restore();
   };
 
-  // doble trazo: profe real
   drawOnce(0.92, 0);
   drawOnce(0.55, 1.5);
 }
 
-function drawWobblyRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string, lw: number, rng: () => number) {
+function drawWobblyRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string,
+  lw: number,
+  rng: () => number
+) {
   drawWobblyLine(ctx, x, y, x + w, y, color, lw, rng);
   drawWobblyLine(ctx, x + w, y, x + w, y + h, color, lw, rng);
   drawWobblyLine(ctx, x + w, y + h, x, y + h, color, lw, rng);
   drawWobblyLine(ctx, x, y + h, x, y, color, lw, rng);
 }
 
-function drawWobblyCircle(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, color: string, lw: number, rng: () => number) {
+function drawWobblyCircle(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  r: number,
+  color: string,
+  lw: number,
+  rng: () => number
+) {
   const steps = 40;
   const jitter = clamp(lw * 0.45, 1.0, 4.0);
 
@@ -397,7 +444,16 @@ function drawWobblyCircle(ctx: CanvasRenderingContext2D, cx: number, cy: number,
   drawOnce(0.55, 1.2);
 }
 
-function drawArrow(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, color: string, lw: number, rng: () => number) {
+function drawArrow(
+  ctx: CanvasRenderingContext2D,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  color: string,
+  lw: number,
+  rng: () => number
+) {
   drawWobblyLine(ctx, x1, y1, x2, y2, color, lw, rng);
 
   const ang = Math.atan2(y2 - y1, x2 - x1);
@@ -412,7 +468,14 @@ function drawArrow(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: nu
   drawWobblyLine(ctx, x2, y2, ax2, ay2, color, lw, rng);
 }
 
-function drawTextLine(ctx: CanvasRenderingContext2D, segs: Seg[], x: number, y: number, fontSize: number, rng: () => number) {
+function drawTextLine(
+  ctx: CanvasRenderingContext2D,
+  segs: Seg[],
+  x: number,
+  y: number,
+  fontSize: number,
+  rng: () => number
+) {
   ctx.save();
   ctx.textBaseline = "top";
   ctx.font = `${fontSize}px "Architects Daughter", "Patrick Hand", system-ui, -apple-system, Segoe UI, Roboto, Arial`;
@@ -420,7 +483,6 @@ function drawTextLine(ctx: CanvasRenderingContext2D, segs: Seg[], x: number, y: 
   let cursorX = x;
 
   for (const seg of segs) {
-    // micro jitter en texto
     const jx = (rng() - 0.5) * 0.8;
     const jy = (rng() - 0.5) * 0.8;
 
@@ -448,6 +510,47 @@ async function ensureFontsReady() {
   } catch {}
 }
 
+// ✅ NUEVO: cache de imágenes por dataUrl (para no recargar ni parpadear)
+const IMAGE_CACHE = new Map<string, HTMLImageElement>();
+
+function loadImage(dataUrl: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    if (IMAGE_CACHE.has(dataUrl)) return resolve(IMAGE_CACHE.get(dataUrl)!);
+
+    const im = new Image();
+    im.onload = () => {
+      IMAGE_CACHE.set(dataUrl, im);
+      resolve(im);
+    };
+    im.onerror = (e) => reject(e);
+    im.src = dataUrl;
+  });
+}
+
+function drawImageContain(
+  ctx: CanvasRenderingContext2D,
+  im: HTMLImageElement,
+  x: number,
+  y: number,
+  w: number,
+  h: number
+) {
+  const iw = im.naturalWidth || 1;
+  const ih = im.naturalHeight || 1;
+  const s = Math.min(w / iw, h / ih);
+  const dw = iw * s;
+  const dh = ih * s;
+  const dx = x + (w - dw) / 2;
+  const dy = y + (h - dh) / 2;
+
+  ctx.save();
+  ctx.globalAlpha = 0.98;
+  ctx.shadowColor = "rgba(255,255,255,0.18)";
+  ctx.shadowBlur = 3;
+  ctx.drawImage(im, dx, dy, dw, dh);
+  ctx.restore();
+}
+
 export default function ChalkboardTutorBoard({
   value,
   className,
@@ -460,6 +563,9 @@ export default function ChalkboardTutorBoard({
 
   const parsed = useMemo(() => parseBoard(value), [value]);
   const [box, setBox] = useState({ w: 0, h: 0 });
+
+  // ✅ NUEVO: estado para saber si las imágenes de este board ya están cargadas
+  const [imagesReady, setImagesReady] = useState(false);
 
   useEffect(() => {
     if (!wrapRef.current) return;
@@ -474,6 +580,30 @@ export default function ChalkboardTutorBoard({
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  // ✅ NUEVO: precargar todas las @image antes de pintar (evita “sale a veces”)
+  useEffect(() => {
+    let cancelled = false;
+    const imgs = parsed.cmds.filter((c) => c.kind === "image") as Array<Extract<DrawCmd, { kind: "image" }>>;
+    if (!imgs.length) {
+      setImagesReady(true);
+      return;
+    }
+
+    setImagesReady(false);
+    Promise.all(imgs.map((c) => loadImage(c.dataUrl)))
+      .then(() => {
+        if (!cancelled) setImagesReady(true);
+      })
+      .catch(() => {
+        // si falla alguna, igualmente dejamos que renderice (verás placeholder vacío)
+        if (!cancelled) setImagesReady(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [parsed]);
 
   useEffect(() => {
     const c = canvasRef.current;
@@ -565,12 +695,21 @@ export default function ChalkboardTutorBoard({
           drawWobblyLine(ctx, x2, y2, x3, y3, cmd.color, cmd.lw, rng);
           drawWobblyLine(ctx, x3, y3, x, y, cmd.color, cmd.lw, rng);
 
-          // ángulo recto
           drawWobblyLine(ctx, x + 18, y, x + 18, y + 18, cmd.color, Math.max(2, cmd.lw - 1), rng);
           drawWobblyLine(ctx, x + 18, y + 18, x, y + 18, cmd.color, Math.max(2, cmd.lw - 1), rng);
 
           drawLineDust(ctx, x2, y2, cmd.lw, cmd.color, rng);
           drawLineDust(ctx, x3, y3, cmd.lw, cmd.color, rng);
+        }
+
+        // ✅ NUEVO: pintar imagen transparente (ya precargada)
+        if (cmd.kind === "image") {
+          try {
+            const im = IMAGE_CACHE.get(cmd.dataUrl) || (await loadImage(cmd.dataUrl));
+            drawImageContain(ctx, im, cmd.x, cmd.y, cmd.w, cmd.h);
+          } catch {
+            // si falla, no hacemos nada (no rompe el render)
+          }
         }
       }
 
@@ -587,7 +726,6 @@ export default function ChalkboardTutorBoard({
         const size = isTitle ? titleSize : textSize;
         const segs = parseColorTags(line);
 
-        // rng estable por línea
         const rng = mulberry32(hashStr("line:" + i + ":" + line + ":" + baseSeed));
         drawTextLine(ctx, segs, x, y, size, rng);
 
@@ -599,8 +737,10 @@ export default function ChalkboardTutorBoard({
       drawTextLine(ctx, [{ text: "·", color: COLOR_MAP.yellow }], 960, 560, 26, debugRng);
     };
 
+    // si hay imágenes y aún no están listas, esperamos a que imagesReady cambie
+    if (!imagesReady) return;
     draw();
-  }, [parsed, width, height, box.w, box.h, value]);
+  }, [parsed, width, height, box.w, box.h, value, imagesReady]);
 
   return (
     <div className={className ?? ""}>
