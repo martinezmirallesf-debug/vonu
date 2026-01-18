@@ -10,7 +10,16 @@ type Props = {
   height?: number; // logical 600
 };
 
-type ColorName = "white" | "yellow" | "cyan" | "pink" | "green" | "orange" | "red" | "blue" | "lightgreen";
+type ColorName =
+  | "white"
+  | "yellow"
+  | "cyan"
+  | "pink"
+  | "green"
+  | "orange"
+  | "red"
+  | "blue"
+  | "lightgreen";
 
 const COLOR_MAP: Record<ColorName, string> = {
   white: "#e9efe9",
@@ -56,8 +65,6 @@ type ParsedBoard = {
 };
 
 // ---------- compat parsers ----------
-
-// Extract numbers from "(a,b,c)" etc.
 function numsFromParen(raw: string): number[] {
   const m = raw.match(/\(([^)]*)\)/);
   if (!m) return [];
@@ -68,7 +75,6 @@ function numsFromParen(raw: string): number[] {
     .map((x) => parseNumber(x, 0));
 }
 
-// Extract bracket tags: [size 66] [fill yellow] [arrow] [w 5] [color red]
 function tagsFromBrackets(raw: string): string[] {
   const tags: string[] = [];
   const re = /\[([^\]]+)\]/g;
@@ -85,30 +91,21 @@ function parseBracketTags(tags: string[]) {
     const parts = t.split(/\s+/).filter(Boolean);
     if (!parts.length) continue;
 
-    // [arrow]
     if (parts[0].toLowerCase() === "arrow") out.arrow = true;
-
-    // [size 66]
     if (parts[0].toLowerCase() === "size" && parts[1]) out.size = clamp(parseNumber(parts[1], 38), 14, 90);
-
-    // [w 5]
     if (parts[0].toLowerCase() === "w" && parts[1]) out.w = clamp(parseNumber(parts[1], 4), 1, 12);
-
-    // [color red]
     if (parts[0].toLowerCase() === "color" && parts[1]) out.color = parseColorToken(parts[1]);
-
-    // [fill yellow]
     if (parts[0].toLowerCase() === "fill" && parts[1]) out.fill = parseColorToken(parts[1]);
   }
   return out;
 }
 
-// ---------- your original DSL parser + compat ----------
+// ---------- parser ----------
 function parseCommand(line: string): DrawCmd | null {
   const raw = line.trim();
   if (!raw.startsWith("@")) return null;
 
-  // ===== 1) Original DSL: @text x y size=.. color=.. |TEXT|
+  // @text x y size=.. color=.. |TEXT|
   if (raw.toLowerCase().startsWith("@text ")) {
     const pipeA = raw.indexOf("|");
     const pipeB = raw.lastIndexOf("|");
@@ -132,7 +129,7 @@ function parseCommand(line: string): DrawCmd | null {
     return { kind: "text", x, y, size, color, text: inside || "" };
   }
 
-  // ===== 2) Compat format: @text(400,50) [size 66] TEXT
+  // compat: @text(400,50) [size 66] TEXT
   if (raw.toLowerCase().startsWith("@text(")) {
     const nums = numsFromParen(raw);
     const tags = parseBracketTags(tagsFromBrackets(raw));
@@ -146,7 +143,6 @@ function parseCommand(line: string): DrawCmd | null {
     return { kind: "text", x, y, size, color, text: after };
   }
 
-  // Compat: @line(...) [arrow]
   if (raw.toLowerCase().startsWith("@line(")) {
     const nums = numsFromParen(raw);
     const tags = parseBracketTags(tagsFromBrackets(raw));
@@ -158,7 +154,6 @@ function parseCommand(line: string): DrawCmd | null {
     return { kind: "line", x1, y1, x2, y2, color, lw };
   }
 
-  // Compat: @circle(...) [fill ...]
   if (raw.toLowerCase().startsWith("@circle(")) {
     const nums = numsFromParen(raw);
     const tags = parseBracketTags(tagsFromBrackets(raw));
@@ -170,7 +165,6 @@ function parseCommand(line: string): DrawCmd | null {
     return { kind: "circle", x, y, r, color, lw, fill };
   }
 
-  // Compat: @rect(...) [fill ...]
   if (raw.toLowerCase().startsWith("@rect(")) {
     const nums = numsFromParen(raw);
     const tags = parseBracketTags(tagsFromBrackets(raw));
@@ -182,7 +176,7 @@ function parseCommand(line: string): DrawCmd | null {
     return { kind: "rect", x, y, w, h, color, lw, fill };
   }
 
-  // ===== 3) Original non-text commands: @rect x y w h color=.. w=..
+  // original non-text commands
   const parts = raw.split(/\s+/);
   const cmd = parts[0].slice(1).toLowerCase();
 
@@ -272,6 +266,26 @@ function parseColorTags(line: string): Seg[] {
   return out.filter((s) => s.text.length > 0);
 }
 
+// -------------------- Hyperreal helpers (deterministic) --------------------
+function hashStringToSeed(s: string) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function mulberry32(seed: number) {
+  let t = seed >>> 0;
+  return function () {
+    t += 0x6D2B79F5;
+    let x = Math.imul(t ^ (t >>> 15), 1 | t);
+    x ^= x + Math.imul(x ^ (x >>> 7), 61 | x);
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 function drawChalkStroke(ctx: CanvasRenderingContext2D, fn: () => void) {
   ctx.save();
   ctx.globalAlpha = 0.95;
@@ -283,60 +297,152 @@ function drawChalkStroke(ctx: CanvasRenderingContext2D, fn: () => void) {
   ctx.restore();
 }
 
-function drawLineDust(ctx: CanvasRenderingContext2D, x: number, y: number, lw: number, color: string) {
+function drawLineDust(ctx: CanvasRenderingContext2D, x: number, y: number, lw: number, color: string, rnd: () => number) {
   const dust = Math.max(1, Math.floor(lw / 2));
   ctx.save();
   ctx.globalAlpha = 0.10;
   ctx.fillStyle = color;
   for (let i = 0; i < dust; i++) {
-    const rx = x + (Math.random() - 0.5) * (lw * 3);
-    const ry = y + (Math.random() - 0.5) * (lw * 3);
+    const rx = x + (rnd() - 0.5) * (lw * 3);
+    const ry = y + (rnd() - 0.5) * (lw * 3);
     ctx.fillRect(rx, ry, 1, 1);
   }
   ctx.restore();
 }
 
-function drawArrow(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, color: string, lw: number) {
-  const ang = Math.atan2(y2 - y1, x2 - x1);
-  const head = 12 + lw * 1.4;
+function wobblyPath(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  wobble: number,
+  rnd: () => number,
+) {
+  const pts: Array<[number, number]> = [];
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len = Math.max(1, Math.hypot(dx, dy));
+  const nx = -dy / len;
+  const ny = dx / len;
 
+  const steps = clamp(Math.floor(len / 90), 3, 10);
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const baseX = x1 + dx * t;
+    const baseY = y1 + dy * t;
+
+    const falloff = 1 - Math.abs(0.5 - t) * 2; // more wobble in middle
+    const off = (rnd() - 0.5) * 2 * wobble * (0.35 + 0.65 * falloff);
+
+    pts.push([baseX + nx * off, baseY + ny * off]);
+  }
+  return pts;
+}
+
+function drawWobblyLine(
+  ctx: CanvasRenderingContext2D,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  color: string,
+  lw: number,
+  rnd: () => number,
+  passes = 2,
+  wobble = 2.3,
+) {
   ctx.strokeStyle = color;
   ctx.lineWidth = lw;
 
-  drawChalkStroke(ctx, () => {
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
+  for (let p = 0; p < passes; p++) {
+    const localWobble = wobble * (0.85 + rnd() * 0.6);
+    const pts = wobblyPath(x1, y1, x2, y2, localWobble, rnd);
 
-    ctx.beginPath();
-    ctx.moveTo(x2, y2);
-    ctx.lineTo(x2 - head * Math.cos(ang - Math.PI / 7), y2 - head * Math.sin(ang - Math.PI / 7));
-    ctx.lineTo(x2 - head * Math.cos(ang + Math.PI / 7), y2 - head * Math.sin(ang + Math.PI / 7));
-    ctx.closePath();
-    ctx.stroke();
-  });
+    drawChalkStroke(ctx, () => {
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.stroke();
+    });
+  }
 }
 
-function drawTextLine(ctx: CanvasRenderingContext2D, segs: Seg[], x: number, y: number, fontSize: number) {
+function drawArrow(
+  ctx: CanvasRenderingContext2D,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  color: string,
+  lw: number,
+  rnd: () => number,
+) {
+  const ang = Math.atan2(y2 - y1, x2 - x1);
+  const head = 12 + lw * 1.4;
+
+  drawWobblyLine(ctx, x1, y1, x2, y2, color, lw, rnd, 2, 2.4);
+
+  // head (two small wobbly lines)
+  const hx1 = x2 - head * Math.cos(ang - Math.PI / 7);
+  const hy1 = y2 - head * Math.sin(ang - Math.PI / 7);
+  const hx2 = x2 - head * Math.cos(ang + Math.PI / 7);
+  const hy2 = y2 - head * Math.sin(ang + Math.PI / 7);
+
+  drawWobblyLine(ctx, x2, y2, hx1, hy1, color, Math.max(2, lw - 1), rnd, 1, 1.6);
+  drawWobblyLine(ctx, x2, y2, hx2, hy2, color, Math.max(2, lw - 1), rnd, 1, 1.6);
+}
+
+function drawUnderlineChalk(
+  ctx: CanvasRenderingContext2D,
+  x1: number,
+  y: number,
+  x2: number,
+  color: string,
+  lw: number,
+  rnd: () => number,
+) {
+  // 3 imperfect passes
+  for (let i = 0; i < 3; i++) {
+    const yy = y + (rnd() - 0.5) * 4;
+    const xa = x1 - 6 - rnd() * 6;
+    const xb = x2 + 8 + rnd() * 10;
+    drawWobblyLine(ctx, xa, yy, xb, yy + (rnd() - 0.5) * 2, color, clamp(lw - 1 + i * 0.6, 2, 10), rnd, 1, 2.2);
+  }
+}
+
+function drawTextLine(
+  ctx: CanvasRenderingContext2D,
+  segs: Seg[],
+  x: number,
+  y: number,
+  fontSize: number,
+  angleRad: number,
+  rnd: () => number,
+) {
   ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angleRad);
+
   ctx.textBaseline = "top";
   ctx.font = `${fontSize}px "Architects Daughter", "Patrick Hand", system-ui, -apple-system, Segoe UI, Roboto, Arial`;
 
-  let cursorX = x;
+  let cursorX = 0;
   for (const seg of segs) {
     ctx.fillStyle = seg.color;
     ctx.globalAlpha = 0.95;
     ctx.shadowColor = "rgba(255,255,255,0.22)";
     ctx.shadowBlur = 1.2;
 
-    ctx.fillText(seg.text, cursorX, y);
+    ctx.fillText(seg.text, cursorX, 0);
 
     const w = ctx.measureText(seg.text).width;
-    drawLineDust(ctx, cursorX + w, y + fontSize * 0.7, 4, seg.color);
+
+    // small chalk dust near end of word
+    drawLineDust(ctx, cursorX + w, fontSize * 0.7, 4, seg.color, rnd);
 
     cursorX += w;
   }
+
   ctx.restore();
 }
 
@@ -363,6 +469,9 @@ export default function ChalkboardTutorBoard({
   const parsed = useMemo(() => parseBoard(value), [value]);
   const [box, setBox] = useState({ w: 0, h: 0 });
 
+  // deterministic seed per board content (no flicker)
+  const seed = useMemo(() => hashStringToSeed(value || ""), [value]);
+
   useEffect(() => {
     if (!wrapRef.current) return;
     const el = wrapRef.current;
@@ -386,6 +495,8 @@ export default function ChalkboardTutorBoard({
 
     const draw = async () => {
       await ensureFontsReady();
+
+      const rnd = mulberry32(seed);
 
       const dpr = typeof window !== "undefined" ? (window.devicePixelRatio || 1) : 1;
 
@@ -411,10 +522,13 @@ export default function ChalkboardTutorBoard({
             ctx.fillRect(cmd.x, cmd.y, cmd.w, cmd.h);
             ctx.restore();
           }
-          ctx.strokeStyle = cmd.color;
-          ctx.lineWidth = cmd.lw;
-          drawChalkStroke(ctx, () => ctx.strokeRect(cmd.x, cmd.y, cmd.w, cmd.h));
-          drawLineDust(ctx, cmd.x + cmd.w, cmd.y + cmd.h, cmd.lw, cmd.color);
+          // slightly imperfect rectangle: draw edges as wobbly lines
+          drawWobblyLine(ctx, cmd.x, cmd.y, cmd.x + cmd.w, cmd.y, cmd.color, cmd.lw, rnd, 2, 1.8);
+          drawWobblyLine(ctx, cmd.x + cmd.w, cmd.y, cmd.x + cmd.w, cmd.y + cmd.h, cmd.color, cmd.lw, rnd, 2, 1.8);
+          drawWobblyLine(ctx, cmd.x + cmd.w, cmd.y + cmd.h, cmd.x, cmd.y + cmd.h, cmd.color, cmd.lw, rnd, 2, 1.8);
+          drawWobblyLine(ctx, cmd.x, cmd.y + cmd.h, cmd.x, cmd.y, cmd.color, cmd.lw, rnd, 2, 1.8);
+
+          drawLineDust(ctx, cmd.x + cmd.w, cmd.y + cmd.h, cmd.lw, cmd.color, rnd);
         }
 
         if (cmd.kind === "circle") {
@@ -427,47 +541,42 @@ export default function ChalkboardTutorBoard({
             ctx.fill();
             ctx.restore();
           }
+
+          // circle double-pass with tiny radius noise
           ctx.strokeStyle = cmd.color;
           ctx.lineWidth = cmd.lw;
-          drawChalkStroke(ctx, () => {
-            ctx.beginPath();
-            ctx.arc(cmd.x, cmd.y, cmd.r, 0, Math.PI * 2);
-            ctx.stroke();
-          });
-          drawLineDust(ctx, cmd.x + cmd.r, cmd.y, cmd.lw, cmd.color);
+
+          for (let p = 0; p < 2; p++) {
+            const rr = cmd.r + (rnd() - 0.5) * 2.5;
+            drawChalkStroke(ctx, () => {
+              ctx.beginPath();
+              ctx.arc(cmd.x + (rnd() - 0.5) * 1.5, cmd.y + (rnd() - 0.5) * 1.5, rr, 0, Math.PI * 2);
+              ctx.stroke();
+            });
+          }
+
+          drawLineDust(ctx, cmd.x + cmd.r, cmd.y, cmd.lw, cmd.color, rnd);
         }
 
         if (cmd.kind === "line") {
-          ctx.strokeStyle = cmd.color;
-          ctx.lineWidth = cmd.lw;
-          drawChalkStroke(ctx, () => {
-            ctx.beginPath();
-            ctx.moveTo(cmd.x1, cmd.y1);
-            ctx.lineTo(cmd.x2, cmd.y2);
-            ctx.stroke();
-          });
-          drawLineDust(ctx, cmd.x2, cmd.y2, cmd.lw, cmd.color);
+          drawWobblyLine(ctx, cmd.x1, cmd.y1, cmd.x2, cmd.y2, cmd.color, cmd.lw, rnd, 2, 2.3);
+          drawLineDust(ctx, cmd.x2, cmd.y2, cmd.lw, cmd.color, rnd);
         }
 
         if (cmd.kind === "arrow") {
-          drawArrow(ctx, cmd.x1, cmd.y1, cmd.x2, cmd.y2, cmd.color, cmd.lw);
-          drawLineDust(ctx, cmd.x2, cmd.y2, cmd.lw, cmd.color);
+          drawArrow(ctx, cmd.x1, cmd.y1, cmd.x2, cmd.y2, cmd.color, cmd.lw, rnd);
+          drawLineDust(ctx, cmd.x2, cmd.y2, cmd.lw, cmd.color, rnd);
         }
 
         if (cmd.kind === "underline") {
-          ctx.strokeStyle = cmd.color;
-          ctx.lineWidth = cmd.lw;
-          drawChalkStroke(ctx, () => {
-            ctx.beginPath();
-            ctx.moveTo(cmd.x1, cmd.y);
-            ctx.lineTo(cmd.x2, cmd.y);
-            ctx.stroke();
-          });
-          drawLineDust(ctx, cmd.x2, cmd.y, cmd.lw, cmd.color);
+          drawUnderlineChalk(ctx, cmd.x1, cmd.y, cmd.x2, cmd.color, cmd.lw, rnd);
+          drawLineDust(ctx, cmd.x2, cmd.y, cmd.lw, cmd.color, rnd);
         }
 
         if (cmd.kind === "text") {
-          drawTextLine(ctx, [{ text: cmd.text, color: cmd.color }], cmd.x, cmd.y, cmd.size);
+          // micro-rotation: super subtle, deterministic
+          const a = (rnd() - 0.5) * (Math.PI / 180) * 1.2; // ±0.6°
+          drawTextLine(ctx, [{ text: cmd.text, color: cmd.color }], cmd.x, cmd.y, cmd.size, a, rnd);
         }
 
         if (cmd.kind === "tri") {
@@ -475,28 +584,16 @@ export default function ChalkboardTutorBoard({
           const x2 = x + cmd.w, y2 = y;
           const x3 = x, y3 = y + cmd.h;
 
-          ctx.strokeStyle = cmd.color;
-          ctx.lineWidth = cmd.lw;
+          drawWobblyLine(ctx, x, y, x2, y2, cmd.color, cmd.lw, rnd, 2, 2.1);
+          drawWobblyLine(ctx, x2, y2, x3, y3, cmd.color, cmd.lw, rnd, 2, 2.1);
+          drawWobblyLine(ctx, x3, y3, x, y, cmd.color, cmd.lw, rnd, 2, 2.1);
 
-          drawChalkStroke(ctx, () => {
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.lineTo(x2, y2);
-            ctx.lineTo(x3, y3);
-            ctx.closePath();
-            ctx.stroke();
-          });
+          // right angle marker (slightly imperfect)
+          drawWobblyLine(ctx, x + 18, y, x + 18, y + 18, cmd.color, Math.max(2, cmd.lw - 1), rnd, 1, 1.2);
+          drawWobblyLine(ctx, x + 18, y + 18, x, y + 18, cmd.color, Math.max(2, cmd.lw - 1), rnd, 1, 1.2);
 
-          drawChalkStroke(ctx, () => {
-            ctx.beginPath();
-            ctx.moveTo(x + 18, y);
-            ctx.lineTo(x + 18, y + 18);
-            ctx.lineTo(x, y + 18);
-            ctx.stroke();
-          });
-
-          drawLineDust(ctx, x2, y2, cmd.lw, cmd.color);
-          drawLineDust(ctx, x3, y3, cmd.lw, cmd.color);
+          drawLineDust(ctx, x2, y2, cmd.lw, cmd.color, rnd);
+          drawLineDust(ctx, x3, y3, cmd.lw, cmd.color, rnd);
         }
       }
 
@@ -512,13 +609,16 @@ export default function ChalkboardTutorBoard({
         const isTitle = i === 0;
         const size = isTitle ? titleSize : textSize;
         const segs = parseColorTags(line);
-        drawTextLine(ctx, segs, x, y, size);
+
+        const a = (rnd() - 0.5) * (Math.PI / 180) * (isTitle ? 1.4 : 0.9); // title a touch more
+        drawTextLine(ctx, segs, x, y, size, a, rnd);
+
         y += size + lineGap;
       });
     };
 
     draw();
-  }, [parsed, width, height, box.w, box.h]);
+  }, [parsed, width, height, box.w, box.h, seed]);
 
   return (
     <div className={className ?? ""}>
