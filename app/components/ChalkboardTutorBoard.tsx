@@ -133,7 +133,7 @@ function parseCommand(line: string): DrawCmd | null {
     return { kind: "text", x, y, size, color, text: inside || "" };
   }
 
-  // Compat: @text(400,50) [size 66] TEXT  (NO lo queremos, pero lo dejamos por compat)
+  // Compat: @text(400,50) [size 66] TEXT
   if (raw.toLowerCase().startsWith("@text(")) {
     const nums = numsFromParen(raw);
     const tags = parseBracketTags(tagsFromBrackets(raw));
@@ -273,8 +273,8 @@ function parseColorTags(line: string): Seg[] {
 function drawChalkStroke(ctx: CanvasRenderingContext2D, fn: () => void) {
   ctx.save();
   ctx.globalAlpha = 0.93;
-  ctx.shadowColor = "rgba(255,255,255,0.22)";
-  ctx.shadowBlur = 1.2;
+  ctx.shadowColor = "rgba(255,255,255,0.20)";
+  ctx.shadowBlur = 1.0;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   fn();
@@ -282,13 +282,14 @@ function drawChalkStroke(ctx: CanvasRenderingContext2D, fn: () => void) {
 }
 
 function drawLineDust(ctx: CanvasRenderingContext2D, x: number, y: number, lw: number, color: string, rng: () => number) {
-  const dust = Math.max(1, Math.floor(lw / 2));
+  // ✅ menos polvo (más limpio)
+  const dust = Math.max(1, Math.floor(lw / 3));
   ctx.save();
-  ctx.globalAlpha = 0.10;
+  ctx.globalAlpha = 0.07;
   ctx.fillStyle = color;
   for (let i = 0; i < dust; i++) {
-    const rx = x + (rng() - 0.5) * (lw * 3);
-    const ry = y + (rng() - 0.5) * (lw * 3);
+    const rx = x + (rng() - 0.5) * (lw * 2.2);
+    const ry = y + (rng() - 0.5) * (lw * 2.2);
     ctx.fillRect(rx, ry, 1, 1);
   }
   ctx.restore();
@@ -313,7 +314,7 @@ function mulberry32(seed: number) {
   };
 }
 
-// -------- hand-drawn primitives (wobble real) --------
+// -------- hand-drawn primitives (más recto, menos wobble) --------
 function drawWobblyLine(
   ctx: CanvasRenderingContext2D,
   x1: number,
@@ -327,12 +328,15 @@ function drawWobblyLine(
   const dx = x2 - x1;
   const dy = y2 - y1;
   const dist = Math.hypot(dx, dy);
-  const steps = clamp(Math.round(dist / 22), 6, 28);
+
+  // ✅ menos puntos => más recto
+  const steps = clamp(Math.round(dist / 34), 4, 18);
 
   const nx = -dy / (dist || 1);
   const ny = dx / (dist || 1);
 
-  const jitter = clamp(lw * 0.55, 1.2, 5);
+  // ✅ MUCHO menos jitter (antes 0.55)
+  const jitter = clamp(lw * 0.18, 0.45, 1.8);
 
   const drawOnce = (alpha: number, extra: number) => {
     ctx.save();
@@ -360,8 +364,9 @@ function drawWobblyLine(
     ctx.restore();
   };
 
+  // ✅ doble trazo MUY suave (profe real pero limpio)
   drawOnce(0.92, 0);
-  drawOnce(0.55, 1.5);
+  drawOnce(0.38, 0.55);
 }
 
 function drawWobblyRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string, lw: number, rng: () => number) {
@@ -372,8 +377,9 @@ function drawWobblyRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: 
 }
 
 function drawWobblyCircle(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, color: string, lw: number, rng: () => number) {
-  const steps = 40;
-  const jitter = clamp(lw * 0.45, 1.0, 4.0);
+  // ✅ menos pasos y menos jitter => círculo más “bien hecho”
+  const steps = 28;
+  const jitter = clamp(lw * 0.14, 0.35, 1.35);
 
   const drawOnce = (alpha: number, extra: number) => {
     ctx.save();
@@ -398,14 +404,14 @@ function drawWobblyCircle(ctx: CanvasRenderingContext2D, cx: number, cy: number,
   };
 
   drawOnce(0.92, 0);
-  drawOnce(0.55, 1.2);
+  drawOnce(0.35, 0.45);
 }
 
 function drawArrow(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, color: string, lw: number, rng: () => number) {
   drawWobblyLine(ctx, x1, y1, x2, y2, color, lw, rng);
 
   const ang = Math.atan2(y2 - y1, x2 - x1);
-  const head = 11 + lw * 1.3;
+  const head = 10 + lw * 1.1;
 
   const ax1 = x2 - head * Math.cos(ang - Math.PI / 7);
   const ay1 = y2 - head * Math.sin(ang - Math.PI / 7);
@@ -424,13 +430,14 @@ function drawTextLine(ctx: CanvasRenderingContext2D, segs: Seg[], x: number, y: 
   let cursorX = x;
 
   for (const seg of segs) {
-    const jx = (rng() - 0.5) * 0.8;
-    const jy = (rng() - 0.5) * 0.8;
+    // ✅ menos jitter en texto
+    const jx = (rng() - 0.5) * 0.45;
+    const jy = (rng() - 0.5) * 0.45;
 
     ctx.fillStyle = seg.color;
     ctx.globalAlpha = 0.95;
-    ctx.shadowColor = "rgba(255,255,255,0.22)";
-    ctx.shadowBlur = 1.2;
+    ctx.shadowColor = "rgba(255,255,255,0.18)";
+    ctx.shadowBlur = 0.9;
 
     ctx.fillText(seg.text, cursorX + jx, y + jy);
 
@@ -532,7 +539,7 @@ export default function ChalkboardTutorBoard({
       ctx.setTransform(dpr * sx, 0, 0, dpr * sy, 0, 0);
       ctx.clearRect(0, 0, width, height);
 
-      // ✅ CLIP: evita pintar en el marco de madera (ajusta si quieres)
+      // ✅ CLIP: evita pintar en el marco de madera
       const INSET_X = 58;
       const INSET_Y = 44;
       const CLIP_W = width - INSET_X * 2;
@@ -545,16 +552,14 @@ export default function ChalkboardTutorBoard({
 
       // rng base por board (estable)
       const baseSeed = hashStr(value || "board");
-      const rngBase = mulberry32(baseSeed);
 
       // ✅ 0) imagen derecha (si existe)
       if (rightImg && boardImagePlacement) {
         const { x, y, w, h } = boardImagePlacement;
         ctx.save();
-        ctx.globalAlpha = 0.96;
-        // leve “tiza” extra
-        ctx.shadowColor = "rgba(255,255,255,0.22)";
-        ctx.shadowBlur = 1.2;
+        ctx.globalAlpha = 0.98;
+        ctx.shadowColor = "rgba(255,255,255,0.18)";
+        ctx.shadowBlur = 0.9;
         ctx.drawImage(rightImg, x, y, w, h);
         ctx.restore();
       }
@@ -567,7 +572,7 @@ export default function ChalkboardTutorBoard({
         if (cmd.kind === "rect") {
           if (cmd.fill) {
             ctx.save();
-            ctx.globalAlpha = 0.16;
+            ctx.globalAlpha = 0.14;
             ctx.fillStyle = cmd.fill;
             ctx.fillRect(cmd.x, cmd.y, cmd.w, cmd.h);
             ctx.restore();
@@ -579,7 +584,7 @@ export default function ChalkboardTutorBoard({
         if (cmd.kind === "circle") {
           if (cmd.fill) {
             ctx.save();
-            ctx.globalAlpha = 0.16;
+            ctx.globalAlpha = 0.14;
             ctx.fillStyle = cmd.fill;
             ctx.beginPath();
             ctx.arc(cmd.x, cmd.y, cmd.r, 0, Math.PI * 2);
@@ -621,9 +626,9 @@ export default function ChalkboardTutorBoard({
           drawWobblyLine(ctx, x2, y2, x3, y3, cmd.color, cmd.lw, rng);
           drawWobblyLine(ctx, x3, y3, x, y, cmd.color, cmd.lw, rng);
 
-          // ángulo recto
-          drawWobblyLine(ctx, x + 18, y, x + 18, y + 18, cmd.color, Math.max(2, cmd.lw - 1), rng);
-          drawWobblyLine(ctx, x + 18, y + 18, x, y + 18, cmd.color, Math.max(2, cmd.lw - 1), rng);
+          // ángulo recto (más limpio)
+          drawWobblyLine(ctx, x + 16, y, x + 16, y + 16, cmd.color, Math.max(2, cmd.lw - 1), rng);
+          drawWobblyLine(ctx, x + 16, y + 16, x, y + 16, cmd.color, Math.max(2, cmd.lw - 1), rng);
 
           drawLineDust(ctx, x2, y2, cmd.lw, cmd.color, rng);
           drawLineDust(ctx, x3, y3, cmd.lw, cmd.color, rng);
@@ -643,7 +648,6 @@ export default function ChalkboardTutorBoard({
         const size = isTitle ? titleSize : textSize;
         const segs = parseColorTags(line);
 
-        // rng estable por línea
         const rng = mulberry32(hashStr("line:" + i + ":" + line + ":" + baseSeed));
         drawTextLine(ctx, segs, x, y, size, rng);
 
