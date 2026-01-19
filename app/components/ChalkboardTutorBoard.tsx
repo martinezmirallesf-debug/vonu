@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-console.log("✅ ChalkboardTutorBoard ACTIVO (wobble + image + clip + z-order)");
+console.log("✅ ChalkboardTutorBoard ACTIVO (wobble + image + clip + z-order + sanitize)");
 
 type Props = {
   value: string;
@@ -66,6 +66,29 @@ type ParsedBoard = {
   cmds: DrawCmd[];
 };
 
+// ---------------- SANITIZE INPUT ----------------
+// Evita que se vea “código” en la pizarra cuando el modelo devuelve líneas @... rotas.
+// Regla: si una línea empieza por @ y NO se puede parsear como comando válido -> se descarta.
+function normalizeValue(value: string) {
+  return String(value ?? "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\u0000/g, "")
+    .trim();
+}
+
+function isGarbageCmdLine(line: string) {
+  const l = (line || "").trim();
+  if (!l.startsWith("@")) return false;
+  // restos típicos de placeholders / tokens raros
+  if (l.includes("{{") || l.includes("}}")) return true;
+  // si es @text debe tener exactamente 2 pipes cuando hay texto
+  if (l.toLowerCase().startsWith("@text ")) {
+    const pipeCount = (l.match(/\|/g) || []).length;
+    if (pipeCount !== 2) return true;
+  }
+  return false;
+}
+
 // ---------- compat parsers ----------
 function numsFromParen(raw: string): number[] {
   const m = raw.match(/\(([^)]*)\)/);
@@ -105,12 +128,18 @@ function parseBracketTags(tags: string[]) {
 function parseCommand(line: string): DrawCmd | null {
   const raw = line.trim();
   if (!raw.startsWith("@")) return null;
+  if (isGarbageCmdLine(raw)) return null;
 
+  // Original DSL: @text x y size=.. color=.. |TEXT|
   if (raw.toLowerCase().startsWith("@text ")) {
     const pipeA = raw.indexOf("|");
     const pipeB = raw.lastIndexOf("|");
-    const inside = pipeA !== -1 && pipeB !== -1 && pipeB > pipeA ? raw.slice(pipeA + 1, pipeB) : "";
-    const head = (pipeA !== -1 ? raw.slice(0, pipeA) : raw).trim();
+
+    // si no están bien los pipes, descartamos (para que no se pinte “código”)
+    if (pipeA === -1 || pipeB === -1 || pipeB <= pipeA) return null;
+
+    const inside = raw.slice(pipeA + 1, pipeB);
+    const head = raw.slice(0, pipeA).trim();
 
     const parts = head.split(/\s+/).slice(1);
     const x = parseNumber(parts[0], 60);
@@ -129,7 +158,11 @@ function parseCommand(line: string): DrawCmd | null {
     return { kind: "text", x, y, size, color, text: inside || "" };
   }
 
+  // Compat legacy: @text(400,50) [size 66] TEXT
   if (raw.toLowerCase().startsWith("@text(")) {
+    // Si alguien mete pipes, descartamos para evitar basura
+    if ((raw.match(/\|/g) || []).length) return null;
+
     const nums = numsFromParen(raw);
     const tags = parseBracketTags(tagsFromBrackets(raw));
     const after = raw.replace(/@text\([^)]*\)/i, "").replace(/\[[^\]]*\]/g, "").trim();
@@ -175,6 +208,7 @@ function parseCommand(line: string): DrawCmd | null {
     return { kind: "rect", x, y, w, h, color, lw, fill };
   }
 
+  // Original non-text: @rect x y w h color=.. w=..
   const parts = raw.split(/\s+/);
   const cmd = parts[0].slice(1).toLowerCase();
 
@@ -221,7 +255,9 @@ function parseCommand(line: string): DrawCmd | null {
 }
 
 function parseBoard(value: string): ParsedBoard {
-  const rawLines = (value || "").replace(/\r\n/g, "\n").split("\n");
+  const v = normalizeValue(value);
+  const rawLines = v.split("\n");
+
   const lines: string[] = [];
   const cmds: DrawCmd[] = [];
 
@@ -230,8 +266,18 @@ function parseBoard(value: string): ParsedBoard {
     if (!trimmed) continue;
 
     const c = parseCommand(trimmed);
-    if (c) cmds.push(c);
-    else lines.push(l);
+    if (c) {
+      cmds.push(c);
+      continue;
+    }
+
+    // ✅ Si empieza por @ pero no es comando válido: NO lo pintamos como texto (evita “código” en pizarra)
+    if (trimmed.startsWith("@")) continue;
+
+    // ✅ También evitamos “basura” tipo {{IM...}}
+    if (trimmed.includes("{{") || trimmed.includes("}}")) continue;
+
+    lines.push(l);
   }
 
   return { lines, cmds };
@@ -321,10 +367,10 @@ function drawWobblyLine(
   const dist = Math.hypot(dx, dy);
 
   const steps = clamp(Math.round(dist / 34), 4, 18);
-
   const nx = -dy / (dist || 1);
   const ny = dx / (dist || 1);
 
+  // ✅ más recto/humano
   const jitter = clamp(lw * 0.18, 0.45, 1.8);
 
   const drawOnce = (alpha: number, extra: number) => {
@@ -357,14 +403,31 @@ function drawWobblyLine(
   drawOnce(0.38, 0.55);
 }
 
-function drawWobblyRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string, lw: number, rng: () => number) {
+function drawWobblyRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string,
+  lw: number,
+  rng: () => number
+) {
   drawWobblyLine(ctx, x, y, x + w, y, color, lw, rng);
   drawWobblyLine(ctx, x + w, y, x + w, y + h, color, lw, rng);
   drawWobblyLine(ctx, x + w, y + h, x, y + h, color, lw, rng);
   drawWobblyLine(ctx, x, y + h, x, y, color, lw, rng);
 }
 
-function drawWobblyCircle(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, color: string, lw: number, rng: () => number) {
+function drawWobblyCircle(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  r: number,
+  color: string,
+  lw: number,
+  rng: () => number
+) {
   const steps = 28;
   const jitter = clamp(lw * 0.14, 0.35, 1.35);
 
@@ -394,7 +457,16 @@ function drawWobblyCircle(ctx: CanvasRenderingContext2D, cx: number, cy: number,
   drawOnce(0.35, 0.45);
 }
 
-function drawArrow(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, color: string, lw: number, rng: () => number) {
+function drawArrow(
+  ctx: CanvasRenderingContext2D,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  color: string,
+  lw: number,
+  rng: () => number
+) {
   drawWobblyLine(ctx, x1, y1, x2, y2, color, lw, rng);
 
   const ang = Math.atan2(y2 - y1, x2 - x1);
@@ -493,8 +565,11 @@ export default function ChalkboardTutorBoard({
     const ctx = c.getContext("2d");
     if (!ctx) return;
 
+    let cancelled = false;
+
     const draw = async () => {
       await ensureFontsReady();
+      if (cancelled) return;
 
       let rightImg: HTMLImageElement | null = null;
       if (boardImageB64) {
@@ -522,6 +597,10 @@ export default function ChalkboardTutorBoard({
       ctx.setTransform(dpr * sx, 0, 0, dpr * sy, 0, 0);
       ctx.clearRect(0, 0, width, height);
 
+      // ✅ suaviza imagen (la tiza)
+      ctx.imageSmoothingEnabled = true;
+
+      // ✅ CLIP: evita pintar en el marco
       const INSET_X = 58;
       const INSET_Y = 44;
       const CLIP_W = width - INSET_X * 2;
@@ -532,15 +611,22 @@ export default function ChalkboardTutorBoard({
       ctx.rect(INSET_X, INSET_Y, CLIP_W, CLIP_H);
       ctx.clip();
 
-      const baseSeed = hashStr(value || "board");
+      const baseSeed = hashStr(normalizeValue(value) || "board");
 
       // ✅ 0) Imagen (si existe) – debajo de todo
-      if (rightImg && boardImagePlacement) {
-        const { x, y, w, h } = boardImagePlacement;
+      if (rightImg) {
+        const p = boardImagePlacement ?? { x: 540, y: 330, w: 380, h: 180 }; // fallback seguro
         ctx.save();
         ctx.globalAlpha = 0.98;
         ctx.shadowColor = "rgba(255,255,255,0.18)";
         ctx.shadowBlur = 0.9;
+
+        // clamp simple dentro del clip (por si placement viene raro)
+        const x = clamp(p.x, INSET_X, INSET_X + CLIP_W - 10);
+        const y = clamp(p.y, INSET_Y, INSET_Y + CLIP_H - 10);
+        const w = clamp(p.w, 10, INSET_X + CLIP_W - x);
+        const h = clamp(p.h, 10, INSET_Y + CLIP_H - y);
+
         ctx.drawImage(rightImg, x, y, w, h);
         ctx.restore();
       }
@@ -644,6 +730,7 @@ export default function ChalkboardTutorBoard({
         y += size + lineGap;
       });
 
+      // (si quieres, bórralo; lo dejo para debug)
       const debugRng = mulberry32(hashStr("debug:" + baseSeed));
       drawTextLine(ctx, [{ text: "·", color: COLOR_MAP.yellow }], 960, 560, 26, debugRng);
 
@@ -651,6 +738,10 @@ export default function ChalkboardTutorBoard({
     };
 
     draw();
+
+    return () => {
+      cancelled = true;
+    };
   }, [parsed, width, height, box.w, box.h, value, boardImageB64, boardImagePlacement]);
 
   return (
