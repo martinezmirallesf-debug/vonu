@@ -1919,16 +1919,19 @@ const fullText =
 
 // ✅ NUEVO: imagen de pizarra (si viene)
 const boardImageB64 =
-  typeof data?.board_image_b64 === "string" && data.board_image_b64
-    ? data.board_image_b64
+  typeof data?.boardImageB64 === "string" && data.boardImageB64
+    ? data.boardImageB64
     : null;
 
 const boardImagePlacement =
-  data?.board_image_placement &&
-  typeof data.board_image_placement?.x === "number" &&
-  typeof data.board_image_placement?.y === "number"
-    ? (data.board_image_placement as { x: number; y: number; w: number; h: number })
+  data?.boardImagePlacement &&
+  typeof data.boardImagePlacement?.x === "number" &&
+  typeof data.boardImagePlacement?.y === "number" &&
+  typeof data.boardImagePlacement?.w === "number" &&
+  typeof data.boardImagePlacement?.h === "number"
+    ? (data.boardImagePlacement as { x: number; y: number; w: number; h: number })
     : null;
+
 
 
       await sleep(90);
