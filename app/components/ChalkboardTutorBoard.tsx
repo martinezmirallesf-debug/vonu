@@ -37,15 +37,36 @@ function clamp(n: number, a: number, b: number) {
 
 // ================== SANITIZE ==================
 function fixSuperscripts(s: string) {
-  // a^2 -> a², a^3 -> a³ (solo casos comunes)
-  return s
-    .replace(/\^2/g, "²")
-    .replace(/\^3/g, "³")
-    // limpiar "( c )" -> "(c)"
-    .replace(/\(\s+/g, "(")
-    .replace(/\s+\)/g, ")")
-    // limpiar espacios dobles
-    .replace(/[ \t]{2,}/g, " ");
+  const toSuper = (x: string) =>
+    x.replace(/\^2/g, "²").replace(/\^3/g, "³");
+
+  const subMap: Record<string, string> = {
+    "0": "₀",
+    "1": "₁",
+    "2": "₂",
+    "3": "₃",
+    "4": "₄",
+    "5": "₅",
+    "6": "₆",
+    "7": "₇",
+    "8": "₈",
+    "9": "₉",
+  };
+
+  const toSubDigits = (digits: string) => digits.split("").map((d) => subMap[d] ?? d).join("");
+
+  // CO2 -> CO₂, H2O -> H₂O, C6H12O6 -> C₆H₁₂O₆
+  const chemSub = (x: string) =>
+    x.replace(/([A-Za-z])(\d+)/g, (_m, a, d) => a + toSubDigits(d));
+
+  return chemSub(
+    toSuper(s)
+      // limpiar "( c )" -> "(c)"
+      .replace(/\(\s+/g, "(")
+      .replace(/\s+\)/g, ")")
+      // limpiar espacios dobles
+      .replace(/[ \t]{2,}/g, " ")
+  );
 }
 
 function sanitizeBoardValue(raw: string) {
@@ -656,11 +677,15 @@ export default function ChalkboardTutorBoard({
   // Ahora el <img> está ABSOLUTO y “cover”, y el tamaño lo decide el contenedor padre.
   return (
     <div className={className ?? ""}>
-      <div ref={wrapRef} className="relative w-full h-full overflow-hidden rounded-[26px] border border-zinc-200 shadow-[0_18px_60px_rgba(0,0,0,0.10)]">
+      <div
+  ref={wrapRef}
+  className="relative w-full h-full min-h-[520px] overflow-hidden rounded-[26px] border border-zinc-200 shadow-[0_18px_60px_rgba(0,0,0,0.10)]"
+  style={{ backgroundColor: "#0b0f0d" }}
+>
         <img
           src={backgroundSrc}
           alt="Pizarra"
-          className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
+          className="absolute inset-0 w-full h-full object-fill select-none pointer-events-none"
           draggable={false}
         />
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
