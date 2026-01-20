@@ -1,23 +1,16 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-console.log("✅ ChalkboardTutorBoard ACTIVO (strict pizarra + fit text)");
+console.log("✅ ChalkboardTutorBoard ACTIVO (JSON boardSpec + stable layout)");
 
-// Si value viene de ```pizarra```, lo tratamos como “modo estricto”:
-// - SOLO dibujamos comandos @...
-// - ignoramos cualquier texto suelto (evita que aparezca "código" en la pizarra)
 type Props = {
   value: string;
   className?: string;
   backgroundSrc?: string;
   width?: number; // logical 1000
   height?: number; // logical 600
-
   boardImageB64?: string | null;
   boardImagePlacement?: { x: number; y: number; w: number; h: number } | null;
-
-  // ✅ NUEVO: por defecto true (para ```pizarra```). Si algún día quieres permitir texto suelto, lo pones false.
-  strictCommands?: boolean;
 };
 
 type ColorName =
@@ -68,11 +61,11 @@ type DrawCmd =
   | { kind: "tri"; x: number; y: number; w: number; h: number; color: string; lw: number };
 
 type ParsedBoard = {
-  lines: string[]; // solo si strictCommands=false
+  lines: string[];
   cmds: DrawCmd[];
 };
 
-// ---------- compat parsers ----------
+// ---------- legacy compat parsers ----------
 function numsFromParen(raw: string): number[] {
   const m = raw.match(/\(([^)]*)\)/);
   if (!m) return [];
@@ -112,8 +105,11 @@ function parseCommand(line: string): DrawCmd | null {
   const raw = line.trim();
   if (!raw.startsWith("@")) return null;
 
-  // @text X Y size=NN color=white |TEXTO|
+  // ✅ hard rule: si una línea @text tiene pipes rotos, NO la pintamos (evita “se ve código”)
   if (raw.toLowerCase().startsWith("@text ")) {
+    const pipeCount = (raw.match(/\|/g) || []).length;
+    if (pipeCount !== 2) return null;
+
     const pipeA = raw.indexOf("|");
     const pipeB = raw.lastIndexOf("|");
     const inside = pipeA !== -1 && pipeB !== -1 && pipeB > pipeA ? raw.slice(pipeA + 1, pipeB) : "";
@@ -136,7 +132,7 @@ function parseCommand(line: string): DrawCmd | null {
     return { kind: "text", x, y, size, color, text: inside || "" };
   }
 
-  // compat viejo (no recomendado)
+  // Compat viejo con paréntesis (si existiera)
   if (raw.toLowerCase().startsWith("@text(")) {
     const nums = numsFromParen(raw);
     const tags = parseBracketTags(tagsFromBrackets(raw));
@@ -183,7 +179,6 @@ function parseCommand(line: string): DrawCmd | null {
     return { kind: "rect", x, y, w, h, color, lw, fill };
   }
 
-  // formato normal
   const parts = raw.split(/\s+/);
   const cmd = parts[0].slice(1).toLowerCase();
 
@@ -229,7 +224,7 @@ function parseCommand(line: string): DrawCmd | null {
   return null;
 }
 
-function parseBoard(value: string, strictCommands: boolean): ParsedBoard {
+function parseBoard(value: string): ParsedBoard {
   const rawLines = (value || "").replace(/\r\n/g, "\n").split("\n");
   const lines: string[] = [];
   const cmds: DrawCmd[] = [];
@@ -239,17 +234,21 @@ function parseBoard(value: string, strictCommands: boolean): ParsedBoard {
     if (!trimmed) continue;
 
     const c = parseCommand(trimmed);
-    if (c) cmds.push(c);
-    else {
-      // ✅ EN MODO ESTRICTO, ignoramos texto suelto para que nunca “se vea código”
-      if (!strictCommands) lines.push(l);
+    if (c) {
+      cmds.push(c);
+      continue;
     }
+
+    // ✅ clave: si empieza por @ pero no es comando válido -> NO lo pintes como texto (evita “código”)
+    if (trimmed.startsWith("@")) continue;
+
+    lines.push(l);
   }
 
   return { lines, cmds };
 }
 
-// --- tags [color]text[/color] --- (solo para modo no estricto)
+// --- tags [color]text[/color] ---
 type Seg = { text: string; color: string };
 
 function parseColorTags(line: string): Seg[] {
@@ -276,11 +275,12 @@ function parseColorTags(line: string): Seg[] {
   return out.filter((s) => s.text.length > 0);
 }
 
+// -------- chalk render (más recto, menos wobble) --------
 function drawChalkStroke(ctx: CanvasRenderingContext2D, fn: () => void) {
   ctx.save();
   ctx.globalAlpha = 0.93;
-  ctx.shadowColor = "rgba(255,255,255,0.20)";
-  ctx.shadowBlur = 1.0;
+  ctx.shadowColor = "rgba(255,255,255,0.18)";
+  ctx.shadowBlur = 0.9;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   fn();
@@ -290,17 +290,16 @@ function drawChalkStroke(ctx: CanvasRenderingContext2D, fn: () => void) {
 function drawLineDust(ctx: CanvasRenderingContext2D, x: number, y: number, lw: number, color: string, rng: () => number) {
   const dust = Math.max(1, Math.floor(lw / 3));
   ctx.save();
-  ctx.globalAlpha = 0.07;
+  ctx.globalAlpha = 0.06;
   ctx.fillStyle = color;
   for (let i = 0; i < dust; i++) {
-    const rx = x + (rng() - 0.5) * (lw * 2.2);
-    const ry = y + (rng() - 0.5) * (lw * 2.2);
+    const rx = x + (rng() - 0.5) * (lw * 2.0);
+    const ry = y + (rng() - 0.5) * (lw * 2.0);
     ctx.fillRect(rx, ry, 1, 1);
   }
   ctx.restore();
 }
 
-// -------- seeded rng (estable, sin parpadeo) --------
 function hashStr(s: string) {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) {
@@ -319,7 +318,6 @@ function mulberry32(seed: number) {
   };
 }
 
-// -------- tiza “humana pero recta” --------
 function drawWobblyLine(
   ctx: CanvasRenderingContext2D,
   x1: number,
@@ -334,12 +332,11 @@ function drawWobblyLine(
   const dy = y2 - y1;
   const dist = Math.hypot(dx, dy);
 
-  const steps = clamp(Math.round(dist / 34), 4, 18);
-
+  const steps = clamp(Math.round(dist / 34), 4, 16);
   const nx = -dy / (dist || 1);
   const ny = dx / (dist || 1);
 
-  const jitter = clamp(lw * 0.18, 0.45, 1.8);
+  const jitter = clamp(lw * 0.16, 0.35, 1.6);
 
   const drawOnce = (alpha: number, extra: number) => {
     ctx.save();
@@ -368,10 +365,19 @@ function drawWobblyLine(
   };
 
   drawOnce(0.92, 0);
-  drawOnce(0.38, 0.55);
+  drawOnce(0.35, 0.45);
 }
 
-function drawWobblyRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string, lw: number, rng: () => number) {
+function drawWobblyRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string,
+  lw: number,
+  rng: () => number
+) {
   drawWobblyLine(ctx, x, y, x + w, y, color, lw, rng);
   drawWobblyLine(ctx, x + w, y, x + w, y + h, color, lw, rng);
   drawWobblyLine(ctx, x + w, y + h, x, y + h, color, lw, rng);
@@ -423,60 +429,25 @@ function drawArrow(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: nu
   drawWobblyLine(ctx, x2, y2, ax2, ay2, color, lw, rng);
 }
 
-// ✅ Ajuste simple: si el texto se va a salir del área útil, baja tamaño o recorta
-function fitTextToWidth(ctx: CanvasRenderingContext2D, text: string, fontSize: number, maxWidth: number) {
-  let size = fontSize;
-  ctx.font = `${size}px "Architects Daughter", "Patrick Hand", system-ui, -apple-system, Segoe UI, Roboto, Arial`;
-
-  let w = ctx.measureText(text).width;
-  while (w > maxWidth && size > 18) {
-    size = Math.floor(size * 0.92);
-    ctx.font = `${size}px "Architects Daughter", "Patrick Hand", system-ui, -apple-system, Segoe UI, Roboto, Arial`;
-    w = ctx.measureText(text).width;
-  }
-
-  if (w <= maxWidth) return { size, text };
-
-  // si aún no cabe, recorta
-  const ell = "…";
-  let t = text;
-  while (t.length > 2 && ctx.measureText(t + ell).width > maxWidth) {
-    t = t.slice(0, -1);
-  }
-  return { size, text: t + ell };
-}
-
-function drawTextLine(ctx: CanvasRenderingContext2D, segs: Seg[], x: number, y: number, fontSize: number, rng: () => number, maxX?: number) {
+function drawTextLine(ctx: CanvasRenderingContext2D, segs: Seg[], x: number, y: number, fontSize: number, rng: () => number) {
   ctx.save();
   ctx.textBaseline = "top";
+  ctx.font = `${fontSize}px "Architects Daughter", "Patrick Hand", system-ui, -apple-system, Segoe UI, Roboto, Arial`;
 
   let cursorX = x;
 
   for (const seg of segs) {
-    const jx = (rng() - 0.5) * 0.45;
-    const jy = (rng() - 0.5) * 0.45;
-
-    // ✅ si nos dan un maxX, ajustamos para no salirnos
-    const allowed = typeof maxX === "number" ? Math.max(20, maxX - cursorX) : null;
+    const jx = (rng() - 0.5) * 0.35;
+    const jy = (rng() - 0.5) * 0.35;
 
     ctx.fillStyle = seg.color;
     ctx.globalAlpha = 0.95;
-    ctx.shadowColor = "rgba(255,255,255,0.18)";
-    ctx.shadowBlur = 0.9;
+    ctx.shadowColor = "rgba(255,255,255,0.16)";
+    ctx.shadowBlur = 0.8;
 
-    let finalText = seg.text;
-    let finalSize = fontSize;
+    ctx.fillText(seg.text, cursorX + jx, y + jy);
 
-    if (allowed) {
-      const fitted = fitTextToWidth(ctx, finalText, finalSize, allowed);
-      finalText = fitted.text;
-      finalSize = fitted.size;
-    }
-
-    ctx.font = `${finalSize}px "Architects Daughter", "Patrick Hand", system-ui, -apple-system, Segoe UI, Roboto, Arial`;
-    ctx.fillText(finalText, cursorX + jx, y + jy);
-
-    const w = ctx.measureText(finalText).width;
+    const w = ctx.measureText(seg.text).width;
     cursorX += w;
   }
 
@@ -493,6 +464,7 @@ async function ensureFontsReady() {
   } catch {}
 }
 
+// ✅ cargar imagen b64 -> HTMLImageElement
 async function loadB64Image(b64: string): Promise<HTMLImageElement | null> {
   if (!b64) return null;
   const src = b64.startsWith("data:image") ? b64 : `data:image/png;base64,${b64}`;
@@ -504,6 +476,176 @@ async function loadB64Image(b64: string): Promise<HTMLImageElement | null> {
   });
 }
 
+// -------------------- NEW: JSON boardSpec --------------------
+type BoardSpecV1 = {
+  v: 1;
+  layout: "split" | "full";
+  title: string;
+
+  // Texto principal (profe). Corto, entendible.
+  left?: string[];
+  right?: string[];
+
+  // Diagrama “universal” (sin coords)
+  diagram?: "pipeline" | "right_triangle" | "axes" | "none";
+  centerLabel?: string;
+
+  // Para mates
+  triangle?: { a?: string; b?: string; c?: string; formula?: string };
+  axes?: { xLabel?: string; yLabel?: string; curveLabel?: string };
+
+  // Si hace falta imagen IA (tiza), el backend la devuelve por props; aquí solo ponemos hueco layout
+  image?: { enabled: boolean };
+};
+
+function tryParseBoardSpec(raw: string): BoardSpecV1 | null {
+  const t = (raw || "").trim();
+  if (!t) return null;
+  if (!(t.startsWith("{") && t.endsWith("}"))) return null;
+  try {
+    const obj = JSON.parse(t);
+    if (!obj || typeof obj !== "object") return null;
+    if (obj.v !== 1) return null;
+    if (obj.layout !== "split" && obj.layout !== "full") return null;
+    if (typeof obj.title !== "string") return null;
+    return obj as BoardSpecV1;
+  } catch {
+    return null;
+  }
+}
+
+function sanitizeLines(arr: any, max = 8): string[] {
+  if (!Array.isArray(arr)) return [];
+  const out: string[] = [];
+  for (const x of arr) {
+    if (typeof x !== "string") continue;
+    const s = x.trim();
+    if (!s) continue;
+    out.push(s.slice(0, 120));
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+function buildCmdsFromSpec(spec: BoardSpecV1): DrawCmd[] {
+  const cmds: DrawCmd[] = [];
+
+  const TITLE_X = 110;
+  const TITLE_Y = 70;
+
+  cmds.push({ kind: "text", x: TITLE_X, y: TITLE_Y, size: 66, color: COLOR_MAP.white, text: spec.title.toUpperCase() });
+  cmds.push({ kind: "underline", x1: TITLE_X, y: 140, x2: 610, color: COLOR_MAP.yellow, lw: 7 });
+
+  const left = sanitizeLines(spec.left, 9);
+  const right = sanitizeLines(spec.right, 9);
+
+  // Área útil para layout
+  const LEFT_X = 95;
+  const RIGHT_X = 560;
+  const TOP_Y = 200;
+  const LINE_H = 44;
+
+  const drawBullets = (x: number, y: number, lines: string[], color: string) => {
+    let yy = y;
+    for (const ln of lines) {
+      cmds.push({ kind: "text", x, y: yy, size: 38, color, text: ln });
+      yy += LINE_H;
+    }
+  };
+
+  if (spec.layout === "split") {
+    // texto izquierda y derecha
+    if (left.length) drawBullets(LEFT_X, TOP_Y, left, COLOR_MAP.white);
+    if (right.length) drawBullets(RIGHT_X, TOP_Y, right, COLOR_MAP.white);
+
+    // diagrama “pipeline” en medio (si aplica)
+    const diagram = spec.diagram || "pipeline";
+    const center = (spec.centerLabel || "").trim();
+
+    if (diagram === "pipeline") {
+      const CX = 500;
+      const CY = 320;
+
+      if (center) {
+        cmds.push({ kind: "text", x: 440, y: 300, size: 38, color: COLOR_MAP.white, text: center.toUpperCase() });
+      }
+
+      // Flechas izquierda -> centro
+      cmds.push({ kind: "arrow", x1: 320, y1: 265, x2: 460, y2: 265, color: COLOR_MAP.white, lw: 6 });
+      cmds.push({ kind: "arrow", x1: 320, y1: 310, x2: 460, y2: 310, color: COLOR_MAP.white, lw: 6 });
+      cmds.push({ kind: "arrow", x1: 320, y1: 355, x2: 460, y2: 355, color: COLOR_MAP.white, lw: 6 });
+
+      // Flechas centro -> derecha
+      cmds.push({ kind: "arrow", x1: 660, y1: 265, x2: 845, y2: 265, color: COLOR_MAP.white, lw: 6 });
+      cmds.push({ kind: "arrow", x1: 660, y1: 310, x2: 845, y2: 310, color: COLOR_MAP.white, lw: 6 });
+
+      // Punto de atención en el centro (pequeño círculo tiza)
+      cmds.push({ kind: "circle", x: CX, y: CY, r: 22, color: COLOR_MAP.white, lw: 5 });
+      cmds.push({ kind: "underline", x1: 430, y: 345, x2: 630, color: COLOR_MAP.white, lw: 4 });
+    }
+
+    // Si hay imagen, el backend la dibuja por props debajo de todo (ya lo manejas)
+    // Aquí no metemos @image para evitar “código” y depender de pipes.
+    return cmds;
+  }
+
+  // layout full
+  const body = left.length ? left : right;
+  if (body.length) {
+    let yy = 190;
+    for (const ln of body) {
+      cmds.push({ kind: "text", x: 110, y: yy, size: 40, color: COLOR_MAP.white, text: ln });
+      yy += 46;
+    }
+  }
+
+  // diagramas full
+  const diag = spec.diagram || "none";
+  if (diag === "right_triangle") {
+    cmds.push({ kind: "tri", x: 180, y: 245, w: 320, h: 240, color: COLOR_MAP.white, lw: 6 });
+
+    const a = spec.triangle?.a || "a";
+    const b = spec.triangle?.b || "b";
+    const c = spec.triangle?.c || "c";
+    const f = spec.triangle?.formula || "c² = a² + b²";
+
+    cmds.push({ kind: "text", x: 130, y: 200, size: 40, color: COLOR_MAP.cyan, text: f });
+    cmds.push({ kind: "text", x: 260, y: 505, size: 34, color: COLOR_MAP.cyan, text: `${a} (cateto)` });
+    cmds.push({ kind: "text", x: 515, y: 375, size: 34, color: COLOR_MAP.green, text: `${b} (cateto)` });
+    cmds.push({ kind: "text", x: 310, y: 330, size: 34, color: COLOR_MAP.yellow, text: `${c} (hipotenusa)` });
+    cmds.push({ kind: "underline", x1: 120, y: 242, x2: 520, color: COLOR_MAP.yellow, lw: 6 });
+  }
+
+  if (diag === "axes") {
+    // ejes simples
+    cmds.push({ kind: "line", x1: 160, y1: 500, x2: 160, y2: 200, color: COLOR_MAP.white, lw: 6 });
+    cmds.push({ kind: "line", x1: 160, y1: 500, x2: 520, y2: 500, color: COLOR_MAP.white, lw: 6 });
+    cmds.push({ kind: "arrow", x1: 160, y1: 200, x2: 160, y2: 175, color: COLOR_MAP.white, lw: 6 });
+    cmds.push({ kind: "arrow", x1: 520, y1: 500, x2: 545, y2: 500, color: COLOR_MAP.white, lw: 6 });
+
+    const xL = spec.axes?.xLabel || "x";
+    const yL = spec.axes?.yLabel || "y";
+    cmds.push({ kind: "text", x: 545, y: 510, size: 32, color: COLOR_MAP.white, text: xL });
+    cmds.push({ kind: "text", x: 120, y: 160, size: 32, color: COLOR_MAP.white, text: yL });
+
+    // curva sencilla
+    cmds.push({ kind: "line", x1: 175, y1: 470, x2: 235, y2: 430, color: COLOR_MAP.cyan, lw: 5 });
+    cmds.push({ kind: "line", x1: 235, y1: 430, x2: 305, y2: 365, color: COLOR_MAP.cyan, lw: 5 });
+    cmds.push({ kind: "line", x1: 305, y1: 365, x2: 390, y2: 305, color: COLOR_MAP.cyan, lw: 5 });
+    cmds.push({ kind: "line", x1: 390, y1: 305, x2: 500, y2: 250, color: COLOR_MAP.cyan, lw: 5 });
+
+    const cl = spec.axes?.curveLabel || "";
+    if (cl) cmds.push({ kind: "text", x: 380, y: 225, size: 34, color: COLOR_MAP.cyan, text: cl });
+  }
+
+  return cmds;
+}
+
+async function ensureFontsReadyOnce() {
+  await ensureFontsReady();
+}
+
+// -------------------- component --------------------
 export default function ChalkboardTutorBoard({
   value,
   className,
@@ -512,14 +654,14 @@ export default function ChalkboardTutorBoard({
   height = 600,
   boardImageB64 = null,
   boardImagePlacement = null,
-  strictCommands = true,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
-  const parsed = useMemo(() => parseBoard(value, strictCommands), [value, strictCommands]);
-  const [box, setBox] = useState({ w: 0, h: 0 });
+  const spec = useMemo(() => tryParseBoardSpec(value), [value]);
+  const parsed = useMemo(() => (spec ? { lines: [], cmds: buildCmdsFromSpec(spec) } : parseBoard(value)), [value, spec]);
 
+  const [box, setBox] = useState({ w: 0, h: 0 });
   const imgCacheRef = useRef<{ b64: string | null; img: HTMLImageElement | null }>({ b64: null, img: null });
 
   useEffect(() => {
@@ -544,15 +686,16 @@ export default function ChalkboardTutorBoard({
     if (!ctx) return;
 
     const draw = async () => {
-      await ensureFontsReady();
+      await ensureFontsReadyOnce();
 
-      let rightImg: HTMLImageElement | null = null;
+      // imagen cache
+      let img: HTMLImageElement | null = null;
       if (boardImageB64) {
         if (imgCacheRef.current.b64 !== boardImageB64) {
           imgCacheRef.current.b64 = boardImageB64;
           imgCacheRef.current.img = await loadB64Image(boardImageB64);
         }
-        rightImg = imgCacheRef.current.img;
+        img = imgCacheRef.current.img;
       } else {
         imgCacheRef.current.b64 = null;
         imgCacheRef.current.img = null;
@@ -572,13 +715,12 @@ export default function ChalkboardTutorBoard({
       ctx.setTransform(dpr * sx, 0, 0, dpr * sy, 0, 0);
       ctx.clearRect(0, 0, width, height);
 
-      // ✅ CLIP: evita pintar sobre marco madera
+      // clip (evita pintar en marco madera)
       const INSET_X = 58;
       const INSET_Y = 44;
       const CLIP_W = width - INSET_X * 2;
       const CLIP_H = height - INSET_Y * 2;
 
-      const MAX_X = INSET_X + CLIP_W - 10; // para fitText
       ctx.save();
       ctx.beginPath();
       ctx.rect(INSET_X, INSET_Y, CLIP_W, CLIP_H);
@@ -586,18 +728,18 @@ export default function ChalkboardTutorBoard({
 
       const baseSeed = hashStr(value || "board");
 
-      // ✅ Imagen debajo
-      if (rightImg && boardImagePlacement) {
+      // 0) imagen debajo
+      if (img && boardImagePlacement) {
         const { x, y, w, h } = boardImagePlacement;
         ctx.save();
         ctx.globalAlpha = 0.98;
-        ctx.shadowColor = "rgba(255,255,255,0.18)";
-        ctx.shadowBlur = 0.9;
-        ctx.drawImage(rightImg, x, y, w, h);
+        ctx.shadowColor = "rgba(255,255,255,0.16)";
+        ctx.shadowBlur = 0.8;
+        ctx.drawImage(img, x, y, w, h);
         ctx.restore();
       }
 
-      // ✅ PASADA 1: formas primero
+      // 1) formas primero, texto después
       const textCmds: Extract<DrawCmd, { kind: "text" }>[] = [];
 
       for (const cmd of parsed.cmds) {
@@ -662,7 +804,6 @@ export default function ChalkboardTutorBoard({
           drawWobblyLine(ctx, x2, y2, x3, y3, cmd.color, cmd.lw, rng);
           drawWobblyLine(ctx, x3, y3, x, y, cmd.color, cmd.lw, rng);
 
-          // ángulo recto
           drawWobblyLine(ctx, x + 16, y, x + 16, y + 16, cmd.color, Math.max(2, cmd.lw - 1), rng);
           drawWobblyLine(ctx, x + 16, y + 16, x, y + 16, cmd.color, Math.max(2, cmd.lw - 1), rng);
 
@@ -671,43 +812,35 @@ export default function ChalkboardTutorBoard({
         }
       }
 
-      // ✅ PASADA 2: textos de comandos arriba SIEMPRE
+      // textos encima
       for (const cmd of textCmds) {
         const seed = hashStr(JSON.stringify(cmd) + String(baseSeed));
         const rng = mulberry32(seed);
-        drawTextLine(ctx, [{ text: cmd.text, color: cmd.color }], cmd.x, cmd.y, cmd.size, rng, MAX_X);
+        drawTextLine(ctx, [{ text: cmd.text, color: cmd.color }], cmd.x, cmd.y, cmd.size, rng);
       }
 
-      // ✅ PASADA 3: (solo si strictCommands=false)
-      if (!strictCommands) {
-        let x = 80;
-        let y = 70;
+      // líneas “normales” (si viniera texto sin comandos)
+      let x = 80;
+      let y = 70;
 
-        const titleSize = 64;
-        const textSize = 40;
-        const lineGap = 10;
+      const titleSize = 64;
+      const textSize = 40;
+      const lineGap = 10;
 
-        parsed.lines.forEach((line, i) => {
-          const isTitle = i === 0;
-          const size = isTitle ? titleSize : textSize;
-          const segs = parseColorTags(line);
-
-          const rng = mulberry32(hashStr("line:" + i + ":" + line + ":" + baseSeed));
-          drawTextLine(ctx, segs, x, y, size, rng, MAX_X);
-
-          y += size + lineGap;
-        });
-      }
-
-      // debug puntito
-      const debugRng = mulberry32(hashStr("debug:" + baseSeed));
-      drawTextLine(ctx, [{ text: "·", color: COLOR_MAP.yellow }], 960, 560, 26, debugRng, MAX_X);
+      parsed.lines.forEach((line, i) => {
+        const isTitle = i === 0;
+        const size = isTitle ? titleSize : textSize;
+        const segs = parseColorTags(line);
+        const rng = mulberry32(hashStr("line:" + i + ":" + line + ":" + baseSeed));
+        drawTextLine(ctx, segs, x, y, size, rng);
+        y += size + lineGap;
+      });
 
       ctx.restore();
     };
 
     draw();
-  }, [parsed, width, height, box.w, box.h, value, boardImageB64, boardImagePlacement, strictCommands]);
+  }, [parsed, width, height, box.w, box.h, value, boardImageB64, boardImagePlacement]);
 
   return (
     <div className={className ?? ""}>
