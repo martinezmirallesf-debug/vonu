@@ -4,7 +4,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Architects_Daughter } from "next/font/google";
 
 import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
@@ -2958,7 +2957,7 @@ export default function Page() {
       {/* MAIN */}
       <div className="flex-1 flex flex-col min-h-0">
         {uiError && (
-          <div className="mx-auto max-w-3xl px-6 mt-3 pt-4">
+          <div className="mx-auto max-w-6xl px-2 md:px-6" style={{ paddingTop: 78, paddingBottom: chatBottomPad }}>
             <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">Ha fallado la llamada a la IA. (Error: {uiError})</div>
           </div>
         )}
@@ -3009,9 +3008,11 @@ export default function Page() {
 
                     return (
                       <div key={m.id} className="w-full">
-                        <div className="rounded-[28px] border border-zinc-200 shadow-[0_18px_60px_rgba(0,0,0,0.10)] overflow-hidden">
-                          <ChalkboardTutorBoard value={boardValue} boardImageB64={m.boardImageB64 ?? null} boardImagePlacement={m.boardImagePlacement ?? null} />
-                        </div>
+                        <div className="rounded-[28px] border border-zinc-200 shadow-[0_18px_60px_rgba(0,0,0,0.10)] overflow-hidden w-full">
+  <div className="w-full" style={{ height: "min(72vh, 680px)" }}>
+    <ChalkboardTutorBoard className="h-full" value={boardValue} boardImageB64={m.boardImageB64 ?? null} boardImagePlacement={m.boardImagePlacement ?? null} />
+  </div>
+</div>
 
                         {/* Indicador tutor (solo si aún no hay contenido) */}
                         {isStreaming && !hasAny ? (
