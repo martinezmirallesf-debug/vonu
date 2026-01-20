@@ -2983,6 +2983,11 @@ export default function Page() {
                 <div className="space-y-4">
                   {messages.map((m) => {
                     const isUser = m.role === "user";
+                    
+// ✅ NO pintar el mensaje inicial (saludo) como pizarra en modo tutor
+if (!isUser && m.id === "init" && !m.pizarra) {
+  return null;
+}
 
                     // 1) Mensajes del usuario: los dejamos como "chips" simples (no burbuja)
                     if (isUser) {
@@ -3008,10 +3013,11 @@ export default function Page() {
 
                     return (
                       <div key={m.id} className="w-full">
-                        <div className="rounded-[28px] border border-zinc-200 shadow-[0_18px_60px_rgba(0,0,0,0.10)] overflow-hidden w-full">
-  <div className="w-full" style={{ height: "min(72vh, 680px)" }}>
-    <ChalkboardTutorBoard className="h-full" value={boardValue} boardImageB64={m.boardImageB64 ?? null} boardImagePlacement={m.boardImagePlacement ?? null} />
-  </div>
+                        <div
+  className="rounded-[28px] border border-zinc-200 shadow-[0_18px_60px_rgba(0,0,0,0.10)] overflow-hidden"
+  style={{ height: "clamp(420px, 70vh, 780px)" }}
+>
+  <ChalkboardTutorBoard value={boardValue} boardImageB64={m.boardImageB64 ?? null} boardImagePlacement={m.boardImagePlacement ?? null} />
 </div>
 
                         {/* Indicador tutor (solo si aún no hay contenido) */}
