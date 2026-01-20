@@ -292,6 +292,82 @@ type AutoBoard = {
   note?: string;
 };
 
+// ================== MINI-LENGUAJE PARSER ==================
+type ChalkBlock =
+  | { type: "title"; text: string }
+  | { type: "quote"; text: string }
+  | { type: "bullet"; text: string }
+  | { type: "formula"; text: string }
+  | { type: "work"; lines: string[] }
+  | { type: "result"; text: string }
+  | { type: "img"; key: string }
+  | { type: "text"; text: string };
+
+function parseChalkScript(raw: string): ChalkBlock[] {
+  const s = (raw || "").trim();
+  const lines = s.split("\n").map((l) => l.trim()).filter(Boolean);
+  const blocks: ChalkBlock[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    if (line.startsWith("#")) {
+      blocks.push({ type: "title", text: line.replace(/^#+\s*/, "").trim() });
+      i++;
+      continue;
+    }
+
+    if (line.startsWith(">")) {
+      blocks.push({ type: "quote", text: line.replace(/^>\s*/, "").trim() });
+      i++;
+      continue;
+    }
+
+    if (line.startsWith("-")) {
+      blocks.push({ type: "bullet", text: line.replace(/^-+\s*/, "").trim() });
+      i++;
+      continue;
+    }
+
+    if (/^\[FORMULA\]/i.test(line)) {
+      blocks.push({ type: "formula", text: line.replace(/^\[FORMULA\]\s*/i, "").trim() });
+      i++;
+      continue;
+    }
+
+    if (/^\[RESULT\]/i.test(line)) {
+      blocks.push({ type: "result", text: line.replace(/^\[RESULT\]\s*/i, "").trim() });
+      i++;
+      continue;
+    }
+
+    if (/^\[IMG\]/i.test(line)) {
+      blocks.push({ type: "img", key: line.replace(/^\[IMG\]\s*/i, "").trim() || "diagram" });
+      i++;
+      continue;
+    }
+
+    if (/^\[WORK\]/i.test(line)) {
+      i++;
+      const work: string[] = [];
+      while (i < lines.length && !/^\[\/WORK\]/i.test(lines[i])) {
+        work.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length && /^\[\/WORK\]/i.test(lines[i])) i++;
+      blocks.push({ type: "work", lines: work.slice(0, 24) });
+      continue;
+    }
+
+    // texto normal
+    blocks.push({ type: "text", text: line });
+    i++;
+  }
+
+  return blocks;
+}
+
 function tryParseAutoBoard(value: string): AutoBoard | null {
   const t = (value || "").trim();
   if (!t.startsWith("{") || !t.endsWith("}")) return null;
