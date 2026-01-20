@@ -3013,12 +3013,15 @@ if (!isUser && m.id === "init" && !m.pizarra) {
 
                     return (
                       <div key={m.id} className="w-full">
-                        <div
-  className="rounded-[28px] border border-zinc-200 shadow-[0_18px_60px_rgba(0,0,0,0.10)] overflow-hidden"
-  style={{ height: "clamp(420px, 70vh, 780px)" }}
->
-  <ChalkboardTutorBoard value={boardValue} boardImageB64={m.boardImageB64 ?? null} boardImagePlacement={m.boardImagePlacement ?? null} />
+                        <div className="w-full h-[72vh] md:h-[78vh]">
+  <ChalkboardTutorBoard
+    className="w-full h-full"
+    value={boardValue}
+    boardImageB64={m.boardImageB64 ?? null}
+    boardImagePlacement={m.boardImagePlacement ?? null}
+  />
 </div>
+
 
                         {/* Indicador tutor (solo si aún no hay contenido) */}
                         {isStreaming && !hasAny ? (
