@@ -675,18 +675,25 @@ export default function ChalkboardTutorBoard({
 
   // ✅ CLAVE: el wrapper YA NO depende de la altura del <img>.
   // Ahora el <img> está ABSOLUTO y “cover”, y el tamaño lo decide el contenedor padre.
-  return (
+    return (
     <div className={className ?? ""}>
       <div
-  ref={wrapRef}
-  className="relative w-full h-full min-h-[520px] overflow-hidden rounded-[26px] border border-zinc-200 shadow-[0_18px_60px_rgba(0,0,0,0.10)]"
-  style={{ backgroundColor: "#0b0f0d" }}
->
-        <img
-          src={backgroundSrc}
-          alt="Pizarra"
-          className="absolute inset-0 w-full h-full object-fill select-none pointer-events-none"
-          draggable={false}
+        ref={wrapRef}
+        className="relative w-full overflow-hidden rounded-[28px] border border-zinc-200 shadow-[0_18px_60px_rgba(0,0,0,0.10)]"
+        style={{
+          backgroundColor: "#070a08",
+          aspectRatio: "9 / 16",
+          minHeight: 520,
+        }}
+      >
+        {/* Fondo “tablet” moderno (sin imagen) */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(1200px 900px at 50% 30%, rgba(255,255,255,0.06), rgba(0,0,0,0) 60%), linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0))",
+          }}
         />
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
       </div>
