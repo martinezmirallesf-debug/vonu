@@ -494,7 +494,89 @@ export default function ChalkboardTutorBoard({
           drawList(right, rightX, listY, rightTextMax, COLOR_MAP.green, rightBottom);
           ctx.restore();
 
+          // ================== MINI-LENGUAJE PARSER ==================
+type ChalkBlock =
+  | { type: "title"; text: string }
+  | { type: "quote"; text: string }
+  | { type: "bullet"; text: string }
+  | { type: "formula"; text: string }
+  | { type: "work"; lines: string[] }
+  | { type: "result"; text: string }
+  | { type: "img"; key: string }
+  | { type: "text"; text: string };
+
+function parseChalkScript(raw: string): ChalkBlock[] {
+  const s = (raw || "").trim();
+  const lines = s.split("\n").map((l) => l.trim()).filter(Boolean);
+  const blocks: ChalkBlock[] = [];
+  let i = 0;
+
+  const pushText = (t: string) => {
+    const tt = (t || "").trim();
+    if (tt) blocks.push({ type: "text", text: tt });
+  };
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    if (line.startsWith("#")) {
+      blocks.push({ type: "title", text: line.replace(/^#+\s*/, "").trim() });
+      i++;
+      continue;
+    }
+
+    if (line.startsWith(">")) {
+      blocks.push({ type: "quote", text: line.replace(/^>\s*/, "").trim() });
+      i++;
+      continue;
+    }
+
+    if (line.startsWith("-")) {
+      blocks.push({ type: "bullet", text: line.replace(/^-+\s*/, "").trim() });
+      i++;
+      continue;
+    }
+
+    if (line.startsWith("[FORMULA]")) {
+      blocks.push({ type: "formula", text: line.replace(/^\[FORMULA\]\s*/i, "").trim() });
+      i++;
+      continue;
+    }
+
+    if (line.startsWith("[RESULT]")) {
+      blocks.push({ type: "result", text: line.replace(/^\[RESULT\]\s*/i, "").trim() });
+      i++;
+      continue;
+    }
+
+    if (line.startsWith("[IMG]")) {
+      blocks.push({ type: "img", key: line.replace(/^\[IMG\]\s*/i, "").trim() || "diagram" });
+      i++;
+      continue;
+    }
+
+    if (line.startsWith("[WORK]")) {
+      i++;
+      const work: string[] = [];
+      while (i < lines.length && !lines[i].startsWith("[/WORK]")) {
+        work.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length && lines[i].startsWith("[/WORK]")) i++;
+      blocks.push({ type: "work", lines: work.slice(0, 24) });
+      continue;
+    }
+
+    // texto normal
+    pushText(line);
+    i++;
+  }
+
+  return blocks;
+}
+
           // arrows between paired rows
+          if (diagram === "pipeline") {
           const rows = Math.min(left.length, right.length, 6);
           if (rows > 0) {
             const rowY0 = listY + 10;
@@ -506,7 +588,7 @@ export default function ChalkboardTutorBoard({
               drawArrow(ctx, ax1, ay, ax2, ay, COLOR_MAP.white, 4.6, rng);
             }
           }
-
+          }
           // diagrams
           if (diagBox) {
             const { x, y: dy, w: dw, h: dh } = diagBox;
@@ -632,6 +714,141 @@ export default function ChalkboardTutorBoard({
         if (note) {
           const ny = y + rows * rowH + 10;
           drawText(ctx, note, leftX, ny, 26, COLOR_MAP.white, rng);
+        }
+
+        ctx.restore();
+        return;
+      }
+
+            // =========================
+      // MINI-LENGUAJE (cuando NO es JSON)
+      // =========================
+      if (!specV1 && !auto) {
+        const blocks = parseChalkScript(safeValue);
+        const seed = hashStr(JSON.stringify(blocks));
+        const rng = mulberry32(seed);
+
+        // medidas base (vertical)
+        const INSET_X = 56;
+        const INSET_Y = 44;
+        const CLIP_W = width - INSET_X * 2;
+        const CLIP_H = height - INSET_Y * 2;
+
+        let x = INSET_X + 14;
+        let y = INSET_Y + 14;
+
+        const maxW = CLIP_W - 28;
+        const bottom = INSET_Y + CLIP_H - 18;
+
+        const drawBox = (x0: number, y0: number, w: number, h: number) => {
+          drawWobblyLine(ctx, x0, y0, x0 + w, y0, COLOR_MAP.white, 3.6, rng);
+          drawWobblyLine(ctx, x0 + w, y0, x0 + w, y0 + h, COLOR_MAP.white, 3.6, rng);
+          drawWobblyLine(ctx, x0 + w, y0 + h, x0, y0 + h, COLOR_MAP.white, 3.6, rng);
+          drawWobblyLine(ctx, x0, y0 + h, x0, y0, COLOR_MAP.white, 3.6, rng);
+        };
+
+        for (const b of blocks) {
+          if (y > bottom) break;
+
+          if (b.type === "title") {
+            const t = fixSuperscripts(b.text).toUpperCase();
+            const T = clamp(44 - Math.max(0, t.length - 18) * 0.5, 30, 44);
+            drawText(ctx, t, x, y, T, COLOR_MAP.chalk, rng);
+            const ulY = y + T + 6;
+            drawWobblyLine(ctx, x, ulY, x + Math.min(520, maxW - 20), ulY, COLOR_MAP.yellow, 5, rng);
+            y += T + 18;
+            continue;
+          }
+
+          if (b.type === "quote") {
+            const lines = wrapText(ctx, fixSuperscripts(b.text), maxW);
+            for (const ln of lines.slice(0, 3)) {
+              drawText(ctx, "→ " + ln, x, y,  28, COLOR_MAP.yellow, rng);
+              y += 36;
+              if (y > bottom) break;
+            }
+            y += 8;
+            continue;
+          }
+
+          if (b.type === "bullet") {
+            const lines = wrapText(ctx, fixSuperscripts(b.text), maxW - 24);
+            for (const ln of lines.slice(0, 2)) {
+              drawText(ctx, "• " + ln, x, y, 28, COLOR_MAP.cyan, rng);
+              y += 34;
+              if (y > bottom) break;
+            }
+            y += 4;
+            continue;
+          }
+
+          if (b.type === "formula") {
+            const f = fixSuperscripts(b.text);
+            const size = 34;
+            ctx.save();
+            setChalkFont(ctx, size);
+            const w = ctx.measureText(f).width;
+            ctx.restore();
+            const fx = x + Math.max(0, (maxW - w) / 2);
+            drawText(ctx, f, fx, y, size, COLOR_MAP.green, rng);
+            y += 46;
+            continue;
+          }
+
+          if (b.type === "work") {
+            const boxY = y;
+            const pad = 14;
+            const lines = b.lines.map(fixSuperscripts).slice(0, 18);
+            const lineH = 30;
+            const h = pad * 2 + lines.length * lineH;
+
+            drawBox(x, boxY, maxW, Math.min(h, bottom - boxY));
+            y += pad;
+
+            for (const ln of lines) {
+              if (y > bottom) break;
+              drawText(ctx, ln, x + pad, y, 26, COLOR_MAP.white, rng);
+              y += lineH;
+            }
+            y += pad + 10;
+            continue;
+          }
+
+          if (b.type === "result") {
+            const text = fixSuperscripts(b.text);
+            const lines = wrapText(ctx, text, maxW - 28).slice(0, 3);
+            const boxY = y;
+            const pad = 14;
+            const h = pad * 2 + lines.length * 34;
+
+            drawBox(x, boxY, maxW, Math.min(h, bottom - boxY));
+            y += pad;
+
+            for (const ln of lines) {
+              drawText(ctx, ln, x + pad, y, 28, COLOR_MAP.yellow, rng);
+              y += 34;
+            }
+            y += pad + 10;
+            continue;
+          }
+
+          if (b.type === "text") {
+            const lines = wrapText(ctx, fixSuperscripts(b.text), maxW).slice(0, 3);
+            for (const ln of lines) {
+              drawText(ctx, ln, x, y, 28, COLOR_MAP.white, rng);
+              y += 34;
+              if (y > bottom) break;
+            }
+            y += 6;
+            continue;
+          }
+
+          // b.type === "img" -> el render de imagen ya te llega por boardImageB64
+        }
+
+        // si se corta por altura, aviso amable
+        if (blocks.length > 0 && y > bottom - 30) {
+          drawText(ctx, "↓ Sigue abajo…", x, bottom - 26, 24, COLOR_MAP.white, rng);
         }
 
         ctx.restore();
