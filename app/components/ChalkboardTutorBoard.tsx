@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-console.log("✅ ChalkboardTutorBoard ACTIVO (layout 50/50 + sanitize + clip + image)");
 
 // ================== TYPES ==================
 type Props = {
-  value: string;
+  value: string; // aquí llega el JSON como string
   className?: string;
   backgroundSrc?: string;
   width?: number; // logical 1000
@@ -14,16 +13,7 @@ type Props = {
   boardImagePlacement?: { x: number; y: number; w: number; h: number } | null;
 };
 
-type ColorName =
-  | "white"
-  | "yellow"
-  | "cyan"
-  | "pink"
-  | "green"
-  | "orange"
-  | "red"
-  | "blue"
-  | "lightgreen";
+type ColorName = "white" | "yellow" | "cyan" | "pink" | "green" | "orange" | "red" | "blue" | "lightgreen";
 
 const COLOR_MAP: Record<ColorName, string> = {
   white: "#e9efe9",
@@ -40,82 +30,78 @@ const COLOR_MAP: Record<ColorName, string> = {
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
-function parseNumber(s: string, fallback = 0) {
-  const n = Number(s);
-  return Number.isFinite(n) ? n : fallback;
+
+function hashStr(s: string) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
 }
-function parseColorToken(v: string | undefined): string {
-  if (!v) return COLOR_MAP.white;
-  const key = v.toLowerCase() as ColorName;
-  return COLOR_MAP[key] ?? v;
+
+function mulberry32(seed: number) {
+  return function () {
+    let t = (seed += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
 // ================== SANITIZE ==================
 /**
- * Esto elimina “restos” típicos que a veces se cuelan:
- *  - {{IM ...}}, [[IM...]], placement, b64, "elements", etc.
- *  - bloques tool/json incrustados
+ * Quita “basura” típica que se cuela en fences:
+ * - restos IM/placement/b64
+ * - excalidraw
+ * - JSON enorme colado
  */
 function sanitizeBoardValue(raw: string) {
   const s = (raw || "").replace(/\r\n/g, "\n");
-
-  // Si viene un JSON gigantesco “colado”, lo tiramos.
   const tooJsony = s.includes('"elements"') || s.includes('"files"') || s.includes('"appState"');
-  if (tooJsony && !s.trim().startsWith("{")) {
-    // mejor mostrar nada que basura
-    return "";
-  }
+  if (tooJsony && !s.trim().startsWith("{")) return "";
 
   const lines = s.split("\n");
   const cleaned: string[] = [];
 
   for (const line of lines) {
     const t = line.trim();
-
-    // basura típica
     if (!t) continue;
     if (t.includes("{{IM") || t.includes("[[IM") || t.includes("placement") || t.includes("boardImage") || t.includes("b64")) continue;
     if (t.startsWith("```") && t.toLowerCase().includes("excalidraw")) continue;
-
     cleaned.push(line);
   }
 
-  return cleaned.join("\n");
+  return cleaned.join("\n").trim();
 }
 
-// ================== AUTO LAYOUT (50/50) ==================
-/**
- * Este modo es CLAVE:
- * La IA ya NO tiene que dibujar flechas ni colocar nada.
- * Solo devuelve un JSON muy simple dentro del ```pizarra
- *
- * {
- *   "layout":"twoCol",
- *   "title":"FOTOSÍNTESIS",
- *   "leftTitle":"ENTRA",
- *   "left":["CO2 (aire)","H2O (raíz)","LUZ (sol)"],
- *   "rightTitle":"SALE",
- *   "right":["GLUCOSA","O2"],
- *   "note":"(en cloroplastos)"
- * }
- */
-type AutoBoard = {
-  layout: "twoCol";
-  title?: string;
-  leftTitle?: string;
-  rightTitle?: string;
+// ================== SPEC (Edge Function) ==================
+type DiagramType = "pipeline" | "right_triangle" | "axes" | "none";
+
+type BoardSpecV1 = {
+  v: 1;
+  layout: "split" | "full";
+  title: string;
   left?: string[];
   right?: string[];
-  note?: string;
+  diagram?: DiagramType;
+  centerLabel?: string;
+  triangle?: { a?: string; b?: string; c?: string; formula?: string };
+  axes?: { xLabel?: string; yLabel?: string; curveLabel?: string };
+  image?: { enabled: boolean };
 };
 
-function tryParseAutoBoard(value: string): AutoBoard | null {
+function tryParseSpec(value: string): BoardSpecV1 | null {
   const t = (value || "").trim();
   if (!t.startsWith("{") || !t.endsWith("}")) return null;
+
   try {
     const obj = JSON.parse(t);
-    if (obj?.layout !== "twoCol") return null;
-    return obj as AutoBoard;
+    if (!obj || typeof obj !== "object") return null;
+    if (obj.v !== 1) return null;
+    if (obj.layout !== "split" && obj.layout !== "full") return null;
+    if (typeof obj.title !== "string") return null;
+    return obj as BoardSpecV1;
   } catch {
     return null;
   }
@@ -131,23 +117,6 @@ function drawChalkStroke(ctx: CanvasRenderingContext2D, fn: () => void) {
   ctx.lineJoin = "round";
   fn();
   ctx.restore();
-}
-
-function hashStr(s: string) {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-function mulberry32(seed: number) {
-  return function () {
-    let t = (seed += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
 }
 
 function drawWobblyLine(
@@ -266,7 +235,7 @@ export default function ChalkboardTutorBoard({
   const imgCacheRef = useRef<{ b64: string | null; img: HTMLImageElement | null }>({ b64: null, img: null });
 
   const safeValue = useMemo(() => sanitizeBoardValue(value), [value]);
-  const auto = useMemo(() => tryParseAutoBoard(safeValue), [safeValue]);
+  const spec = useMemo(() => tryParseSpec(safeValue), [safeValue]);
 
   useEffect(() => {
     if (!wrapRef.current) return;
@@ -318,7 +287,7 @@ export default function ChalkboardTutorBoard({
       ctx.setTransform(dpr * sx, 0, 0, dpr * sy, 0, 0);
       ctx.clearRect(0, 0, width, height);
 
-      // safe inset (para que nada pinte fuera)
+      // safe inset
       const INSET_X = 58;
       const INSET_Y = 44;
       const CLIP_W = width - INSET_X * 2;
@@ -329,7 +298,7 @@ export default function ChalkboardTutorBoard({
       ctx.rect(INSET_X, INSET_Y, CLIP_W, CLIP_H);
       ctx.clip();
 
-      // 0) image below everything
+      // image below everything
       if (rightImg && boardImagePlacement) {
         const { x, y, w, h } = boardImagePlacement;
         const xx = clamp(x, INSET_X, INSET_X + CLIP_W - 1);
@@ -345,58 +314,151 @@ export default function ChalkboardTutorBoard({
         ctx.restore();
       }
 
-      // ===== AUTO LAYOUT 50/50 =====
-      if (auto?.layout === "twoCol") {
-        const seed = hashStr(JSON.stringify(auto));
-        const rng = mulberry32(seed);
+      // If no spec, fallback simple
+      const effective: BoardSpecV1 = spec ?? {
+        v: 1,
+        layout: "full",
+        title: (safeValue || "Pizarra").split("\n")[0] || "Pizarra",
+        left: (safeValue || "").split("\n").slice(1, 12).filter(Boolean),
+        diagram: "none",
+        image: { enabled: false },
+      };
 
-        const title = (auto.title || "").trim();
-        const leftTitle = (auto.leftTitle || "ENTRA").trim();
-        const rightTitle = (auto.rightTitle || "SALE").trim();
-        const left = Array.isArray(auto.left) ? auto.left.filter(Boolean).slice(0, 8) : [];
-        const right = Array.isArray(auto.right) ? auto.right.filter(Boolean).slice(0, 8) : [];
-        const note = (auto.note || "").trim();
+      const seed = hashStr(JSON.stringify(effective));
+      const rng = mulberry32(seed);
 
-        const TITLE_SIZE = 66;
-        const H_SIZE = 36;
-        const ITEM_SIZE = 34;
+      // layout coords
+      const title = (effective.title || "").trim();
+      const left = Array.isArray(effective.left) ? effective.left.filter(Boolean).slice(0, 10) : [];
+      const right = Array.isArray(effective.right) ? effective.right.filter(Boolean).slice(0, 10) : [];
+      const diagram: DiagramType = (effective.diagram || "none") as DiagramType;
 
-        // columnas
-        const colGap = 60;
-        const colW = (CLIP_W - colGap) / 2;
-        const leftX = INSET_X + 18;
-        const rightX = INSET_X + colW + colGap + 18;
+      const TITLE_SIZE = 66;
+      const H_SIZE = 30;
+      const ITEM_SIZE = 34;
 
-        // title
-        let y = INSET_Y + 18;
-        if (title) {
-          drawText(ctx, title.toUpperCase(), leftX, y, TITLE_SIZE, COLOR_MAP.white, rng);
-          // underline
-          const ulY = y + TITLE_SIZE + 6;
-          drawWobblyLine(ctx, leftX, ulY, leftX + Math.min(420, colW - 40), ulY, COLOR_MAP.yellow, 6, rng);
-          y += TITLE_SIZE + 26;
-        } else {
-          y += 20;
-        }
+      // columns
+      const colGap = 60;
+      const colW = (CLIP_W - colGap) / 2;
+      const leftX = INSET_X + 18;
+      const rightX = INSET_X + colW + colGap + 18;
 
-        // headers
-        drawText(ctx, leftTitle.toUpperCase() + ":", leftX, y, H_SIZE, COLOR_MAP.white, rng);
-        drawText(ctx, rightTitle.toUpperCase() + ":", rightX, y, H_SIZE, COLOR_MAP.white, rng);
-        y += H_SIZE + 14;
+      let y = INSET_Y + 18;
 
-        // filas alineadas (flechas centradas entre columnas)
+      // title + underline
+      if (title) {
+        drawText(ctx, title.toUpperCase(), leftX, y, TITLE_SIZE, COLOR_MAP.white, rng);
+        const ulY = y + TITLE_SIZE + 6;
+        drawWobblyLine(ctx, leftX, ulY, leftX + Math.min(520, CLIP_W - 40), ulY, COLOR_MAP.yellow, 6, rng);
+        y += TITLE_SIZE + 24;
+      } else {
+        y += 18;
+      }
+
+      // diagram area (simple + non-invasive)
+      const diagramTop = y;
+      const diagramH = diagram !== "none" ? 160 : 0;
+
+      if (diagram === "pipeline") {
+        const cx = INSET_X + CLIP_W / 2;
+        const cy = diagramTop + 18;
+
+        // left -> center -> right (soft)
+        drawWobblyLine(ctx, cx - 220, cy + 70, cx - 40, cy + 70, COLOR_MAP.white, 5, rng);
+        drawArrow(ctx, cx - 40, cy + 70, cx + 40, cy + 70, COLOR_MAP.white, 5, rng);
+        drawWobblyLine(ctx, cx + 40, cy + 70, cx + 220, cy + 70, COLOR_MAP.white, 5, rng);
+
+        const label = (effective.centerLabel || "").trim();
+        if (label) drawText(ctx, label.toUpperCase(), cx - 80, cy + 12, 30, COLOR_MAP.white, rng);
+
+        y += diagramH;
+      }
+
+      if (diagram === "right_triangle") {
+        const bx = INSET_X + CLIP_W / 2 - 120;
+        const by = diagramTop + 22;
+
+        // triangle points
+        const x1 = bx;
+        const y1 = by + 120;
+        const x2 = bx + 220;
+        const y2 = by + 120;
+        const x3 = bx + 220;
+        const y3 = by + 20;
+
+        drawWobblyLine(ctx, x1, y1, x2, y2, COLOR_MAP.white, 5, rng);
+        drawWobblyLine(ctx, x2, y2, x3, y3, COLOR_MAP.white, 5, rng);
+        drawWobblyLine(ctx, x3, y3, x1, y1, COLOR_MAP.white, 5, rng);
+
+        // right angle mark
+        drawWobblyLine(ctx, x2 - 26, y2, x2 - 26, y2 - 26, COLOR_MAP.white, 4, rng);
+        drawWobblyLine(ctx, x2 - 26, y2 - 26, x2, y2 - 26, COLOR_MAP.white, 4, rng);
+
+        const a = effective.triangle?.a || "a";
+        const b = effective.triangle?.b || "b";
+        const c2 = effective.triangle?.c || "c";
+        const f = effective.triangle?.formula || "c² = a² + b²";
+
+        drawText(ctx, b, x1 + 88, y1 + 10, 28, COLOR_MAP.cyan, rng);
+        drawText(ctx, a, x2 + 10, y3 + 42, 28, COLOR_MAP.cyan, rng);
+        drawText(ctx, c2, x1 + 120, y3 + 32, 28, COLOR_MAP.green, rng);
+        drawText(ctx, f, x1 - 10, y1 + 28, 28, COLOR_MAP.yellow, rng);
+
+        y += diagramH;
+      }
+
+      if (diagram === "axes") {
+        const ox = INSET_X + CLIP_W / 2 - 160;
+        const oy = diagramTop + 140;
+
+        // axes
+        drawArrow(ctx, ox, oy, ox + 320, oy, COLOR_MAP.white, 5, rng);
+        drawArrow(ctx, ox, oy, ox, oy - 120, COLOR_MAP.white, 5, rng);
+
+        const xl = effective.axes?.xLabel || "x";
+        const yl = effective.axes?.yLabel || "y";
+        const cl = effective.axes?.curveLabel || "y = ...";
+
+        drawText(ctx, xl, ox + 300, oy + 6, 24, COLOR_MAP.cyan, rng);
+        drawText(ctx, yl, ox - 18, oy - 118, 24, COLOR_MAP.cyan, rng);
+
+        // simple curve
+        ctx.save();
+        ctx.strokeStyle = COLOR_MAP.green;
+        ctx.lineWidth = 5;
+        drawChalkStroke(ctx, () => {
+          ctx.beginPath();
+          ctx.moveTo(ox + 40, oy - 10);
+          ctx.bezierCurveTo(ox + 120, oy - 90, ox + 220, oy - 20, ox + 300, oy - 100);
+          ctx.stroke();
+        });
+        ctx.restore();
+
+        drawText(ctx, cl, ox + 86, oy - 118, 24, COLOR_MAP.yellow, rng);
+
+        y += diagramH;
+      }
+
+      // text blocks
+      const textY = y + 4;
+
+      if (effective.layout === "split") {
+        // left/right lists with optional arrows
         const rows = Math.max(left.length, right.length, 1);
-        const rowH = 46;
+        const rowH = 44;
+
+        // headers (mini)
+        if (left.length) drawText(ctx, "IZQ:", leftX, textY - 34, H_SIZE, COLOR_MAP.white, rng);
+        if (right.length) drawText(ctx, "DER:", rightX, textY - 34, H_SIZE, COLOR_MAP.white, rng);
 
         for (let i = 0; i < rows; i++) {
-          const ly = y + i * rowH;
+          const ly = textY + i * rowH;
           const ltxt = left[i] || "";
           const rtxt = right[i] || "";
 
           if (ltxt) drawText(ctx, ltxt, leftX, ly, ITEM_SIZE, COLOR_MAP.cyan, rng);
           if (rtxt) drawText(ctx, rtxt, rightX, ly, ITEM_SIZE, COLOR_MAP.green, rng);
 
-          // flecha SOLO si hay izquierda y derecha
           if (ltxt && rtxt) {
             const ax1 = leftX + colW - 40;
             const ax2 = rightX - 18;
@@ -404,49 +466,20 @@ export default function ChalkboardTutorBoard({
             drawArrow(ctx, ax1, ay, ax2, ay, COLOR_MAP.white, 5, rng);
           }
         }
-
-        // note
-        if (note) {
-          const ny = y + rows * rowH + 10;
-          drawText(ctx, note, leftX, ny, 30, COLOR_MAP.white, rng);
+      } else {
+        // full: render left as single column
+        let yy = textY;
+        for (let i = 0; i < left.length; i++) {
+          drawText(ctx, left[i], leftX, yy, ITEM_SIZE, COLOR_MAP.white, rng);
+          yy += 44;
         }
-
-        ctx.restore();
-        return;
-      }
-
-      // ===== FALLBACK (si NO viene JSON) =====
-      // Si llega “texto suelto”, lo pintamos simple en una columna limpia.
-      const baseSeed = hashStr(safeValue || "board");
-      const r = mulberry32(baseSeed);
-
-      let x = INSET_X + 18;
-      let y = INSET_Y + 18;
-
-      const lines = (safeValue || "")
-        .split("\n")
-        .map((l) => l.trimEnd())
-        .filter(Boolean)
-        .slice(0, 14);
-
-      const title = lines[0] || "";
-      if (title) {
-        drawText(ctx, title.toUpperCase(), x, y, 62, COLOR_MAP.white, r);
-        const ulY = y + 62 + 6;
-        drawWobblyLine(ctx, x, ulY, x + 420, ulY, COLOR_MAP.yellow, 6, r);
-        y += 92;
-      }
-
-      for (let i = 1; i < lines.length; i++) {
-        drawText(ctx, lines[i], x, y, 34, COLOR_MAP.white, r);
-        y += 44;
       }
 
       ctx.restore();
     };
 
     draw();
-  }, [safeValue, auto, width, height, box.w, box.h, boardImageB64, boardImagePlacement]);
+  }, [safeValue, spec, width, height, box.w, box.h, boardImageB64, boardImagePlacement]);
 
   return (
     <div className={className ?? ""}>
@@ -454,12 +487,7 @@ export default function ChalkboardTutorBoard({
         ref={wrapRef}
         className="relative w-full overflow-hidden rounded-[26px] border border-zinc-200 shadow-[0_18px_60px_rgba(0,0,0,0.10)]"
       >
-        <img
-          src={backgroundSrc}
-          alt="Pizarra"
-          className="block w-full h-auto select-none pointer-events-none"
-          draggable={false}
-        />
+        <img src={backgroundSrc} alt="Pizarra" className="block w-full h-auto select-none pointer-events-none" draggable={false} />
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
       </div>
     </div>
