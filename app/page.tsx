@@ -3095,7 +3095,7 @@ if (!isUser && m.id === "init" && !m.pizarra) {
     m.pizarra
   )}
 >
-  {m.text ?? ""}
+  {mdText}
 </ReactMarkdown>
 
 
