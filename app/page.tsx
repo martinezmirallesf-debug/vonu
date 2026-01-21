@@ -1799,33 +1799,39 @@ const boardValue =
 
     setUiError(null);
 
-    // ===== Tutor auto-activación (solo si está en chat y la intención es fuerte) =====
-    const threadModeNow: ThreadMode = activeThread.mode ?? "chat";
-    let nextMode: ThreadMode = threadModeNow;
+// ===== Tutor auto-activación (AUTO SI HAY INTENCIÓN) =====
+const threadModeNow: ThreadMode = activeThread.mode ?? "chat";
+let nextMode: ThreadMode = threadModeNow;
 
-    let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
+let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
 
-    if (threadModeNow === "chat" && looksLikeTutorIntent(userText)) {
-      nextMode = "tutor";
-      const inferred = inferTutorLevel(userText);
-      nextTutorLevel = inferred === "unknown" ? nextTutorLevel || "adult" : inferred;
+// ✅ Si hay intención de “explicar/estudiar”, forzamos tutor SIEMPRE
+const tutorIntent = looksLikeTutorIntent(userText);
 
-      setThreads((prev) =>
-        prev.map((t) =>
-          t.id === targetThreadId
-            ? {
-                ...t,
-                updatedAt: Date.now(),
-                mode: "tutor",
-                tutorProfile: { level: nextTutorLevel },
-              }
-            : t
-        )
-      );
+if (tutorIntent) {
+  nextMode = "tutor";
 
-      setToastMsg("✅ He activado Modo Tutor para esta conversación.");
-      setTimeout(() => setToastMsg(null), 2200);
-    }
+  const inferred = inferTutorLevel(userText);
+  nextTutorLevel = inferred === "unknown" ? (nextTutorLevel || "adult") : inferred;
+
+  setThreads((prev) =>
+    prev.map((t) =>
+      t.id === targetThreadId
+        ? {
+            ...t,
+            updatedAt: Date.now(),
+            mode: "tutor",
+            tutorProfile: { level: nextTutorLevel },
+          }
+        : t
+    )
+  );
+
+  // (opcional) toast más discreto o quítalo luego
+  setToastMsg("🎓 Modo Tutor activado automáticamente.");
+  setTimeout(() => setToastMsg(null), 1600);
+}
+
 
     const userMsg: Message = {
       id: crypto.randomUUID(),
@@ -2859,43 +2865,9 @@ const boardValue =
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 mb-3">
+            <div className="grid grid-cols-2 gap-2 mb-3">
               <button onClick={openRename} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer">
                 Renombrar
-              </button>
-
-              <button
-                onClick={() => {
-                  if (!activeThread) return;
-
-                  const current: ThreadMode = activeThread.mode ?? "chat";
-                  const next: ThreadMode = current === "tutor" ? "chat" : "tutor";
-
-                  setThreads((prev) =>
-                    prev.map((t) => {
-                      if (t.id !== activeThread.id) return t;
-
-                      const nextLevel: TutorLevel = t.tutorProfile?.level && t.tutorProfile.level !== "unknown" ? t.tutorProfile.level : "adult";
-
-                      return {
-                        ...t,
-                        updatedAt: Date.now(),
-                        mode: next,
-                        tutorProfile: { level: nextLevel },
-                      };
-                    })
-                  );
-
-                  setToastMsg(next === "tutor" ? "✅ Modo Tutor activado para esta conversación." : "Modo Tutor desactivado.");
-                  setTimeout(() => setToastMsg(null), 2200);
-                  setMenuOpen(false);
-                }}
-                className={[
-                  "text-xs px-3 py-3 rounded-2xl border cursor-pointer transition-colors",
-                  activeThread?.mode === "tutor" ? "bg-blue-600 text-white border-blue-700/10 hover:bg-blue-700" : "bg-white border-zinc-200 hover:bg-zinc-50",
-                ].join(" ")}
-              >
-                {activeThread?.mode === "tutor" ? "Tutor ✓" : "Tutor"}
               </button>
 
               <button onClick={deleteActiveThread} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer">
