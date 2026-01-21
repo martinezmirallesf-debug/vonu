@@ -1342,9 +1342,12 @@ export default function Page() {
   }, []);
 
   function makeMdComponents(
-    boardImageB64?: string | null,
-    boardImagePlacement?: { x: number; y: number; w: number; h: number } | null
-  ): Components {
+  boardImageB64?: string | null,
+  boardImagePlacement?: { x: number; y: number; w: number; h: number } | null,
+  pizarraValue?: string | null
+): Components {
+
+
     return {
       code({ inline, className, children, ...props }: any) {
         const isInline = !!inline;
@@ -1355,10 +1358,22 @@ export default function Page() {
 
         const content = Array.isArray(children) ? children.join("") : String(children ?? "");
         const clean = content.replace(/\n$/, "");
+const boardValue =
+  pizarraValue && String(pizarraValue).trim()
+    ? String(pizarraValue)
+    : clean;
 
         // ✅ si el tutor devuelve ```pizarra o ```whiteboard → renderiza la pizarra bonita
         if (!isInline && (lang === "pizarra" || lang === "whiteboard")) {
-          return <ChalkboardTutorBoard value={clean} boardImageB64={boardImageB64 ?? null} boardImagePlacement={boardImagePlacement ?? null} />;
+          return (
+  <ChalkboardTutorBoard
+    value={boardValue}
+    boardImageB64={boardImageB64 ?? null}
+    boardImagePlacement={boardImagePlacement ?? null}
+  />
+);
+
+
         }
 
         // bloque normal (code block)
@@ -3073,7 +3088,17 @@ if (!isUser && m.id === "init" && !m.pizarra) {
                                   {!hasText ? <TypingDots /> : <TypingCaret />}
                                 </span>
                               ) : (
-                                <ReactMarkdown components={makeMdComponents(m.boardImageB64, m.boardImagePlacement)}>{mdText}</ReactMarkdown>
+                                <ReactMarkdown
+  components={makeMdComponents(
+    m.boardImageB64,
+    m.boardImagePlacement,
+    m.pizarra
+  )}
+>
+  {m.text ?? ""}
+</ReactMarkdown>
+
+
                               )}
                             </div>
                           )}
