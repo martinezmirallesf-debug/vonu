@@ -16,7 +16,17 @@ type Props = {
   boardImagePlacement?: { x: number; y: number; w: number; h: number } | null;
 };
 
-type ColorName = "white" | "yellow" | "cyan" | "pink" | "green" | "orange" | "red" | "blue" | "lightgreen" | "chalk";
+type ColorName =
+  | "white"
+  | "yellow"
+  | "cyan"
+  | "pink"
+  | "green"
+  | "orange"
+  | "red"
+  | "blue"
+  | "lightgreen"
+  | "chalk";
 
 const COLOR_MAP: Record<ColorName, string> = {
   white: "#e9efe9",
@@ -37,8 +47,7 @@ function clamp(n: number, a: number, b: number) {
 
 // ================== SANITIZE ==================
 function fixSuperscripts(s: string) {
-  const toSuper = (x: string) =>
-    x.replace(/\^2/g, "²").replace(/\^3/g, "³");
+  const toSuper = (x: string) => x.replace(/\^2/g, "²").replace(/\^3/g, "³");
 
   const subMap: Record<string, string> = {
     "0": "₀",
@@ -53,7 +62,11 @@ function fixSuperscripts(s: string) {
     "9": "₉",
   };
 
-  const toSubDigits = (digits: string) => digits.split("").map((d) => subMap[d] ?? d).join("");
+  const toSubDigits = (digits: string) =>
+    digits
+      .split("")
+      .map((d) => subMap[d] ?? d)
+      .join("");
 
   // CO2 -> CO₂, H2O -> H₂O, C6H12O6 -> C₆H₁₂O₆
   const chemSub = (x: string) =>
@@ -61,10 +74,8 @@ function fixSuperscripts(s: string) {
 
   return chemSub(
     toSuper(s)
-      // limpiar "( c )" -> "(c)"
       .replace(/\(\s+/g, "(")
       .replace(/\s+\)/g, ")")
-      // limpiar espacios dobles
       .replace(/[ \t]{2,}/g, " ")
   );
 }
@@ -73,7 +84,8 @@ function sanitizeBoardValue(raw: string) {
   const s0 = (raw || "").replace(/\r\n/g, "\n");
 
   // si se cuela un JSON excalidraw gigante, fuera
-  const tooJsony = s0.includes('"elements"') || s0.includes('"files"') || s0.includes('"appState"');
+  const tooJsony =
+    s0.includes('"elements"') || s0.includes('"files"') || s0.includes('"appState"');
   if (tooJsony && !s0.trim().startsWith("{")) return "";
 
   // Limpieza LaTeX escapado típico
@@ -179,7 +191,16 @@ function drawWobblyLine(
   drawOnce(0.35, 0.5);
 }
 
-function drawArrow(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, color: string, lw: number, rng: () => number) {
+function drawArrow(
+  ctx: CanvasRenderingContext2D,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  color: string,
+  lw: number,
+  rng: () => number
+) {
   drawWobblyLine(ctx, x1, y1, x2, y2, color, lw, rng);
 
   const ang = Math.atan2(y2 - y1, x2 - x1);
@@ -197,7 +218,15 @@ function setChalkFont(ctx: CanvasRenderingContext2D, size: number) {
   ctx.font = `${size}px "Architects Daughter","Patrick Hand","Comic Sans MS",system-ui,-apple-system,Segoe UI,Roboto,Arial`;
 }
 
-function drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, color: string, rng: () => number) {
+function drawText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  size: number,
+  color: string,
+  rng: () => number
+) {
   ctx.save();
   ctx.textBaseline = "top";
   setChalkFont(ctx, size);
@@ -292,7 +321,19 @@ type AutoBoard = {
   note?: string;
 };
 
-// ================== MINI-LENGUAJE PARSER ==================
+function tryParseAutoBoard(value: string): AutoBoard | null {
+  const t = (value || "").trim();
+  if (!t.startsWith("{") || !t.endsWith("}")) return null;
+  try {
+    const obj = JSON.parse(t);
+    if (obj?.layout !== "twoCol") return null;
+    return obj as AutoBoard;
+  } catch {
+    return null;
+  }
+}
+
+// ================== MINI-LENGUAJE PARSER (UNO SOLO) ==================
 type ChalkBlock =
   | { type: "title"; text: string }
   | { type: "quote"; text: string }
@@ -304,80 +345,101 @@ type ChalkBlock =
   | { type: "text"; text: string };
 
 function parseChalkScript(raw: string): ChalkBlock[] {
-  const s = (raw || "").trim();
-  const lines = s.split("\n").map((l) => l.trim()).filter(Boolean);
+  const s = (raw || "").replace(/\r\n/g, "\n").trim();
+  if (!s) return [];
+
+  const lines = s.split("\n");
+
   const blocks: ChalkBlock[] = [];
-  let i = 0;
+  let workBuf: string[] = [];
 
-  while (i < lines.length) {
-    const line = lines[i];
+  const flushWork = () => {
+    if (workBuf.length) {
+      blocks.push({ type: "work", lines: [...workBuf] });
+      workBuf = [];
+    }
+  };
 
-    if (line.startsWith("#")) {
-      blocks.push({ type: "title", text: line.replace(/^#+\s*/, "").trim() });
-      i++;
+  const pushText = (text: string) => {
+    const t = (text || "").trim();
+    if (!t) return;
+    blocks.push({ type: "text", text: t });
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const lineRaw = lines[i];
+    const line = (lineRaw ?? "").trim();
+    if (!line) {
+      flushWork();
       continue;
     }
 
+    // {{IMG:key}}
+    const imgMatch = line.match(/^\{\{\s*IMG\s*:\s*([a-zA-Z0-9_\-]+)\s*\}\}$/);
+    if (imgMatch) {
+      flushWork();
+      blocks.push({ type: "img", key: imgMatch[1] });
+      continue;
+    }
+
+    // # Title
+    if (line.startsWith("# ")) {
+      flushWork();
+      blocks.push({ type: "title", text: line.slice(2).trim() });
+      continue;
+    }
+
+    // > Quote
     if (line.startsWith(">")) {
-      blocks.push({ type: "quote", text: line.replace(/^>\s*/, "").trim() });
-      i++;
+      flushWork();
+      blocks.push({ type: "quote", text: line.replace(/^>\s?/, "").trim() });
       continue;
     }
 
-    if (line.startsWith("-")) {
-      blocks.push({ type: "bullet", text: line.replace(/^-+\s*/, "").trim() });
-      i++;
+    // => Result
+    if (line.startsWith("=>")) {
+      flushWork();
+      blocks.push({ type: "result", text: line.replace(/^=>\s?/, "").trim() });
       continue;
     }
 
-    if (/^\[FORMULA\]/i.test(line)) {
-      blocks.push({ type: "formula", text: line.replace(/^\[FORMULA\]\s*/i, "").trim() });
-      i++;
+    // - bullet / • bullet
+    if (line.startsWith("- ") || line.startsWith("• ")) {
+      flushWork();
+      blocks.push({ type: "bullet", text: line.slice(2).trim() });
       continue;
     }
 
-    if (/^\[RESULT\]/i.test(line)) {
-      blocks.push({ type: "result", text: line.replace(/^\[RESULT\]\s*/i, "").trim() });
-      i++;
+    // $$ ... $$  or  `...`
+    const isDollar = line.startsWith("$$") && line.endsWith("$$") && line.length >= 4;
+    if (isDollar) {
+      flushWork();
+      blocks.push({ type: "formula", text: line.slice(2, -2).trim() });
+      continue;
+    }
+    const isBacktick = line.startsWith("`") && line.endsWith("`") && line.length >= 2;
+    if (isBacktick) {
+      flushWork();
+      blocks.push({ type: "formula", text: line.slice(1, -1).trim() });
       continue;
     }
 
-    if (/^\[IMG\]/i.test(line)) {
-      blocks.push({ type: "img", key: line.replace(/^\[IMG\]\s*/i, "").trim() || "diagram" });
-      i++;
+    // Work-ish
+    const looksWork =
+      /[=→]/.test(line) ||
+      /^[0-9a-zA-Z(][0-9a-zA-Z+\-*/^().\s=→√±₀₁₂₃₄₅₆₇₈₉²³]+$/.test(line);
+
+    if (looksWork) {
+      workBuf.push(line);
       continue;
     }
 
-    if (/^\[WORK\]/i.test(line)) {
-      i++;
-      const work: string[] = [];
-      while (i < lines.length && !/^\[\/WORK\]/i.test(lines[i])) {
-        work.push(lines[i]);
-        i++;
-      }
-      if (i < lines.length && /^\[\/WORK\]/i.test(lines[i])) i++;
-      blocks.push({ type: "work", lines: work.slice(0, 24) });
-      continue;
-    }
-
-    // texto normal
-    blocks.push({ type: "text", text: line });
-    i++;
+    flushWork();
+    pushText(line);
   }
 
+  flushWork();
   return blocks;
-}
-
-function tryParseAutoBoard(value: string): AutoBoard | null {
-  const t = (value || "").trim();
-  if (!t.startsWith("{") || !t.endsWith("}")) return null;
-  try {
-    const obj = JSON.parse(t);
-    if (obj?.layout !== "twoCol") return null;
-    return obj as AutoBoard;
-  } catch {
-    return null;
-  }
 }
 
 // ================== COMPONENT ==================
@@ -395,14 +457,17 @@ export default function ChalkboardTutorBoard({
 
   const [box, setBox] = useState({ w: 0, h: 0 });
 
-  const imgCacheRef = useRef<{ b64: string | null; img: HTMLImageElement | null }>({ b64: null, img: null });
+  const imgCacheRef = useRef<{ b64: string | null; img: HTMLImageElement | null }>({
+    b64: null,
+    img: null,
+  });
 
   const safeValue = useMemo(() => sanitizeBoardValue(value), [value]);
 
   const specV1 = useMemo(() => tryParseBoardSpecV1(safeValue), [safeValue]);
   const auto = useMemo(() => (specV1 ? null : tryParseAutoBoard(safeValue)), [safeValue, specV1]);
 
-  // ✅ ResizeObserver: ahora medimos ancho y ALTO real del contenedor
+  // ResizeObserver
   useEffect(() => {
     if (!wrapRef.current) return;
     const el = wrapRef.current;
@@ -425,13 +490,13 @@ export default function ChalkboardTutorBoard({
       await ensureFontsReady();
 
       // cache image
-      let rightImg: HTMLImageElement | null = null;
+      let overlayImg: HTMLImageElement | null = null;
       if (boardImageB64) {
         if (imgCacheRef.current.b64 !== boardImageB64) {
           imgCacheRef.current.b64 = boardImageB64;
           imgCacheRef.current.img = await loadB64Image(boardImageB64);
         }
-        rightImg = imgCacheRef.current.img;
+        overlayImg = imgCacheRef.current.img;
       } else {
         imgCacheRef.current.b64 = null;
         imgCacheRef.current.img = null;
@@ -463,7 +528,7 @@ export default function ChalkboardTutorBoard({
       ctx.clip();
 
       // optional image below everything
-      if (rightImg && boardImagePlacement) {
+      if (overlayImg && boardImagePlacement) {
         const { x, y, w, h } = boardImagePlacement;
         const xx = clamp(x, INSET_X, INSET_X + CLIP_W - 1);
         const yy = clamp(y, INSET_Y, INSET_Y + CLIP_H - 1);
@@ -474,7 +539,7 @@ export default function ChalkboardTutorBoard({
         ctx.globalAlpha = 0.98;
         ctx.shadowColor = "rgba(255,255,255,0.16)";
         ctx.shadowBlur = 0.9;
-        ctx.drawImage(rightImg, xx, yy, ww, hh);
+        ctx.drawImage(overlayImg, xx, yy, ww, hh);
         ctx.restore();
       }
 
@@ -493,7 +558,6 @@ export default function ChalkboardTutorBoard({
         const right = Array.isArray(specV1.right) ? specV1.right.filter(Boolean).slice(0, 10) : [];
         const diagram = specV1.diagram || "none";
 
-        // ✅ título menos gigante (y más utilizable)
         const TITLE_SIZE = clamp(Math.round(48 - Math.max(0, title.length - 18) * 0.6), 34, 48);
         const H_SIZE = 30;
         const ITEM_SIZE = 30;
@@ -504,7 +568,16 @@ export default function ChalkboardTutorBoard({
         if (title) {
           drawText(ctx, title.toUpperCase(), INSET_X + 16, y, TITLE_SIZE, COLOR_MAP.chalk, rng);
           const ulY = y + TITLE_SIZE + 6;
-          drawWobblyLine(ctx, INSET_X + 16, ulY, INSET_X + 16 + Math.min(560, CLIP_W - 40), ulY, COLOR_MAP.yellow, 5, rng);
+          drawWobblyLine(
+            ctx,
+            INSET_X + 16,
+            ulY,
+            INSET_X + 16 + Math.min(560, CLIP_W - 40),
+            ulY,
+            COLOR_MAP.yellow,
+            5,
+            rng
+          );
           y += TITLE_SIZE + 20;
         } else {
           y += 14;
@@ -521,7 +594,14 @@ export default function ChalkboardTutorBoard({
         const leftTextMax = layout === "split" ? colW - 34 : CLIP_W * 0.48 - 30;
         const rightTextMax = layout === "split" ? colW - 34 : CLIP_W * 0.48 - 30;
 
-        const drawList = (items: string[], x0: number, y0: number, maxW: number, color: string, bottomY: number) => {
+        const drawList = (
+          items: string[],
+          x0: number,
+          y0: number,
+          maxW: number,
+          color: string,
+          bottomY: number
+        ) => {
           let yy = y0;
           for (const it of items) {
             const text = String(it || "").trim();
@@ -560,9 +640,10 @@ export default function ChalkboardTutorBoard({
                 };
 
           const rightBottom = diagBox ? diagBox.y - 16 : contentTop + contentH - 10;
+
           drawList(left, leftX, listY, leftTextMax, COLOR_MAP.cyan, contentTop + contentH - 10);
 
-          // clip for right list
+          // right list clipped
           ctx.save();
           ctx.beginPath();
           ctx.rect(rightX, listY, colW - 20, rightBottom - listY);
@@ -570,101 +651,21 @@ export default function ChalkboardTutorBoard({
           drawList(right, rightX, listY, rightTextMax, COLOR_MAP.green, rightBottom);
           ctx.restore();
 
-          // ================== MINI-LENGUAJE PARSER ==================
-type ChalkBlock =
-  | { type: "title"; text: string }
-  | { type: "quote"; text: string }
-  | { type: "bullet"; text: string }
-  | { type: "formula"; text: string }
-  | { type: "work"; lines: string[] }
-  | { type: "result"; text: string }
-  | { type: "img"; key: string }
-  | { type: "text"; text: string };
-
-function parseChalkScript(raw: string): ChalkBlock[] {
-  const s = (raw || "").trim();
-  const lines = s.split("\n").map((l) => l.trim()).filter(Boolean);
-  const blocks: ChalkBlock[] = [];
-  let i = 0;
-
-  const pushText = (t: string) => {
-    const tt = (t || "").trim();
-    if (tt) blocks.push({ type: "text", text: tt });
-  };
-
-  while (i < lines.length) {
-    const line = lines[i];
-
-    if (line.startsWith("#")) {
-      blocks.push({ type: "title", text: line.replace(/^#+\s*/, "").trim() });
-      i++;
-      continue;
-    }
-
-    if (line.startsWith(">")) {
-      blocks.push({ type: "quote", text: line.replace(/^>\s*/, "").trim() });
-      i++;
-      continue;
-    }
-
-    if (line.startsWith("-")) {
-      blocks.push({ type: "bullet", text: line.replace(/^-+\s*/, "").trim() });
-      i++;
-      continue;
-    }
-
-    if (line.startsWith("[FORMULA]")) {
-      blocks.push({ type: "formula", text: line.replace(/^\[FORMULA\]\s*/i, "").trim() });
-      i++;
-      continue;
-    }
-
-    if (line.startsWith("[RESULT]")) {
-      blocks.push({ type: "result", text: line.replace(/^\[RESULT\]\s*/i, "").trim() });
-      i++;
-      continue;
-    }
-
-    if (line.startsWith("[IMG]")) {
-      blocks.push({ type: "img", key: line.replace(/^\[IMG\]\s*/i, "").trim() || "diagram" });
-      i++;
-      continue;
-    }
-
-    if (line.startsWith("[WORK]")) {
-      i++;
-      const work: string[] = [];
-      while (i < lines.length && !lines[i].startsWith("[/WORK]")) {
-        work.push(lines[i]);
-        i++;
-      }
-      if (i < lines.length && lines[i].startsWith("[/WORK]")) i++;
-      blocks.push({ type: "work", lines: work.slice(0, 24) });
-      continue;
-    }
-
-    // texto normal
-    pushText(line);
-    i++;
-  }
-
-  return blocks;
-}
-
-          // arrows between paired rows
+          // Flechas SOLO si es pipeline (si no, confunden)
           if (diagram === "pipeline") {
-          const rows = Math.min(left.length, right.length, 6);
-          if (rows > 0) {
-            const rowY0 = listY + 10;
-            const rowH = 42;
-            for (let i = 0; i < rows; i++) {
-              const ay = rowY0 + i * rowH + 10;
-              const ax1 = leftX + colW - 58;
-              const ax2 = rightX - 16;
-              drawArrow(ctx, ax1, ay, ax2, ay, COLOR_MAP.white, 4.6, rng);
+            const rows = Math.min(left.length, right.length, 6);
+            if (rows > 0) {
+              const rowY0 = listY + 10;
+              const rowH = 42;
+              for (let i = 0; i < rows; i++) {
+                const ay = rowY0 + i * rowH + 10;
+                const ax1 = leftX + colW - 58;
+                const ax2 = rightX - 16;
+                drawArrow(ctx, ax1, ay, ax2, ay, COLOR_MAP.white, 4.6, rng);
+              }
             }
           }
-          }
+
           // diagrams
           if (diagBox) {
             const { x, y: dy, w: dw, h: dh } = diagBox;
@@ -672,7 +673,16 @@ function parseChalkScript(raw: string): ChalkBlock[] {
             const drawBoxTitle = (label: string) => {
               drawText(ctx, label.toUpperCase(), x + 8, dy + 6, 26, COLOR_MAP.yellow, rng);
               const ulY = dy + 34;
-              drawWobblyLine(ctx, x + 8, ulY, x + 8 + Math.min(dw - 18, 220), ulY, COLOR_MAP.yellow, 4, rng);
+              drawWobblyLine(
+                ctx,
+                x + 8,
+                ulY,
+                x + 8 + Math.min(dw - 18, 220),
+                ulY,
+                COLOR_MAP.yellow,
+                4,
+                rng
+              );
             };
 
             if (diagram === "right_triangle") {
@@ -703,16 +713,53 @@ function parseChalkScript(raw: string): ChalkBlock[] {
 
               drawText(ctx, b, (p1.x + p2.x) / 2 - 8, p1.y + 10, 26, COLOR_MAP.cyan, rng);
               drawText(ctx, a, p1.x - 22, (p1.y + p3.y) / 2 - 10, 26, COLOR_MAP.cyan, rng);
-              drawText(ctx, cLab, (p3.x + p2.x) / 2 + 10, (p3.y + p2.y) / 2 - 18, 26, COLOR_MAP.green, rng);
+              drawText(
+                ctx,
+                cLab,
+                (p3.x + p2.x) / 2 + 10,
+                (p3.y + p2.y) / 2 - 18,
+                26,
+                COLOR_MAP.green,
+                rng
+              );
 
               drawText(ctx, formula, x + 8, dy + dh - 36, 28, COLOR_MAP.green, rng);
             }
+
+            if (diagram === "axes") {
+              drawBoxTitle("Gráfica");
+
+              const pad = 28;
+              const ox = x + pad;
+              const oy = dy + dh - 50;
+              const axW = dw - pad * 2;
+              const axH = dh - 110;
+
+              // axes
+              drawWobblyLine(ctx, ox, oy, ox + axW, oy, COLOR_MAP.white, 4.6, rng);
+              drawWobblyLine(ctx, ox, oy, ox, oy - axH, COLOR_MAP.white, 4.6, rng);
+
+              const xl = fixSuperscripts(specV1.axes?.xLabel || "x");
+              const yl = fixSuperscripts(specV1.axes?.yLabel || "y");
+              const cl = fixSuperscripts(specV1.axes?.curveLabel || "y = ...");
+
+              drawText(ctx, xl, ox + axW - 10, oy + 8, 24, COLOR_MAP.cyan, rng);
+              drawText(ctx, yl, ox - 18, oy - axH - 10, 24, COLOR_MAP.cyan, rng);
+
+              // simple curve
+              const x1 = ox + axW * 0.1;
+              const y1 = oy - axH * 0.15;
+              const x2 = ox + axW * 0.9;
+              const y2 = oy - axH * 0.85;
+              drawWobblyLine(ctx, x1, y1, x2, y2, COLOR_MAP.green, 4.2, rng);
+
+              drawText(ctx, cl, ox + 10, oy - axH + 10, 24, COLOR_MAP.green, rng);
+            }
           }
         } else {
-          // FULL layout (text left, diagram right)
+          // FULL layout (texto + dibujo a la derecha)
           const textX = INSET_X + 16;
-          const textW = CLIP_W * 0.48;
-          const diagX = INSET_X + CLIP_W * 0.52;
+          const textW = CLIP_W * 0.52;
 
           const centerLabel = (specV1.centerLabel || "").trim();
           if (centerLabel) drawText(ctx, centerLabel.toUpperCase(), textX, contentTop + 6, 30, COLOR_MAP.yellow, rng);
@@ -720,9 +767,9 @@ function parseChalkScript(raw: string): ChalkBlock[] {
           const listsY = contentTop + (centerLabel ? 52 : 10);
           drawList(left.length ? left : right, textX, listsY, textW - 22, COLOR_MAP.white, contentTop + contentH - 10);
 
+          // (el diagrama full lo puedes ampliar luego, ahora está estable y no rompe)
           if (diagram !== "none") {
-            // leaving diagram impl for full as future, but safe
-            drawText(ctx, "→ Mira el dibujo", diagX, contentTop + 10, 28, COLOR_MAP.green, rng);
+            drawText(ctx, "↘ Mira el dibujo", INSET_X + CLIP_W * 0.66, contentTop + 10, 26, COLOR_MAP.green, rng);
           }
         }
 
@@ -796,21 +843,15 @@ function parseChalkScript(raw: string): ChalkBlock[] {
         return;
       }
 
-            // =========================
+      // =========================
       // MINI-LENGUAJE (cuando NO es JSON)
       // =========================
-      if (!specV1 && !auto) {
+      {
         const blocks = parseChalkScript(safeValue);
         const seed = hashStr(JSON.stringify(blocks));
         const rng = mulberry32(seed);
 
-        // medidas base (vertical)
-        const INSET_X = 56;
-        const INSET_Y = 44;
-        const CLIP_W = width - INSET_X * 2;
-        const CLIP_H = height - INSET_Y * 2;
-
-        let x = INSET_X + 14;
+        const x = INSET_X + 14;
         let y = INSET_Y + 14;
 
         const maxW = CLIP_W - 28;
@@ -837,9 +878,13 @@ function parseChalkScript(raw: string): ChalkBlock[] {
           }
 
           if (b.type === "quote") {
+            ctx.save();
+            setChalkFont(ctx, 28);
             const lines = wrapText(ctx, fixSuperscripts(b.text), maxW);
+            ctx.restore();
+
             for (const ln of lines.slice(0, 3)) {
-              drawText(ctx, "→ " + ln, x, y,  28, COLOR_MAP.yellow, rng);
+              drawText(ctx, "→ " + ln, x, y, 28, COLOR_MAP.yellow, rng);
               y += 36;
               if (y > bottom) break;
             }
@@ -848,7 +893,11 @@ function parseChalkScript(raw: string): ChalkBlock[] {
           }
 
           if (b.type === "bullet") {
+            ctx.save();
+            setChalkFont(ctx, 28);
             const lines = wrapText(ctx, fixSuperscripts(b.text), maxW - 24);
+            ctx.restore();
+
             for (const ln of lines.slice(0, 2)) {
               drawText(ctx, "• " + ln, x, y, 28, COLOR_MAP.cyan, rng);
               y += 34;
@@ -892,7 +941,11 @@ function parseChalkScript(raw: string): ChalkBlock[] {
 
           if (b.type === "result") {
             const text = fixSuperscripts(b.text);
+            ctx.save();
+            setChalkFont(ctx, 28);
             const lines = wrapText(ctx, text, maxW - 28).slice(0, 3);
+            ctx.restore();
+
             const boxY = y;
             const pad = 14;
             const h = pad * 2 + lines.length * 34;
@@ -909,7 +962,11 @@ function parseChalkScript(raw: string): ChalkBlock[] {
           }
 
           if (b.type === "text") {
+            ctx.save();
+            setChalkFont(ctx, 28);
             const lines = wrapText(ctx, fixSuperscripts(b.text), maxW).slice(0, 3);
+            ctx.restore();
+
             for (const ln of lines) {
               drawText(ctx, ln, x, y, 28, COLOR_MAP.white, rng);
               y += 34;
@@ -919,10 +976,9 @@ function parseChalkScript(raw: string): ChalkBlock[] {
             continue;
           }
 
-          // b.type === "img" -> el render de imagen ya te llega por boardImageB64
+          // img: el overlay viene por boardImageB64 (si lo usas)
         }
 
-        // si se corta por altura, aviso amable
         if (blocks.length > 0 && y > bottom - 30) {
           drawText(ctx, "↓ Sigue abajo…", x, bottom - 26, 24, COLOR_MAP.white, rng);
         }
@@ -930,45 +986,13 @@ function parseChalkScript(raw: string): ChalkBlock[] {
         ctx.restore();
         return;
       }
-
-      // =========================
-      // Fallback: texto suelto
-      // =========================
-      const baseSeed = hashStr(safeValue || "board");
-      const r = mulberry32(baseSeed);
-
-      let x = INSET_X + 16;
-      let y = INSET_Y + 16;
-
-      const lines = (safeValue || "")
-        .split("\n")
-        .map((l) => l.trimEnd())
-        .filter(Boolean)
-        .slice(0, 14);
-
-      const title = lines[0] || "";
-      if (title) {
-        const T = clamp(48 - Math.max(0, title.length - 18) * 0.6, 34, 48);
-        drawText(ctx, title.toUpperCase(), x, y, T, COLOR_MAP.white, r);
-        const ulY = y + T + 6;
-        drawWobblyLine(ctx, x, ulY, x + Math.min(560, CLIP_W - 40), ulY, COLOR_MAP.yellow, 5, r);
-        y += T + 20;
-      }
-
-      for (let i = 1; i < lines.length; i++) {
-        drawText(ctx, fixSuperscripts(lines[i]), x, y, 30, COLOR_MAP.white, r);
-        y += 40;
-      }
-
-      ctx.restore();
     };
 
     draw();
   }, [safeValue, specV1, auto, width, height, box.w, box.h, boardImageB64, boardImagePlacement]);
 
-  // ✅ CLAVE: el wrapper YA NO depende de la altura del <img>.
-  // Ahora el <img> está ABSOLUTO y “cover”, y el tamaño lo decide el contenedor padre.
-    return (
+  // Tablet vertical moderna (9:16)
+  return (
     <div className={className ?? ""}>
       <div
         ref={wrapRef}
@@ -979,7 +1003,7 @@ function parseChalkScript(raw: string): ChalkBlock[] {
           minHeight: 520,
         }}
       >
-        {/* Fondo “tablet” moderno (sin imagen) */}
+        {/* Fondo “tablet” moderno */}
         <div
           aria-hidden="true"
           className="absolute inset-0"
