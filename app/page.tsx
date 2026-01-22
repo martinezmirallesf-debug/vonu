@@ -246,6 +246,13 @@ function looksLikeTutorIntent(text: string) {
 
   const strong = [
     "explícame",
+    "explicar",
+"explicación",
+"explicacion",
+"puedes explicar",
+"me puedes explicar",
+"podrías explicar",
+"podrias explicar",
     "explicame",
     "paso a paso",
     "ejercicio",
