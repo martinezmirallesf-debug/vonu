@@ -234,9 +234,10 @@ export default function ChalkboardTutorBoard({
   const LOGICAL_H = 600;
 
   return (
-    <div className={`relative w-full h-full ${className}`}>
+    // ✅ ESTE es el contenedor que “recorta” todo (texto + imagen)
+    <div className={`relative w-full h-full rounded-3xl overflow-hidden ${className}`}>
       {/* Fondo pizarra */}
-      <div className="absolute inset-0 rounded-3xl bg-[#0B0F12] shadow-[0_30px_120px_rgba(0,0,0,0.55)] overflow-hidden">
+      <div className="absolute inset-0 bg-[#0B0F12] shadow-[0_30px_120px_rgba(0,0,0,0.55)]">
         {/* Viñeteado suave */}
         <div className="absolute inset-0 pointer-events-none opacity-70 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.10),rgba(0,0,0,0.65)_60%)]" />
         {/* Ruido / polvo */}
@@ -251,7 +252,8 @@ export default function ChalkboardTutorBoard({
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           exit={{ opacity: 0, y: -6, filter: "blur(6px)" }}
           transition={{ duration: 0.35 }}
-          className="absolute inset-0 p-6 md:p-8"
+          // ✅ Scroll interno si el contenido es largo
+          className="absolute inset-0 p-6 md:p-8 overflow-y-auto overscroll-contain"
         >
           {/* Imagen (si existe) */}
           {boardImageB64 && boardImagePlacement ? (
@@ -278,7 +280,7 @@ export default function ChalkboardTutorBoard({
           ) : null}
 
           {/* Texto “tiza” */}
-          <div className="relative z-10 max-w-[980px]">
+          <div className="relative z-10 max-w-[980px] break-words">
             {sections.map((sec, idx) => {
               if (sec.type === "title") {
                 return (
@@ -293,7 +295,7 @@ export default function ChalkboardTutorBoard({
 
               if (sec.type === "lead") {
                 return (
-                  <div key={idx} className="mt-4 mb-4 text-[#F6D365] text-[16px] md:text-[17px] italic">
+                  <div key={idx} className="mt-4 mb-4 text-[#F6D365] text-[16px] md:text-[17px] italic break-words">
                     → {sec.text}
                   </div>
                 );
@@ -303,7 +305,7 @@ export default function ChalkboardTutorBoard({
                 return (
                   <ul key={idx} className="mb-4 space-y-2">
                     {sec.items.map((b, i) => (
-                      <li key={i} className="text-[#7FE7FF] text-[17px] md:text-[18px]">
+                      <li key={i} className="text-[#7FE7FF] text-[17px] md:text-[18px] break-words">
                         • {b}
                       </li>
                     ))}
@@ -319,7 +321,7 @@ export default function ChalkboardTutorBoard({
                     </div>
                     <div className="space-y-1 text-white text-[16px] md:text-[17px]">
                       {sec.lines.map((l, i) => (
-                        <div key={i} className="opacity-95">
+                        <div key={i} className="opacity-95 break-words">
                           {l}
                         </div>
                       ))}
@@ -334,7 +336,7 @@ export default function ChalkboardTutorBoard({
                     <div className="text-white/70 font-semibold tracking-[0.16em] text-[13px] mb-2">
                       FÓRMULA
                     </div>
-                    <div className="inline-block rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-white text-[16px] md:text-[17px]">
+                    <div className="inline-block rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-white text-[16px] md:text-[17px] break-words">
                       {sec.text}
                     </div>
                   </div>
@@ -350,7 +352,7 @@ export default function ChalkboardTutorBoard({
                     <div className="rounded-3xl border border-white/15 bg-black/20 p-4 md:p-5">
                       <ol className="space-y-2 text-white text-[15px] md:text-[16px] list-decimal pl-5">
                         {sec.lines.map((l, i) => (
-                          <li key={i} className="leading-relaxed">
+                          <li key={i} className="leading-relaxed break-words">
                             {l}
                           </li>
                         ))}
@@ -366,7 +368,7 @@ export default function ChalkboardTutorBoard({
                     <div className="text-white/70 font-semibold tracking-[0.16em] text-[13px] mb-2">
                       RESULTADO
                     </div>
-                    <div className="rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-white text-[16px] md:text-[17px]">
+                    <div className="rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-white text-[16px] md:text-[17px] break-words">
                       {sec.text}
                     </div>
                   </div>
@@ -381,7 +383,7 @@ export default function ChalkboardTutorBoard({
                     </div>
                     <div className="space-y-2 text-white text-[15px] md:text-[16px]">
                       {sec.lines.map((l, i) => (
-                        <div key={i} className="opacity-95">
+                        <div key={i} className="opacity-95 break-words">
                           • {l}
                         </div>
                       ))}
@@ -392,7 +394,7 @@ export default function ChalkboardTutorBoard({
 
               if (sec.type === "close") {
                 return (
-                  <div key={idx} className="mt-4 text-white/85 text-[15px] md:text-[16px] italic">
+                  <div key={idx} className="mt-4 text-white/85 text-[15px] md:text-[16px] italic break-words">
                     {sec.text}
                   </div>
                 );
@@ -400,9 +402,11 @@ export default function ChalkboardTutorBoard({
 
               if (sec.type === "raw") {
                 return (
-                  <div key={idx} className="mt-2 text-white/85 text-[15px] md:text-[16px]">
+                  <div key={idx} className="mt-2 text-white/85 text-[15px] md:text-[16px] break-words">
                     {sec.lines.map((l, i) => (
-                      <div key={i}>{l}</div>
+                      <div key={i} className="break-words">
+                        {l}
+                      </div>
                     ))}
                   </div>
                 );
