@@ -12,6 +12,19 @@ import ChalkboardTutorBoard from "@/app/components/ChalkboardTutorBoard";
 
 import type { Components } from "react-markdown";
 
+type Placement = { x: number; y: number; w: number; h: number };
+
+type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+
+  // extras para pizarra
+  pizarra?: string | null;
+  boardImageB64?: string | null;
+  boardImagePlacement?: Placement | null;
+};
+
+
 type WhiteboardBlockProps = {
   value: string;
   onOpenCanvas?: () => void;
@@ -1353,52 +1366,54 @@ export default function Page() {
   boardImagePlacement?: { x: number; y: number; w: number; h: number } | null,
   pizarraValue?: string | null
 ): Components {
+  return {
+    code({ inline, className, children, ...props }: any) {
+      const isInline = !!inline;
 
+      const cn = typeof className === "string" ? className : "";
+      const match = cn.match(/language-([a-zA-Z0-9_-]+)/);
+      const lang = (match?.[1] || "").toLowerCase();
 
-    return {
-      code({ inline, className, children, ...props }: any) {
-        const isInline = !!inline;
+      const content = Array.isArray(children) ? children.join("") : String(children ?? "");
+      const clean = content.replace(/\n$/, "");
 
-        const cn = typeof className === "string" ? className : "";
-        const m = cn.match(/language-([a-zA-Z0-9_-]+)/);
-        const lang = (m?.[1] || "").toLowerCase();
+      const boardValue =
+        pizarraValue && String(pizarraValue).trim()
+          ? String(pizarraValue)
+          : clean;
 
-        const content = Array.isArray(children) ? children.join("") : String(children ?? "");
-        const clean = content.replace(/\n$/, "");
-const boardValue =
-  pizarraValue && String(pizarraValue).trim()
-    ? String(pizarraValue)
-    : clean;
+      // ✅ si el tutor devuelve ```pizarra o ```whiteboard → renderiza la pizarra bonita
+      if (!isInline && (lang === "pizarra" || lang === "whiteboard")) {
+        return (
+          <ChalkboardTutorBoard
+            value={boardValue}
+            boardImageB64={boardImageB64 ?? null}
+            boardImagePlacement={boardImagePlacement ?? null}
+          />
+        );
+      }
 
-        // ✅ si el tutor devuelve ```pizarra o ```whiteboard → renderiza la pizarra bonita
-        if (!isInline && (lang === "pizarra" || lang === "whiteboard")) {
-          return (
-  <ChalkboardTutorBoard
-    value={boardValue}
-    boardImageB64={boardImageB64 ?? null}
-    boardImagePlacement={boardImagePlacement ?? null}
-  />
-);
+      // bloque normal (code block)
+      if (!isInline) {
+        return (
+          <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
+            <code className="text-[12.5px]" {...props}>
+              {clean}
+            </code>
+          </pre>
+        );
+      }
 
+      // inline code
+      return (
+        <code className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]">
+          {clean}
+        </code>
+      );
+    },
+  };
+}
 
-        }
-
-        // bloque normal (code block)
-        if (!isInline) {
-          return (
-            <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
-              <code className="text-[12.5px]" {...props}>
-                {clean}
-              </code>
-            </pre>
-          );
-        }
-
-        // inline code
-        return <code className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]">{clean}</code>;
-      },
-    };
-  }
 
   function closeBoard() {
     setBoardOpen(false);
