@@ -3022,9 +3022,9 @@ if (!isUser && m.id === "init" && !m.pizarra) {
 
                     return (
                       <div key={m.id} className="w-full">
-                        <div className="w-full h-[72vh] md:h-[78vh]">
+                        <div className="w-full">
   <ChalkboardTutorBoard
-    className="w-full h-full"
+    className="w-full"
     value={boardValue}
     boardImageB64={m.boardImageB64 ?? null}
     boardImagePlacement={m.boardImagePlacement ?? null}

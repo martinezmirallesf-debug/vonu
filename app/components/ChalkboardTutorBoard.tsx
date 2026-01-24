@@ -51,26 +51,19 @@ function isTag(line: string) {
 function prettifyLine(s: string) {
   let t = (s ?? "").replace(/\r/g, "").trimEnd();
 
-  // Quitar bloques LaTeX inline \( \) y \[ \]
   t = t.replace(/\\\(([\s\S]*?)\\\)/g, "$1");
   t = t.replace(/\\\[([\s\S]*?)\\\]/g, "$1");
 
-  // Quitar \rightarrow, \sqrt{..}, etc. (suave)
   t = t.replace(/\\rightarrow/g, "→");
   t = t.replace(/\\to/g, "→");
 
-  // sqrt simple
   t = t.replace(/\\sqrt\{([^}]+)\}/g, "√($1)");
 
-  // Potencias típicas
   t = t.replace(/\^2\b/g, "²");
   t = t.replace(/\^3\b/g, "³");
-
-  // “c^2” (sin espacios)
   t = t.replace(/([a-zA-Z0-9])\s*\^\s*2\b/g, "$1²");
   t = t.replace(/([a-zA-Z0-9])\s*\^\s*3\b/g, "$1³");
 
-  // Limpieza de dobles espacios
   t = t.replace(/\s{2,}/g, " ");
 
   return t;
@@ -97,7 +90,6 @@ function parseMiniLanguage(raw: string): Section[] {
       continue;
     }
 
-    // Título
     if (line.startsWith("#")) {
       if (!title) title = line.replace(/^#+\s*/, "").trim();
       else out.push({ type: "raw", lines: [line] });
@@ -105,7 +97,6 @@ function parseMiniLanguage(raw: string): Section[] {
       continue;
     }
 
-    // Idea clave
     if (line.startsWith(">")) {
       if (!lead) lead = line.replace(/^>\s*/, "").trim();
       else out.push({ type: "raw", lines: [line] });
@@ -113,14 +104,12 @@ function parseMiniLanguage(raw: string): Section[] {
       continue;
     }
 
-    // Bullets iniciales
     if (line.startsWith("-")) {
       bullets.push(line.replace(/^-+\s*/, "").trim());
       i++;
       continue;
     }
 
-    // Secciones
     const upper = line.toUpperCase();
 
     if (upper === "[DIAGRAMA]") {
@@ -136,7 +125,6 @@ function parseMiniLanguage(raw: string): Section[] {
 
     if (upper === "[FORMULA]") {
       i++;
-      // fórmula: 1 línea (si vienen más, las apilamos)
       const f: string[] = [];
       while (i < lines.length && lines[i].trim() && !isTag(lines[i])) {
         f.push(lines[i].trim());
@@ -153,7 +141,6 @@ function parseMiniLanguage(raw: string): Section[] {
         if (lines[i].trim()) w.push(lines[i].trim());
         i++;
       }
-      // saltar [/WORK]
       if (i < lines.length && lines[i].trim().toUpperCase() === "[/WORK]") i++;
       out.push({ type: "work", lines: w });
       continue;
@@ -192,18 +179,15 @@ function parseMiniLanguage(raw: string): Section[] {
       continue;
     }
 
-    // Ignorar [IMG] (la imagen llega por props)
     if (upper.startsWith("[IMG]")) {
       i++;
       continue;
     }
 
-    // Si llega texto “suelto”, lo metemos como raw
     out.push({ type: "raw", lines: [line] });
     i++;
   }
 
-  // Cabecera primero si existe
   if (title) out.unshift({ type: "title", text: title });
   if (lead) out.splice(title ? 1 : 0, 0, { type: "lead", text: lead });
   if (bullets.length) {
@@ -229,22 +213,18 @@ export default function ChalkboardTutorBoard({
 }: ChalkboardTutorBoardProps) {
   const sections = useMemo(() => parseMiniLanguage(value), [value]);
 
-  // Canvas lógico (para placement)
   const LOGICAL_W = 1000;
   const LOGICAL_H = 600;
 
   return (
-    // ✅ ESTE es el contenedor que “recorta” todo (texto + imagen)
-    <div className={`relative w-full h-full rounded-3xl overflow-hidden ${className}`}>
+    // ✅ h-auto (crece según contenido). Sin “pantalla dentro de pantalla”.
+    <div className={`relative w-full rounded-3xl overflow-hidden ${className}`}>
       {/* Fondo pizarra */}
       <div className="absolute inset-0 bg-[#0B0F12] shadow-[0_30px_120px_rgba(0,0,0,0.55)]">
-        {/* Viñeteado suave */}
         <div className="absolute inset-0 pointer-events-none opacity-70 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.10),rgba(0,0,0,0.65)_60%)]" />
-        {/* Ruido / polvo */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.10] [background-image:radial-gradient(rgba(255,255,255,0.9)_1px,transparent_1px)] [background-size:10px_10px]" />
       </div>
 
-      {/* Contenido */}
       <AnimatePresence mode="wait">
         <motion.div
           key={value ? "board" : "empty"}
@@ -252,8 +232,8 @@ export default function ChalkboardTutorBoard({
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           exit={{ opacity: 0, y: -6, filter: "blur(6px)" }}
           transition={{ duration: 0.35 }}
-          // ✅ Scroll interno si el contenido es largo
-          className="absolute inset-0 p-6 md:p-8 overflow-y-auto overscroll-contain"
+          // ✅ YA NO absolute. Ahora el contenedor coge altura real.
+          className="relative p-6 md:p-8"
         >
           {/* Imagen (si existe) */}
           {boardImageB64 && boardImagePlacement ? (
@@ -295,7 +275,7 @@ export default function ChalkboardTutorBoard({
 
               if (sec.type === "lead") {
                 return (
-                  <div key={idx} className="mt-4 mb-4 text-[#F6D365] text-[16px] md:text-[17px] italic break-words">
+                  <div key={idx} className="mt-4 mb-4 text-[#F6D365] text-[16px] md:text-[17px] italic">
                     → {sec.text}
                   </div>
                 );
@@ -305,7 +285,7 @@ export default function ChalkboardTutorBoard({
                 return (
                   <ul key={idx} className="mb-4 space-y-2">
                     {sec.items.map((b, i) => (
-                      <li key={i} className="text-[#7FE7FF] text-[17px] md:text-[18px] break-words">
+                      <li key={i} className="text-[#7FE7FF] text-[17px] md:text-[18px]">
                         • {b}
                       </li>
                     ))}
@@ -321,7 +301,7 @@ export default function ChalkboardTutorBoard({
                     </div>
                     <div className="space-y-1 text-white text-[16px] md:text-[17px]">
                       {sec.lines.map((l, i) => (
-                        <div key={i} className="opacity-95 break-words">
+                        <div key={i} className="opacity-95">
                           {l}
                         </div>
                       ))}
@@ -404,9 +384,7 @@ export default function ChalkboardTutorBoard({
                 return (
                   <div key={idx} className="mt-2 text-white/85 text-[15px] md:text-[16px] break-words">
                     {sec.lines.map((l, i) => (
-                      <div key={i} className="break-words">
-                        {l}
-                      </div>
+                      <div key={i}>{l}</div>
                     ))}
                   </div>
                 );
