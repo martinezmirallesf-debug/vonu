@@ -26,11 +26,14 @@ type Section =
   | { type: "result"; text: string }
   | { type: "check"; lines: string[] }
   | { type: "close"; text: string }
+  | { type: "cole"; lines: string[] }
   | { type: "raw"; lines: string[] };
 
 function isTag(line: string) {
   const t = line.trim().toUpperCase();
   return (
+    t === "[COLE]" ||
+    t === "[/COLE]" ||
     t === "[DIAGRAMA]" ||
     t === "[FORMULA]" ||
     t === "[WORK]" ||
@@ -47,8 +50,11 @@ function isTag(line: string) {
  * - Quita LaTeX: \( ... \) o \[ ... \]
  * - Cambia potencias a “²/³” cuando se pueda
  * - Limpia escapes típicos
+ *
+ * IMPORTANTE: esto NO debe romper alineación de espacios para formato “cole”.
+ * Por eso, en modo normal sí comprimimos espacios; en modo COLE NO.
  */
-function prettifyLine(s: string) {
+function prettifyLine(s: string, opts?: { preserveSpaces?: boolean }) {
   let t = (s ?? "").replace(/\r/g, "").trimEnd();
 
   t = t.replace(/\\\(([\s\S]*?)\\\)/g, "$1");
@@ -64,16 +70,16 @@ function prettifyLine(s: string) {
   t = t.replace(/([a-zA-Z0-9])\s*\^\s*2\b/g, "$1²");
   t = t.replace(/([a-zA-Z0-9])\s*\^\s*3\b/g, "$1³");
 
-  t = t.replace(/\s{2,}/g, " ");
+  // ❗️En modo “cole” NO comprimimos espacios (si no, adiós alineación)
+  if (!opts?.preserveSpaces) {
+    t = t.replace(/\s{2,}/g, " ");
+  }
 
   return t;
 }
 
 function parseMiniLanguage(raw: string): Section[] {
-  const lines = (raw || "")
-    .replace(/\r\n/g, "\n")
-    .split("\n")
-    .map((l) => prettifyLine(l));
+  const rawLines = (raw || "").replace(/\r\n/g, "\n").split("\n");
 
   const out: Section[] = [];
 
@@ -82,14 +88,16 @@ function parseMiniLanguage(raw: string): Section[] {
   const bullets: string[] = [];
 
   let i = 0;
-  while (i < lines.length) {
-    const line = lines[i].trim();
+  while (i < rawLines.length) {
+    const rawLine = rawLines[i] ?? "";
+    const line = prettifyLine(rawLine).trim();
 
     if (!line) {
       i++;
       continue;
     }
 
+    // Título
     if (line.startsWith("#")) {
       if (!title) title = line.replace(/^#+\s*/, "").trim();
       else out.push({ type: "raw", lines: [line] });
@@ -97,6 +105,7 @@ function parseMiniLanguage(raw: string): Section[] {
       continue;
     }
 
+    // Idea clave
     if (line.startsWith(">")) {
       if (!lead) lead = line.replace(/^>\s*/, "").trim();
       else out.push({ type: "raw", lines: [line] });
@@ -104,6 +113,7 @@ function parseMiniLanguage(raw: string): Section[] {
       continue;
     }
 
+    // Bullets iniciales
     if (line.startsWith("-")) {
       bullets.push(line.replace(/^-+\s*/, "").trim());
       i++;
@@ -112,11 +122,31 @@ function parseMiniLanguage(raw: string): Section[] {
 
     const upper = line.toUpperCase();
 
+    // ✅ COLE: bloque monoespaciado, preserva espacios
+    if (upper === "[COLE]") {
+      const block: string[] = [];
+      i++;
+      while (i < rawLines.length) {
+        const rawL = rawLines[i] ?? "";
+        const up = rawL.trim().toUpperCase();
+        if (up === "[/COLE]") break;
+
+        // 👇 NO trim, NO compresión de espacios
+        block.push(prettifyLine(rawL, { preserveSpaces: true }).replace(/\r/g, ""));
+        i++;
+      }
+      if (i < rawLines.length && rawLines[i].trim().toUpperCase() === "[/COLE]") i++;
+      out.push({ type: "cole", lines: block });
+      continue;
+    }
+
     if (upper === "[DIAGRAMA]") {
       const block: string[] = [];
       i++;
-      while (i < lines.length && lines[i].trim() && !isTag(lines[i])) {
-        block.push(lines[i].trim());
+      while (i < rawLines.length) {
+        const l = prettifyLine(rawLines[i] ?? "").trim();
+        if (!l || isTag(l)) break;
+        block.push(l);
         i++;
       }
       out.push({ type: "diagram", lines: block });
@@ -126,8 +156,10 @@ function parseMiniLanguage(raw: string): Section[] {
     if (upper === "[FORMULA]") {
       i++;
       const f: string[] = [];
-      while (i < lines.length && lines[i].trim() && !isTag(lines[i])) {
-        f.push(lines[i].trim());
+      while (i < rawLines.length) {
+        const l = prettifyLine(rawLines[i] ?? "").trim();
+        if (!l || isTag(l)) break;
+        f.push(l);
         i++;
       }
       out.push({ type: "formula", text: f.join(" ") });
@@ -137,11 +169,12 @@ function parseMiniLanguage(raw: string): Section[] {
     if (upper === "[WORK]") {
       const w: string[] = [];
       i++;
-      while (i < lines.length && lines[i].trim().toUpperCase() !== "[/WORK]") {
-        if (lines[i].trim()) w.push(lines[i].trim());
+      while (i < rawLines.length && (rawLines[i] ?? "").trim().toUpperCase() !== "[/WORK]") {
+        const l = prettifyLine(rawLines[i] ?? "").trim();
+        if (l) w.push(l);
         i++;
       }
-      if (i < lines.length && lines[i].trim().toUpperCase() === "[/WORK]") i++;
+      if (i < rawLines.length && (rawLines[i] ?? "").trim().toUpperCase() === "[/WORK]") i++;
       out.push({ type: "work", lines: w });
       continue;
     }
@@ -149,8 +182,10 @@ function parseMiniLanguage(raw: string): Section[] {
     if (upper === "[RESULT]") {
       i++;
       const r: string[] = [];
-      while (i < lines.length && lines[i].trim() && !isTag(lines[i])) {
-        r.push(lines[i].trim());
+      while (i < rawLines.length) {
+        const l = prettifyLine(rawLines[i] ?? "").trim();
+        if (!l || isTag(l)) break;
+        r.push(l);
         i++;
       }
       out.push({ type: "result", text: r.join(" ") });
@@ -160,8 +195,10 @@ function parseMiniLanguage(raw: string): Section[] {
     if (upper === "[CHECK]") {
       i++;
       const c: string[] = [];
-      while (i < lines.length && lines[i].trim() && !isTag(lines[i])) {
-        c.push(lines[i].trim());
+      while (i < rawLines.length) {
+        const l = prettifyLine(rawLines[i] ?? "").trim();
+        if (!l || isTag(l)) break;
+        c.push(l);
         i++;
       }
       out.push({ type: "check", lines: c });
@@ -171,23 +208,28 @@ function parseMiniLanguage(raw: string): Section[] {
     if (upper === "[CIERRE]") {
       i++;
       const c: string[] = [];
-      while (i < lines.length && lines[i].trim() && !isTag(lines[i])) {
-        c.push(lines[i].trim());
+      while (i < rawLines.length) {
+        const l = prettifyLine(rawLines[i] ?? "").trim();
+        if (!l || isTag(l)) break;
+        c.push(l);
         i++;
       }
       out.push({ type: "close", text: c.join(" ") });
       continue;
     }
 
+    // Ignorar [IMG] (la imagen llega por props)
     if (upper.startsWith("[IMG]")) {
       i++;
       continue;
     }
 
+    // Texto suelto
     out.push({ type: "raw", lines: [line] });
     i++;
   }
 
+  // Cabecera primero si existe
   if (title) out.unshift({ type: "title", text: title });
   if (lead) out.splice(title ? 1 : 0, 0, { type: "lead", text: lead });
   if (bullets.length) {
@@ -213,6 +255,7 @@ export default function ChalkboardTutorBoard({
 }: ChalkboardTutorBoardProps) {
   const sections = useMemo(() => parseMiniLanguage(value), [value]);
 
+  // Canvas lógico (para placement)
   const LOGICAL_W = 1000;
   const LOGICAL_H = 600;
 
@@ -221,7 +264,9 @@ export default function ChalkboardTutorBoard({
     <div className={`relative w-full rounded-3xl overflow-hidden ${className}`}>
       {/* Fondo pizarra */}
       <div className="absolute inset-0 bg-[#0B0F12] shadow-[0_30px_120px_rgba(0,0,0,0.55)]">
+        {/* Viñeteado suave */}
         <div className="absolute inset-0 pointer-events-none opacity-70 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.10),rgba(0,0,0,0.65)_60%)]" />
+        {/* Ruido / polvo */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.10] [background-image:radial-gradient(rgba(255,255,255,0.9)_1px,transparent_1px)] [background-size:10px_10px]" />
       </div>
 
@@ -290,6 +335,31 @@ export default function ChalkboardTutorBoard({
                       </li>
                     ))}
                   </ul>
+                );
+              }
+
+              // ✅ BLOQUE "COLE" (fracciones/divisiones/matrices en columna)
+              if (sec.type === "cole") {
+                return (
+                  <div key={idx} className="mt-4 mb-4">
+                    <div className="text-white/70 font-semibold tracking-[0.16em] text-[13px] mb-2">
+                      EN EL COLE
+                    </div>
+
+                    <div
+                      className="rounded-3xl border border-white/15 bg-black/25 p-4 md:p-5 text-white text-[16px] md:text-[17px]"
+                      style={{
+                        fontFamily:
+                          'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                        whiteSpace: "pre",
+                        lineHeight: 1.35,
+                        overflowX: "auto",
+                        WebkitOverflowScrolling: "touch",
+                      }}
+                    >
+                      {sec.lines.join("\n")}
+                    </div>
+                  </div>
                 );
               }
 
