@@ -1871,12 +1871,15 @@ export default function Page() {
 
     setUiError(null);
 
-// ===== Tutor: SOLO si el usuario lo eligió explícitamente =====
+// ===== Tutor auto-activación (DESACTIVADA) =====
 const threadModeNow: ThreadMode = activeThread.mode ?? "chat";
-const nextMode: ThreadMode = threadModeNow;
+let nextMode: ThreadMode = threadModeNow;
 
-// mantenemos el level que ya tuviera el hilo (si existe)
-const nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
+let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
+
+// ✅ Ya NO forzamos modo tutor por intención.
+// El modo lo decide el usuario (UI) y se guarda en el thread.
+// nextMode y nextTutorLevel quedan como están.
 
 
 
