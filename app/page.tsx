@@ -1871,38 +1871,13 @@ export default function Page() {
 
     setUiError(null);
 
-// ===== Tutor auto-activación (AUTO SI HAY INTENCIÓN) =====
+// ===== Tutor: SOLO si el usuario lo eligió explícitamente =====
 const threadModeNow: ThreadMode = activeThread.mode ?? "chat";
-let nextMode: ThreadMode = threadModeNow;
+const nextMode: ThreadMode = threadModeNow;
 
-let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
+// mantenemos el level que ya tuviera el hilo (si existe)
+const nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
 
-// ✅ Si hay intención de “explicar/estudiar”, forzamos tutor SIEMPRE
-const tutorIntent = looksLikeTutorIntent(userText);
-
-if (tutorIntent) {
-  nextMode = "tutor";
-
-  const inferred = inferTutorLevel(userText);
-  nextTutorLevel = inferred === "unknown" ? (nextTutorLevel || "adult") : inferred;
-
-  setThreads((prev) =>
-    prev.map((t) =>
-      t.id === targetThreadId
-        ? {
-            ...t,
-            updatedAt: Date.now(),
-            mode: "tutor",
-            tutorProfile: { level: nextTutorLevel },
-          }
-        : t
-    )
-  );
-
-  // (opcional) toast más discreto o quítalo luego
-  setToastMsg("🎓 Modo Tutor activado automáticamente.");
-  setTimeout(() => setToastMsg(null), 1600);
-}
 
 
     const userMsg: Message = {
