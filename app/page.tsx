@@ -1424,13 +1424,11 @@ export default function Page() {
         const boardValue = pizarraValue && String(pizarraValue).trim() ? String(pizarraValue) : clean;
 
         return (
-          <div
-            className="whitespace-pre-wrap break-words text-[15px] leading-7 text-zinc-900"
-            style={{ fontFamily: "var(--font-poppins), ui-sans-serif, system-ui" }}
-          >
-            {boardValue}
-          </div>
-        );
+  <div className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-zinc-900 font-sans">
+    {boardValue}
+  </div>
+);
+
       }
 
       // ✅ inline code: lo dejamos, pero con Poppins (no monospace)
@@ -3055,135 +3053,119 @@ function replaceFractionsInText(text: string) {
           </div>
         )}
 
-        {/* ========================= */}
-        {/* ✅ CHAT / TUTOR RENDER     */}
-        {/* ========================= */}
-        <div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0">
-          <div className="mx-auto max-w-3xl px-3 md:px-6" style={{ paddingTop: 92, paddingBottom: chatBottomPad }}>
-            <div className="flex flex-col gap-4 py-8 md:pt-6">
-              {/* Badge modo tutor */}
-              {activeThread?.mode === "tutor" ? (
-                <div className="self-start ml-2 -mt-2">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[12px] text-blue-800 font-semibold">
-                    🎓 Modo Tutor
-                    <span className="text-[11px] font-normal text-blue-700/80">nivel: {activeThread?.tutorProfile?.level ?? "adult"}</span>
-                  </div>
-                </div>
-              ) : null}
-
-              {/* ✅ MODO TUTOR: pantalla dominada por pizarra (sin burbujas) */}
-              {activeThread?.mode === "tutor" ? (
-                <div className="space-y-4">
-                  {messages.map((m) => {
-                    const isUser = m.role === "user";
-                    
-// ✅ NO pintar el mensaje inicial (saludo) como pizarra en modo tutor
-if (!isUser && m.id === "init" && !m.pizarra) {
-  return null;
-}
-
-                    // 1) Mensajes del usuario: los dejamos como "chips" simples (no burbuja)
-                    if (isUser) {
-                      const userText = (m.text ?? "").trim();
-                      return (
-                        <div key={m.id} className="flex justify-end">
-                          <div className="max-w-[92%] rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-[14px] text-zinc-900 shadow-sm">
-                            {m.image ? (
-                              <div className="mb-2">
-                                <img src={m.image} alt="Adjunto" className="rounded-xl max-h-60 max-w-full object-cover border border-zinc-200" />
-                              </div>
-                            ) : null}
-                            <div className="whitespace-pre-wrap">{userText || "He adjuntado una imagen."}</div>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    // 2) Mensajes del assistant en tutor: SOLO pizarra grande
-                    const isStreaming = !!m.streaming;
-                    const hasAny = !!(m.pizarra || (m.text ?? "").trim());
-                    const boardValue = m.pizarra ?? (m.text ?? "");
-
-                    return (
-                      <div key={m.id} className="w-full">
-                        <div className="w-full">
-  <ChalkboardTutorBoard
-    className="w-full"
-    value={boardValue}
-    boardImageB64={m.boardImageB64 ?? null}
-    boardImagePlacement={m.boardImagePlacement ?? null}
-  />
-</div>
-
-
-                        {/* Indicador tutor (solo si aún no hay contenido) */}
-                        {isStreaming && !hasAny ? (
-                          <div className="mt-2 text-[12px] text-zinc-600 flex items-center gap-2">
-                            <span>✍️ El tutor está preparando la pizarra</span>
-                            <TypingDots />
-                          </div>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                /* ✅ MODO CHAT NORMAL: bubbles con piquito triángulo tipo WhatsApp */
-                <div className="flex flex-col gap-4">
-                  {messages.map((m) => {
-                    const isUser = m.role === "user";
-                    const rawText = isUser ? (m.text ?? "") : m.text || "";
-
-                    const mdText = isUser ? rawText : m.streaming ? rawText : normalizeAssistantText(rawText);
-
-                    const isStreaming = !!m.streaming;
-                    const hasText = (m.text ?? "").length > 0;
-
-                    const bubbleColor = isUser ? "#dcf8c6" : "#e8f0fe";
-
-                    return (
-                      <div key={m.id} className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
-                        <div
-                          className={[
-                            "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed overflow-hidden break-words",
-                            isUser ? "bg-[#dcf8c6] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-sm mr-2" : "bg-[#e8f0fe] text-zinc-900 rounded-r-2xl rounded-bl-2xl rounded-tl-sm ml-2",
-                          ].join(" ")}
-                        >
-                          {/* ✅ triángulo */}
-                          <BubbleTail side={isUser ? "right" : "left"} color={bubbleColor} />
-
-                          {m.image && (
-                            <div className="mb-2">
-                              <img src={m.image} alt="Adjunto" className="rounded-md max-h-60 max-w-full object-cover" />
-                            </div>
-                          )}
-
-                          {(m.text || m.streaming) && (
-  <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 font-sans">
-    {isStreaming ? (
-      <span className="whitespace-pre-wrap">
-        {mdText.includes('"elements"') || mdText.includes("```excalidraw")
-          ? "✍️ El tutor está dibujando en la pizarra..."
-          : mdText}
-        {!hasText ? <TypingDots /> : <TypingCaret />}
-      </span>
-    ) : (
-      <ReactMarkdown components={makeMdComponents(m.boardImageB64, m.boardImagePlacement, m.pizarra)}>
-        {mdText}
-      </ReactMarkdown>
-    )}
-  </div>
-)}
-
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+       {/* ========================= */}
+{/* ✅ CHAT / TUTOR RENDER     */}
+{/* ========================= */}
+<div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0">
+  <div className="mx-auto max-w-3xl px-3 md:px-6" style={{ paddingTop: 92, paddingBottom: chatBottomPad }}>
+    <div className="flex flex-col gap-4 py-8 md:pt-6">
+      {/* Badge modo tutor */}
+      {activeThread?.mode === "tutor" ? (
+        <div className="self-start ml-2 -mt-2">
+          <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[12px] text-blue-800 font-semibold">
+            🎓 Modo Tutor
+            <span className="text-[11px] font-normal text-blue-700/80">
+              nivel: {activeThread?.tutorProfile?.level ?? "adult"}
+            </span>
           </div>
         </div>
+      ) : null}
+
+      {/* ✅ SIEMPRE bubbles (chat y tutor). En tutor solo cambia el contenido */}
+      <div className="flex flex-col gap-4">
+        {messages.map((m) => {
+          const isUser = m.role === "user";
+
+          // ✅ NO pintar el mensaje inicial (saludo) como pizarra en modo tutor
+          if (!isUser && m.id === "init" && !m.pizarra) {
+            return null;
+          }
+
+          const rawText = isUser ? (m.text ?? "") : m.text || "";
+
+          // ✅ En tutor: si viene m.pizarra, usamos eso como markdown principal (sin fences)
+          const tutorMd =
+            !isUser && activeThread?.mode === "tutor" && (m.pizarra ?? "").trim()
+              ? (m.pizarra as string)
+              : null;
+
+          const mdText = isUser
+            ? rawText
+            : tutorMd
+            ? tutorMd
+            : m.streaming
+            ? rawText
+            : normalizeAssistantText(rawText);
+
+          const isStreaming = !!m.streaming;
+          const hasText = (m.text ?? "").length > 0;
+
+          const bubbleColor = isUser ? "#dcf8c6" : "#e8f0fe";
+
+          return (
+            <div key={m.id} className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
+              <div
+                className={[
+                  "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed overflow-hidden break-words",
+                  isUser
+                    ? "bg-[#dcf8c6] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-sm mr-2"
+                    : "bg-[#e8f0fe] text-zinc-900 rounded-r-2xl rounded-bl-2xl rounded-tl-sm ml-2",
+                ].join(" ")}
+              >
+                {/* ✅ triángulo */}
+                <BubbleTail side={isUser ? "right" : "left"} color={bubbleColor} />
+
+                {m.image && (
+                  <div className="mb-2">
+                    <img src={m.image} alt="Adjunto" className="rounded-md max-h-60 max-w-full object-cover" />
+                  </div>
+                )}
+
+                {(m.text || m.streaming || tutorMd) && (
+                  <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 font-sans">
+                    {isStreaming ? (
+                      <span className="whitespace-pre-wrap">
+                        {mdText.includes('"elements"') || mdText.includes("```excalidraw")
+                          ? "✍️ El tutor está dibujando en la pizarra..."
+                          : mdText}
+                        {!hasText ? <TypingDots /> : <TypingCaret />}
+                      </span>
+                    ) : (
+                      <ReactMarkdown components={makeMdComponents(m.boardImageB64, m.boardImagePlacement, m.pizarra)}>
+                        {mdText}
+                      </ReactMarkdown>
+                    )}
+                  </div>
+                )}
+
+                {/* ✅ En tutor, si hay imagen de pizarra, la mostramos DENTRO de la burbuja (sin romper layout) */}
+                {!isUser && activeThread?.mode === "tutor" && (m.boardImageB64 ?? null) ? (
+                  <div className="mt-3">
+                    <ChalkboardTutorBoard
+                      className="w-full"
+                      value={""} // la explicación ya va en markdown arriba
+                      boardImageB64={m.boardImageB64 ?? null}
+                      boardImagePlacement={m.boardImagePlacement ?? null}
+                    />
+                  </div>
+                ) : null}
+
+                {/* Indicador tutor (solo si aún no hay contenido) */}
+                {!isUser && activeThread?.mode === "tutor" && isStreaming && !(tutorMd || (m.text ?? "").trim()) ? (
+                  <div className="mt-2 text-[12px] text-zinc-600 flex items-center gap-2">
+                    <span>✍️ El tutor está preparando la explicación</span>
+                    <TypingDots />
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+</div>
+
 
         {/* ===== INPUT BAR ===== */}
         <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl">
