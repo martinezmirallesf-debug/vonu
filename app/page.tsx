@@ -293,6 +293,24 @@ function normalizeAssistantText(text: string) {
   const raw = text ?? "";
   return raw.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n");
 }
+function sanitizeTutorLikeImage(text: string) {
+  let s = String(text ?? "");
+
+  // Quitar envoltorios típicos de LaTeX inline/display
+  s = s.replace(/\\\(|\\\)|\\\[|\\\]/g, "");
+
+  // Convertir \frac{a}{b} => a/b (solo números o texto simple dentro)
+  s = s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "$1/$2");
+
+  // Quitar \times, \cdot, etc. (si cuela alguno)
+  s = s.replace(/\\times/g, "×");
+  s = s.replace(/\\cdot/g, "·");
+
+  // Normalizar saltos
+  s = s.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n");
+
+  return s.trim();
+}
 
 // ===== TUTOR (detección ligera frontend) =====
 function looksLikeTutorIntent(text: string) {
@@ -3061,19 +3079,19 @@ function replaceFractionsInText(text: string) {
 
           const rawText = isUser ? (m.text ?? "") : m.text || "";
 
-          // ✅ En tutor: si viene m.pizarra, usamos eso como markdown principal (sin fences)
-          const tutorMd =
-            !isUser && activeThread?.mode === "tutor" && (m.pizarra ?? "").trim()
-              ? (m.pizarra as string)
-              : null;
+          // ✅ En tutor, el texto principal SIEMPRE viene de m.text (como en la imagen).
+// La pizarra (m.pizarra / boardImage) solo es un EXTRA visual, nunca sustituye el texto.
+const mdTextRaw = isUser
+  ? rawText
+  : m.streaming
+  ? rawText
+  : normalizeAssistantText(rawText);
 
-          const mdText = isUser
-            ? rawText
-            : tutorMd
-            ? tutorMd
-            : m.streaming
-            ? rawText
-            : normalizeAssistantText(rawText);
+// ✅ Anti-LaTeX + formato limpio “como la imagen”
+const mdText = !isUser && activeThread?.mode === "tutor"
+  ? sanitizeTutorLikeImage(mdTextRaw)
+  : mdTextRaw;
+
 
           const isStreaming = !!m.streaming;
           const hasText = (m.text ?? "").length > 0;
@@ -3099,7 +3117,7 @@ function replaceFractionsInText(text: string) {
                   </div>
                 )}
 
-                {(m.text || m.streaming || tutorMd) && (
+                {(m.text || m.streaming) && (
                   <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 font-sans">
                     {isStreaming ? (
                       <span className="whitespace-pre-wrap">
@@ -3129,7 +3147,7 @@ function replaceFractionsInText(text: string) {
                 ) : null}
 
                 {/* Indicador tutor (solo si aún no hay contenido) */}
-                {!isUser && activeThread?.mode === "tutor" && isStreaming && !(tutorMd || (m.text ?? "").trim()) ? (
+                {!isUser && activeThread?.mode === "tutor" && isStreaming && !((m.text ?? "").trim()) ? (
                   <div className="mt-2 text-[12px] text-zinc-600 flex items-center gap-2">
                     <span>✍️ El tutor está preparando la explicación</span>
                     <TypingDots />
