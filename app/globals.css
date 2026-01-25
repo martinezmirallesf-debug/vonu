@@ -61,3 +61,12 @@
 .excalidraw .layer-ui__wrapper {
   background: transparent !important;
 }
+
+:root {
+  --font-sans: var(--font-poppins);
+}
+
+html,
+body {
+  font-family: var(--font-poppins), system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}

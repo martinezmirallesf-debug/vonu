@@ -3138,7 +3138,7 @@ if (!isUser && m.id === "init" && !m.pizarra) {
                           )}
 
                           {(m.text || m.streaming) && (
-  <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0">
+  <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 font-sans">
     {isStreaming ? (
       <span className="whitespace-pre-wrap">
         {mdText.includes('"elements"') || mdText.includes("```excalidraw")
