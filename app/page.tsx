@@ -3,14 +3,13 @@
 
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
 import ReactMarkdown from "react-markdown";
 import ChalkboardTutorBoard from "@/app/components/ChalkboardTutorBoard";
 
-import type { Components } from "react-markdown";
 
 type Placement = { x: number; y: number; w: number; h: number };
 
@@ -110,6 +109,48 @@ const FREE_MESSAGE_LIMIT = 2;
 function isDesktopPointer() {
   if (typeof window === "undefined") return true;
   return window.matchMedia?.("(pointer: fine)")?.matches ?? true;
+}
+
+function Fraction({ a, b }: { a: string; b: string }) {
+  return (
+    <span className="inline-flex align-middle mx-[2px]" style={{ transform: "translateY(1px)" }}>
+      <span className="inline-flex flex-col items-center leading-none">
+        <span className="text-[0.90em] font-semibold">{a}</span>
+        <span className="h-[1px] w-[1.15em] bg-zinc-900/70 my-[1px]" />
+        <span className="text-[0.90em] font-semibold">{b}</span>
+      </span>
+    </span>
+  );
+}
+
+function renderTextWithFractions(text: string) {
+  // Convierte "12/5" => fracción vertical.
+  // Nota: evitamos tocar texto vacío.
+  const s = String(text ?? "");
+  if (!s) return s;
+
+  const re = /(\d+)\s*\/\s*(\d+)/g;
+  const parts: Array<string | { a: string; b: string }> = [];
+
+  let last = 0;
+  let m: RegExpExecArray | null;
+
+  while ((m = re.exec(s)) !== null) {
+    const start = m.index;
+    const end = re.lastIndex;
+
+    if (start > last) parts.push(s.slice(last, start));
+    parts.push({ a: m[1], b: m[2] });
+
+    last = end;
+  }
+
+  if (last < s.length) parts.push(s.slice(last));
+
+  return parts.map((p, i) => {
+    if (typeof p === "string") return <span key={i}>{p}</span>;
+    return <Fraction key={i} a={p.a} b={p.b} />;
+  });
 }
 
 function UserIcon({ className }: { className?: string }) {
@@ -1361,58 +1402,48 @@ export default function Page() {
     setBoardOpen(true);
   }, []);
 
-  function makeMdComponents(
-  boardImageB64?: string | null,
-  boardImagePlacement?: { x: number; y: number; w: number; h: number } | null,
-  pizarraValue?: string | null
-): Components {
-  return {
-    code({ inline, className, children, ...props }: any) {
-      const isInline = !!inline;
+    function makeMdComponents(
+    boardImageB64?: string | null,
+    boardImagePlacement?: { x: number; y: number; w: number; h: number } | null,
+    pizarraValue?: string | null
+  ) {
+    return {
+      code({ inline, className, children, ...props }: any) {
+        const isInline = !!inline;
 
-      const cn = typeof className === "string" ? className : "";
-      const match = cn.match(/language-([a-zA-Z0-9_-]+)/);
-      const lang = (match?.[1] || "").toLowerCase();
+        const cn = typeof className === "string" ? className : "";
+        const match = cn.match(/language-([a-zA-Z0-9_-]+)/);
+        const lang = (match?.[1] || "").toLowerCase();
 
-      const content = Array.isArray(children) ? children.join("") : String(children ?? "");
-      const clean = content.replace(/\n$/, "");
+        const content = Array.isArray(children) ? children.join("") : String(children ?? "");
+        const clean = content.replace(/\n$/, "");
 
-      const boardValue =
-        pizarraValue && String(pizarraValue).trim()
-          ? String(pizarraValue)
-          : clean;
+        // ✅ Si llega un bloque ```pizarra``` / ```whiteboard```, lo mostramos como texto normal
+        if (!isInline && (lang === "pizarra" || lang === "whiteboard")) {
+          const boardValue = pizarraValue && String(pizarraValue).trim() ? String(pizarraValue) : clean;
 
-      // ✅ si el tutor devuelve ```pizarra o ```whiteboard → renderiza la pizarra bonita
-      if (!isInline && (lang === "pizarra" || lang === "whiteboard")) {
-        return (
-          <ChalkboardTutorBoard
-            value={boardValue}
-            boardImageB64={boardImageB64 ?? null}
-            boardImagePlacement={boardImagePlacement ?? null}
-          />
-        );
-      }
+          return <div className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-zinc-900">{boardValue}</div>;
+        }
 
-      // bloque normal (code block)
-      if (!isInline) {
-        return (
-          <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
-            <code className="text-[12.5px]" {...props}>
-              {clean}
-            </code>
-          </pre>
-        );
-      }
+        // bloque normal (code block)
+        if (!isInline) {
+          return (
+            <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
+              <code className="text-[12.5px]" {...props}>
+                {clean}
+              </code>
+            </pre>
+          );
+        }
 
-      // inline code
-      return (
-        <code className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]">
-          {clean}
-        </code>
-      );
-    },
-  };
-}
+        // inline code
+        return <code className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]">{clean}</code>;
+      },
+    } as any;
+  }
+
+
+
 
 
   function closeBoard() {
@@ -2106,6 +2137,38 @@ if (tutorIntent) {
     return () => window.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paywallOpen, payLoading, boardOpen, renameOpen, renameValue, activeThreadId]);
+
+  function Frac({ n, d }: { n: string; d: string }) {
+  return (
+    <span className="inline-flex flex-col items-center align-middle mx-1">
+      <span className="text-[0.85em] leading-none">{n}</span>
+      <span className="h-[1px] w-[1.6em] bg-current opacity-80 my-[2px]" />
+      <span className="text-[0.85em] leading-none">{d}</span>
+    </span>
+  );
+}
+
+function replaceFractionsInText(text: string) {
+  // Detecta fracciones tipo 12/5 (solo dígitos) y las renderiza apiladas
+  const re = /(\b\d+)\s*\/\s*(\d+\b)/g;
+  const parts: Array<string | { n: string; d: string }> = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+
+  while ((m = re.exec(text)) !== null) {
+    const start = m.index;
+    const end = start + m[0].length;
+    if (start > last) parts.push(text.slice(last, start));
+    parts.push({ n: m[1], d: m[2] });
+    last = end;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+
+  return parts.map((p, i) => {
+    if (typeof p === "string") return <Fragment key={i}>{p}</Fragment>;
+    return <Frac key={i} n={p.n} d={p.d} />;
+  });
+}
 
   // ============================
   // ✅ UI HELPERS: Bubble "WhatsApp" con piquito TRIÁNGULO (NO rombo)
@@ -3075,27 +3138,22 @@ if (!isUser && m.id === "init" && !m.pizarra) {
                           )}
 
                           {(m.text || m.streaming) && (
-                            <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0">
-                              {isStreaming ? (
-                                <span className="whitespace-pre-wrap">
-                                  {mdText.includes('"elements"') || mdText.includes("```excalidraw") ? "✍️ El tutor está dibujando en la pizarra..." : mdText}
-                                  {!hasText ? <TypingDots /> : <TypingCaret />}
-                                </span>
-                              ) : (
-                                <ReactMarkdown
-  components={makeMdComponents(
-    m.boardImageB64,
-    m.boardImagePlacement,
-    m.pizarra
-  )}
->
-  {mdText}
-</ReactMarkdown>
+  <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0">
+    {isStreaming ? (
+      <span className="whitespace-pre-wrap">
+        {mdText.includes('"elements"') || mdText.includes("```excalidraw")
+          ? "✍️ El tutor está dibujando en la pizarra..."
+          : mdText}
+        {!hasText ? <TypingDots /> : <TypingCaret />}
+      </span>
+    ) : (
+      <ReactMarkdown components={makeMdComponents(m.boardImageB64, m.boardImagePlacement, m.pizarra)}>
+        {mdText}
+      </ReactMarkdown>
+    )}
+  </div>
+)}
 
-
-                              )}
-                            </div>
-                          )}
                         </div>
                       </div>
                     );
@@ -3221,10 +3279,4 @@ if (!isUser && m.id === "init" && !m.pizarra) {
   );
 }
 
-// ============================
-// ✅ DEPLOY (Vercel automático)
-// 1) git add .
-// 2) git commit -m "Tutor board render + bubbles tail triangle + pizarra JSON"
-// 3) git push origin master
-// (Vercel despliega solo)
-// ============================
+

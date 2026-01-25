@@ -46,13 +46,10 @@ function isTag(line: string) {
 }
 
 /**
- * Normaliza “cosas raras”:
+ * Normaliza “cosas raras” (sin romper el formato COLE):
  * - Quita LaTeX: \( ... \) o \[ ... \]
- * - Cambia potencias a “²/³” cuando se pueda
+ * - Cambia potencias a “²/³”
  * - Limpia escapes típicos
- *
- * IMPORTANTE: esto NO debe romper alineación de espacios para formato “cole”.
- * Por eso, en modo normal sí comprimimos espacios; en modo COLE NO.
  */
 function prettifyLine(s: string, opts?: { preserveSpaces?: boolean }) {
   let t = (s ?? "").replace(/\r/g, "").trimEnd();
@@ -70,7 +67,7 @@ function prettifyLine(s: string, opts?: { preserveSpaces?: boolean }) {
   t = t.replace(/([a-zA-Z0-9])\s*\^\s*2\b/g, "$1²");
   t = t.replace(/([a-zA-Z0-9])\s*\^\s*3\b/g, "$1³");
 
-  // ❗️En modo “cole” NO comprimimos espacios (si no, adiós alineación)
+  // ✅ En COLE NO comprimimos espacios
   if (!opts?.preserveSpaces) {
     t = t.replace(/\s{2,}/g, " ");
   }
@@ -97,7 +94,6 @@ function parseMiniLanguage(raw: string): Section[] {
       continue;
     }
 
-    // Título
     if (line.startsWith("#")) {
       if (!title) title = line.replace(/^#+\s*/, "").trim();
       else out.push({ type: "raw", lines: [line] });
@@ -105,7 +101,6 @@ function parseMiniLanguage(raw: string): Section[] {
       continue;
     }
 
-    // Idea clave
     if (line.startsWith(">")) {
       if (!lead) lead = line.replace(/^>\s*/, "").trim();
       else out.push({ type: "raw", lines: [line] });
@@ -113,7 +108,6 @@ function parseMiniLanguage(raw: string): Section[] {
       continue;
     }
 
-    // Bullets iniciales
     if (line.startsWith("-")) {
       bullets.push(line.replace(/^-+\s*/, "").trim());
       i++;
@@ -122,17 +116,16 @@ function parseMiniLanguage(raw: string): Section[] {
 
     const upper = line.toUpperCase();
 
-    // ✅ COLE: bloque monoespaciado, preserva espacios
+    // ✅ COLE block
     if (upper === "[COLE]") {
       const block: string[] = [];
       i++;
       while (i < rawLines.length) {
         const rawL = rawLines[i] ?? "";
-        const up = rawL.trim().toUpperCase();
-        if (up === "[/COLE]") break;
+        if (rawL.trim().toUpperCase() === "[/COLE]") break;
 
-        // 👇 NO trim, NO compresión de espacios
-        block.push(prettifyLine(rawL, { preserveSpaces: true }).replace(/\r/g, ""));
+        // 👇 no trim, preservar espacios
+        block.push(prettifyLine(rawL, { preserveSpaces: true }));
         i++;
       }
       if (i < rawLines.length && rawLines[i].trim().toUpperCase() === "[/COLE]") i++;
@@ -218,18 +211,15 @@ function parseMiniLanguage(raw: string): Section[] {
       continue;
     }
 
-    // Ignorar [IMG] (la imagen llega por props)
     if (upper.startsWith("[IMG]")) {
       i++;
       continue;
     }
 
-    // Texto suelto
     out.push({ type: "raw", lines: [line] });
     i++;
   }
 
-  // Cabecera primero si existe
   if (title) out.unshift({ type: "title", text: title });
   if (lead) out.splice(title ? 1 : 0, 0, { type: "lead", text: lead });
   if (bullets.length) {
@@ -247,6 +237,60 @@ function toDataUrlMaybe(b64: string) {
   return `data:image/png;base64,${s}`;
 }
 
+/** Tokeniza una línea COLE y convierte "12/5" en una fracción apilada */
+type ColeToken = { kind: "text"; value: string } | { kind: "frac"; num: string; den: string };
+
+function tokenizeColeLine(line: string): ColeToken[] {
+  // Fracciones simples tipo 5/4, 117/20 (enteros)
+  const re = /(\d+)\s*\/\s*(\d+)/g;
+
+  const out: ColeToken[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+
+  while ((m = re.exec(line)) !== null) {
+    const start = m.index;
+    const end = start + m[0].length;
+
+    if (start > last) out.push({ kind: "text", value: line.slice(last, start) });
+
+    out.push({ kind: "frac", num: m[1], den: m[2] });
+
+    last = end;
+  }
+
+  if (last < line.length) out.push({ kind: "text", value: line.slice(last) });
+
+  // Si no hay fracciones, devolvemos la línea como texto
+  if (!out.length) return [{ kind: "text", value: line }];
+
+  return out;
+}
+
+function Fraction({ num, den }: { num: string; den: string }) {
+  return (
+    <span
+      className="inline-flex flex-col items-center align-middle mx-[2px]"
+      style={{
+        lineHeight: 1,
+        transform: "translateY(-1px)",
+        filter: "drop-shadow(0px 0px 0.45px rgba(255,255,255,0.22))",
+      }}
+    >
+      <span className="text-[0.92em] px-[2px]">{num}</span>
+      <span
+        className="w-full"
+        style={{
+          height: 0,
+          borderTop: "2px solid rgba(248,250,252,0.85)",
+          margin: "2px 0",
+        }}
+      />
+      <span className="text-[0.92em] px-[2px]">{den}</span>
+    </span>
+  );
+}
+
 export default function ChalkboardTutorBoard({
   value,
   boardImageB64 = null,
@@ -255,18 +299,13 @@ export default function ChalkboardTutorBoard({
 }: ChalkboardTutorBoardProps) {
   const sections = useMemo(() => parseMiniLanguage(value), [value]);
 
-  // Canvas lógico (para placement)
   const LOGICAL_W = 1000;
   const LOGICAL_H = 600;
 
   return (
-    // ✅ h-auto (crece según contenido). Sin “pantalla dentro de pantalla”.
     <div className={`relative w-full rounded-3xl overflow-hidden ${className}`}>
-      {/* Fondo pizarra */}
       <div className="absolute inset-0 bg-[#0B0F12] shadow-[0_30px_120px_rgba(0,0,0,0.55)]">
-        {/* Viñeteado suave */}
         <div className="absolute inset-0 pointer-events-none opacity-70 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.10),rgba(0,0,0,0.65)_60%)]" />
-        {/* Ruido / polvo */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.10] [background-image:radial-gradient(rgba(255,255,255,0.9)_1px,transparent_1px)] [background-size:10px_10px]" />
       </div>
 
@@ -277,10 +316,8 @@ export default function ChalkboardTutorBoard({
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           exit={{ opacity: 0, y: -6, filter: "blur(6px)" }}
           transition={{ duration: 0.35 }}
-          // ✅ YA NO absolute. Ahora el contenedor coge altura real.
           className="relative p-6 md:p-8"
         >
-          {/* Imagen (si existe) */}
           {boardImageB64 && boardImagePlacement ? (
             <div className="absolute inset-0 pointer-events-none">
               <div
@@ -294,17 +331,11 @@ export default function ChalkboardTutorBoard({
                   filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.45))",
                 }}
               >
-                <img
-                  src={toDataUrlMaybe(boardImageB64)}
-                  alt=""
-                  className="w-full h-full object-contain"
-                  draggable={false}
-                />
+                <img src={toDataUrlMaybe(boardImageB64)} alt="" className="w-full h-full object-contain" draggable={false} />
               </div>
             </div>
           ) : null}
 
-          {/* Texto “tiza” */}
           <div className="relative z-10 max-w-[980px] break-words">
             {sections.map((sec, idx) => {
               if (sec.type === "title") {
@@ -338,26 +369,38 @@ export default function ChalkboardTutorBoard({
                 );
               }
 
-              // ✅ BLOQUE "COLE" (fracciones/divisiones/matrices en columna)
+              // ✅ COLE: render “como en el cole” (espacios + fracciones apiladas)
               if (sec.type === "cole") {
                 return (
                   <div key={idx} className="mt-4 mb-4">
-                    <div className="text-white/70 font-semibold tracking-[0.16em] text-[13px] mb-2">
-                      EN EL COLE
-                    </div>
+                    <div className="text-white/70 font-semibold tracking-[0.16em] text-[13px] mb-2">EN EL COLE</div>
 
                     <div
                       className="rounded-3xl border border-white/15 bg-black/25 p-4 md:p-5 text-white text-[16px] md:text-[17px]"
                       style={{
                         fontFamily:
-                          'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-                        whiteSpace: "pre",
-                        lineHeight: 1.35,
-                        overflowX: "auto",
-                        WebkitOverflowScrolling: "touch",
+                          '"Chalkboard SE","Bradley Hand","Comic Sans MS","Segoe Print",ui-sans-serif,system-ui',
+                        textShadow: "0 0 1px rgba(255,255,255,.16)",
                       }}
                     >
-                      {sec.lines.join("\n")}
+                      {sec.lines.map((line, i) => {
+                        const tokens = tokenizeColeLine(line);
+
+                        return (
+                          <div key={i} style={{ whiteSpace: "pre", lineHeight: 1.35 }}>
+                            {tokens.map((t, k) => {
+                              if (t.kind === "text") {
+                                return (
+                                  <span key={k} style={{ whiteSpace: "pre" }}>
+                                    {t.value}
+                                  </span>
+                                );
+                              }
+                              return <Fraction key={k} num={t.num} den={t.den} />;
+                            })}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -366,9 +409,7 @@ export default function ChalkboardTutorBoard({
               if (sec.type === "diagram") {
                 return (
                   <div key={idx} className="mt-4 mb-4">
-                    <div className="text-white/70 font-semibold tracking-[0.16em] text-[13px] mb-2">
-                      DIAGRAMA
-                    </div>
+                    <div className="text-white/70 font-semibold tracking-[0.16em] text-[13px] mb-2">DIAGRAMA</div>
                     <div className="space-y-1 text-white text-[16px] md:text-[17px]">
                       {sec.lines.map((l, i) => (
                         <div key={i} className="opacity-95">
@@ -383,9 +424,7 @@ export default function ChalkboardTutorBoard({
               if (sec.type === "formula") {
                 return (
                   <div key={idx} className="mt-4 mb-4">
-                    <div className="text-white/70 font-semibold tracking-[0.16em] text-[13px] mb-2">
-                      FÓRMULA
-                    </div>
+                    <div className="text-white/70 font-semibold tracking-[0.16em] text-[13px] mb-2">FÓRMULA</div>
                     <div className="inline-block rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-white text-[16px] md:text-[17px] break-words">
                       {sec.text}
                     </div>
@@ -396,9 +435,7 @@ export default function ChalkboardTutorBoard({
               if (sec.type === "work") {
                 return (
                   <div key={idx} className="mt-4 mb-4">
-                    <div className="text-white/70 font-semibold tracking-[0.16em] text-[13px] mb-2">
-                      PASO A PASO
-                    </div>
+                    <div className="text-white/70 font-semibold tracking-[0.16em] text-[13px] mb-2">PASO A PASO</div>
                     <div className="rounded-3xl border border-white/15 bg-black/20 p-4 md:p-5">
                       <ol className="space-y-2 text-white text-[15px] md:text-[16px] list-decimal pl-5">
                         {sec.lines.map((l, i) => (
@@ -415,9 +452,7 @@ export default function ChalkboardTutorBoard({
               if (sec.type === "result") {
                 return (
                   <div key={idx} className="mt-4 mb-4">
-                    <div className="text-white/70 font-semibold tracking-[0.16em] text-[13px] mb-2">
-                      RESULTADO
-                    </div>
+                    <div className="text-white/70 font-semibold tracking-[0.16em] text-[13px] mb-2">RESULTADO</div>
                     <div className="rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-white text-[16px] md:text-[17px] break-words">
                       {sec.text}
                     </div>
@@ -428,9 +463,7 @@ export default function ChalkboardTutorBoard({
               if (sec.type === "check") {
                 return (
                   <div key={idx} className="mt-4 mb-2">
-                    <div className="text-white/70 font-semibold tracking-[0.16em] text-[13px] mb-2">
-                      MINI CHECK
-                    </div>
+                    <div className="text-white/70 font-semibold tracking-[0.16em] text-[13px] mb-2">MINI CHECK</div>
                     <div className="space-y-2 text-white text-[15px] md:text-[16px]">
                       {sec.lines.map((l, i) => (
                         <div key={i} className="opacity-95 break-words">
