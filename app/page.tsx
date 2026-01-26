@@ -3344,14 +3344,13 @@ function replaceFractionsInText(text: string) {
         hacer?
       </div>
 
-      <div className="mt-8 grid grid-cols-2 gap-3 justify-items-start">
+      <div className="mt-8 flex flex-wrap gap-3">
   {quickPrompts.map((p) => (
     <button
       key={p.label}
       onClick={() => applyQuickPrompt(p)}
       className={[
         "inline-flex items-center justify-center",
-        "justify-self-start", // ✅ cada botón se centra en su celda
         "rounded-full border border-zinc-900/35 bg-white",
         "px-5 py-2.5 text-[13px] font-semibold text-zinc-900",
         "shadow-sm hover:bg-zinc-50 transition-colors",
