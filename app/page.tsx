@@ -1697,9 +1697,30 @@ const quickPrompts = useMemo(
     { label: "Estudiar", mode: "tutor" as ThreadMode, text: "Quiero estudiar esto. Explícamelo paso a paso:" },
     { label: "Revisar contrato", mode: "chat" as ThreadMode, text: "¿Me ayudas a revisar este contrato/cláusula? Te lo pego:" },
     { label: "Identificar posible estafa", mode: "chat" as ThreadMode, text: "Me han enviado este mensaje y no sé si es estafa. Te lo pego:" },
+
+    // ✅ Nueva “burbuja” extra (útil y genérica)
+    { label: "Resumir y puntos clave", mode: "chat" as ThreadMode, text: "Resúmeme esto en 5 puntos clave y dime qué harías tú:" },
+
+    // ✅ Personas sordas: empezamos por transcripción (ya funciona hoy)
+    { label: "Resumir audio", mode: "chat" as ThreadMode, text: "Voy a pegar la transcripción de un audio/nota de voz. Resúmelo claro y dime lo importante:" },
   ],
   []
 );
+
+
+// ✅ FIX: en pantalla inicial (sin mensajes del usuario) evitamos el auto-scroll “raro”
+useEffect(() => {
+  const el = scrollRef.current;
+  if (!el) return;
+
+  if (!hasUserMessage) {
+    shouldStickToBottomRef.current = false;
+    // forzamos arriba sin animación
+    requestAnimationFrame(() => {
+      el.scrollTo({ top: 0, behavior: "auto" });
+    });
+  }
+}, [hasUserMessage]);
 
 function applyQuickPrompt(p: { label: string; mode: ThreadMode; text: string }) {
   // ✅ Envío inmediato: al mandar el primer mensaje, desaparece la pantalla inicial automáticamente
@@ -3313,8 +3334,8 @@ function replaceFractionsInText(text: string) {
       ) : null}
 {!hasUserMessage ? (
   <div className="px-1">
-    <div className="pt-8 md:pt-10">
-      <div className="text-zinc-900 font-black tracking-tight leading-[0.92] text-[56px] md:text-[72px]">
+    <div className="pt-8 md:pt-10 ml-2">
+  <div className="text-zinc-900 font-black tracking-tight leading-[0.92] text-[56px] md:text-[72px]">
         ¿Qué
         <br />
         quieres
@@ -3322,7 +3343,7 @@ function replaceFractionsInText(text: string) {
         hacer?
       </div>
 
-      <div className="mt-10 flex flex-wrap gap-3 justify-center md:justify-start">
+      <div className="mt-10 flex flex-wrap gap-3 justify-start">
         {quickPrompts.map((p) => (
           <button
             key={p.label}
