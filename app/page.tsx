@@ -1692,18 +1692,20 @@ export default function Page() {
   const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
 const quickPrompts = useMemo(
   () => [
-    { title: "Analizar un mensaje", desc: "SMS / WhatsApp / email sospechoso", text: "He recibido este mensaje. ¿Puede ser una estafa? Te lo pego:" },
-    { title: "Revisar un enlace o web", desc: "¿Es fiable para comprar/pagar?", text: "¿Puedes revisar si esta web/enlace es fiable antes de comprar?" },
-    { title: "Decisión sensible", desc: "Pago, suscripción, contrato, oferta", text: "Tengo esta situación y no sé si es buena idea. Quiero decidir con calma:" },
-    { title: "Modo Tutor", desc: "Explicación paso a paso", text: "Explícame esto paso a paso como si fuera un profe:" },
+    { label: "Hacer deberes", mode: "tutor" as ThreadMode, text: "Tengo este ejercicio. Explícamelo paso a paso como profe:" },
+    { label: "Analizar web", mode: "chat" as ThreadMode, text: "¿Esta web/enlace es fiable? Te lo paso:" },
+    { label: "Estudiar", mode: "tutor" as ThreadMode, text: "Quiero estudiar esto. Explícamelo paso a paso:" },
+    { label: "Revisar contrato", mode: "chat" as ThreadMode, text: "¿Me ayudas a revisar este contrato/cláusula? Te lo pego:" },
+    { label: "Identificar posible estafa", mode: "chat" as ThreadMode, text: "Me han enviado este mensaje y no sé si es estafa. Te lo pego:" },
   ],
   []
 );
 
-function applyQuickPrompt(text: string) {
-  setInput(text);
-  setTimeout(() => textareaRef.current?.focus(), 60);
+function applyQuickPrompt(p: { label: string; mode: ThreadMode; text: string }) {
+  // ✅ Envío inmediato: al mandar el primer mensaje, desaparece la pantalla inicial automáticamente
+  sendQuickMessage(p.text, p.mode);
 }
+
 
   // textarea autoresize
   useEffect(() => {
@@ -1884,6 +1886,232 @@ function applyQuickPrompt(text: string) {
     return false;
   }
 
+  async function sendQuickMessage(textPreset: string, modePreset: ThreadMode) {
+    if (authLoading) return;
+
+    if (enforceLimitIfNeeded()) return;
+
+    if (isBlockedByPaywall) {
+      openPlansModal();
+      return;
+    }
+
+    if (isTyping) return;
+    if (!activeThread) return;
+
+    const targetThreadId = activeThread.id;
+    activeThreadIdRef.current = targetThreadId;
+
+    const userText = (textPreset || "").trim();
+    if (!userText) return;
+
+    setUiError(null);
+
+    // ✅ Guardamos modo en el thread (así el backend recibe el modo correcto)
+    setThreads((prev) =>
+      prev.map((t) =>
+        t.id === targetThreadId
+          ? {
+              ...t,
+              updatedAt: Date.now(),
+              mode: modePreset,
+              tutorProfile: t.tutorProfile ?? { level: "adult" },
+            }
+          : t
+      )
+    );
+
+    const userMsg: Message = {
+      id: crypto.randomUUID(),
+      role: "user",
+      text: userText,
+    };
+
+    const assistantId = crypto.randomUUID();
+    const assistantMsg: Message = {
+      id: assistantId,
+      role: "assistant",
+      text: "",
+      streaming: true,
+      pizarra: null,
+      boardImageB64: null,
+      boardImagePlacement: null,
+    };
+
+    shouldStickToBottomRef.current = true;
+
+    setThreads((prev) =>
+      prev.map((t) => {
+        if (t.id !== targetThreadId) return t;
+        return {
+          ...t,
+          updatedAt: Date.now(),
+          messages: [...t.messages, userMsg, assistantMsg],
+        };
+      })
+    );
+
+    setInput(""); // por si había algo escrito
+    setImagePreview(null);
+    setIsTyping(true);
+
+    try {
+      await sleep(200);
+
+      // ⚠️ Importante: usamos el estado "prev" más fiable: leemos del localStorage state actual
+      const threadNow = (threads.find((x) => x.id === targetThreadId) ?? activeThread) as ChatThread;
+
+      const convoForApi = [...(threadNow?.messages ?? []), userMsg]
+        .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
+        .map((m) => ({
+          role: m.role,
+          content: m.text ?? "",
+        }));
+
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify({
+          messages: convoForApi,
+          userText,
+          imageBase64: null,
+          mode: modePreset,
+          tutorLevel: activeThread?.tutorProfile?.level ?? "adult",
+        }),
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`HTTP ${res.status} ${res.statusText} ${txt}`);
+      }
+
+      const data = await res.json().catch(() => ({} as any));
+
+      const fullText =
+        typeof data?.text === "string" && data.text.trim()
+          ? data.text
+          : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
+
+      const boardImageB64 = typeof data?.boardImageB64 === "string" && data.boardImageB64 ? data.boardImageB64 : null;
+
+      const boardImagePlacement =
+        data?.boardImagePlacement &&
+        typeof data.boardImagePlacement?.x === "number" &&
+        typeof data.boardImagePlacement?.y === "number" &&
+        typeof data.boardImagePlacement?.w === "number" &&
+        typeof data.boardImagePlacement?.h === "number"
+          ? (data.boardImagePlacement as { x: number; y: number; w: number; h: number })
+          : null;
+
+      const pizarraJson = typeof data?.pizarra === "string" && data.pizarra.trim() ? data.pizarra : null;
+
+      await sleep(90);
+
+      const isTutor = modePreset === "tutor";
+
+      if (isTutor) {
+        await sleep(220);
+
+        setThreads((prev) =>
+          prev.map((t) => {
+            if (t.id !== targetThreadId) return t;
+            return {
+              ...t,
+              updatedAt: Date.now(),
+              messages: t.messages.map((m) =>
+                m.id === assistantId
+                  ? {
+                      ...m,
+                      text: fullText,
+                      streaming: false,
+                      pizarra: pizarraJson,
+                      boardImageB64,
+                      boardImagePlacement,
+                    }
+                  : m
+              ),
+            };
+          })
+        );
+
+        setIsTyping(false);
+        if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+      } else {
+        let i = 0;
+        const speedMs = fullText.length > 900 ? 7 : 11;
+
+        const interval = setInterval(() => {
+          i++;
+          const partial = fullText.slice(0, i);
+
+          setThreads((prev) =>
+            prev.map((t) => {
+              if (t.id !== targetThreadId) return t;
+              return {
+                ...t,
+                updatedAt: Date.now(),
+                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
+              };
+            })
+          );
+
+          if (i >= fullText.length) {
+            clearInterval(interval);
+
+            setThreads((prev) =>
+              prev.map((t) => {
+                if (t.id !== targetThreadId) return t;
+                return {
+                  ...t,
+                  updatedAt: Date.now(),
+                  messages: t.messages.map((m) =>
+                    m.id === assistantId
+                      ? {
+                          ...m,
+                          streaming: false,
+                          pizarra: pizarraJson,
+                          boardImageB64,
+                          boardImagePlacement,
+                        }
+                      : m
+                  ),
+                };
+              })
+            );
+
+            setIsTyping(false);
+            if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+          }
+        }, speedMs);
+      }
+    } catch (err: any) {
+      const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
+
+      setThreads((prev) =>
+        prev.map((t) => {
+          if (t.id !== targetThreadId) return t;
+          return {
+            ...t,
+            updatedAt: Date.now(),
+            messages: t.messages.map((m) =>
+              m.id === assistantId
+                ? {
+                    ...m,
+                    streaming: false,
+                    text: "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" + msg + "\n```",
+                  }
+                : m
+            ),
+          };
+        })
+      );
+
+      setUiError(msg);
+      setIsTyping(false);
+      if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+    }
+  }
 
   async function sendMessage() {
     if (authLoading) return;
@@ -3085,31 +3313,35 @@ function replaceFractionsInText(text: string) {
       ) : null}
 {!hasUserMessage ? (
   <div className="px-1">
-    <div className="rounded-[26px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,0.10)] p-5">
-      <div className="text-[18px] font-semibold text-zinc-900">¿Qué quieres hacer hoy? 🙂</div>
-      <div className="mt-1 text-[13px] text-zinc-600 leading-5">
-        Cuéntame tu situación o pega un mensaje/enlace. Te diré el riesgo real y qué haría ahora.
+    <div className="pt-8 md:pt-10">
+      <div className="text-zinc-900 font-black tracking-tight leading-[0.92] text-[56px] md:text-[72px]">
+        ¿Qué
+        <br />
+        quieres
+        <br />
+        hacer?
       </div>
 
-      <div className="mt-4 grid gap-2">
-        {quickPrompts.map((q) => (
+      <div className="mt-10 flex flex-wrap gap-3 justify-center md:justify-start">
+        {quickPrompts.map((p) => (
           <button
-            key={q.title}
-            onClick={() => applyQuickPrompt(q.text)}
-            className="w-full text-left rounded-[18px] border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors px-4 py-3"
+            key={p.label}
+            onClick={() => applyQuickPrompt(p)}
+            className={[
+              "rounded-full border border-zinc-900/35 bg-white",
+              "px-5 py-2.5 text-[13px] font-semibold text-zinc-900",
+              "shadow-sm hover:bg-zinc-50 transition-colors",
+              "active:scale-[0.99]",
+            ].join(" ")}
           >
-            <div className="text-[14px] font-semibold text-zinc-900">{q.title}</div>
-            <div className="text-[12.5px] text-zinc-600 mt-0.5">{q.desc}</div>
+            {p.label}
           </button>
         ))}
-      </div>
-
-      <div className="mt-4 text-[11.5px] text-zinc-500">
-        Tip: puedes adjuntar una captura con el botón <span className="font-semibold text-zinc-700">+</span>.
       </div>
     </div>
   </div>
 ) : null}
+
 
       {/* ✅ SIEMPRE bubbles (chat y tutor). En tutor solo cambia el contenido */}
       <div className="flex flex-col gap-4">
