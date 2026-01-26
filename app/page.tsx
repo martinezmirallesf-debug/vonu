@@ -1694,15 +1694,16 @@ const quickPrompts = useMemo(
   () => [
     { label: "Hacer deberes", mode: "tutor" as ThreadMode, text: "Tengo este ejercicio. Explícamelo paso a paso como profe:" },
     { label: "Analizar web", mode: "chat" as ThreadMode, text: "¿Esta web/enlace es fiable? Te lo paso:" },
+
     { label: "Estudiar", mode: "tutor" as ThreadMode, text: "Quiero estudiar esto. Explícamelo paso a paso:" },
     { label: "Revisar contrato", mode: "chat" as ThreadMode, text: "¿Me ayudas a revisar este contrato/cláusula? Te lo pego:" },
-    { label: "Identificar posible estafa", mode: "chat" as ThreadMode, text: "Me han enviado este mensaje y no sé si es estafa. Te lo pego:" },
 
-    // ✅ Personas sordas: empezamos por transcripción (ya funciona hoy)
-    { label: "Resumir audio", mode: "chat" as ThreadMode, text: "Voy a pegar la transcripción de un audio/nota de voz. Resúmelo claro y dime lo importante:" },
+    { label: "Identificar posible estafa", mode: "chat" as ThreadMode, text: "Me han enviado este mensaje y no sé si es estafa. Te lo pego:" },
+    { label: "Resumir audio", mode: "chat" as ThreadMode, text: "Voy a pegar la transcripción de un audio o nota de voz. Resúmelo claro y dime lo importante:" },
   ],
   []
 );
+
 
 
 // ✅ FIX: en pantalla inicial (sin mensajes del usuario) evitamos el auto-scroll “raro”
@@ -3343,14 +3344,14 @@ function replaceFractionsInText(text: string) {
         hacer?
       </div>
 
-      <div className="mt-8 grid grid-cols-2 gap-3">
+      <div className="mt-8 grid grid-cols-2 gap-3 justify-items-start">
   {quickPrompts.map((p) => (
     <button
       key={p.label}
       onClick={() => applyQuickPrompt(p)}
       className={[
         "inline-flex items-center justify-center",
-        "justify-self-center", // ✅ cada botón se centra en su celda
+        "justify-self-start", // ✅ cada botón se centra en su celda
         "rounded-full border border-zinc-900/35 bg-white",
         "px-5 py-2.5 text-[13px] font-semibold text-zinc-900",
         "shadow-sm hover:bg-zinc-50 transition-colors",
