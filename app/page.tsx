@@ -3340,21 +3340,25 @@ function replaceFractionsInText(text: string) {
         hacer?
       </div>
 
-      <div className="mt-10 grid grid-cols-2 gap-3 justify-start">
+      <div className="mt-8 flex flex-wrap gap-3">
   {quickPrompts.map((p, idx) => (
     <button
       key={p.label}
       onClick={() => applyQuickPrompt(p)}
       className={[
+        // ✅ 2 por fila sin hacerse gigantes
+        "basis-[calc(50%-6px)] shrink-0",
+
         "rounded-full border border-zinc-900/35 bg-white",
         "px-5 py-2.5 text-[13px] font-semibold text-zinc-900",
         "shadow-sm hover:bg-zinc-50 transition-colors",
         "active:scale-[0.99]",
-        "w-full", // ✅ para que las 2 columnas queden uniformes
-        idx === quickPrompts.length - 1 ? "col-span-2 justify-self-center max-w-[360px]" : "", // ✅ la última centrada
+
+        // ✅ evita que el texto haga el botón más alto (clave para quitar scroll)
+        "whitespace-nowrap",
       ].join(" ")}
     >
-      {p.label}
+      {p.label === "Identificar posible estafa" ? "Posible estafa" : p.label}
     </button>
   ))}
 </div>
