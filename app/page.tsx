@@ -293,16 +293,17 @@ function normalizeAssistantText(text: string) {
   const raw = text ?? "";
   return raw.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n");
 }
+
 function sanitizeTutorLikeImage(text: string) {
   let s = String(text ?? "");
 
   // Quitar envoltorios típicos de LaTeX inline/display
   s = s.replace(/\\\(|\\\)|\\\[|\\\]/g, "");
 
-  // Convertir \frac{a}{b} => a/b (solo números o texto simple dentro)
+  // Convertir \frac{a}{b} => a/b
   s = s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "$1/$2");
 
-  // Quitar \times, \cdot, etc. (si cuela alguno)
+  // Convertir \times y \cdot si cuela alguno
   s = s.replace(/\\times/g, "×");
   s = s.replace(/\\cdot/g, "·");
 
@@ -311,6 +312,8 @@ function sanitizeTutorLikeImage(text: string) {
 
   return s.trim();
 }
+
+
 
 // ===== TUTOR (detección ligera frontend) =====
 function looksLikeTutorIntent(text: string) {
@@ -1687,6 +1690,20 @@ export default function Page() {
   }, [isTyping, input, imagePreview, isBlockedByPaywall]);
 
   const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
+const quickPrompts = useMemo(
+  () => [
+    { title: "Analizar un mensaje", desc: "SMS / WhatsApp / email sospechoso", text: "He recibido este mensaje. ¿Puede ser una estafa? Te lo pego:" },
+    { title: "Revisar un enlace o web", desc: "¿Es fiable para comprar/pagar?", text: "¿Puedes revisar si esta web/enlace es fiable antes de comprar?" },
+    { title: "Decisión sensible", desc: "Pago, suscripción, contrato, oferta", text: "Tengo esta situación y no sé si es buena idea. Quiero decidir con calma:" },
+    { title: "Modo Tutor", desc: "Explicación paso a paso", text: "Explícame esto paso a paso como si fuera un profe:" },
+  ],
+  []
+);
+
+function applyQuickPrompt(text: string) {
+  setInput(text);
+  setTimeout(() => textareaRef.current?.focus(), 60);
+}
 
   // textarea autoresize
   useEffect(() => {
@@ -3066,6 +3083,33 @@ function replaceFractionsInText(text: string) {
           </div>
         </div>
       ) : null}
+{!hasUserMessage ? (
+  <div className="px-1">
+    <div className="rounded-[26px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,0.10)] p-5">
+      <div className="text-[18px] font-semibold text-zinc-900">¿Qué quieres hacer hoy? 🙂</div>
+      <div className="mt-1 text-[13px] text-zinc-600 leading-5">
+        Cuéntame tu situación o pega un mensaje/enlace. Te diré el riesgo real y qué haría ahora.
+      </div>
+
+      <div className="mt-4 grid gap-2">
+        {quickPrompts.map((q) => (
+          <button
+            key={q.title}
+            onClick={() => applyQuickPrompt(q.text)}
+            className="w-full text-left rounded-[18px] border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors px-4 py-3"
+          >
+            <div className="text-[14px] font-semibold text-zinc-900">{q.title}</div>
+            <div className="text-[12.5px] text-zinc-600 mt-0.5">{q.desc}</div>
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4 text-[11.5px] text-zinc-500">
+        Tip: puedes adjuntar una captura con el botón <span className="font-semibold text-zinc-700">+</span>.
+      </div>
+    </div>
+  </div>
+) : null}
 
       {/* ✅ SIEMPRE bubbles (chat y tutor). En tutor solo cambia el contenido */}
       <div className="flex flex-col gap-4">
@@ -3077,9 +3121,9 @@ function replaceFractionsInText(text: string) {
             return null;
           }
 
-          const rawText = isUser ? (m.text ?? "") : m.text || "";
+          const rawText = isUser ? (m.text ?? "") : (m.text ?? "");
 
-          // ✅ En tutor, el texto principal SIEMPRE viene de m.text (como en la imagen).
+// ✅ En tutor, el texto principal SIEMPRE viene de m.text (como en la imagen).
 // La pizarra (m.pizarra / boardImage) solo es un EXTRA visual, nunca sustituye el texto.
 const mdTextRaw = isUser
   ? rawText
@@ -3088,79 +3132,81 @@ const mdTextRaw = isUser
   : normalizeAssistantText(rawText);
 
 // ✅ Anti-LaTeX + formato limpio “como la imagen”
-const mdText = !isUser && activeThread?.mode === "tutor"
-  ? sanitizeTutorLikeImage(mdTextRaw)
-  : mdTextRaw;
+const mdText =
+  !isUser && activeThread?.mode === "tutor"
+    ? sanitizeTutorLikeImage(mdTextRaw)
+    : mdTextRaw;
 
 
-          const isStreaming = !!m.streaming;
-          const hasText = (m.text ?? "").length > 0;
+const isStreaming = !!m.streaming;
+const hasText = (m.text ?? "").length > 0;
 
-          const bubbleColor = isUser ? "#dcf8c6" : "#e8f0fe";
+const bubbleColor = isUser ? "#dcf8c6" : "#e8f0fe";
 
-          return (
-            <div key={m.id} className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
-              <div
-                className={[
-                  "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed overflow-hidden break-words",
-                  isUser
-                    ? "bg-[#dcf8c6] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-sm mr-2"
-                    : "bg-[#e8f0fe] text-zinc-900 rounded-r-2xl rounded-bl-2xl rounded-tl-sm ml-2",
-                ].join(" ")}
-              >
-                {/* ✅ triángulo */}
-                <BubbleTail side={isUser ? "right" : "left"} color={bubbleColor} />
+return (
+  <div key={m.id} className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
+    <div
+      className={[
+        "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed overflow-hidden break-words",
+        isUser
+          ? "bg-[#dcf8c6] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-sm mr-2"
+          : "bg-[#e8f0fe] text-zinc-900 rounded-r-2xl rounded-bl-2xl rounded-tl-sm ml-2",
+      ].join(" ")}
+    >
+      {/* ✅ triángulo */}
+      <BubbleTail side={isUser ? "right" : "left"} color={bubbleColor} />
 
-                {m.image && (
-                  <div className="mb-2">
-                    <img src={m.image} alt="Adjunto" className="rounded-md max-h-60 max-w-full object-cover" />
-                  </div>
-                )}
+      {m.image && (
+        <div className="mb-2">
+          <img src={m.image} alt="Adjunto" className="rounded-md max-h-60 max-w-full object-cover" />
+        </div>
+      )}
 
-                {(m.text || m.streaming) && (
-                  <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 font-sans">
-                    {isStreaming ? (
-                      <span className="whitespace-pre-wrap">
-                        {mdText.includes('"elements"') || mdText.includes("```excalidraw")
-                          ? "✍️ El tutor está dibujando en la pizarra..."
-                          : mdText}
-                        {!hasText ? <TypingDots /> : <TypingCaret />}
-                      </span>
-                    ) : (
-                      <ReactMarkdown components={makeMdComponents(m.boardImageB64, m.boardImagePlacement, m.pizarra)}>
-                        {mdText}
-                      </ReactMarkdown>
-                    )}
-                  </div>
-                )}
+      {(m.text || m.streaming) && (
+        <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 font-sans">
+          {isStreaming ? (
+            <span className="whitespace-pre-wrap">
+              {mdText.includes('"elements"') || mdText.includes("```excalidraw")
+                ? "✍️ El tutor está dibujando en la pizarra..."
+                : mdText}
+              {!hasText ? <TypingDots /> : <TypingCaret />}
+            </span>
+          ) : (
+            <ReactMarkdown components={makeMdComponents(m.boardImageB64, m.boardImagePlacement, m.pizarra)}>
+              {mdText}
+            </ReactMarkdown>
+          )}
+        </div>
+      )}
 
-                {/* ✅ En tutor, si hay imagen de pizarra, la mostramos DENTRO de la burbuja (sin romper layout) */}
-                {!isUser && activeThread?.mode === "tutor" && (m.boardImageB64 ?? null) ? (
-                  <div className="mt-3">
-                    <ChalkboardTutorBoard
-                      className="w-full"
-                      value={""} // la explicación ya va en markdown arriba
-                      boardImageB64={m.boardImageB64 ?? null}
-                      boardImagePlacement={m.boardImagePlacement ?? null}
-                    />
-                  </div>
-                ) : null}
+      {/* ✅ En tutor, si hay imagen de pizarra, la mostramos DENTRO de la burbuja (sin romper layout) */}
+      {!isUser && activeThread?.mode === "tutor" && m.boardImageB64 ? (
+        <div className="mt-3">
+          <ChalkboardTutorBoard
+            className="w-full"
+            value={""} // la explicación ya va en markdown arriba
+            boardImageB64={m.boardImageB64}
+            boardImagePlacement={m.boardImagePlacement}
+          />
+        </div>
+      ) : null}
 
-                {/* Indicador tutor (solo si aún no hay contenido) */}
-                {!isUser && activeThread?.mode === "tutor" && isStreaming && !((m.text ?? "").trim()) ? (
-                  <div className="mt-2 text-[12px] text-zinc-600 flex items-center gap-2">
-                    <span>✍️ El tutor está preparando la explicación</span>
-                    <TypingDots />
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          );
+      {/* Indicador tutor (solo si aún no hay contenido) */}
+      {!isUser && activeThread?.mode === "tutor" && isStreaming && !((m.text ?? "").trim()) ? (
+        <div className="mt-2 text-[12px] text-zinc-600 flex items-center gap-2">
+          <span>✍️ El tutor está preparando la explicación</span>
+          <TypingDots />
+        </div>
+      ) : null}
+    </div>
+  </div>
+);
         })}
       </div>
     </div>
   </div>
 </div>
+
 
 
         {/* ===== INPUT BAR ===== */}
@@ -3181,7 +3227,17 @@ const mdText = !isUser && activeThread?.mode === "tutor"
 
             {micMsg && <div className="mb-2 text-[12px] text-zinc-600 bg-white border border-zinc-200 rounded-2xl px-3 py-2">{micMsg}</div>}
 
-            <div className={["w-full", "relative rounded-[26px] border border-zinc-200 bg-white", "overflow-hidden"].join(" ")}>
+            <div
+  className={[
+    "w-full",
+    "relative rounded-[26px] border border-zinc-200",
+    "bg-transparent",
+    "shadow-[0_10px_30px_rgba(0,0,0,0.08)]",
+    "backdrop-blur-xl",
+    "overflow-hidden",
+  ].join(" ")}
+>
+
               {/* LEFT ICONS */}
               <div className="absolute left-2.5 bottom-2 flex items-center gap-1">
                 <button
