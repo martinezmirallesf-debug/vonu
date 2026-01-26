@@ -1698,9 +1698,6 @@ const quickPrompts = useMemo(
     { label: "Revisar contrato", mode: "chat" as ThreadMode, text: "¿Me ayudas a revisar este contrato/cláusula? Te lo pego:" },
     { label: "Identificar posible estafa", mode: "chat" as ThreadMode, text: "Me han enviado este mensaje y no sé si es estafa. Te lo pego:" },
 
-    // ✅ Nueva “burbuja” extra (útil y genérica)
-    { label: "Resumir y puntos clave", mode: "chat" as ThreadMode, text: "Resúmeme esto en 5 puntos clave y dime qué harías tú:" },
-
     // ✅ Personas sordas: empezamos por transcripción (ya funciona hoy)
     { label: "Resumir audio", mode: "chat" as ThreadMode, text: "Voy a pegar la transcripción de un audio/nota de voz. Resúmelo claro y dime lo importante:" },
   ],
@@ -3343,22 +3340,25 @@ function replaceFractionsInText(text: string) {
         hacer?
       </div>
 
-      <div className="mt-10 flex flex-wrap gap-3 justify-start">
-        {quickPrompts.map((p) => (
-          <button
-            key={p.label}
-            onClick={() => applyQuickPrompt(p)}
-            className={[
-              "rounded-full border border-zinc-900/35 bg-white",
-              "px-5 py-2.5 text-[13px] font-semibold text-zinc-900",
-              "shadow-sm hover:bg-zinc-50 transition-colors",
-              "active:scale-[0.99]",
-            ].join(" ")}
-          >
-            {p.label}
-          </button>
-        ))}
-      </div>
+      <div className="mt-10 grid grid-cols-2 gap-3 justify-start">
+  {quickPrompts.map((p, idx) => (
+    <button
+      key={p.label}
+      onClick={() => applyQuickPrompt(p)}
+      className={[
+        "rounded-full border border-zinc-900/35 bg-white",
+        "px-5 py-2.5 text-[13px] font-semibold text-zinc-900",
+        "shadow-sm hover:bg-zinc-50 transition-colors",
+        "active:scale-[0.99]",
+        "w-full", // ✅ para que las 2 columnas queden uniformes
+        idx === quickPrompts.length - 1 ? "col-span-2 justify-self-center max-w-[360px]" : "", // ✅ la última centrada
+      ].join(" ")}
+    >
+      {p.label}
+    </button>
+  ))}
+</div>
+
     </div>
   </div>
 ) : null}
