@@ -3316,8 +3316,11 @@ function replaceFractionsInText(text: string) {
 {/* ✅ CHAT / TUTOR RENDER     */}
 {/* ========================= */}
 <div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0">
-  <div className="mx-auto max-w-3xl px-3 md:px-6" style={{ paddingTop: 92, paddingBottom: chatBottomPad }}>
-    <div className="flex flex-col gap-4 py-8 md:pt-6">
+  <div
+  className="mx-auto max-w-3xl px-3 md:px-6"
+  style={{ paddingTop: 92, paddingBottom: hasUserMessage ? chatBottomPad : 18 }}
+>
+    <div className="flex flex-col gap-4 py-6 md:pt-6">
       {/* Badge modo tutor */}
       {activeThread?.mode === "tutor" ? (
         <div className="self-start ml-2 -mt-2">
@@ -3340,21 +3343,18 @@ function replaceFractionsInText(text: string) {
         hacer?
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-3">
-  {quickPrompts.map((p, idx) => (
+      <div className="mt-8 grid grid-cols-2 gap-3">
+  {quickPrompts.map((p) => (
     <button
       key={p.label}
       onClick={() => applyQuickPrompt(p)}
       className={[
-        // ✅ 2 por fila sin hacerse gigantes
-        "basis-[calc(50%-6px)] shrink-0",
-
+        "inline-flex items-center justify-center",
+        "justify-self-center", // ✅ cada botón se centra en su celda
         "rounded-full border border-zinc-900/35 bg-white",
         "px-5 py-2.5 text-[13px] font-semibold text-zinc-900",
         "shadow-sm hover:bg-zinc-50 transition-colors",
         "active:scale-[0.99]",
-
-        // ✅ evita que el texto haga el botón más alto (clave para quitar scroll)
         "whitespace-nowrap",
       ].join(" ")}
     >
@@ -3362,6 +3362,7 @@ function replaceFractionsInText(text: string) {
     </button>
   ))}
 </div>
+
 
     </div>
   </div>
