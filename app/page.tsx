@@ -2512,12 +2512,12 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
     <span
       aria-hidden="true"
       className={[
-        "absolute top-[10px]", // 👈 más arriba (no abajo)
-        isRight ? "right-[-8px]" : "left-[-8px]", // 👈 sobresale hacia fuera
-        "pointer-events-none",
+        "absolute pointer-events-none",
+        "top-[12px]", // ✅ más arriba (WhatsApp)
+        isRight ? "right-[-10px]" : "left-[-10px]", // ✅ hacia fuera
       ].join(" ")}
     >
-      {/* Sombra detrás */}
+      {/* sombra suave detrás */}
       <span
         className="absolute"
         style={{
@@ -2526,14 +2526,14 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
           borderTop: "10px solid transparent",
           borderBottom: "10px solid transparent",
           ...(isRight
-            ? { borderLeft: "10px solid rgba(0,0,0,0.14)" }
-            : { borderRight: "10px solid rgba(0,0,0,0.14)" }),
+            ? { borderLeft: "10px solid rgba(0,0,0,0.10)" }
+            : { borderRight: "10px solid rgba(0,0,0,0.10)" }),
           transform: isRight ? "translateX(-1px)" : "translateX(1px)",
-          filter: "blur(0.35px)",
+          filter: "blur(0.3px)",
         }}
       />
 
-      {/* Triángulo principal */}
+      {/* triángulo principal */}
       <span
         className="relative block"
         style={{
@@ -2541,12 +2541,15 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
           height: 0,
           borderTop: "9px solid transparent",
           borderBottom: "9px solid transparent",
-          ...(isRight ? { borderLeft: `9px solid ${color}` } : { borderRight: `9px solid ${color}` }),
+          ...(isRight
+            ? { borderLeft: `9px solid ${color}` }
+            : { borderRight: `9px solid ${color}` }),
         }}
       />
     </span>
   );
 }
+
 
 
 
@@ -3500,7 +3503,7 @@ return (
 
     <div
       className={[
-        "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed overflow-hidden break-words",
+        "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed overflow-visible break-words",
         isUser
           ? "bg-[#dcf8c6] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-sm mr-2"
           : "bg-[#e8f0fe] text-zinc-900 rounded-r-2xl rounded-bl-2xl rounded-tl-sm ml-2",
