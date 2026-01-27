@@ -2512,39 +2512,38 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
     <span
       aria-hidden="true"
       className={[
-        "absolute bottom-[6px]", // 👈 abajo, estilo WhatsApp
-        isRight ? "right-[-6px]" : "left-[-6px]",
-        "pointer-events-none",
+        "absolute bottom-[4px] pointer-events-none",
+        isRight ? "right-[-10px]" : "left-[-10px]",
       ].join(" ")}
+      style={{ width: 22, height: 22 }}
     >
-      {/* Sombra (un pelín más grande, detrás) */}
-      <span
-        className="absolute"
-        style={{
-          width: 0,
-          height: 0,
-          borderTop: "9px solid transparent",
-          borderBottom: "9px solid transparent",
-          ...(isRight ? { borderLeft: "9px solid rgba(0,0,0,0.10)" } : { borderRight: "9px solid rgba(0,0,0,0.10)" }),
-          transform: isRight ? "translateX(-1px)" : "translateX(1px)",
-          filter: "blur(0.2px)",
-        }}
-      />
+      <svg width="22" height="22" viewBox="0 0 22 22" className="block">
+        <defs>
+          <filter id={`tailShadow-${side}`} x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="1" stdDeviation="1.2" floodColor="rgba(0,0,0,0.18)" />
+          </filter>
+        </defs>
 
-      {/* Triángulo principal (color burbuja) */}
-      <span
-        className="relative block"
-        style={{
-          width: 0,
-          height: 0,
-          borderTop: "8px solid transparent",
-          borderBottom: "8px solid transparent",
-          ...(isRight ? { borderLeft: `8px solid ${color}` } : { borderRight: `8px solid ${color}` }),
-        }}
-      />
+        {isRight ? (
+          // Tail derecha
+          <path
+            d="M2 18 C10 18, 12 14, 16 10 C18 8, 19 6, 20 4 C20 10, 20 16, 20 20 C14 20, 8 20, 2 18 Z"
+            fill={color}
+            filter={`url(#tailShadow-${side})`}
+          />
+        ) : (
+          // Tail izquierda
+          <path
+            d="M20 18 C12 18, 10 14, 6 10 C4 8, 3 6, 2 4 C2 10, 2 16, 2 20 C8 20, 14 20, 20 18 Z"
+            fill={color}
+            filter={`url(#tailShadow-${side})`}
+          />
+        )}
+      </svg>
     </span>
   );
 }
+
 
 
   return (
@@ -3560,7 +3559,11 @@ return (
 
 
         {/* ===== INPUT BAR ===== */}
-        <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl">
+        <div
+  ref={inputBarRef}
+  className="fixed bottom-0 left-0 right-0 z-30 bg-transparent"
+  style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+>
           <div className="mx-auto max-w-3xl px-3 md:px-6 pt-3 pb-2">
             {imagePreview && (
               <div className="mb-2 relative w-fit">
@@ -3580,12 +3583,12 @@ return (
             <div
   className={[
     "relative w-full rounded-3xl",
-    "bg-white/80 backdrop-blur-xl",
-    "border border-zinc-200",
-    "shadow-sm",
+    "bg-white/75 backdrop-blur-xl", // ✅ glass
+    "shadow-[0_10px_30px_rgba(0,0,0,0.10)]", // ✅ sombra difuminada (sin borde)
     "px-3 pt-2 pb-2",
   ].join(" ")}
 >
+
 
 
 
@@ -3664,14 +3667,15 @@ return (
                 placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
                 className={[
   "block w-full resize-none outline-none",
-  "bg-zinc-100/70",
+  "bg-white/95", // ✅ blanco (no gris)
   "text-[15px] leading-5 text-zinc-900",
   "rounded-2xl",
   "px-4 pt-2",
   "pb-[56px]",
-  "overflow-hidden",
+  "overflow-visible",
   inputExpanded ? "min-h-[56px]" : "min-h-[44px]",
 ].join(" ")}
+
                 rows={1}
               />
             </div>
