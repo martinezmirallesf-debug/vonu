@@ -2502,27 +2502,49 @@ function replaceFractionsInText(text: string) {
   });
 }
 
-  // ============================
-  // ✅ UI HELPERS: Bubble "WhatsApp" con piquito TRIÁNGULO (NO rombo)
-  // ============================
-  function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) {
-    // Triángulo pequeño pegado arriba (tipo WhatsApp)
-    return (
+  // ✅ PIQUITO WhatsApp (triángulo integrado + sombra)
+// - 2 capas: una sombra (gris/transparente) y el triángulo del color de la burbuja
+// - Posicionado abajo (más WhatsApp) y ligeramente metido en la burbuja
+function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) {
+  const isRight = side === "right";
+
+  return (
+    <span
+      aria-hidden="true"
+      className={[
+        "absolute bottom-[6px]", // 👈 abajo, estilo WhatsApp
+        isRight ? "right-[-6px]" : "left-[-6px]",
+        "pointer-events-none",
+      ].join(" ")}
+    >
+      {/* Sombra (un pelín más grande, detrás) */}
       <span
-        aria-hidden="true"
-        className={["absolute top-[6px]", side === "right" ? "right-[-6px]" : "left-[-6px]"].join(" ")}
+        className="absolute"
         style={{
           width: 0,
           height: 0,
-          borderTop: "7px solid transparent",
-          borderBottom: "7px solid transparent",
-          borderLeft: side === "right" ? `7px solid ${color}` : undefined,
-          borderRight: side === "left" ? `7px solid ${color}` : undefined,
-          filter: "drop-shadow(0px 1px 0px rgba(0,0,0,0.04))",
+          borderTop: "9px solid transparent",
+          borderBottom: "9px solid transparent",
+          ...(isRight ? { borderLeft: "9px solid rgba(0,0,0,0.10)" } : { borderRight: "9px solid rgba(0,0,0,0.10)" }),
+          transform: isRight ? "translateX(-1px)" : "translateX(1px)",
+          filter: "blur(0.2px)",
         }}
       />
-    );
-  }
+
+      {/* Triángulo principal (color burbuja) */}
+      <span
+        className="relative block"
+        style={{
+          width: 0,
+          height: 0,
+          borderTop: "8px solid transparent",
+          borderBottom: "8px solid transparent",
+          ...(isRight ? { borderLeft: `8px solid ${color}` } : { borderRight: `8px solid ${color}` }),
+        }}
+      />
+    </span>
+  );
+}
 
 
   return (
@@ -3540,12 +3562,11 @@ return (
 
             <div
   className={[
-    "w-full",
-    "relative rounded-[26px] border border-zinc-200",
-    "bg-transparent",
-    "shadow-[0_10px_30px_rgba(0,0,0,0.08)]",
-    "backdrop-blur-xl",
-    "overflow-hidden",
+    "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed break-words",
+    "overflow-visible", // ✅ en vez de overflow-hidden
+    isUser
+      ? "bg-[#dcf8c6] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-sm mr-2"
+      : "bg-[#e8f0fe] text-zinc-900 rounded-r-2xl rounded-bl-2xl rounded-tl-sm ml-2",
   ].join(" ")}
 >
 
