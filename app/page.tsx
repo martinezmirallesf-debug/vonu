@@ -2502,9 +2502,9 @@ function replaceFractionsInText(text: string) {
   });
 }
 
-  // ✅ PIQUITO WhatsApp (triángulo integrado + sombra)
-// - 2 capas: una sombra (gris/transparente) y el triángulo del color de la burbuja
-// - Posicionado abajo (más WhatsApp) y ligeramente metido en la burbuja
+  // ✅ PIQUITO WhatsApp (hacia FUERA + arriba + sombra)
+// - 2 capas: sombra y triángulo del color de la burbuja
+// - Posicionado más arriba (WhatsApp) y sobresale hacia fuera
 function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) {
   const isRight = side === "right";
 
@@ -2512,37 +2512,42 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
     <span
       aria-hidden="true"
       className={[
-        "absolute bottom-[4px] pointer-events-none",
-        isRight ? "right-[-10px]" : "left-[-10px]",
+        "absolute top-[10px]", // 👈 más arriba (no abajo)
+        isRight ? "right-[-8px]" : "left-[-8px]", // 👈 sobresale hacia fuera
+        "pointer-events-none",
       ].join(" ")}
-      style={{ width: 22, height: 22 }}
     >
-      <svg width="22" height="22" viewBox="0 0 22 22" className="block">
-        <defs>
-          <filter id={`tailShadow-${side}`} x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx="0" dy="1" stdDeviation="1.2" floodColor="rgba(0,0,0,0.18)" />
-          </filter>
-        </defs>
+      {/* Sombra detrás */}
+      <span
+        className="absolute"
+        style={{
+          width: 0,
+          height: 0,
+          borderTop: "10px solid transparent",
+          borderBottom: "10px solid transparent",
+          ...(isRight
+            ? { borderLeft: "10px solid rgba(0,0,0,0.14)" }
+            : { borderRight: "10px solid rgba(0,0,0,0.14)" }),
+          transform: isRight ? "translateX(-1px)" : "translateX(1px)",
+          filter: "blur(0.35px)",
+        }}
+      />
 
-        {isRight ? (
-          // Tail derecha
-          <path
-            d="M2 18 C10 18, 12 14, 16 10 C18 8, 19 6, 20 4 C20 10, 20 16, 20 20 C14 20, 8 20, 2 18 Z"
-            fill={color}
-            filter={`url(#tailShadow-${side})`}
-          />
-        ) : (
-          // Tail izquierda
-          <path
-            d="M20 18 C12 18, 10 14, 6 10 C4 8, 3 6, 2 4 C2 10, 2 16, 2 20 C8 20, 14 20, 20 18 Z"
-            fill={color}
-            filter={`url(#tailShadow-${side})`}
-          />
-        )}
-      </svg>
+      {/* Triángulo principal */}
+      <span
+        className="relative block"
+        style={{
+          width: 0,
+          height: 0,
+          borderTop: "9px solid transparent",
+          borderBottom: "9px solid transparent",
+          ...(isRight ? { borderLeft: `9px solid ${color}` } : { borderRight: `9px solid ${color}` }),
+        }}
+      />
     </span>
   );
 }
+
 
 
 
@@ -2551,15 +2556,15 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
       <style jsx global>{`
         @keyframes chalkIn {
                 @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(6px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+}
 
           from {
             opacity: 0;
@@ -3490,10 +3495,9 @@ const bubbleColor = isUser ? "#dcf8c6" : "#e8f0fe";
 return (
   <div
     key={m.id}
-    className={`flex w-full ${
-      isUser ? "justify-end" : "justify-start"
-    } animate-[fadeIn_240ms_ease-out]`}
+    className={`flex w-full ${isUser ? "justify-end" : "justify-start"} animate-[fadeIn_240ms_ease-out]`}
   >
+
     <div
       className={[
         "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed overflow-hidden break-words",
@@ -3582,103 +3586,102 @@ return (
 
             <div
   className={[
+    // ✅ Frame glass (transparente) + sombra suave (SIN borde)
     "relative w-full rounded-3xl",
-    "bg-white/75 backdrop-blur-xl", // ✅ glass
-    "shadow-[0_10px_30px_rgba(0,0,0,0.10)]", // ✅ sombra difuminada (sin borde)
+    "bg-white/60 backdrop-blur-xl",
+    "shadow-[0_18px_55px_rgba(0,0,0,0.10)]",
     "px-3 pt-2 pb-2",
   ].join(" ")}
 >
+  {/* LEFT ICONS */}
+  <div className="absolute left-2.5 bottom-2 flex items-center gap-1">
+    <button
+      onClick={openBoard}
+      className="h-10 w-10 rounded-full hover:bg-white/60 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
+      aria-label="Pizarra"
+      title="Pizarra"
+      disabled={!!isTyping}
+    >
+      <PencilIcon className="h-5 w-5 text-zinc-800" />
+    </button>
 
+    <button
+      onClick={() => fileInputRef.current?.click()}
+      className="h-10 w-10 rounded-full hover:bg-white/60 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
+      aria-label="Adjuntar"
+      title="Adjuntar imagen"
+      disabled={!!isTyping}
+    >
+      <PlusIcon className="h-5 w-5 text-zinc-800" />
+    </button>
 
+    <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
+  </div>
 
+  {/* RIGHT ICONS */}
+  <div className="absolute right-2.5 bottom-2 flex items-center gap-2">
+    <button
+      onClick={toggleMic}
+      disabled={!!isTyping || !speechSupported}
+      className={[
+        "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
+        "bg-white/70 backdrop-blur-xl",
+        !speechSupported
+          ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
+          : isListening
+          ? "border-red-200 bg-red-50 text-red-700"
+          : "border-white/40 hover:bg-white text-zinc-900",
+      ].join(" ")}
+      aria-label={isListening ? "Parar micrófono" : "Hablar"}
+      title={!speechSupported ? "Dictado no soportado en este navegador" : isListening ? "Parar" : "Dictar por voz"}
+    >
+      <div className="relative">
+        <MicIcon className="h-5 w-5" />
+        {isListening && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />}
+      </div>
+    </button>
 
-              {/* LEFT ICONS */}
-              <div className="absolute left-2.5 bottom-2 flex items-center gap-1">
-                <button
-                  onClick={openBoard}
-                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
-                  aria-label="Pizarra"
-                  title="Pizarra"
-                  disabled={!!isTyping}
-                >
-                  <PencilIcon className="h-5 w-5 text-zinc-800" />
-                </button>
+    <button
+      onClick={sendMessage}
+      disabled={!canSend}
+      className={[
+        "h-10 w-10 rounded-full shrink-0 transition-colors grid place-items-center p-0",
+        !canSend ? "bg-zinc-200 text-zinc-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer",
+      ].join(" ")}
+      aria-label="Enviar"
+      title="Enviar"
+    >
+      <ArrowUpIcon className="h-5 w-5" />
+    </button>
+  </div>
 
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
-                  aria-label="Adjuntar"
-                  title="Adjuntar imagen"
-                  disabled={!!isTyping}
-                >
-                  <PlusIcon className="h-5 w-5 text-zinc-800" />
-                </button>
+  {/* ✅ Textarea BLANCA (sin gris, sin borde, sin “caja”) */}
+  <textarea
+    ref={textareaRef}
+    value={input}
+    onChange={(e) => setInput(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    }}
+    disabled={!!isTyping}
+    placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
+    className={[
+      "block w-full resize-none outline-none",
+      "bg-white/90", // ✅ blanco (no gris)
+      "rounded-2xl",
+      "text-[15px] leading-5 text-zinc-900",
+      "px-4 pt-3",
+      "pb-[56px]", // deja hueco para los botones
+      "overflow-hidden",
+      inputExpanded ? "min-h-[60px]" : "min-h-[48px]",
+    ].join(" ")}
+    rows={1}
+  />
+</div>
 
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
-              </div>
-
-              {/* RIGHT ICONS */}
-              <div className="absolute right-2.5 bottom-2 flex items-center gap-2">
-                <button
-                  onClick={toggleMic}
-                  disabled={!!isTyping || !speechSupported}
-                  className={[
-                    "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
-                    !speechSupported
-                      ? "border-zinc-200 text-zinc-400 bg-white/60 cursor-not-allowed"
-                      : isListening
-                      ? "border-red-200 bg-red-50 text-red-700"
-                      : "border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-900",
-                  ].join(" ")}
-                  aria-label={isListening ? "Parar micrófono" : "Hablar"}
-                  title={!speechSupported ? "Dictado no soportado en este navegador" : isListening ? "Parar" : "Dictar por voz"}
-                >
-                  <div className="relative">
-                    <MicIcon className="h-5 w-5" />
-                    {isListening && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />}
-                  </div>
-                </button>
-
-                <button
-                  onClick={sendMessage}
-                  disabled={!canSend}
-                  className={[
-                    "h-10 w-10 rounded-full shrink-0 transition-colors grid place-items-center p-0",
-                    !canSend ? "bg-zinc-200 text-zinc-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer",
-                  ].join(" ")}
-                  aria-label="Enviar"
-                  title="Enviar"
-                >
-                  <ArrowUpIcon className="h-5 w-5" />
-                </button>
-              </div>
-
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                  }
-                }}
-                disabled={!!isTyping}
-                placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
-                className={[
-  "block w-full resize-none outline-none",
-  "bg-white/95", // ✅ blanco (no gris)
-  "text-[15px] leading-5 text-zinc-900",
-  "rounded-2xl",
-  "px-4 pt-2",
-  "pb-[56px]",
-  "overflow-visible",
-  inputExpanded ? "min-h-[56px]" : "min-h-[44px]",
-].join(" ")}
-
-                rows={1}
-              />
-            </div>
           </div>
 
           <div className="mx-auto max-w-3xl px-3 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
