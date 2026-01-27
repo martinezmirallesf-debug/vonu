@@ -2525,26 +2525,28 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
       aria-hidden="true"
       className={[
         "absolute pointer-events-none",
-        "top-[6px]", // ✅ integrado arriba
-        isRight ? "right-[-10px]" : "left-[-10px]", // ✅ hacia fuera
-        "z-10", // ✅ visible
+        // ✅ más arriba para que parezca “parte de la burbuja”
+        "top-[2px]",
+        // ✅ sale hacia fuera
+        isRight ? "right-[-10px]" : "left-[-10px]",
+        // ✅ por delante (si no, desaparece)
+        "z-10",
       ].join(" ")}
-      style={{ filter: "drop-shadow(0 1px 1px rgba(24,24,27,0.18))" }}
     >
-      <svg width="14" height="22" viewBox="0 0 14 22" className={isRight ? "" : "-scale-x-100"}>
-        <path
-          d="M2 0
-             C9 3, 13 7, 13 11
-             C13 15, 9 19, 2 22
-             L0 22
-             L0 0
-             Z"
-          fill={color}
-        />
+      {/* ✅ triángulo con parte superior RECTa (integrado) */}
+      <svg
+        width="12"
+        height="18"
+        viewBox="0 0 12 18"
+        className={isRight ? "" : "-scale-x-100"}
+        style={{ display: "block" }}
+      >
+        <path d="M0 0 L12 6 L0 12 Z" fill={color} />
       </svg>
     </span>
   );
 }
+
 
 return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
@@ -3593,11 +3595,13 @@ return (
             <div
   className={[
     "relative w-full rounded-3xl",
-    "bg-white/58 backdrop-blur-xl",
-    "shadow-[0_16px_46px_rgba(24,24,27,0.22)]", // ✅ más fuerte + gris (zinc)
+    "bg-white/62 backdrop-blur-xl",
+    // ✅ sombra más visible y gris (zinc), para separar del disclaimer
+    "shadow-[0_18px_60px_rgba(24,24,27,0.28)]",
     "px-3 pt-2 pb-2",
   ].join(" ")}
 >
+
 
 
   {/* LEFT ICONS */}
@@ -3664,31 +3668,29 @@ return (
 
   {/* ✅ Textarea BLANCA (sin gris, sin borde, sin “caja”) */}
   <textarea
-    ref={textareaRef}
-    value={input}
-    onChange={(e) => setInput(e.target.value)}
-    onKeyDown={(e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    }}
-    disabled={!!isTyping}
-    placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
-    className={[
-  "block w-full resize-none outline-none",
-  "bg-white/70",                 // ✅ limpio
-  "border border-zinc-200/80",    // ✅ borde suave gris (lo que pediste)
-  "rounded-2xl",
-  "text-[15px] leading-5 text-zinc-900 placeholder:text-zinc-400",
-  "px-4 pt-3",
-  "pb-[56px]",
-  "overflow-hidden",
-  inputExpanded ? "min-h-[60px]" : "min-h-[48px]",
-].join(" ")}
-
-    rows={1}
-  />
+  ref={textareaRef}
+  value={input}
+  onChange={(e) => setInput(e.target.value)}
+  onKeyDown={(e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }}
+  disabled={!!isTyping}
+  placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
+  className={[
+    "block w-full resize-none outline-none",
+    "bg-white/80",
+    "rounded-2xl",
+    "text-[15px] leading-5 text-zinc-900 placeholder:text-zinc-400",
+    "px-4 pt-3",
+    "pb-[56px]",
+    "overflow-hidden",
+    inputExpanded ? "min-h-[60px]" : "min-h-[48px]",
+  ].join(" ")}
+  rows={1}
+/>
 </div>
 
           </div>
