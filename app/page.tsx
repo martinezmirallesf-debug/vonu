@@ -2524,14 +2524,14 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
     <span
       aria-hidden="true"
       className={[
-        "absolute pointer-events-none -z-10", // ✅ detrás de la burbuja (evita corte)
-        "top-[6px]",                          // ✅ más arriba (se integra con la parte superior)
-        isRight ? "right-[-10px]" : "left-[-10px]",
+        "absolute pointer-events-none",
+        "top-[6px]", // ✅ integrado arriba
+        isRight ? "right-[-10px]" : "left-[-10px]", // ✅ hacia fuera
+        "z-10", // ✅ visible
       ].join(" ")}
-      style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.10))" }}
+      style={{ filter: "drop-shadow(0 1px 1px rgba(24,24,27,0.18))" }}
     >
       <svg width="14" height="22" viewBox="0 0 14 22" className={isRight ? "" : "-scale-x-100"}>
-        {/* forma tipo WhatsApp (punta suave) */}
         <path
           d="M2 0
              C9 3, 13 7, 13 11
@@ -2546,12 +2546,7 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
   );
 }
 
-
-
-
-
-
-  return (
+return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
       <style jsx global>{`
         @keyframes chalkIn {
@@ -3376,9 +3371,16 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
                           handleOpenPlansCTA();
                           setMenuOpen(false);
                         }}
-                        className={["text-xs px-3 py-2 rounded-full transition-colors cursor-pointer", isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700"].join(
-                          " "
-                        )}
+                        className={[
+  "block w-full resize-none outline-none",
+  "bg-white/70",
+  "rounded-2xl",
+  "text-[15px] leading-5 text-zinc-900 placeholder:text-zinc-400",
+  "px-4 pt-3",
+  "pb-[56px]",
+  "overflow-hidden",
+  inputExpanded ? "min-h-[60px]" : "min-h-[48px]",
+].join(" ")}
                       >
                         {isPro ? "Ver" : "Mejorar"}
                       </button>
@@ -3591,12 +3593,12 @@ return (
             <div
   className={[
     "relative w-full rounded-3xl",
-    "bg-white/55 backdrop-blur-xl",
-    "border border-zinc-200/70", // ✅ borde suave gris
-    "shadow-[0_18px_55px_rgba(0,0,0,0.10)]",
+    "bg-white/58 backdrop-blur-xl",
+    "shadow-[0_16px_46px_rgba(24,24,27,0.22)]", // ✅ más fuerte + gris (zinc)
     "px-3 pt-2 pb-2",
   ].join(" ")}
 >
+
 
   {/* LEFT ICONS */}
   <div className="absolute left-2.5 bottom-2 flex items-center gap-1">
