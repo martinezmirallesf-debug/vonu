@@ -1191,91 +1191,122 @@ export default function Page() {
   const [inputBarH, setInputBarH] = useState<number>(140);
   const shouldStickToBottomRef = useRef(true);
 
-  // ===== MIC (SpeechRecognition) =====
-  const [speechSupported, setSpeechSupported] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [micMsg, setMicMsg] = useState<string | null>(null);
-  const recognitionRef = useRef<any>(null);
+ // =======================
+// 🎙️ MIC (SpeechRecognition) — SIN DUPLICADOS
+// =======================
+const [speechSupported, setSpeechSupported] = useState(false);
+const [isListening, setIsListening] = useState(false);
+const [micMsg, setMicMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    setSpeechSupported(!!SR);
-  }, []);
+const recognitionRef = useRef<any>(null);
 
-  function stopMic() {
-    try {
-      recognitionRef.current?.stop?.();
-    } catch {}
+// refs para evitar duplicados
+const micBaseRef = useRef<string>("");
+const micFinalRef = useRef<string>("");
+const micInterimRef = useRef<string>("");
+
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  setSpeechSupported(!!SR);
+}, []);
+
+function stopMic() {
+  try {
+    const rec = recognitionRef.current;
+    if (rec) {
+      rec.onresult = null;
+      rec.onerror = null;
+      rec.onend = null;
+      rec.stop?.();
+    }
+  } catch {}
+  recognitionRef.current = null;
+  setIsListening(false);
+}
+
+async function toggleMic() {
+  if (isTyping) return;
+
+  const SR = typeof window !== "undefined" ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition : null;
+  if (!SR) {
+    setMicMsg("Tu navegador no soporta dictado por voz. Prueba Chrome/Edge en Android o Desktop.");
+    setTimeout(() => setMicMsg(null), 2400);
+    return;
   }
 
-  async function toggleMic() {
-    if (isTyping) return;
+  // si ya está escuchando -> parar
+  if (isListening) {
+    stopMic();
+    return;
+  }
 
-    const SR = typeof window !== "undefined" ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition : null;
-    if (!SR) {
-      setMicMsg("Tu navegador no soporta dictado por voz. Prueba Chrome/Edge en Android o Desktop.");
-      setTimeout(() => setMicMsg(null), 2400);
-      return;
-    }
+  try {
+    setMicMsg(null);
 
-    if (isListening) {
-      stopMic();
-      return;
-    }
+    const rec = new SR();
+    recognitionRef.current = rec;
 
-    try {
-      setMicMsg(null);
+    // ✅ modo limpio
+    rec.lang = "es-ES";
+    rec.continuous = true;     // puedes dictar largo
+    rec.interimResults = true; // muestra mientras hablas
 
-      const rec = new SR();
-      recognitionRef.current = rec;
+    // ✅ guardamos el texto que ya había antes de empezar a dictar
+    micBaseRef.current = (input || "").trim() ? (input.trim() + " ") : "";
+    micFinalRef.current = "";
+    micInterimRef.current = "";
 
-      rec.continuous = false;
-      rec.interimResults = true;
-      rec.lang = "es-ES";
+    rec.onstart = () => {
+      setIsListening(true);
+    };
 
-      rec.onstart = () => {
-        setIsListening(true);
-      };
-
-      rec.onerror = (_e: any) => {
-        setIsListening(false);
-        setMicMsg("No se pudo usar el micrófono. Revisa permisos del navegador.");
-        setTimeout(() => setMicMsg(null), 2600);
-      };
-
-      rec.onend = () => {
-        setIsListening(false);
-      };
-
-      rec.onresult = (event: any) => {
-        let finalText = "";
-        let interim = "";
-
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const res = event.results[i];
-          const txt = res?.[0]?.transcript ?? "";
-          if (res.isFinal) finalText += txt;
-          else interim += txt;
-        }
-
-        const combined = (finalText || interim || "").trim();
-        if (!combined) return;
-
-        setInput((prev) => {
-          const base = prev.trim();
-          if (!base) return combined;
-          return base + " " + combined;
-        });
-      };
-
-      rec.start();
-    } catch {
+    rec.onerror = (_e: any) => {
       setIsListening(false);
-      setMicMsg("No se pudo iniciar el dictado. Revisa permisos del navegador.");
+      setMicMsg("No se pudo usar el micrófono. Revisa permisos del navegador.");
       setTimeout(() => setMicMsg(null), 2600);
-    }
+      stopMic();
+    };
+
+    rec.onend = () => {
+      // some browsers end unexpectedly; ensure we reset state
+      setIsListening(false);
+      recognitionRef.current = null;
+    };
+
+    rec.onresult = (event: any) => {
+      let interim = "";
+
+      // ⚠️ Importante: NO concatenar a input aquí.
+      // Solo acumulamos "final" y reemplazamos el interim.
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const res = event.results[i];
+        const txt = res?.[0]?.transcript ?? "";
+
+        if (res.isFinal) {
+          micFinalRef.current += txt.trim() + " ";
+        } else {
+          interim += txt;
+        }
+      }
+
+      micInterimRef.current = interim;
+
+      const next = (micBaseRef.current + micFinalRef.current + micInterimRef.current).replace(/\s+/g, " ").trim();
+      if (next) setInput(next);
+    };
+
+    rec.start();
+  } catch {
+    setIsListening(false);
+    setMicMsg("No se pudo iniciar el dictado. Revisa permisos del navegador.");
+    setTimeout(() => setMicMsg(null), 2600);
+    stopMic();
   }
+}
+
+
+
 
   // ===== WHITEBOARD =====
   const [boardOpen, setBoardOpen] = useState(false);
