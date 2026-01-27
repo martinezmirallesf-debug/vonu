@@ -1681,24 +1681,35 @@ if (cleaned) setInput(cleaned);
     }
   }
 
-  // VisualViewport
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const vv = window.visualViewport;
-    if (!vv) return;
+  // VisualViewport (altura visible + inset inferior cuando aparece teclado)
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  const vv = window.visualViewport;
+  if (!vv) return;
 
-    const setVvh = () => {
-      document.documentElement.style.setProperty("--vvh", `${vv.height}px`);
-    };
+  const setVars = () => {
+    // altura visible real
+    document.documentElement.style.setProperty("--vvh", `${vv.height}px`);
 
-    setVvh();
-    vv.addEventListener("resize", setVvh);
-    vv.addEventListener("scroll", setVvh);
-    return () => {
-      vv.removeEventListener("resize", setVvh);
-      vv.removeEventListener("scroll", setVvh);
-    };
-  }, []);
+    // cuánto “tapa” el teclado (inset inferior)
+    const bottomInset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    document.documentElement.style.setProperty("--vvb", `${bottomInset}px`);
+  };
+
+  setVars();
+  vv.addEventListener("resize", setVars);
+  vv.addEventListener("scroll", setVars);
+
+  window.addEventListener("resize", setVars);
+  window.addEventListener("orientationchange", setVars);
+
+  return () => {
+    vv.removeEventListener("resize", setVars);
+    vv.removeEventListener("scroll", setVars);
+    window.removeEventListener("resize", setVars);
+    window.removeEventListener("orientationchange", setVars);
+  };
+}, []);
 
   // Resize observer del input bar
   useEffect(() => {
@@ -2415,7 +2426,9 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
     }
   }
 
-  const chatBottomPad = inputBarH;
+  // ✅ fijo y estable (evita el hueco blanco gigante en móvil)
+const chatBottomPad = hasUserMessage ? 132 : 18;
+
 
   const TOP_OFFSET_PX = 12;
   const TOP_BUBBLE_H = 44;
@@ -2502,9 +2515,8 @@ function replaceFractionsInText(text: string) {
   });
 }
 
-  // ✅ PIQUITO WhatsApp (hacia FUERA + arriba + sombra)
-// - 2 capas: sombra y triángulo del color de la burbuja
-// - Posicionado más arriba (WhatsApp) y sobresale hacia fuera
+  // ✅ PIQUITO WhatsApp (integrado arriba + hacia fuera + sin corte)
+// - usamos SVG con drop-shadow (no 2 capas que “cortan”)
 function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) {
   const isRight = side === "right";
 
@@ -2512,43 +2524,28 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
     <span
       aria-hidden="true"
       className={[
-        "absolute pointer-events-none",
-        "top-[12px]", // ✅ más arriba (WhatsApp)
-        isRight ? "right-[-10px]" : "left-[-10px]", // ✅ hacia fuera
+        "absolute pointer-events-none -z-10", // ✅ detrás de la burbuja (evita corte)
+        "top-[6px]",                          // ✅ más arriba (se integra con la parte superior)
+        isRight ? "right-[-10px]" : "left-[-10px]",
       ].join(" ")}
+      style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.10))" }}
     >
-      {/* sombra suave detrás */}
-      <span
-        className="absolute"
-        style={{
-          width: 0,
-          height: 0,
-          borderTop: "10px solid transparent",
-          borderBottom: "10px solid transparent",
-          ...(isRight
-            ? { borderLeft: "10px solid rgba(0,0,0,0.10)" }
-            : { borderRight: "10px solid rgba(0,0,0,0.10)" }),
-          transform: isRight ? "translateX(-1px)" : "translateX(1px)",
-          filter: "blur(0.3px)",
-        }}
-      />
-
-      {/* triángulo principal */}
-      <span
-        className="relative block"
-        style={{
-          width: 0,
-          height: 0,
-          borderTop: "9px solid transparent",
-          borderBottom: "9px solid transparent",
-          ...(isRight
-            ? { borderLeft: `9px solid ${color}` }
-            : { borderRight: `9px solid ${color}` }),
-        }}
-      />
+      <svg width="14" height="22" viewBox="0 0 14 22" className={isRight ? "" : "-scale-x-100"}>
+        {/* forma tipo WhatsApp (punta suave) */}
+        <path
+          d="M2 0
+             C9 3, 13 7, 13 11
+             C13 15, 9 19, 2 22
+             L0 22
+             L0 0
+             Z"
+          fill={color}
+        />
+      </svg>
     </span>
   );
 }
+
 
 
 
@@ -3409,7 +3406,8 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
        {/* ========================= */}
 {/* ✅ CHAT / TUTOR RENDER     */}
 {/* ========================= */}
-<div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0">
+<div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0 overscroll-contain">
+
   <div
   className="mx-auto max-w-3xl px-3 md:px-6"
   style={{ paddingTop: 92, paddingBottom: hasUserMessage ? chatBottomPad : 18 }}
@@ -3568,8 +3566,11 @@ return (
         {/* ===== INPUT BAR ===== */}
         <div
   ref={inputBarRef}
-  className="fixed bottom-0 left-0 right-0 z-30 bg-transparent"
-  style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+  className="fixed left-0 right-0 z-30 bg-transparent"
+  style={{
+    bottom: "var(--vvb, 0px)", // ✅ sube con el teclado
+    paddingBottom: "env(safe-area-inset-bottom)",
+  }}
 >
           <div className="mx-auto max-w-3xl px-3 md:px-6 pt-3 pb-2">
             {imagePreview && (
@@ -3589,13 +3590,14 @@ return (
 
             <div
   className={[
-    // ✅ Frame glass (transparente) + sombra suave (SIN borde)
     "relative w-full rounded-3xl",
-    "bg-white/60 backdrop-blur-xl",
+    "bg-white/55 backdrop-blur-xl",
+    "border border-zinc-200/70", // ✅ borde suave gris
     "shadow-[0_18px_55px_rgba(0,0,0,0.10)]",
     "px-3 pt-2 pb-2",
   ].join(" ")}
 >
+
   {/* LEFT ICONS */}
   <div className="absolute left-2.5 bottom-2 flex items-center gap-1">
     <button
@@ -3672,15 +3674,17 @@ return (
     disabled={!!isTyping}
     placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
     className={[
-      "block w-full resize-none outline-none",
-      "bg-white/90", // ✅ blanco (no gris)
-      "rounded-2xl",
-      "text-[15px] leading-5 text-zinc-900",
-      "px-4 pt-3",
-      "pb-[56px]", // deja hueco para los botones
-      "overflow-hidden",
-      inputExpanded ? "min-h-[60px]" : "min-h-[48px]",
-    ].join(" ")}
+  "block w-full resize-none outline-none",
+  "bg-white/70",                 // ✅ limpio
+  "border border-zinc-200/80",    // ✅ borde suave gris (lo que pediste)
+  "rounded-2xl",
+  "text-[15px] leading-5 text-zinc-900 placeholder:text-zinc-400",
+  "px-4 pt-3",
+  "pb-[56px]",
+  "overflow-hidden",
+  inputExpanded ? "min-h-[60px]" : "min-h-[48px]",
+].join(" ")}
+
     rows={1}
   />
 </div>
