@@ -2525,56 +2525,76 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
       aria-hidden="true"
       className={[
         "absolute pointer-events-none",
-        // ✅ más arriba para que parezca “parte de la burbuja”
+        // ✅ pegado arriba (como WhatsApp)
         "top-[2px]",
         // ✅ sale hacia fuera
         isRight ? "right-[-10px]" : "left-[-10px]",
-        // ✅ por delante (si no, desaparece)
-        "z-10",
       ].join(" ")}
+      style={{ width: 22, height: 22 }}
     >
-      {/* ✅ triángulo con parte superior RECTa (integrado) */}
       <svg
-        width="12"
-        height="18"
-        viewBox="0 0 12 18"
-        className={isRight ? "" : "-scale-x-100"}
-        style={{ display: "block" }}
+        width="22"
+        height="22"
+        viewBox="0 0 22 22"
+        className="block"
+        style={{
+          // ✅ sombra suave hacia abajo (sin “corte” feo)
+          filter: "drop-shadow(0px 2px 2px rgba(0,0,0,0.10))",
+        }}
       >
-        <path d="M0 0 L12 6 L0 12 Z" fill={color} />
+        {isRight ? (
+          // Cola derecha (usuario)
+          <path
+            d="M2 2 H20 V20
+               C14 18, 10 13, 6 10
+               C4.3 8.8, 3 7.9, 2 7
+               Z"
+            fill={color}
+          />
+        ) : (
+          // Cola izquierda (assistant) — espejo
+          <path
+            d="M20 2 H2 V20
+               C8 18, 12 13, 16 10
+               C17.7 8.8, 19 7.9, 20 7
+               Z"
+            fill={color}
+          />
+        )}
       </svg>
     </span>
   );
 }
 
 
+
 return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
       <style jsx global>{`
-        @keyframes chalkIn {
-                @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
   }
-  to {
-    opacity: 1;
-    transform: translateY(0px);
-  }
-}
 
-          from {
-            opacity: 0;
-            transform: translateY(2px);
-            filter: blur(0.4px);
-          }
-          to {
-            opacity: 0.92;
-            transform: translateY(0px);
-            filter: blur(0px);
-          }
-        }
-      `}</style>
+  @keyframes chalkIn {
+    from {
+      opacity: 0;
+      transform: translateY(2px);
+      filter: blur(0.4px);
+    }
+    to {
+      opacity: 0.92;
+      transform: translateY(0px);
+      filter: blur(0px);
+    }
+  }
+`}</style>
 
       {/* TOAST */}
       {toastMsg && (
@@ -3374,15 +3394,17 @@ return (
                           setMenuOpen(false);
                         }}
                         className={[
-  "block w-full resize-none outline-none",
-  "bg-white/70",
+  "block w-full resize-none",
+  "appearance-none border-0 ring-0 shadow-none outline-none focus:outline-none focus:ring-0",
+  "bg-white/92",
   "rounded-2xl",
-  "text-[15px] leading-5 text-zinc-900 placeholder:text-zinc-400",
+  "text-[15px] leading-5 text-zinc-900",
   "px-4 pt-3",
   "pb-[56px]",
   "overflow-hidden",
   inputExpanded ? "min-h-[60px]" : "min-h-[48px]",
 ].join(" ")}
+
                       >
                         {isPro ? "Ver" : "Mejorar"}
                       </button>
@@ -3595,14 +3617,12 @@ return (
             <div
   className={[
     "relative w-full rounded-3xl",
-    "bg-white/62 backdrop-blur-xl",
-    // ✅ sombra más visible y gris (zinc), para separar del disclaimer
-    "shadow-[0_18px_60px_rgba(24,24,27,0.28)]",
+    "bg-white/55 backdrop-blur-xl",
+    // ✅ sombra MÁS marcada y gris (para que el disclaimer se lea)
+    "shadow-[0_22px_70px_rgba(0,0,0,0.18)]",
     "px-3 pt-2 pb-2",
   ].join(" ")}
 >
-
-
 
   {/* LEFT ICONS */}
   <div className="absolute left-2.5 bottom-2 flex items-center gap-1">
@@ -3695,10 +3715,12 @@ return (
 
           </div>
 
-          <div className="mx-auto max-w-3xl px-3 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
-            <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">Orientación preventiva · No sustituye profesionales.</p>
-            {!hasUserMessage && <div className="h-1" />}
-          </div>
+          <div className="mx-auto w-fit px-3 py-1 rounded-full bg-white/70 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.10)]">
+  <p className="text-center text-[11.5px] md:text-[12px] text-zinc-600 leading-4 md:leading-5">
+    Orientación preventiva · No sustituye profesionales.
+  </p>
+</div>
+
         </div>
       </div>
     </div>
