@@ -1194,6 +1194,19 @@ export default function Page() {
  // =======================
 // 🎙️ MIC (SpeechRecognition) — SIN DUPLICADOS
 // =======================
+function cleanRepeatedWords(text: string) {
+  const words = text.split(" ");
+  const result: string[] = [];
+
+  for (let i = 0; i < words.length; i++) {
+    if (i === 0 || words[i].toLowerCase() !== words[i - 1].toLowerCase()) {
+      result.push(words[i]);
+    }
+  }
+
+  return result.join(" ");
+}
+
 const [speechSupported, setSpeechSupported] = useState(false);
 const [isListening, setIsListening] = useState(false);
 const [micMsg, setMicMsg] = useState<string | null>(null);
@@ -1292,8 +1305,17 @@ async function toggleMic() {
 
       micInterimRef.current = interim;
 
-      const next = (micBaseRef.current + micFinalRef.current + micInterimRef.current).replace(/\s+/g, " ").trim();
-      if (next) setInput(next);
+      const raw =
+  micBaseRef.current +
+  micFinalRef.current +
+  micInterimRef.current;
+
+const cleaned = cleanRepeatedWords(
+  raw.replace(/\s+/g, " ").trim()
+);
+
+if (cleaned) setInput(cleaned);
+
     };
 
     rec.start();
