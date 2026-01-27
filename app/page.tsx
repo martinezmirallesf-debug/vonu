@@ -522,7 +522,7 @@ export default function Page() {
               style={{
                 opacity: 0.92,
                 animation: "chalkIn 240ms ease-out both",
-                filter: "drop-shadow(0px 0px 0.4px rgba(255,255,255,0.25))",
+                filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.12))"
               }}
             >
               {l || " "}
@@ -1262,7 +1262,7 @@ async function toggleMic() {
 
     // ✅ modo limpio
     rec.lang = "es-ES";
-    rec.continuous = true;     // puedes dictar largo
+    rec.continuous = false;     // puedes dictar largo
     rec.interimResults = true; // muestra mientras hablas
 
     // ✅ guardamos el texto que ya había antes de empezar a dictar
@@ -1282,10 +1282,10 @@ async function toggleMic() {
     };
 
     rec.onend = () => {
-      // some browsers end unexpectedly; ensure we reset state
-      setIsListening(false);
-      recognitionRef.current = null;
-    };
+  setIsListening(false);
+  recognitionRef.current = null;
+  micInterimRef.current = "";
+};
 
     rec.onresult = (event: any) => {
       let interim = "";
@@ -2551,6 +2551,17 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
       <style jsx global>{`
         @keyframes chalkIn {
+                @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(6px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
           from {
             opacity: 0;
             transform: translateY(2px);
@@ -3445,6 +3456,7 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
 
 
       {/* ✅ SIEMPRE bubbles (chat y tutor). En tutor solo cambia el contenido */}
+      
       <div className="flex flex-col gap-4">
         {messages.map((m) => {
           const isUser = m.role === "user";
@@ -3477,7 +3489,12 @@ const hasText = (m.text ?? "").length > 0;
 const bubbleColor = isUser ? "#dcf8c6" : "#e8f0fe";
 
 return (
-  <div key={m.id} className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
+  <div
+    key={m.id}
+    className={`flex w-full ${
+      isUser ? "justify-end" : "justify-start"
+    } animate-[fadeIn_240ms_ease-out]`}
+  >
     <div
       className={[
         "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed overflow-hidden break-words",
@@ -3562,13 +3579,15 @@ return (
 
             <div
   className={[
-    "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed break-words",
-    "overflow-visible", // ✅ en vez de overflow-hidden
-    isUser
-      ? "bg-[#dcf8c6] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-sm mr-2"
-      : "bg-[#e8f0fe] text-zinc-900 rounded-r-2xl rounded-bl-2xl rounded-tl-sm ml-2",
+    "relative w-full rounded-3xl",
+    "bg-white/80 backdrop-blur-xl",
+    "border border-zinc-200",
+    "shadow-sm",
+    "px-3 pt-2 pb-2",
   ].join(" ")}
 >
+
+
 
               {/* LEFT ICONS */}
               <div className="absolute left-2.5 bottom-2 flex items-center gap-1">
@@ -3644,13 +3663,15 @@ return (
                 disabled={!!isTyping}
                 placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
                 className={[
-                  "block w-full resize-none bg-transparent outline-none",
-                  "text-[15px] leading-5",
-                  "px-4 pt-2",
-                  "pb-[56px]",
-                  "overflow-hidden",
-                  inputExpanded ? "min-h-[56px]" : "min-h-[44px]",
-                ].join(" ")}
+  "block w-full resize-none outline-none",
+  "bg-zinc-100/70",
+  "text-[15px] leading-5 text-zinc-900",
+  "rounded-2xl",
+  "px-4 pt-2",
+  "pb-[56px]",
+  "overflow-hidden",
+  inputExpanded ? "min-h-[56px]" : "min-h-[44px]",
+].join(" ")}
                 rows={1}
               />
             </div>
