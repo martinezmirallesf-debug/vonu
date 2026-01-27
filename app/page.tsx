@@ -2517,6 +2517,7 @@ function replaceFractionsInText(text: string) {
 
   // ✅ PIQUITO WhatsApp (integrado arriba + hacia fuera + sin corte)
 // - usamos SVG con drop-shadow (no 2 capas que “cortan”)
+// ✅ PIQUITO WhatsApp (cuadrado girado, integrado arriba, sin sombra “cortada”)
 function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) {
   const isRight = side === "right";
 
@@ -2525,46 +2526,39 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
       aria-hidden="true"
       className={[
         "absolute pointer-events-none",
-        // ✅ pegado arriba (como WhatsApp)
-        "top-[2px]",
-        // ✅ sale hacia fuera
-        isRight ? "right-[-10px]" : "left-[-10px]",
+        "top-[6px]", // ✅ bien arriba (integrado)
+        isRight ? "right-[-6px]" : "left-[-6px]", // ✅ hacia fuera
+        "z-0", // ✅ por detrás del contenido
       ].join(" ")}
-      style={{ width: 22, height: 22 }}
     >
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 22 22"
-        className="block"
+      {/* sombra SOLO hacia fuera (para que no parezca un corte) */}
+      <span
+        className="absolute block"
         style={{
-          // ✅ sombra suave hacia abajo (sin “corte” feo)
-          filter: "drop-shadow(0px 2px 2px rgba(0,0,0,0.10))",
+          width: 12,
+          height: 12,
+          background: "rgba(0,0,0,0.10)",
+          transform: `rotate(45deg) translateX(${isRight ? 2 : -2}px)`,
+          borderRadius: 0,
+          filter: "blur(0.2px)",
         }}
-      >
-        {isRight ? (
-          // Cola derecha (usuario)
-          <path
-            d="M2 2 H20 V20
-               C14 18, 10 13, 6 10
-               C4.3 8.8, 3 7.9, 2 7
-               Z"
-            fill={color}
-          />
-        ) : (
-          // Cola izquierda (assistant) — espejo
-          <path
-            d="M20 2 H2 V20
-               C8 18, 12 13, 16 10
-               C17.7 8.8, 19 7.9, 20 7
-               Z"
-            fill={color}
-          />
-        )}
-      </svg>
+      />
+
+      {/* cuadrado principal girado (look WhatsApp) */}
+      <span
+        className="absolute block"
+        style={{
+          width: 12,
+          height: 12,
+          background: color,
+          transform: "rotate(45deg)",
+          borderRadius: 0,
+        }}
+      />
     </span>
   );
 }
+
 
 
 
@@ -3526,59 +3520,62 @@ return (
   >
 
     <div
-      className={[
-        "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed overflow-visible break-words",
-        isUser
-          ? "bg-[#dcf8c6] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-sm mr-2"
-          : "bg-[#e8f0fe] text-zinc-900 rounded-r-2xl rounded-bl-2xl rounded-tl-sm ml-2",
-      ].join(" ")}
-    >
-      {/* ✅ triángulo */}
-      <BubbleTail side={isUser ? "right" : "left"} color={bubbleColor} />
+  className={[
+    "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed overflow-visible break-words",
+    "z-10", // ✅ la burbuja por encima
+    isUser
+      ? "bg-[#dcf8c6] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-sm mr-2"
+      : "bg-[#e8f0fe] text-zinc-900 rounded-r-2xl rounded-bl-2xl rounded-tl-sm ml-2",
+  ].join(" ")}
+>
+  {/* ✅ piquito por detrás */}
+  <BubbleTail side={isUser ? "right" : "left"} color={bubbleColor} />
 
-      {m.image && (
-        <div className="mb-2">
-          <img src={m.image} alt="Adjunto" className="rounded-md max-h-60 max-w-full object-cover" />
-        </div>
-      )}
+  {/* ✅ contenido por encima (para que la cola no tape nada) */}
+  <div className="relative z-10">
+    {m.image && (
+      <div className="mb-2">
+        <img src={m.image} alt="Adjunto" className="rounded-md max-h-60 max-w-full object-cover" />
+      </div>
+    )}
 
-      {(m.text || m.streaming) && (
-        <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 font-sans">
-          {isStreaming ? (
-            <span className="whitespace-pre-wrap">
-              {mdText.includes('"elements"') || mdText.includes("```excalidraw")
-                ? "✍️ El tutor está dibujando en la pizarra..."
-                : mdText}
-              {!hasText ? <TypingDots /> : <TypingCaret />}
-            </span>
-          ) : (
-            <ReactMarkdown components={makeMdComponents(m.boardImageB64, m.boardImagePlacement, m.pizarra)}>
-              {mdText}
-            </ReactMarkdown>
-          )}
-        </div>
-      )}
+    {(m.text || m.streaming) && (
+      <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 font-sans">
+        {isStreaming ? (
+          <span className="whitespace-pre-wrap">
+            {mdText.includes('"elements"') || mdText.includes("```excalidraw")
+              ? "✍️ El tutor está dibujando en la pizarra..."
+              : mdText}
+            {!hasText ? <TypingDots /> : <TypingCaret />}
+          </span>
+        ) : (
+          <ReactMarkdown components={makeMdComponents(m.boardImageB64, m.boardImagePlacement, m.pizarra)}>
+            {mdText}
+          </ReactMarkdown>
+        )}
+      </div>
+    )}
 
-      {/* ✅ En tutor, si hay imagen de pizarra, la mostramos DENTRO de la burbuja (sin romper layout) */}
-      {!isUser && activeThread?.mode === "tutor" && m.boardImageB64 ? (
-        <div className="mt-3">
-          <ChalkboardTutorBoard
-            className="w-full"
-            value={""} // la explicación ya va en markdown arriba
-            boardImageB64={m.boardImageB64}
-            boardImagePlacement={m.boardImagePlacement}
-          />
-        </div>
-      ) : null}
+    {!isUser && activeThread?.mode === "tutor" && m.boardImageB64 ? (
+      <div className="mt-3">
+        <ChalkboardTutorBoard
+          className="w-full"
+          value={""}
+          boardImageB64={m.boardImageB64}
+          boardImagePlacement={m.boardImagePlacement}
+        />
+      </div>
+    ) : null}
 
-      {/* Indicador tutor (solo si aún no hay contenido) */}
-      {!isUser && activeThread?.mode === "tutor" && isStreaming && !((m.text ?? "").trim()) ? (
-        <div className="mt-2 text-[12px] text-zinc-600 flex items-center gap-2">
-          <span>✍️ El tutor está preparando la explicación</span>
-          <TypingDots />
-        </div>
-      ) : null}
-    </div>
+    {!isUser && activeThread?.mode === "tutor" && isStreaming && !((m.text ?? "").trim()) ? (
+      <div className="mt-2 text-[12px] text-zinc-600 flex items-center gap-2">
+        <span>✍️ El tutor está preparando la explicación</span>
+        <TypingDots />
+      </div>
+    ) : null}
+  </div>
+</div>
+
   </div>
 );
         })}
