@@ -3219,10 +3219,10 @@ return (
         </div>
       )}
 
-      {/* ===== TOP FADE ===== */}
-      <div className="fixed top-0 left-0 right-0 z-40 pointer-events-none">
-        <div className="h-[86px] bg-gradient-to-b from-white via-white/85 to-transparent" />
-      </div>
+      {/* ===== TOP FADE (solo sombra, sin blur/gradiente) ===== */}
+<div className="fixed top-0 left-0 right-0 z-40 pointer-events-none">
+  <div className="h-[14px] shadow-[0_10px_30px_rgba(0,0,0,0.06)]" />
+</div>
 
       {/* ===== TOP BUBBLES ===== */}
       <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
@@ -3420,7 +3420,7 @@ return (
 
   <div
   className="mx-auto max-w-3xl px-3 md:px-6"
-  style={{ paddingTop: 92, paddingBottom: hasUserMessage ? chatBottomPad : 18 }}
+  style={{ paddingTop: 104, paddingBottom: hasUserMessage ? chatBottomPad : 18 }}
 >
     <div className="flex flex-col gap-4 py-6 md:pt-6">
       {/* Badge modo tutor */}
