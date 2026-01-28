@@ -2426,8 +2426,9 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
     }
   }
 
-  // ✅ fijo y estable (evita el hueco blanco gigante en móvil)
-const chatBottomPad = hasUserMessage ? 132 : 18;
+  // ✅ padding dinámico según la altura REAL del input bar (evita que se “corte” en PC)
+const chatBottomPad = hasUserMessage ? (inputBarH + 22) : 18;
+
 
 
   const TOP_OFFSET_PX = 12;
@@ -2526,8 +2527,8 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
       aria-hidden="true"
       className={[
         "absolute pointer-events-none",
-        "top-0",
-        isRight ? "right-[-14px]" : "left-[-14px]",
+        "top-[2px]",
+        isRight ? "right-[-6px]" : "left-[-6px]",
         "z-0",
       ].join(" ")}
       style={{ width: 14, height: 14 }}
@@ -2536,20 +2537,13 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
         className="absolute inset-0"
         style={{
           background: color,
-          // Triángulo rectángulo: el lado largo (arriba) continúa el borde superior de la burbuja
-          clipPath: isRight
-            ? "polygon(0% 0%, 100% 0%, 0% 100%)" // derecha
-            : "polygon(100% 0%, 0% 0%, 100% 100%)", // izquierda
+          borderRadius: 4,          // ✅ redondeo
+          transform: "rotate(45deg)",
         }}
       />
     </span>
   );
 }
-
-
-
-
-
 
 
 return (
@@ -3576,12 +3570,13 @@ return (
         {/* ===== INPUT BAR ===== */}
         <div
   ref={inputBarRef}
-  className="fixed left-0 right-0 z-30 bg-white/40 backdrop-blur-xl"
+  className="fixed left-0 right-0 z-30 bg-transparent"
   style={{
-    bottom: "var(--vvb, 0px)", // ✅ sube con el teclado
+    bottom: "var(--vvb, 0px)",
     paddingBottom: "env(safe-area-inset-bottom)",
   }}
 >
+
           <div className="mx-auto max-w-3xl px-3 md:px-6 pt-3 pb-2">
             {imagePreview && (
               <div className="mb-2 relative w-fit">
@@ -3601,11 +3596,12 @@ return (
             <div
   className={[
     "relative w-full rounded-3xl",
-    "bg-white", // ✅ blanco sólido
+    "bg-white",                 // ✅ blanco sólido
     "shadow-[0_22px_70px_rgba(0,0,0,0.18)]",
     "px-3 pt-2 pb-2",
   ].join(" ")}
 >
+
 
 {/* ✅ Disclaimer dentro del input (full width en móvil, estilo Gemini) */}
 <div
@@ -3654,7 +3650,7 @@ return (
       disabled={!!isTyping || !speechSupported}
       className={[
         "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
-        "bg-white/70 backdrop-blur-xl",
+        "bg-white",
         !speechSupported
           ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
           : isListening
