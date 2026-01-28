@@ -2521,48 +2521,32 @@ function replaceFractionsInText(text: string) {
 function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) {
   const isRight = side === "right";
 
-  // Tail tipo WhatsApp (triángulo curvado), NO rombo
-  // - pegado arriba
-  // - por detrás de la burbuja
-  // - sombra solo hacia fuera
   return (
     <span
       aria-hidden="true"
       className={[
         "absolute pointer-events-none",
-        "top-[1x]",
+        "top-0",
         isRight ? "right-[-14px]" : "left-[-14px]",
         "z-0",
       ].join(" ")}
+      style={{ width: 14, height: 14 }}
     >
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 20 20"
-        className="block"
+      <span
+        className="absolute inset-0"
         style={{
-          filter: isRight
-            ? "drop-shadow(2px 2px 2px rgba(0,0,0,0.14))"
-            : "drop-shadow(-2px 2px 2px rgba(0,0,0,0.14))",
+          background: color,
+          // Triángulo rectángulo: el lado largo (arriba) continúa el borde superior de la burbuja
+          clipPath: isRight
+            ? "polygon(0% 0%, 100% 0%, 0% 100%)" // derecha
+            : "polygon(100% 0%, 0% 0%, 100% 100%)", // izquierda
         }}
-      >
-        {isRight ? (
-          // derecha
-          <path
-            d="M2 2 L18 10 L2 18 C6 14, 6 6, 2 2 Z"
-            fill={color}
-          />
-        ) : (
-          // izquierda (espejo)
-          <path
-            d="M18 2 L2 10 L18 18 C14 14, 14 6, 18 2 Z"
-            fill={color}
-          />
-        )}
-      </svg>
+      />
     </span>
   );
 }
+
+
 
 
 
@@ -3527,12 +3511,13 @@ return (
 
     <div
   className={[
-    "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed overflow-visible break-words",
-    "z-10", // ✅ la burbuja por encima
-    isUser
-      ? "bg-[#dcf8c6] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-sm mr-2"
-      : "bg-[#e8f0fe] text-zinc-900 rounded-r-2xl rounded-bl-2xl rounded-tl-sm ml-2",
-  ].join(" ")}
+  "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
+  "md:shadow-sm", // 👈 sombra SOLO en desktop
+  isUser
+  ? "bg-[#dcf8c6] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-none mr-2"
+  : "bg-[#e8f0fe] text-zinc-900 rounded-r-2xl rounded-bl-2xl rounded-tl-none ml-2",
+].join(" ")}
+
 >
   {/* ✅ piquito por detrás */}
   <BubbleTail side={isUser ? "right" : "left"} color={bubbleColor} />
@@ -3626,9 +3611,23 @@ return (
     "px-3 pt-2 pb-2",
   ].join(" ")}
 >
+{/* ✅ Disclaimer dentro del input (full width en móvil, estilo Gemini) */}
+<div
+  className={[
+    "absolute left-0 right-0 bottom-0",
+    "px-4 py-2",
+    "text-center text-[11.5px] md:text-[12px]",
+    "text-zinc-600",
+    "bg-white/70 backdrop-blur-xl",
+    "border-t border-zinc-200/70",
+    "rounded-b-3xl",
+  ].join(" ")}
+>
+  Orientación preventiva · No sustituye profesionales.
+</div>
 
   {/* LEFT ICONS */}
-  <div className="absolute left-2.5 bottom-2 flex items-center gap-1">
+  <div className="absolute left-2.5 bottom-[34px] flex items-center gap-1">
     <button
       onClick={openBoard}
       className="h-10 w-10 rounded-full hover:bg-white/60 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
@@ -3653,7 +3652,7 @@ return (
   </div>
 
   {/* RIGHT ICONS */}
-  <div className="absolute right-2.5 bottom-2 flex items-center gap-2">
+  <div className="absolute right-2.5 bottom-[34px] flex items-center gap-2">
     <button
       onClick={toggleMic}
       disabled={!!isTyping || !speechSupported}
@@ -3708,7 +3707,7 @@ return (
     "rounded-2xl",
     "text-[15px] leading-5 text-zinc-900 placeholder:text-zinc-400",
     "px-4 pt-3",
-    "pb-[56px]",
+    "pb-[92px]", // 👈 ahora hay espacio para botones + disclaimer dentro
     "overflow-hidden",
     inputExpanded ? "min-h-[60px]" : "min-h-[48px]",
   ].join(" ")}
@@ -3717,23 +3716,6 @@ return (
 </div>
 
           </div>
-
-          <div
-  className={[
-    "mx-auto w-fit",
-    "px-3 py-1.5",
-    "rounded-full",
-    "bg-white/90 backdrop-blur-md",
-    "border border-zinc-200/70",
-    "shadow-[0_14px_40px_rgba(0,0,0,0.18)]",
-  ].join(" ")}
->
-  <p className="text-center text-[11.5px] md:text-[12px] text-zinc-700 font-medium leading-4 md:leading-5">
-    Orientación preventiva · No sustituye profesionales.
-  </p>
-</div>
-
-
         </div>
       </div>
     </div>
