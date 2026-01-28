@@ -2516,36 +2516,44 @@ function replaceFractionsInText(text: string) {
   });
 }
 
-  // ✅ PIQUITO WhatsApp (integrado arriba, hacia fuera, punta suavizada)
+  // ✅ PIQUITO WhatsApp PERFECTO
+// - Triángulo rectángulo
+// - Lado largo continúa el borde superior
+// - SOLO la punta exterior suavizada
 function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) {
   const isRight = side === "right";
 
   return (
-    <span
+    <svg
       aria-hidden="true"
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
       className={[
         "absolute pointer-events-none",
         "top-0",
         isRight ? "right-[-14px]" : "left-[-14px]",
         "z-0",
       ].join(" ")}
-      style={{
-        width: 14,
-        height: 14,
-        overflow: "hidden",      // 👈 CLAVE
-        borderRadius: 2,         // 👈 suaviza la punta
-      }}
     >
-      <span
-        className="absolute inset-0"
-        style={{
-          background: color,
-          clipPath: isRight
-            ? "polygon(0% 0%, 100% 0%, 0% 100%)"   // derecha
-            : "polygon(100% 0%, 0% 0%, 100% 100%)", // izquierda
-        }}
-      />
-    </span>
+      {isRight ? (
+        // 👉 Bubble del usuario (derecha)
+        <path
+          d="M0 0 H14 V2 L2 14 Z"
+          fill={color}
+          stroke="none"
+          strokeLinejoin="round"
+        />
+      ) : (
+        // 👉 Bubble del asistente (izquierda)
+        <path
+          d="M14 0 H0 V2 L12 14 Z"
+          fill={color}
+          stroke="none"
+          strokeLinejoin="round"
+        />
+      )}
+    </svg>
   );
 }
 
