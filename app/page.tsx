@@ -2516,9 +2516,7 @@ function replaceFractionsInText(text: string) {
   });
 }
 
-  // ✅ PIQUITO WhatsApp (integrado arriba + hacia fuera + sin corte)
-// - usamos SVG con drop-shadow (no 2 capas que “cortan”)
-// ✅ PIQUITO WhatsApp (cuadrado girado, integrado arriba, sin sombra “cortada”)
+  // ✅ PIQUITO WhatsApp (integrado arriba, hacia fuera, punta suavizada)
 function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) {
   const isRight = side === "right";
 
@@ -2531,25 +2529,25 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
         isRight ? "right-[-14px]" : "left-[-14px]",
         "z-0",
       ].join(" ")}
-      style={{ width: 14, height: 14 }}
+      style={{
+        width: 14,
+        height: 14,
+        overflow: "hidden",      // 👈 CLAVE
+        borderRadius: 2,         // 👈 suaviza la punta
+      }}
     >
       <span
         className="absolute inset-0"
         style={{
           background: color,
-          // Triángulo rectángulo: el lado largo (arriba) continúa el borde superior de la burbuja
           clipPath: isRight
-            ? "polygon(0% 0%, 100% 0%, 0% 100%)" // derecha
+            ? "polygon(0% 0%, 100% 0%, 0% 100%)"   // derecha
             : "polygon(100% 0%, 0% 0%, 100% 100%)", // izquierda
         }}
       />
     </span>
   );
 }
-
-
-
-
 
 
 
