@@ -3219,10 +3219,6 @@ return (
         </div>
       )}
 
-      {/* ===== TOP FADE (solo sombra, sin blur/gradiente) ===== */}
-<div className="fixed top-0 left-0 right-0 z-40 pointer-events-none">
-  <div className="h-[14px] shadow-[0_10px_30px_rgba(0,0,0,0.06)]" />
-</div>
 
       {/* ===== TOP BUBBLES ===== */}
       <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
@@ -3420,7 +3416,7 @@ return (
 
   <div
   className="mx-auto max-w-3xl px-3 md:px-6"
-  style={{ paddingTop: 104, paddingBottom: hasUserMessage ? chatBottomPad : 18 }}
+  style={{ paddingTop: 124, paddingBottom: hasUserMessage ? chatBottomPad : 18 }}
 >
     <div className="flex flex-col gap-4 py-6 md:pt-6">
       {/* Badge modo tutor */}
@@ -3605,12 +3601,12 @@ return (
             <div
   className={[
     "relative w-full rounded-3xl",
-    "bg-white",                 // ✅ blanco sólido
-    "shadow-[0_22px_70px_rgba(0,0,0,0.18)]", // ✅ sombra exterior
-    "border border-zinc-200/70",            // ✅ borde suave (opcional pero queda pro)
+    "bg-white", // ✅ blanco sólido
+    "shadow-[0_22px_70px_rgba(0,0,0,0.18)]",
     "px-3 pt-2 pb-2",
   ].join(" ")}
 >
+
 {/* ✅ Disclaimer dentro del input (full width en móvil, estilo Gemini) */}
 <div
   className={[
