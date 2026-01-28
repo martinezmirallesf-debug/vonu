@@ -2531,7 +2531,7 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
       className={[
         "absolute pointer-events-none",
         "top-[4px]",
-        isRight ? "right-[-12px]" : "left-[-12px]",
+        isRight ? "right-[-10px]" : "left-[-10px]",
         "z-0",
       ].join(" ")}
     >
