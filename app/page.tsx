@@ -2521,43 +2521,49 @@ function replaceFractionsInText(text: string) {
 function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) {
   const isRight = side === "right";
 
+  // Tail tipo WhatsApp (triángulo curvado), NO rombo
+  // - pegado arriba
+  // - por detrás de la burbuja
+  // - sombra solo hacia fuera
   return (
     <span
       aria-hidden="true"
       className={[
         "absolute pointer-events-none",
-        "top-[6px]", // ✅ bien arriba (integrado)
-        isRight ? "right-[-6px]" : "left-[-6px]", // ✅ hacia fuera
-        "z-0", // ✅ por detrás del contenido
+        "top-[6px]",
+        isRight ? "right-[-12px]" : "left-[-12px]",
+        "z-0",
       ].join(" ")}
     >
-      {/* sombra SOLO hacia fuera (para que no parezca un corte) */}
-      <span
-        className="absolute block"
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        className="block"
         style={{
-          width: 12,
-          height: 12,
-          background: "rgba(0,0,0,0.10)",
-          transform: `rotate(45deg) translateX(${isRight ? 2 : -2}px)`,
-          borderRadius: 0,
-          filter: "blur(0.2px)",
+          filter: isRight
+            ? "drop-shadow(2px 2px 2px rgba(0,0,0,0.14))"
+            : "drop-shadow(-2px 2px 2px rgba(0,0,0,0.14))",
         }}
-      />
-
-      {/* cuadrado principal girado (look WhatsApp) */}
-      <span
-        className="absolute block"
-        style={{
-          width: 12,
-          height: 12,
-          background: color,
-          transform: "rotate(45deg)",
-          borderRadius: 0,
-        }}
-      />
+      >
+        {isRight ? (
+          // derecha
+          <path
+            d="M2 2 L18 10 L2 18 C6 14, 6 6, 2 2 Z"
+            fill={color}
+          />
+        ) : (
+          // izquierda (espejo)
+          <path
+            d="M18 2 L2 10 L18 18 C14 14, 14 6, 18 2 Z"
+            fill={color}
+          />
+        )}
+      </svg>
     </span>
   );
 }
+
 
 
 
@@ -3712,11 +3718,21 @@ return (
 
           </div>
 
-          <div className="mx-auto w-fit px-3 py-1 rounded-full bg-white/70 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.10)]">
-  <p className="text-center text-[11.5px] md:text-[12px] text-zinc-600 leading-4 md:leading-5">
+          <div
+  className={[
+    "mx-auto w-fit",
+    "px-3 py-1.5",
+    "rounded-full",
+    "bg-white/90 backdrop-blur-md",
+    "border border-zinc-200/70",
+    "shadow-[0_14px_40px_rgba(0,0,0,0.18)]",
+  ].join(" ")}
+>
+  <p className="text-center text-[11.5px] md:text-[12px] text-zinc-700 font-medium leading-4 md:leading-5">
     Orientación preventiva · No sustituye profesionales.
   </p>
 </div>
+
 
         </div>
       </div>
