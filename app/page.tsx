@@ -2530,7 +2530,7 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
       aria-hidden="true"
       className={[
         "absolute pointer-events-none",
-        "top-[6px]",
+        "top-[4px]",
         isRight ? "right-[-12px]" : "left-[-12px]",
         "z-0",
       ].join(" ")}
