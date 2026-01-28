@@ -2527,8 +2527,8 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
       aria-hidden="true"
       className={[
         "absolute pointer-events-none",
-        "top-[2px]",
-        isRight ? "right-[-6px]" : "left-[-6px]",
+        "top-0",
+        isRight ? "right-[-14px]" : "left-[-14px]",
         "z-0",
       ].join(" ")}
       style={{ width: 14, height: 14 }}
@@ -2537,13 +2537,20 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
         className="absolute inset-0"
         style={{
           background: color,
-          borderRadius: 4,          // ✅ redondeo
-          transform: "rotate(45deg)",
+          // Triángulo rectángulo: el lado largo (arriba) continúa el borde superior de la burbuja
+          clipPath: isRight
+            ? "polygon(0% 0%, 100% 0%, 0% 100%)" // derecha
+            : "polygon(100% 0%, 0% 0%, 100% 100%)", // izquierda
         }}
       />
     </span>
   );
 }
+
+
+
+
+
 
 
 return (
