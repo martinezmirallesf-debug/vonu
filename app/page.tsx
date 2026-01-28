@@ -2537,25 +2537,25 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
       ].join(" ")}
     >
       {isRight ? (
-        // 👉 derecha (usuario)
+        // 👉 derecha (usuario) — punta redondeada visible
         <path
           d="
             M0 0
             L14 0
-            L1.2 12.8
-            Q0 14 0 12.2
+            L3.6 11.4
+            Q0 14 0 10.2
             Z
           "
           fill={color}
         />
       ) : (
-        // 👉 izquierda (Vonu)
+        // 👉 izquierda (Vonu) — punta redondeada visible
         <path
           d="
             M14 0
             L0 0
-            L12.8 12.8
-            Q14 14 14 12.2
+            L10.4 11.4
+            Q14 14 14 10.2
             Z
           "
           fill={color}
@@ -2564,6 +2564,7 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
     </svg>
   );
 }
+
 
 
 
