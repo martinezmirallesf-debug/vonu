@@ -2532,24 +2532,32 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
       className={[
         "absolute pointer-events-none",
         "top-0",
-        isRight ? "right-[-14px]" : "left-[-14px]",
+        // ✅ pegado a la burbuja (sin hueco)
+        isRight ? "right-[-13px]" : "left-[-13px]",
         "z-0",
       ].join(" ")}
+      style={{
+        // ✅ micro-ajuste para que “muerda” el borde y no se vea línea/hueco
+        transform: isRight ? "translateX(0px)" : "translateX(0px)",
+      }}
     >
       {isRight ? (
-        // 👉 Bubble del usuario (derecha)
+        // 👉 derecha: el borde superior es y=0, y el lateral está en x=0 pegado a la bubble
         <path
-          d="M0 0 H14 V2 L2 14 Z"
+          d="M0 0 L14 0 L0 14 Z"
           fill={color}
-          stroke="none"
+          // ✅ redondea SOLO la punta exterior (el vértice en 0,14)
+          stroke={color}
+          strokeWidth="0.8"
           strokeLinejoin="round"
         />
       ) : (
-        // 👉 Bubble del asistente (izquierda)
+        // 👉 izquierda
         <path
-          d="M14 0 H0 V2 L12 14 Z"
+          d="M14 0 L0 0 L14 14 Z"
           fill={color}
-          stroke="none"
+          stroke={color}
+          strokeWidth="0.8"
           strokeLinejoin="round"
         />
       )}
