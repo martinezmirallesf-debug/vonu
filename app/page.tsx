@@ -3580,7 +3580,7 @@ return (
         {/* ===== INPUT BAR ===== */}
         <div
   ref={inputBarRef}
-  className="fixed left-0 right-0 z-30 bg-transparent"
+  className="fixed left-0 right-0 z-30 bg-white/40 backdrop-blur-xl"
   style={{
     bottom: "var(--vvb, 0px)", // ✅ sube con el teclado
     paddingBottom: "env(safe-area-inset-bottom)",
@@ -3605,9 +3605,9 @@ return (
             <div
   className={[
     "relative w-full rounded-3xl",
-    "bg-white/55 backdrop-blur-xl",
-    // ✅ sombra MÁS marcada y gris (para que el disclaimer se lea)
-    "shadow-[0_22px_70px_rgba(0,0,0,0.18)]",
+    "bg-white",                 // ✅ blanco sólido
+    "shadow-[0_22px_70px_rgba(0,0,0,0.18)]", // ✅ sombra exterior
+    "border border-zinc-200/70",            // ✅ borde suave (opcional pero queda pro)
     "px-3 pt-2 pb-2",
   ].join(" ")}
 >
@@ -3617,14 +3617,14 @@ return (
     "absolute left-0 right-0 bottom-0",
     "px-4 py-2",
     "text-center text-[11.5px] md:text-[12px]",
-    "text-zinc-600",
-    "bg-white/70 backdrop-blur-xl",
-    "border-t border-zinc-200/70",
+    "text-zinc-500",
+    "bg-white",          // ✅ blanco sólido
     "rounded-b-3xl",
   ].join(" ")}
 >
   Orientación preventiva · No sustituye profesionales.
 </div>
+
 
   {/* LEFT ICONS */}
   <div className="absolute left-2.5 bottom-[34px] flex items-center gap-1">
@@ -3703,7 +3703,7 @@ return (
   placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
   className={[
     "block w-full resize-none outline-none",
-    "bg-white/80",
+    "bg-white",
     "rounded-2xl",
     "text-[15px] leading-5 text-zinc-900 placeholder:text-zinc-400",
     "px-4 pt-3",
