@@ -1173,6 +1173,161 @@ export default function Page() {
 
   // -------- UI --------
   const [input, setInput] = useState("");
+  // =======================
+// 🔊 VOZ (Text-to-Speech) — premium: habla + escribe
+// =======================
+const [ttsEnabled, setTtsEnabled] = useState(true);
+const [ttsSpeaking, setTtsSpeaking] = useState(false);
+
+// ✅ Modo conversación (voz + hablar por turnos)
+const [voiceMode, setVoiceMode] = useState(false);
+
+// Cuando activas voiceMode, ponemos TTS ON y preparamos micro
+function setVoiceModeOn() {
+  setVoiceMode(true);
+  setTtsEnabled(true);
+}
+
+function setVoiceModeOff() {
+  setVoiceMode(false);
+  stopTTS();
+  stopMic();
+}
+
+function supportsTTS() {
+  if (typeof window === "undefined") return false;
+  return typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance !== "undefined";
+}
+
+// Limpia markdown a texto “hablable”
+function stripMarkdownForTTS(md: string) {
+  let s = String(md ?? "");
+
+  // quitar bloques de código
+  s = s.replace(/```[\s\S]*?```/g, " ");
+  // quitar inline code
+  s = s.replace(/`([^`]+)`/g, "$1");
+
+  // links [texto](url) -> texto
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1");
+
+  // negritas/itálicas
+  s = s.replace(/\*\*([^*]+)\*\*/g, "$1");
+  s = s.replace(/\*([^*]+)\*/g, "$1");
+  s = s.replace(/_([^_]+)_/g, "$1");
+
+  // bullets raros
+  s = s.replace(/^\s*[-*•]\s+/gm, "");
+  s = s.replace(/\n{3,}/g, "\n\n");
+
+  return s.trim();
+}
+
+// Partir en trozos para que el motor no se “atragante”
+function chunkForTTS(text: string, maxLen = 220) {
+  const t = stripMarkdownForTTS(text);
+  if (!t) return [];
+
+  // corta muy largo para evitar locuras
+  const clipped = t.length > 2200 ? t.slice(0, 2200) + "…" : t;
+
+  // troceo por frases
+  const parts: string[] = [];
+  const sentences = clipped.split(/(?<=[\.\?\!])\s+/g);
+
+  let buf = "";
+  for (const s of sentences) {
+    const next = (buf ? buf + " " : "") + s;
+    if (next.length <= maxLen) {
+      buf = next;
+    } else {
+      if (buf) parts.push(buf);
+      buf = s;
+    }
+  }
+  if (buf) parts.push(buf);
+
+  // fallback si no hay puntuación
+  if (!parts.length) {
+    for (let i = 0; i < clipped.length; i += maxLen) {
+      parts.push(clipped.slice(i, i + maxLen));
+    }
+  }
+
+  return parts.map((x) => x.trim()).filter(Boolean);
+}
+
+function stopTTS() {
+  if (typeof window === "undefined") return;
+  try {
+    window.speechSynthesis?.cancel?.();
+  } catch {}
+  setTtsSpeaking(false);
+}
+
+async function speakTTS(text: string) {
+  if (!ttsEnabled) return;
+  if (!supportsTTS()) return;
+
+  // si ya estaba hablando, cortamos y arrancamos limpio
+  stopTTS();
+
+  const chunks = chunkForTTS(text);
+  if (!chunks.length) return;
+
+  setTtsSpeaking(true);
+
+  // Elegir voz ES si existe
+  const synth = window.speechSynthesis;
+
+  const pickVoice = () => {
+    const vs = synth.getVoices?.() ?? [];
+    // intenta español primero
+    const es = vs.find((v) => (v.lang || "").toLowerCase().startsWith("es"));
+    return es ?? vs[0] ?? null;
+  };
+
+  // A veces las voces cargan tarde (Chrome)
+  let voice = pickVoice();
+  if (!voice) {
+    await new Promise((r) => setTimeout(r, 80));
+    voice = pickVoice();
+  }
+
+  // Reproducir en cola (promesa por chunk)
+  for (const ch of chunks) {
+    const u = new SpeechSynthesisUtterance(ch);
+
+    if (voice) u.voice = voice;
+    u.lang = (voice?.lang || "es-ES");
+    u.rate = 1.02;   // natural
+    u.pitch = 1.0;
+    u.volume = 1.0;
+
+    await new Promise<void>((resolve) => {
+      u.onend = () => resolve();
+      u.onerror = () => resolve();
+      try {
+        synth.speak(u);
+      } catch {
+        resolve();
+      }
+    });
+
+    // Si el usuario lo ha cortado durante la cola
+    if (!ttsEnabled) break;
+  }
+
+  setTtsSpeaking(false);
+
+// ✅ modo conversación: cuando Vonu termina de hablar, volvemos a activar micro
+if (voiceMode) {
+  setTimeout(() => {
+    toggleMic();
+  }, 250);
+}
+}
+
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -1256,6 +1411,9 @@ async function toggleMic() {
 
   try {
     setMicMsg(null);
+
+// ✅ si el usuario empieza a hablar, cortamos TTS para no pisarnos
+stopTTS();
 
     const rec = new SR();
     recognitionRef.current = rec;
@@ -1989,6 +2147,9 @@ function applyQuickPrompt(p: { label: string; mode: ThreadMode; text: string }) 
     if (!userText) return;
 
     setUiError(null);
+    // ✅ premium turnos: si voiceMode está ON, cerramos micro al enviar (turno de Vonu)
+if (voiceMode) stopMic();
+
 
     // ✅ Guardamos modo en el thread (así el backend recibe el modo correcto)
     setThreads((prev) =>
@@ -2119,7 +2280,12 @@ function applyQuickPrompt(p: { label: string; mode: ThreadMode; text: string }) 
         );
 
         setIsTyping(false);
-        if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+
+// ✅ habla la respuesta final (solo si TTS activado)
+speakTTS(fullText);
+
+if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+
       } else {
         let i = 0;
         const speedMs = fullText.length > 900 ? 7 : 11;
@@ -2164,6 +2330,8 @@ function applyQuickPrompt(p: { label: string; mode: ThreadMode; text: string }) 
             );
 
             setIsTyping(false);
+            // ✅ habla la respuesta final (solo si TTS activado)
+speakTTS(fullText);
             if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
           }
         }, speedMs);
@@ -2216,6 +2384,9 @@ function applyQuickPrompt(p: { label: string; mode: ThreadMode; text: string }) 
     const imageBase64 = imagePreview;
 
     setUiError(null);
+    // ✅ premium turnos: si voiceMode está ON, cerramos micro al enviar (turno de Vonu)
+if (voiceMode) stopMic();
+
 
 // ===== Tutor auto-activación (DESACTIVADA) =====
 const threadModeNow: ThreadMode = activeThread.mode ?? "chat";
@@ -2348,6 +2519,7 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
         );
 
         setIsTyping(false);
+        speakTTS(fullText);
         if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       } else {
         // ✅ Chat normal: streaming letra a letra
@@ -3666,26 +3838,68 @@ return (
 
   {/* RIGHT ICONS */}
   <div className="absolute right-2.5 bottom-[34px] flex items-center gap-2">
-    <button
-      onClick={toggleMic}
-      disabled={!!isTyping || !speechSupported}
-      className={[
-        "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
-        "bg-white",
-        !speechSupported
-          ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
-          : isListening
-          ? "border-red-200 bg-red-50 text-red-700"
-          : "border-white/40 hover:bg-white text-zinc-900",
-      ].join(" ")}
-      aria-label={isListening ? "Parar micrófono" : "Hablar"}
-      title={!speechSupported ? "Dictado no soportado en este navegador" : isListening ? "Parar" : "Dictar por voz"}
-    >
-      <div className="relative">
-        <MicIcon className="h-5 w-5" />
-        {isListening && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />}
-      </div>
-    </button>
+    {/* 🔊 TTS toggle (botón independiente) */}
+<button
+  onClick={() => {
+    const next = !ttsEnabled;
+    setTtsEnabled(next);
+    if (!next) stopTTS();
+  }}
+  disabled={!!isTyping}
+  className={[
+    "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
+    "bg-white",
+    "border-white/40 hover:bg-white text-zinc-900",
+    !!isTyping ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+  ].join(" ")}
+  aria-label={ttsEnabled ? "Desactivar voz" : "Activar voz"}
+  title={ttsEnabled ? "Voz activada (clic para desactivar)" : "Voz desactivada (clic para activar)"}
+>
+  <span className="text-[12px] font-semibold">{ttsEnabled ? "🔊" : "🔇"}</span>
+</button>
+
+<button
+  onClick={() => {
+    if (voiceMode) setVoiceModeOff();
+    else setVoiceModeOn();
+  }}
+  disabled={!!isTyping}
+  className={[
+    "h-10 px-3 rounded-full border transition-colors shrink-0 grid place-items-center",
+    "bg-white",
+    "border-white/40 hover:bg-white text-zinc-900",
+    voiceMode ? "ring-2 ring-blue-600/25" : "",
+    !!isTyping ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+  ].join(" ")}
+  aria-label={voiceMode ? "Desactivar modo conversación" : "Activar modo conversación"}
+  title={voiceMode ? "Modo conversación ON" : "Modo conversación OFF"}
+>
+  <span className="text-[12px] font-semibold">{voiceMode ? "🗣️" : "💬"}</span>
+</button>
+
+
+{/* 🎙️ Mic (dictado) */}
+<button
+  onClick={toggleMic}
+  disabled={!!isTyping || !speechSupported}
+  className={[
+    "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
+    "bg-white",
+    !speechSupported
+      ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
+      : isListening
+      ? "border-red-200 bg-red-50 text-red-700"
+      : "border-white/40 hover:bg-white text-zinc-900",
+  ].join(" ")}
+  aria-label={isListening ? "Parar micrófono" : "Hablar"}
+  title={!speechSupported ? "Dictado no soportado en este navegador" : isListening ? "Parar" : "Dictar por voz"}
+>
+  <div className="relative">
+    <MicIcon className="h-5 w-5" />
+    {isListening && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />}
+  </div>
+</button>
+
 
     <button
       onClick={sendMessage}
