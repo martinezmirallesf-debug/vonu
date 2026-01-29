@@ -1182,6 +1182,12 @@ const [ttsSpeaking, setTtsSpeaking] = useState(false);
 // ✅ Modo conversación (voz + hablar por turnos)
 const [voiceMode, setVoiceMode] = useState(false);
 
+const voiceModeRef = useRef(false);
+
+useEffect(() => {
+  voiceModeRef.current = voiceMode;
+}, [voiceMode]);
+
 // Cuando activas voiceMode, ponemos TTS ON y preparamos micro
 function setVoiceModeOn() {
   setVoiceMode(true);
@@ -1193,6 +1199,25 @@ function setVoiceModeOff() {
   stopTTS();
   stopMic();
 }
+
+function toggleVoice() {
+  if (voiceModeRef.current) {
+    // OFF
+    setVoiceModeOff();
+    return;
+  }
+
+  // ON
+  setVoiceModeOn();
+
+  // arranca micro inmediatamente
+  setTimeout(() => {
+    try {
+      toggleMic();
+    } catch {}
+  }, 80);
+}
+
 
 function supportsTTS() {
   if (typeof window === "undefined") return false;
@@ -1320,12 +1345,15 @@ async function speakTTS(text: string) {
 
   setTtsSpeaking(false);
 
-// ✅ modo conversación: cuando Vonu termina de hablar, volvemos a activar micro
-if (voiceMode) {
+// ✅ modo conversación: si sigue ON, volvemos a activar micro
+if (voiceModeRef.current) {
   setTimeout(() => {
-    toggleMic();
+    try {
+      toggleMic();
+    } catch {}
   }, 250);
 }
+
 }
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -2330,9 +2358,12 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
             );
 
             setIsTyping(false);
-            // ✅ habla la respuesta final (solo si TTS activado)
+
+// ✅ habla la respuesta final también en CHAT normal
 speakTTS(fullText);
-            if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+
+if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+
           }
         }, speedMs);
       }
@@ -3840,66 +3871,34 @@ return (
   <div className="absolute right-2.5 bottom-[34px] flex items-center gap-2">
     {/* 🔊 TTS toggle (botón independiente) */}
 <button
-  onClick={() => {
-    const next = !ttsEnabled;
-    setTtsEnabled(next);
-    if (!next) stopTTS();
-  }}
-  disabled={!!isTyping}
-  className={[
-    "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
-    "bg-white",
-    "border-white/40 hover:bg-white text-zinc-900",
-    !!isTyping ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
-  ].join(" ")}
-  aria-label={ttsEnabled ? "Desactivar voz" : "Activar voz"}
-  title={ttsEnabled ? "Voz activada (clic para desactivar)" : "Voz desactivada (clic para activar)"}
->
-  <span className="text-[12px] font-semibold">{ttsEnabled ? "🔊" : "🔇"}</span>
-</button>
-
-<button
-  onClick={() => {
-    if (voiceMode) setVoiceModeOff();
-    else setVoiceModeOn();
-  }}
-  disabled={!!isTyping}
-  className={[
-    "h-10 px-3 rounded-full border transition-colors shrink-0 grid place-items-center",
-    "bg-white",
-    "border-white/40 hover:bg-white text-zinc-900",
-    voiceMode ? "ring-2 ring-blue-600/25" : "",
-    !!isTyping ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
-  ].join(" ")}
-  aria-label={voiceMode ? "Desactivar modo conversación" : "Activar modo conversación"}
-  title={voiceMode ? "Modo conversación ON" : "Modo conversación OFF"}
->
-  <span className="text-[12px] font-semibold">{voiceMode ? "🗣️" : "💬"}</span>
-</button>
-
-
-{/* 🎙️ Mic (dictado) */}
-<button
-  onClick={toggleMic}
+  onClick={toggleVoice}
   disabled={!!isTyping || !speechSupported}
   className={[
     "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
     "bg-white",
     !speechSupported
       ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
-      : isListening
-      ? "border-red-200 bg-red-50 text-red-700"
+      : voiceMode
+      ? "border-blue-200 bg-blue-50 text-blue-800"
       : "border-white/40 hover:bg-white text-zinc-900",
+    !!isTyping ? "opacity-50 cursor-not-allowed" : "",
   ].join(" ")}
-  aria-label={isListening ? "Parar micrófono" : "Hablar"}
-  title={!speechSupported ? "Dictado no soportado en este navegador" : isListening ? "Parar" : "Dictar por voz"}
+  aria-label={voiceMode ? "Desactivar modo voz" : "Activar modo voz"}
+  title={
+    !speechSupported
+      ? "Dictado no soportado en este navegador"
+      : voiceMode
+      ? "Modo voz ON: dicta y Vonu responde hablando (clic para apagar)"
+      : "Modo voz OFF: clic para activar"
+  }
 >
   <div className="relative">
     <MicIcon className="h-5 w-5" />
-    {isListening && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />}
+    {(voiceMode && isListening) ? (
+      <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />
+    ) : null}
   </div>
 </button>
-
 
     <button
       onClick={sendMessage}
