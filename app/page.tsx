@@ -1227,6 +1227,12 @@ function toggleDictation() {
     setTimeout(() => setMicMsg(null), 2400);
     return;
   }
+  // ✅ Si estás en modo conversación, el dictado no se usa (evita conflicto)
+  if (voiceModeRef.current) {
+    setMicMsg("Apaga el modo conversación para usar dictado.");
+    setTimeout(() => setMicMsg(null), 2200);
+    return;
+  }
 
   // Si Vonu está hablando, cortamos para no pisar
   stopTTS();
@@ -1250,6 +1256,9 @@ function toggleConversation() {
     stopMic();
     return;
   }
+  
+  // ✅ Si estaba dictando, paramos el micro antes de entrar en conversación
+  if (isListening) stopMic();
 
   // ON
   setVoiceMode(true);
@@ -1451,6 +1460,7 @@ function cleanRepeatedWords(text: string) {
 const [speechSupported, setSpeechSupported] = useState(false);
 const [isListening, setIsListening] = useState(false);
 const [micMsg, setMicMsg] = useState<string | null>(null);
+const [listeningPurpose, setListeningPurpose] = useState<MicPurpose | null>(null);
 
 const recognitionRef = useRef<any>(null);
 
@@ -1480,7 +1490,9 @@ function stopMic() {
   } catch {}
   recognitionRef.current = null;
   setIsListening(false);
+  setListeningPurpose(null); // ✅ NUEVO
 }
+
 
 async function startMic(purpose: MicPurpose) {
   if (isTyping) return;
@@ -1504,6 +1516,7 @@ async function startMic(purpose: MicPurpose) {
     stopTTS();
 
     micPurposeRef.current = purpose;
+setListeningPurpose(purpose);
 
     const rec = new SR();
     recognitionRef.current = rec;
@@ -1527,8 +1540,9 @@ async function startMic(purpose: MicPurpose) {
     };
 
     rec.onend = () => {
-      setIsListening(false);
-      recognitionRef.current = null;
+  setIsListening(false);
+  setListeningPurpose(null); // ✅ NUEVO
+  recognitionRef.current = null;
 
       const finalText = cleanRepeatedWords(
         (micFinalRef.current || "").replace(/\s+/g, " ").trim()
@@ -2682,7 +2696,12 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
             );
 
             setIsTyping(false);
-            if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+
+// ✅ HABLAR respuesta (y esto re-activa micro si voiceMode sigue ON)
+speakTTS(fullText);
+
+if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+
           }
         }, speedMs);
       }
@@ -3963,8 +3982,8 @@ return (
       "bg-white",
       !speechSupported
         ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
-        : isListening
-        ? "border-red-200 bg-red-50 text-red-700"
+        : (isListening && listeningPurpose === "dictation")
+? "border-red-200 bg-red-50 text-red-700"
         : "border-zinc-200 hover:bg-zinc-50 text-zinc-900",
       !!isTyping ? "opacity-50 cursor-not-allowed" : "",
     ].join(" ")}
@@ -3973,7 +3992,10 @@ return (
   >
     <div className="relative">
       <MicIcon className="h-5 w-5" />
-      {isListening ? <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" /> : null}
+      {isListening && listeningPurpose === "dictation" ? (
+  <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />
+) : null}
+
     </div>
   </button>
 
