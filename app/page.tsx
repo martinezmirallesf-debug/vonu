@@ -3881,7 +3881,7 @@ return (
   </div>
 
   {/* RIGHT ICONS */}
-<div className="absolute right-2.5 bottom-2 flex items-center gap-2">
+<div className="absolute right-2.5 bottom-[34px] z-20 flex items-center gap-2">
   {/* 🗣️ BOTÓN ÚNICO DE VOZ (dictado + respuesta hablada) */}
   <button
     onClick={toggleVoice}
@@ -3936,6 +3936,7 @@ return (
     <ArrowUpIcon className="h-5 w-5" />
   </button>
 </div>
+
 
 
   {/* ✅ Textarea BLANCA (sin gris, sin borde, sin “caja”) */}
