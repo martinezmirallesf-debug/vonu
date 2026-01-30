@@ -390,14 +390,21 @@ function MicIcon({ className }: { className?: string }) {
 function TalkIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M7 11a5 5 0 0 0 10 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M12 16v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M9 20h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M5 12v1a7 7 0 0 0 14 0v-1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      {/* Bocadillo */}
+      <path
+        d="M7 6h10a4 4 0 0 1 4 4v4a4 4 0 0 1-4 4H12l-4 3v-3H7a4 4 0 0 1-4-4v-4a4 4 0 0 1 4-4Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      {/* Ondas */}
+      <path d="M10 11.5h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M12 11.5h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M14 11.5h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
     </svg>
   );
 }
+
 
 
 function PencilIcon({ className }: { className?: string }) {
@@ -1229,7 +1236,6 @@ function toggleDictation() {
 }
 
 function toggleConversation() {
-  // Conversación = turnos: TTS ON + micro ON
   if (!speechSupported) {
     setMicMsg("Tu navegador no soporta modo conversación (micro). Prueba Chrome/Edge.");
     setTimeout(() => setMicMsg(null), 2400);
@@ -1249,13 +1255,12 @@ function toggleConversation() {
   setVoiceMode(true);
   setTtsEnabled(true);
 
-  // Arrancar micro un pelín después
+  // arrancar escucha en modo conversación
   setTimeout(() => {
-    try {
-      toggleMic();
-    } catch {}
-  }, 80);
+    if (voiceModeRef.current) startMic("conversation");
+  }, 120);
 }
+
 
 function toggleReadAloud() {
   // Solo lectura (TTS)
@@ -1401,10 +1406,11 @@ async function speakTTS(text: string) {
 if (voiceModeRef.current) {
   setTimeout(() => {
     try {
-      toggleMic();
+      startMic("conversation");
     } catch {}
   }, 250);
 }
+
 
 }
 
@@ -1452,6 +1458,9 @@ const recognitionRef = useRef<any>(null);
 const micBaseRef = useRef<string>("");
 const micFinalRef = useRef<string>("");
 const micInterimRef = useRef<string>("");
+type MicPurpose = "dictation" | "conversation";
+const micPurposeRef = useRef<MicPurpose>("dictation");
+
 
 useEffect(() => {
   if (typeof window === "undefined") return;
@@ -1473,7 +1482,7 @@ function stopMic() {
   setIsListening(false);
 }
 
-async function toggleMic() {
+async function startMic(purpose: MicPurpose) {
   if (isTyping) return;
 
   const SR = typeof window !== "undefined" ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition : null;
@@ -1483,36 +1492,34 @@ async function toggleMic() {
     return;
   }
 
-  // si ya está escuchando -> parar
+  // si ya está escuchando, primero paramos (evita estados raros)
   if (isListening) {
     stopMic();
-    return;
   }
 
   try {
     setMicMsg(null);
 
-// ✅ si el usuario empieza a hablar, cortamos TTS para no pisarnos
-stopTTS();
+    // ✅ si el usuario empieza a hablar, cortamos TTS
+    stopTTS();
+
+    micPurposeRef.current = purpose;
 
     const rec = new SR();
     recognitionRef.current = rec;
 
-    // ✅ modo limpio
     rec.lang = "es-ES";
-    rec.continuous = false;     // puedes dictar largo
-    rec.interimResults = true; // muestra mientras hablas
+    rec.continuous = false;
+    rec.interimResults = true;
 
-    // ✅ guardamos el texto que ya había antes de empezar a dictar
-    micBaseRef.current = (input || "").trim() ? (input.trim() + " ") : "";
+    // base: para dictado conservamos lo que había escrito; en conversación empezamos “limpio”
+    micBaseRef.current = purpose === "dictation" ? ((input || "").trim() ? input.trim() + " " : "") : "";
     micFinalRef.current = "";
     micInterimRef.current = "";
 
-    rec.onstart = () => {
-      setIsListening(true);
-    };
+    rec.onstart = () => setIsListening(true);
 
-    rec.onerror = (_e: any) => {
+    rec.onerror = () => {
       setIsListening(false);
       setMicMsg("No se pudo usar el micrófono. Revisa permisos del navegador.");
       setTimeout(() => setMicMsg(null), 2600);
@@ -1520,16 +1527,32 @@ stopTTS();
     };
 
     rec.onend = () => {
-  setIsListening(false);
-  recognitionRef.current = null;
-  micInterimRef.current = "";
-};
+      setIsListening(false);
+      recognitionRef.current = null;
+
+      const finalText = cleanRepeatedWords(
+        (micFinalRef.current || "").replace(/\s+/g, " ").trim()
+      );
+
+      micInterimRef.current = "";
+
+      // ✅ si estamos en conversación y hay texto, lo enviamos automático
+      if (micPurposeRef.current === "conversation" && voiceModeRef.current) {
+        if (finalText) {
+          // enviamos sin depender del input actual
+          sendQuickMessage(finalText, activeThread?.mode ?? "chat");
+        } else {
+          // si no dijo nada, volvemos a escuchar (solo si sigue ON)
+          setTimeout(() => {
+            if (voiceModeRef.current) startMic("conversation");
+          }, 180);
+        }
+      }
+    };
 
     rec.onresult = (event: any) => {
       let interim = "";
 
-      // ⚠️ Importante: NO concatenar a input aquí.
-      // Solo acumulamos "final" y reemplazamos el interim.
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const res = event.results[i];
         const txt = res?.[0]?.transcript ?? "";
@@ -1543,27 +1566,37 @@ stopTTS();
 
       micInterimRef.current = interim;
 
-      const raw =
-  micBaseRef.current +
-  micFinalRef.current +
-  micInterimRef.current;
+      const raw = micBaseRef.current + micFinalRef.current + micInterimRef.current;
+      const cleaned = cleanRepeatedWords(raw.replace(/\s+/g, " ").trim());
 
-const cleaned = cleanRepeatedWords(
-  raw.replace(/\s+/g, " ").trim()
-);
+      // ✅ dictado: lo mostramos en el input mientras habla
+      if (micPurposeRef.current === "dictation") {
+        setInput(cleaned);
+      }
 
-if (cleaned) setInput(cleaned);
-
+      // ✅ conversación: no hace falta “llenar” el input (opcional).
+      // Si quieres ver texto mientras hablas, descomenta:
+      // if (micPurposeRef.current === "conversation") setInput(cleaned);
     };
 
     rec.start();
   } catch {
     setIsListening(false);
-    setMicMsg("No se pudo iniciar el dictado. Revisa permisos del navegador.");
+    setMicMsg("No se pudo iniciar el micrófono. Revisa permisos del navegador.");
     setTimeout(() => setMicMsg(null), 2600);
     stopMic();
   }
 }
+
+// ✅ Dictado = toggle (enciende/apaga) pero solo para escribir
+function toggleMic() {
+  if (isListening) {
+    stopMic();
+    return;
+  }
+  startMic("dictation");
+}
+
 
 
 
@@ -3961,7 +3994,15 @@ return (
     aria-label={voiceMode ? "Desactivar conversación" : "Activar conversación"}
     title={!speechSupported ? "Tu navegador no soporta conversación" : voiceMode ? "Conversación ON (clic para apagar)" : "Conversación OFF (clic para encender)"}
   >
-    <TalkIcon className="h-5 w-5" />
+    <div className="relative">
+  <TalkIcon className="h-5 w-5" />
+  {voiceMode ? (
+    <span
+      className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-blue-500"
+      aria-hidden="true"
+    />
+  ) : null}
+</div>
   </button>
 
   {/* ⬆️ ENVIAR */}
