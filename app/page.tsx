@@ -390,33 +390,15 @@ function MicIcon({ className }: { className?: string }) {
 function TalkIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M7 11a4 4 0 1 1 8 0v2a4 4 0 1 1-8 0v-2Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M12 19v3"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M9 22h6"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M5 12v1a7 7 0 0 0 14 0v-1"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M7 11a5 5 0 0 0 10 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M12 16v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M9 20h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M5 12v1a7 7 0 0 0 14 0v-1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
+
 
 function PencilIcon({ className }: { className?: string }) {
   return (
@@ -3939,8 +3921,7 @@ return (
 
   {/* RIGHT ICONS */}
 <div className="absolute right-2.5 bottom-[34px] z-[60] flex items-center gap-2">
-  <div className="absolute right-2.5 bottom-[34px] z-[60] flex items-center gap-2">
-  {/* 🎙️ Dictado */}
+  {/* 🎙️ Dictado (solo escribir) */}
   <button
     onClick={toggleDictation}
     disabled={!!isTyping || !speechSupported}
@@ -3951,7 +3932,7 @@ return (
         ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
         : isListening
         ? "border-red-200 bg-red-50 text-red-700"
-        : "border-white/40 hover:bg-white text-zinc-900",
+        : "border-zinc-200 hover:bg-zinc-50 text-zinc-900",
       !!isTyping ? "opacity-50 cursor-not-allowed" : "",
     ].join(" ")}
     aria-label={isListening ? "Parar dictado" : "Dictar por voz"}
@@ -3963,7 +3944,7 @@ return (
     </div>
   </button>
 
-  {/* 🗣️ Conversación (turnos) */}
+  {/* 🗣️ Conversación (turnos: habla + escucha) */}
   <button
     onClick={toggleConversation}
     disabled={!!isTyping || !speechSupported}
@@ -3974,7 +3955,7 @@ return (
         ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
         : voiceMode
         ? "border-blue-200 bg-blue-50 text-blue-800"
-        : "border-white/40 hover:bg-white text-zinc-900",
+        : "border-zinc-200 hover:bg-zinc-50 text-zinc-900",
       !!isTyping ? "opacity-50 cursor-not-allowed" : "",
     ].join(" ")}
     aria-label={voiceMode ? "Desactivar conversación" : "Activar conversación"}
@@ -3983,24 +3964,6 @@ return (
     <TalkIcon className="h-5 w-5" />
   </button>
 
-  {/* ⬆️ ENVIAR (lo tocamos en el punto 3) */}
-  <button
-    onClick={sendMessage}
-    disabled={!canSend}
-    className={[
-      "h-10 w-10 rounded-full shrink-0 transition-colors grid place-items-center p-0",
-      !canSend
-        ? "bg-zinc-200 text-zinc-500 cursor-not-allowed"
-        : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer",
-    ].join(" ")}
-    aria-label="Enviar"
-    title="Enviar"
-  >
-    <ArrowUpIcon className="h-5 w-5" />
-  </button>
-</div>
-
-
   {/* ⬆️ ENVIAR */}
   <button
     onClick={sendMessage}
@@ -4008,7 +3971,7 @@ return (
     className={[
       "h-10 w-10 rounded-full shrink-0 transition-colors grid place-items-center p-0",
       !canSend
-        ? "bg-zinc-200 text-zinc-500 cursor-not-allowed"
+        ? "bg-zinc-200 text-zinc-500 cursor-default opacity-70"
         : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer",
     ].join(" ")}
     aria-label="Enviar"
