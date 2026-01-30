@@ -3605,16 +3605,16 @@ return (
                           setMenuOpen(false);
                         }}
                         className={[
-  "block w-full resize-none",
-  "appearance-none border-0 ring-0 shadow-none outline-none focus:outline-none focus:ring-0",
-  "bg-white/92",
+  "relative z-0 block w-full resize-none outline-none",
+  "bg-white",
   "rounded-2xl",
-  "text-[15px] leading-5 text-zinc-900",
+  "text-[15px] leading-5 text-zinc-900 placeholder:text-zinc-400",
   "px-4 pt-3",
-  "pb-[56px]",
+  "pb-[92px]",
   "overflow-hidden",
   inputExpanded ? "min-h-[60px]" : "min-h-[48px]",
 ].join(" ")}
+
 
                       >
                         {isPro ? "Ver" : "Mejorar"}
@@ -3856,7 +3856,7 @@ return (
 
 
   {/* LEFT ICONS */}
-  <div className="absolute left-2.5 bottom-[34px] flex items-center gap-1">
+  <div className="absolute left-2.5 bottom-[34px] z-[60] flex items-center gap-1">
     <button
       onClick={openBoard}
       className="h-10 w-10 rounded-full hover:bg-white/60 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
@@ -3881,7 +3881,7 @@ return (
   </div>
 
   {/* RIGHT ICONS */}
-<div className="absolute right-2.5 bottom-[34px] z-20 flex items-center gap-2">
+<div className="absolute right-2.5 bottom-[34px] z-[60] flex items-center gap-2">
   {/* 🗣️ BOTÓN ÚNICO DE VOZ (dictado + respuesta hablada) */}
   <button
     onClick={toggleVoice}
