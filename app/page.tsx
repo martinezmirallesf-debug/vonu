@@ -387,6 +387,37 @@ function MicIcon({ className }: { className?: string }) {
   );
 }
 
+function TalkIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M7 11a4 4 0 1 1 8 0v2a4 4 0 1 1-8 0v-2Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12 19v3"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M9 22h6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M5 12v1a7 7 0 0 0 14 0v-1"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function PencilIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1200,35 +1231,61 @@ function setVoiceModeOff() {
   stopMic();
 }
 
-function toggleVoice() {
-  // Si NO hay micro pero SÍ TTS, que el botón sirva para activar/desactivar lectura
-  if (!speechSupported && supportsTTS()) {
-    setTtsEnabled((v) => {
-      const next = !v;
-      if (!next) stopTTS();
-      return next;
-    });
+function toggleDictation() {
+  // Solo dictado (micro) — si no hay soporte, avisamos
+  if (!speechSupported) {
+    setMicMsg("Tu navegador no soporta dictado por voz. Prueba Chrome/Edge.");
+    setTimeout(() => setMicMsg(null), 2400);
     return;
   }
 
-  // Con micro: modo conversación
+  // Si Vonu está hablando, cortamos para no pisar
+  stopTTS();
+
+  // Encender/apagar micro
+  toggleMic();
+}
+
+function toggleConversation() {
+  // Conversación = turnos: TTS ON + micro ON
+  if (!speechSupported) {
+    setMicMsg("Tu navegador no soporta modo conversación (micro). Prueba Chrome/Edge.");
+    setTimeout(() => setMicMsg(null), 2400);
+    return;
+  }
+
   if (voiceModeRef.current) {
     // OFF
-    setVoiceModeOff();
-    setTtsEnabled(false); // ✅ al apagar modo voz, también apagamos lectura
+    setVoiceMode(false);
+    setTtsEnabled(false);
+    stopTTS();
+    stopMic();
     return;
   }
 
   // ON
-  setVoiceModeOn();
+  setVoiceMode(true);
+  setTtsEnabled(true);
 
-  // arranca micro inmediatamente
+  // Arrancar micro un pelín después
   setTimeout(() => {
     try {
       toggleMic();
     } catch {}
   }, 80);
 }
+
+function toggleReadAloud() {
+  // Solo lectura (TTS)
+  if (!supportsTTS()) return;
+
+  setTtsEnabled((v) => {
+    const next = !v;
+    if (!next) stopTTS();
+    return next;
+  });
+}
+
 
 
 
@@ -3882,43 +3939,67 @@ return (
 
   {/* RIGHT ICONS */}
 <div className="absolute right-2.5 bottom-[34px] z-[60] flex items-center gap-2">
-  {/* 🗣️ BOTÓN ÚNICO DE VOZ (dictado + respuesta hablada) */}
+  <div className="absolute right-2.5 bottom-[34px] z-[60] flex items-center gap-2">
+  {/* 🎙️ Dictado */}
   <button
-    onClick={toggleVoice}
-    disabled={!!isTyping || (!speechSupported && !supportsTTS())}
+    onClick={toggleDictation}
+    disabled={!!isTyping || !speechSupported}
     className={[
       "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
       "bg-white",
-      (!speechSupported && !supportsTTS())
+      !speechSupported
         ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
-        : (voiceMode || ttsEnabled)
+        : isListening
+        ? "border-red-200 bg-red-50 text-red-700"
+        : "border-white/40 hover:bg-white text-zinc-900",
+      !!isTyping ? "opacity-50 cursor-not-allowed" : "",
+    ].join(" ")}
+    aria-label={isListening ? "Parar dictado" : "Dictar por voz"}
+    title={!speechSupported ? "Tu navegador no soporta dictado" : isListening ? "Parar dictado" : "Dictar por voz"}
+  >
+    <div className="relative">
+      <MicIcon className="h-5 w-5" />
+      {isListening ? <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" /> : null}
+    </div>
+  </button>
+
+  {/* 🗣️ Conversación (turnos) */}
+  <button
+    onClick={toggleConversation}
+    disabled={!!isTyping || !speechSupported}
+    className={[
+      "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
+      "bg-white",
+      !speechSupported
+        ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
+        : voiceMode
         ? "border-blue-200 bg-blue-50 text-blue-800"
         : "border-white/40 hover:bg-white text-zinc-900",
       !!isTyping ? "opacity-50 cursor-not-allowed" : "",
     ].join(" ")}
-    aria-label={(voiceMode || ttsEnabled) ? "Desactivar voz" : "Activar voz"}
-    title={
-      (!speechSupported && !supportsTTS())
-        ? "Tu navegador no soporta voz"
-        : (voiceMode || ttsEnabled)
-        ? (speechSupported
-            ? "Voz ON: dicta y Vonu responde hablando (clic para apagar)"
-            : "Voz ON: Vonu leerá las respuestas (clic para apagar)")
-        : (speechSupported
-            ? "Voz OFF: clic para activar modo voz"
-            : "Voz OFF: clic para activar lectura")
-    }
+    aria-label={voiceMode ? "Desactivar conversación" : "Activar conversación"}
+    title={!speechSupported ? "Tu navegador no soporta conversación" : voiceMode ? "Conversación ON (clic para apagar)" : "Conversación OFF (clic para encender)"}
   >
-    <div className="relative">
-      <MicIcon className="h-5 w-5" />
-      {(voiceMode && isListening) ? (
-        <span
-          className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500"
-          aria-hidden="true"
-        />
-      ) : null}
-    </div>
+    <TalkIcon className="h-5 w-5" />
   </button>
+
+  {/* ⬆️ ENVIAR (lo tocamos en el punto 3) */}
+  <button
+    onClick={sendMessage}
+    disabled={!canSend}
+    className={[
+      "h-10 w-10 rounded-full shrink-0 transition-colors grid place-items-center p-0",
+      !canSend
+        ? "bg-zinc-200 text-zinc-500 cursor-not-allowed"
+        : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer",
+    ].join(" ")}
+    aria-label="Enviar"
+    title="Enviar"
+  >
+    <ArrowUpIcon className="h-5 w-5" />
+  </button>
+</div>
+
 
   {/* ⬆️ ENVIAR */}
   <button
