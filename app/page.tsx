@@ -390,20 +390,33 @@ function MicIcon({ className }: { className?: string }) {
 function TalkIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      {/* Bocadillo */}
+      {/* Headset */}
       <path
-        d="M7 6h10a4 4 0 0 1 4 4v4a4 4 0 0 1-4 4H12l-4 3v-3H7a4 4 0 0 1-4-4v-4a4 4 0 0 1 4-4Z"
+        d="M4 12a8 8 0 0 1 16 0"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M4 12v4a2 2 0 0 0 2 2h1v-8H6a2 2 0 0 0-2 2Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M20 12v4a2 2 0 0 1-2 2h-1v-8h1a2 2 0 0 1 2 2Z"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinejoin="round"
       />
       {/* Ondas */}
-      <path d="M10 11.5h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <path d="M12 11.5h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <path d="M14 11.5h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M10 12h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M12 12h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M14 12h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
     </svg>
   );
 }
+
 
 
 
@@ -1256,7 +1269,7 @@ function toggleConversation() {
     stopMic();
     return;
   }
-  
+
   // ✅ Si estaba dictando, paramos el micro antes de entrar en conversación
   if (isListening) stopMic();
 
@@ -1310,8 +1323,61 @@ function stripMarkdownForTTS(md: string) {
   // bullets raros
   s = s.replace(/^\s*[-*•]\s+/gm, "");
   s = s.replace(/\n{3,}/g, "\n\n");
+  // ✅ quitar emojis (evita "cara sonriente", etc.)
+  // Extended_Pictographic funciona en navegadores modernos (Chrome/Edge/Safari recientes)
+  try {
+    s = s.replace(/\p{Extended_Pictographic}+/gu, " ");
+  } catch {
+    // fallback básico si el navegador no soporta unicode property escapes
+    s = s.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]+/gu, " ");
+  }
+
+  // limpiar dobles espacios tras quitar emojis
+  s = s.replace(/\s{2,}/g, " ");
+  // ✅ Matemáticas "hablables"
+  // fracciones simples 12/5 -> "12 entre 5"
+  s = s.replace(/(\b\d+)\s*\/\s*(\d+\b)/g, "$1 entre $2");
+
+  // raíz: √9 -> "raíz de 9"
+  s = s.replace(/√\s*([0-9a-zA-Z]+)/g, "raíz de $1");
+
+  // exponentes estilo x^2, a^n
+  s = s.replace(/([a-zA-Z0-9\)\]])\s*\^\s*2\b/g, "$1 al cuadrado");
+  s = s.replace(/([a-zA-Z0-9\)\]])\s*\^\s*3\b/g, "$1 al cubo");
+  s = s.replace(/([a-zA-Z0-9\)\]])\s*\^\s*(\d+)\b/g, "$1 elevado a $2");
+
+  // superscripts comunes ² ³ (y algunos más)
+  s = s.replace(/([a-zA-Z0-9\)\]])\s*²/g, "$1 al cuadrado");
+  s = s.replace(/([a-zA-Z0-9\)\]])\s*³/g, "$1 al cubo");
+
+  // pi aproximado
+  s = s.replace(/\bπ\b/g, "pi");
 
   return s.trim();
+}
+
+function shortenForVoice(text: string, maxChars = 420) {
+  const t = stripMarkdownForTTS(text);
+  if (!t) return "";
+
+  // corta por frases, y se queda con 2-3 frases
+  const sentences = t.split(/(?<=[\.\?\!])\s+/g).filter(Boolean);
+
+  let out = "";
+  for (const s of sentences) {
+    if (!s.trim()) continue;
+    const next = (out ? out + " " : "") + s.trim();
+    if (next.length > maxChars) break;
+    out = next;
+    if ((out.match(/[.!?]/g) || []).length >= 3) break;
+  }
+
+  // fallback si no hay puntuación
+  if (!out) out = t.slice(0, maxChars);
+
+  // si hemos recortado, rematamos
+  if (out.length < t.length) out = out.trim() + "… Si quieres, te lo amplío.";
+  return out.trim();
 }
 
 // Partir en trozos para que el motor no se “atragante”
@@ -1363,7 +1429,9 @@ async function speakTTS(text: string) {
   // si ya estaba hablando, cortamos y arrancamos limpio
   stopTTS();
 
-  const chunks = chunkForTTS(text);
+    const voiceText = voiceModeRef.current ? shortenForVoice(text) : stripMarkdownForTTS(text);
+  const chunks = chunkForTTS(voiceText);
+
   if (!chunks.length) return;
 
   setTtsSpeaking(true);
@@ -3691,25 +3759,15 @@ return (
                       </div>
 
                       <button
-                        onClick={() => {
-                          handleOpenPlansCTA();
-                          setMenuOpen(false);
-                        }}
-                        className={[
-  "relative z-0 block w-full resize-none outline-none",
-  "bg-white",
-  "rounded-2xl",
-  "text-[15px] leading-5 text-zinc-900 placeholder:text-zinc-400",
-  "px-4 pt-3",
-  "pb-[92px]",
-  "overflow-hidden",
-  inputExpanded ? "min-h-[60px]" : "min-h-[48px]",
-].join(" ")}
+  onClick={() => {
+    handleOpenPlansCTA();
+    setMenuOpen(false);
+  }}
+  className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer shrink-0"
+>
+  {isPro ? "Ver" : "Mejorar"}
+</button>
 
-
-                      >
-                        {isPro ? "Ver" : "Mejorar"}
-                      </button>
                     </div>
                   </div>
                 ) : (
@@ -3924,7 +3982,9 @@ return (
             <div
   className={[
     "relative w-full rounded-3xl",
-    "bg-white",                 // ✅ blanco sólido
+    "bg-white",
+    "border border-zinc-200/70",
+    "ring-1 ring-zinc-900/[0.03]",               // ✅ micro borde óptico
     "shadow-[0_22px_70px_rgba(0,0,0,0.18)]",
     "px-3 pt-2 pb-2",
   ].join(" ")}
@@ -4018,13 +4078,23 @@ return (
   >
     <div className="relative">
   <TalkIcon className="h-5 w-5" />
+
+  {/* ✅ ON */}
   {voiceMode ? (
-    <span
-      className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-blue-500"
-      aria-hidden="true"
-    />
+    <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-blue-500" aria-hidden="true" />
+  ) : null}
+
+  {/* ✅ Escuchando (tu turno) */}
+  {voiceMode && isListening && listeningPurpose === "conversation" ? (
+    <span className="absolute -bottom-1 -right-1 h-2.5 w-2.5 rounded-full bg-emerald-500" aria-hidden="true" />
+  ) : null}
+
+  {/* ✅ Hablando (turno de Vonu) */}
+  {voiceMode && ttsSpeaking ? (
+    <span className="absolute -bottom-1 -right-1 h-2.5 w-2.5 rounded-full bg-violet-500 animate-pulse" aria-hidden="true" />
   ) : null}
 </div>
+
   </button>
 
   {/* ⬆️ ENVIAR */}
