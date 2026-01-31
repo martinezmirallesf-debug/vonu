@@ -389,38 +389,27 @@ function MicIcon({ className }: { className?: string }) {
 
 function TalkIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-5 w-5"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      {/* Cara */}
-      <circle
-        cx="9"
-        cy="12"
-        r="4.5"
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      {/* Perfil cabeza (contorno) */}
+      <path
+        d="M11.2 4.6c-2.4.2-4.3 2.1-4.6 4.5-.2 1.9.7 3.6 2.1 4.7-.5.3-1 .7-1.4 1.2-.8.9-1.3 2.1-1.3 3.4V20h7.1c2.2 0 4-1.8 4-4v-2.2c0-1.7-1.1-3.2-2.7-3.8.5-.8.8-1.8.7-2.9-.2-2.6-2.3-4.7-4.9-4.5Z"
         stroke="currentColor"
         strokeWidth="2"
+        strokeLinejoin="round"
       />
 
-      {/* Boca abierta */}
-      <circle
-        cx="9"
-        cy="13"
-        r="1.2"
-        fill="currentColor"
-      />
+      {/* Boca abierta (pequeño óvalo) */}
+      <ellipse cx="12.2" cy="12.6" rx="0.9" ry="1.1" fill="currentColor" />
 
       {/* Ondas de voz */}
       <path
-        d="M15 9.5c1.5 1.5 1.5 3.5 0 5"
+        d="M17 10.2c1.2 1.2 1.2 2.8 0 4"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
       />
       <path
-        d="M17.5 8c2.5 2.5 2.5 6 0 8.5"
+        d="M19.4 8.7c2.1 2.1 2.1 5 0 7.1"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
@@ -428,6 +417,7 @@ function TalkIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
 
 
 
@@ -1232,15 +1222,6 @@ useEffect(() => {
   voiceModeRef.current = voiceMode;
 }, [voiceMode]);
 
-// Cuando activas voiceMode, ponemos TTS ON y preparamos micro
-function setVoiceModeOn() {
-  setVoiceMode(true);
-  setTtsEnabled(true);
-  useEffect(() => {
-  if (voiceMode) setTtsEnabled(true);
-}, [voiceMode]);
-
-}
 
 function setVoiceModeOff() {
   setVoiceMode(false);
@@ -1289,8 +1270,9 @@ function toggleConversation() {
   if (isListening) stopMic();
 
   // ON
-  setVoiceMode(true);
-  setTtsEnabled(true);
+setVoiceMode(true);
+setTtsEnabled(true);
+primeTTS();
 
   // arrancar escucha en modo conversación
   setTimeout(() => {
@@ -1317,6 +1299,58 @@ function supportsTTS() {
   if (typeof window === "undefined") return false;
   return typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance !== "undefined";
 }
+
+// ✅ Cargar voces de forma fiable (algunos navegadores las cargan tarde)
+function getVoicesAsync(timeoutMs = 700): Promise<SpeechSynthesisVoice[]> {
+  if (typeof window === "undefined") return Promise.resolve([]);
+  const synth = window.speechSynthesis;
+
+  const existing = synth.getVoices?.() ?? [];
+  if (existing.length) return Promise.resolve(existing);
+
+  return new Promise((resolve) => {
+    let done = false;
+
+    const finish = () => {
+      if (done) return;
+      done = true;
+      try {
+        synth.onvoiceschanged = null;
+      } catch {}
+      resolve(synth.getVoices?.() ?? []);
+    };
+
+    // A veces dispara este evento cuando ya están listas
+    try {
+      synth.onvoiceschanged = () => finish();
+    } catch {}
+
+    setTimeout(() => finish(), timeoutMs);
+  });
+}
+
+// ✅ "Warm-up" para desbloquear TTS tras gesto del usuario (móviles/Chrome)
+function primeTTS() {
+  if (!supportsTTS()) return;
+
+  try {
+    const synth = window.speechSynthesis;
+    synth.cancel();
+
+    const u = new SpeechSynthesisUtterance(" ");
+    u.volume = 0; // no se oye
+    u.rate = 1;
+    u.pitch = 1;
+
+    synth.speak(u);
+    setTimeout(() => {
+      try {
+        synth.cancel();
+      } catch {}
+    }, 60);
+  } catch {}
+}
+
 
 // Limpia markdown a texto “hablable”
 function stripMarkdownForTTS(md: string) {
@@ -1464,21 +1498,18 @@ async function speakTTS(text: string) {
   setTtsSpeaking(true);
 
   // Elegir voz ES si existe
-  const synth = window.speechSynthesis;
+    const synth = window.speechSynthesis;
+
+  const voices = await getVoicesAsync(800);
 
   const pickVoice = () => {
-    const vs = synth.getVoices?.() ?? [];
-    // intenta español primero
+    const vs = voices.length ? voices : (synth.getVoices?.() ?? []);
     const es = vs.find((v) => (v.lang || "").toLowerCase().startsWith("es"));
     return es ?? vs[0] ?? null;
   };
 
-  // A veces las voces cargan tarde (Chrome)
-  let voice = pickVoice();
-  if (!voice) {
-    await new Promise((r) => setTimeout(r, 80));
-    voice = pickVoice();
-  }
+  const voice = pickVoice();
+
 
   // Reproducir en cola (promesa por chunk)
   for (const ch of chunks) {
@@ -4105,22 +4136,8 @@ return (
   >
     <div className="relative">
   <TalkIcon className="h-5 w-5" />
-
-  {/* ✅ ON */}
-  {voiceMode ? (
-    <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-blue-500" aria-hidden="true" />
-  ) : null}
-
-  {/* ✅ Escuchando (tu turno) */}
-  {voiceMode && isListening && listeningPurpose === "conversation" ? (
-    <span className="absolute -bottom-1 -right-1 h-2.5 w-2.5 rounded-full bg-emerald-500" aria-hidden="true" />
-  ) : null}
-
-  {/* ✅ Hablando (turno de Vonu) */}
-  {voiceMode && ttsSpeaking ? (
-    <span className="absolute -bottom-1 -right-1 h-2.5 w-2.5 rounded-full bg-violet-500 animate-pulse" aria-hidden="true" />
-  ) : null}
 </div>
+
 
   </button>
 
@@ -4129,11 +4146,23 @@ return (
     onClick={sendMessage}
     disabled={!canSend}
     className={[
-      "h-10 w-10 rounded-full shrink-0 transition-colors grid place-items-center p-0",
-      !canSend
-        ? "bg-zinc-200 text-zinc-500 cursor-default opacity-70"
-        : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer",
-    ].join(" ")}
+  "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
+  "bg-white",
+  !speechSupported
+    ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
+    : voiceMode
+    ? [
+        // base ON
+        "border-blue-300 bg-blue-50/60 text-blue-900",
+        // si Vonu habla: late azul
+        ttsSpeaking ? "ring-2 ring-blue-300/70 animate-pulse" : "ring-1 ring-blue-200/60",
+        // si está escuchando: verde (tu turno)
+        isListening && listeningPurpose === "conversation" ? "border-emerald-300 bg-emerald-50/60 text-emerald-900 ring-2 ring-emerald-200/60" : "",
+      ].join(" ")
+    : "border-zinc-200 hover:bg-zinc-50 text-zinc-900",
+  !!isTyping ? "opacity-50 cursor-not-allowed" : "",
+].join(" ")}
+
     aria-label="Enviar"
     title="Enviar"
   >
