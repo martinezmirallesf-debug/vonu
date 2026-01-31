@@ -390,42 +390,35 @@ function MicIcon({ className }: { className?: string }) {
 function TalkIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      {/* Headset */}
+      {/* Cabeza perfil */}
       <path
-        d="M4 12a8 8 0 0 1 16 0v5a3 3 0 0 1-3 3h-2"
+        d="M12.2 4.2c-2.5 0-4.6 2-4.6 4.6v2.2c0 1.5-.7 2.7-1.8 3.4l-.6.4c-.3.2-.2.7.2.7H9.3c1.1 0 2-.3 2.8-.9l.3-.2"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Cara + boca */}
+      <path
+        d="M12.6 7.2c1.7.6 3 2.2 3 4.1 0 1.8-1 3.3-2.6 4"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
-        d="M4 12v4a2 2 0 0 0 2 2h1v-6H6a2 2 0 0 0-2 2Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M20 12v4a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      {/* Mic */}
-      <path
-        d="M12 12a2 2 0 0 0 2-2V7a2 2 0 0 0-4 0v3a2 2 0 0 0 2 2Z"
+        d="M15.8 11.3h1.2"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
       />
-      <path d="M9 12a3 3 0 0 0 6 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      {/* Ondas voz (3 rayitas) */}
+      <path d="M18.2 10.1c.9.9.9 2.4 0 3.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M20.1 9c1.5 1.6 1.5 4.2 0 5.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M22 7.8c2.2 2.3 2.2 6.1 0 8.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
-
-
-
 
 
 
@@ -1265,6 +1258,11 @@ function toggleConversation() {
     return;
   }
 
+  if (!supportsTTS()) {
+  setMicMsg("Tu navegador no soporta voz (TTS). Prueba Safari en iPhone o Chrome/Edge en desktop.");
+  setTimeout(() => setMicMsg(null), 2600);
+}
+
   if (voiceModeRef.current) {
     // OFF
     setVoiceMode(false);
@@ -1563,7 +1561,7 @@ if (voiceModeRef.current) {
     try {
       startMic("conversation");
     } catch {}
-  }, 250);
+  }, 650);
 }
 
 
@@ -4161,33 +4159,22 @@ return (
 
   </button>
 
-  {/* ⬆️ ENVIAR */}
-  <button
-    onClick={sendMessage}
-    disabled={!canSend}
-    className={[
-  "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
-  "bg-white",
-  !speechSupported
-    ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
-    : voiceMode
-    ? [
-        // base ON
-        "border-blue-300 bg-blue-50/60 text-blue-900",
-        // si Vonu habla: late azul
-        ttsSpeaking ? "ring-2 ring-blue-300/70 animate-pulse" : "ring-1 ring-blue-200/60",
-        // si está escuchando: verde (tu turno)
-        isListening && listeningPurpose === "conversation" ? "border-emerald-300 bg-emerald-50/60 text-emerald-900 ring-2 ring-emerald-200/60" : "",
-      ].join(" ")
-    : "border-zinc-200 hover:bg-zinc-50 text-zinc-900",
-  !!isTyping ? "opacity-50 cursor-not-allowed" : "",
-].join(" ")}
-
-    aria-label="Enviar"
-    title="Enviar"
-  >
-    <ArrowUpIcon className="h-5 w-5" />
-  </button>
+  {/* ⬆️ ENVIAR */}  
+<button
+  onClick={sendMessage}
+  disabled={!canSend}
+  className={[
+    "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
+    canSend
+      ? "bg-blue-600 border-blue-700/10 text-white hover:bg-blue-700 cursor-pointer"
+      : "bg-zinc-200 border-zinc-200 text-zinc-500 cursor-default",
+    !!isTyping ? "opacity-60 cursor-default" : "",
+  ].join(" ")}
+  aria-label="Enviar"
+  title="Enviar"
+>
+  <ArrowUpIcon className="h-5 w-5" />
+</button>
 </div>
 
 
