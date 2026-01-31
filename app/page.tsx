@@ -390,35 +390,20 @@ function MicIcon({ className }: { className?: string }) {
 function TalkIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      {/* Cabeza perfil */}
+      {/* Altavoz */}
       <path
-        d="M12.2 4.2c-2.5 0-4.6 2-4.6 4.6v2.2c0 1.5-.7 2.7-1.8 3.4l-.6.4c-.3.2-.2.7.2.7H9.3c1.1 0 2-.3 2.8-.9l.3-.2"
+        d="M4 10v4h3l4 3V7L7 10H4Z"
         stroke="currentColor"
         strokeWidth="2"
-        strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* Cara + boca */}
-      <path
-        d="M12.6 7.2c1.7.6 3 2.2 3 4.1 0 1.8-1 3.3-2.6 4"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M15.8 11.3h1.2"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      {/* Ondas voz (3 rayitas) */}
-      <path d="M18.2 10.1c.9.9.9 2.4 0 3.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M20.1 9c1.5 1.6 1.5 4.2 0 5.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M22 7.8c2.2 2.3 2.2 6.1 0 8.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      {/* Ondas */}
+      <path d="M16 9.5c1.2 1.2 1.2 3.8 0 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M18.5 7c2.6 2.6 2.6 7.4 0 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
+
 
 
 
@@ -1261,7 +1246,9 @@ function toggleConversation() {
   if (!supportsTTS()) {
   setMicMsg("Tu navegador no soporta voz (TTS). Prueba Safari en iPhone o Chrome/Edge en desktop.");
   setTimeout(() => setMicMsg(null), 2600);
+  return; // ✅ CLAVE: sin TTS no activamos conversación
 }
+
 
   if (voiceModeRef.current) {
     // OFF
@@ -1517,6 +1504,7 @@ async function speakTTS(text: string) {
 
   // Elegir voz ES si existe
     const synth = window.speechSynthesis;
+try { synth.resume?.(); } catch {}
 
   const voices = await getVoicesAsync(800);
 
@@ -4112,7 +4100,7 @@ return (
   {/* 🎙️ Dictado (solo escribir) */}
   <button
     onClick={toggleDictation}
-    disabled={!!isTyping || !speechSupported}
+    disabled={!!isTyping || !speechSupported || !supportsTTS()}
     className={[
       "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
       "bg-white",
@@ -4150,7 +4138,15 @@ return (
       !!isTyping ? "opacity-50 cursor-not-allowed" : "",
     ].join(" ")}
     aria-label={voiceMode ? "Desactivar conversación" : "Activar conversación"}
-    title={!speechSupported ? "Tu navegador no soporta conversación" : voiceMode ? "Conversación ON (clic para apagar)" : "Conversación OFF (clic para encender)"}
+    title={
+  !speechSupported
+    ? "Tu navegador no soporta micrófono (SpeechRecognition)"
+    : !supportsTTS()
+    ? "Tu navegador no soporta voz (TTS)"
+    : voiceMode
+    ? "Conversación ON (clic para apagar)"
+    : "Conversación OFF (clic para encender)"
+}
   >
     <div className="relative">
   <TalkIcon className="h-5 w-5" />
