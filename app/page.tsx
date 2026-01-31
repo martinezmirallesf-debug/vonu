@@ -389,34 +389,45 @@ function MicIcon({ className }: { className?: string }) {
 
 function TalkIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      {/* Headset */}
+    <svg
+      className={className ?? "h-5 w-5"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      {/* Cara */}
+      <circle
+        cx="9"
+        cy="12"
+        r="4.5"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+
+      {/* Boca abierta */}
+      <circle
+        cx="9"
+        cy="13"
+        r="1.2"
+        fill="currentColor"
+      />
+
+      {/* Ondas de voz */}
       <path
-        d="M4 12a8 8 0 0 1 16 0"
+        d="M15 9.5c1.5 1.5 1.5 3.5 0 5"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
       />
       <path
-        d="M4 12v4a2 2 0 0 0 2 2h1v-8H6a2 2 0 0 0-2 2Z"
+        d="M17.5 8c2.5 2.5 2.5 6 0 8.5"
         stroke="currentColor"
         strokeWidth="2"
-        strokeLinejoin="round"
+        strokeLinecap="round"
       />
-      <path
-        d="M20 12v4a2 2 0 0 1-2 2h-1v-8h1a2 2 0 0 1 2 2Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      {/* Ondas */}
-      <path d="M10 12h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <path d="M12 12h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <path d="M14 12h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
     </svg>
   );
 }
-
 
 
 
@@ -1225,6 +1236,10 @@ useEffect(() => {
 function setVoiceModeOn() {
   setVoiceMode(true);
   setTtsEnabled(true);
+  useEffect(() => {
+  if (voiceMode) setTtsEnabled(true);
+}, [voiceMode]);
+
 }
 
 function setVoiceModeOff() {
@@ -1423,8 +1438,20 @@ function stopTTS() {
 }
 
 async function speakTTS(text: string) {
-  if (!ttsEnabled) return;
-  if (!supportsTTS()) return;
+  // ✅ En modo conversación, si TTS no está disponible, igualmente reanudamos el micro
+  const inConversation = voiceModeRef.current;
+
+  // Si TTS no está activado o no hay soporte...
+  if (!ttsEnabled || !supportsTTS()) {
+    if (inConversation) {
+      setTimeout(() => {
+        try {
+          if (voiceModeRef.current) startMic("conversation");
+        } catch {}
+      }, 200);
+    }
+    return;
+  }
 
   // si ya estaba hablando, cortamos y arrancamos limpio
   stopTTS();
