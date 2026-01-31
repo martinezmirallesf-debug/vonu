@@ -390,33 +390,41 @@ function MicIcon({ className }: { className?: string }) {
 function TalkIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      {/* Perfil cabeza (contorno) */}
+      {/* Headset */}
       <path
-        d="M11.2 4.6c-2.4.2-4.3 2.1-4.6 4.5-.2 1.9.7 3.6 2.1 4.7-.5.3-1 .7-1.4 1.2-.8.9-1.3 2.1-1.3 3.4V20h7.1c2.2 0 4-1.8 4-4v-2.2c0-1.7-1.1-3.2-2.7-3.8.5-.8.8-1.8.7-2.9-.2-2.6-2.3-4.7-4.9-4.5Z"
+        d="M4 12a8 8 0 0 1 16 0v5a3 3 0 0 1-3 3h-2"
         stroke="currentColor"
         strokeWidth="2"
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
-
-      {/* Boca abierta (pequeño óvalo) */}
-      <ellipse cx="12.2" cy="12.6" rx="0.9" ry="1.1" fill="currentColor" />
-
-      {/* Ondas de voz */}
       <path
-        d="M17 10.2c1.2 1.2 1.2 2.8 0 4"
+        d="M4 12v4a2 2 0 0 0 2 2h1v-6H6a2 2 0 0 0-2 2Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M20 12v4a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Mic */}
+      <path
+        d="M12 12a2 2 0 0 0 2-2V7a2 2 0 0 0-4 0v3a2 2 0 0 0 2 2Z"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
       />
-      <path
-        d="M19.4 8.7c2.1 2.1 2.1 5 0 7.1"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <path d="M9 12a3 3 0 0 0 6 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
+
+
 
 
 
@@ -1269,15 +1277,20 @@ function toggleConversation() {
   // ✅ Si estaba dictando, paramos el micro antes de entrar en conversación
   if (isListening) stopMic();
 
-  // ON
+// ON
+voiceModeRef.current = true;
 setVoiceMode(true);
-setTtsEnabled(true);
-primeTTS();
 
-  // arrancar escucha en modo conversación
-  setTimeout(() => {
-    if (voiceModeRef.current) startMic("conversation");
-  }, 120);
+setTtsEnabled(true);
+
+// desbloquear TTS sí o sí tras el click
+primeTTS();
+setTimeout(() => primeTTS(), 120);
+
+// arrancar escucha en modo conversación
+setTimeout(() => {
+  if (voiceModeRef.current) startMic("conversation");
+}, 180);
 }
 
 
@@ -1293,20 +1306,26 @@ function toggleReadAloud() {
 }
 
 
-
-
+// =======================
+// 🔊 TTS helpers
+// =======================
 function supportsTTS() {
   if (typeof window === "undefined") return false;
   return typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance !== "undefined";
 }
 
 // ✅ Cargar voces de forma fiable (algunos navegadores las cargan tarde)
-function getVoicesAsync(timeoutMs = 700): Promise<SpeechSynthesisVoice[]> {
+function getVoicesAsync(timeoutMs = 900): Promise<SpeechSynthesisVoice[]> {
   if (typeof window === "undefined") return Promise.resolve([]);
   const synth = window.speechSynthesis;
 
-  const existing = synth.getVoices?.() ?? [];
-  if (existing.length) return Promise.resolve(existing);
+  // por si el motor queda “pausado”
+  try { synth.resume?.(); } catch {}
+
+  try {
+    const existing = synth.getVoices?.() ?? [];
+    if (existing.length) return Promise.resolve(existing);
+  } catch {}
 
   return new Promise((resolve) => {
     let done = false;
@@ -1314,13 +1333,10 @@ function getVoicesAsync(timeoutMs = 700): Promise<SpeechSynthesisVoice[]> {
     const finish = () => {
       if (done) return;
       done = true;
-      try {
-        synth.onvoiceschanged = null;
-      } catch {}
-      resolve(synth.getVoices?.() ?? []);
+      try { synth.onvoiceschanged = null; } catch {}
+      try { resolve(synth.getVoices?.() ?? []); } catch { resolve([]); }
     };
 
-    // A veces dispara este evento cuando ya están listas
     try {
       synth.onvoiceschanged = () => finish();
     } catch {}
@@ -1329,27 +1345,31 @@ function getVoicesAsync(timeoutMs = 700): Promise<SpeechSynthesisVoice[]> {
   });
 }
 
-// ✅ "Warm-up" para desbloquear TTS tras gesto del usuario (móviles/Chrome)
+// ✅ “Unlock” de TTS (muy importante en móvil / iOS / Chrome)
+// OJO: esto debe ejecutarse tras un gesto del usuario (click/tap)
 function primeTTS() {
+  if (typeof window === "undefined") return;
   if (!supportsTTS()) return;
 
   try {
     const synth = window.speechSynthesis;
+    try { synth.resume?.(); } catch {}
     synth.cancel();
 
     const u = new SpeechSynthesisUtterance(" ");
-    u.volume = 0; // no se oye
+    u.volume = 0; // silencioso
     u.rate = 1;
     u.pitch = 1;
 
     synth.speak(u);
+
+    // cancel rápido para no “comerse” el siguiente speak
     setTimeout(() => {
-      try {
-        synth.cancel();
-      } catch {}
-    }, 60);
+      try { synth.cancel(); } catch {}
+    }, 80);
   } catch {}
 }
+
 
 
 // Limpia markdown a texto “hablable”
@@ -1586,16 +1606,16 @@ function cleanRepeatedWords(text: string) {
 const [speechSupported, setSpeechSupported] = useState(false);
 const [isListening, setIsListening] = useState(false);
 const [micMsg, setMicMsg] = useState<string | null>(null);
+type MicPurpose = "dictation" | "conversation";
+
 const [listeningPurpose, setListeningPurpose] = useState<MicPurpose | null>(null);
 
-const recognitionRef = useRef<any>(null);
-
-// refs para evitar duplicados
+const micPurposeRef = useRef<MicPurpose>("dictation");
+// ✅ refs internas del motor de reconocimiento
+const recognitionRef = useRef<any | null>(null);
 const micBaseRef = useRef<string>("");
 const micFinalRef = useRef<string>("");
 const micInterimRef = useRef<string>("");
-type MicPurpose = "dictation" | "conversation";
-const micPurposeRef = useRef<MicPurpose>("dictation");
 
 
 useEffect(() => {
@@ -4103,7 +4123,7 @@ return (
         : (isListening && listeningPurpose === "dictation")
 ? "border-red-200 bg-red-50 text-red-700"
         : "border-zinc-200 hover:bg-zinc-50 text-zinc-900",
-      !!isTyping ? "opacity-50 cursor-not-allowed" : "",
+      !!isTyping ? "opacity-50" : "",
     ].join(" ")}
     aria-label={isListening ? "Parar dictado" : "Dictar por voz"}
     title={!speechSupported ? "Tu navegador no soporta dictado" : isListening ? "Parar dictado" : "Dictar por voz"}
