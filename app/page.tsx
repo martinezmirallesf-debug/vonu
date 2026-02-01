@@ -1269,10 +1269,11 @@ setVoiceMode(true);
 setTtsEnabled(true);
 
 // ✅ desbloquear TTS tras el click (sin cancelar la voz real)
-primeTTSAsync();
+primeTTSAsync({ hardCancel: true });
 setTimeout(() => {
-  primeTTSAsync();
+  primeTTSAsync({ hardCancel: true });
 }, 180);
+
 
 
 
@@ -1336,22 +1337,25 @@ function getVoicesAsync(timeoutMs = 900): Promise<SpeechSynthesisVoice[]> {
 
 // ✅ “Unlock” de TTS SIN timer que cancele tu voz real
 // Devuelve una promesa para poder esperar a que termine.
-function primeTTSAsync() {
+function primeTTSAsync(opts?: { hardCancel?: boolean }) {
   if (typeof window === "undefined") return Promise.resolve();
   if (!supportsTTS()) return Promise.resolve();
+
+  const hardCancel = !!opts?.hardCancel;
 
   return new Promise<void>((resolve) => {
     try {
       const synth = window.speechSynthesis;
 
-      // Limpio cualquier cola anterior
+      // ✅ Solo cancel “duro” cuando vienes de un click (unlock).
+      // Antes de hablar respuesta real, NO cancel agresivo.
       try {
-        synth.cancel();
+        if (hardCancel) synth.cancel();
         synth.resume?.();
       } catch {}
 
       const u = new SpeechSynthesisUtterance(" ");
-      u.volume = 0;   // silencioso
+      u.volume = 0; // silencioso
       u.rate = 1;
       u.pitch = 1;
 
@@ -1365,7 +1369,6 @@ function primeTTSAsync() {
       u.onend = finish;
       u.onerror = finish;
 
-      // Por si el navegador no dispara eventos (edge cases)
       setTimeout(finish, 250);
 
       synth.speak(u);
@@ -1374,6 +1377,7 @@ function primeTTSAsync() {
     }
   });
 }
+
 
 
 // Limpia markdown a texto “hablable”
@@ -1515,7 +1519,7 @@ async function speakTTS(text: string) {
 
   // ✅ Re-unlock ANTES de hablar (sin timers que cancelen)
   try {
-    await primeTTSAsync();
+    await primeTTSAsync({ hardCancel: false });
   } catch {}
 
 
@@ -1581,10 +1585,9 @@ async function speakTTS(text: string) {
   // ✅ modo conversación: si sigue ON, volvemos a escuchar
   if (voiceModeRef.current) {
     setTimeout(() => {
-      try {
-        startMic("conversation");
-      } catch {}
-    }, 850); // un pelín más humano
+  if (voiceModeRef.current) startMic("conversation");
+}, 320);
+ // un pelín más humano
   }
 
 
@@ -1697,40 +1700,48 @@ rec.interimResults = true;
     micBaseRef.current = purpose === "dictation" ? ((input || "").trim() ? input.trim() + " " : "") : "";
     micFinalRef.current = "";
     micInterimRef.current = "";
-// ✅ Timer de silencio (solo conversación): permite pausas para pensar sin cerrar el turno
-let silenceTimer: any = null;
-let lastHeardAt = Date.now();
 
-const SILENCE_MS = 1800; // 👈 ajusta: 1100–1600 suele ir bien
 
-const armSilenceTimer = () => {
+// ✅ Silencio (solo conversación) — en móvil SpeechRecognition “corta” solo,
+// así que evitamos intervalos rítmicos y usamos timeout reseteable.
+let silenceTimeout: any = null;
+let hadSpeech = false;
+
+// ✅ En PC cortamos antes (se siente más rápido). En móvil dejamos más margen.
+const SILENCE_MS = isDesktopPointer() ? 1100 : 1700;
+
+const clearSilence = () => {
+  try {
+    if (silenceTimeout) clearTimeout(silenceTimeout);
+  } catch {}
+  silenceTimeout = null;
+};
+
+const armSilence = () => {
   if (purpose !== "conversation") return;
-  if (silenceTimer) clearInterval(silenceTimer);
+  clearSilence();
 
-  silenceTimer = setInterval(() => {
+  silenceTimeout = setTimeout(() => {
+    // Si se apagó el modo conversación o cambió el rec actual, no hacemos nada
     if (!voiceModeRef.current) return;
     if (recognitionRef.current !== rec) return;
 
-    const quietFor = Date.now() - lastHeardAt;
-    if (quietFor >= SILENCE_MS) {
-      try {
-        clearInterval(silenceTimer);
-      } catch {}
-      silenceTimer = null;
+    // ✅ Si NO hubo voz real, NO forzamos stop (evita bucle en móvil)
+    if (!hadSpeech) return;
 
-      // ✅ cerramos el reconocimiento “a propósito” tras silencio largo
-      try {
-        rec.stop?.();
-      } catch {}
-    }
-  }, 180);
+    try {
+      rec.stop?.();
+    } catch {}
+  }, SILENCE_MS);
 };
+
 
     rec.onstart = () => {
   setIsListening(true);
-  lastHeardAt = Date.now();
-  armSilenceTimer();
+  hadSpeech = false;
+  armSilence();
 };
+
 
 
     rec.onerror = () => {
@@ -1751,25 +1762,27 @@ const armSilenceTimer = () => {
 
       micInterimRef.current = "";
 
-      try {
-  if (silenceTimer) clearInterval(silenceTimer);
-} catch {}
-silenceTimer = null;
+      clearSilence();
 
 
       // ✅ si estamos en conversación y hay texto, lo enviamos automático
       if (micPurposeRef.current === "conversation" && voiceModeRef.current) {
-        if (finalText) {
-          // enviamos sin depender del input actual
-          sendQuickMessage(finalText, activeThread?.mode ?? "chat");
-        } else {
-          // si no dijo nada, volvemos a escuchar (solo si sigue ON)
-          setTimeout(() => {
-  if (voiceModeRef.current) startMic("conversation");
-}, 650); // ✅ antes 180ms: demasiado agresivo
+  if (finalText) {
+    sendQuickMessage(finalText, activeThread?.mode ?? "chat");
+  } else {
+    // ✅ Si no hubo voz real, NO reiniciar agresivo (en móvil hace bucle)
+    // Esperamos un poco y solo reiniciamos si sigue todo estable.
+    const waitMs = isDesktopPointer() ? 450 : 1200;
 
-        }
-      }
+    setTimeout(() => {
+      if (!voiceModeRef.current) return;
+      if (isTyping) return;
+      if (recognitionRef.current) return; // ya hay otro rec activo
+      startMic("conversation");
+    }, waitMs);
+  }
+}
+
     };
 
     rec.onresult = (event: any) => {
@@ -1787,11 +1800,13 @@ silenceTimer = null;
       }
 
       micInterimRef.current = interim;
-// ✅ si llega cualquier señal de voz, refrescamos el “último oído”
+
+// ✅ Si hay voz (interim o final), marcamos y rearmamos silencio
 if ((interim && interim.trim()) || (micFinalRef.current && micFinalRef.current.trim())) {
-  lastHeardAt = Date.now();
-  armSilenceTimer();
+  hadSpeech = true;
+  armSilence();
 }
+
 
       const raw = micBaseRef.current + micFinalRef.current + micInterimRef.current;
       const cleaned = cleanRepeatedWords(raw.replace(/\s+/g, " ").trim());
