@@ -1586,8 +1586,7 @@ async function speakTTS(text: string) {
   if (voiceModeRef.current) {
     setTimeout(() => {
   if (voiceModeRef.current) startMic("conversation");
-}, 320);
- // un pelín más humano
+}, 320); // un pelín más humano
   }
 
 
@@ -1635,11 +1634,28 @@ type MicPurpose = "dictation" | "conversation";
 const [listeningPurpose, setListeningPurpose] = useState<MicPurpose | null>(null);
 
 const micPurposeRef = useRef<MicPurpose>("dictation");
+
 // ✅ refs internas del motor de reconocimiento
 const recognitionRef = useRef<any | null>(null);
 const micBaseRef = useRef<string>("");
 const micFinalRef = useRef<string>("");
 const micInterimRef = useRef<string>("");
+
+// ✅ anti-duplicado de envíos en conversación
+const lastMicSendRef = useRef<{ text: string; ts: number }>({ text: "", ts: 0 });
+
+// ✅ NUEVO: control de sesión + silencios (evita “colgados” y timeouts huérfanos)
+const micSessionIdRef = useRef<number>(0);
+const silenceTimeoutRef = useRef<any>(null);
+const micHadSpeechRef = useRef<boolean>(false);
+
+function clearSilenceTimer() {
+  try {
+    if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
+  } catch {}
+  silenceTimeoutRef.current = null;
+}
+
 
 
 useEffect(() => {
@@ -1649,19 +1665,36 @@ useEffect(() => {
 }, []);
 
 function stopMic() {
+  // ✅ limpiar silencio SIEMPRE (antes de tocar el motor)
+  clearSilenceTimer();
+  micHadSpeechRef.current = false;
+
   try {
     const rec = recognitionRef.current;
     if (rec) {
+      // evitar callbacks tardíos
       rec.onresult = null;
       rec.onerror = null;
       rec.onend = null;
-      rec.stop?.();
+      rec.onstart = null;
+      rec.onnomatch = null;
+
+      // ✅ abort es más “duro” y evita estados colgados en Chrome Android
+      try {
+        rec.abort?.();
+      } catch {}
+
+      try {
+        rec.stop?.();
+      } catch {}
     }
   } catch {}
+
   recognitionRef.current = null;
   setIsListening(false);
-  setListeningPurpose(null); // ✅ NUEVO
+  setListeningPurpose(null);
 }
+
 
 
 async function startMic(purpose: MicPurpose) {
@@ -1702,32 +1735,28 @@ rec.interimResults = true;
     micInterimRef.current = "";
 
 
-// ✅ Silencio (solo conversación) — en móvil SpeechRecognition “corta” solo,
-// así que evitamos intervalos rítmicos y usamos timeout reseteable.
-let silenceTimeout: any = null;
-let hadSpeech = false;
+// ✅ NUEVO: “sesión” del micro (evita eventos viejos tocando el estado actual)
+micSessionIdRef.current += 1;
+const mySessionId = micSessionIdRef.current;
 
 // ✅ En PC cortamos antes (se siente más rápido). En móvil dejamos más margen.
 const SILENCE_MS = isDesktopPointer() ? 1100 : 1700;
 
-const clearSilence = () => {
-  try {
-    if (silenceTimeout) clearTimeout(silenceTimeout);
-  } catch {}
-  silenceTimeout = null;
-};
-
 const armSilence = () => {
   if (purpose !== "conversation") return;
-  clearSilence();
 
-  silenceTimeout = setTimeout(() => {
+  clearSilenceTimer();
+
+  silenceTimeoutRef.current = setTimeout(() => {
+    // si la sesión cambió, ignorar
+    if (micSessionIdRef.current !== mySessionId) return;
+
     // Si se apagó el modo conversación o cambió el rec actual, no hacemos nada
     if (!voiceModeRef.current) return;
     if (recognitionRef.current !== rec) return;
 
     // ✅ Si NO hubo voz real, NO forzamos stop (evita bucle en móvil)
-    if (!hadSpeech) return;
+    if (!micHadSpeechRef.current) return;
 
     try {
       rec.stop?.();
@@ -1736,54 +1765,92 @@ const armSilence = () => {
 };
 
 
+
     rec.onstart = () => {
+  // si es un evento viejo, ignorar
+  if (micSessionIdRef.current !== mySessionId) return;
+
   setIsListening(true);
-  hadSpeech = false;
+  micHadSpeechRef.current = false;
   armSilence();
 };
 
 
 
-    rec.onerror = () => {
-      setIsListening(false);
-      setMicMsg("No se pudo usar el micrófono. Revisa permisos del navegador.");
-      setTimeout(() => setMicMsg(null), 2600);
-      stopMic();
-    };
+
+    rec.onerror = (ev: any) => {
+  if (micSessionIdRef.current !== mySessionId) return;
+
+  setIsListening(false);
+
+  const code = String(ev?.error ?? "").toLowerCase();
+
+  let msg = "No se pudo usar el micrófono. Revisa permisos del navegador.";
+  if (code === "not-allowed" || code === "permission-denied") {
+    msg = "Permiso denegado. Activa el micrófono en el navegador (icono del candado) y recarga.";
+  } else if (code === "no-speech") {
+    msg = "No te he escuchado. Prueba a hablar más cerca del micro o en un sitio más silencioso.";
+  } else if (code === "audio-capture") {
+    msg = "No se detecta micrófono. Revisa que esté conectado o permitido.";
+  } else if (code === "network") {
+    msg = "Error de red del reconocimiento de voz. Prueba de nuevo.";
+  } else if (code) {
+    msg = `Error del micrófono (${code}). Revisa permisos y prueba otra vez.`;
+  }
+
+  setMicMsg(msg);
+  setTimeout(() => setMicMsg(null), 3200);
+
+  stopMic();
+};
+
 
     rec.onend = () => {
+  // ✅ si es un evento viejo, ignorar (evita “dobles onend”)
+  if (micSessionIdRef.current !== mySessionId) return;
+
   setIsListening(false);
-  setListeningPurpose(null); // ✅ NUEVO
+  setListeningPurpose(null);
   recognitionRef.current = null;
 
-      const finalText = cleanRepeatedWords(
-        (micFinalRef.current || "").replace(/\s+/g, " ").trim()
-      );
+  const finalText = cleanRepeatedWords((micFinalRef.current || "").replace(/\s+/g, " ").trim());
+  micInterimRef.current = "";
 
-      micInterimRef.current = "";
+  clearSilenceTimer();
 
-      clearSilence();
+  const purposeAtStart = purpose; // snapshot
 
+  // ✅ conversación: enviar automático si hay texto
+  if (purposeAtStart === "conversation" && voiceModeRef.current) {
+    if (finalText) {
+      const now = Date.now();
+      const prev = lastMicSendRef.current;
 
-      // ✅ si estamos en conversación y hay texto, lo enviamos automático
-      if (micPurposeRef.current === "conversation" && voiceModeRef.current) {
-  if (finalText) {
-    sendQuickMessage(finalText, activeThread?.mode ?? "chat");
-  } else {
+      if (prev.text === finalText && now - prev.ts < 2500) {
+        // ignorar duplicado
+      } else if (isTyping) {
+        // si Vonu está respondiendo, no mandamos otro
+      } else {
+        lastMicSendRef.current = { text: finalText, ts: now };
+        sendQuickMessage(finalText, activeThread?.mode ?? "chat");
+      }
+      return;
+    }
+
     // ✅ Si no hubo voz real, NO reiniciar agresivo (en móvil hace bucle)
-    // Esperamos un poco y solo reiniciamos si sigue todo estable.
     const waitMs = isDesktopPointer() ? 450 : 1200;
 
     setTimeout(() => {
       if (!voiceModeRef.current) return;
       if (isTyping) return;
-      if (recognitionRef.current) return; // ya hay otro rec activo
+      if (recognitionRef.current) return;
+      if (micSessionIdRef.current !== mySessionId) return;
       startMic("conversation");
     }, waitMs);
   }
-}
+};
 
-    };
+
 
     rec.onresult = (event: any) => {
       let interim = "";
@@ -1793,19 +1860,26 @@ const armSilence = () => {
         const txt = res?.[0]?.transcript ?? "";
 
         if (res.isFinal) {
-          micFinalRef.current += txt.trim() + " ";
-        } else {
-          interim += txt;
-        }
+  const chunk = (txt ?? "").trim();
+  if (chunk) {
+    // ✅ Chrome Android repite el mismo final varias veces: lo ignoramos si ya está
+    const tail = micFinalRef.current.trimEnd();
+    const already = tail.endsWith(chunk);
+    if (!already) micFinalRef.current += chunk + " ";
+  }
+} else {
+  interim += txt;
+}
+
       }
 
       micInterimRef.current = interim;
 
-// ✅ Si hay voz (interim o final), marcamos y rearmamos silencio
 if ((interim && interim.trim()) || (micFinalRef.current && micFinalRef.current.trim())) {
-  hadSpeech = true;
+  micHadSpeechRef.current = true;
   armSilence();
 }
+
 
 
       const raw = micBaseRef.current + micFinalRef.current + micInterimRef.current;
@@ -4222,7 +4296,7 @@ return (
   {/* 🗣️ Conversación (turnos: habla + escucha) */}
   <button
     onClick={toggleConversation}
-    disabled={!!isTyping || !speechSupported}
+    disabled={!!isTyping || !speechSupported || !supportsTTS()}
     className={[
       "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
       "bg-white",
