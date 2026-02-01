@@ -1506,15 +1506,22 @@ async function speakTTS(text: string) {
     const synth = window.speechSynthesis;
 try { synth.resume?.(); } catch {}
 
-  const voices = await getVoicesAsync(800);
+  // ✅ NO esperamos voces antes de hablar (Safari/iOS puede “bloquear” el speak si haces await aquí)
+const voicesNow = (() => {
+  try { return synth.getVoices?.() ?? []; } catch { return []; }
+})();
 
-  const pickVoice = () => {
-    const vs = voices.length ? voices : (synth.getVoices?.() ?? []);
-    const es = vs.find((v) => (v.lang || "").toLowerCase().startsWith("es"));
-    return es ?? vs[0] ?? null;
-  };
+const pickVoice = () => {
+  const vs = voicesNow;
+  const es = vs.find((v) => (v.lang || "").toLowerCase().startsWith("es"));
+  return es ?? vs[0] ?? null;
+};
 
-  const voice = pickVoice();
+const voice = pickVoice();
+
+// ✅ en segundo plano intentamos cargar voces para próximos speaks (sin bloquear este)
+getVoicesAsync(800).catch(() => {});
+
 
 
   // Reproducir en cola (promesa por chunk)
@@ -1531,10 +1538,12 @@ try { synth.resume?.(); } catch {}
       u.onend = () => resolve();
       u.onerror = () => resolve();
       try {
-        synth.speak(u);
-      } catch {
-        resolve();
-      }
+  try { synth.resume?.(); } catch {}
+  synth.speak(u);
+} catch {
+  resolve();
+}
+
     });
 
     // Si el usuario lo ha cortado durante la cola
