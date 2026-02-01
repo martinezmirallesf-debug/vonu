@@ -1477,7 +1477,6 @@ function stopTTS() {
 }
 
 async function speakTTS(text: string) {
-  // ✅ En modo conversación, si TTS no está disponible, igualmente reanudamos el micro
   const inConversation = voiceModeRef.current;
 
   // Si TTS no está activado o no hay soporte...
@@ -1492,45 +1491,49 @@ async function speakTTS(text: string) {
     return;
   }
 
+  // ✅ En móvil/iOS a veces “pierde” el unlock: lo re-primamos justo antes de hablar
+  try {
+    primeTTS();
+  } catch {}
+
   // si ya estaba hablando, cortamos y arrancamos limpio
   stopTTS();
 
-    const voiceText = voiceModeRef.current ? shortenForVoice(text) : stripMarkdownForTTS(text);
+  const voiceText = voiceModeRef.current ? shortenForVoice(text) : stripMarkdownForTTS(text);
   const chunks = chunkForTTS(voiceText);
-
   if (!chunks.length) return;
 
   setTtsSpeaking(true);
 
-  // Elegir voz ES si existe
-    const synth = window.speechSynthesis;
-try { synth.resume?.(); } catch {}
+  const synth = window.speechSynthesis;
+  try {
+    synth.resume?.();
+  } catch {}
 
-  // ✅ NO esperamos voces antes de hablar (Safari/iOS puede “bloquear” el speak si haces await aquí)
-const voicesNow = (() => {
-  try { return synth.getVoices?.() ?? []; } catch { return []; }
-})();
+  // ✅ Elegir voz (mejor hacerlo “vivo”, no con snapshot)
+  const pickVoiceLive = () => {
+    let vs: SpeechSynthesisVoice[] = [];
+    try {
+      vs = synth.getVoices?.() ?? [];
+    } catch {}
+    const es = vs.find((v) => (v.lang || "").toLowerCase().startsWith("es"));
+    return es ?? vs[0] ?? null;
+  };
 
-const pickVoice = () => {
-  const vs = voicesNow;
-  const es = vs.find((v) => (v.lang || "").toLowerCase().startsWith("es"));
-  return es ?? vs[0] ?? null;
-};
+  // En segundo plano cargamos voces para próximas veces
+  getVoicesAsync(900).catch(() => {});
 
-const voice = pickVoice();
+  // ✅ Pequeño micro-delay: ayuda en Safari/iOS tras cancel()
+  await new Promise((r) => setTimeout(r, 30));
 
-// ✅ en segundo plano intentamos cargar voces para próximos speaks (sin bloquear este)
-getVoicesAsync(800).catch(() => {});
-
-
-
-  // Reproducir en cola (promesa por chunk)
   for (const ch of chunks) {
     const u = new SpeechSynthesisUtterance(ch);
 
+    const voice = pickVoiceLive();
     if (voice) u.voice = voice;
-    u.lang = (voice?.lang || "es-ES");
-    u.rate = 1.02;   // natural
+
+    u.lang = voice?.lang || "es-ES";
+    u.rate = 1.02;
     u.pitch = 1.0;
     u.volume = 1.0;
 
@@ -1538,28 +1541,28 @@ getVoicesAsync(800).catch(() => {});
       u.onend = () => resolve();
       u.onerror = () => resolve();
       try {
-  try { synth.resume?.(); } catch {}
-  synth.speak(u);
-} catch {
-  resolve();
-}
-
+        try {
+          synth.resume?.();
+        } catch {}
+        synth.speak(u);
+      } catch {
+        resolve();
+      }
     });
 
-    // Si el usuario lo ha cortado durante la cola
     if (!ttsEnabled) break;
   }
 
   setTtsSpeaking(false);
 
-// ✅ modo conversación: si sigue ON, volvemos a activar micro
-if (voiceModeRef.current) {
-  setTimeout(() => {
-    try {
-      startMic("conversation");
-    } catch {}
-  }, 650);
-}
+  // ✅ modo conversación: si sigue ON, volvemos a escuchar
+  if (voiceModeRef.current) {
+    setTimeout(() => {
+      try {
+        startMic("conversation");
+      } catch {}
+    }, 850); // un pelín más humano
+  }
 
 
 }
@@ -1663,15 +1666,49 @@ setListeningPurpose(purpose);
     recognitionRef.current = rec;
 
     rec.lang = "es-ES";
-    rec.continuous = false;
-    rec.interimResults = true;
+    rec.continuous = purpose === "conversation"; // ✅ conversación tolera pausas
+rec.interimResults = true;
+
 
     // base: para dictado conservamos lo que había escrito; en conversación empezamos “limpio”
     micBaseRef.current = purpose === "dictation" ? ((input || "").trim() ? input.trim() + " " : "") : "";
     micFinalRef.current = "";
     micInterimRef.current = "";
+// ✅ Timer de silencio (solo conversación): permite pausas para pensar sin cerrar el turno
+let silenceTimer: any = null;
+let lastHeardAt = Date.now();
 
-    rec.onstart = () => setIsListening(true);
+const SILENCE_MS = 1250; // 👈 ajusta: 1100–1600 suele ir bien
+
+const armSilenceTimer = () => {
+  if (purpose !== "conversation") return;
+  if (silenceTimer) clearInterval(silenceTimer);
+
+  silenceTimer = setInterval(() => {
+    if (!voiceModeRef.current) return;
+    if (recognitionRef.current !== rec) return;
+
+    const quietFor = Date.now() - lastHeardAt;
+    if (quietFor >= SILENCE_MS) {
+      try {
+        clearInterval(silenceTimer);
+      } catch {}
+      silenceTimer = null;
+
+      // ✅ cerramos el reconocimiento “a propósito” tras silencio largo
+      try {
+        rec.stop?.();
+      } catch {}
+    }
+  }, 180);
+};
+
+    rec.onstart = () => {
+  setIsListening(true);
+  lastHeardAt = Date.now();
+  armSilenceTimer();
+};
+
 
     rec.onerror = () => {
       setIsListening(false);
@@ -1691,6 +1728,12 @@ setListeningPurpose(purpose);
 
       micInterimRef.current = "";
 
+      try {
+  if (silenceTimer) clearInterval(silenceTimer);
+} catch {}
+silenceTimer = null;
+
+
       // ✅ si estamos en conversación y hay texto, lo enviamos automático
       if (micPurposeRef.current === "conversation" && voiceModeRef.current) {
         if (finalText) {
@@ -1699,8 +1742,9 @@ setListeningPurpose(purpose);
         } else {
           // si no dijo nada, volvemos a escuchar (solo si sigue ON)
           setTimeout(() => {
-            if (voiceModeRef.current) startMic("conversation");
-          }, 180);
+  if (voiceModeRef.current) startMic("conversation");
+}, 650); // ✅ antes 180ms: demasiado agresivo
+
         }
       }
     };
@@ -1720,6 +1764,11 @@ setListeningPurpose(purpose);
       }
 
       micInterimRef.current = interim;
+// ✅ si llega cualquier señal de voz, refrescamos el “último oído”
+if ((interim && interim.trim()) || (micFinalRef.current && micFinalRef.current.trim())) {
+  lastHeardAt = Date.now();
+  armSilenceTimer();
+}
 
       const raw = micBaseRef.current + micFinalRef.current + micInterimRef.current;
       const cleaned = cleanRepeatedWords(raw.replace(/\s+/g, " ").trim());
@@ -4109,7 +4158,7 @@ return (
   {/* 🎙️ Dictado (solo escribir) */}
   <button
     onClick={toggleDictation}
-    disabled={!!isTyping || !speechSupported || !supportsTTS()}
+    disabled={!!isTyping || !speechSupported}
     className={[
       "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
       "bg-white",
