@@ -1268,9 +1268,13 @@ setVoiceMode(true);
 
 setTtsEnabled(true);
 
-// desbloquear TTS sí o sí tras el click
-primeTTS();
-setTimeout(() => primeTTS(), 120);
+// ✅ desbloquear TTS tras el click (sin cancelar la voz real)
+primeTTSAsync();
+setTimeout(() => {
+  primeTTSAsync();
+}, 180);
+
+
 
 // arrancar escucha en modo conversación
 setTimeout(() => {
@@ -1330,31 +1334,46 @@ function getVoicesAsync(timeoutMs = 900): Promise<SpeechSynthesisVoice[]> {
   });
 }
 
-// ✅ “Unlock” de TTS (muy importante en móvil / iOS / Chrome)
-// OJO: esto debe ejecutarse tras un gesto del usuario (click/tap)
-function primeTTS() {
-  if (typeof window === "undefined") return;
-  if (!supportsTTS()) return;
+// ✅ “Unlock” de TTS SIN timer que cancele tu voz real
+// Devuelve una promesa para poder esperar a que termine.
+function primeTTSAsync() {
+  if (typeof window === "undefined") return Promise.resolve();
+  if (!supportsTTS()) return Promise.resolve();
 
-  try {
-    const synth = window.speechSynthesis;
-    try { synth.resume?.(); } catch {}
-    synth.cancel();
+  return new Promise<void>((resolve) => {
+    try {
+      const synth = window.speechSynthesis;
 
-    const u = new SpeechSynthesisUtterance(" ");
-    u.volume = 0; // silencioso
-    u.rate = 1;
-    u.pitch = 1;
+      // Limpio cualquier cola anterior
+      try {
+        synth.cancel();
+        synth.resume?.();
+      } catch {}
 
-    synth.speak(u);
+      const u = new SpeechSynthesisUtterance(" ");
+      u.volume = 0;   // silencioso
+      u.rate = 1;
+      u.pitch = 1;
 
-    // cancel rápido para no “comerse” el siguiente speak
-    setTimeout(() => {
-      try { synth.cancel(); } catch {}
-    }, 80);
-  } catch {}
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        resolve();
+      };
+
+      u.onend = finish;
+      u.onerror = finish;
+
+      // Por si el navegador no dispara eventos (edge cases)
+      setTimeout(finish, 250);
+
+      synth.speak(u);
+    } catch {
+      resolve();
+    }
+  });
 }
-
 
 
 // Limpia markdown a texto “hablable”
@@ -1491,13 +1510,14 @@ async function speakTTS(text: string) {
     return;
   }
 
-  // ✅ En móvil/iOS a veces “pierde” el unlock: lo re-primamos justo antes de hablar
+    // si ya estaba hablando, cortamos y arrancamos limpio
+  stopTTS();
+
+  // ✅ Re-unlock ANTES de hablar (sin timers que cancelen)
   try {
-    primeTTS();
+    await primeTTSAsync();
   } catch {}
 
-  // si ya estaba hablando, cortamos y arrancamos limpio
-  stopTTS();
 
   const voiceText = voiceModeRef.current ? shortenForVoice(text) : stripMarkdownForTTS(text);
   const chunks = chunkForTTS(voiceText);
@@ -1520,8 +1540,11 @@ async function speakTTS(text: string) {
     return es ?? vs[0] ?? null;
   };
 
-  // En segundo plano cargamos voces para próximas veces
-  getVoicesAsync(900).catch(() => {});
+    // ✅ En Chrome a veces no hay voces aún: esperamos un poco
+  try {
+    await getVoicesAsync(900);
+  } catch {}
+
 
   // ✅ Pequeño micro-delay: ayuda en Safari/iOS tras cancel()
   await new Promise((r) => setTimeout(r, 30));
@@ -1678,7 +1701,7 @@ rec.interimResults = true;
 let silenceTimer: any = null;
 let lastHeardAt = Date.now();
 
-const SILENCE_MS = 1250; // 👈 ajusta: 1100–1600 suele ir bien
+const SILENCE_MS = 1800; // 👈 ajusta: 1100–1600 suele ir bien
 
 const armSilenceTimer = () => {
   if (purpose !== "conversation") return;
