@@ -1213,6 +1213,7 @@ function setVoiceModeOff() {
   setVoiceMode(false);
   stopTTS();
   stopMic();
+  clearSilenceTimer();
 }
 
 function toggleDictation() {
@@ -1502,8 +1503,8 @@ function stopTTS() {
 async function speakTTS(text: string) {
   const inConversation = voiceModeRef.current;
 
-  // Si TTS no está activado o no hay soporte...
-  if (!ttsEnabled || !supportsTTS()) {
+  // ✅ Si no hay soporte real de TTS, en conversación volvemos a escuchar y fuera.
+  if (!supportsTTS()) {
     if (inConversation) {
       setTimeout(() => {
         try {
@@ -1513,6 +1514,11 @@ async function speakTTS(text: string) {
     }
     return;
   }
+
+  // ✅ En conversación: hablamos aunque ttsEnabled esté desincronizado por state.
+  // En modo normal: solo si el usuario activó lectura.
+  if (!ttsEnabled && !inConversation) return;
+
 
     // si ya estaba hablando, cortamos y arrancamos limpio
   stopTTS();
@@ -1853,47 +1859,42 @@ const armSilence = () => {
 
 
     rec.onresult = (event: any) => {
-      let interim = "";
+  if (micSessionIdRef.current !== mySessionId) return;
 
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const res = event.results[i];
-        const txt = res?.[0]?.transcript ?? "";
+  // ✅ Chrome Android: results suelen venir acumulativos/repetidos.
+  // En vez de "sumar chunks", reconstruimos SIEMPRE desde 0.
+  let finalAgg = "";
+  let interimAgg = "";
 
-        if (res.isFinal) {
-  const chunk = (txt ?? "").trim();
-  if (chunk) {
-    // ✅ Chrome Android repite el mismo final varias veces: lo ignoramos si ya está
-    const tail = micFinalRef.current.trimEnd();
-    const already = tail.endsWith(chunk);
-    if (!already) micFinalRef.current += chunk + " ";
+  for (let i = 0; i < event.results.length; i++) {
+    const res = event.results[i];
+    const txt = (res?.[0]?.transcript ?? "").trim();
+    if (!txt) continue;
+
+    if (res.isFinal) finalAgg += txt + " ";
+    else interimAgg += txt + " ";
   }
-} else {
-  interim += txt;
-}
 
-      }
+  micFinalRef.current = finalAgg;
+  micInterimRef.current = interimAgg;
 
-      micInterimRef.current = interim;
+  if ((interimAgg && interimAgg.trim()) || (finalAgg && finalAgg.trim())) {
+    micHadSpeechRef.current = true;
+    armSilence();
+  }
 
-if ((interim && interim.trim()) || (micFinalRef.current && micFinalRef.current.trim())) {
-  micHadSpeechRef.current = true;
-  armSilence();
-}
+  const raw = micBaseRef.current + micFinalRef.current + micInterimRef.current;
+  const cleaned = cleanRepeatedWords(raw.replace(/\s+/g, " ").trim());
 
+  // ✅ dictado: lo mostramos en el input mientras habla
+  if (micPurposeRef.current === "dictation") {
+    setInput(cleaned);
+  }
 
+  // (opcional) conversación: si quieres ver lo que entiende mientras hablas
+  // if (micPurposeRef.current === "conversation") setInput(cleaned);
+};
 
-      const raw = micBaseRef.current + micFinalRef.current + micInterimRef.current;
-      const cleaned = cleanRepeatedWords(raw.replace(/\s+/g, " ").trim());
-
-      // ✅ dictado: lo mostramos en el input mientras habla
-      if (micPurposeRef.current === "dictation") {
-        setInput(cleaned);
-      }
-
-      // ✅ conversación: no hace falta “llenar” el input (opcional).
-      // Si quieres ver texto mientras hablas, descomenta:
-      // if (micPurposeRef.current === "conversation") setInput(cleaned);
-    };
 
     rec.start();
   } catch {
