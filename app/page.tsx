@@ -1690,6 +1690,9 @@ const recognitionRef = useRef<any | null>(null);
 const micBaseRef = useRef<string>("");
 const micFinalRef = useRef<string>("");
 const micInterimRef = useRef<string>("");
+// ✅ evita duplicados en Android Chrome: recuerda el último índice final ya procesado
+const micLastFinalIndexRef = useRef<number>(-1);
+
 
 // ✅ anti-duplicado de envíos en conversación
 const lastMicSendRef = useRef<{ text: string; ts: number }>({ text: "", ts: 0 });
@@ -1782,7 +1785,9 @@ rec.interimResults = true;
     // base: para dictado conservamos lo que había escrito; en conversación empezamos “limpio”
     micBaseRef.current = purpose === "dictation" ? ((input || "").trim() ? input.trim() + " " : "") : "";
     micFinalRef.current = "";
-    micInterimRef.current = "";
+micInterimRef.current = "";
+micLastFinalIndexRef.current = -1; // ✅ reset anti-duplicado
+
 
 
 // ✅ NUEVO: “sesión” del micro (evita eventos viejos tocando el estado actual)
@@ -1905,29 +1910,42 @@ const armSilence = () => {
     rec.onresult = (event: any) => {
   if (micSessionIdRef.current !== mySessionId) return;
 
-  // ✅ Chrome Android: results suelen venir acumulativos/repetidos.
-  // En vez de "sumar chunks", reconstruimos SIEMPRE desde 0.
-  let finalAgg = "";
-  let interimAgg = "";
+  // ✅ Android Chrome FIX:
+  // - NO reconstruimos desde 0 (duplica).
+  // - Consumimos solo desde event.resultIndex.
+  // - Solo añadimos finals "nuevos" (por índice) usando micLastFinalIndexRef.
+  let finalText = micFinalRef.current || "";
+  let interimText = "";
 
-  for (let i = 0; i < event.results.length; i++) {
-    const res = event.results[i];
+  const startIndex = typeof event?.resultIndex === "number" ? event.resultIndex : 0;
+  const results = event?.results ?? [];
+
+  for (let i = startIndex; i < results.length; i++) {
+    const res = results[i];
     const txt = (res?.[0]?.transcript ?? "").trim();
     if (!txt) continue;
 
-    if (res.isFinal) finalAgg += txt + " ";
-    else interimAgg += txt + " ";
+    if (res.isFinal) {
+      // ✅ solo si es un final nuevo por índice (evita que Android lo "re-emita")
+      if (i > micLastFinalIndexRef.current) {
+        finalText += txt + " ";
+        micLastFinalIndexRef.current = i;
+      }
+    } else {
+      // interim (puede variar mientras hablas)
+      interimText += txt + " ";
+    }
   }
 
-  micFinalRef.current = finalAgg;
-  micInterimRef.current = interimAgg;
+  micFinalRef.current = finalText;
+  micInterimRef.current = interimText;
 
-  if ((interimAgg && interimAgg.trim()) || (finalAgg && finalAgg.trim())) {
+  if ((interimText && interimText.trim()) || (finalText && finalText.trim())) {
     micHadSpeechRef.current = true;
     armSilence();
   }
 
-  const raw = micBaseRef.current + micFinalRef.current + micInterimRef.current;
+  const raw = micBaseRef.current + finalText + interimText;
   const cleaned = cleanRepeatedWords(raw.replace(/\s+/g, " ").trim());
 
   // ✅ dictado: lo mostramos en el input mientras habla
@@ -1935,9 +1953,10 @@ const armSilence = () => {
     setInput(cleaned);
   }
 
-  // (opcional) conversación: si quieres ver lo que entiende mientras hablas
+  // Si quieres ver lo que entiende en conversación mientras hablas:
   // if (micPurposeRef.current === "conversation") setInput(cleaned);
 };
+
 
 
     rec.start();
