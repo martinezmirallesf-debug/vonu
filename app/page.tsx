@@ -1252,13 +1252,16 @@ function toggleConversation() {
 
 
   if (voiceModeRef.current) {
-    // OFF
-    setVoiceMode(false);
-    setTtsEnabled(false);
-    stopTTS();
-    stopMic();
-    return;
-  }
+  // OFF (blindado)
+  voiceModeRef.current = false;
+  setVoiceMode(false);
+  setTtsEnabled(false);
+  clearSilenceTimer();
+  stopMic();
+  stopTTS();
+  return;
+}
+
 
   // ✅ Si estaba dictando, paramos el micro antes de entrar en conversación
   if (isListening) stopMic();
@@ -1583,7 +1586,7 @@ async function speakTTS(text: string) {
       }
     });
 
-    if (!ttsEnabled) break;
+    if (!ttsEnabled && !voiceModeRef.current) break;
   }
 
   setTtsSpeaking(false);
@@ -1598,10 +1601,51 @@ async function speakTTS(text: string) {
 
 }
 
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
+
+  // =========================
+  // ✅ ANTI-DUPLICADO / SEND LOCK
+  // Evita que el mismo mensaje se envíe 2-3 veces por:
+  // - doble click / Enter
+  // - modo conversación (SpeechRecognition onend duplicado)
+  // - carrera antes de que isTyping pase a true
+  // =========================
+  const sendGuardRef = useRef<{
+    busy: boolean;
+    last: { threadId: string; text: string; ts: number };
+  }>({
+    busy: false,
+    last: { threadId: "", text: "", ts: 0 },
+  });
+
+  function normalizeSendText(t: string) {
+    return (t ?? "")
+      .trim()
+      .replace(/\s+/g, " ")
+      .toLowerCase();
+  }
+
+  function shouldBlockDuplicateSend(threadId: string, rawText: string) {
+    const now = Date.now();
+    const text = normalizeSendText(rawText);
+
+    if (!threadId || !text) return false;
+
+    const last = sendGuardRef.current.last;
+    // ventana anti-duplicado (ajústala si quieres)
+    const WINDOW_MS = 1800;
+
+    if (last.threadId === threadId && last.text === text && now - last.ts < WINDOW_MS) {
+      return true;
+    }
+
+    sendGuardRef.current.last = { threadId, text, ts: now };
+    return false;
+  }
+
 
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
@@ -2570,11 +2614,25 @@ function applyQuickPrompt(p: { label: string; mode: ThreadMode; text: string }) 
     if (isTyping) return;
     if (!activeThread) return;
 
+        // ✅ SEND LOCK (anti doble click / doble onend)
+    if (sendGuardRef.current.busy) return;
+    sendGuardRef.current.busy = true;
+
     const targetThreadId = activeThread.id;
     activeThreadIdRef.current = targetThreadId;
 
     const userText = (textPreset || "").trim();
-    if (!userText) return;
+    if (!userText) {
+      sendGuardRef.current.busy = false;
+      return;
+    }
+
+    // ✅ ANTI-DUPLICADO por texto en el mismo thread
+    if (shouldBlockDuplicateSend(targetThreadId, userText)) {
+      sendGuardRef.current.busy = false;
+      return;
+    }
+
 
     setUiError(null);
     // ✅ premium turnos: si voiceMode está ON, cerramos micro al enviar (turno de Vonu)
@@ -2710,6 +2768,7 @@ if (voiceMode) stopMic();
         );
 
         setIsTyping(false);
+        sendGuardRef.current.busy = false;
 
 // ✅ habla la respuesta final (solo si TTS activado)
 speakTTS(fullText);
@@ -2760,6 +2819,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
             );
 
             setIsTyping(false);
+            sendGuardRef.current.busy = false;
 
 // ✅ habla la respuesta final también en CHAT normal
 speakTTS(fullText);
@@ -2793,6 +2853,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
       setUiError(msg);
       setIsTyping(false);
+      sendGuardRef.current.busy = false;
       if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
     }
   }
@@ -2808,10 +2869,22 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
     }
 
     if (!canSend) return;
-    if (!activeThread) return;
+if (!activeThread) return;
 
-    const targetThreadId = activeThread.id;
-    activeThreadIdRef.current = targetThreadId;
+// ✅ SEND LOCK (anti doble click / Enter repetido / carreras)
+if (sendGuardRef.current.busy) return;
+sendGuardRef.current.busy = true;
+
+const targetThreadId = activeThread.id;
+activeThreadIdRef.current = targetThreadId;
+
+// ✅ ANTI-DUPLICADO por texto en el mismo thread
+const previewText = (input || "").trim();
+if (previewText && shouldBlockDuplicateSend(targetThreadId, previewText)) {
+  sendGuardRef.current.busy = false;
+  return;
+}
+
 
     const userText = input.trim();
     const imageBase64 = imagePreview;
@@ -2952,6 +3025,7 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
         );
 
         setIsTyping(false);
+        sendGuardRef.current.busy = false;
         speakTTS(fullText);
         if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       } else {
@@ -2999,6 +3073,7 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
             );
 
             setIsTyping(false);
+            sendGuardRef.current.busy = false;
 
 // ✅ HABLAR respuesta (y esto re-activa micro si voiceMode sigue ON)
 speakTTS(fullText);
@@ -3032,6 +3107,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
       setUiError(msg);
       setIsTyping(false);
+      sendGuardRef.current.busy = false;
       if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
     }
   }
@@ -3104,27 +3180,6 @@ const chatBottomPad = hasUserMessage ? (inputBarH + 22) : 18;
   );
 }
 
-function replaceFractionsInText(text: string) {
-  // Detecta fracciones tipo 12/5 (solo dígitos) y las renderiza apiladas
-  const re = /(\b\d+)\s*\/\s*(\d+\b)/g;
-  const parts: Array<string | { n: string; d: string }> = [];
-  let last = 0;
-  let m: RegExpExecArray | null;
-
-  while ((m = re.exec(text)) !== null) {
-    const start = m.index;
-    const end = start + m[0].length;
-    if (start > last) parts.push(text.slice(last, start));
-    parts.push({ n: m[1], d: m[2] });
-    last = end;
-  }
-  if (last < text.length) parts.push(text.slice(last));
-
-  return parts.map((p, i) => {
-    if (typeof p === "string") return <Fragment key={i}>{p}</Fragment>;
-    return <Frac key={i} n={p.n} d={p.d} />;
-  });
-}
 
   // ✅ PIQUITO WhatsApp PERFECTO
 // - Triángulo rectángulo
@@ -4328,8 +4383,11 @@ return (
 
   {/* ⬆️ ENVIAR */}  
 <button
-  onClick={sendMessage}
-  disabled={!canSend}
+  onClick={() => {
+    if (!canSend) return;
+    sendMessage();
+  }}
+  aria-disabled={!canSend}
   className={[
     "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
     canSend
@@ -4342,6 +4400,7 @@ return (
 >
   <ArrowUpIcon className="h-5 w-5" />
 </button>
+
 </div>
 
 
