@@ -1692,6 +1692,8 @@ const micFinalRef = useRef<string>("");
 const micInterimRef = useRef<string>("");
 // ✅ evita duplicados en Android Chrome: recuerda el último índice final ya procesado
 const micLastFinalIndexRef = useRef<number>(-1);
+// ✅ Android: guarda cada trozo final por índice y reconstruye (evita repeticiones bestia)
+const micFinalByIndexRef = useRef<Record<number, string>>({});
 
 
 // ✅ anti-duplicado de envíos en conversación
@@ -1780,13 +1782,15 @@ setListeningPurpose(purpose);
     rec.lang = "es-ES";
     rec.continuous = purpose === "conversation"; // ✅ conversación tolera pausas
 rec.interimResults = true;
+rec.maxAlternatives = 1;
 
 
     // base: para dictado conservamos lo que había escrito; en conversación empezamos “limpio”
-    micBaseRef.current = purpose === "dictation" ? ((input || "").trim() ? input.trim() + " " : "") : "";
     micFinalRef.current = "";
 micInterimRef.current = "";
-micLastFinalIndexRef.current = -1; // ✅ reset anti-duplicado
+micLastFinalIndexRef.current = -1;
+micFinalByIndexRef.current = {}; // ✅ reset del mapa
+
 
 
 
@@ -1910,15 +1914,12 @@ const armSilence = () => {
     rec.onresult = (event: any) => {
   if (micSessionIdRef.current !== mySessionId) return;
 
-  // ✅ Android Chrome FIX:
-  // - NO reconstruimos desde 0 (duplica).
-  // - Consumimos solo desde event.resultIndex.
-  // - Solo añadimos finals "nuevos" (por índice) usando micLastFinalIndexRef.
-  let finalText = micFinalRef.current || "";
-  let interimText = "";
-
-  const startIndex = typeof event?.resultIndex === "number" ? event.resultIndex : 0;
   const results = event?.results ?? [];
+  const startIndex = typeof event?.resultIndex === "number" ? event.resultIndex : 0;
+
+  // Vamos guardando finals por índice (si el mismo índice cambia, se reemplaza)
+  const finalMap = micFinalByIndexRef.current || {};
+  let interimText = "";
 
   for (let i = startIndex; i < results.length; i++) {
     const res = results[i];
@@ -1926,14 +1927,23 @@ const armSilence = () => {
     if (!txt) continue;
 
     if (res.isFinal) {
-      // ✅ solo si es un final nuevo por índice (evita que Android lo "re-emita")
-      if (i > micLastFinalIndexRef.current) {
-        finalText += txt + " ";
-        micLastFinalIndexRef.current = i;
-      }
+      finalMap[i] = txt; // ✅ reemplaza si Android lo re-emite/actualiza
+      if (i > micLastFinalIndexRef.current) micLastFinalIndexRef.current = i;
     } else {
-      // interim (puede variar mientras hablas)
       interimText += txt + " ";
+    }
+  }
+
+  micFinalByIndexRef.current = finalMap;
+
+  // Reconstruimos el final en orden (0..lastFinalIndex)
+  let finalText = "";
+  const lastIdx = micLastFinalIndexRef.current;
+
+  if (lastIdx >= 0) {
+    for (let i = 0; i <= lastIdx; i++) {
+      const piece = finalMap[i];
+      if (piece && piece.trim()) finalText += piece.trim() + " ";
     }
   }
 
@@ -1948,12 +1958,12 @@ const armSilence = () => {
   const raw = micBaseRef.current + finalText + interimText;
   const cleaned = cleanRepeatedWords(raw.replace(/\s+/g, " ").trim());
 
-  // ✅ dictado: lo mostramos en el input mientras habla
+  // ✅ Dictado: actualizar input en vivo
   if (micPurposeRef.current === "dictation") {
     setInput(cleaned);
   }
 
-  // Si quieres ver lo que entiende en conversación mientras hablas:
+  // Si quieres ver en conversación mientras hablas:
   // if (micPurposeRef.current === "conversation") setInput(cleaned);
 };
 
