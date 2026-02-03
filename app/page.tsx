@@ -1883,16 +1883,31 @@ const armSilence = () => {
   if (purposeAtStart === "conversation" && voiceModeRef.current) {
     if (finalText) {
       const now = Date.now();
-      const prev = lastMicSendRef.current;
+const prev = lastMicSendRef.current;
 
-      if (prev.text === finalText && now - prev.ts < 2500) {
-        // ignorar duplicado
-      } else if (isTyping) {
-        // si Vonu está respondiendo, no mandamos otro
-      } else {
-        lastMicSendRef.current = { text: finalText, ts: now };
-        sendQuickMessage(finalText, activeThread?.mode ?? "chat");
-      }
+// ✅ normalización fuerte para comparar (evita que "hola" vs "hola." se envíen 2 veces)
+const normalizeVoiceSend = (s: string) =>
+  (s ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[.,;:!?¡¿]+/g, ""); // quitamos puntuación suave
+
+const curNorm = normalizeVoiceSend(finalText);
+const prevNorm = normalizeVoiceSend(prev.text);
+
+// ventana un poco más larga en móvil
+const WINDOW_MS = isDesktopPointer() ? 2500 : 4200;
+
+if (curNorm && prevNorm === curNorm && now - prev.ts < WINDOW_MS) {
+  // ✅ ignorar duplicado real aunque cambie un punto/espacio
+} else if (isTyping) {
+  // si Vonu está respondiendo, no mandamos otro
+} else {
+  lastMicSendRef.current = { text: finalText, ts: now };
+  sendQuickMessage(finalText, activeThread?.mode ?? "chat");
+}
+
       return;
     }
 
@@ -1936,16 +1951,29 @@ const armSilence = () => {
 
   micFinalByIndexRef.current = finalMap;
 
-  // Reconstruimos el final en orden (0..lastFinalIndex)
-  let finalText = "";
-  const lastIdx = micLastFinalIndexRef.current;
+  // ✅ Reconstrucción robusta en Android:
+// - NO asumimos 0..lastIdx (Chrome puede "saltar" índices o reemitir con índices nuevos)
+// - Ordenamos las keys existentes
+// - Deduplicamos piezas consecutivas (por si reemite la misma frase con otro índice)
+const keys = Object.keys(finalMap)
+  .map((k) => Number(k))
+  .filter((n) => Number.isFinite(n))
+  .sort((a, b) => a - b);
 
-  if (lastIdx >= 0) {
-    for (let i = 0; i <= lastIdx; i++) {
-      const piece = finalMap[i];
-      if (piece && piece.trim()) finalText += piece.trim() + " ";
-    }
-  }
+let finalText = "";
+let lastPiece = "";
+
+for (const k of keys) {
+  const piece = (finalMap[k] ?? "").trim();
+  if (!piece) continue;
+
+  const normPiece = piece.replace(/\s+/g, " ").trim().toLowerCase();
+  if (normPiece && normPiece === lastPiece) continue; // ✅ evita duplicados de frase
+
+  finalText += piece + " ";
+  lastPiece = normPiece;
+}
+
 
   micFinalRef.current = finalText;
   micInterimRef.current = interimText;

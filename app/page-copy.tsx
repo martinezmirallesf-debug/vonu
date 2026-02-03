@@ -1,16 +1,29 @@
 // app/page.tsx
 
+
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Architects_Daughter } from "next/font/google";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
 import ReactMarkdown from "react-markdown";
 import ChalkboardTutorBoard from "@/app/components/ChalkboardTutorBoard";
 
-import type { Components } from "react-markdown";
+
+type Placement = { x: number; y: number; w: number; h: number };
+
+type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+
+  // extras para pizarra
+  pizarra?: string | null;
+  boardImageB64?: string | null;
+  boardImagePlacement?: Placement | null;
+};
+
+
 type WhiteboardBlockProps = {
   value: string;
   onOpenCanvas?: () => void;
@@ -23,7 +36,6 @@ type WhiteboardBlockProps = {
  * - Animación línea a línea (como si escribiera el profe)
  */
 
-
 type Message = {
   id: string;
   role: "user" | "assistant";
@@ -31,13 +43,15 @@ type Message = {
   image?: string;
   streaming?: boolean;
 
-  // ✅ NUEVO: imagen de pizarra (IA) y su colocación
+  // ✅ Tutor: JSON de pizarra (para render sin burbuja en modo tutor)
+  pizarra?: string | null;
+
+  // ✅ imagen de pizarra (IA) y su colocación
   boardImageB64?: string | null;
   boardImagePlacement?: { x: number; y: number; w: number; h: number } | null;
 };
 
 type ThreadMode = "chat" | "tutor";
-
 type TutorLevel = "kid" | "teen" | "adult" | "unknown";
 
 type TutorProfile = {
@@ -52,7 +66,6 @@ type ChatThread = {
   tutorProfile?: TutorProfile;
   messages: Message[];
 };
-
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -81,7 +94,6 @@ function makeNewThread(): ChatThread {
   };
 }
 
-
 function makeTitleFromText(text: string) {
   const t = text.trim().replace(/\s+/g, " ");
   if (!t) return "Nueva consulta";
@@ -89,7 +101,6 @@ function makeTitleFromText(text: string) {
 }
 
 const STORAGE_KEY = "vonu_threads_v2";
-
 const HOME_URL = "https://vonuai.com";
 
 // ✅ regla: tras 2 análisis, pedir login/pago
@@ -98,6 +109,48 @@ const FREE_MESSAGE_LIMIT = 2;
 function isDesktopPointer() {
   if (typeof window === "undefined") return true;
   return window.matchMedia?.("(pointer: fine)")?.matches ?? true;
+}
+
+function Fraction({ a, b }: { a: string; b: string }) {
+  return (
+    <span className="inline-flex align-middle mx-[2px]" style={{ transform: "translateY(1px)" }}>
+      <span className="inline-flex flex-col items-center leading-none">
+        <span className="text-[0.90em] font-semibold">{a}</span>
+        <span className="h-[1px] w-[1.15em] bg-zinc-900/70 my-[1px]" />
+        <span className="text-[0.90em] font-semibold">{b}</span>
+      </span>
+    </span>
+  );
+}
+
+function renderTextWithFractions(text: string) {
+  // Convierte "12/5" => fracción vertical.
+  // Nota: evitamos tocar texto vacío.
+  const s = String(text ?? "");
+  if (!s) return s;
+
+  const re = /(\d+)\s*\/\s*(\d+)/g;
+  const parts: Array<string | { a: string; b: string }> = [];
+
+  let last = 0;
+  let m: RegExpExecArray | null;
+
+  while ((m = re.exec(s)) !== null) {
+    const start = m.index;
+    const end = re.lastIndex;
+
+    if (start > last) parts.push(s.slice(last, start));
+    parts.push({ a: m[1], b: m[2] });
+
+    last = end;
+  }
+
+  if (last < s.length) parts.push(s.slice(last));
+
+  return parts.map((p, i) => {
+    if (typeof p === "string") return <span key={i}>{p}</span>;
+    return <Fraction key={i} a={p.a} b={p.b} />;
+  });
 }
 
 function UserIcon({ className }: { className?: string }) {
@@ -238,21 +291,43 @@ function deriveName(email: string | null, metaName?: string | null, identityName
 // para que NO haya “salto raro” al terminar (mismo layout antes y después).
 function normalizeAssistantText(text: string) {
   const raw = text ?? "";
-  return raw
-    .replace(/\r\n/g, "\n")
-    // deja markdown vivir: mantenemos saltos de línea
-    // solo compactamos “demasiados” saltos seguidos
-    .replace(/\n{3,}/g, "\n\n");
+  return raw.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n");
 }
+
+function sanitizeTutorLikeImage(text: string) {
+  let s = String(text ?? "");
+
+  // Quitar envoltorios típicos de LaTeX inline/display
+  s = s.replace(/\\\(|\\\)|\\\[|\\\]/g, "");
+
+  // Convertir \frac{a}{b} => a/b
+  s = s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "$1/$2");
+
+  // Convertir \times y \cdot si cuela alguno
+  s = s.replace(/\\times/g, "×");
+  s = s.replace(/\\cdot/g, "·");
+
+  // Normalizar saltos
+  s = s.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n");
+
+  return s.trim();
+}
+
 
 
 // ===== TUTOR (detección ligera frontend) =====
 function looksLikeTutorIntent(text: string) {
   const t = (text || "").toLowerCase();
 
-  // señales fuertes (estudio/explicación)
   const strong = [
     "explícame",
+    "explicar",
+"explicación",
+"explicacion",
+"puedes explicar",
+"me puedes explicar",
+"podrías explicar",
+"podrias explicar",
     "explicame",
     "paso a paso",
     "ejercicio",
@@ -289,21 +364,17 @@ function looksLikeTutorIntent(text: string) {
 function inferTutorLevel(text: string): TutorLevel {
   const t = (text || "").toLowerCase();
 
-  // kid
   const kid = ["primaria", "tabla", "sumas", "restas", "multiplic", "divisiones", "dictado", "ortografía", "deberes"];
   if (kid.some((k) => t.includes(k))) return "kid";
 
-  // teen
   const teen = ["eso", "bachiller", "selectividad", "evau", "trigonometr", "derivad", "integral", "funciones", "química", "física"];
   if (teen.some((k) => t.includes(k))) return "teen";
 
-  // adult / unknown
   const adult = ["universidad", "ingeniería", "álgebra lineal", "calculo", "estadística", "programación", "finanzas", "contabilidad"];
   if (adult.some((k) => t.includes(k))) return "adult";
 
   return "unknown";
 }
-
 
 function MicIcon({ className }: { className?: string }) {
   return (
@@ -315,6 +386,26 @@ function MicIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+function TalkIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      {/* Altavoz */}
+      <path
+        d="M4 10v4h3l4 3V7L7 10H4Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      {/* Ondas */}
+      <path d="M16 9.5c1.2 1.2 1.2 3.8 0 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M18.5 7c2.6 2.6 2.6 7.4 0 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+
+
 
 function PencilIcon({ className }: { className?: string }) {
   return (
@@ -392,100 +483,90 @@ export default function Page() {
       <sup className="ml-[1px] text-[12px] font-bold leading-none relative -top-[5px]">+</sup>
     </span>
   );
-function WhiteboardBlock({
-  value,
-  onOpenCanvas,
-}: {
-  value: string;
-  onOpenCanvas: () => void;
-}) {
-  const lines = (value || "")
-    .replace(/\r\n/g, "\n")
-    .split("\n")
-    .map((l) => l.trimEnd());
 
-  // ✅ animación: ir revelando líneas (como “profe escribiendo”)
-  const [shown, setShown] = useState(0);
+  function WhiteboardBlock({ value, onOpenCanvas }: { value: string; onOpenCanvas: () => void }) {
+    const lines = (value || "")
+      .replace(/\r\n/g, "\n")
+      .split("\n")
+      .map((l) => l.trimEnd());
 
-  useEffect(() => {
-    setShown(0);
-    const total = lines.length;
+    // ✅ animación: ir revelando líneas (como “profe escribiendo”)
+    const [shown, setShown] = useState(0);
 
-    // si es muy largo, aceleramos un poco
-    const speed = total > 14 ? 70 : 110;
+    useEffect(() => {
+      setShown(0);
+      const total = lines.length;
 
-    const t = setInterval(() => {
-      setShown((s) => {
-        const next = Math.min(total, s + 1);
-        if (next >= total) clearInterval(t);
-        return next;
-      });
-    }, speed);
+      // si es muy largo, aceleramos un poco
+      const speed = total > 14 ? 70 : 110;
 
-    return () => clearInterval(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
+      const t = setInterval(() => {
+        setShown((s) => {
+          const next = Math.min(total, s + 1);
+          if (next >= total) clearInterval(t);
+          return next;
+        });
+      }, speed);
 
-  return (
-    <div className="my-2 rounded-2xl border border-zinc-200 overflow-hidden">
-      <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-zinc-200 bg-white">
-        <div className="text-[12px] font-semibold text-zinc-900">🧑‍🏫 Pizarra</div>
+      return () => clearInterval(t);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value]);
 
-        <button
-          onClick={onOpenCanvas}
-          className="h-8 px-3 rounded-full bg-black hover:bg-zinc-900 text-white text-[12px] font-semibold"
+    return (
+      <div className="my-2 rounded-2xl border border-zinc-200 overflow-hidden">
+        <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-zinc-200 bg-white">
+          <div className="text-[12px] font-semibold text-zinc-900">🧑‍🏫 Pizarra</div>
+
+          <button onClick={onOpenCanvas} className="h-8 px-3 rounded-full bg-black hover:bg-zinc-900 text-white text-[12px] font-semibold">
+            Abrir pizarra
+          </button>
+        </div>
+
+        <div
+          className="px-4 py-4 text-[14px] leading-7"
+          style={{
+            backgroundColor: "#0b0f0d",
+            color: "#f8fafc",
+            fontFamily: '"Chalkboard SE","Bradley Hand","Comic Sans MS","Segoe Print",ui-sans-serif,system-ui',
+            textShadow: "0 0 1px rgba(255,255,255,.20)",
+            backgroundImage:
+              "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)",
+            backgroundSize: "26px 26px, 38px 38px",
+            backgroundPosition: "0 0, 13px 19px",
+          }}
         >
-          Abrir pizarra
-        </button>
+          {lines.slice(0, shown).map((l, i) => (
+            <div
+              key={`${i}-${l?.slice?.(0, 10) ?? ""}`}
+              className="whitespace-pre-wrap break-words"
+              style={{
+                opacity: 0.92,
+                animation: "chalkIn 240ms ease-out both",
+                filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.12))"
+              }}
+            >
+              {l || " "}
+            </div>
+          ))}
+          {/* cursor “tiza” al final mientras escribe */}
+          {shown < lines.length ? (
+            <span
+              aria-hidden="true"
+              style={{
+                display: "inline-block",
+                width: 10,
+                height: 18,
+                marginLeft: 4,
+                background: "rgba(248,250,252,0.85)",
+                borderRadius: 2,
+                transform: "translateY(3px)",
+              }}
+            />
+          ) : null}
+        </div>
       </div>
-
-      <div
-        className="px-4 py-4 text-[14px] leading-7"
-        style={{
-          backgroundColor: "#0b0f0d",
-          color: "#f8fafc",
-          fontFamily:
-            '"Chalkboard SE","Bradley Hand","Comic Sans MS","Segoe Print",ui-sans-serif,system-ui',
-          textShadow: "0 0 1px rgba(255,255,255,.20)",
-          backgroundImage:
-            "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)",
-          backgroundSize: "26px 26px, 38px 38px",
-          backgroundPosition: "0 0, 13px 19px",
-        }}
-      >
-        {lines.slice(0, shown).map((l, i) => (
-          <div
-            key={`${i}-${l?.slice?.(0, 10) ?? ""}`}
-            className="whitespace-pre-wrap break-words"
-            style={{
-              opacity: 0.92,
-              animation: "chalkIn 240ms ease-out both",
-              filter: "drop-shadow(0px 0px 0.4px rgba(255,255,255,0.25))",
-            }}
-          >
-            {l || " "}
-          </div>
-        ))}
-        {/* cursor “tiza” al final mientras escribe */}
-        {shown < lines.length ? (
-          <span
-            aria-hidden="true"
-            style={{
-              display: "inline-block",
-              width: 10,
-              height: 18,
-              marginLeft: 4,
-              background: "rgba(248,250,252,0.85)",
-              borderRadius: 2,
-              transform: "translateY(3px)",
-            }}
-          />
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
+    );
+  }
 
   // ✅ FIX CLAVE: refreshProStatus NO depende de authUserId.
   async function refreshProStatus() {
@@ -523,8 +604,12 @@ function WhiteboardBlock({
     const identityEmail = pickFirstNonEmpty(identityData?.email, identityData?.preferred_username) as string | null;
 
     const identityName =
-      pickFirstNonEmpty(identityData?.name, identityData?.full_name, identityData?.displayName, buildNameFromParts(identityData?.given_name, identityData?.family_name)) ??
-      null;
+      pickFirstNonEmpty(
+        identityData?.name,
+        identityData?.full_name,
+        identityData?.displayName,
+        buildNameFromParts(identityData?.given_name, identityData?.family_name)
+      ) ?? null;
 
     const email = (u?.email ?? metaEmail ?? identityEmail ?? null) as string | null;
     const id = (u?.id ?? null) as string | null;
@@ -701,6 +786,8 @@ function WhiteboardBlock({
     }
   }
 
+ 
+
   // Cargar sesión + escuchar cambios
   useEffect(() => {
     let unsub: (() => void) | null = null;
@@ -848,7 +935,7 @@ function WhiteboardBlock({
 
   function openPlansModal() {
     setPayMsg(null);
-    // si ya es Pro, por defecto marcamos "Seguir gratis" (como en la captura: plan actual arriba, pero selección en gratis)
+    // si ya es Pro, por defecto marcamos "Seguir gratis"
     setPlan(isPro ? "free" : "yearly");
     setPaywallOpen(true);
   }
@@ -1059,59 +1146,506 @@ function WhiteboardBlock({
   }
 
   // -------- Persistencia local --------
-const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
-const [activeThreadId, setActiveThreadId] = useState<string>("");
-const activeThreadIdRef = useRef<string>("");
+  const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
+  const [activeThreadId, setActiveThreadId] = useState<string>("");
+  const activeThreadIdRef = useRef<string>("");
 
-useEffect(() => {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
 
-    const parsed = JSON.parse(raw) as any[];
-    if (!Array.isArray(parsed) || parsed.length === 0) return;
+      const parsed = JSON.parse(raw) as any[];
+      if (!Array.isArray(parsed) || parsed.length === 0) return;
 
-    const clean: ChatThread[] = parsed
-      .filter((t) => t && typeof t.id === "string")
-      .map((t) => ({
-        id: String(t.id),
-        title: typeof t.title === "string" ? t.title : "Consulta",
-        updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
+      const clean: ChatThread[] = parsed
+        .filter((t) => t && typeof t.id === "string")
+        .map((t) => ({
+          id: String(t.id),
+          title: typeof t.title === "string" ? t.title : "Consulta",
+          updatedAt: typeof t.updatedAt === "number" ? t.updatedAt : Date.now(),
 
-        // 🔒 tipado estricto
-        mode: (t?.mode === "tutor" ? "tutor" : "chat") as ThreadMode,
+          mode: (t?.mode === "tutor" ? "tutor" : "chat") as ThreadMode,
 
-        tutorProfile: {
-          level:
-            t?.tutorProfile?.level === "kid" || t?.tutorProfile?.level === "teen" || t?.tutorProfile?.level === "adult"
-              ? (t.tutorProfile.level as TutorLevel)
-              : ("adult" as TutorLevel),
-        },
+          tutorProfile: {
+            level:
+              t?.tutorProfile?.level === "kid" || t?.tutorProfile?.level === "teen" || t?.tutorProfile?.level === "adult"
+                ? (t.tutorProfile.level as TutorLevel)
+                : ("adult" as TutorLevel),
+          },
 
-        messages: Array.isArray(t.messages) && t.messages.length ? (t.messages as Message[]) : [initialAssistantMessage()],
-      }));
+          messages: Array.isArray(t.messages) && t.messages.length ? (t.messages as Message[]) : [initialAssistantMessage()],
+        }));
 
-    if (clean.length) {
-      setThreads(clean);
-      setActiveThreadId(clean[0].id);
-    }
-  } catch {}
-}, []);
+      if (clean.length) {
+        setThreads(clean);
+        setActiveThreadId(clean[0].id);
+      }
+    } catch {}
+  }, []);
 
-useEffect(() => {
-  if (!mounted) return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(threads));
-  } catch {}
-}, [threads, mounted]);
-
+  useEffect(() => {
+    if (!mounted) return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(threads));
+    } catch {}
+  }, [threads, mounted]);
 
   // -------- UI --------
   const [input, setInput] = useState("");
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // =======================
+// 🔊 VOZ (Text-to-Speech) — premium: habla + escribe
+// =======================
+const [ttsEnabled, setTtsEnabled] = useState(false);
+const [ttsSpeaking, setTtsSpeaking] = useState(false);
+
+// ✅ Modo conversación (voz + hablar por turnos)
+const [voiceMode, setVoiceMode] = useState(false);
+
+const voiceModeRef = useRef(false);
+
+useEffect(() => {
+  voiceModeRef.current = voiceMode;
+}, [voiceMode]);
+
+
+function setVoiceModeOff() {
+  setVoiceMode(false);
+  stopTTS();
+  stopMic();
+  clearSilenceTimer();
+}
+
+function toggleDictation() {
+  // Solo dictado (micro) — si no hay soporte, avisamos
+  if (!speechSupported) {
+    setMicMsg("Tu navegador no soporta dictado por voz. Prueba Chrome/Edge.");
+    setTimeout(() => setMicMsg(null), 2400);
+    return;
+  }
+  // ✅ Si estás en modo conversación, el dictado no se usa (evita conflicto)
+  if (voiceModeRef.current) {
+    setMicMsg("Apaga el modo conversación para usar dictado.");
+    setTimeout(() => setMicMsg(null), 2200);
+    return;
+  }
+
+  // Si Vonu está hablando, cortamos para no pisar
+  stopTTS();
+
+  // Encender/apagar micro
+  toggleMic();
+}
+
+function toggleConversation() {
+  if (!speechSupported) {
+    setMicMsg("Tu navegador no soporta modo conversación (micro). Prueba Chrome/Edge.");
+    setTimeout(() => setMicMsg(null), 2400);
+    return;
+  }
+
+  if (!supportsTTS()) {
+  setMicMsg("Tu navegador no soporta voz (TTS). Prueba Safari en iPhone o Chrome/Edge en desktop.");
+  setTimeout(() => setMicMsg(null), 2600);
+  return; // ✅ CLAVE: sin TTS no activamos conversación
+}
+
+
+  if (voiceModeRef.current) {
+  // OFF (blindado)
+  voiceModeRef.current = false;
+  setVoiceMode(false);
+  setTtsEnabled(false);
+  clearSilenceTimer();
+  stopMic();
+  stopTTS();
+  return;
+}
+
+
+  // ✅ Si estaba dictando, paramos el micro antes de entrar en conversación
+  if (isListening) stopMic();
+
+// ON
+voiceModeRef.current = true;
+setVoiceMode(true);
+
+setTtsEnabled(true);
+
+// ✅ desbloquear TTS tras el click (sin cancelar la voz real)
+primeTTSAsync({ hardCancel: true });
+setTimeout(() => {
+  primeTTSAsync({ hardCancel: true });
+}, 180);
+
+
+
+
+// arrancar escucha en modo conversación
+setTimeout(() => {
+  if (voiceModeRef.current) startMic("conversation");
+}, 180);
+}
+
+
+function toggleReadAloud() {
+  // Solo lectura (TTS)
+  if (!supportsTTS()) return;
+
+  setTtsEnabled((v) => {
+    const next = !v;
+    if (!next) stopTTS();
+    return next;
+  });
+}
+
+
+// =======================
+// 🔊 TTS helpers
+// =======================
+function supportsTTS() {
+  if (typeof window === "undefined") return false;
+  return typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance !== "undefined";
+}
+
+// ✅ Cargar voces de forma fiable (algunos navegadores las cargan tarde)
+function getVoicesAsync(timeoutMs = 900): Promise<SpeechSynthesisVoice[]> {
+  if (typeof window === "undefined") return Promise.resolve([]);
+  const synth = window.speechSynthesis;
+
+  // por si el motor queda “pausado”
+  try { synth.resume?.(); } catch {}
+
+  try {
+    const existing = synth.getVoices?.() ?? [];
+    if (existing.length) return Promise.resolve(existing);
+  } catch {}
+
+  return new Promise((resolve) => {
+    let done = false;
+
+    const finish = () => {
+      if (done) return;
+      done = true;
+      try { synth.onvoiceschanged = null; } catch {}
+      try { resolve(synth.getVoices?.() ?? []); } catch { resolve([]); }
+    };
+
+    try {
+      synth.onvoiceschanged = () => finish();
+    } catch {}
+
+    setTimeout(() => finish(), timeoutMs);
+  });
+}
+
+// ✅ “Unlock” de TTS SIN timer que cancele tu voz real
+// Devuelve una promesa para poder esperar a que termine.
+function primeTTSAsync(opts?: { hardCancel?: boolean }) {
+  if (typeof window === "undefined") return Promise.resolve();
+  if (!supportsTTS()) return Promise.resolve();
+
+  const hardCancel = !!opts?.hardCancel;
+
+  return new Promise<void>((resolve) => {
+    try {
+      const synth = window.speechSynthesis;
+
+      // ✅ Solo cancel “duro” cuando vienes de un click (unlock).
+      // Antes de hablar respuesta real, NO cancel agresivo.
+      try {
+        if (hardCancel) synth.cancel();
+        synth.resume?.();
+      } catch {}
+
+      const u = new SpeechSynthesisUtterance(" ");
+      u.volume = 0; // silencioso
+      u.rate = 1;
+      u.pitch = 1;
+
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        resolve();
+      };
+
+      u.onend = finish;
+      u.onerror = finish;
+
+      setTimeout(finish, 250);
+
+      synth.speak(u);
+    } catch {
+      resolve();
+    }
+  });
+}
+
+
+
+// Limpia markdown a texto “hablable”
+function stripMarkdownForTTS(md: string) {
+  let s = String(md ?? "");
+
+  // quitar bloques de código
+  s = s.replace(/```[\s\S]*?```/g, " ");
+  // quitar inline code
+  s = s.replace(/`([^`]+)`/g, "$1");
+
+  // links [texto](url) -> texto
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1");
+
+  // negritas/itálicas
+  s = s.replace(/\*\*([^*]+)\*\*/g, "$1");
+  s = s.replace(/\*([^*]+)\*/g, "$1");
+  s = s.replace(/_([^_]+)_/g, "$1");
+
+  // bullets raros
+  s = s.replace(/^\s*[-*•]\s+/gm, "");
+  s = s.replace(/\n{3,}/g, "\n\n");
+  // ✅ quitar emojis (evita "cara sonriente", etc.)
+  // Extended_Pictographic funciona en navegadores modernos (Chrome/Edge/Safari recientes)
+  try {
+    s = s.replace(/\p{Extended_Pictographic}+/gu, " ");
+  } catch {
+    // fallback básico si el navegador no soporta unicode property escapes
+    s = s.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]+/gu, " ");
+  }
+
+  // limpiar dobles espacios tras quitar emojis
+  s = s.replace(/\s{2,}/g, " ");
+  // ✅ Matemáticas "hablables"
+  // fracciones simples 12/5 -> "12 entre 5"
+  s = s.replace(/(\b\d+)\s*\/\s*(\d+\b)/g, "$1 entre $2");
+
+  // raíz: √9 -> "raíz de 9"
+  s = s.replace(/√\s*([0-9a-zA-Z]+)/g, "raíz de $1");
+
+  // exponentes estilo x^2, a^n
+  s = s.replace(/([a-zA-Z0-9\)\]])\s*\^\s*2\b/g, "$1 al cuadrado");
+  s = s.replace(/([a-zA-Z0-9\)\]])\s*\^\s*3\b/g, "$1 al cubo");
+  s = s.replace(/([a-zA-Z0-9\)\]])\s*\^\s*(\d+)\b/g, "$1 elevado a $2");
+
+  // superscripts comunes ² ³ (y algunos más)
+  s = s.replace(/([a-zA-Z0-9\)\]])\s*²/g, "$1 al cuadrado");
+  s = s.replace(/([a-zA-Z0-9\)\]])\s*³/g, "$1 al cubo");
+
+  // pi aproximado
+  s = s.replace(/\bπ\b/g, "pi");
+
+  return s.trim();
+}
+
+function shortenForVoice(text: string, maxChars = 420) {
+  const t = stripMarkdownForTTS(text);
+  if (!t) return "";
+
+  // corta por frases, y se queda con 2-3 frases
+  const sentences = t.split(/(?<=[\.\?\!])\s+/g).filter(Boolean);
+
+  let out = "";
+  for (const s of sentences) {
+    if (!s.trim()) continue;
+    const next = (out ? out + " " : "") + s.trim();
+    if (next.length > maxChars) break;
+    out = next;
+    if ((out.match(/[.!?]/g) || []).length >= 3) break;
+  }
+
+  // fallback si no hay puntuación
+  if (!out) out = t.slice(0, maxChars);
+
+  // si hemos recortado, rematamos
+  if (out.length < t.length) out = out.trim() + "… Si quieres, te lo amplío.";
+  return out.trim();
+}
+
+// Partir en trozos para que el motor no se “atragante”
+function chunkForTTS(text: string, maxLen = 220) {
+  const t = stripMarkdownForTTS(text);
+  if (!t) return [];
+
+  // corta muy largo para evitar locuras
+  const clipped = t.length > 2200 ? t.slice(0, 2200) + "…" : t;
+
+  // troceo por frases
+  const parts: string[] = [];
+  const sentences = clipped.split(/(?<=[\.\?\!])\s+/g);
+
+  let buf = "";
+  for (const s of sentences) {
+    const next = (buf ? buf + " " : "") + s;
+    if (next.length <= maxLen) {
+      buf = next;
+    } else {
+      if (buf) parts.push(buf);
+      buf = s;
+    }
+  }
+  if (buf) parts.push(buf);
+
+  // fallback si no hay puntuación
+  if (!parts.length) {
+    for (let i = 0; i < clipped.length; i += maxLen) {
+      parts.push(clipped.slice(i, i + maxLen));
+    }
+  }
+
+  return parts.map((x) => x.trim()).filter(Boolean);
+}
+
+function stopTTS() {
+  if (typeof window === "undefined") return;
+  try {
+    window.speechSynthesis?.cancel?.();
+  } catch {}
+  setTtsSpeaking(false);
+}
+
+async function speakTTS(text: string) {
+  const inConversation = voiceModeRef.current;
+
+  // ✅ Si no hay soporte real de TTS, en conversación volvemos a escuchar y fuera.
+  if (!supportsTTS()) {
+    if (inConversation) {
+      setTimeout(() => {
+        try {
+          if (voiceModeRef.current) startMic("conversation");
+        } catch {}
+      }, 200);
+    }
+    return;
+  }
+
+  // ✅ En conversación: hablamos aunque ttsEnabled esté desincronizado por state.
+  // En modo normal: solo si el usuario activó lectura.
+  if (!ttsEnabled && !inConversation) return;
+
+
+    // si ya estaba hablando, cortamos y arrancamos limpio
+  stopTTS();
+
+  // ✅ Re-unlock ANTES de hablar (sin timers que cancelen)
+  try {
+    await primeTTSAsync({ hardCancel: false });
+  } catch {}
+
+
+  const voiceText = voiceModeRef.current ? shortenForVoice(text) : stripMarkdownForTTS(text);
+  const chunks = chunkForTTS(voiceText);
+  if (!chunks.length) return;
+
+  setTtsSpeaking(true);
+
+  const synth = window.speechSynthesis;
+  try {
+    synth.resume?.();
+  } catch {}
+
+  // ✅ Elegir voz (mejor hacerlo “vivo”, no con snapshot)
+  const pickVoiceLive = () => {
+    let vs: SpeechSynthesisVoice[] = [];
+    try {
+      vs = synth.getVoices?.() ?? [];
+    } catch {}
+    const es = vs.find((v) => (v.lang || "").toLowerCase().startsWith("es"));
+    return es ?? vs[0] ?? null;
+  };
+
+    // ✅ En Chrome a veces no hay voces aún: esperamos un poco
+  try {
+    await getVoicesAsync(900);
+  } catch {}
+
+
+  // ✅ Pequeño micro-delay: ayuda en Safari/iOS tras cancel()
+  await new Promise((r) => setTimeout(r, 30));
+
+  for (const ch of chunks) {
+    const u = new SpeechSynthesisUtterance(ch);
+
+    const voice = pickVoiceLive();
+    if (voice) u.voice = voice;
+
+    u.lang = voice?.lang || "es-ES";
+    u.rate = 1.02;
+    u.pitch = 1.0;
+    u.volume = 1.0;
+
+    await new Promise<void>((resolve) => {
+      u.onend = () => resolve();
+      u.onerror = () => resolve();
+      try {
+        try {
+          synth.resume?.();
+        } catch {}
+        synth.speak(u);
+      } catch {
+        resolve();
+      }
+    });
+
+    if (!ttsEnabled && !voiceModeRef.current) break;
+  }
+
+  setTtsSpeaking(false);
+
+  // ✅ modo conversación: si sigue ON, volvemos a escuchar
+  if (voiceModeRef.current) {
+    setTimeout(() => {
+  if (voiceModeRef.current) startMic("conversation");
+}, 320); // un pelín más humano
+  }
+
+
+}
+
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
+
+  // =========================
+  // ✅ ANTI-DUPLICADO / SEND LOCK
+  // Evita que el mismo mensaje se envíe 2-3 veces por:
+  // - doble click / Enter
+  // - modo conversación (SpeechRecognition onend duplicado)
+  // - carrera antes de que isTyping pase a true
+  // =========================
+  const sendGuardRef = useRef<{
+    busy: boolean;
+    last: { threadId: string; text: string; ts: number };
+  }>({
+    busy: false,
+    last: { threadId: "", text: "", ts: 0 },
+  });
+
+  function normalizeSendText(t: string) {
+    return (t ?? "")
+      .trim()
+      .replace(/\s+/g, " ")
+      .toLowerCase();
+  }
+
+  function shouldBlockDuplicateSend(threadId: string, rawText: string) {
+    const now = Date.now();
+    const text = normalizeSendText(rawText);
+
+    if (!threadId || !text) return false;
+
+    const last = sendGuardRef.current.last;
+    // ventana anti-duplicado (ajústala si quieres)
+    const WINDOW_MS = 1800;
+
+    if (last.threadId === threadId && last.text === text && now - last.ts < WINDOW_MS) {
+      return true;
+    }
+
+    sendGuardRef.current.last = { threadId, text, ts: now };
+    return false;
+  }
+
 
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
@@ -1126,91 +1660,336 @@ useEffect(() => {
   const [inputBarH, setInputBarH] = useState<number>(140);
   const shouldStickToBottomRef = useRef(true);
 
-  // ===== MIC (SpeechRecognition) =====
-  const [speechSupported, setSpeechSupported] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [micMsg, setMicMsg] = useState<string | null>(null);
-  const recognitionRef = useRef<any>(null);
+ // =======================
+// 🎙️ MIC (SpeechRecognition) — SIN DUPLICADOS
+// =======================
+function cleanRepeatedWords(text: string) {
+  const words = text.split(" ");
+  const result: string[] = [];
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    setSpeechSupported(!!SR);
-  }, []);
+  for (let i = 0; i < words.length; i++) {
+    if (i === 0 || words[i].toLowerCase() !== words[i - 1].toLowerCase()) {
+      result.push(words[i]);
+    }
+  }
 
-  function stopMic() {
+  return result.join(" ");
+}
+
+const [speechSupported, setSpeechSupported] = useState(false);
+const [isListening, setIsListening] = useState(false);
+const [micMsg, setMicMsg] = useState<string | null>(null);
+type MicPurpose = "dictation" | "conversation";
+
+const [listeningPurpose, setListeningPurpose] = useState<MicPurpose | null>(null);
+
+const micPurposeRef = useRef<MicPurpose>("dictation");
+
+// ✅ refs internas del motor de reconocimiento
+const recognitionRef = useRef<any | null>(null);
+const micBaseRef = useRef<string>("");
+const micFinalRef = useRef<string>("");
+const micInterimRef = useRef<string>("");
+// ✅ evita duplicados en Android Chrome: recuerda el último índice final ya procesado
+const micLastFinalIndexRef = useRef<number>(-1);
+// ✅ Android: guarda cada trozo final por índice y reconstruye (evita repeticiones bestia)
+const micFinalByIndexRef = useRef<Record<number, string>>({});
+
+
+// ✅ anti-duplicado de envíos en conversación
+const lastMicSendRef = useRef<{ text: string; ts: number }>({ text: "", ts: 0 });
+
+// ✅ NUEVO: control de sesión + silencios (evita “colgados” y timeouts huérfanos)
+const micSessionIdRef = useRef<number>(0);
+const silenceTimeoutRef = useRef<any>(null);
+const micHadSpeechRef = useRef<boolean>(false);
+
+function clearSilenceTimer() {
+  try {
+    if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
+  } catch {}
+  silenceTimeoutRef.current = null;
+}
+
+
+
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  setSpeechSupported(!!SR);
+}, []);
+
+function stopMic() {
+  // ✅ limpiar silencio SIEMPRE (antes de tocar el motor)
+  clearSilenceTimer();
+  micHadSpeechRef.current = false;
+
+  try {
+    const rec = recognitionRef.current;
+    if (rec) {
+      // evitar callbacks tardíos
+      rec.onresult = null;
+      rec.onerror = null;
+      rec.onend = null;
+      rec.onstart = null;
+      rec.onnomatch = null;
+
+      // ✅ abort es más “duro” y evita estados colgados en Chrome Android
+      try {
+        rec.abort?.();
+      } catch {}
+
+      try {
+        rec.stop?.();
+      } catch {}
+    }
+  } catch {}
+
+  recognitionRef.current = null;
+  setIsListening(false);
+  setListeningPurpose(null);
+}
+
+
+
+async function startMic(purpose: MicPurpose) {
+  if (isTyping) return;
+
+  const SR = typeof window !== "undefined" ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition : null;
+  if (!SR) {
+    setMicMsg("Tu navegador no soporta dictado por voz. Prueba Chrome/Edge en Android o Desktop.");
+    setTimeout(() => setMicMsg(null), 2400);
+    return;
+  }
+
+  // si ya está escuchando, primero paramos (evita estados raros)
+  if (isListening) {
+    stopMic();
+  }
+
+  try {
+    setMicMsg(null);
+
+    // ✅ si el usuario empieza a hablar, cortamos TTS
+    stopTTS();
+
+    micPurposeRef.current = purpose;
+setListeningPurpose(purpose);
+
+    const rec = new SR();
+    recognitionRef.current = rec;
+
+    rec.lang = "es-ES";
+    rec.continuous = purpose === "conversation"; // ✅ conversación tolera pausas
+rec.interimResults = true;
+rec.maxAlternatives = 1;
+
+
+    // base: para dictado conservamos lo que había escrito; en conversación empezamos “limpio”
+    micFinalRef.current = "";
+micInterimRef.current = "";
+micLastFinalIndexRef.current = -1;
+micFinalByIndexRef.current = {}; // ✅ reset del mapa
+
+
+
+
+// ✅ NUEVO: “sesión” del micro (evita eventos viejos tocando el estado actual)
+micSessionIdRef.current += 1;
+const mySessionId = micSessionIdRef.current;
+
+// ✅ En PC cortamos antes (se siente más rápido). En móvil dejamos más margen.
+const SILENCE_MS = isDesktopPointer() ? 1100 : 1700;
+
+const armSilence = () => {
+  if (purpose !== "conversation") return;
+
+  clearSilenceTimer();
+
+  silenceTimeoutRef.current = setTimeout(() => {
+    // si la sesión cambió, ignorar
+    if (micSessionIdRef.current !== mySessionId) return;
+
+    // Si se apagó el modo conversación o cambió el rec actual, no hacemos nada
+    if (!voiceModeRef.current) return;
+    if (recognitionRef.current !== rec) return;
+
+    // ✅ Si NO hubo voz real, NO forzamos stop (evita bucle en móvil)
+    if (!micHadSpeechRef.current) return;
+
     try {
-      recognitionRef.current?.stop?.();
+      rec.stop?.();
     } catch {}
+  }, SILENCE_MS);
+};
+
+
+
+    rec.onstart = () => {
+  // si es un evento viejo, ignorar
+  if (micSessionIdRef.current !== mySessionId) return;
+
+  setIsListening(true);
+  micHadSpeechRef.current = false;
+  armSilence();
+};
+
+
+
+
+    rec.onerror = (ev: any) => {
+  if (micSessionIdRef.current !== mySessionId) return;
+
+  setIsListening(false);
+
+  const code = String(ev?.error ?? "").toLowerCase();
+
+  let msg = "No se pudo usar el micrófono. Revisa permisos del navegador.";
+  if (code === "not-allowed" || code === "permission-denied") {
+    msg = "Permiso denegado. Activa el micrófono en el navegador (icono del candado) y recarga.";
+  } else if (code === "no-speech") {
+    msg = "No te he escuchado. Prueba a hablar más cerca del micro o en un sitio más silencioso.";
+  } else if (code === "audio-capture") {
+    msg = "No se detecta micrófono. Revisa que esté conectado o permitido.";
+  } else if (code === "network") {
+    msg = "Error de red del reconocimiento de voz. Prueba de nuevo.";
+  } else if (code) {
+    msg = `Error del micrófono (${code}). Revisa permisos y prueba otra vez.`;
   }
 
-  async function toggleMic() {
-    if (isTyping) return;
+  setMicMsg(msg);
+  setTimeout(() => setMicMsg(null), 3200);
 
-    const SR = typeof window !== "undefined" ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) : null;
-    if (!SR) {
-      setMicMsg("Tu navegador no soporta dictado por voz. Prueba Chrome/Edge en Android o Desktop.");
-      setTimeout(() => setMicMsg(null), 2400);
+  stopMic();
+};
+
+
+    rec.onend = () => {
+  // ✅ si es un evento viejo, ignorar (evita “dobles onend”)
+  if (micSessionIdRef.current !== mySessionId) return;
+
+  setIsListening(false);
+  setListeningPurpose(null);
+  recognitionRef.current = null;
+
+  const finalText = cleanRepeatedWords((micFinalRef.current || "").replace(/\s+/g, " ").trim());
+  micInterimRef.current = "";
+
+  clearSilenceTimer();
+
+  const purposeAtStart = purpose; // snapshot
+
+  // ✅ conversación: enviar automático si hay texto
+  if (purposeAtStart === "conversation" && voiceModeRef.current) {
+    if (finalText) {
+      const now = Date.now();
+      const prev = lastMicSendRef.current;
+
+      if (prev.text === finalText && now - prev.ts < 2500) {
+        // ignorar duplicado
+      } else if (isTyping) {
+        // si Vonu está respondiendo, no mandamos otro
+      } else {
+        lastMicSendRef.current = { text: finalText, ts: now };
+        sendQuickMessage(finalText, activeThread?.mode ?? "chat");
+      }
       return;
     }
 
-    if (isListening) {
-      stopMic();
-      return;
-    }
+    // ✅ Si no hubo voz real, NO reiniciar agresivo (en móvil hace bucle)
+    const waitMs = isDesktopPointer() ? 450 : 1200;
 
-    try {
-      setMicMsg(null);
+    setTimeout(() => {
+      if (!voiceModeRef.current) return;
+      if (isTyping) return;
+      if (recognitionRef.current) return;
+      if (micSessionIdRef.current !== mySessionId) return;
+      startMic("conversation");
+    }, waitMs);
+  }
+};
 
-      const rec = new SR();
-      recognitionRef.current = rec;
 
-      rec.continuous = false;
-      rec.interimResults = true;
-      rec.lang = "es-ES";
 
-      rec.onstart = () => {
-        setIsListening(true);
-      };
+    rec.onresult = (event: any) => {
+  if (micSessionIdRef.current !== mySessionId) return;
 
-      rec.onerror = (_e: any) => {
-        setIsListening(false);
-        setMicMsg("No se pudo usar el micrófono. Revisa permisos del navegador.");
-        setTimeout(() => setMicMsg(null), 2600);
-      };
+  const results = event?.results ?? [];
+  const startIndex = typeof event?.resultIndex === "number" ? event.resultIndex : 0;
 
-      rec.onend = () => {
-        setIsListening(false);
-      };
+  // Vamos guardando finals por índice (si el mismo índice cambia, se reemplaza)
+  const finalMap = micFinalByIndexRef.current || {};
+  let interimText = "";
 
-      rec.onresult = (event: any) => {
-        let finalText = "";
-        let interim = "";
+  for (let i = startIndex; i < results.length; i++) {
+    const res = results[i];
+    const txt = (res?.[0]?.transcript ?? "").trim();
+    if (!txt) continue;
 
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const res = event.results[i];
-          const txt = res?.[0]?.transcript ?? "";
-          if (res.isFinal) finalText += txt;
-          else interim += txt;
-        }
-
-        const combined = (finalText || interim || "").trim();
-        if (!combined) return;
-
-        setInput((prev) => {
-          const base = prev.trim();
-          if (!base) return combined;
-          return base + " " + combined;
-        });
-      };
-
-      rec.start();
-    } catch {
-      setIsListening(false);
-      setMicMsg("No se pudo iniciar el dictado. Revisa permisos del navegador.");
-      setTimeout(() => setMicMsg(null), 2600);
+    if (res.isFinal) {
+      finalMap[i] = txt; // ✅ reemplaza si Android lo re-emite/actualiza
+      if (i > micLastFinalIndexRef.current) micLastFinalIndexRef.current = i;
+    } else {
+      interimText += txt + " ";
     }
   }
+
+  micFinalByIndexRef.current = finalMap;
+
+  // Reconstruimos el final en orden (0..lastFinalIndex)
+  let finalText = "";
+  const lastIdx = micLastFinalIndexRef.current;
+
+  if (lastIdx >= 0) {
+    for (let i = 0; i <= lastIdx; i++) {
+      const piece = finalMap[i];
+      if (piece && piece.trim()) finalText += piece.trim() + " ";
+    }
+  }
+
+  micFinalRef.current = finalText;
+  micInterimRef.current = interimText;
+
+  if ((interimText && interimText.trim()) || (finalText && finalText.trim())) {
+    micHadSpeechRef.current = true;
+    armSilence();
+  }
+
+  const raw = micBaseRef.current + finalText + interimText;
+  const cleaned = cleanRepeatedWords(raw.replace(/\s+/g, " ").trim());
+
+  // ✅ Dictado: actualizar input en vivo
+  if (micPurposeRef.current === "dictation") {
+    setInput(cleaned);
+  }
+
+  // Si quieres ver en conversación mientras hablas:
+  // if (micPurposeRef.current === "conversation") setInput(cleaned);
+};
+
+
+
+    rec.start();
+  } catch {
+    setIsListening(false);
+    setMicMsg("No se pudo iniciar el micrófono. Revisa permisos del navegador.");
+    setTimeout(() => setMicMsg(null), 2600);
+    stopMic();
+  }
+}
+
+// ✅ Dictado = toggle (enciende/apaga) pero solo para escribir
+function toggleMic() {
+  if (isListening) {
+    stopMic();
+    return;
+  }
+  startMic("dictation");
+}
+
+
+
+
 
   // ===== WHITEBOARD =====
   const [boardOpen, setBoardOpen] = useState(false);
@@ -1219,7 +1998,7 @@ useEffect(() => {
 
   const [boardTool, setBoardTool] = useState<"pen" | "eraser">("pen");
   const BOARD_BG = "#0b0f0d"; // negro pizarra
-const [boardColor, setBoardColor] = useState<string>("#f8fafc"); // blanco tiza
+  const [boardColor, setBoardColor] = useState<string>("#f8fafc"); // blanco tiza
 
   const [boardSize, setBoardSize] = useState<number>(6);
   const [boardMsg, setBoardMsg] = useState<string | null>(null);
@@ -1236,21 +2015,20 @@ const [boardColor, setBoardColor] = useState<string>("#f8fafc"); // blanco tiza
   }
 
   function resetCanvasWhite() {
-  const c = canvasRef.current;
-  const ctx = getCtx();
-  if (!c || !ctx) return;
+    const c = canvasRef.current;
+    const ctx = getCtx();
+    if (!c || !ctx) return;
 
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.clearRect(0, 0, c.width, c.height);
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, c.width, c.height);
 
-  // ✅ fondo negro pizarra
-  ctx.fillStyle = BOARD_BG;
-  ctx.fillRect(0, 0, c.width, c.height);
+    // ✅ fondo negro pizarra
+    ctx.fillStyle = BOARD_BG;
+    ctx.fillRect(0, 0, c.width, c.height);
 
-  ctx.restore();
-}
-
+    ctx.restore();
+  }
 
   function pushHistory() {
     const c = canvasRef.current;
@@ -1341,10 +2119,10 @@ const [boardColor, setBoardColor] = useState<string>("#f8fafc"); // blanco tiza
       if (tctx) {
         tctx.putImageData(prev, 0, 0);
         ctx2.save();
-ctx2.fillStyle = BOARD_BG; // ✅ negro pizarra
-ctx2.fillRect(0, 0, nextW, nextH);
-ctx2.drawImage(tmp, 0, 0, nextW, nextH);
-ctx2.restore();
+        ctx2.fillStyle = BOARD_BG; // ✅ negro pizarra
+        ctx2.fillRect(0, 0, nextW, nextH);
+        ctx2.drawImage(tmp, 0, 0, nextW, nextH);
+        ctx2.restore();
       }
     } catch {
       resetCanvasWhite();
@@ -1355,55 +2133,68 @@ ctx2.restore();
   }
 
   const openBoard = useCallback(() => {
-  setBoardMsg(null);
-  setBoardOpen(true);
-}, []);
-  function makeMdComponents(
+    setBoardMsg(null);
+    setBoardOpen(true);
+  }, []);
+
+    function makeMdComponents(
   boardImageB64?: string | null,
-  boardImagePlacement?: { x: number; y: number; w: number; h: number } | null
-): Components {
+  boardImagePlacement?: { x: number; y: number; w: number; h: number } | null,
+  pizarraValue?: string | null
+) {
   return {
+    // ✅ Bloques de código
     code({ inline, className, children, ...props }: any) {
       const isInline = !!inline;
 
       const cn = typeof className === "string" ? className : "";
-      const m = cn.match(/language-([a-zA-Z0-9_-]+)/);
-      const lang = (m?.[1] || "").toLowerCase();
+      const match = cn.match(/language-([a-zA-Z0-9_-]+)/);
+      const lang = (match?.[1] || "").toLowerCase();
 
       const content = Array.isArray(children) ? children.join("") : String(children ?? "");
       const clean = content.replace(/\n$/, "");
 
-      // ✅ si el tutor devuelve ```pizarra o ```whiteboard → renderiza la pizarra bonita
+      // ✅ PIZARRA: si viene ```pizarra``` o ```whiteboard``` => texto "cuaderno", NO código
       if (!isInline && (lang === "pizarra" || lang === "whiteboard")) {
+        const boardValue = pizarraValue && String(pizarraValue).trim() ? String(pizarraValue) : clean;
+
         return (
-          <ChalkboardTutorBoard
-            value={clean}
-            boardImageB64={boardImageB64 ?? null}
-            boardImagePlacement={boardImagePlacement ?? null}
-          />
+  <div className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-zinc-900 font-sans">
+    {boardValue}
+  </div>
+);
+
+      }
+
+      // ✅ inline code: lo dejamos, pero con Poppins (no monospace)
+      if (isInline) {
+        return (
+          <code
+            className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]"
+            style={{ fontFamily: "var(--font-poppins), ui-sans-serif, system-ui" }}
+          >
+            {clean}
+          </code>
         );
       }
 
-      // bloque normal (code block)
-      if (!isInline) {
-        return (
-          <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
-            <code className="text-[12.5px]" {...props}>
-              {clean}
-            </code>
-          </pre>
-        );
-      }
-
-      // inline code
+      // ✅ code block normal: SOLO para modo chat real (esto sí puede ser monospace)
       return (
-        <code className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]">
-          {clean}
-        </code>
+        <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
+          <code className="text-[12.5px]" {...props}>
+            {clean}
+          </code>
+        </pre>
       );
     },
-  };
+
+    // ✅ Por si el Markdown mete <pre> directo (dependiendo del parser)
+    pre({ children }: any) {
+      return <>{children}</>;
+    },
+  } as any;
 }
+
 
 
 
@@ -1447,55 +2238,55 @@ ctx2.restore();
   }
 
   function drawLine(a: { x: number; y: number }, b: { x: number; y: number }, pressure?: number) {
-  const ctx = getCtx();
-  if (!ctx) return;
+    const ctx = getCtx();
+    if (!ctx) return;
 
-  const p = typeof pressure === "number" ? Math.max(0.2, Math.min(1, pressure)) : 1;
+    const p = typeof pressure === "number" ? Math.max(0.2, Math.min(1, pressure)) : 1;
 
-  // ✅ tamaño más “chalk”
-  const base = boardTool === "eraser" ? Math.max(14, boardSize * 2.2) : Math.max(3, boardSize);
-  const size = base * p;
+    // ✅ tamaño más “chalk”
+    const base = boardTool === "eraser" ? Math.max(14, boardSize * 2.2) : Math.max(3, boardSize);
+    const size = base * p;
 
-  ctx.save();
+    ctx.save();
 
-  // ✅ en pizarra negra: la goma pinta negro (NO destination-out)
-  ctx.globalCompositeOperation = "source-over";
-  ctx.strokeStyle = boardTool === "eraser" ? BOARD_BG : boardColor;
-  ctx.lineWidth = size;
+    // ✅ en pizarra negra: la goma pinta negro (NO destination-out)
+    ctx.globalCompositeOperation = "source-over";
+    ctx.strokeStyle = boardTool === "eraser" ? BOARD_BG : boardColor;
+    ctx.lineWidth = size;
 
-  // ✅ efecto tiza (ligero glow + textura)
-  if (boardTool !== "eraser") {
-    ctx.globalAlpha = 0.92;
-    ctx.shadowColor = "rgba(255,255,255,0.35)";
-    ctx.shadowBlur = 1.6;
-  } else {
-    ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
-  }
-
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-
-  ctx.beginPath();
-  ctx.moveTo(a.x, a.y);
-  ctx.lineTo(b.x, b.y);
-  ctx.stroke();
-
-  // ✅ “polvo de tiza” sutil (micro puntos)
-  if (boardTool !== "eraser") {
-    const dust = Math.max(1, Math.floor(size / 5));
-    ctx.shadowBlur = 0;
-    ctx.globalAlpha = 0.10;
-    ctx.fillStyle = boardColor;
-    for (let i = 0; i < dust; i++) {
-      const rx = b.x + (Math.random() - 0.5) * (size * 1.2);
-      const ry = b.y + (Math.random() - 0.5) * (size * 1.2);
-      ctx.fillRect(rx, ry, 1, 1);
+    // ✅ efecto tiza (ligero glow + textura)
+    if (boardTool !== "eraser") {
+      ctx.globalAlpha = 0.92;
+      ctx.shadowColor = "rgba(255,255,255,0.35)";
+      ctx.shadowBlur = 1.6;
+    } else {
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
     }
-  }
 
-  ctx.restore();
-}
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+
+    // ✅ “polvo de tiza” sutil (micro puntos)
+    if (boardTool !== "eraser") {
+      const dust = Math.max(1, Math.floor(size / 5));
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 0.10;
+      ctx.fillStyle = boardColor;
+      for (let i = 0; i < dust; i++) {
+        const rx = b.x + (Math.random() - 0.5) * (size * 1.2);
+        const ry = b.y + (Math.random() - 0.5) * (size * 1.2);
+        ctx.fillRect(rx, ry, 1, 1);
+      }
+    }
+
+    ctx.restore();
+  }
 
   function onCanvasPointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
     const c = canvasRef.current;
@@ -1551,24 +2342,35 @@ ctx2.restore();
     }
   }
 
-  // VisualViewport
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const vv = window.visualViewport;
-    if (!vv) return;
+  // VisualViewport (altura visible + inset inferior cuando aparece teclado)
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  const vv = window.visualViewport;
+  if (!vv) return;
 
-    const setVvh = () => {
-      document.documentElement.style.setProperty("--vvh", `${vv.height}px`);
-    };
+  const setVars = () => {
+    // altura visible real
+    document.documentElement.style.setProperty("--vvh", `${vv.height}px`);
 
-    setVvh();
-    vv.addEventListener("resize", setVvh);
-    vv.addEventListener("scroll", setVvh);
-    return () => {
-      vv.removeEventListener("resize", setVvh);
-      vv.removeEventListener("scroll", setVvh);
-    };
-  }, []);
+    // cuánto “tapa” el teclado (inset inferior)
+    const bottomInset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    document.documentElement.style.setProperty("--vvb", `${bottomInset}px`);
+  };
+
+  setVars();
+  vv.addEventListener("resize", setVars);
+  vv.addEventListener("scroll", setVars);
+
+  window.addEventListener("resize", setVars);
+  window.addEventListener("orientationchange", setVars);
+
+  return () => {
+    vv.removeEventListener("resize", setVars);
+    vv.removeEventListener("scroll", setVars);
+    window.removeEventListener("resize", setVars);
+    window.removeEventListener("orientationchange", setVars);
+  };
+}, []);
 
   // Resize observer del input bar
   useEffect(() => {
@@ -1591,8 +2393,9 @@ ctx2.restore();
   }, [threads.length]);
 
   useEffect(() => {
-  activeThreadIdRef.current = activeThreadId;
-}, [activeThreadId]);
+    activeThreadIdRef.current = activeThreadId;
+  }, [activeThreadId]);
+
   const activeThread = useMemo(() => {
     return threads.find((t) => t.id === activeThreadId) ?? threads[0];
   }, [threads, activeThreadId]);
@@ -1612,6 +2415,41 @@ ctx2.restore();
   }, [isTyping, input, imagePreview, isBlockedByPaywall]);
 
   const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
+const quickPrompts = useMemo(
+  () => [
+    { label: "Hacer deberes", mode: "tutor" as ThreadMode, text: "Tengo este ejercicio. Explícamelo paso a paso como profe:" },
+    { label: "Analizar web", mode: "chat" as ThreadMode, text: "¿Esta web/enlace es fiable? Te lo paso:" },
+
+    { label: "Estudiar", mode: "tutor" as ThreadMode, text: "Quiero estudiar esto. Explícamelo paso a paso:" },
+    { label: "Revisar contrato", mode: "chat" as ThreadMode, text: "¿Me ayudas a revisar este contrato/cláusula? Te lo pego:" },
+
+    { label: "Identificar posible estafa", mode: "chat" as ThreadMode, text: "Me han enviado este mensaje y no sé si es estafa. Te lo pego:" },
+    { label: "Resumir audio", mode: "chat" as ThreadMode, text: "Voy a pegar la transcripción de un audio o nota de voz. Resúmelo claro y dime lo importante:" },
+  ],
+  []
+);
+
+
+
+// ✅ FIX: en pantalla inicial (sin mensajes del usuario) evitamos el auto-scroll “raro”
+useEffect(() => {
+  const el = scrollRef.current;
+  if (!el) return;
+
+  if (!hasUserMessage) {
+    shouldStickToBottomRef.current = false;
+    // forzamos arriba sin animación
+    requestAnimationFrame(() => {
+      el.scrollTo({ top: 0, behavior: "auto" });
+    });
+  }
+}, [hasUserMessage]);
+
+function applyQuickPrompt(p: { label: string; mode: ThreadMode; text: string }) {
+  // ✅ Envío inmediato: al mandar el primer mensaje, desaparece la pantalla inicial automáticamente
+  sendQuickMessage(p.text, p.mode);
+}
+
 
   // textarea autoresize
   useEffect(() => {
@@ -1792,7 +2630,7 @@ ctx2.restore();
     return false;
   }
 
-  async function sendMessage() {
+  async function sendQuickMessage(textPreset: string, modePreset: ThreadMode) {
     if (authLoading) return;
 
     if (enforceLimitIfNeeded()) return;
@@ -1802,52 +2640,52 @@ ctx2.restore();
       return;
     }
 
-    if (!canSend) return;
+    if (isTyping) return;
     if (!activeThread) return;
+
+        // ✅ SEND LOCK (anti doble click / doble onend)
+    if (sendGuardRef.current.busy) return;
+    sendGuardRef.current.busy = true;
+
     const targetThreadId = activeThread.id;
-activeThreadIdRef.current = targetThreadId;
+    activeThreadIdRef.current = targetThreadId;
 
-    const userText = input.trim();
-const imageBase64 = imagePreview;
+    const userText = (textPreset || "").trim();
+    if (!userText) {
+      sendGuardRef.current.busy = false;
+      return;
+    }
 
-setUiError(null);
-
-// ===== Tutor auto-activación (solo si está en chat y la intención es fuerte) =====
-const threadModeNow: ThreadMode = activeThread.mode ?? "chat";
-let nextMode: ThreadMode = threadModeNow;
-
-let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
-
-if (threadModeNow === "chat" && looksLikeTutorIntent(userText)) {
-  nextMode = "tutor";
-  const inferred = inferTutorLevel(userText);
-  nextTutorLevel = inferred === "unknown" ? (nextTutorLevel || "adult") : inferred;
-
-  setThreads((prev) =>
-    prev.map((t) =>
-      t.id === targetThreadId
-        ? {
-            ...t,
-            updatedAt: Date.now(),
-            mode: "tutor",
-            tutorProfile: { level: nextTutorLevel },
-          }
-        : t
-    )
-  );
-
-  setToastMsg("✅ He activado Modo Tutor para esta conversación.");
-  setTimeout(() => setToastMsg(null), 2200);
-}
+    // ✅ ANTI-DUPLICADO por texto en el mismo thread
+    if (shouldBlockDuplicateSend(targetThreadId, userText)) {
+      sendGuardRef.current.busy = false;
+      return;
+    }
 
 
     setUiError(null);
+    // ✅ premium turnos: si voiceMode está ON, cerramos micro al enviar (turno de Vonu)
+if (voiceMode) stopMic();
+
+
+    // ✅ Guardamos modo en el thread (así el backend recibe el modo correcto)
+    setThreads((prev) =>
+      prev.map((t) =>
+        t.id === targetThreadId
+          ? {
+              ...t,
+              updatedAt: Date.now(),
+              mode: modePreset,
+              tutorProfile: t.tutorProfile ?? { level: "adult" },
+            }
+          : t
+      )
+    );
 
     const userMsg: Message = {
       id: crypto.randomUUID(),
       role: "user",
-      text: userText || (imageBase64 ? "He adjuntado una imagen." : undefined),
-      image: imageBase64 || undefined,
+      text: userText,
     };
 
     const assistantId = crypto.randomUUID();
@@ -1856,33 +2694,33 @@ if (threadModeNow === "chat" && looksLikeTutorIntent(userText)) {
       role: "assistant",
       text: "",
       streaming: true,
+      pizarra: null,
+      boardImageB64: null,
+      boardImagePlacement: null,
     };
 
     shouldStickToBottomRef.current = true;
 
     setThreads((prev) =>
-  prev.map((t) => {
-    if (t.id !== targetThreadId) return t;
+      prev.map((t) => {
+        if (t.id !== targetThreadId) return t;
+        return {
+          ...t,
+          updatedAt: Date.now(),
+          messages: [...t.messages, userMsg, assistantMsg],
+        };
+      })
+    );
 
-    return {
-      ...t,
-      updatedAt: Date.now(),
-      // ✅ guardamos los mensajes en el thread
-      messages: [...t.messages, userMsg, assistantMsg],
-    };
-  })
-);
-
-
-
-    setInput("");
+    setInput(""); // por si había algo escrito
     setImagePreview(null);
     setIsTyping(true);
 
     try {
-      await sleep(220);
+      await sleep(200);
 
-      const threadNow = threads.find((x) => x.id === targetThreadId) ?? activeThread;
+      // ⚠️ Importante: usamos el estado "prev" más fiable: leemos del localStorage state actual
+      const threadNow = (threads.find((x) => x.id === targetThreadId) ?? activeThread) as ChatThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
         .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
@@ -1895,14 +2733,13 @@ if (threadModeNow === "chat" && looksLikeTutorIntent(userText)) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
-       body: JSON.stringify({
-  messages: convoForApi,
-  userText,
-  imageBase64,
-  mode: nextMode,
-  tutorLevel: nextTutorLevel,
-}),
-
+        body: JSON.stringify({
+          messages: convoForApi,
+          userText,
+          imageBase64: null,
+          mode: modePreset,
+          tutorLevel: activeThread?.tutorProfile?.level ?? "adult",
+        }),
       });
 
       if (!res.ok) {
@@ -1910,100 +2747,117 @@ if (threadModeNow === "chat" && looksLikeTutorIntent(userText)) {
         throw new Error(`HTTP ${res.status} ${res.statusText} ${txt}`);
       }
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({} as any));
 
-const fullText =
-  typeof data?.text === "string" && data.text.trim()
-    ? data.text
-    : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
+      const fullText =
+        typeof data?.text === "string" && data.text.trim()
+          ? data.text
+          : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
 
-// ✅ NUEVO: imagen de pizarra (si viene)
-const boardImageB64 =
-  typeof data?.boardImageB64 === "string" && data.boardImageB64
-    ? data.boardImageB64
-    : null;
+      const boardImageB64 = typeof data?.boardImageB64 === "string" && data.boardImageB64 ? data.boardImageB64 : null;
 
-const boardImagePlacement =
-  data?.boardImagePlacement &&
-  typeof data.boardImagePlacement?.x === "number" &&
-  typeof data.boardImagePlacement?.y === "number" &&
-  typeof data.boardImagePlacement?.w === "number" &&
-  typeof data.boardImagePlacement?.h === "number"
-    ? (data.boardImagePlacement as { x: number; y: number; w: number; h: number })
-    : null;
+      const boardImagePlacement =
+        data?.boardImagePlacement &&
+        typeof data.boardImagePlacement?.x === "number" &&
+        typeof data.boardImagePlacement?.y === "number" &&
+        typeof data.boardImagePlacement?.w === "number" &&
+        typeof data.boardImagePlacement?.h === "number"
+          ? (data.boardImagePlacement as { x: number; y: number; w: number; h: number })
+          : null;
 
-
+      const pizarraJson = typeof data?.pizarra === "string" && data.pizarra.trim() ? data.pizarra : null;
 
       await sleep(90);
 
-      const isTutor = nextMode === "tutor";
+      const isTutor = modePreset === "tutor";
 
-if (isTutor) {
-  // ✅ Tutor: menos streaming, más estable (mostramos dots y luego el bloque completo)
-  await sleep(220);
+      if (isTutor) {
+        await sleep(220);
 
-  setThreads((prev) =>
-    prev.map((t) => {
-      if (t.id !== targetThreadId) return t;
-      return {
-        ...t,
-        updatedAt: Date.now(),
-        messages: t.messages.map((m) =>
-  m.id === assistantId
-    ? { ...m, text: fullText, streaming: false, boardImageB64, boardImagePlacement }
-    : m
-),
+        setThreads((prev) =>
+          prev.map((t) => {
+            if (t.id !== targetThreadId) return t;
+            return {
+              ...t,
+              updatedAt: Date.now(),
+              messages: t.messages.map((m) =>
+                m.id === assistantId
+                  ? {
+                      ...m,
+                      text: fullText,
+                      streaming: false,
+                      pizarra: pizarraJson,
+                      boardImageB64,
+                      boardImagePlacement,
+                    }
+                  : m
+              ),
+            };
+          })
+        );
 
-      };
-    })
-  );
+        setIsTyping(false);
+        sendGuardRef.current.busy = false;
 
-  setIsTyping(false);
-  if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
-} else {
-  // ✅ Chat normal: streaming letra a letra como ahora
-  let i = 0;
-  const speedMs = fullText.length > 900 ? 7 : 11;
+// ✅ habla la respuesta final (solo si TTS activado)
+speakTTS(fullText);
 
-  const interval = setInterval(() => {
-    i++;
-    const partial = fullText.slice(0, i);
+if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
-    setThreads((prev) =>
-      prev.map((t) => {
-        if (t.id !== targetThreadId) return t;
-        return {
-          ...t,
-          updatedAt: Date.now(),
-          messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
-        };
-      })
-    );
+      } else {
+        let i = 0;
+        const speedMs = fullText.length > 900 ? 7 : 11;
 
-    if (i >= fullText.length) {
-      clearInterval(interval);
+        const interval = setInterval(() => {
+          i++;
+          const partial = fullText.slice(0, i);
 
-      setThreads((prev) =>
-        prev.map((t) => {
-          if (t.id !== targetThreadId) return t;
-          return {
-            ...t,
-            updatedAt: Date.now(),
-            messages: t.messages.map((m) =>
-  m.id === assistantId
-    ? { ...m, streaming: false, boardImageB64, boardImagePlacement }
-    : m
-),
-          };
-        })
-      );
+          setThreads((prev) =>
+            prev.map((t) => {
+              if (t.id !== targetThreadId) return t;
+              return {
+                ...t,
+                updatedAt: Date.now(),
+                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
+              };
+            })
+          );
 
-      setIsTyping(false);
-      if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
-    }
-  }, speedMs);
-}
+          if (i >= fullText.length) {
+            clearInterval(interval);
 
+            setThreads((prev) =>
+              prev.map((t) => {
+                if (t.id !== targetThreadId) return t;
+                return {
+                  ...t,
+                  updatedAt: Date.now(),
+                  messages: t.messages.map((m) =>
+                    m.id === assistantId
+                      ? {
+                          ...m,
+                          streaming: false,
+                          pizarra: pizarraJson,
+                          boardImageB64,
+                          boardImagePlacement,
+                        }
+                      : m
+                  ),
+                };
+              })
+            );
+
+            setIsTyping(false);
+            sendGuardRef.current.busy = false;
+
+// ✅ habla la respuesta final también en CHAT normal
+speakTTS(fullText);
+
+if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+
+          }
+        }, speedMs);
+      }
     } catch (err: any) {
       const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
 
@@ -2028,11 +2882,269 @@ if (isTutor) {
 
       setUiError(msg);
       setIsTyping(false);
+      sendGuardRef.current.busy = false;
       if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
     }
   }
 
-  const chatBottomPad = inputBarH;
+  async function sendMessage() {
+    if (authLoading) return;
+
+    if (enforceLimitIfNeeded()) return;
+
+    if (isBlockedByPaywall) {
+      openPlansModal();
+      return;
+    }
+
+    if (!canSend) return;
+if (!activeThread) return;
+
+// ✅ SEND LOCK (anti doble click / Enter repetido / carreras)
+if (sendGuardRef.current.busy) return;
+sendGuardRef.current.busy = true;
+
+const targetThreadId = activeThread.id;
+activeThreadIdRef.current = targetThreadId;
+
+// ✅ ANTI-DUPLICADO por texto en el mismo thread
+const previewText = (input || "").trim();
+if (previewText && shouldBlockDuplicateSend(targetThreadId, previewText)) {
+  sendGuardRef.current.busy = false;
+  return;
+}
+
+
+    const userText = input.trim();
+    const imageBase64 = imagePreview;
+
+    setUiError(null);
+    // ✅ premium turnos: si voiceMode está ON, cerramos micro al enviar (turno de Vonu)
+if (voiceMode) stopMic();
+
+
+// ===== Tutor auto-activación (DESACTIVADA) =====
+const threadModeNow: ThreadMode = activeThread.mode ?? "chat";
+let nextMode: ThreadMode = threadModeNow;
+
+let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
+
+// ✅ Ya NO forzamos modo tutor por intención.
+// El modo lo decide el usuario (UI) y se guarda en el thread.
+// nextMode y nextTutorLevel quedan como están.
+
+
+
+    const userMsg: Message = {
+      id: crypto.randomUUID(),
+      role: "user",
+      text: userText || (imageBase64 ? "He adjuntado una imagen." : undefined),
+      image: imageBase64 || undefined,
+    };
+
+    const assistantId = crypto.randomUUID();
+    const assistantMsg: Message = {
+      id: assistantId,
+      role: "assistant",
+      text: "",
+      streaming: true,
+      pizarra: null,
+      boardImageB64: null,
+      boardImagePlacement: null,
+    };
+
+    shouldStickToBottomRef.current = true;
+
+    setThreads((prev) =>
+      prev.map((t) => {
+        if (t.id !== targetThreadId) return t;
+
+        return {
+          ...t,
+          updatedAt: Date.now(),
+          messages: [...t.messages, userMsg, assistantMsg],
+        };
+      })
+    );
+
+    setInput("");
+    setImagePreview(null);
+    setIsTyping(true);
+
+    try {
+      await sleep(220);
+
+      const threadNow = threads.find((x) => x.id === targetThreadId) ?? activeThread;
+
+      const convoForApi = [...(threadNow?.messages ?? []), userMsg]
+        .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
+        .map((m) => ({
+          role: m.role,
+          content: m.text ?? "",
+        }));
+
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify({
+          messages: convoForApi,
+          userText,
+          imageBase64,
+          mode: nextMode,
+          tutorLevel: nextTutorLevel,
+        }),
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`HTTP ${res.status} ${res.statusText} ${txt}`);
+      }
+
+      const data = await res.json().catch(() => ({} as any));
+
+      const fullText =
+        typeof data?.text === "string" && data.text.trim()
+          ? data.text
+          : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
+
+      // ✅ NUEVO: imagen de pizarra (si viene)
+      const boardImageB64 = typeof data?.boardImageB64 === "string" && data.boardImageB64 ? data.boardImageB64 : null;
+
+      const boardImagePlacement =
+        data?.boardImagePlacement &&
+        typeof data.boardImagePlacement?.x === "number" &&
+        typeof data.boardImagePlacement?.y === "number" &&
+        typeof data.boardImagePlacement?.w === "number" &&
+        typeof data.boardImagePlacement?.h === "number"
+          ? (data.boardImagePlacement as { x: number; y: number; w: number; h: number })
+          : null;
+
+      // ✅ NUEVO: JSON de pizarra (si viene)
+      const pizarraJson = typeof data?.pizarra === "string" && data.pizarra.trim() ? data.pizarra : null;
+
+      await sleep(90);
+
+      const isTutor = nextMode === "tutor";
+
+      if (isTutor) {
+        // ✅ Tutor: estable (no streaming letra a letra). Mostramos dots y luego el bloque completo.
+        await sleep(220);
+
+        setThreads((prev) =>
+          prev.map((t) => {
+            if (t.id !== targetThreadId) return t;
+            return {
+              ...t,
+              updatedAt: Date.now(),
+              messages: t.messages.map((m) =>
+                m.id === assistantId
+                  ? {
+                      ...m,
+                      text: fullText,
+                      streaming: false,
+                      pizarra: pizarraJson,
+                      boardImageB64,
+                      boardImagePlacement,
+                    }
+                  : m
+              ),
+            };
+          })
+        );
+
+        setIsTyping(false);
+        sendGuardRef.current.busy = false;
+        speakTTS(fullText);
+        if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+      } else {
+        // ✅ Chat normal: streaming letra a letra
+        let i = 0;
+        const speedMs = fullText.length > 900 ? 7 : 11;
+
+        const interval = setInterval(() => {
+          i++;
+          const partial = fullText.slice(0, i);
+
+          setThreads((prev) =>
+            prev.map((t) => {
+              if (t.id !== targetThreadId) return t;
+              return {
+                ...t,
+                updatedAt: Date.now(),
+                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
+              };
+            })
+          );
+
+          if (i >= fullText.length) {
+            clearInterval(interval);
+
+            setThreads((prev) =>
+              prev.map((t) => {
+                if (t.id !== targetThreadId) return t;
+                return {
+                  ...t,
+                  updatedAt: Date.now(),
+                  messages: t.messages.map((m) =>
+                    m.id === assistantId
+                      ? {
+                          ...m,
+                          streaming: false,
+                          pizarra: pizarraJson,
+                          boardImageB64,
+                          boardImagePlacement,
+                        }
+                      : m
+                  ),
+                };
+              })
+            );
+
+            setIsTyping(false);
+            sendGuardRef.current.busy = false;
+
+// ✅ HABLAR respuesta (y esto re-activa micro si voiceMode sigue ON)
+speakTTS(fullText);
+
+if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+
+          }
+        }, speedMs);
+      }
+    } catch (err: any) {
+      const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
+
+      setThreads((prev) =>
+        prev.map((t) => {
+          if (t.id !== targetThreadId) return t;
+          return {
+            ...t,
+            updatedAt: Date.now(),
+            messages: t.messages.map((m) =>
+              m.id === assistantId
+                ? {
+                    ...m,
+                    streaming: false,
+                    text: "⚠️ No he podido conectar con la IA.\n\n**Detalles técnicos:**\n\n```\n" + msg + "\n```",
+                  }
+                : m
+            ),
+          };
+        })
+      );
+
+      setUiError(msg);
+      setIsTyping(false);
+      sendGuardRef.current.busy = false;
+      if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+    }
+  }
+
+  // ✅ padding dinámico según la altura REAL del input bar (evita que se “corte” en PC)
+const chatBottomPad = hasUserMessage ? (inputBarH + 22) : 18;
+
+
 
   const TOP_OFFSET_PX = 12;
   const TOP_BUBBLE_H = 44;
@@ -2050,6 +3162,7 @@ if (isTutor) {
 
   // ✅ UI estado botones top-right (plan + cuenta)
   const topPlanLabel = authLoading ? "…" : isPro ? PLUS_NODE : isLoggedIn ? "Gratis" : PLUS_NODE;
+
   const userInitial = (() => {
     const base = (authUserName ?? authUserEmail ?? "").trim();
     if (!base) return "U";
@@ -2086,9 +3199,82 @@ if (isTutor) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paywallOpen, payLoading, boardOpen, renameOpen, renameValue, activeThreadId]);
 
+  function Frac({ n, d }: { n: string; d: string }) {
   return (
+    <span className="inline-flex flex-col items-center align-middle mx-1">
+      <span className="text-[0.85em] leading-none">{n}</span>
+      <span className="h-[1px] w-[1.6em] bg-current opacity-80 my-[2px]" />
+      <span className="text-[0.85em] leading-none">{d}</span>
+    </span>
+  );
+}
+
+
+  // ✅ PIQUITO WhatsApp PERFECTO
+// - Triángulo rectángulo
+// - Lado largo continúa el borde superior
+// - SOLO la punta exterior suavizada
+function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) {
+  const isRight = side === "right";
+
+  return (
+    <svg
+      aria-hidden="true"
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      className={[
+        "absolute pointer-events-none",
+        "top-0",
+        isRight ? "right-[-13px]" : "left-[-13px]",
+        "z-0",
+      ].join(" ")}
+    >
+      {isRight ? (
+        // 👉 derecha (usuario) — redondeamos la punta EXTERIOR (14,0)
+        <path
+          d="
+            M0 0
+            L12.0 0
+            Q14 0 14 2.0
+            L0 14
+            Z
+          "
+          fill={color}
+        />
+      ) : (
+        // 👉 izquierda (Vonu) — redondeamos la punta EXTERIOR (0,0)
+        <path
+          d="
+            M14 0
+            L2.0 0
+            Q0 0 0 2.0
+            L14 14
+            Z
+          "
+          fill={color}
+        />
+      )}
+    </svg>
+  );
+}
+
+
+
+return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
       <style jsx global>{`
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
+
   @keyframes chalkIn {
     from {
       opacity: 0;
@@ -2110,7 +3296,7 @@ if (isTutor) {
         </div>
       )}
 
-      {/* ===== RENAME MODAL (FIX: ahora sí funciona) ===== */}
+      {/* ===== RENAME MODAL ===== */}
       {renameOpen && (
         <div className="fixed inset-0 z-[85] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6" onClick={() => setRenameOpen(false)}>
           <div
@@ -2171,17 +3357,16 @@ if (isTutor) {
             <div className="mx-auto h-full w-full max-w-4xl px-3 md:px-6">
               <div className="pt-4 flex items-center justify-between">
                 <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-2 h-10 max-w-full">
-  <div className="hidden sm:block text-[11px] text-zinc-600">Grosor</div>
-  <input
-    type="range"
-    min={2}
-    max={18}
-    value={boardSize}
-    onChange={(e) => setBoardSize(parseInt(e.target.value || "6", 10))}
-    className="w-[86px] sm:w-[120px] md:w-[140px]"
-  />
-</div>
-
+                  <div className="hidden sm:block text-[11px] text-zinc-600">Grosor</div>
+                  <input
+                    type="range"
+                    min={2}
+                    max={18}
+                    value={boardSize}
+                    onChange={(e) => setBoardSize(parseInt(e.target.value || "6", 10))}
+                    className="w-[86px] sm:w-[120px] md:w-[140px]"
+                  />
+                </div>
 
                 <button
                   onClick={closeBoard}
@@ -2300,17 +3485,16 @@ if (isTutor) {
                   {/* Canvas */}
                   <div className="mt-2 flex-1 min-h-0">
                     <div
-  ref={canvasWrapRef}
-  className="h-full w-full rounded-[22px] border border-zinc-200 overflow-hidden"
-  style={{
-    backgroundColor: "#0b0f0d",
-    backgroundImage:
-      "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)",
-    backgroundSize: "26px 26px, 38px 38px",
-    backgroundPosition: "0 0, 13px 19px",
-  }}
->
-
+                      ref={canvasWrapRef}
+                      className="h-full w-full rounded-[22px] border border-zinc-200 overflow-hidden"
+                      style={{
+                        backgroundColor: "#0b0f0d",
+                        backgroundImage:
+                          "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)",
+                        backgroundSize: "26px 26px, 38px 38px",
+                        backgroundPosition: "0 0, 13px 19px",
+                      }}
+                    >
                       <canvas
                         ref={canvasRef}
                         className="h-full w-full"
@@ -2325,10 +3509,8 @@ if (isTutor) {
                   </div>
 
                   <div className="pt-2 pb-[calc(env(safe-area-inset-bottom)+6px)] flex items-center justify-between gap-3">
-                    {/* ✅ FIX: tip en negro */}
                     <div className="text-[11px] text-zinc-900">Tip: escribe grande en tablet (dedo o lápiz). Puedes enviar varias pizarras seguidas.</div>
 
-                    {/* Mobile: Enviar al chat abajo (y quitamos “Cerrar”) */}
                     <button
                       onClick={exportBoardToChat}
                       className="md:hidden inline-flex h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors shrink-0 items-center justify-center"
@@ -2345,7 +3527,7 @@ if (isTutor) {
         </div>
       )}
 
-      {/* ===== PAYWALL (FULLSCREEN TAKEOVER) ===== */}
+      {/* ===== PAYWALL ===== */}
       {paywallOpen && (
         <div className="fixed inset-0 z-[70]">
           <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-white to-white" onClick={closePaywall} aria-hidden="true" />
@@ -2355,7 +3537,6 @@ if (isTutor) {
           <div className="absolute top-[48%] -right-24 h-[280px] w-[280px] rounded-full bg-zinc-900/5 blur-3xl pointer-events-none" />
 
           <div className="relative h-full w-full" onClick={(e) => e.stopPropagation()}>
-            {/* ✅ SIN SCROLL: todo cabe */}
             <div className="mx-auto h-full w-full max-w-md px-3 pb-[env(safe-area-inset-bottom)] flex flex-col min-h-0">
               <div className="pt-2 flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
@@ -2391,12 +3572,10 @@ if (isTutor) {
 
               <div className="mt-2 flex-1 min-h-0 rounded-[26px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden">
                 <div className="h-full flex flex-col p-3">
-                  {/* ===== como la foto: Elige tu plan + 3 opciones ===== */}
                   <div className="rounded-[20px] border border-zinc-200 bg-white p-3">
                     <div className="text-[12.5px] font-semibold text-zinc-900">Elige tu plan</div>
 
                     <div className="mt-2 grid gap-2">
-                      {/* ANUAL */}
                       <button
                         onClick={() => setPlan("yearly")}
                         disabled={!!payLoading}
@@ -2406,7 +3585,6 @@ if (isTutor) {
                           plan === "yearly" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
                         ].join(" ")}
                       >
-                        {/* radio */}
                         <div className="pt-[2px]">
                           <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "yearly" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
                             {plan === "yearly" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
@@ -2429,7 +3607,6 @@ if (isTutor) {
                         </div>
                       </button>
 
-                      {/* MENSUAL */}
                       <button
                         onClick={() => setPlan("monthly")}
                         disabled={!!payLoading}
@@ -2439,7 +3616,6 @@ if (isTutor) {
                           plan === "monthly" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
                         ].join(" ")}
                       >
-                        {/* radio */}
                         <div className="pt-[2px]">
                           <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "monthly" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
                             {plan === "monthly" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
@@ -2459,7 +3635,6 @@ if (isTutor) {
                         </div>
                       </button>
 
-                      {/* SEGUIR GRATIS */}
                       <button
                         onClick={() => setPlan("free")}
                         disabled={!!payLoading}
@@ -2469,7 +3644,6 @@ if (isTutor) {
                           plan === "free" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
                         ].join(" ")}
                       >
-                        {/* radio */}
                         <div className="pt-[2px]">
                           <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "free" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
                             {plan === "free" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
@@ -2487,7 +3661,6 @@ if (isTutor) {
                     </div>
                   </div>
 
-                  {/* ===== Bloque GRATIS como la foto ===== */}
                   <div className="mt-2 rounded-[20px] border border-zinc-200 bg-white p-3">
                     <div className="text-[12.5px] font-semibold text-zinc-900">Gratis</div>
                     <div className="mt-2 grid gap-1.5">
@@ -2502,14 +3675,12 @@ if (isTutor) {
                     </div>
                   </div>
 
-                  {/* Mensaje error/pago (compacto) */}
                   {payMsg ? (
                     <div className="mt-2 rounded-[16px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">{payMsg}</div>
                   ) : (
                     <div className="mt-2 opacity-0 select-none text-[12px] px-3 py-2">placeholder</div>
                   )}
 
-                  {/* Footer fijo, sin scroll */}
                   <div className="mt-auto pt-1 pb-[calc(env(safe-area-inset-bottom)+8px)]">
                     <button
                       onClick={() => {
@@ -2518,13 +3689,9 @@ if (isTutor) {
                           closePaywall();
                           return;
                         }
-                        // anual: yearly / mensual: monthly
                         startCheckout(plan);
                       }}
-                      className={[
-                        "w-full h-11 rounded-full text-[14px] font-semibold transition-colors cursor-pointer disabled:opacity-50",
-                        "bg-black text-white hover:bg-zinc-900",
-                      ].join(" ")}
+                      className={["w-full h-11 rounded-full text-[14px] font-semibold transition-colors cursor-pointer disabled:opacity-50", "bg-black text-white hover:bg-zinc-900"].join(" ")}
                       disabled={!!payLoading}
                     >
                       {payLoading ? "Procesando…" : plan === "free" ? "Volver al chat" : "Continuar con el pago"}
@@ -2761,10 +3928,6 @@ if (isTutor) {
         </div>
       )}
 
-      {/* ===== TOP FADE ===== */}
-      <div className="fixed top-0 left-0 right-0 z-40 pointer-events-none">
-        <div className="h-[86px] bg-gradient-to-b from-white via-white/85 to-transparent" />
-      </div>
 
       {/* ===== TOP BUBBLES ===== */}
       <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
@@ -2790,7 +3953,6 @@ if (isTutor) {
           </div>
         </div>
 
-        {/* ✅ CAMBIO: renderizar SIEMPRE (si authLoading, quedan deshabilitados) */}
         <div className="pointer-events-auto flex items-center gap-2">
           <button
             onClick={handleOpenPlansCTA}
@@ -2863,68 +4025,16 @@ if (isTutor) {
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 mb-3">
-  <button
-    onClick={openRename}
-    className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer"
-  >
-    Renombrar
-  </button>
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <button onClick={openRename} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer">
+                Renombrar
+              </button>
 
-  <button
-    onClick={() => {
-      if (!activeThread) return;
+              <button onClick={deleteActiveThread} className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer">
+                Borrar
+              </button>
+            </div>
 
-      const current: ThreadMode = activeThread.mode ?? "chat";
-      const next: ThreadMode = current === "tutor" ? "chat" : "tutor";
-
-      setThreads((prev) =>
-        prev.map((t) => {
-          if (t.id !== activeThread.id) return t;
-
-          const nextLevel: TutorLevel =
-            t.tutorProfile?.level && t.tutorProfile.level !== "unknown"
-              ? t.tutorProfile.level
-              : "adult";
-
-          return {
-            ...t,
-            updatedAt: Date.now(),
-            mode: next,
-            tutorProfile: { level: nextLevel },
-          };
-        })
-      );
-
-      setToastMsg(
-        next === "tutor"
-          ? "✅ Modo Tutor activado para esta conversación."
-          : "Modo Tutor desactivado."
-      );
-      setTimeout(() => setToastMsg(null), 2200);
-      setMenuOpen(false);
-    }}
-    className={[
-      "text-xs px-3 py-3 rounded-2xl border cursor-pointer transition-colors",
-      activeThread?.mode === "tutor"
-        ? "bg-blue-600 text-white border-blue-700/10 hover:bg-blue-700"
-        : "bg-white border-zinc-200 hover:bg-zinc-50",
-    ].join(" ")}
-  >
-    {activeThread?.mode === "tutor" ? "Tutor ✓" : "Tutor"}
-  </button>
-
-  <button
-    onClick={deleteActiveThread}
-    className="text-xs px-3 py-3 rounded-2xl bg-white border border-zinc-200 hover:bg-zinc-50 text-red-600 cursor-pointer"
-  >
-    Borrar
-  </button>
-</div>
-
-
-
-            {/* LISTA (scroll) */}
             <div className="space-y-2 overflow-y-auto pr-1 flex-1">
               {sortedThreads.map((t) => {
                 const active = t.id === activeThreadId;
@@ -2934,7 +4044,9 @@ if (isTutor) {
                   <button
                     key={t.id}
                     onClick={() => activateThread(t.id)}
-                    className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"}`}
+                    className={`w-full text-left rounded-2xl px-3 py-3 border transition-colors cursor-pointer ${
+                      active ? "border-blue-600 bg-blue-50" : "border-zinc-200 bg-white hover:bg-zinc-50"
+                    }`}
                   >
                     <div className="text-sm font-medium text-zinc-900">{t.title}</div>
                     <div className="text-xs text-zinc-500 mt-1">{when}</div>
@@ -2943,7 +4055,6 @@ if (isTutor) {
               })}
             </div>
 
-            {/* ✅ Cuenta al FINAL (abajo) con plan */}
             {!authLoading && (
               <div className="mt-3 rounded-3xl border border-zinc-200 bg-white px-3 py-3">
                 <div className="text-xs text-zinc-500 mb-2">Cuenta</div>
@@ -2967,14 +4078,15 @@ if (isTutor) {
                       </div>
 
                       <button
-                        onClick={() => {
-                          handleOpenPlansCTA();
-                          setMenuOpen(false);
-                        }}
-                        className={["text-xs px-3 py-2 rounded-full transition-colors cursor-pointer", isPro ? "border border-zinc-200 hover:bg-zinc-50" : "bg-blue-600 text-white hover:bg-blue-700"].join(" ")}
-                      >
-                        {isPro ? "Ver" : "Mejorar"}
-                      </button>
+  onClick={() => {
+    handleOpenPlansCTA();
+    setMenuOpen(false);
+  }}
+  className="text-xs px-3 py-2 rounded-full border border-zinc-200 hover:bg-zinc-50 cursor-pointer shrink-0"
+>
+  {isPro ? "Ver" : "Mejorar"}
+</button>
+
                     </div>
                   </div>
                 ) : (
@@ -2991,85 +4103,185 @@ if (isTutor) {
       {/* MAIN */}
       <div className="flex-1 flex flex-col min-h-0">
         {uiError && (
-          <div className="mx-auto max-w-3xl px-6 mt-3 pt-4">
+          <div className="mx-auto max-w-6xl px-2 md:px-6" style={{ paddingTop: 78, paddingBottom: chatBottomPad }}>
             <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">Ha fallado la llamada a la IA. (Error: {uiError})</div>
           </div>
         )}
 
-        <div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0">
-          <div className="mx-auto max-w-3xl px-3 md:px-6" style={{ paddingTop: 92, paddingBottom: chatBottomPad }}>
-            <div className="flex flex-col gap-4 py-8 md:pt-6">
-  {activeThread?.mode === "tutor" ? (
-    <div className="self-start ml-2 -mt-2">
-      <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[12px] text-blue-800 font-semibold">
-        🎓 Modo Tutor
-        <span className="text-[11px] font-normal text-blue-700/80">
-          nivel: {activeThread?.tutorProfile?.level ?? "adult"}
-        </span>
+       {/* ========================= */}
+{/* ✅ CHAT / TUTOR RENDER     */}
+{/* ========================= */}
+<div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0 overscroll-contain">
+
+  <div
+  className="mx-auto max-w-3xl px-3 md:px-6"
+  style={{ paddingTop: 124, paddingBottom: hasUserMessage ? chatBottomPad : 18 }}
+>
+    <div className="flex flex-col gap-4 py-6 md:pt-6">
+      {/* Badge modo tutor */}
+      {activeThread?.mode === "tutor" ? (
+        <div className="self-start ml-2 -mt-2">
+          <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[12px] text-blue-800 font-semibold">
+            🎓 Modo Tutor
+            <span className="text-[11px] font-normal text-blue-700/80">
+              nivel: {activeThread?.tutorProfile?.level ?? "adult"}
+            </span>
+          </div>
+        </div>
+      ) : null}
+{!hasUserMessage ? (
+  <div className="px-1">
+    <div className="pt-8 md:pt-10 ml-2">
+  <div className="text-zinc-900 font-black tracking-tight leading-[0.92] text-[56px] md:text-[72px]">
+        ¿Qué
+        <br />
+        quieres
+        <br />
+        hacer?
       </div>
+
+      <div className="mt-8 flex flex-wrap gap-3">
+  {quickPrompts.map((p) => (
+    <button
+      key={p.label}
+      onClick={() => applyQuickPrompt(p)}
+      className={[
+        "inline-flex items-center justify-center",
+        "rounded-full border border-zinc-900/35 bg-white",
+        "px-5 py-2.5 text-[13px] font-semibold text-zinc-900",
+        "shadow-sm hover:bg-zinc-50 transition-colors",
+        "active:scale-[0.99]",
+        "whitespace-nowrap",
+      ].join(" ")}
+    >
+      {p.label === "Identificar posible estafa" ? "Posible estafa" : p.label}
+    </button>
+  ))}
+</div>
+
+
     </div>
-  ) : null}
+  </div>
+) : null}
 
-  {messages.map((m) => {
 
-                const isUser = m.role === "user";
-                const rawText = isUser ? (m.text ?? "") : m.text || "";
+      {/* ✅ SIEMPRE bubbles (chat y tutor). En tutor solo cambia el contenido */}
+      
+      <div className="flex flex-col gap-4">
+        {messages.map((m) => {
+          const isUser = m.role === "user";
 
-                const isTutorThread = (activeThread?.mode ?? "chat") === "tutor";
-const mdText = isUser
+          // ✅ NO pintar el mensaje inicial (saludo) como pizarra en modo tutor
+          if (!isUser && m.id === "init" && !m.pizarra) {
+            return null;
+          }
+
+          const rawText = isUser ? (m.text ?? "") : (m.text ?? "");
+
+// ✅ En tutor, el texto principal SIEMPRE viene de m.text (como en la imagen).
+// La pizarra (m.pizarra / boardImage) solo es un EXTRA visual, nunca sustituye el texto.
+const mdTextRaw = isUser
   ? rawText
   : m.streaming
-  ? rawText // 🔒 SIN normalizar ni markdown mientras streamea
+  ? rawText
   : normalizeAssistantText(rawText);
 
+// ✅ Anti-LaTeX + formato limpio “como la imagen”
+const mdText =
+  !isUser && activeThread?.mode === "tutor"
+    ? sanitizeTutorLikeImage(mdTextRaw)
+    : mdTextRaw;
 
-                // ✅ SUSTITUYE TU SELECCIÓN POR ESTE BLOQUE EXACTO
-// ... justo después de definir mdText
+
 const isStreaming = !!m.streaming;
 const hasText = (m.text ?? "").length > 0;
 
-return (
-  <div key={m.id} className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
-    <div
-      className={[
-        "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 shadow-sm text-[15px] leading-relaxed overflow-hidden break-words",
-        isUser ? "bg-[#dcf8c6] text-zinc-900 rounded-l-lg rounded-br-lg rounded-tr-none mr-2" : "bg-[#e8f0fe] text-zinc-900 rounded-r-lg rounded-bl-lg rounded-tl-none ml-2",
-        "after:content-[''] after:absolute after:w-3 after:h-3 after:rotate-45 after:top-[3px]",
-        isUser ? "after:right-[-6px] after:bg-[#dcf8c6]" : "after:left-[-6px] after:bg-[#e8f0fe]",
-      ].join(" ")}
-    >
-      {m.image && (
-        <div className="mb-2">
-          <img src={m.image} alt="Adjunto" className="rounded-md max-h-60 max-w-full object-cover" />
-        </div>
-      )}
+const bubbleColor = isUser ? "#dcf8c6" : "#e8f0fe";
 
-      {(m.text || m.streaming) && (
-        <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0">
-          {isStreaming ? (
-            <span className="whitespace-pre-wrap">
-              {mdText.includes('"elements"') || mdText.includes('```excalidraw')
-                ? "✍️ El tutor está dibujando en la pizarra..." 
-                : mdText}
-              {!hasText ? <TypingDots /> : <TypingCaret />}
-            </span>
-          ) : (
-            <ReactMarkdown components={makeMdComponents(m.boardImageB64, m.boardImagePlacement)}>
-  {mdText}
-</ReactMarkdown>
-          )}
-        </div>
-      )}
-    </div>
+return (
+  <div
+    key={m.id}
+    className={`flex w-full ${isUser ? "justify-end" : "justify-start"} animate-[fadeIn_240ms_ease-out]`}
+  >
+
+    <div
+  className={[
+  "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
+  "md:shadow-sm", // 👈 sombra SOLO en desktop
+  isUser
+  ? "bg-[#dcf8c6] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-none mr-2"
+  : "bg-[#e8f0fe] text-zinc-900 rounded-r-2xl rounded-bl-2xl rounded-tl-none ml-2",
+].join(" ")}
+
+>
+  {/* ✅ piquito por detrás */}
+  <BubbleTail side={isUser ? "right" : "left"} color={bubbleColor} />
+
+  {/* ✅ contenido por encima (para que la cola no tape nada) */}
+  <div className="relative z-10">
+    {m.image && (
+      <div className="mb-2">
+        <img src={m.image} alt="Adjunto" className="rounded-md max-h-60 max-w-full object-cover" />
+      </div>
+    )}
+
+    {(m.text || m.streaming) && (
+      <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 font-sans">
+        {isStreaming ? (
+          <span className="whitespace-pre-wrap">
+            {mdText.includes('"elements"') || mdText.includes("```excalidraw")
+              ? "✍️ El tutor está dibujando en la pizarra..."
+              : mdText}
+            {!hasText ? <TypingDots /> : <TypingCaret />}
+          </span>
+        ) : (
+          <ReactMarkdown components={makeMdComponents(m.boardImageB64, m.boardImagePlacement, m.pizarra)}>
+            {mdText}
+          </ReactMarkdown>
+        )}
+      </div>
+    )}
+
+    {!isUser && activeThread?.mode === "tutor" && m.boardImageB64 ? (
+      <div className="mt-3">
+        <ChalkboardTutorBoard
+          className="w-full"
+          value={""}
+          boardImageB64={m.boardImageB64}
+          boardImagePlacement={m.boardImagePlacement}
+        />
+      </div>
+    ) : null}
+
+    {!isUser && activeThread?.mode === "tutor" && isStreaming && !((m.text ?? "").trim()) ? (
+      <div className="mt-2 text-[12px] text-zinc-600 flex items-center gap-2">
+        <span>✍️ El tutor está preparando la explicación</span>
+        <TypingDots />
+      </div>
+    ) : null}
+  </div>
+</div>
+
   </div>
 );
-})}
-            </div>
-          </div>
-        </div>
+        })}
+      </div>
+    </div>
+  </div>
+</div>
 
-        {/* ===== INPUT BAR (nuevo estilo como tu captura) ===== */}
-        <div ref={inputBarRef} className="sticky bottom-0 left-0 right-0 z-30 bg-white/92 backdrop-blur-xl">
+
+
+        {/* ===== INPUT BAR ===== */}
+        <div
+  ref={inputBarRef}
+  className="fixed left-0 right-0 z-30 bg-transparent"
+  style={{
+    bottom: "var(--vvb, 0px)",
+    paddingBottom: "env(safe-area-inset-bottom)",
+  }}
+>
+
           <div className="mx-auto max-w-3xl px-3 md:px-6 pt-3 pb-2">
             {imagePreview && (
               <div className="mb-2 relative w-fit">
@@ -3086,101 +4298,174 @@ return (
 
             {micMsg && <div className="mb-2 text-[12px] text-zinc-600 bg-white border border-zinc-200 rounded-2xl px-3 py-2">{micMsg}</div>}
 
-            {/* ✅ INPUT: textarea “tipo Gemini”: el TEXTO ocupa laterales; iconos anclados abajo */}
-            <div className={["w-full", "relative rounded-[26px] border border-zinc-200 bg-white", "overflow-hidden"].join(" ")}>
-              {/* LEFT ICONS (overlay) */}
-              <div className="absolute left-2.5 bottom-2 flex items-center gap-1">
-                <button
-                  onClick={openBoard}
-                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
-                  aria-label="Pizarra"
-                  title="Pizarra"
-                  disabled={!!isTyping}
-                >
-                  <PencilIcon className="h-5 w-5 text-zinc-800" />
-                </button>
+            <div
+  className={[
+    "relative w-full rounded-3xl",
+    "bg-white",
+    "border border-zinc-200/70",
+    "ring-1 ring-zinc-900/[0.03]",               // ✅ micro borde óptico
+    "shadow-[0_22px_70px_rgba(0,0,0,0.18)]",
+    "px-3 pt-2 pb-2",
+  ].join(" ")}
+>
 
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="h-10 w-10 rounded-full hover:bg-zinc-50 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
-                  aria-label="Adjuntar"
-                  title="Adjuntar imagen"
-                  disabled={!!isTyping}
-                >
-                  <PlusIcon className="h-5 w-5 text-zinc-800" />
-                </button>
 
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
-              </div>
+{/* ✅ Disclaimer dentro del input (full width en móvil, estilo Gemini) */}
+<div
+  className={[
+    "absolute left-0 right-0 bottom-0",
+    "px-4 py-2",
+    "text-center text-[11.5px] md:text-[12px]",
+    "text-zinc-500",
+    "bg-white",          // ✅ blanco sólido
+    "rounded-b-3xl",
+  ].join(" ")}
+>
+  Orientación preventiva · No sustituye profesionales.
+</div>
 
-              {/* RIGHT ICONS (overlay) */}
-              <div className="absolute right-2.5 bottom-2 flex items-center gap-2">
-                <button
-                  onClick={toggleMic}
-                  disabled={!!isTyping || !speechSupported}
-                  className={[
-                    "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
-                    !speechSupported
-                      ? "border-zinc-200 text-zinc-400 bg-white/60 cursor-not-allowed"
-                      : isListening
-                      ? "border-red-200 bg-red-50 text-red-700"
-                      : "border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-900",
-                  ].join(" ")}
-                  aria-label={isListening ? "Parar micrófono" : "Hablar"}
-                  title={!speechSupported ? "Dictado no soportado en este navegador" : isListening ? "Parar" : "Dictar por voz"}
-                >
-                  <div className="relative">
-                    <MicIcon className="h-5 w-5" />
-                    {isListening && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />}
-                  </div>
-                </button>
 
-                <button
-                  onClick={sendMessage}
-                  disabled={!canSend}
-                  className={[
-                    "h-10 w-10 rounded-full shrink-0 transition-colors grid place-items-center p-0",
-                    !canSend ? "bg-zinc-200 text-zinc-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer",
-                  ].join(" ")}
-                  aria-label="Enviar"
-                  title="Enviar"
-                >
-                  <ArrowUpIcon className="h-5 w-5" />
-                </button>
-              </div>
+  {/* LEFT ICONS */}
+  <div className="absolute left-2.5 bottom-[34px] z-[60] flex items-center gap-1">
+    <button
+      onClick={openBoard}
+      className="h-10 w-10 rounded-full hover:bg-white/60 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
+      aria-label="Pizarra"
+      title="Pizarra"
+      disabled={!!isTyping}
+    >
+      <PencilIcon className="h-5 w-5 text-zinc-800" />
+    </button>
 
-              {/* TEXTAREA: full-width real (sin huecos laterales), con padding inferior para no pisar iconos */}
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                  }
-                }}
-                disabled={!!isTyping}
-                placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
-                className={[
-                  "block w-full resize-none bg-transparent outline-none",
-                  "text-[15px] leading-5",
-                  "px-4 pt-2",
-                  "pb-[56px]", // espacio para iconos inferiores
-                  "overflow-hidden",
-                  inputExpanded ? "min-h-[56px]" : "min-h-[44px]",
-                ].join(" ")}
-                rows={1}
-              />
-            </div>
-          </div>
+    <button
+      onClick={() => fileInputRef.current?.click()}
+      className="h-10 w-10 rounded-full hover:bg-white/60 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
+      aria-label="Adjuntar"
+      title="Adjuntar imagen"
+      disabled={!!isTyping}
+    >
+      <PlusIcon className="h-5 w-5 text-zinc-800" />
+    </button>
 
-          <div className="mx-auto max-w-3xl px-3 md:px-6 pb-3 pb-[env(safe-area-inset-bottom)]">
-            <p className="text-center text-[11.5px] md:text-[12px] text-zinc-500 leading-4 md:leading-5">Orientación preventiva · No sustituye profesionales.</p>
-            {!hasUserMessage && <div className="h-1" />}
+    <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
+  </div>
+
+  {/* RIGHT ICONS */}
+<div className="absolute right-2.5 bottom-[34px] z-[60] flex items-center gap-2">
+  {/* 🎙️ Dictado (solo escribir) */}
+  <button
+    onClick={toggleDictation}
+    disabled={!!isTyping || !speechSupported}
+    className={[
+      "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
+      "bg-white",
+      !speechSupported
+        ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
+        : (isListening && listeningPurpose === "dictation")
+? "border-red-200 bg-red-50 text-red-700"
+        : "border-zinc-200 hover:bg-zinc-50 text-zinc-900",
+      !!isTyping ? "opacity-50" : "",
+    ].join(" ")}
+    aria-label={isListening ? "Parar dictado" : "Dictar por voz"}
+    title={!speechSupported ? "Tu navegador no soporta dictado" : isListening ? "Parar dictado" : "Dictar por voz"}
+  >
+    <div className="relative">
+      <MicIcon className="h-5 w-5" />
+      {isListening && listeningPurpose === "dictation" ? (
+  <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />
+) : null}
+
+    </div>
+  </button>
+
+  {/* 🗣️ Conversación (turnos: habla + escucha) */}
+  <button
+    onClick={toggleConversation}
+    disabled={!!isTyping || !speechSupported || !supportsTTS()}
+    className={[
+      "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
+      "bg-white",
+      !speechSupported
+        ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
+        : voiceMode
+        ? "border-blue-200 bg-blue-50 text-blue-800"
+        : "border-zinc-200 hover:bg-zinc-50 text-zinc-900",
+      !!isTyping ? "opacity-50 cursor-not-allowed" : "",
+    ].join(" ")}
+    aria-label={voiceMode ? "Desactivar conversación" : "Activar conversación"}
+    title={
+  !speechSupported
+    ? "Tu navegador no soporta micrófono (SpeechRecognition)"
+    : !supportsTTS()
+    ? "Tu navegador no soporta voz (TTS)"
+    : voiceMode
+    ? "Conversación ON (clic para apagar)"
+    : "Conversación OFF (clic para encender)"
+}
+  >
+    <div className="relative">
+  <TalkIcon className="h-5 w-5" />
+</div>
+
+
+  </button>
+
+  {/* ⬆️ ENVIAR */}  
+<button
+  onClick={() => {
+    if (!canSend) return;
+    sendMessage();
+  }}
+  aria-disabled={!canSend}
+  className={[
+    "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
+    canSend
+      ? "bg-blue-600 border-blue-700/10 text-white hover:bg-blue-700 cursor-pointer"
+      : "bg-zinc-200 border-zinc-200 text-zinc-500 cursor-default",
+    !!isTyping ? "opacity-60 cursor-default" : "",
+  ].join(" ")}
+  aria-label="Enviar"
+  title="Enviar"
+>
+  <ArrowUpIcon className="h-5 w-5" />
+</button>
+
+</div>
+
+
+
+  {/* ✅ Textarea BLANCA (sin gris, sin borde, sin “caja”) */}
+  <textarea
+  ref={textareaRef}
+  value={input}
+  onChange={(e) => setInput(e.target.value)}
+  onKeyDown={(e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }}
+  disabled={!!isTyping}
+  placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
+  className={[
+    "block w-full resize-none outline-none",
+    "bg-white",
+    "rounded-2xl",
+    "text-[15px] leading-5 text-zinc-900 placeholder:text-zinc-400",
+    "px-4 pt-3",
+    "pb-[92px]", // 👈 ahora hay espacio para botones + disclaimer dentro
+    "overflow-hidden",
+    inputExpanded ? "min-h-[60px]" : "min-h-[48px]",
+  ].join(" ")}
+  rows={1}
+/>
+</div>
+
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+
