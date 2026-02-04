@@ -1146,9 +1146,15 @@ export default function Page() {
   }
 
   // -------- Persistencia local --------
-  const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
-  const [activeThreadId, setActiveThreadId] = useState<string>("");
-  const activeThreadIdRef = useRef<string>("");
+const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
+const threadsRef = useRef<ChatThread[]>([]);
+const [activeThreadId, setActiveThreadId] = useState<string>("");
+const activeThreadIdRef = useRef<string>("");
+
+useEffect(() => {
+  threadsRef.current = threads;
+}, [threads]);
+
 
   useEffect(() => {
     try {
@@ -2479,16 +2485,21 @@ function applyQuickPrompt(p: { label: string; mode: ThreadMode; text: string }) 
 }
 
 
-  // textarea autoresize
-  useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
+  // textarea autoresize (robusto)
+useEffect(() => {
+  const el = textareaRef.current;
+  if (!el) return;
 
-    el.style.height = "0px";
-    const next = Math.min(el.scrollHeight, 140);
+  const raf = requestAnimationFrame(() => {
+    el.style.height = "auto";
+    const next = Math.min(el.scrollHeight, 220); // puedes subir a 260 si quieres
     el.style.height = next + "px";
-    setInputExpanded(next > 52);
-  }, [input]);
+    setInputExpanded(next > 60);
+  });
+
+  return () => cancelAnimationFrame(raf);
+}, [input, imagePreview, isTyping]);
+
 
   function handleChatScroll() {
     const el = scrollRef.current;
@@ -2529,16 +2540,63 @@ function applyQuickPrompt(p: { label: string; mode: ThreadMode; text: string }) 
     return () => clearTimeout(t);
   }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId, loginOpen, paywallOpen, boardOpen]);
 
-  function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => setImagePreview(reader.result as string);
-    reader.readAsDataURL(file);
-
+  try {
+    // Limpiar input file para poder volver a elegir el mismo archivo
     e.target.value = "";
+
+    // Solo imágenes
+    if (!file.type.startsWith("image/")) {
+      setMicMsg("Ese archivo no es una imagen.");
+      setTimeout(() => setMicMsg(null), 2200);
+      return;
+    }
+
+    // ✅ Comprimir: máx 1400px lado largo, JPEG calidad 0.82
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("No se pudo leer la imagen."));
+      reader.readAsDataURL(file);
+    });
+
+    const img = document.createElement("img");
+    img.src = dataUrl;
+
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("No se pudo cargar la imagen."));
+    });
+
+    const MAX = 1400;
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+
+    const scale = Math.min(1, MAX / Math.max(w, h));
+    const nw = Math.max(1, Math.round(w * scale));
+    const nh = Math.max(1, Math.round(h * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = nw;
+    canvas.height = nh;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas no disponible.");
+
+    ctx.drawImage(img, 0, 0, nw, nh);
+
+    // JPEG reduce muchísimo tamaño (sobre todo fotos de móvil)
+    const compressed = canvas.toDataURL("image/jpeg", 0.82);
+
+    setImagePreview(compressed);
+  } catch (err: any) {
+    setMicMsg(err?.message || "No se pudo adjuntar la imagen.");
+    setTimeout(() => setMicMsg(null), 2400);
   }
+}
 
   function createThreadAndActivate() {
     const t = makeNewThread();
@@ -2748,7 +2806,7 @@ if (voiceMode) stopMic();
       await sleep(200);
 
       // ⚠️ Importante: usamos el estado "prev" más fiable: leemos del localStorage state actual
-      const threadNow = (threads.find((x) => x.id === targetThreadId) ?? activeThread) as ChatThread;
+      const threadNow = (threadsRef.current.find((x) => x.id === targetThreadId) ?? activeThread) as ChatThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
         .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
@@ -3002,7 +3060,7 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
     try {
       await sleep(220);
 
-      const threadNow = threads.find((x) => x.id === targetThreadId) ?? activeThread;
+      const threadNow = threadsRef.current.find((x) => x.id === targetThreadId) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
         .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
@@ -4469,9 +4527,11 @@ return (
   onChange={(e) => setInput(e.target.value)}
   onKeyDown={(e) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+  e.preventDefault();
+  if (!canSend) return;
+  sendMessage();
+}
+
   }}
   disabled={!!isTyping}
   placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
