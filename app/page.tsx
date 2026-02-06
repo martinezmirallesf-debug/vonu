@@ -1208,6 +1208,15 @@ const [ttsSpeaking, setTtsSpeaking] = useState(false);
 // ✅ Modo conversación (voz + hablar por turnos)
 const [voiceMode, setVoiceMode] = useState(false);
 
+// ✅ Anti-eco: tras hablar (TTS), esperamos antes de escuchar
+const ttsCooldownUntilRef = useRef<number>(0);
+
+// helper
+function inTtsCooldown() {
+  return Date.now() < (ttsCooldownUntilRef.current || 0);
+}
+
+
 const voiceModeRef = useRef(false);
 
 useEffect(() => {
@@ -1511,6 +1520,14 @@ function stopTTS() {
 
 async function speakTTS(text: string) {
   const inConversation = voiceModeRef.current;
+  // ✅ Si estamos en conversación, paramos micro mientras Vonu habla (evita eco)
+if (inConversation && isListening) {
+  try { stopMic(); } catch {}
+}
+
+// ✅ cooldown inicial: aunque alguien llame a startMic mientras habla
+ttsCooldownUntilRef.current = Date.now() + 1200;
+
 
   // ✅ Si no hay soporte real de TTS, en conversación volvemos a escuchar y fuera.
   if (!supportsTTS()) {
@@ -1597,12 +1614,18 @@ async function speakTTS(text: string) {
 
   setTtsSpeaking(false);
 
-  // ✅ modo conversación: si sigue ON, volvemos a escuchar
-  if (voiceModeRef.current) {
-    setTimeout(() => {
-  if (voiceModeRef.current) startMic("conversation");
-}, 320); // un pelín más humano
-  }
+// ✅ Anti-eco: esperamos un poco antes de volver a escuchar
+ttsCooldownUntilRef.current = Date.now() + (isDesktopPointer() ? 900 : 1400);
+
+if (voiceModeRef.current) {
+  setTimeout(() => {
+    if (!voiceModeRef.current) return;
+    if (isTyping) return;
+    if (inTtsCooldown()) return;
+    startMic("conversation");
+  }, isDesktopPointer() ? 950 : 1550);
+}
+
 
 
 }
@@ -1760,6 +1783,17 @@ function stopMic() {
 
 async function startMic(purpose: MicPurpose) {
   if (isTyping) return;
+  // ✅ Anti-eco: no arrancar escucha mientras acaba de hablar Vonu
+if (purpose === "conversation" && inTtsCooldown()) {
+  setTimeout(() => {
+    if (!voiceModeRef.current) return;
+    if (isTyping) return;
+    if (inTtsCooldown()) return;
+    startMic("conversation");
+  }, isDesktopPointer() ? 700 : 1100);
+  return;
+}
+
 
   const SR = typeof window !== "undefined" ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition : null;
   if (!SR) {
@@ -1934,6 +1968,11 @@ if (curNorm && prevNorm === curNorm && now - prev.ts < WINDOW_MS) {
 
     rec.onresult = (event: any) => {
   if (micSessionIdRef.current !== mySessionId) return;
+  // ✅ Anti-eco: si Vonu acaba de hablar, ignoramos lo que “oye” el micro
+if (micPurposeRef.current === "conversation" && inTtsCooldown()) {
+  return;
+}
+
 
   const results = event?.results ?? [];
   const startIndex = typeof event?.resultIndex === "number" ? event.resultIndex : 0;
