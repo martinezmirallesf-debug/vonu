@@ -1705,6 +1705,33 @@ function cleanRepeatedWords(text: string) {
   return result.join(" ");
 }
 
+function dedupeGrowingTranscript(prev: string, next: string) {
+  const p = (prev ?? "").replace(/\s+/g, " ").trim();
+  const n = (next ?? "").replace(/\s+/g, " ").trim();
+
+  if (!p) return n;
+  if (!n) return p;
+
+  // típico móvil: el nuevo contiene al anterior (va “creciendo”)
+  if (n.toLowerCase().startsWith(p.toLowerCase())) return n;
+  // raro: llega uno más corto después
+  if (p.toLowerCase().startsWith(n.toLowerCase())) return p;
+
+  // merge por solape: sufijo de prev == prefijo de next
+  const pl = p.toLowerCase();
+  const nl = n.toLowerCase();
+  const max = Math.min(pl.length, nl.length);
+
+  for (let len = max; len >= 12; len--) {
+    if (pl.slice(-len) === nl.slice(0, len)) {
+      return (p + " " + n.slice(len)).replace(/\s+/g, " ").trim();
+    }
+  }
+
+  // si no hay solape claro, nos quedamos con el más largo
+  return n.length >= p.length ? n : p;
+}
+
 function beepReady() {
   if (typeof window === "undefined") return;
   try {
@@ -1742,6 +1769,8 @@ const recognitionRef = useRef<any | null>(null);
 const micBaseRef = useRef<string>("");
 const micFinalRef = useRef<string>("");
 const micInterimRef = useRef<string>("");
+const micLastFullRef = useRef<string>("");
+
 // ✅ evita duplicados en Android Chrome: recuerda el último índice final ya procesado
 const micLastFinalIndexRef = useRef<number>(-1);
 // ✅ Android: guarda cada trozo final por índice y reconstruye (evita repeticiones bestia)
@@ -1891,8 +1920,9 @@ rec.maxAlternatives = 1;
 micInterimRef.current = "";
 micLastFinalIndexRef.current = -1;
 micFinalByIndexRef.current = {}; // ✅ reset del mapa
-
-
+// ✅ Para dictado: conserva lo que había escrito antes de empezar a dictar
+micBaseRef.current = purpose === "dictation" ? ((input ?? "").trim() ? (input.trim() + " ") : "") : "";
+micLastFullRef.current = micBaseRef.current.trim();
 
 
 // ✅ NUEVO: “sesión” del micro (evita eventos viejos tocando el estado actual)
@@ -1979,7 +2009,10 @@ const armSilence = () => {
   setListeningPurpose(null);
   recognitionRef.current = null;
 
-  const finalText = cleanRepeatedWords((micFinalRef.current || "").replace(/\s+/g, " ").trim());
+  const combined = `${micFinalRef.current || ""} ${micInterimRef.current || ""}`.replace(/\s+/g, " ").trim();
+let finalText = cleanRepeatedWords(combined);
+finalText = dedupeGrowingTranscript("", finalText);
+
   micInterimRef.current = "";
 
   clearSilenceTimer();
@@ -2057,78 +2090,57 @@ if (isNearlySameVoice(finalText, lastUser)) {
 
     rec.onresult = (event: any) => {
   if (micSessionIdRef.current !== mySessionId) return;
-  // ✅ Anti-eco: si Vonu acaba de hablar, ignoramos lo que “oye” el micro
-if (micPurposeRef.current === "conversation" && inTtsCooldown()) {
-  return;
-}
 
+  // ✅ Anti-eco: si Vonu acaba de hablar, ignoramos lo que “oye” el micro
+  if (micPurposeRef.current === "conversation" && inTtsCooldown()) return;
 
   const results = event?.results ?? [];
-  const startIndex = typeof event?.resultIndex === "number" ? event.resultIndex : 0;
 
-  // Vamos guardando finals por índice (si el mismo índice cambia, se reemplaza)
-  const finalMap = micFinalByIndexRef.current || {};
+  let finalText = "";
   let interimText = "";
 
-  for (let i = startIndex; i < results.length; i++) {
+  // ✅ Construimos transcript completo de forma estable (Android)
+  for (let i = 0; i < results.length; i++) {
     const res = results[i];
     const txt = (res?.[0]?.transcript ?? "").trim();
     if (!txt) continue;
 
     if (res.isFinal) {
-      finalMap[i] = txt; // ✅ reemplaza si Android lo re-emite/actualiza
-      if (i > micLastFinalIndexRef.current) micLastFinalIndexRef.current = i;
+      finalText += txt + " ";
     } else {
-      interimText += txt + " ";
+      // en móvil el interim suele ser “el que crece”
+      interimText = txt;
     }
   }
 
-  micFinalByIndexRef.current = finalMap;
+  const finalClean = finalText.replace(/\s+/g, " ").trim();
+  const interimClean = interimText.replace(/\s+/g, " ").trim();
 
-  // ✅ Reconstrucción robusta en Android:
-// - NO asumimos 0..lastIdx (Chrome puede "saltar" índices o reemitir con índices nuevos)
-// - Ordenamos las keys existentes
-// - Deduplicamos piezas consecutivas (por si reemite la misma frase con otro índice)
-const keys = Object.keys(finalMap)
-  .map((k) => Number(k))
-  .filter((n) => Number.isFinite(n))
-  .sort((a, b) => a - b);
+  micFinalRef.current = finalClean;
+  micInterimRef.current = interimClean;
 
-let finalText = "";
-let lastPiece = "";
-
-for (const k of keys) {
-  const piece = (finalMap[k] ?? "").trim();
-  if (!piece) continue;
-
-  const normPiece = piece.replace(/\s+/g, " ").trim().toLowerCase();
-  if (normPiece && normPiece === lastPiece) continue; // ✅ evita duplicados de frase
-
-  finalText += piece + " ";
-  lastPiece = normPiece;
-}
-
-
-  micFinalRef.current = finalText;
-  micInterimRef.current = interimText;
-
-  if ((interimText && interimText.trim()) || (finalText && finalText.trim())) {
+  if (finalClean || interimClean) {
     micHadSpeechRef.current = true;
     armSilence();
   }
 
-  const raw = micBaseRef.current + finalText + interimText;
-  const cleaned = cleanRepeatedWords(raw.replace(/\s+/g, " ").trim());
+  // ✅ Texto completo
+  const rawFull =
+    (micPurposeRef.current === "dictation" ? micBaseRef.current : "") +
+    (finalClean ? finalClean + " " : "") +
+    (interimClean ? interimClean : "");
 
-  // ✅ Dictado: actualizar input en vivo
+  let full = rawFull.replace(/\s+/g, " ").trim();
+  full = cleanRepeatedWords(full);
+
+  // ✅ Clave: dedupe por crecimiento/solape
+  full = dedupeGrowingTranscript(micLastFullRef.current, full);
+  micLastFullRef.current = full;
+
   if (micPurposeRef.current === "dictation") {
-    setInput(cleaned);
+    setInput(full);
   }
-
-  // Si quieres ver en conversación mientras hablas:
-  // if (micPurposeRef.current === "conversation") setInput(cleaned);
 };
-
 
 
     rec.start();
