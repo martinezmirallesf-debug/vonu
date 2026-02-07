@@ -1615,7 +1615,7 @@ ttsCooldownUntilRef.current = Date.now() + 1200;
   setTtsSpeaking(false);
 
 // ✅ Anti-eco: esperamos un poco antes de volver a escuchar
-ttsCooldownUntilRef.current = Date.now() + (isDesktopPointer() ? 900 : 1400);
+ttsCooldownUntilRef.current = Date.now() + (isDesktopPointer() ? 900 : 1800);
 
 if (voiceModeRef.current) {
   setTimeout(() => {
@@ -1623,7 +1623,7 @@ if (voiceModeRef.current) {
     if (isTyping) return;
     if (inTtsCooldown()) return;
     startMic("conversation");
-  }, isDesktopPointer() ? 950 : 1550);
+  }, isDesktopPointer() ? 950 : 1950);
 }
 
 
