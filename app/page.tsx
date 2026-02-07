@@ -1727,6 +1727,28 @@ const micFinalByIndexRef = useRef<Record<number, string>>({});
 
 // ✅ anti-duplicado de envíos en conversación
 const lastMicSendRef = useRef<{ text: string; ts: number }>({ text: "", ts: 0 });
+function normalizeVoiceSendText(s: string) {
+  return (s ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[.,;:!?¡¿]+/g, ""); // quitamos puntuación suave
+}
+
+function getLastUserTextInThread(threadId: string) {
+  try {
+    const t = threadsRef.current.find((x) => x.id === threadId);
+    if (!t) return "";
+    for (let i = (t.messages?.length ?? 0) - 1; i >= 0; i--) {
+      const m = t.messages[i];
+      if (m?.role === "user" && typeof m.text === "string" && m.text.trim()) {
+        return m.text.trim();
+      }
+    }
+  } catch {}
+  return "";
+}
+
 
 // ✅ NUEVO: control de sesión + silencios (evita “colgados” y timeouts huérfanos)
 const micSessionIdRef = useRef<number>(0);
@@ -1944,8 +1966,21 @@ if (curNorm && prevNorm === curNorm && now - prev.ts < WINDOW_MS) {
 } else if (isTyping) {
   // si Vonu está respondiendo, no mandamos otro
 } else {
+  const threadId = activeThreadIdRef.current || (activeThread?.id ?? "");
+const lastUser = threadId ? getLastUserTextInThread(threadId) : "";
+
+const curNorm = normalizeVoiceSendText(finalText);
+const lastNorm = normalizeVoiceSendText(lastUser);
+
+// ✅ BLOQUEO FUERTE: si lo que “oyó” el micro coincide con tu último mensaje real,
+// NO se envía nunca (aunque hayan pasado muchos segundos).
+if (curNorm && lastNorm && curNorm === lastNorm) {
+  // ignorar (eco/repetición típica en móvil)
+} else {
   lastMicSendRef.current = { text: finalText, ts: now };
   sendQuickMessage(finalText, activeThread?.mode ?? "chat");
+}
+
 }
 
       return;
