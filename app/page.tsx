@@ -1627,6 +1627,7 @@ if (voiceModeRef.current) {
 }
 
 
+
 }
 
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -1980,11 +1981,10 @@ const armSilence = () => {
   setIsListening(true);
   micHadSpeechRef.current = false;
   if (purpose === "conversation") {
-  setMicMsg("🎙️ Habla ahora");
   beepReady();
-  setTimeout(() => setMicMsg(null), 1200);
+  setMicMsg("🎙️ Tu turno");
+  setTimeout(() => setMicMsg(null), 650);
 }
-
   armSilence();
 };
 
@@ -2030,14 +2030,41 @@ if (micStoppingRef.current) return;
   recognitionRef.current = null;
 
   const combined = `${micFinalRef.current || ""} ${micInterimRef.current || ""}`.replace(/\s+/g, " ").trim();
+
 let finalText = cleanRepeatedWords(combined);
 finalText = dedupeGrowingTranscript("", finalText);
 
-  micInterimRef.current = "";
+// ✅ ANDROID: si el motor devuelve “frase frase”, nos quedamos con la primera
+function cutRepeatedSentence(text: string) {
+  const t = (text || "").trim();
+  if (!t) return t;
 
-  clearSilenceTimer();
+  // caso típico: el texto es literalmente el mismo 2 veces
+  const half = Math.floor(t.length / 2);
+  const first = t.slice(0, half).trim();
+  const second = t.slice(half).trim();
 
-  const purposeAtStart = purpose; // snapshot
+  if (first && second && second.startsWith(first)) return first;
+
+  // fallback: cortar repetición por palabras (último recurso)
+  const words = t.split(/\s+/g);
+  const midWords = Math.floor(words.length / 2);
+  if (midWords >= 3) {
+    const left = words.slice(0, midWords).join(" ");
+    const right = words.slice(midWords).join(" ");
+    if (right.toLowerCase().startsWith(left.toLowerCase())) return left;
+  }
+
+  return t;
+}
+
+finalText = cutRepeatedSentence(finalText);
+
+micInterimRef.current = "";
+clearSilenceTimer();
+
+const purposeAtStart = purpose; // snapshot
+
 
   // ✅ conversación: enviar automático si hay texto
   if (purposeAtStart === "conversation" && voiceModeRef.current) {
@@ -2135,6 +2162,7 @@ if (isNearlySameVoice(finalText, lastUser)) {
 
   const finalClean = finalText.replace(/\s+/g, " ").trim();
   const interimClean = interimText.replace(/\s+/g, " ").trim();
+
 
   micFinalRef.current = finalClean;
   micInterimRef.current = interimClean;
@@ -2397,10 +2425,6 @@ function toggleMic() {
     },
   } as any;
 }
-
-
-
-
 
 
   function closeBoard() {
@@ -2993,7 +3017,7 @@ if (voiceMode) stopMic();
           userText,
           imageBase64: null,
           mode: modePreset,
-          tutorLevel: activeThread?.tutorProfile?.level ?? "adult",
+          tutorLevel: threadNow?.tutorProfile?.level ?? "adult",
         }),
       });
 
@@ -4621,8 +4645,15 @@ return (
         : "border-zinc-200 hover:bg-zinc-50 text-zinc-900",
       !!isTyping ? "opacity-50" : "",
     ].join(" ")}
-    aria-label={isListening ? "Parar dictado" : "Dictar por voz"}
-    title={!speechSupported ? "Tu navegador no soporta dictado" : isListening ? "Parar dictado" : "Dictar por voz"}
+    aria-label={isListening && listeningPurpose === "dictation" ? "Parar dictado" : "Dictar por voz"}
+title={
+  !speechSupported
+    ? "Tu navegador no soporta dictado"
+    : isListening && listeningPurpose === "dictation"
+    ? "Parar dictado"
+    : "Dictar por voz"
+}
+
   >
     <div className="relative">
       <MicIcon className="h-5 w-5" />
