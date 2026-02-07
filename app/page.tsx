@@ -1614,8 +1614,8 @@ ttsCooldownUntilRef.current = Date.now() + 1200;
 
   setTtsSpeaking(false);
 
-// ✅ Anti-eco: esperamos un poco antes de volver a escuchar
-ttsCooldownUntilRef.current = Date.now() + (isDesktopPointer() ? 900 : 1800);
+// ✅ Anti-eco: mini cooldown (más corto para que no se sienta “lento”)
+ttsCooldownUntilRef.current = Date.now() + (isDesktopPointer() ? 280 : 650);
 
 if (voiceModeRef.current) {
   setTimeout(() => {
@@ -1623,9 +1623,8 @@ if (voiceModeRef.current) {
     if (isTyping) return;
     if (inTtsCooldown()) return;
     startMic("conversation");
-  }, isDesktopPointer() ? 950 : 1950);
+  }, isDesktopPointer() ? 320 : 720);
 }
-
 
 
 }
@@ -1766,6 +1765,7 @@ const micPurposeRef = useRef<MicPurpose>("dictation");
 
 // ✅ refs internas del motor de reconocimiento
 const recognitionRef = useRef<any | null>(null);
+const micStoppingRef = useRef(false); // ✅ evita onend fantasma (stop/abort programático)
 const micBaseRef = useRef<string>("");
 const micFinalRef = useRef<string>("");
 const micInterimRef = useRef<string>("");
@@ -1835,9 +1835,22 @@ useEffect(() => {
 }, []);
 
 function stopMic() {
+  // ✅ marcamos stop “programático” para ignorar el onend que llega tarde
+  micStoppingRef.current = true;
+
+  // ✅ invalidar sesión para que callbacks viejos no toquen estado actual
+  micSessionIdRef.current += 1;
+
   // ✅ limpiar silencio SIEMPRE (antes de tocar el motor)
   clearSilenceTimer();
   micHadSpeechRef.current = false;
+
+  // ✅ limpiar buffers (evita que onend mande texto viejo)
+  micBaseRef.current = "";
+  micFinalRef.current = "";
+  micInterimRef.current = "";
+  micLastFinalIndexRef.current = -1;
+  micFinalByIndexRef.current = {};
 
   try {
     const rec = recognitionRef.current;
@@ -1863,8 +1876,12 @@ function stopMic() {
   recognitionRef.current = null;
   setIsListening(false);
   setListeningPurpose(null);
-}
 
+  // ✅ liberamos el flag un pelín después (por si entra un onend tardío)
+  setTimeout(() => {
+    micStoppingRef.current = false;
+  }, 250);
+}
 
 
 async function startMic(purpose: MicPurpose) {
@@ -2004,6 +2021,9 @@ const armSilence = () => {
     rec.onend = () => {
   // ✅ si es un evento viejo, ignorar (evita “dobles onend”)
   if (micSessionIdRef.current !== mySessionId) return;
+  // ✅ si hemos parado nosotros el micro, ignorar este onend (móvil lo dispara tarde)
+if (micStoppingRef.current) return;
+
 
   setIsListening(false);
   setListeningPurpose(null);
@@ -2137,11 +2157,20 @@ if (isNearlySameVoice(finalText, lastUser)) {
   full = dedupeGrowingTranscript(micLastFullRef.current, full);
   micLastFullRef.current = full;
 
-  if (micPurposeRef.current === "dictation") {
-    setInput(full);
-  }
-};
+  // ✅ dictado: usar SIEMPRE los “clean” (evita repeticiones por espacios / parciales)
+let dictationText = `${finalClean}${interimClean ? " " + interimClean : ""}`.replace(/\s+/g, " ").trim();
 
+// ✅ limpieza ligera (solo palabras consecutivas idénticas)
+dictationText = cleanRepeatedWords(dictationText);
+
+// ✅ dedupe por crecimiento (Android repite el inicio al ampliar)
+dictationText = dedupeGrowingTranscript(micLastFullRef.current, dictationText);
+micLastFullRef.current = dictationText;
+
+if (micPurposeRef.current === "dictation") {
+  setInput(dictationText);
+}
+};
 
     rec.start();
   } catch {
