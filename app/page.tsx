@@ -1705,6 +1705,29 @@ function cleanRepeatedWords(text: string) {
   return result.join(" ");
 }
 
+function beepReady() {
+  if (typeof window === "undefined") return;
+  try {
+    const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.value = 880; // beep agudo corto
+    g.gain.value = 0.03;
+
+    o.connect(g);
+    g.connect(ctx.destination);
+
+    o.start();
+    setTimeout(() => {
+      try { o.stop(); } catch {}
+      try { ctx.close(); } catch {}
+    }, 90);
+  } catch {}
+}
+
 const [speechSupported, setSpeechSupported] = useState(false);
 const [isListening, setIsListening] = useState(false);
 const [micMsg, setMicMsg] = useState<string | null>(null);
@@ -1732,7 +1755,18 @@ function normalizeVoiceSendText(s: string) {
     .toLowerCase()
     .trim()
     .replace(/\s+/g, " ")
-    .replace(/[.,;:!?¡¿]+/g, ""); // quitamos puntuación suave
+    .replace(/[.,;:!?¡¿]+/g, "")
+    .replace(/["'`()\[\]{}]/g, "");
+}
+
+// Similaridad simple: bloquea si uno contiene al otro (muy útil con motores móviles)
+function isNearlySameVoice(a: string, b: string) {
+  const A = normalizeVoiceSendText(a);
+  const B = normalizeVoiceSendText(b);
+  if (!A || !B) return false;
+  if (A === B) return true;
+  if (A.length >= 8 && (B.includes(A) || A.includes(B))) return true;
+  return false;
 }
 
 function getLastUserTextInThread(threadId: string) {
@@ -1748,6 +1782,7 @@ function getLastUserTextInThread(threadId: string) {
   } catch {}
   return "";
 }
+
 
 
 // ✅ NUEVO: control de sesión + silencios (evita “colgados” y timeouts huérfanos)
@@ -1841,6 +1876,10 @@ setListeningPurpose(purpose);
     const rec = new SR();
     recognitionRef.current = rec;
 
+    if (purpose === "conversation") {
+  setMicMsg("Preparando micrófono…");
+}
+
     rec.lang = "es-ES";
     rec.continuous = purpose === "conversation"; // ✅ conversación tolera pausas
 rec.interimResults = true;
@@ -1861,7 +1900,7 @@ micSessionIdRef.current += 1;
 const mySessionId = micSessionIdRef.current;
 
 // ✅ En PC cortamos antes (se siente más rápido). En móvil dejamos más margen.
-const SILENCE_MS = isDesktopPointer() ? 1100 : 1700;
+const SILENCE_MS = isDesktopPointer() ? 1100 : 2300;
 
 const armSilence = () => {
   if (purpose !== "conversation") return;
@@ -1893,6 +1932,12 @@ const armSilence = () => {
 
   setIsListening(true);
   micHadSpeechRef.current = false;
+  if (purpose === "conversation") {
+  setMicMsg("🎙️ Habla ahora");
+  beepReady();
+  setTimeout(() => setMicMsg(null), 1200);
+}
+
   armSilence();
 };
 
@@ -1977,8 +2022,17 @@ const lastNorm = normalizeVoiceSendText(lastUser);
 if (curNorm && lastNorm && curNorm === lastNorm) {
   // ignorar (eco/repetición típica en móvil)
 } else {
+  const threadId = activeThreadIdRef.current || (activeThread?.id ?? "");
+const lastUser = threadId ? getLastUserTextInThread(threadId) : "";
+
+// ✅ bloqueo fuerte por “igual o casi igual” al último user real
+if (isNearlySameVoice(finalText, lastUser)) {
+  // ignorar eco / repetición móvil
+} else {
   lastMicSendRef.current = { text: finalText, ts: now };
   sendQuickMessage(finalText, activeThread?.mode ?? "chat");
+}
+
 }
 
 }
