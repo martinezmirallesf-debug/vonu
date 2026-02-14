@@ -10,6 +10,7 @@ import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 import ReactMarkdown from "react-markdown";
 import ChalkboardTutorBoard from "@/app/components/ChalkboardTutorBoard";
 
+import { FootballPredictionCards } from "@/app/components/FootballPredictionCards";
 
 type Placement = { x: number; y: number; w: number; h: number };
 
