@@ -59,6 +59,71 @@ function fairOddFromProb(p: number) {
 }
 
 // -------------------------
+// RNG
+// -------------------------
+function randUniform() {
+  let u = Math.random();
+  while (u === 0) u = Math.random();
+  return u;
+}
+
+function randNormal() {
+  // Box-Muller
+  const u1 = randUniform();
+  const u2 = randUniform();
+  return Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+}
+
+function poissonSample(lambda: number) {
+  if (lambda <= 0) return 0;
+
+  // Knuth for small/medium
+  if (lambda < 60) {
+    const L = Math.exp(-lambda);
+    let k = 0;
+    let p = 1;
+    do {
+      k++;
+      p *= randUniform();
+    } while (p > L);
+    return k - 1;
+  }
+
+  // Normal approx for large lambda
+  const x = Math.round(lambda + Math.sqrt(lambda) * randNormal());
+  return Math.max(0, x);
+}
+
+function binomialSample(n: number, p: number) {
+  const pp = clamp(p, 0, 1);
+  let x = 0;
+  for (let i = 0; i < n; i++) if (Math.random() < pp) x++;
+  return x;
+}
+
+// -------------------------
+// Overdispersion without Gamma/LogGamma:
+// Poisson-Lognormal mixture (practical NB-like)
+// If Var = m + alpha*m^2  => choose sigma s.t. exp(sigma^2)-1 ≈ alpha
+// => sigma^2 = ln(1+alpha)
+// -------------------------
+function sigmaFromAlpha(alpha: number) {
+  const a = clamp(alpha, 1e-6, 5);
+  return Math.sqrt(Math.log(1 + a));
+}
+
+function overdispersedPoissonSample(meanM: number, alpha: number) {
+  const m = Math.max(0, meanM);
+  if (m <= 0) return 0;
+
+  const sigma = sigmaFromAlpha(alpha);
+  // lognormal with mean 1: exp(sigma*z - 0.5*sigma^2)
+  const z = randNormal();
+  const mult = Math.exp(sigma * z - 0.5 * sigma * sigma);
+  return poissonSample(m * mult);
+}
+
+// -------------------------
 // Weather (Open-Meteo)
 // -------------------------
 async function geocodeCity(city: string) {
@@ -128,8 +193,8 @@ function weatherMultipliers(w: { temperatureC: number; precipitationMm: number; 
   const rain = w.precipitationMm ?? 0;
   const wind = w.windKmh ?? 0;
 
-  const rainLevel = clamp(rain / 5, 0, 2); // 0..2
-  const windLevel = clamp((wind - 15) / 20, 0, 2); // penalize >15 km/h
+  const rainLevel = clamp(rain / 5, 0, 2);
+  const windLevel = clamp((wind - 15) / 20, 0, 2);
 
   const goals = clamp(1 - 0.04 * rainLevel - 0.03 * windLevel, 0.85, 1.05);
   const shots = clamp(1 - 0.03 * rainLevel - 0.02 * windLevel, 0.88, 1.05);
@@ -175,7 +240,6 @@ function injuryMultipliers(injuries: any[] | null) {
         }
       }
 
-      // Conservative + capped
       const homeAttack = clamp(1 - 0.02 * homeMissing - 0.01 * homeQuestionable, 0.85, 1);
       const awayAttack = clamp(1 - 0.02 * awayMissing - 0.01 * awayQuestionable, 0.85, 1);
 
@@ -208,7 +272,7 @@ function competitionMultipliers(leagueName: string | null) {
     goals *= 0.97;
     shots *= 0.95;
     shotsOnTarget *= 0.95;
-    cards *= 0.80;
+    cards *= 0.8;
   }
 
   if (isCup || isUcl || isInternational) {
@@ -226,20 +290,25 @@ function competitionMultipliers(leagueName: string | null) {
 }
 
 // -------------------------
-// Dixon–Coles goals model
+// Dixon–Coles (no logGamma needed)
+// We'll use factorial table up to 15
 // -------------------------
-function factorial(n: number) {
-  let r = 1;
-  for (let i = 2; i <= n; i++) r *= i;
-  return r;
-}
+const FACT: number[] = (() => {
+  const f = [1];
+  for (let i = 1; i <= 25; i++) f[i] = f[i - 1] * i;
+  return f;
+})();
 
 function poissonPmf(k: number, lambda: number) {
   if (k < 0) return 0;
-  return Math.exp(-lambda) * Math.pow(lambda, k) / factorial(k);
+  if (lambda <= 0) return k === 0 ? 1 : 0;
+  const kk = Math.min(k, 25);
+  const denom = FACT[kk] || 1;
+  // For safety if k > 25 (we never go that high in goals)
+  if (k > 25) return 0;
+  return Math.exp(-lambda) * Math.pow(lambda, k) / denom;
 }
 
-// Dixon–Coles tau adjustment (classic)
 function dcTau(x: number, y: number, lambda: number, mu: number, rho: number) {
   if (x === 0 && y === 0) return 1 - lambda * mu * rho;
   if (x === 0 && y === 1) return 1 + lambda * rho;
@@ -248,7 +317,6 @@ function dcTau(x: number, y: number, lambda: number, mu: number, rho: number) {
   return 1;
 }
 
-// score matrix with DC, normalized
 function dcScoreMatrix(lambda: number, mu: number, rho: number, maxGoals = 7) {
   const mat: { home: number; away: number; p: number }[] = [];
   let total = 0;
@@ -262,11 +330,7 @@ function dcScoreMatrix(lambda: number, mu: number, rho: number, maxGoals = 7) {
     }
   }
 
-  // normalize to 1 (within grid)
-  if (total > 0) {
-    for (const s of mat) s.p = s.p / total;
-  }
-
+  if (total > 0) for (const s of mat) s.p = s.p / total;
   return mat;
 }
 
@@ -282,7 +346,7 @@ function oneXtwoFromScores(scores: { home: number; away: number; p: number }[]) 
   return { pH, pD, pA };
 }
 
-function topScores(scores: { home: number; away: number; p: number }[], topN = 8) {
+function topScores(scores: { home: number; away: number; p: number }[], topN = 10) {
   return [...scores]
     .sort((a, b) => b.p - a.p)
     .slice(0, topN)
@@ -291,76 +355,6 @@ function topScores(scores: { home: number; away: number; p: number }[], topN = 8
       p: toPct(s.p),
       fairOdd: fairOddFromProb(s.p),
     }));
-}
-
-// -------------------------
-// Negative Binomial (counts)
-// Parameterization: mean = m, alpha = overdispersion (Var = m + alpha*m^2)
-// r = 1/alpha, p = r/(r+m)
-// -------------------------
-
-// log-gamma (Lanczos approximation)
-function logGamma(z: number) {
-  const p = [
-    676.5203681218851,
-    -1259.1392167224028,
-    771.3234287776531,
-    -176.6150291621406,
-    12.507343278686905,
-    -0.13857109526572012,
-    9.984369578019572e-6,
-    1.5056327351493116e-7,
-  ];
-  if (z < 0.5) {
-    return Math.log(Math.PI) - Math.log(Math.sin(Math.PI * z)) - logGamma(1 - z);
-  }
-  z -= 1;
-  let x = 0.9999999999998099;
-  for (let i = 0; i < p.length; i++) x += p[i] / (z + i + 1);
-  const t = z + p.length - 0.5;
-  return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x);
-}
-
-function nbPmf(k: number, meanM: number, alpha: number) {
-  if (k < 0) return 0;
-  const a = clamp(alpha, 1e-6, 10);
-  const r = 1 / a; // shape
-  const p = r / (r + meanM); // success prob in NB(r,p)
-  // pmf = C(k+r-1, k) * (1-p)^k * p^r
-  // use logs for stability
-  const logCoef = logGamma(k + r) - logGamma(r) - logGamma(k + 1);
-  const logP = logCoef + k * Math.log(1 - p) + r * Math.log(p);
-  return Math.exp(logP);
-}
-
-function nbCdf(k: number, meanM: number, alpha: number) {
-  // sum pmf up to k
-  let s = 0;
-  for (let i = 0; i <= k; i++) s += nbPmf(i, meanM, alpha);
-  return clamp(s, 0, 1);
-}
-
-function buildLinesNB(meanM: number, alpha: number, lines: number[]) {
-  return lines.map((line) => {
-    const k = Math.floor(line + 0.5); // 2.5->3
-    const pUnder = nbCdf(k - 1, meanM, alpha);
-    const pOver = 1 - pUnder;
-    return {
-      line,
-      over: { p: toPct(pOver), fairOdd: fairOddFromProb(pOver) },
-      under: { p: toPct(pUnder), fairOdd: fairOddFromProb(pUnder) },
-    };
-  });
-}
-
-function estimateAlphaFromTotals(totals: number[]) {
-  // alpha = (var - mean) / mean^2
-  const m = mean(totals);
-  if (m <= 0 || totals.length < 5) return 0.15; // sane default
-  const v = variance(totals);
-  const a = (v - m) / (m * m);
-  // clamp to stable range
-  return clamp(isFinite(a) ? a : 0.15, 0.03, 0.8);
 }
 
 // -------------------------
@@ -383,6 +377,34 @@ type Agg = {
 };
 
 // -------------------------
+// Helpers
+// -------------------------
+function safeRate(num: number, den: number, fallback: number, lo: number, hi: number) {
+  if (!isFinite(num) || !isFinite(den) || den <= 0) return clamp(fallback, lo, hi);
+  return clamp(num / den, lo, hi);
+}
+
+function lineProbFromSamples(samples: number[], line: number) {
+  const k = Math.floor(line + 0.5); // Over x.5 => >= x+1
+  const overCount = samples.filter((v) => v >= k).length;
+  const pOver = overCount / Math.max(1, samples.length);
+  const pUnder = 1 - pOver;
+  return {
+    line,
+    over: { p: toPct(pOver), fairOdd: fairOddFromProb(pOver) },
+    under: { p: toPct(pUnder), fairOdd: fairOddFromProb(pUnder) },
+  };
+}
+
+function estimateAlphaFromTotals(totals: number[]) {
+  const m = mean(totals);
+  if (m <= 0 || totals.length < 5) return 0.15;
+  const v = variance(totals);
+  const a = (v - m) / (m * m);
+  return clamp(isFinite(a) ? a : 0.15, 0.03, 0.8);
+}
+
+// -------------------------
 // Route
 // -------------------------
 export async function GET(req: Request) {
@@ -390,6 +412,8 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const fixtureId = searchParams.get("fixture");
     const lastN = parseInt(searchParams.get("last") || "10", 10);
+    const simsRaw = parseInt(searchParams.get("sims") || "25000", 10);
+    const sims = clamp(isFinite(simsRaw) ? simsRaw : 25000, 5000, 50000);
 
     if (!fixtureId) return NextResponse.json({ error: "Missing fixture" }, { status: 400 });
 
@@ -405,12 +429,17 @@ export async function GET(req: Request) {
     const league = fixture?.league;
     const venue = fixture?.fixture?.venue;
     const kickoffIso = fixture?.fixture?.date;
+    const statusShort = fixture?.fixture?.status?.short;
+
+    if (!home?.id || !away?.id || !league?.id || !league?.season) {
+      return NextResponse.json({ error: "Fixture missing team/league data" }, { status: 500 });
+    }
 
     // 2) Injuries
     const injRes = await apiFootballFetch(`/injuries?fixture=${fixtureId}`);
     const injuries = injRes.ok ? injRes.json?.response || [] : [];
 
-    // 3) Call your team-context endpoints
+    // 3) team-context endpoints
     const baseUrl = new URL(req.url);
     const origin = `${baseUrl.protocol}//${baseUrl.host}`;
 
@@ -429,71 +458,19 @@ export async function GET(req: Request) {
     const homeAgg: Agg = homeCtx?.agg;
     const awayAgg: Agg = awayCtx?.agg;
 
-    // 4) Build home/away splits for goals (for DC)
+    if (!homeAgg || !awayAgg) {
+      return NextResponse.json(
+        { error: "Missing team-context agg for one team", homeAgg, awayAgg },
+        { status: 500 }
+      );
+    }
+
     const homeMatches = (homeCtx?.perMatch || []).filter((m: any) => m.status === "FT");
     const awayMatches = (awayCtx?.perMatch || []).filter((m: any) => m.status === "FT");
 
-    const homeAtHome = homeMatches.filter((m: any) => m.isHome === true);
-    const awayAtAway = awayMatches.filter((m: any) => m.isHome === false);
-
-    const homeGoalsForHome = homeAtHome.length ? mean(homeAtHome.map((m: any) => m.goalsFor ?? 0)) : homeAgg.goalsForAvg;
-    const homeGoalsAgainstHome = homeAtHome.length ? mean(homeAtHome.map((m: any) => m.goalsAgainst ?? 0)) : homeAgg.goalsAgainstAvg;
-
-    const awayGoalsForAway = awayAtAway.length ? mean(awayAtAway.map((m: any) => m.goalsFor ?? 0)) : awayAgg.goalsForAvg;
-    const awayGoalsAgainstAway = awayAtAway.length ? mean(awayAtAway.map((m: any) => m.goalsAgainst ?? 0)) : awayAgg.goalsAgainstAvg;
-
-    // Base lambdas per team
-    let lambdaHomeGoals = (homeGoalsForHome + awayGoalsAgainstAway) / 2;
-    let lambdaAwayGoals = (awayGoalsForAway + homeGoalsAgainstHome) / 2;
-
-    // Base totals for other markets (mean)
-    let meanCornersTotal =
-      (homeAgg.cornersForAvg + awayAgg.cornersAgainstAvg + awayAgg.cornersForAvg + homeAgg.cornersAgainstAvg) / 2;
-
-    let meanCardsTotal =
-      (homeAgg.yellowsForAvg + awayAgg.yellowsAgainstAvg + awayAgg.yellowsForAvg + homeAgg.yellowsAgainstAvg) / 2;
-
-    let meanShotsTotal =
-      (homeAgg.shotsForAvg + awayAgg.shotsAgainstAvg + awayAgg.shotsForAvg + homeAgg.shotsAgainstAvg) / 2;
-
-    let meanSoTTotal =
-      (homeAgg.shotsOnTargetForAvg +
-        awayAgg.shotsOnTargetAgainstAvg +
-        awayAgg.shotsOnTargetForAvg +
-        homeAgg.shotsOnTargetAgainstAvg) /
-      2;
-
-    // 5) Estimate dispersion alpha from empirical match totals (from perMatch)
-    // We use totals per match from each team's recent games as proxies; then average both.
-    const cornersTotals = [
-      ...homeMatches.map((m: any) => (m.cornersFor ?? 0) + (m.cornersAgainst ?? 0)),
-      ...awayMatches.map((m: any) => (m.cornersFor ?? 0) + (m.cornersAgainst ?? 0)),
-    ].filter((x: any) => typeof x === "number" && isFinite(x));
-
-    const cardsTotals = [
-      ...homeMatches.map((m: any) => (m.yellowsFor ?? 0) + (m.yellowsAgainst ?? 0)),
-      ...awayMatches.map((m: any) => (m.yellowsFor ?? 0) + (m.yellowsAgainst ?? 0)),
-    ].filter((x: any) => typeof x === "number" && isFinite(x));
-
-    const shotsTotals = [
-      ...homeMatches.map((m: any) => (m.shotsFor ?? 0) + (m.shotsAgainst ?? 0)),
-      ...awayMatches.map((m: any) => (m.shotsFor ?? 0) + (m.shotsAgainst ?? 0)),
-    ].filter((x: any) => typeof x === "number" && isFinite(x));
-
-    const sotTotals = [
-      ...homeMatches.map((m: any) => (m.shotsOnTargetFor ?? 0) + (m.shotsOnTargetAgainst ?? 0)),
-      ...awayMatches.map((m: any) => (m.shotsOnTargetFor ?? 0) + (m.shotsOnTargetAgainst ?? 0)),
-    ].filter((x: any) => typeof x === "number" && isFinite(x));
-
-    const alphaCorners = estimateAlphaFromTotals(cornersTotals);
-    const alphaCards = estimateAlphaFromTotals(cardsTotals);
-    const alphaShots = estimateAlphaFromTotals(shotsTotals);
-    const alphaSoT = estimateAlphaFromTotals(sotTotals);
-
-    // 6) Context multipliers
+    // 4) Context multipliers
     const inj = injuryMultipliers(injuries);
     const injBuilt = inj.buildForTeams(home.id, away.id);
-
     const comp = competitionMultipliers(league?.name || null);
 
     let weather: any = null;
@@ -506,72 +483,156 @@ export async function GET(req: Request) {
     }
     const wMult = weatherMultipliers(weather);
 
-    // Apply context to goals (team-level)
-    lambdaHomeGoals =
-      lambdaHomeGoals *
-      injBuilt.mult.homeAttack *
-      injBuilt.mult.awayConcede *
-      comp.goals *
-      wMult.goals;
+    // -------------------------
+    // PRO: Shots means (home/away) from (for + conceded)/2
+    // -------------------------
+    let meanShotsHome = (homeAgg.shotsForAvg + awayAgg.shotsAgainstAvg) / 2;
+    let meanShotsAway = (awayAgg.shotsForAvg + homeAgg.shotsAgainstAvg) / 2;
 
-    lambdaAwayGoals =
-      lambdaAwayGoals *
-      injBuilt.mult.awayAttack *
-      injBuilt.mult.homeConcede *
-      comp.goals *
-      wMult.goals;
+    // Apply context
+    meanShotsHome = meanShotsHome * injBuilt.mult.homeAttack * injBuilt.mult.awayConcede * comp.shots * wMult.shots;
+    meanShotsAway = meanShotsAway * injBuilt.mult.awayAttack * injBuilt.mult.homeConcede * comp.shots * wMult.shots;
 
-    // Apply context to totals markets (mean)
-    meanCornersTotal = meanCornersTotal * comp.corners * wMult.corners;
-    meanCardsTotal = meanCardsTotal * comp.cards * wMult.cards;
-    meanShotsTotal = meanShotsTotal * comp.shots * wMult.shots;
-    meanSoTTotal = meanSoTTotal * comp.shotsOnTarget * wMult.shotsOnTarget;
+    meanShotsHome = clamp(meanShotsHome, 4, 30);
+    meanShotsAway = clamp(meanShotsAway, 4, 30);
 
-    // Safety clamps
-    lambdaHomeGoals = clamp(lambdaHomeGoals, 0.2, 4.5);
-    lambdaAwayGoals = clamp(lambdaAwayGoals, 0.2, 4.5);
+    // Shots dispersion alpha from variance (team series)
+    const homeShotsForSeries = homeMatches.map((m: any) => m.shotsFor ?? 0).filter((x: any) => isFinite(x));
+    const awayShotsForSeries = awayMatches.map((m: any) => m.shotsFor ?? 0).filter((x: any) => isFinite(x));
+    const alphaShotsHome = estimateAlphaFromTotals(homeShotsForSeries.length ? homeShotsForSeries : [meanShotsHome]);
+    const alphaShotsAway = estimateAlphaFromTotals(awayShotsForSeries.length ? awayShotsForSeries : [meanShotsAway]);
 
-    meanCornersTotal = clamp(meanCornersTotal, 4, 15);
-    meanCardsTotal = clamp(meanCardsTotal, 1.5, 8.5);
-    meanShotsTotal = clamp(meanShotsTotal, 12, 40);
-    meanSoTTotal = clamp(meanSoTTotal, 3, 16);
+    // p(SoT|Shot)
+    const pSotTeamHome = safeRate(homeAgg.shotsOnTargetForAvg, homeAgg.shotsForAvg, 0.32, 0.15, 0.55);
+    const pSotTeamAway = safeRate(awayAgg.shotsOnTargetForAvg, awayAgg.shotsForAvg, 0.32, 0.15, 0.55);
 
-    // 7) Dixon–Coles rho estimation (lightweight + stable)
-    // Typical rho is slightly negative (inflates 0-0 / 1-0 / 0-1 / 1-1 patterns).
-    // We adjust rho by "low scoring tendency" using recent totals.
-    const recentGoalsTotals = [
-      ...homeMatches.map((m: any) => (m.goalsFor ?? 0) + (m.goalsAgainst ?? 0)),
-      ...awayMatches.map((m: any) => (m.goalsFor ?? 0) + (m.goalsAgainst ?? 0)),
+    const pSotConcedeByAway = safeRate(awayAgg.shotsOnTargetAgainstAvg, awayAgg.shotsAgainstAvg, 0.32, 0.15, 0.55);
+    const pSotConcedeByHome = safeRate(homeAgg.shotsOnTargetAgainstAvg, homeAgg.shotsAgainstAvg, 0.32, 0.15, 0.55);
+
+    let pSotHome = Math.sqrt(pSotTeamHome * pSotConcedeByAway);
+    let pSotAway = Math.sqrt(pSotTeamAway * pSotConcedeByHome);
+
+    pSotHome = clamp(pSotHome * clamp(wMult.shotsOnTarget / wMult.shots, 0.9, 1.05), 0.12, 0.60);
+    pSotAway = clamp(pSotAway * clamp(wMult.shotsOnTarget / wMult.shots, 0.9, 1.05), 0.12, 0.60);
+
+    // p(Goal|SoT)
+    const pGoalTeamHome = safeRate(homeAgg.goalsForAvg, homeAgg.shotsOnTargetForAvg, 0.28, 0.10, 0.45);
+    const pGoalTeamAway = safeRate(awayAgg.goalsForAvg, awayAgg.shotsOnTargetForAvg, 0.28, 0.10, 0.45);
+
+    const pGoalConcedeByAway = safeRate(awayAgg.goalsAgainstAvg, awayAgg.shotsOnTargetAgainstAvg, 0.28, 0.10, 0.50);
+    const pGoalConcedeByHome = safeRate(homeAgg.goalsAgainstAvg, homeAgg.shotsOnTargetAgainstAvg, 0.28, 0.10, 0.50);
+
+    let pGoalHome = Math.sqrt(pGoalTeamHome * pGoalConcedeByAway);
+    let pGoalAway = Math.sqrt(pGoalTeamAway * pGoalConcedeByHome);
+
+    pGoalHome = clamp(pGoalHome * injBuilt.mult.homeAttack, 0.08, 0.55);
+    pGoalAway = clamp(pGoalAway * injBuilt.mult.awayAttack, 0.08, 0.55);
+
+    // -------------------------
+    // Corners/Cards (totals) means + alpha
+    // -------------------------
+    let meanCornersTotal =
+      (homeAgg.cornersForAvg + awayAgg.cornersAgainstAvg + awayAgg.cornersForAvg + homeAgg.cornersAgainstAvg) / 2;
+    let meanCardsTotal =
+      (homeAgg.yellowsForAvg + awayAgg.yellowsAgainstAvg + awayAgg.yellowsForAvg + homeAgg.yellowsAgainstAvg) / 2;
+
+    meanCornersTotal = clamp(meanCornersTotal * comp.corners * wMult.corners, 4, 15);
+    meanCardsTotal = clamp(meanCardsTotal * comp.cards * wMult.cards, 1.5, 9);
+
+    const cornersTotals = [
+      ...homeMatches.map((m: any) => (m.cornersFor ?? 0) + (m.cornersAgainst ?? 0)),
+      ...awayMatches.map((m: any) => (m.cornersFor ?? 0) + (m.cornersAgainst ?? 0)),
     ].filter((x: any) => typeof x === "number" && isFinite(x));
 
-    const recentGoalsMean = mean(recentGoalsTotals);
-    // More low-scoring => more negative rho (within safe range)
+    const cardsTotals = [
+      ...homeMatches.map((m: any) => (m.yellowsFor ?? 0) + (m.yellowsAgainst ?? 0)),
+      ...awayMatches.map((m: any) => (m.yellowsFor ?? 0) + (m.yellowsAgainst ?? 0)),
+    ].filter((x: any) => typeof x === "number" && isFinite(x));
+
+    const alphaCorners = estimateAlphaFromTotals(cornersTotals.length ? cornersTotals : [meanCornersTotal]);
+    const alphaCards = estimateAlphaFromTotals(cardsTotals.length ? cardsTotals : [meanCardsTotal]);
+
+    // -------------------------
+    // Monte Carlo:
+    // Shots totals, SoT totals, Goals -> lambdas
+    // Corners totals, Cards totals via Poisson-lognormal
+    // -------------------------
+    const simShotsTotal: number[] = [];
+    const simSoTTotal: number[] = [];
+    const simGoalsHome: number[] = [];
+    const simGoalsAway: number[] = [];
+    const simGoalsTotal: number[] = [];
+    const simCornersTotal: number[] = [];
+    const simCardsTotal: number[] = [];
+
+    let sumGH = 0,
+      sumGA = 0,
+      sumShotsT = 0,
+      sumSoTT = 0,
+      sumCT = 0,
+      sumCardsT = 0;
+
+    for (let i = 0; i < sims; i++) {
+      const shotsH = overdispersedPoissonSample(meanShotsHome, alphaShotsHome);
+      const shotsA = overdispersedPoissonSample(meanShotsAway, alphaShotsAway);
+
+      const sotH = binomialSample(shotsH, pSotHome);
+      const sotA = binomialSample(shotsA, pSotAway);
+
+      const goalsH = binomialSample(sotH, pGoalHome);
+      const goalsA = binomialSample(sotA, pGoalAway);
+
+      const cornersT = overdispersedPoissonSample(meanCornersTotal, alphaCorners);
+      const cardsT = overdispersedPoissonSample(meanCardsTotal, alphaCards);
+
+      const shotsT = shotsH + shotsA;
+      const sotT = sotH + sotA;
+      const goalsT = goalsH + goalsA;
+
+      simShotsTotal.push(shotsT);
+      simSoTTotal.push(sotT);
+      simGoalsHome.push(goalsH);
+      simGoalsAway.push(goalsA);
+      simGoalsTotal.push(goalsT);
+      simCornersTotal.push(cornersT);
+      simCardsTotal.push(cardsT);
+
+      sumGH += goalsH;
+      sumGA += goalsA;
+      sumShotsT += shotsT;
+      sumSoTT += sotT;
+      sumCT += cornersT;
+      sumCardsT += cardsT;
+    }
+
+    const lambdaHome = sumGH / sims;
+    const lambdaAway = sumGA / sims;
+
+    // -------------------------
+    // Dixon–Coles (score/1X2) with lambdas from chain
+    // -------------------------
+    const expectedGoalsTotal = lambdaHome + lambdaAway;
     let rho = -0.08;
-    if (recentGoalsMean <= 2.0) rho = -0.12;
-    else if (recentGoalsMean >= 3.2) rho = -0.05;
+    if (expectedGoalsTotal <= 2.0) rho = -0.12;
+    else if (expectedGoalsTotal >= 3.2) rho = -0.05;
     rho = clamp(rho, -0.2, 0.05);
 
-    const dcScores = dcScoreMatrix(lambdaHomeGoals, lambdaAwayGoals, rho, 7);
+    const dcScores = dcScoreMatrix(lambdaHome, lambdaAway, rho, 7);
     const oneXtwo = oneXtwoFromScores(dcScores);
     const top = topScores(dcScores, 10);
 
-    // Totals goals from DC matrix (for O/U goals with correlation respected)
-    // We compute P(total <= t) by summing score probs
-    function goalsTotalProbOver(line: number) {
-      const k = Math.floor(line + 0.5); // 2.5 -> 3
-      let pUnder = 0; // P(total <= k-1)
+    function goalsTotalProbOverFromDC(line: number) {
+      const k = Math.floor(line + 0.5);
+      let pUnder = 0;
       for (const s of dcScores) {
         if (s.home + s.away <= k - 1) pUnder += s.p;
       }
       return 1 - pUnder;
     }
-    function goalsTotalProbUnder(line: number) {
-      return 1 - goalsTotalProbOver(line);
-    }
 
     const goalsLines = [0.5, 1.5, 2.5, 3.5, 4.5].map((line) => {
-      const pOver = clamp(goalsTotalProbOver(line), 0, 1);
-      const pUnder = clamp(goalsTotalProbUnder(line), 0, 1);
+      const pOver = clamp(goalsTotalProbOverFromDC(line), 0, 1);
+      const pUnder = 1 - pOver;
       return {
         line,
         over: { p: toPct(pOver), fairOdd: fairOddFromProb(pOver) },
@@ -579,43 +640,45 @@ export async function GET(req: Request) {
       };
     });
 
-    // 8) Markets
+    const shotsLines = [15.5, 17.5, 19.5, 21.5, 23.5, 25.5].map((l) => lineProbFromSamples(simShotsTotal, l));
+    const sotLines = [5.5, 6.5, 7.5, 8.5, 9.5].map((l) => lineProbFromSamples(simSoTTotal, l));
+    const cornersLines = [5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5].map((l) => lineProbFromSamples(simCornersTotal, l));
+    const cardsLines = [2.5, 3.5, 4.5, 5.5, 6.5].map((l) => lineProbFromSamples(simCardsTotal, l));
+
     const markets = {
       goals: {
-        model: "Dixon–Coles (bivariate Poisson adjusted)",
-        lambdaHome: Math.round(lambdaHomeGoals * 100) / 100,
-        lambdaAway: Math.round(lambdaAwayGoals * 100) / 100,
+        model: "Chain (Shots->SoT->Goals) for λ + Dixon–Coles for score/1X2",
+        lambdaHome: Math.round(lambdaHome * 100) / 100,
+        lambdaAway: Math.round(lambdaAway * 100) / 100,
         rho: Math.round(rho * 1000) / 1000,
         lines: goalsLines,
       },
       corners: {
-        model: "Negative Binomial (overdispersion)",
-        mean: Math.round(meanCornersTotal * 100) / 100,
+        model: "Poisson-Lognormal (NB-like overdispersion) + Monte Carlo lines",
+        mean: Math.round((sumCT / sims) * 100) / 100,
         alpha: Math.round(alphaCorners * 1000) / 1000,
-        lines: buildLinesNB(meanCornersTotal, alphaCorners, [5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5]),
+        lines: cornersLines,
       },
       cards: {
-        model: "Negative Binomial (overdispersion)",
-        mean: Math.round(meanCardsTotal * 100) / 100,
+        model: "Poisson-Lognormal (NB-like overdispersion) + Monte Carlo lines",
+        mean: Math.round((sumCardsT / sims) * 100) / 100,
         alpha: Math.round(alphaCards * 1000) / 1000,
-        lines: buildLinesNB(meanCardsTotal, alphaCards, [2.5, 3.5, 4.5, 5.5, 6.5]),
+        lines: cardsLines,
       },
       shots: {
-        model: "Negative Binomial (overdispersion)",
-        mean: Math.round(meanShotsTotal * 100) / 100,
-        alpha: Math.round(alphaShots * 1000) / 1000,
-        lines: buildLinesNB(meanShotsTotal, alphaShots, [15.5, 17.5, 19.5, 21.5, 23.5, 25.5]),
+        model: "Overdispersed Poisson per team + Monte Carlo totals",
+        meanTotal: Math.round((sumShotsT / sims) * 100) / 100,
+        lines: shotsLines,
       },
       shotsOnTarget: {
-        model: "Negative Binomial (overdispersion)",
-        mean: Math.round(meanSoTTotal * 100) / 100,
-        alpha: Math.round(alphaSoT * 1000) / 1000,
-        lines: buildLinesNB(meanSoTTotal, alphaSoT, [5.5, 6.5, 7.5, 8.5, 9.5]),
+        model: "Binomial(SoT|Shots) per team + Monte Carlo totals",
+        meanTotal: Math.round((sumSoTT / sims) * 100) / 100,
+        lines: sotLines,
       },
     };
 
     const quiniela = {
-      model: "Dixon–Coles 1X2 + exact scores",
+      model: "Dixon–Coles 1X2 + exact scores (λ from chain model)",
       "1": { p: toPct(oneXtwo.pH), fairOdd: fairOddFromProb(oneXtwo.pH) },
       "X": { p: toPct(oneXtwo.pD), fairOdd: fairOddFromProb(oneXtwo.pD) },
       "2": { p: toPct(oneXtwo.pA), fairOdd: fairOddFromProb(oneXtwo.pA) },
@@ -626,12 +689,12 @@ export async function GET(req: Request) {
       fixture: {
         id: fixture?.fixture?.id,
         date: kickoffIso,
-        status: fixture?.fixture?.status?.short,
+        status: statusShort,
         league: { id: league?.id, name: league?.name, country: league?.country, season: league?.season, round: league?.round },
         venue: { id: venue?.id, name: venue?.name, city: venue?.city },
         teams: { home: { id: home?.id, name: home?.name }, away: { id: away?.id, name: away?.name } },
       },
-      inputs: { lastN },
+      inputs: { lastN, sims },
       context: {
         injuriesCount: injBuilt.counts,
         injuryMultipliers: injBuilt.mult,
@@ -639,12 +702,21 @@ export async function GET(req: Request) {
         weather: weather
           ? { ...weather, geo: weatherGeo, multipliers: wMult, note: wMult.note }
           : { geo: weatherGeo || null, multipliers: wMult, note: wMult.note },
+        chainParams: {
+          meanShotsHome: Math.round(meanShotsHome * 100) / 100,
+          meanShotsAway: Math.round(meanShotsAway * 100) / 100,
+          alphaShotsHome: Math.round(alphaShotsHome * 1000) / 1000,
+          alphaShotsAway: Math.round(alphaShotsAway * 1000) / 1000,
+          pSotHome: Math.round(pSotHome * 1000) / 1000,
+          pSotAway: Math.round(pSotAway * 1000) / 1000,
+          pGoalHome: Math.round(pGoalHome * 1000) / 1000,
+          pGoalAway: Math.round(pGoalAway * 1000) / 1000,
+          note: "Modelo causal aproximado: Shots -> SoT -> Goals con efectos de rival + contexto.",
+        },
         dispersion: {
-          cornersAlpha: Math.round(alphaCorners * 1000) / 1000,
-          cardsAlpha: Math.round(alphaCards * 1000) / 1000,
-          shotsAlpha: Math.round(alphaShots * 1000) / 1000,
-          sotAlpha: Math.round(alphaSoT * 1000) / 1000,
-          note: "Alpha controla sobre-dispersión (varianza > media). Estimado de históricos recientes.",
+          alphaCorners: Math.round(alphaCorners * 1000) / 1000,
+          alphaCards: Math.round(alphaCards * 1000) / 1000,
+          note: "Alpha calibrada con Var ≈ mean + alpha*mean^2. Implementación Poisson-Lognormal equivalente práctica.",
         },
         baseAgg: { homeAgg, awayAgg },
       },
@@ -653,12 +725,11 @@ export async function GET(req: Request) {
       glossary: {
         p: "probabilidad (%)",
         fairOdd: "cuota justa (odd mínima) = 1 / prob",
-        mean: "media esperada del conteo",
-        alpha: "overdispersion (Var = mean + alpha*mean^2)",
+        alpha: "overdispersion (Var ≈ mean + alpha*mean^2)",
         rho: "corrección Dixon–Coles (correlación en marcadores bajos)",
+        sims: "número de simulaciones Monte Carlo",
       },
-      disclaimer:
-        "Modelo probabilístico orientativo. No garantiza resultados. Úsalo para análisis y gestión de riesgo, no como certeza.",
+      disclaimer: "Modelo probabilístico orientativo: no garantiza resultados. Úsalo para análisis y control de riesgo, no como certeza.",
     });
   } catch (e: any) {
     return NextResponse.json({ error: "predict/match failed", message: e?.message || String(e) }, { status: 500 });
