@@ -837,7 +837,7 @@ const upset = buildUpsetRisk(
     // -------------------------
     // LÍNEAS AMPLIADAS (A)
     // -------------------------
-    const goalsLinesWanted = [0.5, 1.5, 2.5, 3.5, 4.5, 5.5];
+    const goalsLinesWanted = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.5, 8.5];
 
     const goalsLines = goalsLinesWanted.map((line) => {
       const pOver = clamp(goalsTotalProbOverFromDC(line), 0, 1);
@@ -849,14 +849,14 @@ const upset = buildUpsetRisk(
       };
     });
 
-    const shotsLinesWanted = mkHalfLines(14.5, 32.5, 2); // 14.5,16.5,...,32.5
-    const sotLinesWanted = mkHalfLines(3.5, 12.5, 1); // 3.5,4.5,...,12.5
+    const shotsLinesWanted = mkHalfLines(8.5, 40.5, 2);   // + abajo y + arriba
+const sotLinesWanted = mkHalfLines(1.5, 16.5, 1);     // + abajo y + arriba
 
     const shotsLines = shotsLinesWanted.map((l) => lineProbFromSamples(simShotsTotal, l));
     const sotLines = sotLinesWanted.map((l) => lineProbFromSamples(simSoTTotal, l));
 
-    const cornersLinesWanted = mkHalfLines(5.5, 12.5, 1); // 5.5..12.5
-    const cardsLinesWanted = mkHalfLines(1.5, 7.5, 1); // 1.5..7.5
+    const cornersLinesWanted = mkHalfLines(3.5, 16.5, 1); // + abajo y + arriba
+const cardsLinesWanted = mkHalfLines(0.5, 10.5, 1);   // + abajo y + arriba
 
     const markets = {
       goals: {
