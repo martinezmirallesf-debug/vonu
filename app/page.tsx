@@ -10,7 +10,6 @@ import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 import ReactMarkdown from "react-markdown";
 import ChalkboardTutorBoard from "@/app/components/ChalkboardTutorBoard";
 
-import { FootballPredictionCards } from "@/app/components/FootballPredictionCards";
 
 type Placement = { x: number; y: number; w: number; h: number };
 
@@ -536,7 +535,7 @@ export default function Page() {
             backgroundPosition: "0 0, 13px 19px",
           }}
         >
-          {lines.slice(0, shown).map((l, i) => (
+          {lines.map((l, i) => (
             <div
               key={`${i}-${l?.slice?.(0, 10) ?? ""}`}
               className="whitespace-pre-wrap break-words"
