@@ -5,14 +5,26 @@ export const runtime = "nodejs";
 
 const API_BASE = "https://v3.football.api-sports.io";
 
-function requiredEnv(name: string) {
-  const v = process.env[name];
-  if (!v) throw new Error(`Missing env var: ${name}`);
-  return v;
+function getApiKey() {
+  // Acepta varios nombres (por si hay duplicados en Vercel)
+  const key =
+    process.env.APIFOOTBALL_KEY ||
+    process.env.API_FOOTBALL_KEY ||
+    process.env.APISPORTS_KEY ||
+    process.env.API_SPORTS_KEY ||
+    process.env.API_FOOTBALL_API_KEY;
+
+  if (!key) {
+    throw new Error(
+      "Falta la API key. Configura en Vercel una de estas variables: APIFOOTBALL_KEY o API_FOOTBALL_KEY (recomendado)."
+    );
+  }
+  return key;
 }
 
+
 async function apiFootballFetch(path: string) {
-  const key = requiredEnv("APIFOOTBALL_KEY");
+  const key = getApiKey();
 
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { "x-apisports-key": key },
