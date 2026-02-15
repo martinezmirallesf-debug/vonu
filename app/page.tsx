@@ -535,7 +535,7 @@ export default function Page() {
             backgroundPosition: "0 0, 13px 19px",
           }}
         >
-          {lines.map((l, i) => (
+          {lines.slice(0, shown).map((l, i) => (
             <div
               key={`${i}-${l?.slice?.(0, 10) ?? ""}`}
               className="whitespace-pre-wrap break-words"
@@ -2374,56 +2374,91 @@ function toggleMic() {
   pizarraValue?: string | null
 ) {
   return {
-    // ✅ Bloques de código
-    code({ inline, className, children, ...props }: any) {
-      const isInline = !!inline;
+  // ✅ Lista ordenada con contador “badge” (como tu captura)
+  ol({ children, ...props }: any) {
+    return (
+      <ol className="my-3 space-y-2 list-none [counter-reset:item]" {...props}>
+        {children}
+      </ol>
+    );
+  },
 
-      const cn = typeof className === "string" ? className : "";
-      const match = cn.match(/language-([a-zA-Z0-9_-]+)/);
-      const lang = (match?.[1] || "").toLowerCase();
+  li({ children, ...props }: any) {
+    return (
+      <li
+        className="
+          relative pl-10 leading-relaxed text-zinc-900
+          before:absolute before:left-0 before:top-0.5
+          before:inline-flex before:h-6 before:w-6 before:items-center before:justify-center
+          before:rounded-md before:border before:border-blue-200
+          before:bg-blue-50 before:text-blue-700 before:text-xs before:font-semibold
+          before:[counter-increment:item] before:content-[counter(item)]
+        "
+        {...props}
+      >
+        {children}
+      </li>
+    );
+  },
 
-      const content = Array.isArray(children) ? children.join("") : String(children ?? "");
-      const clean = content.replace(/\n$/, "");
+  // ✅ Negritas “bonitas” (azul)
+  strong({ children, ...props }: any) {
+    return (
+      <strong className="font-semibold text-blue-700" {...props}>
+        {children}
+      </strong>
+    );
+  },
 
-      // ✅ PIZARRA: si viene ```pizarra``` o ```whiteboard``` => texto "cuaderno", NO código
-      if (!isInline && (lang === "pizarra" || lang === "whiteboard")) {
-        const boardValue = pizarraValue && String(pizarraValue).trim() ? String(pizarraValue) : clean;
+  // ✅ Bloques de código
+  code({ inline, className, children, ...props }: any) {
+    const isInline = !!inline;
 
-        return (
-  <div className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-zinc-900 font-sans">
-    {boardValue}
-  </div>
-);
+    const cn = typeof className === "string" ? className : "";
+    const match = cn.match(/language-([a-zA-Z0-9_-]+)/);
+    const lang = (match?.[1] || "").toLowerCase();
 
-      }
+    const content = Array.isArray(children) ? children.join("") : String(children ?? "");
+    const clean = content.replace(/\n$/, "");
 
-      // ✅ inline code: lo dejamos, pero con Poppins (no monospace)
-      if (isInline) {
-        return (
-          <code
-            className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]"
-            style={{ fontFamily: "var(--font-poppins), ui-sans-serif, system-ui" }}
-          >
-            {clean}
-          </code>
-        );
-      }
+    // ✅ PIZARRA: si viene ```pizarra``` o ```whiteboard``` => texto "cuaderno", NO código
+    if (!isInline && (lang === "pizarra" || lang === "whiteboard")) {
+      const boardValue = pizarraValue && String(pizarraValue).trim() ? String(pizarraValue) : clean;
 
-      // ✅ code block normal: SOLO para modo chat real (esto sí puede ser monospace)
       return (
-        <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
-          <code className="text-[12.5px]" {...props}>
-            {clean}
-          </code>
-        </pre>
+        <div className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-zinc-900 font-sans">
+          {boardValue}
+        </div>
       );
-    },
+    }
 
-    // ✅ Por si el Markdown mete <pre> directo (dependiendo del parser)
-    pre({ children }: any) {
-      return <>{children}</>;
-    },
-  } as any;
+    // ✅ inline code: lo dejamos, pero con Poppins (no monospace)
+    if (isInline) {
+      return (
+        <code
+          className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]"
+          style={{ fontFamily: "var(--font-poppins), ui-sans-serif, system-ui" }}
+        >
+          {clean}
+        </code>
+      );
+    }
+
+    // ✅ code block normal: SOLO para modo chat real (esto sí puede ser monospace)
+    return (
+      <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
+        <code className="text-[12.5px]" {...props}>
+          {clean}
+        </code>
+      </pre>
+    );
+  },
+
+  // ✅ Por si el Markdown mete <pre> directo (dependiendo del parser)
+  pre({ children }: any) {
+    return <>{children}</>;
+  },
+} as any;
 }
 
 
