@@ -20,17 +20,31 @@ function getApiFootballKey() {
 
   if (!key) {
     throw new Error(
-      "Missing env var: API_FOOTBALL_KEY (recomendado). También valen: APIFOOTBALL_KEY / APISPORTS_KEY / API_SPORTS_KEY / API_FOOTBALL_API_KEY"
+      "Missing env var: API_FOOTBALL_KEY (recomendado). También valen: APIFOOTBALL_KEY / APISPORTS_KEY / API_SPORTS_KEY / API_FOOTBALL_API_KEY",
     );
   }
   return key;
 }
 
+function hasApiSportsErrors(json: any) {
+  // API-Sports suele mandar HTTP 200 con { errors: {...} } o message
+  const errs = json?.errors;
+  if (errs && typeof errs === "object" && Object.keys(errs).length > 0) return true;
+  if (typeof json?.message === "string" && json.message.trim().length > 0) return true;
+  return false;
+}
+
 async function apiFootballFetch(path: string) {
   const key = getApiFootballKey();
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "x-apisports-key": key },
+  const upstreamUrl = `${API_BASE}${path}`;
+
+  const res = await fetch(upstreamUrl, {
+    headers: {
+      "x-apisports-key": key,
+      "Accept": "application/json",
+      "User-Agent": "VonuVercel/1.0",
+    },
     cache: "no-store",
   });
 
@@ -42,11 +56,36 @@ async function apiFootballFetch(path: string) {
     json = null;
   }
 
-  if (!res.ok) {
-    return { ok: false, status: res.status, statusText: res.statusText, json, raw: text };
+  // ❌ Si no es JSON válido
+  if (!json) {
+    return {
+      ok: false,
+      status: res.status || 502,
+      statusText: res.statusText || "Invalid JSON from upstream",
+      json: null,
+      raw: text,
+      upstreamUrl,
+    };
   }
 
-  return { ok: true, status: res.status, json };
+  // ❌ Si HTTP no ok
+  if (!res.ok) {
+    return { ok: false, status: res.status, statusText: res.statusText, json, raw: text, upstreamUrl };
+  }
+
+  // ✅ MUY IMPORTANTE: aunque sea 200, puede venir con errors
+  if (hasApiSportsErrors(json)) {
+    return {
+      ok: false,
+      status: 502,
+      statusText: "API-Sports returned errors (HTTP 200)",
+      json,
+      raw: text,
+      upstreamUrl,
+    };
+  }
+
+  return { ok: true, status: res.status, json, upstreamUrl };
 }
 
 function cleanFixture(fx: any) {
@@ -135,6 +174,7 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
 
+    const debug = url.searchParams.get("debug") === "1";
     const q = url.searchParams.get("q"); // NUEVO: "A vs B"
     const date = url.searchParams.get("date");
     const league = url.searchParams.get("league");
@@ -150,7 +190,7 @@ export async function GET(req: Request) {
       if (!parsed) {
         return NextResponse.json(
           { error: 'Formato inválido en q. Usa "Equipo A vs Equipo B".' },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -163,7 +203,7 @@ export async function GET(req: Request) {
             error: "No pude resolver uno de los equipos por nombre.",
             details: { home: parsed.home, away: parsed.away, homeId, awayId },
           },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -179,9 +219,16 @@ export async function GET(req: Request) {
         return NextResponse.json(
           {
             error: "API-Football error",
-            details: { status: r.status, statusText: r.statusText, body: r.json ?? r.raw },
+            details: {
+              upstreamUrl: (r as any).upstreamUrl ?? null,
+              status: r.status,
+              statusText: r.statusText,
+              apiErrors: (r as any).json?.errors ?? null,
+              apiMessage: (r as any).json?.message ?? null,
+              body: (r as any).json ?? (r as any).raw,
+            },
           },
-          { status: 500 }
+          { status: 502 },
         );
       }
 
@@ -203,6 +250,16 @@ export async function GET(req: Request) {
         bestFixtureId: best?.fixture?.id ?? null,
         count: cleaned.length,
         fixtures: cleaned,
+        ...(debug
+          ? {
+              upstream: {
+                url: (r as any).upstreamUrl ?? null,
+                results: r.json?.results ?? null,
+                paging: r.json?.paging ?? null,
+                errors: r.json?.errors ?? null,
+              },
+            }
+          : {}),
       });
     }
 
@@ -213,7 +270,7 @@ export async function GET(req: Request) {
           error:
             'Debes pasar ?date=YYYY-MM-DD o ?next=10 (y opcionalmente league/season/team) o usar ?q=EquipoA vs EquipoB',
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -222,7 +279,7 @@ export async function GET(req: Request) {
     if (league) qParams.set("league", league);
     if (season) qParams.set("season", season);
     if (team) qParams.set("team", team);
-    if (!date && next) qParams.set("next", next);
+    if (!date && next) qParams.set("next", String(nextN));
 
     const r = await apiFootballFetch(`/fixtures?${qParams.toString()}`);
 
@@ -230,9 +287,16 @@ export async function GET(req: Request) {
       return NextResponse.json(
         {
           error: "API-Football error",
-          details: { status: r.status, statusText: r.statusText, body: r.json ?? r.raw },
+          details: {
+            upstreamUrl: (r as any).upstreamUrl ?? null,
+            status: r.status,
+            statusText: r.statusText,
+            apiErrors: (r as any).json?.errors ?? null,
+            apiMessage: (r as any).json?.message ?? null,
+            body: (r as any).json ?? (r as any).raw,
+          },
         },
-        { status: 500 }
+        { status: 502 },
       );
     }
 
@@ -243,6 +307,16 @@ export async function GET(req: Request) {
       mode: "list",
       count: cleaned.length,
       fixtures: cleaned,
+      ...(debug
+        ? {
+            upstream: {
+              url: (r as any).upstreamUrl ?? null,
+              results: r.json?.results ?? null,
+              paging: r.json?.paging ?? null,
+              errors: r.json?.errors ?? null,
+            },
+          }
+        : {}),
     });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? "Unexpected error" }, { status: 500 });
