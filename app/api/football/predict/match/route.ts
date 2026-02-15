@@ -50,13 +50,113 @@ function variance(nums: number[]): number {
 }
 
 function toPct(p: number): number {
-  return Math.round(p * 1000) / 10; // 1 decimal (%)
+  return Math.round(p * 1000) / 10;
 }
 
 function fairOddFromProb(p: number): number | null {
   if (p <= 0) return null;
   return Math.round((1 / p) * 100) / 100;
 }
+
+/* ------------------------------------------------------------------
+   🔥 HYBRID STRENGTH / STYLE ENGINE
+-------------------------------------------------------------------*/
+
+function buildHybridStrength(homeAgg: any, awayAgg: any) {
+  const homeAttack = homeAgg.goalsForAvg * 0.6 + homeAgg.shotsOnTargetForAvg * 0.4;
+  const awayAttack = awayAgg.goalsForAvg * 0.6 + awayAgg.shotsOnTargetForAvg * 0.4;
+
+  const homeDef = 1 / Math.max(0.3, homeAgg.goalsAgainstAvg);
+  const awayDef = 1 / Math.max(0.3, awayAgg.goalsAgainstAvg);
+
+  const strengthHome = homeAttack * 0.7 + homeDef * 0.3;
+  const strengthAway = awayAttack * 0.7 + awayDef * 0.3;
+
+  const diff = strengthHome - strengthAway;
+
+  const eloFactorHome = clamp(1 + diff * 0.08, 0.85, 1.18);
+  const eloFactorAway = clamp(1 - diff * 0.08, 0.85, 1.18);
+
+  const formHome = clamp(1 + (homeAgg.goalsForAvg - homeAgg.goalsAgainstAvg) * 0.08, 0.88, 1.15);
+  const formAway = clamp(1 + (awayAgg.goalsForAvg - awayAgg.goalsAgainstAvg) * 0.08, 0.88, 1.15);
+
+  return { eloFactorHome, eloFactorAway, formHome, formAway };
+}
+
+function buildStyleProfile(agg: any) {
+  const pressure = clamp(agg.shotsForAvg / Math.max(1, agg.shotsAgainstAvg), 0.6, 1.6);
+  const possession = clamp(agg.shotsOnTargetForAvg / Math.max(1, agg.shotsForAvg), 0.2, 0.6);
+  const verticality = clamp(agg.goalsForAvg / Math.max(1, agg.shotsOnTargetForAvg), 0.1, 0.5);
+
+  return { pressure, possession, verticality };
+}
+
+function buildUpsetRisk(
+  hybrid: any,
+  lambdaHome: number,
+  lambdaAway: number
+) {
+  const strengthGap = Math.abs(hybrid.eloFactorHome - hybrid.eloFactorAway);
+
+  // equilibrio ofensivo real
+  const goalBalance = Math.abs(lambdaHome - lambdaAway);
+
+  // cuanto más equilibrado, más riesgo sorpresa
+  const chaosFactor = clamp(1 - goalBalance / 2.2, 0, 1);
+
+  // si fuerzas muy iguales -> sube riesgo
+  const parityFactor = clamp(1 - strengthGap * 2.2, 0, 1);
+
+  const upsetScore = clamp(
+    0.55 * chaosFactor + 0.45 * parityFactor,
+    0,
+    1
+  );
+
+  let label = "BAJO";
+  if (upsetScore > 0.66) label = "ALTO";
+  else if (upsetScore > 0.4) label = "MEDIO";
+
+  return {
+    score: Math.round(upsetScore * 100) / 100,
+    label,
+  };
+}
+
+// 🔥 MARKET SHARPNESS ENGINE
+function buildSharpness(goalsLines:any[], quiniela:any) {
+
+  function edgeLabel(p:number) {
+    if (p >= 0.82) return "MUY_ALTA";
+if (p >= 0.70) return "ALTA";
+if (p >= 0.58) return "MEDIA";
+
+    return "BAJA";
+  }
+
+  const sharpGoals = goalsLines.map((l:any)=>({
+    line:l.line,
+    overEdge:edgeLabel((l.over.p||0)/100),
+    underEdge:edgeLabel((l.under.p||0)/100),
+  }));
+
+  const sharp1X2 = {
+    "1": edgeLabel((quiniela["1"]?.p||0)/100),
+    "X": edgeLabel((quiniela["X"]?.p||0)/100),
+    "2": edgeLabel((quiniela["2"]?.p||0)/100),
+  };
+
+  return {
+    goals: sharpGoals,
+    oneXtwo: sharp1X2
+  };
+}
+
+
+/* ------------------------------------------------------------------
+   TODO EL RESTO DEL CÓDIGO ORIGINAL SE MANTIENE IGUAL
+   (no lo repito aquí para no enviarte 3 mensajes gigantes)
+-------------------------------------------------------------------*/
 
 // -------------------------
 // Weather (Open-Meteo)
@@ -566,14 +666,38 @@ export async function GET(req: Request) {
     }
     const wMult = weatherMultipliers(weather);
 
+// 🔥 NEW: Hybrid strength + style engine
+const hybrid = buildHybridStrength(homeAgg, awayAgg);
+const styleHome = buildStyleProfile(homeAgg);
+const styleAway = buildStyleProfile(awayAgg);
+
+
     // -------------------------
     // PRO: Chain model
     // -------------------------
     let meanShotsHome = (homeAgg.shotsForAvg + awayAgg.shotsAgainstAvg) / 2;
     let meanShotsAway = (awayAgg.shotsForAvg + homeAgg.shotsAgainstAvg) / 2;
 
-    meanShotsHome = meanShotsHome * injBuilt.mult.homeAttack * injBuilt.mult.awayConcede * comp.shots * wMult.shots;
-    meanShotsAway = meanShotsAway * injBuilt.mult.awayAttack * injBuilt.mult.homeConcede * comp.shots * wMult.shots;
+    meanShotsHome =
+  meanShotsHome *
+  injBuilt.mult.homeAttack *
+  injBuilt.mult.awayConcede *
+  comp.shots *
+  wMult.shots *
+  hybrid.eloFactorHome *
+  hybrid.formHome *
+  clamp(1 + (styleHome.pressure - 1) * 0.12, 0.90, 1.15);
+
+    meanShotsAway =
+  meanShotsAway *
+  injBuilt.mult.awayAttack *
+  injBuilt.mult.homeConcede *
+  comp.shots *
+  wMult.shots *
+  hybrid.eloFactorAway *
+  hybrid.formAway *
+  clamp(1 + (styleAway.pressure - 1) * 0.15, 0.85, 1.2);
+
 
     meanShotsHome = clamp(meanShotsHome, 4, 30);
     meanShotsAway = clamp(meanShotsAway, 4, 30);
@@ -681,6 +805,13 @@ export async function GET(req: Request) {
     // Dixon–Coles with lambdas
     // -------------------------
     const expectedGoalsTotal = lambdaHomeFromChain + lambdaAwayFromChain;
+    // 🔥 NEW: Upset risk engine
+const upset = buildUpsetRisk(
+  hybrid,
+  lambdaHomeFromChain,
+  lambdaAwayFromChain
+);
+
     let rho = -0.08;
     if (expectedGoalsTotal <= 2.0) rho = -0.12;
     else if (expectedGoalsTotal >= 3.2) rho = -0.05;
@@ -790,6 +921,8 @@ export async function GET(req: Request) {
       weather && typeof weather.temperatureC === "number"
         ? `Clima aprox. en kickoff: ${weather.temperatureC}°C, lluvia ${weather.precipitationMm}mm/h, viento ${weather.windKmh}km/h.`
         : "Clima no disponible (fallback neutro).";
+// 🔥 NEW: Sharpness engine
+const sharpness = buildSharpness(goalsLines, quiniela);
 
     const summary = {
       expected: {
@@ -802,8 +935,10 @@ export async function GET(req: Request) {
         cardsTotal: Math.round(meanCardsTotal * 100) / 100,
       },
       matchProfile: {
-        pace: { label: pace.label, score: pace.score },
-        openness,
+  pace: { label: pace.label, score: pace.score },
+  openness,
+  upsetRisk: upset,
+
         note:
           openness === "CERRADO"
             ? "Se espera partido de pocas ocasiones; suele favorecer unders y empate/partidos ajustados."
@@ -835,6 +970,7 @@ export async function GET(req: Request) {
       },
       inputs: { lastN, sims },
       summary,
+      sharpness,
       context: {
         injuriesCount: injBuilt.counts,
         injuryMultipliers: injBuilt.mult,
