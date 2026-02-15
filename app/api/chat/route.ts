@@ -48,18 +48,28 @@ export async function POST(req: NextRequest) {
 
     // ✅ Normalizamos campos clave (quick-service siempre recibe algo consistente)
     const normalized = {
-      messages: Array.isArray(body?.messages) ? body.messages : [],
-      userText: typeof body?.userText === "string" ? body.userText : "",
-      imageBase64: typeof body?.imageBase64 === "string" ? body.imageBase64 : null,
-      mode: body?.mode === "tutor" ? "tutor" : "chat",
-      tutorLevel:
-        body?.tutorLevel === "kid" || body?.tutorLevel === "teen" || body?.tutorLevel === "adult"
-          ? body.tutorLevel
-          : "adult",
-      ...Object.fromEntries(
-        Object.entries(body || {}).filter(([k]) => !["messages", "userText", "imageBase64", "mode", "tutorLevel"].includes(k))
-      ),
-    };
+  messages: Array.isArray(body?.messages) ? body.messages : [],
+  userText: typeof body?.userText === "string" ? body.userText : "",
+  imageBase64: typeof body?.imageBase64 === "string" ? body.imageBase64 : null,
+  mode: body?.mode === "tutor" ? "tutor" : "chat",
+  tutorLevel:
+    body?.tutorLevel === "kid" || body?.tutorLevel === "teen" || body?.tutorLevel === "adult"
+      ? body.tutorLevel
+      : "adult",
+
+  // ✅ NUEVO: control de “más líneas” en fútbol (normal | wide)
+  footballProfile:
+    body?.footballProfile === "wide" || body?.footballProfile === "normal"
+      ? body.footballProfile
+      : "normal",
+
+  ...Object.fromEntries(
+    Object.entries(body || {}).filter(
+      ([k]) => !["messages", "userText", "imageBase64", "mode", "tutorLevel", "footballProfile"].includes(k)
+    )
+  ),
+};
+
 
     const authHeader = req.headers.get("authorization") || "";
 

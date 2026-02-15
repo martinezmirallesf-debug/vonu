@@ -8,14 +8,26 @@ const API_BASE = "https://v3.football.api-sports.io";
 // -------------------------
 // Utils
 // -------------------------
-function requiredEnv(name: string): string {
-  const v = process.env[name];
-  if (!v) throw new Error(`Missing env var: ${name}`);
-  return v;
+function getApiFootballKey(): string {
+  const candidates = [
+    process.env.API_FOOTBALL_KEY,      // ✅ recomendado (principal)
+    process.env.APIFOOTBALL_KEY,       // alias legacy
+    process.env.APISPORTS_KEY,         // alias
+    process.env.API_SPORTS_KEY,        // alias
+    process.env.API_FOOTBALL_API_KEY,  // alias
+  ];
+
+  const key = candidates.find((v) => typeof v === "string" && v.trim().length > 0);
+  if (!key) {
+    throw new Error(
+      "Missing API-Football key. Set API_FOOTBALL_KEY (preferred) or one of: APIFOOTBALL_KEY, APISPORTS_KEY, API_SPORTS_KEY, API_FOOTBALL_API_KEY"
+    );
+  }
+  return key.trim();
 }
 
 async function apiFootballFetch(path: string): Promise<any> {
-  const key = requiredEnv("APIFOOTBALL_KEY");
+  const key = getApiFootballKey();
 
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { "x-apisports-key": key },
@@ -33,6 +45,7 @@ async function apiFootballFetch(path: string): Promise<any> {
   if (!res.ok) return { ok: false, status: res.status, statusText: res.statusText, json, raw };
   return { ok: true, status: res.status, json };
 }
+
 
 function clamp(x: number, a: number, b: number): number {
   return Math.max(a, Math.min(b, x));
@@ -835,28 +848,58 @@ const upset = buildUpsetRisk(
     }
 
     // -------------------------
-    // LÍNEAS AMPLIADAS (A)
-    // -------------------------
-    const goalsLinesWanted = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.5, 8.5];
+// LÍNEAS (normal vs wide)
+// -------------------------
+const profile = (searchParams.get("profile") || "normal").toLowerCase(); // normal | wide
 
-    const goalsLines = goalsLinesWanted.map((line) => {
-      const pOver = clamp(goalsTotalProbOverFromDC(line), 0, 1);
-      const pUnder = 1 - pOver;
-      return {
-        line,
-        over: { p: toPct(pOver), fairOdd: fairOddFromProb(pOver) },
-        under: { p: toPct(pUnder), fairOdd: fairOddFromProb(pUnder) },
+// helper: genera 0.5, 1.0, 1.5... (incluye enteros)
+function mkHalf(from: number, to: number, step = 0.5): number[] {
+  const out: number[] = [];
+  for (let x = from; x <= to + 1e-9; x += step) out.push(Math.round(x * 10) / 10);
+  return out;
+}
+
+// ✅ rangos por perfil
+const ranges =
+  profile === "wide"
+    ? {
+        goals: { from: 0.5, to: 10.5, step: 0.5 },
+        shots: { from: 6.5, to: 48.5, step: 2 },
+        sot: { from: 0.5, to: 22.5, step: 1 },
+        corners: { from: 2.5, to: 20.5, step: 1 },
+        cards: { from: 0.5, to: 14.5, step: 1 },
+      }
+    : {
+        goals: { from: 0.5, to: 8.5, step: 0.5 },
+        shots: { from: 8.5, to: 40.5, step: 2 },
+        sot: { from: 1.5, to: 16.5, step: 1 },
+        corners: { from: 3.5, to: 16.5, step: 1 },
+        cards: { from: 0.5, to: 10.5, step: 1 },
       };
-    });
 
-    const shotsLinesWanted = mkHalfLines(8.5, 40.5, 2);   // + abajo y + arriba
-const sotLinesWanted = mkHalfLines(1.5, 16.5, 1);     // + abajo y + arriba
+// ✅ GOALS desde Dixon–Coles
+const goalsLinesWanted = mkHalf(ranges.goals.from, ranges.goals.to, ranges.goals.step);
 
-    const shotsLines = shotsLinesWanted.map((l) => lineProbFromSamples(simShotsTotal, l));
-    const sotLines = sotLinesWanted.map((l) => lineProbFromSamples(simSoTTotal, l));
+const goalsLines = goalsLinesWanted.map((line) => {
+  const pOver = clamp(goalsTotalProbOverFromDC(line), 0, 1);
+  const pUnder = 1 - pOver;
+  return {
+    line,
+    over: { p: toPct(pOver), fairOdd: fairOddFromProb(pOver) },
+    under: { p: toPct(pUnder), fairOdd: fairOddFromProb(pUnder) },
+  };
+});
 
-    const cornersLinesWanted = mkHalfLines(3.5, 16.5, 1); // + abajo y + arriba
-const cardsLinesWanted = mkHalfLines(0.5, 10.5, 1);   // + abajo y + arriba
+// ✅ SHOTS / SOT desde simulación
+const shotsLinesWanted = mkHalfLines(ranges.shots.from, ranges.shots.to, ranges.shots.step);
+const sotLinesWanted = mkHalfLines(ranges.sot.from, ranges.sot.to, ranges.sot.step);
+
+const shotsLines = shotsLinesWanted.map((l) => lineProbFromSamples(simShotsTotal, l));
+const sotLines = sotLinesWanted.map((l) => lineProbFromSamples(simSoTTotal, l));
+
+// ✅ CORNERS / CARDS (NB)
+const cornersLinesWanted = mkHalfLines(ranges.corners.from, ranges.corners.to, ranges.corners.step);
+const cardsLinesWanted = mkHalfLines(ranges.cards.from, ranges.cards.to, ranges.cards.step);
 
     const markets = {
       goals: {
