@@ -182,7 +182,7 @@ export async function GET(req: Request) {
     const team = url.searchParams.get("team");
     const next = url.searchParams.get("next");
 
-    const nextN = next ? Math.max(5, Math.min(400, Number(next))) : 30;
+    const nextN = next ? Math.max(5, Math.min(100, Number(next))) : 30;
 
     // ---------- MODO B: q=... ----------
     if (q) {
