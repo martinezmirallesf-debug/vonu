@@ -5,26 +5,29 @@ export const runtime = "nodejs";
 
 const API_BASE = "https://v3.football.api-sports.io";
 
-function getApiKey() {
-  // Acepta varios nombres (por si hay duplicados en Vercel)
+/**
+ * ✅ API KEY unificada
+ * Recomendado en Vercel: API_FOOTBALL_KEY
+ * (pero soportamos aliases para evitar errores por duplicados)
+ */
+function getApiFootballKey() {
   const key =
-    process.env.APIFOOTBALL_KEY ||
     process.env.API_FOOTBALL_KEY ||
+    process.env.APIFOOTBALL_KEY ||
     process.env.APISPORTS_KEY ||
     process.env.API_SPORTS_KEY ||
     process.env.API_FOOTBALL_API_KEY;
 
   if (!key) {
     throw new Error(
-      "Falta la API key. Configura en Vercel una de estas variables: APIFOOTBALL_KEY o API_FOOTBALL_KEY (recomendado)."
+      "Missing env var: API_FOOTBALL_KEY (recomendado). También valen: APIFOOTBALL_KEY / APISPORTS_KEY / API_SPORTS_KEY / API_FOOTBALL_API_KEY"
     );
   }
   return key;
 }
 
-
 async function apiFootballFetch(path: string) {
-  const key = getApiKey();
+  const key = getApiFootballKey();
 
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { "x-apisports-key": key },
@@ -139,7 +142,7 @@ export async function GET(req: Request) {
     const team = url.searchParams.get("team");
     const next = url.searchParams.get("next");
 
-    const nextN = next ? Math.max(5, Math.min(80, Number(next))) : 30;
+    const nextN = next ? Math.max(5, Math.min(400, Number(next))) : 30;
 
     // ---------- MODO B: q=... ----------
     if (q) {
@@ -191,7 +194,6 @@ export async function GET(req: Request) {
       });
 
       const best = pickBestFixture(filtered);
-
       const cleaned = filtered.map(cleanFixture);
 
       return NextResponse.json({
@@ -207,7 +209,10 @@ export async function GET(req: Request) {
     // ---------- MODO A: date/next ----------
     if (!date && !next) {
       return NextResponse.json(
-        { error: "Debes pasar ?date=YYYY-MM-DD o ?next=10 (y opcionalmente league/season/team) o usar ?q=EquipoA vs EquipoB" },
+        {
+          error:
+            'Debes pasar ?date=YYYY-MM-DD o ?next=10 (y opcionalmente league/season/team) o usar ?q=EquipoA vs EquipoB',
+        },
         { status: 400 }
       );
     }
