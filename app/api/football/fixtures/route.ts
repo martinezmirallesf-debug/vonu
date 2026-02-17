@@ -153,13 +153,24 @@ function pickBestFixture(fixtures: any[]): any | null {
   return list[0] ?? null;
 }
 
+// ✅ Helpers de fechas (ventana)
+function ymdUTC(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
+function makeWindowDays(daysAhead = 60) {
+  const now = new Date();
+  const from = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000); // ayer
+  const to = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+  return { from: ymdUTC(from), to: ymdUTC(to) };
+}
+
 /**
  * GET /api/football/fixtures
  *
  * MODO A) list:
  *  - ?date=YYYY-MM-DD
- *  - o ?from=YYYY-MM-DD&to=YYYY-MM-DD  ✅ (selecciones/copa/ventana)
- *  - o ?team=ID&next=30                ✅ (solo si NO hay date/from/to)
+ *  - o ?from=YYYY-MM-DD&to=YYYY-MM-DD
+ *  - o ?team=ID&next=30   ✅ (pero internamente lo convertimos a from/to)
  *  opcionales: league, season, team
  *
  * MODO B) search por nombres:
@@ -204,14 +215,16 @@ export async function GET(req: Request) {
         );
       }
 
-      // ⚠️ IMPORTANTÍSIMO: aquí NO usamos from/to por defecto para no cambiar comportamiento.
-      // Pedimos próximos partidos del HOME y filtramos por AWAY.
-      // (Si el bug next vuelve, ya lo moveremos al resolver. Aquí lo dejamos “conservador”.)
+      // ✅ FIX: NO usar team+next en upstream (da errores a veces).
+      // Convertimos a ventana amplia from/to y luego filtramos por rival.
       const qFx = new URLSearchParams();
       qFx.set("team", String(homeId));
-      qFx.set("next", String(nextN));
       if (league) qFx.set("league", league);
       if (season) qFx.set("season", season);
+
+      const win = makeWindowDays(90); // un poco más por si hay parones / selecciones
+      qFx.set("from", win.from);
+      qFx.set("to", win.to);
 
       const r = await apiFootballFetch(`/fixtures?${qFx.toString()}`);
       if (!r.ok) {
@@ -239,8 +252,14 @@ export async function GET(req: Request) {
         return (h === homeId && a === awayId) || (h === awayId && a === homeId);
       });
 
-      const best = pickBestFixture(filtered);
-      const cleaned = filtered.map(cleanFixture);
+      // orden + recorte tipo "nextN"
+      const filteredSorted = [...filtered].sort(
+        (a, b) => Number(a?.fixture?.timestamp ?? 0) - Number(b?.fixture?.timestamp ?? 0),
+      );
+      const limited = filteredSorted.slice(0, nextN);
+
+      const best = pickBestFixture(limited);
+      const cleaned = limited.map(cleanFixture);
 
       return NextResponse.json({
         mode: "search",
@@ -257,6 +276,7 @@ export async function GET(req: Request) {
                 paging: r.json?.paging ?? null,
                 errors: r.json?.errors ?? null,
               },
+              usedWindow: win,
             }
           : {}),
       });
@@ -283,14 +303,26 @@ export async function GET(req: Request) {
     if (team) qParams.set("team", team);
 
     // ✅ prioridad: date > range > next
+    let usedWindow: { from: string; to: string } | null = null;
+
     if (hasDate) {
       qParams.set("date", String(date));
     } else if (hasRange) {
       qParams.set("from", String(from));
       qParams.set("to", String(to));
+      usedWindow = { from: String(from), to: String(to) };
     } else {
-      // ⚠️ next solo cuando NO hay date/from-to
-      qParams.set("next", String(nextN));
+      // ✅ FIX: si viene team+next, lo convertimos a from/to
+      const hasTeamAndNext = !!team && !!next;
+      if (hasTeamAndNext) {
+        const win = makeWindowDays(90);
+        qParams.set("from", win.from);
+        qParams.set("to", win.to);
+        usedWindow = win;
+      } else {
+        // ⚠️ next solo cuando NO hay team (o sea, listados generales)
+        qParams.set("next", String(nextN));
+      }
     }
 
     const r = await apiFootballFetch(`/fixtures?${qParams.toString()}`);
@@ -313,7 +345,16 @@ export async function GET(req: Request) {
     }
 
     const response = r.json?.response ?? [];
-    const cleaned = response.map(cleanFixture);
+    let cleaned = response.map(cleanFixture);
+
+    // ✅ Si usamos ventana (team+next convertido a from/to), recortamos nosotros al nextN
+    const didConvertTeamNextToWindow = !!team && !!next && !hasDate && !hasRange;
+    if (didConvertTeamNextToWindow) {
+      cleaned = cleaned
+        .filter((f: any) => typeof f?.timestamp === "number" && isFinite(f.timestamp))
+        .sort((a: any, b: any) => (a.timestamp ?? 0) - (b.timestamp ?? 0))
+        .slice(0, nextN);
+    }
 
     return NextResponse.json({
       mode: "list",
@@ -327,6 +368,7 @@ export async function GET(req: Request) {
               paging: r.json?.paging ?? null,
               errors: r.json?.errors ?? null,
             },
+            usedWindow,
           }
         : {}),
     });
