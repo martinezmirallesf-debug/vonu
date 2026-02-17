@@ -27,7 +27,6 @@ function getApiFootballKey() {
 }
 
 function hasApiSportsErrors(json: any) {
-  // API-Sports suele mandar HTTP 200 con { errors: {...} } o message
   const errs = json?.errors;
   if (errs && typeof errs === "object" && Object.keys(errs).length > 0) return true;
   if (typeof json?.message === "string" && json.message.trim().length > 0) return true;
@@ -36,13 +35,12 @@ function hasApiSportsErrors(json: any) {
 
 async function apiFootballFetch(path: string) {
   const key = getApiFootballKey();
-
   const upstreamUrl = `${API_BASE}${path}`;
 
   const res = await fetch(upstreamUrl, {
     headers: {
       "x-apisports-key": key,
-      "Accept": "application/json",
+      Accept: "application/json",
       "User-Agent": "VonuVercel/1.0",
     },
     cache: "no-store",
@@ -121,7 +119,6 @@ function parseVsQuery(q: string): { home: string; away: string } | null {
   const s = (q || "").trim();
   if (!s) return null;
 
-  // soporta: "A vs B", "A v B", "A - B", "A contra B"
   const m = s.match(/(.+?)\s*(?:vs|v|contra|-)\s*(.+)/i);
   if (!m) return null;
 
@@ -146,52 +143,52 @@ async function findTeamIdByName(name: string): Promise<number | null> {
 function pickBestFixture(fixtures: any[]): any | null {
   if (!Array.isArray(fixtures) || fixtures.length === 0) return null;
 
-  // Preferimos el más cercano que NO sea FT (si hay)
   const notFinished = fixtures.filter((f) => {
     const st = String(f?.fixture?.status?.short ?? "");
     return st && st !== "FT" && st !== "AET" && st !== "PEN";
   });
 
   const list = (notFinished.length ? notFinished : fixtures).slice();
-
-  list.sort((a, b) => {
-    const ta = Number(a?.fixture?.timestamp ?? 0);
-    const tb = Number(b?.fixture?.timestamp ?? 0);
-    return ta - tb;
-  });
-
+  list.sort((a, b) => Number(a?.fixture?.timestamp ?? 0) - Number(b?.fixture?.timestamp ?? 0));
   return list[0] ?? null;
 }
 
-// GET /api/football/fixtures
-// MODO A) clásico:
-//   ?date=YYYY-MM-DD&league=140&season=2024
-//   opcionales: team=541, next=10
-//
-// MODO B) búsqueda por nombres:
-//   ?q=Real Madrid vs Real Sociedad&next=30&league=140&season=2024
+/**
+ * GET /api/football/fixtures
+ *
+ * MODO A) list:
+ *  - ?date=YYYY-MM-DD
+ *  - o ?from=YYYY-MM-DD&to=YYYY-MM-DD  ✅ (selecciones/copa/ventana)
+ *  - o ?team=ID&next=30                ✅ (solo si NO hay date/from/to)
+ *  opcionales: league, season, team
+ *
+ * MODO B) search por nombres:
+ *  - ?q=Equipo A vs Equipo B&next=30&league=...&season=...
+ */
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
 
     const debug = url.searchParams.get("debug") === "1";
-    const q = url.searchParams.get("q"); // NUEVO: "A vs B"
+    const q = url.searchParams.get("q"); // "A vs B"
+
     const date = url.searchParams.get("date");
+    const from = url.searchParams.get("from");
+    const to = url.searchParams.get("to");
+
     const league = url.searchParams.get("league");
     const season = url.searchParams.get("season");
     const team = url.searchParams.get("team");
     const next = url.searchParams.get("next");
 
+    // next cap (API-Sports suele permitir hasta 100)
     const nextN = next ? Math.max(5, Math.min(100, Number(next))) : 30;
 
     // ---------- MODO B: q=... ----------
     if (q) {
       const parsed = parseVsQuery(q);
       if (!parsed) {
-        return NextResponse.json(
-          { error: 'Formato inválido en q. Usa "Equipo A vs Equipo B".' },
-          { status: 400 },
-        );
+        return NextResponse.json({ error: 'Formato inválido en q. Usa "Equipo A vs Equipo B".' }, { status: 400 });
       }
 
       const homeId = await findTeamIdByName(parsed.home);
@@ -207,7 +204,9 @@ export async function GET(req: Request) {
         );
       }
 
-      // Pedimos próximos partidos del HOME y filtramos por AWAY
+      // ⚠️ IMPORTANTÍSIMO: aquí NO usamos from/to por defecto para no cambiar comportamiento.
+      // Pedimos próximos partidos del HOME y filtramos por AWAY.
+      // (Si el bug next vuelve, ya lo moveremos al resolver. Aquí lo dejamos “conservador”.)
       const qFx = new URLSearchParams();
       qFx.set("team", String(homeId));
       qFx.set("next", String(nextN));
@@ -263,23 +262,36 @@ export async function GET(req: Request) {
       });
     }
 
-    // ---------- MODO A: date/next ----------
-    if (!date && !next) {
+    // ---------- MODO A ----------
+    const hasRange = !!(from && to);
+    const hasDate = !!date;
+
+    // ✅ Si no hay date/from-to y tampoco next => error
+    if (!hasDate && !hasRange && !next) {
       return NextResponse.json(
         {
           error:
-            'Debes pasar ?date=YYYY-MM-DD o ?next=10 (y opcionalmente league/season/team) o usar ?q=EquipoA vs EquipoB',
+            'Debes pasar ?date=YYYY-MM-DD o ?from=YYYY-MM-DD&to=YYYY-MM-DD o ?next=10 (y opcionalmente league/season/team) o usar ?q=EquipoA vs EquipoB',
         },
         { status: 400 },
       );
     }
 
     const qParams = new URLSearchParams();
-    if (date) qParams.set("date", date);
     if (league) qParams.set("league", league);
     if (season) qParams.set("season", season);
     if (team) qParams.set("team", team);
-    if (!date && next) qParams.set("next", String(nextN));
+
+    // ✅ prioridad: date > range > next
+    if (hasDate) {
+      qParams.set("date", String(date));
+    } else if (hasRange) {
+      qParams.set("from", String(from));
+      qParams.set("to", String(to));
+    } else {
+      // ⚠️ next solo cuando NO hay date/from-to
+      qParams.set("next", String(nextN));
+    }
 
     const r = await apiFootballFetch(`/fixtures?${qParams.toString()}`);
 
