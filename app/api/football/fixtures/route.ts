@@ -54,7 +54,6 @@ async function apiFootballFetch(path: string) {
     json = null;
   }
 
-  // ❌ Si no es JSON válido
   if (!json) {
     return {
       ok: false,
@@ -66,12 +65,10 @@ async function apiFootballFetch(path: string) {
     };
   }
 
-  // ❌ Si HTTP no ok
   if (!res.ok) {
     return { ok: false, status: res.status, statusText: res.statusText, json, raw: text, upstreamUrl };
   }
 
-  // ✅ MUY IMPORTANTE: aunque sea 200, puede venir con errors
   if (hasApiSportsErrors(json)) {
     return {
       ok: false,
@@ -153,15 +150,22 @@ function pickBestFixture(fixtures: any[]): any | null {
   return list[0] ?? null;
 }
 
-// ✅ Helpers de fechas (ventana)
-function ymdUTC(d: Date) {
-  return d.toISOString().slice(0, 10);
-}
-function makeWindowDays(daysAhead = 60) {
+// ✅ infer season automáticamente (Europa: temporada empieza en julio)
+function inferSeasonFromToday() {
   const now = new Date();
-  const from = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000); // ayer
-  const to = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
-  return { from: ymdUTC(from), to: ymdUTC(to) };
+  const y = now.getUTCFullYear();
+  const m = now.getUTCMonth() + 1; // 1-12
+  return m >= 7 ? y : y - 1;
+}
+
+function inferSeasonFromDateOrRange(date?: string | null, from?: string | null, to?: string | null) {
+  const pick = date || from || to;
+  if (!pick) return inferSeasonFromToday();
+  const d = new Date(pick);
+  if (Number.isNaN(d.getTime())) return inferSeasonFromToday();
+  const y = d.getUTCFullYear();
+  const m = d.getUTCMonth() + 1;
+  return m >= 7 ? y : y - 1;
 }
 
 /**
@@ -170,7 +174,7 @@ function makeWindowDays(daysAhead = 60) {
  * MODO A) list:
  *  - ?date=YYYY-MM-DD
  *  - o ?from=YYYY-MM-DD&to=YYYY-MM-DD
- *  - o ?team=ID&next=30   ✅ (pero internamente lo convertimos a from/to)
+ *  - o ?team=ID&next=30
  *  opcionales: league, season, team
  *
  * MODO B) search por nombres:
@@ -181,19 +185,28 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
 
     const debug = url.searchParams.get("debug") === "1";
-    const q = url.searchParams.get("q"); // "A vs B"
+    const q = url.searchParams.get("q");
 
     const date = url.searchParams.get("date");
     const from = url.searchParams.get("from");
     const to = url.searchParams.get("to");
 
     const league = url.searchParams.get("league");
-    const season = url.searchParams.get("season");
+    let season = url.searchParams.get("season"); // 👈 ahora lo podremos autocompletar
     const team = url.searchParams.get("team");
     const next = url.searchParams.get("next");
 
-    // next cap (API-Sports suele permitir hasta 100)
     const nextN = next ? Math.max(5, Math.min(100, Number(next))) : 30;
+
+    // ✅ Si NO viene season pero estamos pidiendo fixtures por team/next o por rango, lo inferimos
+    // (Evita el error: "Season field is required.")
+    const hasRange = !!(from && to);
+    const hasDate = !!date;
+    const usesNext = !!next;
+
+    if (!season && (usesNext || hasRange)) {
+      season = String(inferSeasonFromDateOrRange(date, from, to));
+    }
 
     // ---------- MODO B: q=... ----------
     if (q) {
@@ -215,16 +228,12 @@ export async function GET(req: Request) {
         );
       }
 
-      // ✅ FIX: NO usar team+next en upstream (da errores a veces).
-      // Convertimos a ventana amplia from/to y luego filtramos por rival.
       const qFx = new URLSearchParams();
       qFx.set("team", String(homeId));
+      qFx.set("next", String(nextN));
       if (league) qFx.set("league", league);
-      if (season) qFx.set("season", season);
-
-      const win = makeWindowDays(90); // un poco más por si hay parones / selecciones
-      qFx.set("from", win.from);
-      qFx.set("to", win.to);
+      if (season) qFx.set("season", season); // ✅ ahora siempre
+      else qFx.set("season", String(inferSeasonFromToday()));
 
       const r = await apiFootballFetch(`/fixtures?${qFx.toString()}`);
       if (!r.ok) {
@@ -252,14 +261,8 @@ export async function GET(req: Request) {
         return (h === homeId && a === awayId) || (h === awayId && a === homeId);
       });
 
-      // orden + recorte tipo "nextN"
-      const filteredSorted = [...filtered].sort(
-        (a, b) => Number(a?.fixture?.timestamp ?? 0) - Number(b?.fixture?.timestamp ?? 0),
-      );
-      const limited = filteredSorted.slice(0, nextN);
-
-      const best = pickBestFixture(limited);
-      const cleaned = limited.map(cleanFixture);
+      const best = pickBestFixture(filtered);
+      const cleaned = filtered.map(cleanFixture);
 
       return NextResponse.json({
         mode: "search",
@@ -276,22 +279,17 @@ export async function GET(req: Request) {
                 paging: r.json?.paging ?? null,
                 errors: r.json?.errors ?? null,
               },
-              usedWindow: win,
             }
           : {}),
       });
     }
 
     // ---------- MODO A ----------
-    const hasRange = !!(from && to);
-    const hasDate = !!date;
-
-    // ✅ Si no hay date/from-to y tampoco next => error
     if (!hasDate && !hasRange && !next) {
       return NextResponse.json(
         {
           error:
-            'Debes pasar ?date=YYYY-MM-DD o ?from=YYYY-MM-DD&to=YYYY-MM-DD o ?next=10 (y opcionalmente league/season/team) o usar ?q=EquipoA vs EquipoB',
+            'Debes pasar ?date=YYYY-MM-DD o ?from=YYYY-MM-DD&to=YYYY-MM-DD o ?team=ID&next=10 (y opcionalmente league/season) o usar ?q=EquipoA vs EquipoB',
         },
         { status: 400 },
       );
@@ -299,30 +297,20 @@ export async function GET(req: Request) {
 
     const qParams = new URLSearchParams();
     if (league) qParams.set("league", league);
-    if (season) qParams.set("season", season);
+    if (season) qParams.set("season", season); // ✅ siempre que tengamos season
     if (team) qParams.set("team", team);
-
-    // ✅ prioridad: date > range > next
-    let usedWindow: { from: string; to: string } | null = null;
 
     if (hasDate) {
       qParams.set("date", String(date));
+      // (date normalmente NO requiere season, pero no molesta si lo mandas)
     } else if (hasRange) {
       qParams.set("from", String(from));
       qParams.set("to", String(to));
-      usedWindow = { from: String(from), to: String(to) };
+      if (!season) qParams.set("season", String(inferSeasonFromDateOrRange(date, from, to)));
     } else {
-      // ✅ FIX: si viene team+next, lo convertimos a from/to
-      const hasTeamAndNext = !!team && !!next;
-      if (hasTeamAndNext) {
-        const win = makeWindowDays(90);
-        qParams.set("from", win.from);
-        qParams.set("to", win.to);
-        usedWindow = win;
-      } else {
-        // ⚠️ next solo cuando NO hay team (o sea, listados generales)
-        qParams.set("next", String(nextN));
-      }
+      qParams.set("next", String(nextN));
+      // ✅ next por team suele requerir season, garantizado arriba
+      if (!season) qParams.set("season", String(inferSeasonFromToday()));
     }
 
     const r = await apiFootballFetch(`/fixtures?${qParams.toString()}`);
@@ -345,16 +333,7 @@ export async function GET(req: Request) {
     }
 
     const response = r.json?.response ?? [];
-    let cleaned = response.map(cleanFixture);
-
-    // ✅ Si usamos ventana (team+next convertido a from/to), recortamos nosotros al nextN
-    const didConvertTeamNextToWindow = !!team && !!next && !hasDate && !hasRange;
-    if (didConvertTeamNextToWindow) {
-      cleaned = cleaned
-        .filter((f: any) => typeof f?.timestamp === "number" && isFinite(f.timestamp))
-        .sort((a: any, b: any) => (a.timestamp ?? 0) - (b.timestamp ?? 0))
-        .slice(0, nextN);
-    }
+    const cleaned = response.map(cleanFixture);
 
     return NextResponse.json({
       mode: "list",
@@ -368,7 +347,6 @@ export async function GET(req: Request) {
               paging: r.json?.paging ?? null,
               errors: r.json?.errors ?? null,
             },
-            usedWindow,
           }
         : {}),
     });
