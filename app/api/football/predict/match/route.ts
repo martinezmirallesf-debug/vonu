@@ -10,17 +10,17 @@ const API_BASE = "https://v3.football.api-sports.io";
 // -------------------------
 function getApiFootballKey(): string {
   const candidates = [
-    process.env.API_FOOTBALL_KEY,      // ✅ recomendado (principal)
-    process.env.APIFOOTBALL_KEY,       // alias legacy
-    process.env.APISPORTS_KEY,         // alias
-    process.env.API_SPORTS_KEY,        // alias
-    process.env.API_FOOTBALL_API_KEY,  // alias
+    process.env.API_FOOTBALL_KEY, // ✅ recomendado (principal)
+    process.env.APIFOOTBALL_KEY, // alias legacy
+    process.env.APISPORTS_KEY, // alias
+    process.env.API_SPORTS_KEY, // alias
+    process.env.API_FOOTBALL_API_KEY, // alias
   ];
 
   const key = candidates.find((v) => typeof v === "string" && v.trim().length > 0);
   if (!key) {
     throw new Error(
-      "Missing API-Football key. Set API_FOOTBALL_KEY (preferred) or one of: APIFOOTBALL_KEY, APISPORTS_KEY, API_SPORTS_KEY, API_FOOTBALL_API_KEY"
+      "Missing API-Football key. Set API_FOOTBALL_KEY (preferred) or one of: APIFOOTBALL_KEY, APISPORTS_KEY, API_SPORTS_KEY, API_FOOTBALL_API_KEY",
     );
   }
   return key.trim();
@@ -45,7 +45,6 @@ async function apiFootballFetch(path: string): Promise<any> {
   if (!res.ok) return { ok: false, status: res.status, statusText: res.statusText, json, raw };
   return { ok: true, status: res.status, json };
 }
-
 
 function clamp(x: number, a: number, b: number): number {
   return Math.max(a, Math.min(b, x));
@@ -104,11 +103,7 @@ function buildStyleProfile(agg: any) {
   return { pressure, possession, verticality };
 }
 
-function buildUpsetRisk(
-  hybrid: any,
-  lambdaHome: number,
-  lambdaAway: number
-) {
+function buildUpsetRisk(hybrid: any, lambdaHome: number, lambdaAway: number) {
   const strengthGap = Math.abs(hybrid.eloFactorHome - hybrid.eloFactorAway);
 
   // equilibrio ofensivo real
@@ -120,11 +115,7 @@ function buildUpsetRisk(
   // si fuerzas muy iguales -> sube riesgo
   const parityFactor = clamp(1 - strengthGap * 2.2, 0, 1);
 
-  const upsetScore = clamp(
-    0.55 * chaosFactor + 0.45 * parityFactor,
-    0,
-    1
-  );
+  const upsetScore = clamp(0.55 * chaosFactor + 0.45 * parityFactor, 0, 1);
 
   let label = "BAJO";
   if (upsetScore > 0.66) label = "ALTO";
@@ -137,47 +128,39 @@ function buildUpsetRisk(
 }
 
 // 🔥 MARKET SHARPNESS ENGINE
-function buildSharpness(goalsLines:any[], quiniela:any) {
-
-  function edgeLabel(p:number) {
+function buildSharpness(goalsLines: any[], quiniela: any) {
+  function edgeLabel(p: number) {
     if (p >= 0.82) return "MUY_ALTA";
-if (p >= 0.70) return "ALTA";
-if (p >= 0.58) return "MEDIA";
-
+    if (p >= 0.7) return "ALTA";
+    if (p >= 0.58) return "MEDIA";
     return "BAJA";
   }
 
-  const sharpGoals = goalsLines.map((l:any)=>({
-    line:l.line,
-    overEdge:edgeLabel((l.over.p||0)/100),
-    underEdge:edgeLabel((l.under.p||0)/100),
+  const sharpGoals = goalsLines.map((l: any) => ({
+    line: l.line,
+    overEdge: edgeLabel((l.over.p || 0) / 100),
+    underEdge: edgeLabel((l.under.p || 0) / 100),
   }));
 
   const sharp1X2 = {
-    "1": edgeLabel((quiniela["1"]?.p||0)/100),
-    "X": edgeLabel((quiniela["X"]?.p||0)/100),
-    "2": edgeLabel((quiniela["2"]?.p||0)/100),
+    "1": edgeLabel((quiniela["1"]?.p || 0) / 100),
+    "X": edgeLabel((quiniela["X"]?.p || 0) / 100),
+    "2": edgeLabel((quiniela["2"]?.p || 0) / 100),
   };
 
   return {
     goals: sharpGoals,
-    oneXtwo: sharp1X2
+    oneXtwo: sharp1X2,
   };
 }
-
-
-/* ------------------------------------------------------------------
-   TODO EL RESTO DEL CÓDIGO ORIGINAL SE MANTIENE IGUAL
-   (no lo repito aquí para no enviarte 3 mensajes gigantes)
--------------------------------------------------------------------*/
 
 // -------------------------
 // Weather (Open-Meteo)
 // -------------------------
-async function geocodeCity(city: string): Promise<{ latitude: number; longitude: number; name: string; country: string } | null> {
-  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
-    city
-  )}&count=1&language=en&format=json`;
+async function geocodeCity(
+  city: string,
+): Promise<{ latitude: number; longitude: number; name: string; country: string } | null> {
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
 
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) return null;
@@ -190,7 +173,7 @@ async function geocodeCity(city: string): Promise<{ latitude: number; longitude:
 async function fetchKickoffWeather(
   lat: number,
   lon: number,
-  kickoffIso: string
+  kickoffIso: string,
 ): Promise<{ time: string; temperatureC: number; precipitationMm: number; windKmh: number } | null> {
   const date = kickoffIso.slice(0, 10);
   const url =
@@ -231,7 +214,7 @@ async function fetchKickoffWeather(
 }
 
 function weatherMultipliers(
-  w: { temperatureC: number; precipitationMm: number; windKmh: number } | null
+  w: { temperatureC: number; precipitationMm: number; windKmh: number } | null,
 ): { goals: number; shots: number; shotsOnTarget: number; corners: number; cards: number; note: string } {
   if (!w) {
     return {
@@ -247,15 +230,14 @@ function weatherMultipliers(
   const rain = w.precipitationMm ?? 0;
   const wind = w.windKmh ?? 0;
 
-  const rainLevel = clamp(rain / 5, 0, 2); // 0..2
-  const windLevel = clamp((wind - 15) / 20, 0, 2); // penalize >15 km/h
+  const rainLevel = clamp(rain / 5, 0, 2);
+  const windLevel = clamp((wind - 15) / 20, 0, 2);
 
-  // Conservador, capado
   const goals = clamp(1 - 0.04 * rainLevel - 0.03 * windLevel, 0.85, 1.05);
   const shots = clamp(1 - 0.03 * rainLevel - 0.02 * windLevel, 0.88, 1.05);
   const shotsOnTarget = clamp(1 - 0.04 * rainLevel - 0.03 * windLevel, 0.85, 1.05);
   const corners = clamp(1 + 0.02 * rainLevel, 0.95, 1.08);
-  const cards = clamp(1 + 0.02 * rainLevel, 0.95, 1.10);
+  const cards = clamp(1 + 0.02 * rainLevel, 0.95, 1.1);
 
   return {
     goals,
@@ -300,7 +282,6 @@ function injuryMultipliers(injuries: any[] | null): {
         }
       }
 
-      // Conservador + capado
       const homeAttack = clamp(1 - 0.02 * homeMissing - 0.01 * homeQuestionable, 0.85, 1);
       const awayAttack = clamp(1 - 0.02 * awayMissing - 0.01 * awayQuestionable, 0.85, 1);
 
@@ -370,7 +351,6 @@ function poissonPmf(k: number, lambda: number): number {
   return Math.exp(-lambda) * Math.pow(lambda, k) / factorial(k);
 }
 
-// Dixon–Coles tau adjustment (classic)
 function dcTau(x: number, y: number, lambda: number, mu: number, rho: number): number {
   if (x === 0 && y === 0) return 1 - lambda * mu * rho;
   if (x === 0 && y === 1) return 1 + lambda * rho;
@@ -379,7 +359,12 @@ function dcTau(x: number, y: number, lambda: number, mu: number, rho: number): n
   return 1;
 }
 
-function dcScoreMatrix(lambda: number, mu: number, rho: number, maxGoals = 7): { home: number; away: number; p: number }[] {
+function dcScoreMatrix(
+  lambda: number,
+  mu: number,
+  rho: number,
+  maxGoals = 7,
+): { home: number; away: number; p: number }[] {
   const mat: { home: number; away: number; p: number }[] = [];
   let total = 0;
 
@@ -408,7 +393,10 @@ function oneXtwoFromScores(scores: { home: number; away: number; p: number }[]):
   return { pH, pD, pA };
 }
 
-function topScores(scores: { home: number; away: number; p: number }[], topN = 10): { score: string; p: number; fairOdd: number | null }[] {
+function topScores(
+  scores: { home: number; away: number; p: number }[],
+  topN = 10,
+): { score: string; p: number; fairOdd: number | null }[] {
   return [...scores]
     .sort((a, b) => b.p - a.p)
     .slice(0, topN)
@@ -421,8 +409,6 @@ function topScores(scores: { home: number; away: number; p: number }[], topN = 1
 
 // -------------------------
 // Negative Binomial (counts)
-// Var = m + alpha*m^2
-// alpha = (var - mean)/mean^2
 // -------------------------
 function estimateAlphaFromTotals(totals: number[]): number {
   const m = mean(totals);
@@ -432,7 +418,6 @@ function estimateAlphaFromTotals(totals: number[]): number {
   return clamp(isFinite(a) ? a : 0.15, 0.03, 0.8);
 }
 
-// Lanczos log-gamma (estable) -> IMPORTANTE: return type explícito (TS)
 function logGammaLanczos(z: number): number {
   const p: number[] = [
     676.5203681218851,
@@ -446,7 +431,6 @@ function logGammaLanczos(z: number): number {
   ];
 
   if (z < 0.5) {
-    // reflexión
     return Math.log(Math.PI) - Math.log(Math.sin(Math.PI * z)) - logGammaLanczos(1 - z);
   }
 
@@ -476,7 +460,7 @@ function nbCdf(k: number, meanM: number, alpha: number): number {
 
 function buildLinesNB(meanM: number, alpha: number, lines: number[]): any[] {
   return lines.map((line) => {
-    const k = Math.floor(line + 0.5); // 2.5->3
+    const k = Math.floor(line + 0.5);
     const pUnder = nbCdf(k - 1, meanM, alpha);
     const pOver = 1 - pUnder;
     return {
@@ -488,25 +472,49 @@ function buildLinesNB(meanM: number, alpha: number, lines: number[]): any[] {
 }
 
 // -------------------------
-// RNG sampling for PRO chain model
-// NB via Gamma-Poisson mixture
+// ✅ Seeded RNG (determinista)
+// -------------------------
+function fnv1a32(str: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+function mulberry32(seed: number) {
+  let a = seed >>> 0;
+  return function rng() {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+let RNG: (() => number) | null = null;
+function R(): number {
+  return RNG ? RNG() : Math.random();
+}
+
+// -------------------------
+// RNG sampling
 // -------------------------
 function randn(): number {
-  // Box-Muller
   let u = 0,
     v = 0;
-  while (u === 0) u = Math.random();
-  while (v === 0) v = Math.random();
+  while (u === 0) u = R();
+  while (v === 0) v = R();
   return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
 }
 
-// Marsaglia–Tsang gamma sampler -> return type explícito (TS)
 function gammaRand(shape: number, scale: number): number {
   if (shape <= 0 || scale <= 0) return 0;
 
-  // Boost para shape < 1
   if (shape < 1) {
-    const u = Math.random();
+    const u = R();
     return gammaRand(shape + 1, scale) * Math.pow(u, 1 / shape);
   }
 
@@ -519,7 +527,7 @@ function gammaRand(shape: number, scale: number): number {
     if (v <= 0) continue;
     v = v * v * v;
 
-    const u = Math.random();
+    const u = R();
     if (u < 1 - 0.0331 * (x * x) * (x * x)) return d * v * scale;
     if (Math.log(u) < 0.5 * x * x + d * (1 - v + Math.log(v))) return d * v * scale;
   }
@@ -531,7 +539,7 @@ function poissonSample(lambda: number): number {
   let p = 1;
   do {
     k++;
-    p *= Math.random();
+    p *= R();
   } while (p > L);
   return k - 1;
 }
@@ -547,9 +555,7 @@ function nbSample(meanM: number, alpha: number): number {
 function binomialSample(n: number, p: number): number {
   const pp = clamp(p, 0, 1);
   let x = 0;
-  for (let i = 0; i < n; i++) {
-    if (Math.random() < pp) x++;
-  }
+  for (let i = 0; i < n; i++) if (R() < pp) x++;
   return x;
 }
 
@@ -581,14 +587,22 @@ function safeRate(num: number, den: number, fallback: number, lo: number, hi: nu
 }
 
 function lineProbFromSamples(samples: number[], line: number): any {
-  const k = Math.floor(line + 0.5); // over 2.5 => >=3
+  const n = Math.max(1, samples.length);
+  const k = Math.floor(line + 0.5);
   let overCount = 0;
-  for (let i = 0; i < samples.length; i++) if (samples[i] >= k) overCount++;
-  const pOver = overCount / Math.max(1, samples.length);
+  for (let i = 0; i < n; i++) if (samples[i] >= k) overCount++;
+
+  const pOver = overCount / n;
   const pUnder = 1 - pOver;
+
+  const se = Math.sqrt((pOver * (1 - pOver)) / n);
+  const z = 1.96;
+  const pOverLo = clamp(pOver - z * se, 0, 1);
+  const pOverHi = clamp(pOver + z * se, 0, 1);
+
   return {
     line,
-    over: { p: toPct(pOver), fairOdd: fairOddFromProb(pOver) },
+    over: { p: toPct(pOver), fairOdd: fairOddFromProb(pOver), lo: toPct(pOverLo), hi: toPct(pOverHi) },
     under: { p: toPct(pUnder), fairOdd: fairOddFromProb(pUnder) },
   };
 }
@@ -625,6 +639,10 @@ export async function GET(req: Request) {
 
     if (!fixtureId) return NextResponse.json({ error: "Missing fixture" }, { status: 400 });
 
+    // ✅ Seed determinista: mismo fixture + params => misma predicción SIEMPRE
+    const seedStr = `fixture=${fixtureId}|last=${lastN}|sims=${sims}`;
+    RNG = mulberry32(fnv1a32(seedStr));
+
     // 1) Fixture
     const fx = await apiFootballFetch(`/fixtures?id=${fixtureId}`);
     if (!fx.ok) return NextResponse.json({ error: "fixture fetch failed", details: fx }, { status: 500 });
@@ -648,11 +666,11 @@ export async function GET(req: Request) {
 
     const homeCtxRes = await fetch(
       `${origin}/api/football/team-context?team=${home.id}&league=${league.id}&season=${league.season}&last=${lastN}`,
-      { cache: "no-store" }
+      { cache: "no-store" },
     );
     const awayCtxRes = await fetch(
       `${origin}/api/football/team-context?team=${away.id}&league=${league.id}&season=${league.season}&last=${lastN}`,
-      { cache: "no-store" }
+      { cache: "no-store" },
     );
 
     const homeCtx = await homeCtxRes.json().catch(() => null);
@@ -679,11 +697,9 @@ export async function GET(req: Request) {
     }
     const wMult = weatherMultipliers(weather);
 
-// 🔥 NEW: Hybrid strength + style engine
-const hybrid = buildHybridStrength(homeAgg, awayAgg);
-const styleHome = buildStyleProfile(homeAgg);
-const styleAway = buildStyleProfile(awayAgg);
-
+    const hybrid = buildHybridStrength(homeAgg, awayAgg);
+    const styleHome = buildStyleProfile(homeAgg);
+    const styleAway = buildStyleProfile(awayAgg);
 
     // -------------------------
     // PRO: Chain model
@@ -692,25 +708,24 @@ const styleAway = buildStyleProfile(awayAgg);
     let meanShotsAway = (awayAgg.shotsForAvg + homeAgg.shotsAgainstAvg) / 2;
 
     meanShotsHome =
-  meanShotsHome *
-  injBuilt.mult.homeAttack *
-  injBuilt.mult.awayConcede *
-  comp.shots *
-  wMult.shots *
-  hybrid.eloFactorHome *
-  hybrid.formHome *
-  clamp(1 + (styleHome.pressure - 1) * 0.12, 0.90, 1.15);
+      meanShotsHome *
+      injBuilt.mult.homeAttack *
+      injBuilt.mult.awayConcede *
+      comp.shots *
+      wMult.shots *
+      hybrid.eloFactorHome *
+      hybrid.formHome *
+      clamp(1 + (styleHome.pressure - 1) * 0.12, 0.9, 1.15);
 
     meanShotsAway =
-  meanShotsAway *
-  injBuilt.mult.awayAttack *
-  injBuilt.mult.homeConcede *
-  comp.shots *
-  wMult.shots *
-  hybrid.eloFactorAway *
-  hybrid.formAway *
-  clamp(1 + (styleAway.pressure - 1) * 0.15, 0.85, 1.2);
-
+      meanShotsAway *
+      injBuilt.mult.awayAttack *
+      injBuilt.mult.homeConcede *
+      comp.shots *
+      wMult.shots *
+      hybrid.eloFactorAway *
+      hybrid.formAway *
+      clamp(1 + (styleAway.pressure - 1) * 0.15, 0.85, 1.2);
 
     meanShotsHome = clamp(meanShotsHome, 4, 30);
     meanShotsAway = clamp(meanShotsAway, 4, 30);
@@ -729,14 +744,14 @@ const styleAway = buildStyleProfile(awayAgg);
     let pSotHome = Math.sqrt(pSotTeamHome * pSotConcedeByAway);
     let pSotAway = Math.sqrt(pSotTeamAway * pSotConcedeByHome);
 
-    pSotHome = clamp(pSotHome * clamp(wMult.shotsOnTarget / wMult.shots, 0.9, 1.05), 0.12, 0.60);
-    pSotAway = clamp(pSotAway * clamp(wMult.shotsOnTarget / wMult.shots, 0.9, 1.05), 0.12, 0.60);
+    pSotHome = clamp(pSotHome * clamp(wMult.shotsOnTarget / wMult.shots, 0.9, 1.05), 0.12, 0.6);
+    pSotAway = clamp(pSotAway * clamp(wMult.shotsOnTarget / wMult.shots, 0.9, 1.05), 0.12, 0.6);
 
-    const pGoalTeamHome = safeRate(homeAgg.goalsForAvg, homeAgg.shotsOnTargetForAvg, 0.28, 0.10, 0.45);
-    const pGoalTeamAway = safeRate(awayAgg.goalsForAvg, awayAgg.shotsOnTargetForAvg, 0.28, 0.10, 0.45);
+    const pGoalTeamHome = safeRate(homeAgg.goalsForAvg, homeAgg.shotsOnTargetForAvg, 0.28, 0.1, 0.45);
+    const pGoalTeamAway = safeRate(awayAgg.goalsForAvg, awayAgg.shotsOnTargetForAvg, 0.28, 0.1, 0.45);
 
-    const pGoalConcedeByAway = safeRate(awayAgg.goalsAgainstAvg, awayAgg.shotsOnTargetAgainstAvg, 0.28, 0.10, 0.50);
-    const pGoalConcedeByHome = safeRate(homeAgg.goalsAgainstAvg, homeAgg.shotsOnTargetAgainstAvg, 0.28, 0.10, 0.50);
+    const pGoalConcedeByAway = safeRate(awayAgg.goalsAgainstAvg, awayAgg.shotsOnTargetAgainstAvg, 0.28, 0.1, 0.5);
+    const pGoalConcedeByHome = safeRate(homeAgg.goalsAgainstAvg, homeAgg.shotsOnTargetAgainstAvg, 0.28, 0.1, 0.5);
 
     let pGoalHome = Math.sqrt(pGoalTeamHome * pGoalConcedeByAway);
     let pGoalAway = Math.sqrt(pGoalTeamAway * pGoalConcedeByHome);
@@ -776,9 +791,6 @@ const styleAway = buildStyleProfile(awayAgg);
     // -------------------------
     const simShotsTotal: number[] = [];
     const simSoTTotal: number[] = [];
-    const simGoalsHome: number[] = [];
-    const simGoalsAway: number[] = [];
-    const simGoalsTotal: number[] = [];
 
     let sumGH = 0,
       sumGA = 0,
@@ -797,13 +809,9 @@ const styleAway = buildStyleProfile(awayAgg);
 
       const shotsT = shotsH + shotsA;
       const sotT = sotH + sotA;
-      const goalsT = goalsH + goalsA;
 
       simShotsTotal.push(shotsT);
       simSoTTotal.push(sotT);
-      simGoalsHome.push(goalsH);
-      simGoalsAway.push(goalsA);
-      simGoalsTotal.push(goalsT);
 
       sumGH += goalsH;
       sumGA += goalsA;
@@ -818,12 +826,8 @@ const styleAway = buildStyleProfile(awayAgg);
     // Dixon–Coles with lambdas
     // -------------------------
     const expectedGoalsTotal = lambdaHomeFromChain + lambdaAwayFromChain;
-    // 🔥 NEW: Upset risk engine
-const upset = buildUpsetRisk(
-  hybrid,
-  lambdaHomeFromChain,
-  lambdaAwayFromChain
-);
+
+    const upset = buildUpsetRisk(hybrid, lambdaHomeFromChain, lambdaAwayFromChain);
 
     let rho = -0.08;
     if (expectedGoalsTotal <= 2.0) rho = -0.12;
@@ -841,65 +845,58 @@ const upset = buildUpsetRisk(
     function goalsTotalProbOverFromDC(line: number): number {
       const k = Math.floor(line + 0.5);
       let pUnder = 0;
-      for (const s of dcScores) {
-        if (s.home + s.away <= k - 1) pUnder += s.p;
-      }
+      for (const s of dcScores) if (s.home + s.away <= k - 1) pUnder += s.p;
       return 1 - pUnder;
     }
 
     // -------------------------
-// LÍNEAS (normal vs wide)
-// -------------------------
-const profile = (searchParams.get("profile") || "normal").toLowerCase(); // normal | wide
+    // LÍNEAS (normal vs wide)
+    // -------------------------
+    const profile = (searchParams.get("profile") || "normal").toLowerCase();
 
-// helper: genera 0.5, 1.0, 1.5... (incluye enteros)
-function mkHalf(from: number, to: number, step = 0.5): number[] {
-  const out: number[] = [];
-  for (let x = from; x <= to + 1e-9; x += step) out.push(Math.round(x * 10) / 10);
-  return out;
-}
+    function mkHalf(from: number, to: number, step = 0.5): number[] {
+      const out: number[] = [];
+      for (let x = from; x <= to + 1e-9; x += step) out.push(Math.round(x * 10) / 10);
+      return out;
+    }
 
-// ✅ rangos por perfil
-const ranges =
-  profile === "wide"
-    ? {
-        goals: { from: 0.5, to: 10.5, step: 0.5 },
-        shots: { from: 6.5, to: 48.5, step: 2 },
-        sot: { from: 0.5, to: 22.5, step: 1 },
-        corners: { from: 2.5, to: 20.5, step: 1 },
-        cards: { from: 0.5, to: 14.5, step: 1 },
-      }
-    : {
-        goals: { from: 0.5, to: 8.5, step: 0.5 },
-        shots: { from: 8.5, to: 40.5, step: 2 },
-        sot: { from: 1.5, to: 16.5, step: 1 },
-        corners: { from: 3.5, to: 16.5, step: 1 },
-        cards: { from: 0.5, to: 10.5, step: 1 },
+    const ranges =
+      profile === "wide"
+        ? {
+            goals: { from: 0.5, to: 10.5, step: 0.5 },
+            shots: { from: 6.5, to: 48.5, step: 2 },
+            sot: { from: 0.5, to: 22.5, step: 1 },
+            corners: { from: 2.5, to: 20.5, step: 1 },
+            cards: { from: 0.5, to: 14.5, step: 1 },
+          }
+        : {
+            goals: { from: 0.5, to: 8.5, step: 0.5 },
+            shots: { from: 8.5, to: 40.5, step: 2 },
+            sot: { from: 1.5, to: 16.5, step: 1 },
+            corners: { from: 3.5, to: 16.5, step: 1 },
+            cards: { from: 0.5, to: 10.5, step: 1 },
+          };
+
+    const goalsLinesWanted = mkHalf(ranges.goals.from, ranges.goals.to, ranges.goals.step);
+
+    const goalsLines = goalsLinesWanted.map((line) => {
+      const pOver = clamp(goalsTotalProbOverFromDC(line), 0, 1);
+      const pUnder = 1 - pOver;
+      return {
+        line,
+        over: { p: toPct(pOver), fairOdd: fairOddFromProb(pOver) },
+        under: { p: toPct(pUnder), fairOdd: fairOddFromProb(pUnder) },
       };
+    });
 
-// ✅ GOALS desde Dixon–Coles
-const goalsLinesWanted = mkHalf(ranges.goals.from, ranges.goals.to, ranges.goals.step);
+    const shotsLinesWanted = mkHalfLines(ranges.shots.from, ranges.shots.to, ranges.shots.step);
+    const sotLinesWanted = mkHalfLines(ranges.sot.from, ranges.sot.to, ranges.sot.step);
 
-const goalsLines = goalsLinesWanted.map((line) => {
-  const pOver = clamp(goalsTotalProbOverFromDC(line), 0, 1);
-  const pUnder = 1 - pOver;
-  return {
-    line,
-    over: { p: toPct(pOver), fairOdd: fairOddFromProb(pOver) },
-    under: { p: toPct(pUnder), fairOdd: fairOddFromProb(pUnder) },
-  };
-});
+    const shotsLines = shotsLinesWanted.map((l) => lineProbFromSamples(simShotsTotal, l));
+    const sotLines = sotLinesWanted.map((l) => lineProbFromSamples(simSoTTotal, l));
 
-// ✅ SHOTS / SOT desde simulación
-const shotsLinesWanted = mkHalfLines(ranges.shots.from, ranges.shots.to, ranges.shots.step);
-const sotLinesWanted = mkHalfLines(ranges.sot.from, ranges.sot.to, ranges.sot.step);
-
-const shotsLines = shotsLinesWanted.map((l) => lineProbFromSamples(simShotsTotal, l));
-const sotLines = sotLinesWanted.map((l) => lineProbFromSamples(simSoTTotal, l));
-
-// ✅ CORNERS / CARDS (NB)
-const cornersLinesWanted = mkHalfLines(ranges.corners.from, ranges.corners.to, ranges.corners.step);
-const cardsLinesWanted = mkHalfLines(ranges.cards.from, ranges.cards.to, ranges.cards.step);
+    const cornersLinesWanted = mkHalfLines(ranges.corners.from, ranges.corners.to, ranges.corners.step);
+    const cardsLinesWanted = mkHalfLines(ranges.cards.from, ranges.cards.to, ranges.cards.step);
 
     const markets = {
       goals: {
@@ -962,10 +959,10 @@ const cardsLinesWanted = mkHalfLines(ranges.cards.from, ranges.cards.to, ranges.
 
     const weatherNote =
       weather && typeof weather.temperatureC === "number"
-        ? `Clima aprox. en kickoff: ${weather.temperatureC}°C, lluvia ${weather.precipitationMm}mm/h, viento ${weather.windKmh}km/h.`
+        ? `Clima aprox. en kickoff: ${weather.temperatureC}°C, lluvia ${weather.precipitationMm}mm/h, viento ${weather.windKmh} km/h.`
         : "Clima no disponible (fallback neutro).";
-// 🔥 NEW: Sharpness engine
-const sharpness = buildSharpness(goalsLines, quiniela);
+
+    const sharpness = buildSharpness(goalsLines, quiniela);
 
     const summary = {
       expected: {
@@ -978,10 +975,9 @@ const sharpness = buildSharpness(goalsLines, quiniela);
         cardsTotal: Math.round(meanCardsTotal * 100) / 100,
       },
       matchProfile: {
-  pace: { label: pace.label, score: pace.score },
-  openness,
-  upsetRisk: upset,
-
+        pace: { label: pace.label, score: pace.score },
+        openness,
+        upsetRisk: upset,
         note:
           openness === "CERRADO"
             ? "Se espera partido de pocas ocasiones; suele favorecer unders y empate/partidos ajustados."
@@ -1011,7 +1007,7 @@ const sharpness = buildSharpness(goalsLines, quiniela);
         venue: { id: venue?.id, name: venue?.name, city: venue?.city },
         teams: { home: { id: home?.id, name: home?.name }, away: { id: away?.id, name: away?.name } },
       },
-      inputs: { lastN, sims },
+      inputs: { lastN, sims, profile },
       summary,
       sharpness,
       context: {
@@ -1048,8 +1044,7 @@ const sharpness = buildSharpness(goalsLines, quiniela);
         rho: "corrección Dixon–Coles (correlación en marcadores bajos)",
         sims: "número de simulaciones Monte Carlo",
       },
-      disclaimer:
-        "Modelo probabilístico orientativo: no garantiza resultados. Úsalo para análisis y control de riesgo, no como certeza.",
+      disclaimer: "Modelo probabilístico orientativo: no garantiza resultados. Úsalo para análisis y control de riesgo, no como certeza.",
     });
   } catch (e: any) {
     return NextResponse.json({ error: "predict/match failed", message: e?.message || String(e) }, { status: 500 });
