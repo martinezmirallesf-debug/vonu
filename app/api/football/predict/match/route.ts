@@ -106,13 +106,9 @@ function buildStyleProfile(agg: any) {
 function buildUpsetRisk(hybrid: any, lambdaHome: number, lambdaAway: number) {
   const strengthGap = Math.abs(hybrid.eloFactorHome - hybrid.eloFactorAway);
 
-  // equilibrio ofensivo real
   const goalBalance = Math.abs(lambdaHome - lambdaAway);
-
-  // cuanto más equilibrado, más riesgo sorpresa
   const chaosFactor = clamp(1 - goalBalance / 2.2, 0, 1);
 
-  // si fuerzas muy iguales -> sube riesgo
   const parityFactor = clamp(1 - strengthGap * 2.2, 0, 1);
 
   const upsetScore = clamp(0.55 * chaosFactor + 0.45 * parityFactor, 0, 1);
@@ -127,7 +123,6 @@ function buildUpsetRisk(hybrid: any, lambdaHome: number, lambdaAway: number) {
   };
 }
 
-// 🔥 MARKET SHARPNESS ENGINE
 function buildSharpness(goalsLines: any[], quiniela: any) {
   function edgeLabel(p: number) {
     if (p >= 0.82) return "MUY_ALTA";
@@ -639,8 +634,11 @@ export async function GET(req: Request) {
 
     if (!fixtureId) return NextResponse.json({ error: "Missing fixture" }, { status: 400 });
 
-    // ✅ Seed determinista: mismo fixture + params => misma predicción SIEMPRE
-    const seedStr = `fixture=${fixtureId}|last=${lastN}|sims=${sims}`;
+    // ✅ Leer profile al principio (para que afecte a seed y a todo el output)
+    const profile = (searchParams.get("profile") || "normal").toLowerCase();
+
+    // ✅ Seed determinista: mismo fixture + params + profile => misma predicción SIEMPRE
+    const seedStr = `fixture=${fixtureId}|last=${lastN}|sims=${sims}|profile=${profile}`;
     RNG = mulberry32(fnv1a32(seedStr));
 
     // 1) Fixture
@@ -852,8 +850,6 @@ export async function GET(req: Request) {
     // -------------------------
     // LÍNEAS (normal vs wide)
     // -------------------------
-    const profile = (searchParams.get("profile") || "normal").toLowerCase();
-
     function mkHalf(from: number, to: number, step = 0.5): number[] {
       const out: number[] = [];
       for (let x = from; x <= to + 1e-9; x += step) out.push(Math.round(x * 10) / 10);
@@ -1044,7 +1040,8 @@ export async function GET(req: Request) {
         rho: "corrección Dixon–Coles (correlación en marcadores bajos)",
         sims: "número de simulaciones Monte Carlo",
       },
-      disclaimer: "Modelo probabilístico orientativo: no garantiza resultados. Úsalo para análisis y control de riesgo, no como certeza.",
+      disclaimer:
+        "Modelo probabilístico orientativo: no garantiza resultados. Úsalo para análisis y control de riesgo, no como certeza.",
     });
   } catch (e: any) {
     return NextResponse.json({ error: "predict/match failed", message: e?.message || String(e) }, { status: 500 });
