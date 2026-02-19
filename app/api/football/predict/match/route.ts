@@ -949,7 +949,7 @@ export async function GET(req: Request) {
 
     const injCounts = injBuilt.counts;
     const injuryNote =
-      (injCounts.homeMissing + injCounts.homeQuestionable + injCounts.awayMissing + injCounts.awayQuestionable) === 0
+      injCounts.homeMissing + injCounts.homeQuestionable + injCounts.awayMissing + injCounts.awayQuestionable === 0
         ? "Sin bajas relevantes detectadas por la API."
         : `Bajas: Local (missing ${injCounts.homeMissing}, duda ${injCounts.homeQuestionable}) | Visitante (missing ${injCounts.awayMissing}, duda ${injCounts.awayQuestionable}).`;
 
