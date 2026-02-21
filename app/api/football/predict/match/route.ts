@@ -123,6 +123,7 @@ function buildUpsetRisk(hybrid: any, lambdaHome: number, lambdaAway: number) {
   };
 }
 
+// 🔥 MARKET SHARPNESS ENGINE
 function buildSharpness(goalsLines: any[], quiniela: any) {
   function edgeLabel(p: number) {
     if (p >= 0.82) return "MUY_ALTA";
@@ -484,7 +485,7 @@ function mulberry32(seed: number) {
     a |= 0;
     a = (a + 0x6d2b79f5) | 0;
     let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    t = (t + Math.imul(t ^ (a >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
@@ -619,6 +620,154 @@ function opennessLabel(expectedGoalsTotal: number): "ABIERTO" | "EQUILIBRADO" | 
   if (expectedGoalsTotal >= 3.0) return "ABIERTO";
   if (expectedGoalsTotal >= 2.2) return "EQUILIBRADO";
   return "CERRADO";
+}
+
+/* ------------------------------------------------------------------
+   ✅ Pick selector (no picks triviales, p>=70%, cap p<=96%)
+-------------------------------------------------------------------*/
+
+type PickSide = "OVER" | "UNDER";
+type PickMarket = "GOALS" | "CORNERS" | "CARDS" | "SHOTS" | "SOT";
+
+type LineItem = {
+  line: number;
+  over?: { p: number; fairOdd?: number | null };
+  under?: { p: number; fairOdd?: number | null };
+};
+
+type CandidatePick = {
+  market: PickMarket;
+  side: PickSide;
+  line: number;
+  p: number; // 0..1
+  fairOdd: number | null;
+  score: number; // ranking interno
+  label: string;
+};
+
+function asProb01FromPct(pct: number) {
+  return clamp(pct / 100, 0, 1);
+}
+
+function fairOddFromProb01(p: number): number | null {
+  if (p <= 0) return null;
+  return Math.round((1 / p) * 100) / 100;
+}
+
+function isTrivialGoalsLine(line: number) {
+  // mata el under 7.5/8.5/9.5 que siempre sale 99%
+  return line >= 6.5;
+}
+function isTrivialCornersLine(line: number) {
+  return line >= 18.5 || line <= 2.5;
+}
+function isTrivialCardsLine(line: number) {
+  return line >= 10.5 || line <= 0.5;
+}
+
+function distanceToMean(line: number, meanHint: number) {
+  return Math.abs(line - meanHint);
+}
+
+function pickFromLines(opts: {
+  market: PickMarket;
+  lines: LineItem[];
+  meanHint: number;
+  minP?: number; // 0..1
+  capP?: number; // 0..1
+  trivialFilter?: (line: number) => boolean;
+}): CandidatePick | null {
+  const minP = opts.minP ?? 0.7;
+  const capP = opts.capP ?? 0.96;
+
+  let best: CandidatePick | null = null;
+
+  for (const l of opts.lines || []) {
+    const line = l.line;
+    if (opts.trivialFilter && opts.trivialFilter(line)) continue;
+
+    const sides: Array<{ side: PickSide; pct: number | undefined }> = [
+      { side: "OVER", pct: l.over?.p },
+      { side: "UNDER", pct: l.under?.p },
+    ];
+
+    for (const s of sides) {
+      if (typeof s.pct !== "number") continue;
+
+      const p = asProb01FromPct(s.pct);
+      if (p < minP) continue;
+      if (p > capP) continue;
+
+      const dist = distanceToMean(line, opts.meanHint);
+
+      // score: premia probabilidad, penaliza distancia a la media (evita picks raros)
+      const score = p * 100 - dist * 8;
+
+      const cand: CandidatePick = {
+        market: opts.market,
+        side: s.side,
+        line,
+        p,
+        fairOdd: fairOddFromProb01(p),
+        score,
+        label: `${opts.market} ${s.side} ${line}`,
+      };
+
+      if (!best || cand.score > best.score) best = cand;
+    }
+  }
+
+  return best;
+}
+
+function pickOneCleanFromMarkets(markets: any): CandidatePick | null {
+  const candidates: CandidatePick[] = [];
+
+  // goals
+  if (markets?.goals?.lines?.length) {
+    const meanGoals = typeof markets.goals.lambdaTotal === "number" ? markets.goals.lambdaTotal : 2.6;
+    const c = pickFromLines({
+      market: "GOALS",
+      lines: markets.goals.lines,
+      meanHint: meanGoals,
+      minP: 0.7,
+      capP: 0.96,
+      trivialFilter: isTrivialGoalsLine,
+    });
+    if (c) candidates.push(c);
+  }
+
+  // corners
+  if (markets?.corners?.lines?.length) {
+    const meanCorners = typeof markets.corners.mean === "number" ? markets.corners.mean : 9.5;
+    const c = pickFromLines({
+      market: "CORNERS",
+      lines: markets.corners.lines,
+      meanHint: meanCorners,
+      minP: 0.7,
+      capP: 0.96,
+      trivialFilter: isTrivialCornersLine,
+    });
+    if (c) candidates.push(c);
+  }
+
+  // cards
+  if (markets?.cards?.lines?.length) {
+    const meanCards = typeof markets.cards.mean === "number" ? markets.cards.mean : 4.5;
+    const c = pickFromLines({
+      market: "CARDS",
+      lines: markets.cards.lines,
+      meanHint: meanCards,
+      minP: 0.7,
+      capP: 0.96,
+      trivialFilter: isTrivialCardsLine,
+    });
+    if (c) candidates.push(c);
+  }
+
+  if (!candidates.length) return null;
+  candidates.sort((a, b) => b.score - a.score);
+  return candidates[0];
 }
 
 // -------------------------
@@ -988,6 +1137,12 @@ export async function GET(req: Request) {
       },
     };
 
+    // ✅ Recommended pick (en el JSON)
+    const recommendedPick = pickOneCleanFromMarkets(markets);
+    const recommendedPickNote = recommendedPick
+      ? "Pick filtrado: p>=70%, cap<=96% y sin líneas triviales."
+      : "No hay pick con p>=70% tras filtrar líneas triviales y cap<=96%.";
+
     return NextResponse.json({
       fixture: {
         id: fixture?.fixture?.id,
@@ -1006,6 +1161,17 @@ export async function GET(req: Request) {
       inputs: { lastN, sims, profile },
       summary,
       sharpness,
+      recommendedPick: recommendedPick
+        ? {
+            market: recommendedPick.market,
+            side: recommendedPick.side,
+            line: recommendedPick.line,
+            p: toPct(recommendedPick.p), // devuelvo en % para que sea consistente con el resto
+            fairOdd: recommendedPick.fairOdd,
+            score: Math.round(recommendedPick.score * 100) / 100,
+            note: recommendedPickNote,
+          }
+        : null,
       context: {
         injuriesCount: injBuilt.counts,
         injuryMultipliers: injBuilt.mult,
