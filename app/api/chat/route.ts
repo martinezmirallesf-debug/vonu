@@ -112,17 +112,8 @@ function pct(n: any) {
 }
 
 export async function POST(req: NextRequest) {
-  // 🔒 FOOTBALL DISABLED SWITCH (safe shutdown)
-if (process.env.VONU_DISABLE_FOOTBALL === "1") {
-  return NextResponse.json(
-    {
-      disabled: true,
-      module: "football",
-      message: "⚽ Módulo de fútbol desactivado. Vonu ya no hace predicciones deportivas.",
-    },
-    { status: 410 },
-  );
-}
+// 🔒 FOOTBALL DISABLED SWITCH (respuesta bonita, sin error)
+const FOOTBALL_DISABLED = process.env.VONU_DISABLE_FOOTBALL === "1";
   try {
     const body = (await req.json().catch(() => ({}))) as any;
 
@@ -154,6 +145,22 @@ if (process.env.VONU_DISABLE_FOOTBALL === "1") {
 
     // Solo si parece fútbol, no hay imagen, y no es tutor:
     if (!isTutor && !normalized.imageBase64 && looksLikeFootballIntent(userText)) {
+  // ✅ Si fútbol está desactivado: detectar pero NO analizar (respuesta bonita y 200 OK)
+  if (FOOTBALL_DISABLED) {
+    return json(
+      {
+        text:
+          "Te he entendido 🙂\n\n" +
+          "Ahora mismo **no hago predicciones deportivas** dentro de Vonu.\n\n" +
+          "Pero si quieres, puedo ayudarte sin apostar:\n" +
+          "- ✅ Explicarte mercados (Over/Under, BTTS, 1X2, hándicap…)\n" +
+          "- ✅ Cómo leer cuotas y gestionar riesgo\n" +
+          "- ✅ Checklist para decidir con calma\n\n" +
+          "Dime el partido y qué duda exacta tienes (por ejemplo: *qué significa Over 2.5*).",
+      },
+      200
+    );
+  }
       const origin = req.nextUrl.origin;
 
       // 1) Resolver fixture por nombres
