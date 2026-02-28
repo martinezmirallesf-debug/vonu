@@ -112,6 +112,17 @@ function pct(n: any) {
 }
 
 export async function POST(req: NextRequest) {
+  // 🔒 FOOTBALL DISABLED SWITCH (safe shutdown)
+if (process.env.VONU_DISABLE_FOOTBALL === "1") {
+  return NextResponse.json(
+    {
+      disabled: true,
+      module: "football",
+      message: "⚽ Módulo de fútbol desactivado. Vonu ya no hace predicciones deportivas.",
+    },
+    { status: 410 },
+  );
+}
   try {
     const body = (await req.json().catch(() => ({}))) as any;
 

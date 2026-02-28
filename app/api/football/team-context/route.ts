@@ -64,6 +64,18 @@ function safeAvg(nums: (number | null)[]) {
 }
 
 export async function GET(req: Request) {
+  
+  // 🔒 FOOTBALL DISABLED SWITCH (safe shutdown)
+if (process.env.VONU_DISABLE_FOOTBALL === "1") {
+  return NextResponse.json(
+    {
+      disabled: true,
+      module: "football",
+      message: "⚽ Módulo de fútbol desactivado. Vonu ya no hace predicciones deportivas.",
+    },
+    { status: 410 },
+  );
+}
   try {
     const url = new URL(req.url);
     const team = url.searchParams.get("team");

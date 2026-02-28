@@ -631,6 +631,17 @@ export async function GET(req: Request) {
     const sims = clamp(isFinite(simsRaw) ? simsRaw : 20000, 5000, 50000);
 
     if (!fixtureId) return NextResponse.json({ error: "Missing fixture" }, { status: 400 });
+    // 🔒 FOOTBALL DISABLED SWITCH (safe shutdown)
+if (process.env.VONU_DISABLE_FOOTBALL === "1") {
+  return NextResponse.json(
+    {
+      disabled: true,
+      module: "football",
+      message: "⚽ Módulo de fútbol desactivado. Vonu ya no hace predicciones deportivas.",
+    },
+    { status: 410 },
+  );
+}
 
     // ✅ Leer profile al principio (para que afecte a seed y a todo el output)
     const profile = (searchParams.get("profile") || "normal").toLowerCase();
