@@ -162,14 +162,17 @@ remoteAudio.setAttribute("playsinline", "true");
     }
 
     // 7) Enviamos SDP a OpenAI Realtime
-    const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${ephemeralKey}`,
-        "Content-Type": "application/sdp",
-      },
-      body: pc.localDescription.sdp,
-    });
+    const sdpRes = await fetch(
+  "https://api.openai.com/v1/realtime?model=gpt-realtime",
+  {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${ephemeralKey}`,
+      "Content-Type": "application/sdp",
+    },
+    body: pc.localDescription.sdp,
+  }
+);
 
     const answerSdp = await sdpRes.text().catch(() => "");
 
