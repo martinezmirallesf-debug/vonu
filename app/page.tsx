@@ -9,6 +9,11 @@ import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
 import ReactMarkdown from "react-markdown";
 import ChalkboardTutorBoard from "@/app/components/ChalkboardTutorBoard";
+import {
+  startRealtimeVoice,
+  type RealtimeVoiceConnection,
+  type RealtimeVoiceStatus,
+} from "@/app/lib/realtimeVoice";
 
 
 type Placement = { x: number; y: number; w: number; h: number };
@@ -1205,8 +1210,10 @@ useEffect(() => {
 const [ttsEnabled, setTtsEnabled] = useState(false);
 const [ttsSpeaking, setTtsSpeaking] = useState(false);
 
-// ✅ Modo conversación (voz + hablar por turnos)
+// ✅ Modo conversación (nuevo: OpenAI Realtime)
 const [voiceMode, setVoiceMode] = useState(false);
+const [realtimeStatus, setRealtimeStatus] = useState<RealtimeVoiceStatus>("idle");
+const realtimeConnRef = useRef<RealtimeVoiceConnection | null>(null);
 
 // ✅ Anti-eco: tras hablar (TTS), esperamos antes de escuchar
 const ttsCooldownUntilRef = useRef<number>(0);
@@ -1222,6 +1229,15 @@ const voiceModeRef = useRef(false);
 useEffect(() => {
   voiceModeRef.current = voiceMode;
 }, [voiceMode]);
+
+useEffect(() => {
+  return () => {
+    try {
+      realtimeConnRef.current?.stop();
+    } catch {}
+    realtimeConnRef.current = null;
+  };
+}, []);
 
 
 function setVoiceModeOff() {
@@ -1252,54 +1268,113 @@ function toggleDictation() {
   toggleMic();
 }
 
-function toggleConversation() {
-  if (!speechSupported) {
-    setMicMsg("Tu navegador no soporta modo conversación (micro). Prueba Chrome/Edge.");
+async function toggleConversation() {
+  const supportsMic =
+    typeof navigator !== "undefined" &&
+    !!navigator.mediaDevices &&
+    !!navigator.mediaDevices.getUserMedia;
+
+  if (!supportsMic) {
+    setMicMsg("Tu navegador no soporta micrófono en este modo.");
     setTimeout(() => setMicMsg(null), 2400);
     return;
   }
 
-  if (!supportsTTS()) {
-  setMicMsg("Tu navegador no soporta voz (TTS). Prueba Safari en iPhone o Chrome/Edge en desktop.");
-  setTimeout(() => setMicMsg(null), 2600);
-  return; // ✅ CLAVE: sin TTS no activamos conversación
-}
-
-
+  // ✅ Si ya está activo, apagar
   if (voiceModeRef.current) {
-  // OFF (blindado)
-  voiceModeRef.current = false;
-  setVoiceMode(false);
-  setTtsEnabled(false);
+    try {
+      realtimeConnRef.current?.stop();
+    } catch {}
+    realtimeConnRef.current = null;
+
+    voiceModeRef.current = false;
+    setVoiceMode(false);
+    setRealtimeStatus("closed");
+
+    // apagamos también la voz antigua por si acaso
+    setTtsEnabled(false);
+    stopTTS();
+    stopMic();
+    clearSilenceTimer();
+
+    setMicMsg("Modo conversación desactivado.");
+    setTimeout(() => setMicMsg(null), 1800);
+    return;
+  }
+
+  // ✅ Antes de arrancar el nuevo modo, apagar por completo el viejo
+  try {
+    stopTTS();
+  } catch {}
+
+  try {
+    stopMic();
+  } catch {}
+
   clearSilenceTimer();
-  stopMic();
-  stopTTS();
-  return;
-}
 
+  setMicMsg("Conectando con Vonu por voz…");
+  setRealtimeStatus("connecting");
 
-  // ✅ Si estaba dictando, paramos el micro antes de entrar en conversación
-  if (isListening) stopMic();
+  try {
+    const conn = await startRealtimeVoice({
+      onStatus: (status) => {
+        setRealtimeStatus(status);
 
-// ON
-voiceModeRef.current = true;
-setVoiceMode(true);
+        if (status === "connected") {
+          setMicMsg("✅ Ya puedes hablar con Vonu");
+          setTimeout(() => setMicMsg(null), 1800);
+        }
 
-setTtsEnabled(true);
+        if (status === "listening") {
+          setMicMsg("🎙️ Te escucho…");
+        }
 
-// ✅ desbloquear TTS tras el click (sin cancelar la voz real)
-primeTTSAsync({ hardCancel: true });
-setTimeout(() => {
-  primeTTSAsync({ hardCancel: true });
-}, 180);
+        if (status === "speaking") {
+          setMicMsg("🗣️ Vonu está hablando…");
+        }
 
+        if (status === "closed") {
+          setMicMsg(null);
+        }
+      },
+      onError: (message) => {
+        setMicMsg(message || "Error en el modo conversación.");
+        setTimeout(() => setMicMsg(null), 3200);
 
+        try {
+          realtimeConnRef.current?.stop();
+        } catch {}
+        realtimeConnRef.current = null;
 
+        voiceModeRef.current = false;
+        setVoiceMode(false);
+        setRealtimeStatus("error");
+      },
+      onEvent: (_event) => {
+        // de momento no hacemos nada aquí
+      },
+    });
 
-// arrancar escucha en modo conversación
-setTimeout(() => {
-  if (voiceModeRef.current) startMic("conversation");
-}, 180);
+    realtimeConnRef.current = conn;
+    voiceModeRef.current = true;
+    setVoiceMode(true);
+    setTtsEnabled(false); // este modo ya no usa la voz antigua
+    setMicMsg("✅ Modo conversación activado");
+    setTimeout(() => setMicMsg(null), 1800);
+  } catch (e: any) {
+    try {
+      realtimeConnRef.current?.stop();
+    } catch {}
+    realtimeConnRef.current = null;
+
+    voiceModeRef.current = false;
+    setVoiceMode(false);
+    setRealtimeStatus("error");
+
+    setMicMsg(e?.message ?? "No se pudo iniciar el modo conversación.");
+    setTimeout(() => setMicMsg(null), 3200);
+  }
 }
 
 
@@ -4701,35 +4776,33 @@ title={
 
   {/* 🗣️ Conversación (turnos: habla + escucha) */}
   <button
-    onClick={toggleConversation}
-    disabled={!!isTyping || !speechSupported || !supportsTTS()}
-    className={[
-      "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
-      "bg-white",
-      !speechSupported
-        ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
-        : voiceMode
-        ? "border-blue-200 bg-blue-50 text-blue-800"
-        : "border-zinc-200 hover:bg-zinc-50 text-zinc-900",
-      !!isTyping ? "opacity-50 cursor-not-allowed" : "",
-    ].join(" ")}
-    aria-label={voiceMode ? "Desactivar conversación" : "Activar conversación"}
-    title={
-  !speechSupported
-    ? "Tu navegador no soporta micrófono (SpeechRecognition)"
-    : !supportsTTS()
-    ? "Tu navegador no soporta voz (TTS)"
-    : voiceMode
-    ? "Conversación ON (clic para apagar)"
-    : "Conversación OFF (clic para encender)"
-}
-  >
-    <div className="relative">
-  <TalkIcon className="h-5 w-5" />
-</div>
-
-
-  </button>
+  onClick={toggleConversation}
+  disabled={!!isTyping}
+  className={[
+    "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
+    "bg-white",
+    voiceMode
+      ? "border-blue-200 bg-blue-50 text-blue-800"
+      : "border-zinc-200 hover:bg-zinc-50 text-zinc-900",
+    !!isTyping ? "opacity-50 cursor-not-allowed" : "",
+  ].join(" ")}
+  aria-label={voiceMode ? "Desactivar conversación" : "Activar conversación"}
+  title={
+    voiceMode
+      ? `Conversación ON · estado: ${realtimeStatus}`
+      : "Activar conversación natural"
+  }
+>
+  <div className="relative">
+    <TalkIcon className="h-5 w-5" />
+    {voiceMode ? (
+      <span
+        className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-blue-500"
+        aria-hidden="true"
+      />
+    ) : null}
+  </div>
+</button>
 
   {/* ⬆️ ENVIAR */}  
 <button
