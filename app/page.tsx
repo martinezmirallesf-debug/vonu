@@ -1444,6 +1444,8 @@ async function toggleConversation() {
   }
 },
   onEvent: (event) => {
+  console.log("REALTIME EVENT:", event);
+
   const maybeText =
     typeof event?.transcript === "string"
       ? event.transcript
@@ -1455,7 +1457,6 @@ async function toggleConversation() {
     realtimeLastUserTextRef.current = maybeText.trim();
   }
 
-  // Algunos eventos de OpenAI marcan transcripción final del usuario
   if (
     event?.type === "conversation.item.input_audio_transcription.completed" &&
     typeof event?.transcript === "string" &&
