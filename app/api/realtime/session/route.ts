@@ -20,9 +20,9 @@ export async function POST() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-realtime",
-        voice: "verse",
-      }),
+  model: "gpt-realtime",
+  voice: "marin",
+}),
     });
 
     const data = await response.json().catch(() => null);
