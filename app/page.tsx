@@ -1214,6 +1214,7 @@ const [ttsSpeaking, setTtsSpeaking] = useState(false);
 const [voiceMode, setVoiceMode] = useState(false);
 const [realtimeStatus, setRealtimeStatus] = useState<RealtimeVoiceStatus>("idle");
 const realtimeConnRef = useRef<RealtimeVoiceConnection | null>(null);
+const realtimeLastUserTextRef = useRef<string>("");
 
 // ✅ Anti-eco: tras hablar (TTS), esperamos antes de escuchar
 const ttsCooldownUntilRef = useRef<number>(0);
@@ -1278,6 +1279,49 @@ function appendRealtimeAssistantMessage(text: string) {
   );
 
   shouldStickToBottomRef.current = true;
+}
+
+async function createWrittenReplyFromVoice(userText: string) {
+  const cleanUserText = (userText ?? "").trim();
+  if (!cleanUserText) return;
+
+  const threadId = activeThreadIdRef.current || activeThread?.id;
+  if (!threadId) return;
+
+  const threadNow = threadsRef.current.find((x) => x.id === threadId) ?? activeThread;
+  if (!threadNow) return;
+
+  try {
+    const convoForApi = (threadNow.messages ?? [])
+      .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
+      .map((m) => ({
+        role: m.role,
+        content: m.text ?? "",
+      }));
+
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      body: JSON.stringify({
+        messages: convoForApi,
+        userText: cleanUserText,
+        imageBase64: null,
+        mode: threadNow.mode ?? "chat",
+        tutorLevel: threadNow.tutorProfile?.level ?? "adult",
+      }),
+    });
+
+    const data = await res.json().catch(() => null);
+    const text =
+      typeof data?.text === "string" && data.text.trim()
+        ? data.text.trim()
+        : "";
+
+    if (!text) return;
+
+    appendRealtimeAssistantMessage(text);
+  } catch {}
 }
 
 function setVoiceModeOff() {
@@ -1392,11 +1436,39 @@ async function toggleConversation() {
     setRealtimeStatus("error");
   },
   onAssistantFinalText: (text) => {
-    appendRealtimeAssistantMessage(text);
-  },
-  onEvent: (_event) => {
-    // de momento no hacemos nada aquí
-  },
+  const threadMode = activeThread?.mode ?? "chat";
+  const lastUserVoiceText = realtimeLastUserTextRef.current || "";
+
+  // ✅ Si el usuario ha pedido algo que conviene guardar, o estamos en tutor,
+  // entonces generamos una versión escrita bien hecha en el chat.
+  if (wantsWrittenReply(lastUserVoiceText, threadMode)) {
+    createWrittenReplyFromVoice(lastUserVoiceText);
+    return;
+  }
+
+  // ✅ Si no lo ha pedido, no ensuciamos el chat con texto.
+},
+  onEvent: (event) => {
+  const maybeText =
+    typeof event?.transcript === "string"
+      ? event.transcript
+      : typeof event?.text === "string"
+      ? event.text
+      : "";
+
+  if (maybeText.trim()) {
+    realtimeLastUserTextRef.current = maybeText.trim();
+  }
+
+  // Algunos eventos de OpenAI marcan transcripción final del usuario
+  if (
+    event?.type === "conversation.item.input_audio_transcription.completed" &&
+    typeof event?.transcript === "string" &&
+    event.transcript.trim()
+  ) {
+    realtimeLastUserTextRef.current = event.transcript.trim();
+  }
+},
 });
 
     realtimeConnRef.current = conn;
@@ -1774,6 +1846,45 @@ if (voiceModeRef.current) {
       .replace(/\s+/g, " ")
       .toLowerCase();
   }
+
+  function wantsWrittenReply(text: string, threadMode: ThreadMode) {
+  const t = (text ?? "").trim().toLowerCase();
+
+  if (!t) return false;
+
+  // ✅ En tutor, preferimos guardar texto más a menudo
+  if (threadMode === "tutor") return true;
+
+  const triggers = [
+    "por escrito",
+    "escríbelo",
+    "escribelo",
+    "escríbemelo",
+    "escribemelo",
+    "ponlo por escrito",
+    "resumen",
+    "resúmen",
+    "resume",
+    "resúmelo",
+    "resumelo",
+    "hazme un resumen",
+    "explícamelo",
+    "explicamelo",
+    "paso a paso",
+    "apuntes",
+    "ejercicios",
+    "lista",
+    "repaso",
+    "tradúcelo",
+    "traducelo",
+    "quiero verlo en texto",
+    "quiero que lo escribas",
+    "mándamelo escrito",
+    "mandamelo escrito",
+  ];
+
+  return triggers.some((k) => t.includes(k));
+}
 
   function shouldBlockDuplicateSend(threadId: string, rawText: string) {
     const now = Date.now();
