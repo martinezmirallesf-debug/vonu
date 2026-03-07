@@ -1439,14 +1439,9 @@ async function toggleConversation() {
   const threadMode = activeThread?.mode ?? "chat";
   const lastUserVoiceText = realtimeLastUserTextRef.current || "";
 
-  // ✅ Si el usuario ha pedido algo que conviene guardar, o estamos en tutor,
-  // entonces generamos una versión escrita bien hecha en el chat.
   if (wantsWrittenReply(lastUserVoiceText, threadMode)) {
-    createWrittenReplyFromVoice(lastUserVoiceText);
-    return;
+    appendRealtimeAssistantMessage(text);
   }
-
-  // ✅ Si no lo ha pedido, no ensuciamos el chat con texto.
 },
   onEvent: (event) => {
   const maybeText =
