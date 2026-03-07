@@ -11,6 +11,7 @@ type RealtimeVoiceOptions = {
   onStatus?: (status: RealtimeVoiceStatus) => void;
   onError?: (message: string) => void;
   onEvent?: (event: any) => void;
+  onAssistantFinalText?: (text: string) => void;
 };
 
 export type RealtimeVoiceConnection = {
@@ -29,7 +30,7 @@ function safeParseJson(text: string) {
 export async function startRealtimeVoice(
   options: RealtimeVoiceOptions = {}
 ): Promise<RealtimeVoiceConnection> {
-  const { onStatus, onError, onEvent } = options;
+  const { onStatus, onError, onEvent, onAssistantFinalText } = options;
 
   const setStatus = (status: RealtimeVoiceStatus) => {
     try {
@@ -96,6 +97,7 @@ remoteAudio.setAttribute("playsinline", "true");
 
     // 5) Canal de eventos
     const dc = pc.createDataChannel("oai-events");
+    let assistantTextBuffer = "";
 
     dc.addEventListener("open", () => {
       setStatus("connected");
@@ -118,27 +120,54 @@ remoteAudio.setAttribute("playsinline", "true");
     });
 
     dc.addEventListener("message", (event) => {
-      const data = safeParseJson(event.data);
-      if (!data) return;
+  const data = safeParseJson(event.data);
+  if (!data) return;
 
-      onEvent?.(data);
+  onEvent?.(data);
 
-      // Estados útiles para UI
-      if (data.type === "input_audio_buffer.speech_started") {
-        setStatus("listening");
-      }
+  // ✅ Usuario empieza a hablar
+  if (data.type === "input_audio_buffer.speech_started") {
+    setStatus("listening");
+  }
 
-      if (data.type === "response.audio.delta") {
-        setStatus("speaking");
-      }
+  // ✅ Vonu está hablando
+  if (data.type === "response.audio.delta") {
+    setStatus("speaking");
+  }
 
-      if (
-        data.type === "response.done" ||
-        data.type === "output_audio_buffer.stopped"
-      ) {
-        setStatus("connected");
-      }
-    });
+  // ✅ Texto parcial del asistente
+  if (
+    data.type === "response.output_text.delta" &&
+    typeof data.delta === "string"
+  ) {
+    assistantTextBuffer += data.delta;
+  }
+
+  // ✅ Algunos eventos pueden traer el texto ya cerrado
+  if (
+    data.type === "response.output_text.done" &&
+    typeof data.text === "string" &&
+    data.text.trim()
+  ) {
+    assistantTextBuffer = data.text.trim();
+  }
+
+  // ✅ Cuando termina la respuesta, volcamos el texto final al chat
+  if (
+    data.type === "response.done" ||
+    data.type === "output_audio_buffer.stopped"
+  ) {
+    const finalText = assistantTextBuffer.trim();
+    if (finalText) {
+      try {
+        onAssistantFinalText?.(finalText);
+      } catch {}
+      assistantTextBuffer = "";
+    }
+
+    setStatus("connected");
+  }
+});
 
     pc.addEventListener("connectionstatechange", () => {
       const state = pc.connectionState;

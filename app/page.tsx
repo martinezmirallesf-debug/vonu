@@ -1239,6 +1239,46 @@ useEffect(() => {
   };
 }, []);
 
+function appendRealtimeAssistantMessage(text: string) {
+  const clean = normalizeAssistantText(String(text ?? "").trim());
+  if (!clean) return;
+
+  const threadId = activeThreadIdRef.current || activeThread?.id;
+  if (!threadId) return;
+
+  setThreads((prev) =>
+    prev.map((t) => {
+      if (t.id !== threadId) return t;
+
+      const last = t.messages[t.messages.length - 1];
+      const lastText = (last?.text ?? "").trim();
+
+      // ✅ evita duplicar si el último mensaje ya es exactamente el mismo
+      if (last?.role === "assistant" && lastText === clean) {
+        return t;
+      }
+
+      return {
+        ...t,
+        updatedAt: Date.now(),
+        messages: [
+          ...t.messages,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            text: clean,
+            streaming: false,
+            pizarra: null,
+            boardImageB64: null,
+            boardImagePlacement: null,
+          },
+        ],
+      };
+    })
+  );
+
+  shouldStickToBottomRef.current = true;
+}
 
 function setVoiceModeOff() {
   setVoiceMode(false);
@@ -1318,43 +1358,46 @@ async function toggleConversation() {
 
   try {
     const conn = await startRealtimeVoice({
-      onStatus: (status) => {
-        setRealtimeStatus(status);
+  onStatus: (status) => {
+    setRealtimeStatus(status);
 
-        if (status === "connected") {
-          setMicMsg("✅ Ya puedes hablar con Vonu");
-          setTimeout(() => setMicMsg(null), 1800);
-        }
+    if (status === "connected") {
+      setMicMsg("✅ Ya puedes hablar con Vonu");
+      setTimeout(() => setMicMsg(null), 1800);
+    }
 
-        if (status === "listening") {
-          setMicMsg("🎙️ Te escucho…");
-        }
+    if (status === "listening") {
+      setMicMsg("🎙️ Te escucho…");
+    }
 
-        if (status === "speaking") {
-          setMicMsg("🗣️ Vonu está hablando…");
-        }
+    if (status === "speaking") {
+      setMicMsg("🗣️ Vonu está hablando…");
+    }
 
-        if (status === "closed") {
-          setMicMsg(null);
-        }
-      },
-      onError: (message) => {
-        setMicMsg(message || "Error en el modo conversación.");
-        setTimeout(() => setMicMsg(null), 3200);
+    if (status === "closed") {
+      setMicMsg(null);
+    }
+  },
+  onError: (message) => {
+    setMicMsg(message || "Error en el modo conversación.");
+    setTimeout(() => setMicMsg(null), 3200);
 
-        try {
-          realtimeConnRef.current?.stop();
-        } catch {}
-        realtimeConnRef.current = null;
+    try {
+      realtimeConnRef.current?.stop();
+    } catch {}
+    realtimeConnRef.current = null;
 
-        voiceModeRef.current = false;
-        setVoiceMode(false);
-        setRealtimeStatus("error");
-      },
-      onEvent: (_event) => {
-        // de momento no hacemos nada aquí
-      },
-    });
+    voiceModeRef.current = false;
+    setVoiceMode(false);
+    setRealtimeStatus("error");
+  },
+  onAssistantFinalText: (text) => {
+    appendRealtimeAssistantMessage(text);
+  },
+  onEvent: (_event) => {
+    // de momento no hacemos nada aquí
+  },
+});
 
     realtimeConnRef.current = conn;
     voiceModeRef.current = true;
