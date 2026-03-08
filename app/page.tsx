@@ -1217,9 +1217,6 @@ const realtimeConnRef = useRef<RealtimeVoiceConnection | null>(null);
 const realtimeLastUserTextRef = useRef<string>("");
 const realtimeWriteBusyRef = useRef(false);
 
-const [realtimeDebugUserText, setRealtimeDebugUserText] = useState("");
-const [realtimeDebugWriteState, setRealtimeDebugWriteState] = useState("");
-
 // ✅ Anti-eco: tras hablar (TTS), esperamos antes de escuchar
 const ttsCooldownUntilRef = useRef<number>(0);
 
@@ -1287,14 +1284,8 @@ function appendRealtimeAssistantMessage(text: string) {
 
 async function createWrittenReplyFromVoice(userText: string) {
   const cleanUserText = (userText ?? "").trim();
-if (!cleanUserText) {
-  setRealtimeDebugWriteState("No hay texto de usuario por voz.");
-  return;
-}
-if (realtimeWriteBusyRef.current) {
-  setRealtimeDebugWriteState("Ya había una escritura en curso.");
-  return;
-}
+  if (!cleanUserText) return;
+  if (realtimeWriteBusyRef.current) return;
 
   const threadId = activeThreadIdRef.current || activeThread?.id;
   if (!threadId) return;
@@ -1338,21 +1329,16 @@ if (realtimeWriteBusyRef.current) {
         ? data.text.trim()
         : "";
 
-    if (!text) {
-  setRealtimeDebugWriteState("La IA no devolvió texto escrito.");
-  return;
-}
+    if (!text) return;
 
-appendRealtimeAssistantMessage(text);
-setRealtimeDebugWriteState("Respuesta escrita añadida al chat.");
+    appendRealtimeAssistantMessage(text);
   } catch {
-  setRealtimeDebugWriteState("Error generando la respuesta escrita.");
-} finally {
-  realtimeWriteBusyRef.current = false;
-}
+    // no rompemos la conversación
+  } finally {
+    realtimeWriteBusyRef.current = false;
+  }
 }
 
-setRealtimeDebugWriteState("Generando respuesta escrita...");
 
 function setVoiceModeOff() {
   setVoiceMode(false);
@@ -1468,7 +1454,6 @@ async function toggleConversation() {
   onUserFinalTranscript: (text) => {
   const clean = (text ?? "").trim();
   realtimeLastUserTextRef.current = clean;
-  setRealtimeDebugUserText(clean);
 },
 
 onAssistantFinalText: (_text) => {
@@ -4873,22 +4858,6 @@ return (
   ].join(" ")}
 >
 
-{voiceMode && (realtimeDebugUserText || realtimeDebugWriteState) ? (
-  <div className="mb-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-[11px] text-zinc-600 leading-5">
-    {realtimeDebugUserText ? (
-      <div>
-        <span className="font-semibold text-zinc-800">Último texto por voz:</span>{" "}
-        {realtimeDebugUserText}
-      </div>
-    ) : null}
-    {realtimeDebugWriteState ? (
-      <div className={realtimeDebugUserText ? "mt-1" : ""}>
-        <span className="font-semibold text-zinc-800">Estado escritura:</span>{" "}
-        {realtimeDebugWriteState}
-      </div>
-    ) : null}
-  </div>
-) : null}
 
 {/* ✅ Disclaimer dentro del input (full width en móvil, estilo Gemini) */}
 <div
