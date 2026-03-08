@@ -32,6 +32,39 @@ export async function startRealtimeVoice(
   options: RealtimeVoiceOptions = {}
 ): Promise<RealtimeVoiceConnection> {
   const { onStatus, onError, onEvent, onAssistantFinalText, onUserFinalTranscript } = options;
+  let lastDeliveredUserTranscript = "";
+
+  function extractUserTranscriptFromEvent(data: any) {
+  // Caso 1: evento directo de transcripción completada
+  if (
+    (data?.type === "conversation.item.input_audio_transcription.completed" ||
+      data?.type === "input_audio_transcription.completed") &&
+    typeof data?.transcript === "string" &&
+    data.transcript.trim()
+  ) {
+    return data.transcript.trim();
+  }
+
+  // Caso 2: viene dentro de item/content
+  const item = data?.item;
+  if (item?.role === "user" && Array.isArray(item?.content)) {
+    for (const part of item.content) {
+      if (typeof part?.transcript === "string" && part.transcript.trim()) {
+        return part.transcript.trim();
+      }
+      if (typeof part?.text === "string" && part.text.trim()) {
+        return part.text.trim();
+      }
+    }
+  }
+
+  // Caso 3: formato alternativo
+  if (typeof data?.item?.formatted?.transcript === "string" && data.item.formatted.transcript.trim()) {
+    return data.item.formatted.transcript.trim();
+  }
+
+  return "";
+}
 
   const setStatus = (status: RealtimeVoiceStatus) => {
     try {
@@ -126,31 +159,18 @@ remoteAudio.setAttribute("playsinline", "true");
 
   onEvent?.(data);
 
+  const userTranscript = extractUserTranscriptFromEvent(data);
+
+  if (userTranscript && userTranscript !== lastDeliveredUserTranscript) {
+    lastDeliveredUserTranscript = userTranscript;
+    try {
+      onUserFinalTranscript?.(userTranscript);
+    } catch {}
+  }
+
   // ✅ Usuario empieza a hablar
   if (data.type === "input_audio_buffer.speech_started") {
     setStatus("listening");
-  }
-
-  // ✅ Transcripción final del usuario
-if (
-  data.type === "conversation.item.input_audio_transcription.completed" &&
-  typeof data.transcript === "string" &&
-  data.transcript.trim()
-) {
-  try {
-    onUserFinalTranscript?.(data.transcript.trim());
-  } catch {}
-}
-
-    // ✅ Transcripción final del usuario
-  if (
-    data.type === "conversation.item.input_audio_transcription.completed" &&
-    typeof data.transcript === "string" &&
-    data.transcript.trim()
-  ) {
-    try {
-      onUserFinalTranscript?.(data.transcript.trim());
-    } catch {}
   }
 
   // ✅ Texto del asistente (tu caso real)
