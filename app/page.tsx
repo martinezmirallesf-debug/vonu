@@ -1455,19 +1455,12 @@ async function toggleConversation() {
         setRealtimeStatus("error");
       },
 
-                  onUserFinalTranscript: (text) => {
-        const clean = (text ?? "").trim();
-        realtimeLastUserTextRef.current = clean;
-        voiceWriteGuardRef.current.setLastRequestedText(clean);
+                        onUserFinalTranscript: (text) => {
+  const clean = (text ?? "").trim();
+  realtimeLastUserTextRef.current = clean;
 
-        const threadMode = activeThread?.mode ?? "chat";
-
-        if (voiceWriteGuardRef.current.shouldGenerate(clean, threadMode)) {
-          setTimeout(() => {
-            createWrittenReplyFromVoice(clean);
-          }, 900);
-        }
-      },
+  appendRealtimeAssistantMessage(`🧪 TEST VOZ OK: ${clean}`);
+},
 
 onAssistantFinalText: (_text) => {
   // de momento no usamos este callback para generar el texto escrito
