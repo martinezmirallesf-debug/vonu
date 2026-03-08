@@ -2878,6 +2878,16 @@ useEffect(() => {
 }, [voiceMode, isTyping, input, imagePreview, isBlockedByPaywall]);
 
   const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
+
+const hasRealConversation = useMemo(() => {
+  return messages.some((m) => {
+    if (m.id === "init") return false;
+    const hasText = typeof m.text === "string" && m.text.trim().length > 0;
+    const hasImage = typeof m.image === "string" && m.image.trim().length > 0;
+    return hasText || hasImage;
+  });
+}, [messages]);
+
 const quickPrompts = useMemo(
   () => [
     { label: "Hacer deberes", mode: "tutor" as ThreadMode, text: "Tengo este ejercicio. Explícamelo paso a paso como profe:" },
@@ -3660,7 +3670,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
 
   // ✅ padding dinámico según la altura REAL del input bar (evita que se “corte” en PC)
-const chatBottomPad = hasUserMessage ? (inputBarH + 22) : 18;
+const chatBottomPad = hasRealConversation ? (inputBarH + 22) : 18;
 
 
 
@@ -4633,7 +4643,7 @@ return (
 
   <div
   className="mx-auto max-w-3xl px-3 md:px-6"
-  style={{ paddingTop: 124, paddingBottom: hasUserMessage ? chatBottomPad : 18 }}
+  style={{ paddingTop: 124, paddingBottom: hasRealConversation ? chatBottomPad : 18 }}
 >
     <div className="flex flex-col gap-4 py-6 md:pt-6">
       {/* Badge modo tutor */}
@@ -4647,7 +4657,7 @@ return (
           </div>
         </div>
       ) : null}
-{!hasUserMessage ? (
+{!hasRealConversation ? (
   <div className="px-1">
     <div className="pt-8 md:pt-10 ml-2">
   <div className="text-zinc-900 font-black tracking-tight leading-[0.92] text-[56px] md:text-[72px]">
