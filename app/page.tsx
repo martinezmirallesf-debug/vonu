@@ -1444,8 +1444,6 @@ async function toggleConversation() {
   }
 },
   onEvent: (event) => {
-  console.log("REALTIME EVENT:", event);
-
   const maybeText =
     typeof event?.transcript === "string"
       ? event.transcript

@@ -135,7 +135,24 @@ remoteAudio.setAttribute("playsinline", "true");
     setStatus("speaking");
   }
 
-  // ✅ Texto parcial del asistente
+  // ✅ Texto del asistente (tu caso real)
+  if (
+    data.type === "response.audio_transcript.delta" &&
+    typeof data.delta === "string"
+  ) {
+    assistantTextBuffer += data.delta;
+  }
+
+  // ✅ Si llega el transcript completo del audio, lo usamos
+  if (
+    data.type === "response.audio_transcript.done" &&
+    typeof data.transcript === "string" &&
+    data.transcript.trim()
+  ) {
+    assistantTextBuffer = data.transcript.trim();
+  }
+
+  // ✅ Compatibilidad por si en algún momento llegan eventos de texto normales
   if (
     data.type === "response.output_text.delta" &&
     typeof data.delta === "string"
@@ -143,7 +160,6 @@ remoteAudio.setAttribute("playsinline", "true");
     assistantTextBuffer += data.delta;
   }
 
-  // ✅ Algunos eventos pueden traer el texto ya cerrado
   if (
     data.type === "response.output_text.done" &&
     typeof data.text === "string" &&
@@ -152,12 +168,13 @@ remoteAudio.setAttribute("playsinline", "true");
     assistantTextBuffer = data.text.trim();
   }
 
-  // ✅ Cuando termina la respuesta, volcamos el texto final al chat
+  // ✅ Cuando termina la respuesta, volcamos el texto final
   if (
     data.type === "response.done" ||
     data.type === "output_audio_buffer.stopped"
   ) {
     const finalText = assistantTextBuffer.trim();
+
     if (finalText) {
       try {
         onAssistantFinalText?.(finalText);
