@@ -1215,6 +1215,7 @@ const [voiceMode, setVoiceMode] = useState(false);
 const [realtimeStatus, setRealtimeStatus] = useState<RealtimeVoiceStatus>("idle");
 const realtimeConnRef = useRef<RealtimeVoiceConnection | null>(null);
 const realtimeLastUserTextRef = useRef<string>("");
+const realtimeWriteBusyRef = useRef(false);
 
 // ✅ Anti-eco: tras hablar (TTS), esperamos antes de escuchar
 const ttsCooldownUntilRef = useRef<number>(0);
@@ -1284,12 +1285,15 @@ function appendRealtimeAssistantMessage(text: string) {
 async function createWrittenReplyFromVoice(userText: string) {
   const cleanUserText = (userText ?? "").trim();
   if (!cleanUserText) return;
+  if (realtimeWriteBusyRef.current) return;
 
   const threadId = activeThreadIdRef.current || activeThread?.id;
   if (!threadId) return;
 
   const threadNow = threadsRef.current.find((x) => x.id === threadId) ?? activeThread;
   if (!threadNow) return;
+
+  realtimeWriteBusyRef.current = true;
 
   try {
     const convoForApi = (threadNow.messages ?? [])
@@ -1299,13 +1303,19 @@ async function createWrittenReplyFromVoice(userText: string) {
         content: m.text ?? "",
       }));
 
+    const augmentedPrompt =
+      `El usuario te ha hablado por voz y ahora necesita una RESPUESTA ESCRITA útil para el chat.\n` +
+      `No hagas una transcripción del audio ni de tu respuesta hablada.\n` +
+      `Genera directamente el resultado escrito final que el usuario necesita.\n\n` +
+      `Petición del usuario:\n${cleanUserText}`;
+
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       cache: "no-store",
       body: JSON.stringify({
         messages: convoForApi,
-        userText: cleanUserText,
+        userText: augmentedPrompt,
         imageBase64: null,
         mode: threadNow.mode ?? "chat",
         tutorLevel: threadNow.tutorProfile?.level ?? "adult",
@@ -1313,6 +1323,7 @@ async function createWrittenReplyFromVoice(userText: string) {
     });
 
     const data = await res.json().catch(() => null);
+
     const text =
       typeof data?.text === "string" && data.text.trim()
         ? data.text.trim()
@@ -1321,7 +1332,11 @@ async function createWrittenReplyFromVoice(userText: string) {
     if (!text) return;
 
     appendRealtimeAssistantMessage(text);
-  } catch {}
+  } catch {
+    // no rompemos la conversación
+  } finally {
+    realtimeWriteBusyRef.current = false;
+  }
 }
 
 function setVoiceModeOff() {
@@ -1435,33 +1450,20 @@ async function toggleConversation() {
     setVoiceMode(false);
     setRealtimeStatus("error");
   },
-  onAssistantFinalText: (text) => {
+  onUserFinalTranscript: (text) => {
+  realtimeLastUserTextRef.current = (text ?? "").trim();
+},
+
+onAssistantFinalText: (_text) => {
   const threadMode = activeThread?.mode ?? "chat";
   const lastUserVoiceText = realtimeLastUserTextRef.current || "";
 
   if (wantsWrittenReply(lastUserVoiceText, threadMode)) {
-    appendRealtimeAssistantMessage(text);
+    createWrittenReplyFromVoice(lastUserVoiceText);
   }
 },
-  onEvent: (event) => {
-  const maybeText =
-    typeof event?.transcript === "string"
-      ? event.transcript
-      : typeof event?.text === "string"
-      ? event.text
-      : "";
-
-  if (maybeText.trim()) {
-    realtimeLastUserTextRef.current = maybeText.trim();
-  }
-
-  if (
-    event?.type === "conversation.item.input_audio_transcription.completed" &&
-    typeof event?.transcript === "string" &&
-    event.transcript.trim()
-  ) {
-    realtimeLastUserTextRef.current = event.transcript.trim();
-  }
+  onEvent: (_event) => {
+  // ya no usamos este bloque para guardar el texto del usuario
 },
 });
 
@@ -1846,7 +1848,6 @@ if (voiceModeRef.current) {
 
   if (!t) return false;
 
-  // ✅ En tutor, preferimos guardar texto más a menudo
   if (threadMode === "tutor") return true;
 
   const triggers = [
@@ -1856,9 +1857,16 @@ if (voiceModeRef.current) {
     "escríbemelo",
     "escribemelo",
     "ponlo por escrito",
-    "resumen",
-    "resúmen",
+    "redáctame",
+    "redactame",
+    "redáctalo",
+    "redactalo",
+    "hazme un email",
+    "hazme un correo",
+    "escribe un correo",
+    "escribe un email",
     "resume",
+    "resumen",
     "resúmelo",
     "resumelo",
     "hazme un resumen",
@@ -1875,6 +1883,8 @@ if (voiceModeRef.current) {
     "quiero que lo escribas",
     "mándamelo escrito",
     "mandamelo escrito",
+    "déjamelo escrito",
+    "dejamelo escrito",
   ];
 
   return triggers.some((k) => t.includes(k));

@@ -131,6 +131,17 @@ remoteAudio.setAttribute("playsinline", "true");
     setStatus("listening");
   }
 
+  // ✅ Transcripción final del usuario
+if (
+  data.type === "conversation.item.input_audio_transcription.completed" &&
+  typeof data.transcript === "string" &&
+  data.transcript.trim()
+) {
+  try {
+    onUserFinalTranscript?.(data.transcript.trim());
+  } catch {}
+}
+
     // ✅ Transcripción final del usuario
   if (
     data.type === "conversation.item.input_audio_transcription.completed" &&
