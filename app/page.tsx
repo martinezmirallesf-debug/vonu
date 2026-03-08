@@ -1452,18 +1452,19 @@ async function toggleConversation() {
       },
 
       onUserFinalTranscript: (text) => {
-        const clean = (text ?? "").trim();
-        realtimeLastUserTextRef.current = clean;
-      },
+  const clean = (text ?? "").trim();
+  realtimeLastUserTextRef.current = clean;
 
-      onAssistantFinalText: (_text) => {
-        const threadMode = activeThread?.mode ?? "chat";
-        const lastUserVoiceText = realtimeLastUserTextRef.current || "";
+  const threadMode = activeThread?.mode ?? "chat";
 
-        if (wantsWrittenReply(lastUserVoiceText, threadMode)) {
-          createWrittenReplyFromVoice(lastUserVoiceText);
-        }
-      },
+  if (wantsWrittenReply(clean, threadMode)) {
+    createWrittenReplyFromVoice(clean);
+  }
+},
+
+onAssistantFinalText: (_text) => {
+  // de momento no usamos este callback para generar el texto escrito
+},
 
       onEvent: (_event) => {
         // de momento no usamos este bloque
@@ -2907,10 +2908,11 @@ useEffect(() => {
   const userMsgCountInThread = useMemo(() => messages.filter((m) => m.role === "user").length, [messages]);
 
   const canSend = useMemo(() => {
-    const basicReady = !isTyping && (!!input.trim() || !!imagePreview);
-    if (isBlockedByPaywall) return false;
-    return basicReady;
-  }, [isTyping, input, imagePreview, isBlockedByPaywall]);
+  if (voiceMode) return false;
+  const basicReady = !isTyping && (!!input.trim() || !!imagePreview);
+  if (isBlockedByPaywall) return false;
+  return basicReady;
+}, [voiceMode, isTyping, input, imagePreview, isBlockedByPaywall]);
 
   const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
 const quickPrompts = useMemo(
@@ -3436,6 +3438,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
     }
   }
+  if (voiceModeRef.current) return;
 
   async function sendMessage() {
     if (authLoading) return;
@@ -3690,6 +3693,8 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
     }
   }
+
+    if (voiceModeRef.current) return;
 
   // ✅ padding dinámico según la altura REAL del input bar (evita que se “corte” en PC)
 const chatBottomPad = hasUserMessage ? (inputBarH + 22) : 18;
@@ -5002,8 +5007,16 @@ title={
 }
 
   }}
-  disabled={!!isTyping}
-  placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
+  disabled={!!isTyping || voiceMode}
+placeholder={
+  voiceMode
+    ? "Modo conversación activo…"
+    : isTyping
+    ? "Vonu está respondiendo…"
+    : isListening
+    ? "Escuchando… habla ahora"
+    : "Escribe tu mensaje…"
+}
   className={[
     "block w-full resize-none outline-none",
     "bg-white",
