@@ -1391,7 +1391,6 @@ async function toggleConversation() {
     setVoiceMode(false);
     setRealtimeStatus("closed");
 
-    // apagamos también la voz antigua por si acaso
     setTtsEnabled(false);
     stopTTS();
     stopMic();
@@ -1402,7 +1401,6 @@ async function toggleConversation() {
     return;
   }
 
-  // ✅ Antes de arrancar el nuevo modo, apagar por completo el viejo
   try {
     stopTTS();
   } catch {}
@@ -1418,61 +1416,64 @@ async function toggleConversation() {
 
   try {
     const conn = await startRealtimeVoice({
-  onStatus: (status) => {
-    setRealtimeStatus(status);
+      onStatus: (status) => {
+        setRealtimeStatus(status);
 
-    if (status === "connected") {
-      setMicMsg("✅ Ya puedes hablar con Vonu");
-      setTimeout(() => setMicMsg(null), 1800);
-    }
+        if (status === "connected") {
+          setMicMsg("✅ Ya puedes hablar con Vonu");
+          setTimeout(() => setMicMsg(null), 1800);
+        }
 
-    if (status === "listening") {
-      setMicMsg("🎙️ Te escucho…");
-    }
+        if (status === "listening") {
+          setMicMsg("🎙️ Te escucho…");
+        }
 
-    if (status === "speaking") {
-      setMicMsg("🗣️ Vonu está hablando…");
-    }
+        if (status === "speaking") {
+          setMicMsg("🗣️ Vonu está hablando…");
+        }
 
-    if (status === "closed") {
-      setMicMsg(null);
-    }
-  },
-  onError: (message) => {
-    setMicMsg(message || "Error en el modo conversación.");
-    setTimeout(() => setMicMsg(null), 3200);
+        if (status === "closed") {
+          setMicMsg(null);
+        }
+      },
 
-    try {
-      realtimeConnRef.current?.stop();
-    } catch {}
-    realtimeConnRef.current = null;
+      onError: (message) => {
+        setMicMsg(message || "Error en el modo conversación.");
+        setTimeout(() => setMicMsg(null), 3200);
 
-    voiceModeRef.current = false;
-    setVoiceMode(false);
-    setRealtimeStatus("error");
-  },
-  onUserFinalTranscript: (text) => {
-  const clean = (text ?? "").trim();
-  realtimeLastUserTextRef.current = clean;
-},
+        try {
+          realtimeConnRef.current?.stop();
+        } catch {}
+        realtimeConnRef.current = null;
 
-onAssistantFinalText: (_text) => {
-  const threadMode = activeThread?.mode ?? "chat";
-  const lastUserVoiceText = realtimeLastUserTextRef.current || "";
+        voiceModeRef.current = false;
+        setVoiceMode(false);
+        setRealtimeStatus("error");
+      },
 
-  if (wantsWrittenReply(lastUserVoiceText, threadMode)) {
-    createWrittenReplyFromVoice(lastUserVoiceText);
-  }
-},
-  onEvent: (_event) => {
-  // ya no usamos este bloque para guardar el texto del usuario
-},
-});
+      onUserFinalTranscript: (text) => {
+        const clean = (text ?? "").trim();
+        realtimeLastUserTextRef.current = clean;
+      },
+
+      onAssistantFinalText: (_text) => {
+        const threadMode = activeThread?.mode ?? "chat";
+        const lastUserVoiceText = realtimeLastUserTextRef.current || "";
+
+        if (wantsWrittenReply(lastUserVoiceText, threadMode)) {
+          createWrittenReplyFromVoice(lastUserVoiceText);
+        }
+      },
+
+      onEvent: (_event) => {
+        // de momento no usamos este bloque
+      },
+    });
 
     realtimeConnRef.current = conn;
     voiceModeRef.current = true;
     setVoiceMode(true);
-    setTtsEnabled(false); // este modo ya no usa la voz antigua
+    setTtsEnabled(false);
     setMicMsg("✅ Modo conversación activado");
     setTimeout(() => setMicMsg(null), 1800);
   } catch (e: any) {
