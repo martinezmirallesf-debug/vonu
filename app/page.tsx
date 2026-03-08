@@ -1451,16 +1451,10 @@ async function toggleConversation() {
         setRealtimeStatus("error");
       },
 
-      onUserFinalTranscript: (text) => {
-  const clean = (text ?? "").trim();
-  realtimeLastUserTextRef.current = clean;
-
-  const threadMode = activeThread?.mode ?? "chat";
-
-  if (wantsWrittenReply(clean, threadMode)) {
-    createWrittenReplyFromVoice(clean);
-  }
-},
+            onUserFinalTranscript: (text) => {
+        const clean = (text ?? "").trim();
+        realtimeLastUserTextRef.current = clean;
+      },
 
 onAssistantFinalText: (_text) => {
   // de momento no usamos este callback para generar el texto escrito
@@ -3183,7 +3177,8 @@ useEffect(() => {
   }
 
   async function sendQuickMessage(textPreset: string, modePreset: ThreadMode) {
-    if (authLoading) return;
+  if (voiceModeRef.current) return;
+  if (authLoading) return;
 
     if (enforceLimitIfNeeded()) return;
 
@@ -3438,10 +3433,10 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
     }
   }
-  if (voiceModeRef.current) return;
 
   async function sendMessage() {
-    if (authLoading) return;
+  if (voiceModeRef.current) return;
+  if (authLoading) return;
 
     if (enforceLimitIfNeeded()) return;
 
@@ -3694,7 +3689,6 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
     }
   }
 
-    if (voiceModeRef.current) return;
 
   // ✅ padding dinámico según la altura REAL del input bar (evita que se “corte” en PC)
 const chatBottomPad = hasUserMessage ? (inputBarH + 22) : 18;
