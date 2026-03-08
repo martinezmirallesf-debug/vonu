@@ -137,14 +137,17 @@ remoteAudio.setAttribute("playsinline", "true");
       setStatus("connected");
 
       // Ajustes de sesión una vez abierta
-      const sessionUpdate = {
+            const sessionUpdate = {
         type: "session.update",
         session: {
           type: "realtime",
           model: "gpt-realtime",
           modalities: ["audio", "text"],
+          input_audio_transcription: {
+            model: "gpt-4o-mini-transcribe",
+          },
           instructions:
-  "Eres Vonu. Habla siempre en español de España, con acento castellano neutro y natural. Evita acentos latinoamericanos. Tu tono debe sonar humano, cálido, claro y agradable, nunca robótico. Responde de forma útil, cercana y breve. Si el usuario pide una explicación tipo profesor, explica paso a paso, con claridad y tono didáctico.",
+            "Eres Vonu. Habla siempre en español de España, con acento castellano neutro y natural. Evita acentos latinoamericanos. Tu tono debe sonar humano, cálido, claro y agradable, nunca robótico. Responde de forma útil, cercana y breve. Si el usuario pide una explicación tipo profesor, explica paso a paso, con claridad y tono didáctico.",
         },
       };
 
@@ -157,7 +160,9 @@ remoteAudio.setAttribute("playsinline", "true");
   const data = safeParseJson(event.data);
   if (!data) return;
 
-  onEvent?.(data);
+  try {
+    onEvent?.(data);
+  } catch {}
 
   const userTranscript = extractUserTranscriptFromEvent(data);
 
@@ -173,7 +178,12 @@ remoteAudio.setAttribute("playsinline", "true");
     setStatus("listening");
   }
 
-  // ✅ Texto del asistente (tu caso real)
+  // ✅ También volvemos a connected cuando acaba la voz del usuario
+  if (data.type === "input_audio_buffer.speech_stopped") {
+    setStatus("connected");
+  }
+
+  // ✅ Texto del asistente por transcript de audio
   if (
     data.type === "response.audio_transcript.delta" &&
     typeof data.delta === "string"
@@ -181,7 +191,6 @@ remoteAudio.setAttribute("playsinline", "true");
     assistantTextBuffer += data.delta;
   }
 
-  // ✅ Si llega el transcript completo del audio, lo usamos
   if (
     data.type === "response.audio_transcript.done" &&
     typeof data.transcript === "string" &&
@@ -190,7 +199,7 @@ remoteAudio.setAttribute("playsinline", "true");
     assistantTextBuffer = data.transcript.trim();
   }
 
-  // ✅ Compatibilidad por si en algún momento llegan eventos de texto normales
+  // ✅ Compatibilidad por si llegan eventos de texto “normales”
   if (
     data.type === "response.output_text.delta" &&
     typeof data.delta === "string"
@@ -204,6 +213,20 @@ remoteAudio.setAttribute("playsinline", "true");
     data.text.trim()
   ) {
     assistantTextBuffer = data.text.trim();
+  }
+
+  // ✅ Fallback: algunas respuestas vienen por output[0].content[0].transcript/text
+  const out = Array.isArray(data?.response?.output) ? data.response.output : [];
+  for (const item of out) {
+    const content = Array.isArray(item?.content) ? item.content : [];
+    for (const part of content) {
+      if (typeof part?.transcript === "string" && part.transcript.trim()) {
+        assistantTextBuffer = part.transcript.trim();
+      }
+      if (typeof part?.text === "string" && part.text.trim()) {
+        assistantTextBuffer = part.text.trim();
+      }
+    }
   }
 
   // ✅ Cuando termina la respuesta, volcamos el texto final
