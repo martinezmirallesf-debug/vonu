@@ -16,13 +16,16 @@ export async function POST() {
     const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-  model: "gpt-realtime",
-  voice: "marin",
-}),
+        model: "gpt-realtime",
+        voice: "marin",
+        input_audio_transcription: {
+          model: "gpt-4o-mini-transcribe",
+        },
+      }),
     });
 
     const data = await response.json().catch(() => null);

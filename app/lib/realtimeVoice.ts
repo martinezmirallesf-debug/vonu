@@ -12,6 +12,7 @@ type RealtimeVoiceOptions = {
   onError?: (message: string) => void;
   onEvent?: (event: any) => void;
   onAssistantFinalText?: (text: string) => void;
+  onUserFinalTranscript?: (text: string) => void;
 };
 
 export type RealtimeVoiceConnection = {
@@ -30,7 +31,7 @@ function safeParseJson(text: string) {
 export async function startRealtimeVoice(
   options: RealtimeVoiceOptions = {}
 ): Promise<RealtimeVoiceConnection> {
-  const { onStatus, onError, onEvent, onAssistantFinalText } = options;
+  const { onStatus, onError, onEvent, onAssistantFinalText, onUserFinalTranscript } = options;
 
   const setStatus = (status: RealtimeVoiceStatus) => {
     try {
@@ -130,9 +131,15 @@ remoteAudio.setAttribute("playsinline", "true");
     setStatus("listening");
   }
 
-  // ✅ Vonu está hablando
-  if (data.type === "response.audio.delta") {
-    setStatus("speaking");
+    // ✅ Transcripción final del usuario
+  if (
+    data.type === "conversation.item.input_audio_transcription.completed" &&
+    typeof data.transcript === "string" &&
+    data.transcript.trim()
+  ) {
+    try {
+      onUserFinalTranscript?.(data.transcript.trim());
+    } catch {}
   }
 
   // ✅ Texto del asistente (tu caso real)
