@@ -14,6 +14,7 @@ import {
   type RealtimeVoiceConnection,
   type RealtimeVoiceStatus,
 } from "@/app/lib/realtimeVoice";
+import { makeVoiceWriteGuard } from "@/app/lib/voiceWriteIntent";
 
 
 type Placement = { x: number; y: number; w: number; h: number };
@@ -1216,6 +1217,7 @@ const [realtimeStatus, setRealtimeStatus] = useState<RealtimeVoiceStatus>("idle"
 const realtimeConnRef = useRef<RealtimeVoiceConnection | null>(null);
 const realtimeLastUserTextRef = useRef<string>("");
 const realtimeWriteBusyRef = useRef(false);
+const voiceWriteGuardRef = useRef(makeVoiceWriteGuard());
 
 // ✅ Anti-eco: tras hablar (TTS), esperamos antes de escuchar
 const ttsCooldownUntilRef = useRef<number>(0);
@@ -1294,6 +1296,7 @@ async function createWrittenReplyFromVoice(userText: string) {
   if (!threadNow) return;
 
   realtimeWriteBusyRef.current = true;
+  voiceWriteGuardRef.current.markGenerating(cleanUserText);
 
   try {
     const convoForApi = (threadNow.messages ?? [])
@@ -1336,6 +1339,7 @@ async function createWrittenReplyFromVoice(userText: string) {
     // no rompemos la conversación
   } finally {
     realtimeWriteBusyRef.current = false;
+    voiceWriteGuardRef.current.markFinished();
   }
 }
 
@@ -1451,9 +1455,18 @@ async function toggleConversation() {
         setRealtimeStatus("error");
       },
 
-            onUserFinalTranscript: (text) => {
+                  onUserFinalTranscript: (text) => {
         const clean = (text ?? "").trim();
         realtimeLastUserTextRef.current = clean;
+        voiceWriteGuardRef.current.setLastRequestedText(clean);
+
+        const threadMode = activeThread?.mode ?? "chat";
+
+        if (voiceWriteGuardRef.current.shouldGenerate(clean, threadMode)) {
+          setTimeout(() => {
+            createWrittenReplyFromVoice(clean);
+          }, 900);
+        }
       },
 
 onAssistantFinalText: (_text) => {
@@ -1477,9 +1490,10 @@ onAssistantFinalText: (_text) => {
     } catch {}
     realtimeConnRef.current = null;
 
-    voiceModeRef.current = false;
+        voiceModeRef.current = false;
     setVoiceMode(false);
-    setRealtimeStatus("error");
+    setRealtimeStatus("closed");
+    voiceWriteGuardRef.current.reset();
 
     setMicMsg(e?.message ?? "No se pudo iniciar el modo conversación.");
     setTimeout(() => setMicMsg(null), 3200);
@@ -1841,52 +1855,7 @@ if (voiceModeRef.current) {
       .toLowerCase();
   }
 
-  function wantsWrittenReply(text: string, threadMode: ThreadMode) {
-  const t = (text ?? "").trim().toLowerCase();
 
-  if (!t) return false;
-
-  if (threadMode === "tutor") return true;
-
-  const triggers = [
-    "por escrito",
-    "escríbelo",
-    "escribelo",
-    "escríbemelo",
-    "escribemelo",
-    "ponlo por escrito",
-    "redáctame",
-    "redactame",
-    "redáctalo",
-    "redactalo",
-    "hazme un email",
-    "hazme un correo",
-    "escribe un correo",
-    "escribe un email",
-    "resume",
-    "resumen",
-    "resúmelo",
-    "resumelo",
-    "hazme un resumen",
-    "explícamelo",
-    "explicamelo",
-    "paso a paso",
-    "apuntes",
-    "ejercicios",
-    "lista",
-    "repaso",
-    "tradúcelo",
-    "traducelo",
-    "quiero verlo en texto",
-    "quiero que lo escribas",
-    "mándamelo escrito",
-    "mandamelo escrito",
-    "déjamelo escrito",
-    "dejamelo escrito",
-  ];
-
-  return triggers.some((k) => t.includes(k));
-}
 
   function shouldBlockDuplicateSend(threadId: string, rawText: string) {
     const now = Date.now();
