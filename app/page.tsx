@@ -1243,6 +1243,47 @@ useEffect(() => {
   };
 }, []);
 
+function appendRealtimeUserMessage(text: string) {
+  const clean = String(text ?? "").trim();
+  if (!clean) return;
+
+  const threadId = activeThreadIdRef.current || activeThread?.id;
+  if (!threadId) return;
+
+  setThreads((prev) =>
+    prev.map((t) => {
+      if (t.id !== threadId) return t;
+
+      const last = t.messages[t.messages.length - 1];
+      const lastText = (last?.text ?? "").trim();
+
+      // evita duplicar si el último mensaje ya es exactamente el mismo
+      if (last?.role === "user" && lastText === clean) {
+        return t;
+      }
+
+      return {
+        ...t,
+        updatedAt: Date.now(),
+        messages: [
+          ...t.messages,
+          {
+            id: crypto.randomUUID(),
+            role: "user",
+            text: clean,
+            streaming: false,
+            pizarra: null,
+            boardImageB64: null,
+            boardImagePlacement: null,
+          },
+        ],
+      };
+    })
+  );
+
+  shouldStickToBottomRef.current = true;
+}
+
 function appendRealtimeAssistantMessage(text: string) {
   const clean = normalizeAssistantText(String(text ?? "").trim());
   if (!clean) return;
@@ -1343,6 +1384,21 @@ async function createWrittenReplyFromVoice(userText: string) {
   }
 }
 
+function handleVoiceMessageForChat(text: string) {
+  const clean = (text ?? "").trim();
+  if (!clean) return;
+
+  const prev = normalizeSendText(realtimeLastUserTextRef.current || "");
+  const next = normalizeSendText(clean);
+
+  // evita repetir exactamente lo mismo
+  if (prev && prev === next) return;
+
+  realtimeLastUserTextRef.current = clean;
+
+  appendRealtimeUserMessage(clean);
+  void createWrittenReplyFromVoice(clean);
+}
 
 function setVoiceModeOff() {
   setVoiceMode(false);
@@ -1455,12 +1511,9 @@ async function toggleConversation() {
         setRealtimeStatus("error");
       },
 
-                        onUserFinalTranscript: (text) => {
-  const clean = (text ?? "").trim();
-  realtimeLastUserTextRef.current = clean;
-
-  appendRealtimeAssistantMessage(`🧪 TEST VOZ OK: ${clean}`);
-},
+                              onUserFinalTranscript: (text) => {
+        handleVoiceMessageForChat(text);
+      },
 
 onAssistantFinalText: (_text) => {
   // de momento no usamos este callback para generar el texto escrito
@@ -1471,12 +1524,21 @@ onAssistantFinalText: (_text) => {
       },
     });
 
-    realtimeConnRef.current = conn;
+        realtimeConnRef.current = conn;
     voiceModeRef.current = true;
     setVoiceMode(true);
     setTtsEnabled(false);
     setMicMsg("✅ Modo conversación activado");
     setTimeout(() => setMicMsg(null), 1800);
+
+    // arrancamos también la transcripción local para poder escribir en el chat
+    setTimeout(() => {
+      if (!voiceModeRef.current) return;
+      if (isTyping) return;
+      if (recognitionRef.current) return;
+      startMic("conversation");
+    }, 250);
+    
   } catch (e: any) {
     try {
       realtimeConnRef.current?.stop();
@@ -2259,61 +2321,33 @@ clearSilenceTimer();
 const purposeAtStart = purpose; // snapshot
 
 
-  // ✅ conversación: enviar automático si hay texto
+    // ✅ conversación: enviar automático al chat escrito si hay texto
   if (purposeAtStart === "conversation" && voiceModeRef.current) {
     if (finalText) {
       const now = Date.now();
-const prev = lastMicSendRef.current;
+      const prev = lastMicSendRef.current;
 
-// ✅ normalización fuerte para comparar (evita que "hola" vs "hola." se envíen 2 veces)
-const normalizeVoiceSend = (s: string) =>
-  (s ?? "")
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, " ")
-    .replace(/[.,;:!?¡¿]+/g, ""); // quitamos puntuación suave
+      const curNorm = normalizeVoiceSendText(finalText);
+      const prevNorm = normalizeVoiceSendText(prev.text);
 
-const curNorm = normalizeVoiceSend(finalText);
-const prevNorm = normalizeVoiceSend(prev.text);
+      const WINDOW_MS = isDesktopPointer() ? 2500 : 4200;
 
-// ventana un poco más larga en móvil
-const WINDOW_MS = isDesktopPointer() ? 2500 : 4200;
+      if (curNorm && prevNorm === curNorm && now - prev.ts < WINDOW_MS) {
+        // duplicado reciente: ignorar
+      } else if (!isTyping) {
+        const threadId = activeThreadIdRef.current || (activeThread?.id ?? "");
+        const lastUser = threadId ? getLastUserTextInThread(threadId) : "";
 
-if (curNorm && prevNorm === curNorm && now - prev.ts < WINDOW_MS) {
-  // ✅ ignorar duplicado real aunque cambie un punto/espacio
-} else if (isTyping) {
-  // si Vonu está respondiendo, no mandamos otro
-} else {
-  const threadId = activeThreadIdRef.current || (activeThread?.id ?? "");
-const lastUser = threadId ? getLastUserTextInThread(threadId) : "";
-
-const curNorm = normalizeVoiceSendText(finalText);
-const lastNorm = normalizeVoiceSendText(lastUser);
-
-// ✅ BLOQUEO FUERTE: si lo que “oyó” el micro coincide con tu último mensaje real,
-// NO se envía nunca (aunque hayan pasado muchos segundos).
-if (curNorm && lastNorm && curNorm === lastNorm) {
-  // ignorar (eco/repetición típica en móvil)
-} else {
-  const threadId = activeThreadIdRef.current || (activeThread?.id ?? "");
-const lastUser = threadId ? getLastUserTextInThread(threadId) : "";
-
-// ✅ bloqueo fuerte por “igual o casi igual” al último user real
-if (isNearlySameVoice(finalText, lastUser)) {
-  // ignorar eco / repetición móvil
-} else {
-  lastMicSendRef.current = { text: finalText, ts: now };
-  sendQuickMessage(finalText, activeThread?.mode ?? "chat");
-}
-
-}
-
-}
+        if (!isNearlySameVoice(finalText, lastUser)) {
+          lastMicSendRef.current = { text: finalText, ts: now };
+          handleVoiceMessageForChat(finalText);
+        }
+      }
 
       return;
     }
 
-    // ✅ Si no hubo voz real, NO reiniciar agresivo (en móvil hace bucle)
+    // Si no hubo texto final, rearmamos escucha suave
     const waitMs = isDesktopPointer() ? 450 : 1200;
 
     setTimeout(() => {
