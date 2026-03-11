@@ -181,12 +181,15 @@ export async function startRealtimeVoice(
 
     const tokenJson = await tokenRes.json().catch(() => null);
 
-    if (!tokenRes.ok) {
-      throw new Error(
+        if (!tokenRes.ok) {
+      const details =
+        tokenJson?.details?.error?.message ||
+        tokenJson?.details?.message ||
+        tokenJson?.message ||
         tokenJson?.error ||
-          tokenJson?.message ||
-          "No se pudo crear la sesión realtime."
-      );
+        `No se pudo crear la sesión realtime (HTTP ${tokenRes.status}).`;
+
+      throw new Error(details);
     }
 
     const ephemeralKey =
@@ -227,19 +230,11 @@ export async function startRealtimeVoice(
       setStatus("connected");
 
       // ✅ API actual
-            const sessionUpdate = {
+                  const sessionUpdate = {
         type: "session.update",
         session: {
           instructions:
-            "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico.",
-          audio: {
-            input: {
-              transcription: {
-                model: "gpt-4o-mini-transcribe",
-                language: "es",
-              },
-            },
-          },
+            "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve.",
         },
       };
 

@@ -13,24 +13,10 @@ export async function POST() {
       );
     }
 
+    // ✅ Payload mínimo para aislar el error real
     const payload = {
+      type: "realtime",
       model: "gpt-realtime-1.5",
-      voice: "marin",
-      instructions:
-        "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico.",
-      audio: {
-        input: {
-          transcription: {
-            model: "gpt-4o-mini-transcribe",
-            language: "es",
-          },
-          turn_detection: {
-            type: "server_vad",
-            silence_duration_ms: 700,
-            prefix_padding_ms: 300,
-          },
-        },
-      },
     };
 
     const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
@@ -54,6 +40,7 @@ export async function POST() {
     if (!response.ok) {
       console.error("REALTIME_SESSION_ERROR", {
         status: response.status,
+        payload,
         data,
       });
 
