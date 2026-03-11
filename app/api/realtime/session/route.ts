@@ -14,31 +14,31 @@ export async function POST() {
     }
 
     const payload = {
-      session: {
-        type: "realtime",
-        model: "gpt-realtime-1.5",
-        instructions:
-          "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico.",
-        audio: {
-          input: {
-            transcription: {
-              model: "gpt-4o-mini-transcribe",
-              language: "es",
-            },
-            turn_detection: {
-              type: "server_vad",
-              create_response: true,
-              interrupt_response: true,
-              silence_duration_ms: 900,
-              prefix_padding_ms: 300,
-            },
-          },
-          output: {
-            voice: "marin",
-          },
+  session: {
+    type: "realtime",
+    model: "gpt-realtime-1.5",
+    instructions:
+      "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico.",
+    audio: {
+      input: {
+        transcription: {
+          model: "gpt-4o-mini-transcribe",
+          language: "es",
+        },
+        turn_detection: {
+          type: "server_vad",
+          create_response: true,
+          interrupt_response: true,
+          silence_duration_ms: 900,
+          prefix_padding_ms: 300,
         },
       },
-    };
+      output: {
+        voice: "marin",
+      },
+    },
+  },
+};
 
     const response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
       method: "POST",
