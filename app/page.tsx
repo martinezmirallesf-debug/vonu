@@ -1519,8 +1519,8 @@ async function toggleConversation() {
       },
 
       onAssistantFinalText: (text) => {
-        console.log("[VOICE] onAssistantFinalText", text);
-        // de momento no generamos el chat desde aquí
+  console.log("[VOICE] onAssistantFinalText", text);
+  appendRealtimeAssistantMessage(text);
       },
 
       onEvent: (event) => {
