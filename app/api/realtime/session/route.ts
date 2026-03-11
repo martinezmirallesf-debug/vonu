@@ -20,11 +20,33 @@ export async function POST() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-realtime",
-        voice: "marin",
-        input_audio_transcription: {
-          model: "gpt-4o-mini-transcribe",
+        type: "realtime",
+        model: "gpt-realtime-1.5",
+        output_modalities: ["audio"],
+        audio: {
+          input: {
+            noise_reduction: {
+              type: "near_field",
+            },
+            transcription: {
+              model: "gpt-4o-mini-transcribe",
+              language: "es",
+            },
+            turn_detection: {
+              type: "server_vad",
+              create_response: true,
+              interrupt_response: true,
+              silence_duration_ms: 700,
+              prefix_padding_ms: 300,
+            },
+          },
+          output: {
+            voice: "marin",
+            speed: 1.0,
+          },
         },
+        instructions:
+          "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico.",
       }),
     });
 

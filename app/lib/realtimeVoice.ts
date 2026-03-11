@@ -28,43 +28,139 @@ function safeParseJson(text: string) {
   }
 }
 
-export async function startRealtimeVoice(
-  options: RealtimeVoiceOptions = {}
-): Promise<RealtimeVoiceConnection> {
-  const { onStatus, onError, onEvent, onAssistantFinalText, onUserFinalTranscript } = options;
-  let lastDeliveredUserTranscript = "";
+function cleanText(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
 
-  function extractUserTranscriptFromEvent(data: any) {
-  // Caso 1: evento directo de transcripción completada
-  if (
-    (data?.type === "conversation.item.input_audio_transcription.completed" ||
-      data?.type === "input_audio_transcription.completed") &&
-    typeof data?.transcript === "string" &&
-    data.transcript.trim()
-  ) {
-    return data.transcript.trim();
-  }
+function pickTranscriptFromContentArray(content: any[]): string {
+  if (!Array.isArray(content)) return "";
 
-  // Caso 2: viene dentro de item/content
-  const item = data?.item;
-  if (item?.role === "user" && Array.isArray(item?.content)) {
-    for (const part of item.content) {
-      if (typeof part?.transcript === "string" && part.transcript.trim()) {
-        return part.transcript.trim();
-      }
-      if (typeof part?.text === "string" && part.text.trim()) {
-        return part.text.trim();
-      }
-    }
-  }
+  for (const part of content) {
+    const transcript = cleanText(part?.transcript);
+    if (transcript) return transcript;
 
-  // Caso 3: formato alternativo
-  if (typeof data?.item?.formatted?.transcript === "string" && data.item.formatted.transcript.trim()) {
-    return data.item.formatted.transcript.trim();
+    const text = cleanText(part?.text);
+    if (text) return text;
   }
 
   return "";
 }
+
+function extractUserTranscriptFromEvent(data: any): string {
+  if (!data || typeof data !== "object") return "";
+
+  // Evento principal actual
+  if (
+    data?.type === "conversation.item.input_audio_transcription.completed" &&
+    cleanText(data?.transcript)
+  ) {
+    return cleanText(data.transcript);
+  }
+
+  // Delta acumulable si hiciera falta
+  if (
+    data?.type === "conversation.item.input_audio_transcription.delta" &&
+    cleanText(data?.delta)
+  ) {
+    return cleanText(data.delta);
+  }
+
+  // A veces viene en item ya finalizado
+  const item = data?.item;
+  if (item?.role === "user") {
+    const fromContent = pickTranscriptFromContentArray(item?.content);
+    if (fromContent) return fromContent;
+
+    const formattedTranscript = cleanText(item?.formatted?.transcript);
+    if (formattedTranscript) return formattedTranscript;
+
+    const directTranscript = cleanText(item?.transcript);
+    if (directTranscript) return directTranscript;
+
+    const directText = cleanText(item?.text);
+    if (directText) return directText;
+  }
+
+  return "";
+}
+
+function extractAssistantTranscriptFromEvent(data: any): {
+  delta?: string;
+  done?: string;
+} {
+  if (!data || typeof data !== "object") return {};
+
+  // API actual: transcript del audio de salida
+  if (
+    data?.type === "response.output_audio_transcript.delta" &&
+    typeof data?.delta === "string"
+  ) {
+    return { delta: data.delta };
+  }
+
+  if (
+    data?.type === "response.output_audio_transcript.done" &&
+    cleanText(data?.transcript)
+  ) {
+    return { done: cleanText(data.transcript) };
+  }
+
+  // Compatibilidad extra: output_text por si alguna respuesta entra en texto
+  if (
+    data?.type === "response.output_text.delta" &&
+    typeof data?.delta === "string"
+  ) {
+    return { delta: data.delta };
+  }
+
+  if (
+    data?.type === "response.output_text.done" &&
+    cleanText(data?.text)
+  ) {
+    return { done: cleanText(data.text) };
+  }
+
+  // Fallback por response.output_item.done / conversation.item.done
+  const item = data?.item;
+  if (item?.role === "assistant") {
+    const fromContent = pickTranscriptFromContentArray(item?.content);
+    if (fromContent) return { done: fromContent };
+
+    const formattedTranscript = cleanText(item?.formatted?.transcript);
+    if (formattedTranscript) return { done: formattedTranscript };
+
+    const directTranscript = cleanText(item?.transcript);
+    if (directTranscript) return { done: directTranscript };
+
+    const directText = cleanText(item?.text);
+    if (directText) return { done: directText };
+  }
+
+  const out = Array.isArray(data?.response?.output) ? data.response.output : [];
+  for (const itemOut of out) {
+    const content = Array.isArray(itemOut?.content) ? itemOut.content : [];
+    const fromContent = pickTranscriptFromContentArray(content);
+    if (fromContent) return { done: fromContent };
+  }
+
+  return {};
+}
+
+export async function startRealtimeVoice(
+  options: RealtimeVoiceOptions = {}
+): Promise<RealtimeVoiceConnection> {
+  const {
+    onStatus,
+    onError,
+    onEvent,
+    onAssistantFinalText,
+    onUserFinalTranscript,
+  } = options;
+
+  let lastDeliveredUserTranscript = "";
+  let lastDeliveredAssistantTranscript = "";
+  let assistantTextBuffer = "";
+  let stopped = false;
 
   const setStatus = (status: RealtimeVoiceStatus) => {
     try {
@@ -75,7 +171,6 @@ export async function startRealtimeVoice(
   try {
     setStatus("connecting");
 
-    // 1) Pedimos client secret a tu backend
     const tokenRes = await fetch("/api/realtime/session", {
       method: "POST",
       headers: {
@@ -103,20 +198,17 @@ export async function startRealtimeVoice(
       throw new Error("La respuesta no trae client_secret.value");
     }
 
-    // 2) Creamos conexión WebRTC
     const pc = new RTCPeerConnection();
 
-    // 3) Audio remoto (lo que habla Vonu)
     const remoteAudio = document.createElement("audio");
-remoteAudio.autoplay = true;
-remoteAudio.setAttribute("playsinline", "true");
+    remoteAudio.autoplay = true;
+    remoteAudio.setAttribute("playsinline", "true");
 
     pc.ontrack = (event) => {
       remoteAudio.srcObject = event.streams[0];
       setStatus("speaking");
     };
 
-    // 4) Micrófono local
     const localStream = await navigator.mediaDevices.getUserMedia({
       audio: {
         echoCancellation: true,
@@ -129,25 +221,39 @@ remoteAudio.setAttribute("playsinline", "true");
       pc.addTrack(track, localStream);
     }
 
-    // 5) Canal de eventos
     const dc = pc.createDataChannel("oai-events");
-    let assistantTextBuffer = "";
 
     dc.addEventListener("open", () => {
       setStatus("connected");
 
-      // Ajustes de sesión una vez abierta
-            const sessionUpdate = {
+      // ✅ API actual
+      const sessionUpdate = {
         type: "session.update",
         session: {
           type: "realtime",
-          model: "gpt-realtime",
-          modalities: ["audio", "text"],
-          input_audio_transcription: {
-            model: "gpt-4o-mini-transcribe",
+          model: "gpt-realtime-1.5",
+          output_modalities: ["audio"],
+          audio: {
+            input: {
+              noise_reduction: { type: "near_field" },
+              transcription: {
+                model: "gpt-4o-mini-transcribe",
+                language: "es",
+              },
+              turn_detection: {
+                type: "server_vad",
+                create_response: true,
+                interrupt_response: true,
+                idle_timeout_ms: 6000,
+              },
+            },
+            output: {
+              voice: "marin",
+              speed: 1.0,
+            },
           },
           instructions:
-            "Eres Vonu. Habla siempre en español de España, con acento castellano neutro y natural. Evita acentos latinoamericanos. Tu tono debe sonar humano, cálido, claro y agradable, nunca robótico. Responde de forma útil, cercana y breve. Si el usuario pide una explicación tipo profesor, explica paso a paso, con claridad y tono didáctico.",
+            "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico.",
         },
       };
 
@@ -157,129 +263,115 @@ remoteAudio.setAttribute("playsinline", "true");
     });
 
     dc.addEventListener("message", (event) => {
-  const data = safeParseJson(event.data);
-  if (!data) return;
+      const data = safeParseJson(event.data);
+      if (!data) return;
 
-  try {
-    onEvent?.(data);
-  } catch {}
-
-  const userTranscript = extractUserTranscriptFromEvent(data);
-
-  if (userTranscript && userTranscript !== lastDeliveredUserTranscript) {
-    lastDeliveredUserTranscript = userTranscript;
-    try {
-      onUserFinalTranscript?.(userTranscript);
-    } catch {}
-  }
-
-  // ✅ Usuario empieza a hablar
-  if (data.type === "input_audio_buffer.speech_started") {
-    setStatus("listening");
-  }
-
-  // ✅ También volvemos a connected cuando acaba la voz del usuario
-  if (data.type === "input_audio_buffer.speech_stopped") {
-    setStatus("connected");
-  }
-
-  // ✅ Texto del asistente por transcript de audio
-  if (
-    data.type === "response.audio_transcript.delta" &&
-    typeof data.delta === "string"
-  ) {
-    assistantTextBuffer += data.delta;
-  }
-
-  if (
-    data.type === "response.audio_transcript.done" &&
-    typeof data.transcript === "string" &&
-    data.transcript.trim()
-  ) {
-    assistantTextBuffer = data.transcript.trim();
-  }
-
-  // ✅ Compatibilidad por si llegan eventos de texto “normales”
-  if (
-    data.type === "response.output_text.delta" &&
-    typeof data.delta === "string"
-  ) {
-    assistantTextBuffer += data.delta;
-  }
-
-  if (
-    data.type === "response.output_text.done" &&
-    typeof data.text === "string" &&
-    data.text.trim()
-  ) {
-    assistantTextBuffer = data.text.trim();
-  }
-
-  // ✅ Fallback: algunas respuestas vienen por output[0].content[0].transcript/text
-  const out = Array.isArray(data?.response?.output) ? data.response.output : [];
-  for (const item of out) {
-    const content = Array.isArray(item?.content) ? item.content : [];
-    for (const part of content) {
-      if (typeof part?.transcript === "string" && part.transcript.trim()) {
-        assistantTextBuffer = part.transcript.trim();
-      }
-      if (typeof part?.text === "string" && part.text.trim()) {
-        assistantTextBuffer = part.text.trim();
-      }
-    }
-  }
-
-  // ✅ Cuando termina la respuesta, volcamos el texto final
-  if (
-    data.type === "response.done" ||
-    data.type === "output_audio_buffer.stopped"
-  ) {
-    const finalText = assistantTextBuffer.trim();
-
-    if (finalText) {
       try {
-        onAssistantFinalText?.(finalText);
+        onEvent?.(data);
       } catch {}
-      assistantTextBuffer = "";
-    }
 
-    setStatus("connected");
-  }
-});
+      // errores del servidor realtime
+      if (data?.type === "error") {
+        const msg =
+          cleanText(data?.error?.message) ||
+          cleanText(data?.message) ||
+          "Error en la sesión realtime.";
+        try {
+          onError?.(msg);
+        } catch {}
+      }
+
+      // usuario empieza / termina de hablar
+      if (data?.type === "input_audio_buffer.speech_started") {
+        setStatus("listening");
+      }
+
+      if (
+        data?.type === "input_audio_buffer.speech_stopped" ||
+        data?.type === "input_audio_buffer.committed"
+      ) {
+        setStatus("connected");
+      }
+
+      // transcript final del usuario
+      const userTranscript = extractUserTranscriptFromEvent(data);
+      if (
+        userTranscript &&
+        userTranscript !== lastDeliveredUserTranscript
+      ) {
+        lastDeliveredUserTranscript = userTranscript;
+        try {
+          onUserFinalTranscript?.(userTranscript);
+        } catch {}
+      }
+
+      // transcript del asistente
+      const assistant = extractAssistantTranscriptFromEvent(data);
+
+      if (assistant.delta) {
+        assistantTextBuffer += assistant.delta;
+      }
+
+      if (assistant.done) {
+        assistantTextBuffer = assistant.done;
+      }
+
+      // cuando termina la respuesta, soltamos el texto final
+      if (
+        data?.type === "response.done" ||
+        data?.type === "output_audio_buffer.stopped" ||
+        data?.type === "response.output_item.done" ||
+        data?.type === "conversation.item.done"
+      ) {
+        const finalText = cleanText(assistantTextBuffer);
+
+        if (
+          finalText &&
+          finalText !== lastDeliveredAssistantTranscript
+        ) {
+          lastDeliveredAssistantTranscript = finalText;
+          try {
+            onAssistantFinalText?.(finalText);
+          } catch {}
+        }
+
+        assistantTextBuffer = "";
+        setStatus("connected");
+      }
+    });
 
     pc.addEventListener("connectionstatechange", () => {
       const state = pc.connectionState;
 
       if (state === "connected") setStatus("connected");
+
       if (state === "failed" || state === "disconnected") {
         setStatus("error");
       }
+
       if (state === "closed") {
         setStatus("closed");
       }
     });
 
-    // 6) Oferta SDP
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
-    // Esperar a que localDescription exista
     if (!pc.localDescription?.sdp) {
       throw new Error("No se pudo generar la oferta WebRTC.");
     }
 
-    // 7) Enviamos SDP a OpenAI Realtime
     const sdpRes = await fetch(
-  "https://api.openai.com/v1/realtime?model=gpt-realtime",
-  {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${ephemeralKey}`,
-      "Content-Type": "application/sdp",
-    },
-    body: pc.localDescription.sdp,
-  }
-);
+      "https://api.openai.com/v1/realtime?model=gpt-realtime-1.5",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${ephemeralKey}`,
+          "Content-Type": "application/sdp",
+        },
+        body: pc.localDescription.sdp,
+      }
+    );
 
     const answerSdp = await sdpRes.text().catch(() => "");
 
@@ -295,6 +387,9 @@ remoteAudio.setAttribute("playsinline", "true");
     });
 
     const stop = () => {
+      if (stopped) return;
+      stopped = true;
+
       try {
         dc.close();
       } catch {}
@@ -321,7 +416,8 @@ remoteAudio.setAttribute("playsinline", "true");
 
       try {
         if (remoteAudio.srcObject) {
-          const tracks = (remoteAudio.srcObject as MediaStream).getTracks?.() || [];
+          const tracks =
+            (remoteAudio.srcObject as MediaStream).getTracks?.() || [];
           tracks.forEach((t) => {
             try {
               t.stop();
@@ -367,7 +463,9 @@ remoteAudio.setAttribute("playsinline", "true");
     };
   } catch (error: any) {
     setStatus("error");
-    onError?.(error?.message || "Error iniciando voz realtime.");
+    try {
+      onError?.(error?.message || "Error iniciando voz realtime.");
+    } catch {}
     throw error;
   }
 }
