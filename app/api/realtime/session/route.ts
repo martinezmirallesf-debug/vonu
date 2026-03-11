@@ -13,13 +13,31 @@ export async function POST() {
       );
     }
 
-    // ✅ Payload mínimo para aislar el error real
     const payload = {
-      type: "realtime",
       model: "gpt-realtime-1.5",
+      audio: {
+        input: {
+          transcription: {
+            model: "gpt-4o-mini-transcribe",
+            language: "es",
+          },
+          turn_detection: {
+            type: "server_vad",
+            create_response: true,
+            interrupt_response: true,
+            silence_duration_ms: 700,
+            prefix_padding_ms: 300,
+          },
+        },
+        output: {
+          voice: "marin",
+        },
+      },
+      instructions:
+        "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico.",
     };
 
-    const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
+    const response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -38,7 +56,7 @@ export async function POST() {
     }
 
     if (!response.ok) {
-      console.error("REALTIME_SESSION_ERROR", {
+      console.error("REALTIME_CLIENT_SECRET_ERROR", {
         status: response.status,
         payload,
         data,
@@ -56,7 +74,7 @@ export async function POST() {
 
     return NextResponse.json(data, { status: 200 });
   } catch (error: any) {
-    console.error("REALTIME_SESSION_INTERNAL_ERROR", error);
+    console.error("REALTIME_CLIENT_SECRET_INTERNAL_ERROR", error);
 
     return NextResponse.json(
       {
