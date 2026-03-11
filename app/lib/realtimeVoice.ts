@@ -247,12 +247,13 @@ export async function startRealtimeVoice(
 
       // ✅ Solo instrucciones. La config de audio ya viene desde /api/realtime/session
       const sessionUpdate = {
-        type: "session.update",
-        session: {
-          instructions:
-            "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico.",
-        },
-      };
+  type: "session.update",
+  session: {
+    type: "realtime",
+    instructions:
+      "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico.",
+  },
+};
 
       try {
         dc.send(JSON.stringify(sessionUpdate));
