@@ -342,8 +342,8 @@ export async function startRealtimeVoice(
       throw new Error("No se pudo generar la oferta WebRTC.");
     }
 
-    const sdpRes = await fetch(
-      "https://api.openai.com/v1/realtime?model=gpt-realtime-1.5",
+        const sdpRes = await fetch(
+      "https://api.openai.com/v1/realtime/calls",
       {
         method: "POST",
         headers: {
@@ -354,11 +354,13 @@ export async function startRealtimeVoice(
       }
     );
 
-    const answerSdp = await sdpRes.text().catch(() => "");
+        const answerSdp = await sdpRes.text().catch(() => "");
 
     if (!sdpRes.ok || !answerSdp) {
       throw new Error(
-        `No se pudo completar la conexión de voz (HTTP ${sdpRes.status}).`
+        answerSdp?.trim()
+          ? `No se pudo completar la conexión de voz (HTTP ${sdpRes.status}): ${answerSdp}`
+          : `No se pudo completar la conexión de voz (HTTP ${sdpRes.status}).`
       );
     }
 
