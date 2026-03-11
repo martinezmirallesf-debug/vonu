@@ -17,6 +17,8 @@ export async function POST() {
       session: {
         type: "realtime",
         model: "gpt-realtime-1.5",
+        instructions:
+          "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico.",
         audio: {
           input: {
             transcription: {
@@ -27,7 +29,7 @@ export async function POST() {
               type: "server_vad",
               create_response: true,
               interrupt_response: true,
-              silence_duration_ms: 700,
+              silence_duration_ms: 900,
               prefix_padding_ms: 300,
             },
           },
@@ -35,8 +37,6 @@ export async function POST() {
             voice: "marin",
           },
         },
-        instructions:
-          "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico.",
       },
     };
 

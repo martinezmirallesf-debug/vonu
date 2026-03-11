@@ -207,8 +207,15 @@ export async function startRealtimeVoice(
     remoteAudio.autoplay = true;
     remoteAudio.setAttribute("playsinline", "true");
 
-    pc.ontrack = (event) => {
+        pc.ontrack = async (event) => {
       remoteAudio.srcObject = event.streams[0];
+
+      try {
+        await remoteAudio.play();
+      } catch (err) {
+        console.warn("[Realtime audio play error]", err);
+      }
+
       setStatus("speaking");
     };
 
@@ -226,26 +233,60 @@ export async function startRealtimeVoice(
 
     const dc = pc.createDataChannel("oai-events");
 
-    dc.addEventListener("open", () => {
+        dc.addEventListener("open", () => {
       setStatus("connected");
 
-      // ✅ API actual
-                  const sessionUpdate = {
+      const sessionUpdate = {
         type: "session.update",
         session: {
           instructions:
-            "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve.",
+            "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico.",
+          audio: {
+            input: {
+              transcription: {
+                model: "gpt-4o-mini-transcribe",
+                language: "es",
+              },
+              turn_detection: {
+                type: "server_vad",
+                create_response: true,
+                interrupt_response: true,
+                silence_duration_ms: 900,
+                prefix_padding_ms: 300,
+              },
+            },
+            output: {
+              voice: "marin",
+            },
+          },
         },
       };
 
       try {
         dc.send(JSON.stringify(sessionUpdate));
       } catch {}
+
+      // pequeño ping de prueba para confirmar que el canal funciona
+      setTimeout(() => {
+        try {
+          dc.send(
+            JSON.stringify({
+              type: "response.create",
+              response: {
+                instructions: "Di solo: conexión completada.",
+                output_modalities: ["audio", "text"],
+              },
+            })
+          );
+        } catch {}
+      }, 500);
     });
 
-    dc.addEventListener("message", (event) => {
+        dc.addEventListener("message", (event) => {
       const data = safeParseJson(event.data);
       if (!data) return;
+
+      console.log("[Realtime event]", data?.type, data);
 
       try {
         onEvent?.(data);
