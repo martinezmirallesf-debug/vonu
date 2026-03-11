@@ -1513,16 +1513,42 @@ async function toggleConversation() {
         setRealtimeStatus("error");
       },
 
-                              onUserFinalTranscript: (text) => {
+                                    onUserFinalTranscript: (text) => {
+        console.log("[VOICE] onUserFinalTranscript", text);
         handleVoiceMessageForChat(text);
       },
 
-onAssistantFinalText: (_text) => {
-  // de momento no usamos este callback para generar el texto escrito
-},
+      onAssistantFinalText: (text) => {
+        console.log("[VOICE] onAssistantFinalText", text);
+        // de momento no generamos el chat desde aquí
+      },
 
-      onEvent: (_event) => {
-        // de momento no usamos este bloque
+      onEvent: (event) => {
+        try {
+          const type = String(event?.type ?? "");
+          console.log("[VOICE] raw event", type, event);
+
+          // ✅ fallback extra: si por lo que sea el callback principal no entra,
+          // intentamos sacar el transcript del evento aquí también
+          const transcript =
+            (typeof event?.transcript === "string" && event.transcript.trim()) ||
+            (typeof event?.item?.formatted?.transcript === "string" &&
+              event.item.formatted.transcript.trim()) ||
+            (Array.isArray(event?.item?.content)
+              ? event.item.content.find((p: any) => typeof p?.transcript === "string" && p.transcript.trim())?.transcript
+              : "") ||
+            "";
+
+          if (
+            transcript &&
+            (type === "conversation.item.input_audio_transcription.completed" ||
+              type === "conversation.item.created" ||
+              type === "conversation.item.completed")
+          ) {
+            console.log("[VOICE] fallback transcript", transcript);
+            handleVoiceMessageForChat(transcript);
+          }
+        } catch {}
       },
     });
 
