@@ -1463,9 +1463,6 @@ async function toggleConversation() {
     stopTTS();
   } catch {}
 
-  try {
-    stopMic();
-  } catch {}
 
   clearSilenceTimer();
 
@@ -1525,8 +1522,7 @@ onAssistantFinalText: (_text) => {
     voiceModeRef.current = true;
     setVoiceMode(true);
     setTtsEnabled(false);
-    setMicMsg("✅ Modo conversación activado");
-    setTimeout(() => setMicMsg(null), 1800);
+    setMicMsg("✅ Conectando modo conversación…");
 
         // ✅ No arrancamos SpeechRecognition local en modo conversación.
     // El chat escrito vendrá del transcript de OpenAI Realtime.
