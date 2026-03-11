@@ -1218,6 +1218,7 @@ const realtimeConnRef = useRef<RealtimeVoiceConnection | null>(null);
 const realtimeLastUserTextRef = useRef<string>("");
 const realtimeWriteBusyRef = useRef(false);
 const voiceWriteGuardRef = useRef(makeVoiceWriteGuard());
+const realtimeManualCloseRef = useRef(false);
 
 // ✅ Anti-eco: tras hablar (TTS), esperamos antes de escuchar
 const ttsCooldownUntilRef = useRef<number>(0);
@@ -1440,7 +1441,9 @@ async function toggleConversation() {
   }
 
   // ✅ Si ya está activo, apagar
-  if (voiceModeRef.current) {
+    if (voiceModeRef.current) {
+    realtimeManualCloseRef.current = true;
+
     try {
       realtimeConnRef.current?.stop();
     } catch {}
@@ -1466,6 +1469,7 @@ async function toggleConversation() {
 
   clearSilenceTimer();
 
+    realtimeManualCloseRef.current = false;
   setMicMsg("Conectando con Vonu por voz…");
   setRealtimeStatus("connecting");
 
@@ -1487,13 +1491,17 @@ async function toggleConversation() {
         }
 
         if (status === "closed") {
-          setMicMsg("Modo conversación desactivado.");
-        }
+  if (realtimeManualCloseRef.current) {
+    setMicMsg("Modo conversación desactivado.");
+  }
+}
       },
 
-      onError: (message) => {
+            onError: (message) => {
+        realtimeManualCloseRef.current = false;
         setMicMsg(message || "Error en el modo conversación.");
-        setTimeout(() => setMicMsg(null), 3200);
+
+        console.error("[Realtime UI error]", message);
 
         try {
           realtimeConnRef.current?.stop();
