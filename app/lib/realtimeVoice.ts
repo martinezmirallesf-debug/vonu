@@ -227,33 +227,19 @@ export async function startRealtimeVoice(
       setStatus("connected");
 
       // ✅ API actual
-      const sessionUpdate = {
+            const sessionUpdate = {
         type: "session.update",
         session: {
-          type: "realtime",
-          model: "gpt-realtime-1.5",
-          output_modalities: ["audio"],
+          instructions:
+            "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico.",
           audio: {
             input: {
-              noise_reduction: { type: "near_field" },
               transcription: {
                 model: "gpt-4o-mini-transcribe",
                 language: "es",
               },
-              turn_detection: {
-                type: "server_vad",
-                create_response: true,
-                interrupt_response: true,
-                idle_timeout_ms: 6000,
-              },
-            },
-            output: {
-              voice: "marin",
-              speed: 1.0,
             },
           },
-          instructions:
-            "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico.",
         },
       };
 
