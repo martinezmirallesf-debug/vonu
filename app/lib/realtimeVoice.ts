@@ -49,7 +49,6 @@ function pickTranscriptFromContentArray(content: any[]): string {
 function extractUserTranscriptFromEvent(data: any): string {
   if (!data || typeof data !== "object") return "";
 
-  // Evento principal actual
   if (
     data?.type === "conversation.item.input_audio_transcription.completed" &&
     cleanText(data?.transcript)
@@ -57,7 +56,6 @@ function extractUserTranscriptFromEvent(data: any): string {
     return cleanText(data.transcript);
   }
 
-  // Delta acumulable si hiciera falta
   if (
     data?.type === "conversation.item.input_audio_transcription.delta" &&
     cleanText(data?.delta)
@@ -65,7 +63,6 @@ function extractUserTranscriptFromEvent(data: any): string {
     return cleanText(data.delta);
   }
 
-  // A veces viene en item ya finalizado
   const item = data?.item;
   if (item?.role === "user") {
     const fromContent = pickTranscriptFromContentArray(item?.content);
@@ -84,13 +81,14 @@ function extractUserTranscriptFromEvent(data: any): string {
   return "";
 }
 
-function extractAssistantTranscriptFromEvent(data: any): {
+function extractAssistantTranscriptFromEvent(
+  data: any
+): {
   delta?: string;
   done?: string;
 } {
   if (!data || typeof data !== "object") return {};
 
-  // API actual: transcript del audio de salida
   if (
     data?.type === "response.output_audio_transcript.delta" &&
     typeof data?.delta === "string"
@@ -105,7 +103,6 @@ function extractAssistantTranscriptFromEvent(data: any): {
     return { done: cleanText(data.transcript) };
   }
 
-  // Compatibilidad extra: output_text por si alguna respuesta entra en texto
   if (
     data?.type === "response.output_text.delta" &&
     typeof data?.delta === "string"
@@ -120,7 +117,6 @@ function extractAssistantTranscriptFromEvent(data: any): {
     return { done: cleanText(data.text) };
   }
 
-  // Fallback por response.output_item.done / conversation.item.done
   const item = data?.item;
   if (item?.role === "assistant") {
     const fromContent = pickTranscriptFromContentArray(item?.content);
@@ -181,7 +177,7 @@ export async function startRealtimeVoice(
 
     const tokenJson = await tokenRes.json().catch(() => null);
 
-        if (!tokenRes.ok) {
+    if (!tokenRes.ok) {
       const details =
         tokenJson?.details?.error?.message ||
         tokenJson?.details?.message ||
@@ -207,16 +203,29 @@ export async function startRealtimeVoice(
     remoteAudio.autoplay = true;
     remoteAudio.setAttribute("playsinline", "true");
 
-        pc.ontrack = async (event) => {
+    pc.ontrack = async (event) => {
+      console.log("[Realtime ontrack] remote stream received", event);
+
       remoteAudio.srcObject = event.streams[0];
+      remoteAudio.muted = false;
+      remoteAudio.volume = 1;
+
+      remoteAudio.onplaying = () => {
+        console.log("[Realtime audio] onplaying");
+        setStatus("speaking");
+      };
+
+      remoteAudio.onended = () => {
+        console.log("[Realtime audio] onended");
+        setStatus("connected");
+      };
 
       try {
         await remoteAudio.play();
+        console.log("[Realtime audio] play() OK");
       } catch (err) {
         console.warn("[Realtime audio play error]", err);
       }
-
-      setStatus("speaking");
     };
 
     const localStream = await navigator.mediaDevices.getUserMedia({
@@ -233,77 +242,48 @@ export async function startRealtimeVoice(
 
     const dc = pc.createDataChannel("oai-events");
 
-        dc.addEventListener("open", () => {
+    dc.addEventListener("open", () => {
       setStatus("connected");
 
+      // ✅ Solo instrucciones. La config de audio ya viene desde /api/realtime/session
       const sessionUpdate = {
         type: "session.update",
         session: {
           instructions:
             "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico.",
-          audio: {
-            input: {
-              transcription: {
-                model: "gpt-4o-mini-transcribe",
-                language: "es",
-              },
-              turn_detection: {
-                type: "server_vad",
-                create_response: true,
-                interrupt_response: true,
-                silence_duration_ms: 900,
-                prefix_padding_ms: 300,
-              },
-            },
-            output: {
-              voice: "marin",
-            },
-          },
         },
       };
 
       try {
         dc.send(JSON.stringify(sessionUpdate));
       } catch {}
-
-      // pequeño ping de prueba para confirmar que el canal funciona
-      setTimeout(() => {
-        try {
-          dc.send(
-            JSON.stringify({
-              type: "response.create",
-              response: {
-                instructions: "Di solo: conexión completada.",
-                output_modalities: ["audio", "text"],
-              },
-            })
-          );
-        } catch {}
-      }, 500);
     });
 
-        dc.addEventListener("message", (event) => {
+    dc.addEventListener("message", (event) => {
       const data = safeParseJson(event.data);
       if (!data) return;
 
       console.log("[Realtime event]", data?.type, data);
 
+      if (data?.type === "session.updated") {
+        console.log("[Realtime] session updated OK", data);
+      }
+
       try {
         onEvent?.(data);
       } catch {}
 
-      // errores del servidor realtime
       if (data?.type === "error") {
         const msg =
           cleanText(data?.error?.message) ||
           cleanText(data?.message) ||
           "Error en la sesión realtime.";
+
         try {
           onError?.(msg);
         } catch {}
       }
 
-      // usuario empieza / termina de hablar
       if (data?.type === "input_audio_buffer.speech_started") {
         setStatus("listening");
       }
@@ -315,7 +295,6 @@ export async function startRealtimeVoice(
         setStatus("connected");
       }
 
-      // transcript final del usuario
       const userTranscript = extractUserTranscriptFromEvent(data);
       if (
         userTranscript &&
@@ -327,7 +306,6 @@ export async function startRealtimeVoice(
         } catch {}
       }
 
-      // transcript del asistente
       const assistant = extractAssistantTranscriptFromEvent(data);
 
       if (assistant.delta) {
@@ -338,7 +316,6 @@ export async function startRealtimeVoice(
         assistantTextBuffer = assistant.done;
       }
 
-      // cuando termina la respuesta, soltamos el texto final
       if (
         data?.type === "response.done" ||
         data?.type === "output_audio_buffer.stopped" ||
@@ -383,19 +360,16 @@ export async function startRealtimeVoice(
       throw new Error("No se pudo generar la oferta WebRTC.");
     }
 
-        const sdpRes = await fetch(
-      "https://api.openai.com/v1/realtime/calls",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${ephemeralKey}`,
-          "Content-Type": "application/sdp",
-        },
-        body: pc.localDescription.sdp,
-      }
-    );
+    const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${ephemeralKey}`,
+        "Content-Type": "application/sdp",
+      },
+      body: pc.localDescription.sdp,
+    });
 
-        const answerSdp = await sdpRes.text().catch(() => "");
+    const answerSdp = await sdpRes.text().catch(() => "");
 
     if (!sdpRes.ok || !answerSdp) {
       throw new Error(

@@ -1403,7 +1403,6 @@ function handleVoiceMessageForChat(text: string) {
 function setVoiceModeOff() {
   setVoiceMode(false);
   stopTTS();
-  stopMic();
   clearSilenceTimer();
 }
 
@@ -1451,9 +1450,8 @@ async function toggleConversation() {
     setVoiceMode(false);
     setRealtimeStatus("closed");
 
-    setTtsEnabled(false);
+        setTtsEnabled(false);
     stopTTS();
-    stopMic();
     clearSilenceTimer();
 
     setMicMsg("Modo conversación desactivado.");
@@ -1479,21 +1477,20 @@ async function toggleConversation() {
       onStatus: (status) => {
         setRealtimeStatus(status);
 
-        if (status === "connected") {
-          setMicMsg("✅ Ya puedes hablar con Vonu");
-          setTimeout(() => setMicMsg(null), 1800);
+                if (status === "connected") {
+          setMicMsg("✅ Conectado. Habla cuando quieras.");
         }
 
         if (status === "listening") {
-          setMicMsg("🎙️ Te escucho…");
+          setMicMsg("🎙️ Te estoy escuchando…");
         }
 
         if (status === "speaking") {
-          setMicMsg("🗣️ Vonu está hablando…");
+          setMicMsg("🗣️ Vonu está respondiendo…");
         }
 
         if (status === "closed") {
-          setMicMsg(null);
+          setMicMsg("Modo conversación desactivado.");
         }
       },
 
@@ -1531,13 +1528,8 @@ onAssistantFinalText: (_text) => {
     setMicMsg("✅ Modo conversación activado");
     setTimeout(() => setMicMsg(null), 1800);
 
-    // arrancamos también la transcripción local para poder escribir en el chat
-    setTimeout(() => {
-      if (!voiceModeRef.current) return;
-      if (isTyping) return;
-      if (recognitionRef.current) return;
-      startMic("conversation");
-    }, 250);
+        // ✅ No arrancamos SpeechRecognition local en modo conversación.
+    // El chat escrito vendrá del transcript de OpenAI Realtime.
     
   } catch (e: any) {
     try {
