@@ -1540,14 +1540,14 @@ async function toggleConversation() {
             "";
 
           if (
-            transcript &&
-            (type === "conversation.item.input_audio_transcription.completed" ||
-              type === "conversation.item.created" ||
-              type === "conversation.item.completed")
-          ) {
-            console.log("[VOICE] fallback transcript", transcript);
-            handleVoiceMessageForChat(transcript);
-          }
+  transcript &&
+  (type === "conversation.item.input_audio_transcription.completed" ||
+    type === "conversation.item.created" ||
+    type === "conversation.item.completed")
+) {
+  console.log("[VOICE] fallback transcript", transcript);
+  handleVoiceMessageForChat(transcript);
+}
         } catch {}
       },
     });
