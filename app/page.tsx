@@ -1246,33 +1246,44 @@ useEffect(() => {
 
 function appendRealtimeUserMessage(text: string) {
   const clean = String(text ?? "").trim();
-  console.log("[VOICE] appendRealtimeUserMessage", clean);
+
+  console.log("[VOICE] appendRealtimeUserMessage IN", {
+    clean,
+    activeThreadIdRef: activeThreadIdRef.current,
+    activeThreadIdState: activeThread?.id,
+  });
 
   if (!clean) return;
 
   const threadId = activeThreadIdRef.current || activeThread?.id;
-  if (!threadId) return;
+  if (!threadId) {
+    console.log("[VOICE] appendRealtimeUserMessage NO_THREAD");
+    return;
+  }
 
-  setThreads((prev) =>
-    prev.map((t) => {
+  setThreads((prev) => {
+    const next = prev.map((t) => {
       if (t.id !== threadId) return t;
 
       const last = t.messages[t.messages.length - 1];
       const lastText = (last?.text ?? "").trim();
 
-      // evita duplicar si el último mensaje ya es exactamente el mismo
       if (last?.role === "user" && lastText === clean) {
+        console.log("[VOICE] appendRealtimeUserMessage BLOCK_DUPLICATE", {
+          threadId,
+          clean,
+        });
         return t;
       }
 
-      return {
+      const updated = {
         ...t,
         updatedAt: Date.now(),
         messages: [
           ...t.messages,
           {
             id: crypto.randomUUID(),
-            role: "user",
+            role: "user" as const,
             text: clean,
             streaming: false,
             pizarra: null,
@@ -1281,39 +1292,71 @@ function appendRealtimeUserMessage(text: string) {
           },
         ],
       };
-    })
-  );
+
+      console.log("[VOICE] appendRealtimeUserMessage APPENDED", {
+        threadId,
+        newCount: updated.messages.length,
+        text: clean,
+      });
+
+      return updated;
+    });
+
+    return next;
+  });
 
   shouldStickToBottomRef.current = true;
 }
 
 function appendRealtimeAssistantMessage(text: string) {
   const clean = normalizeAssistantText(String(text ?? "").trim());
+
+  console.log("[VOICE] appendRealtimeAssistantMessage IN", {
+    raw: text,
+    clean,
+    activeThreadIdRef: activeThreadIdRef.current,
+    activeThreadIdState: activeThread?.id,
+  });
+
   if (!clean) return;
 
   const threadId = activeThreadIdRef.current || activeThread?.id;
-  if (!threadId) return;
+  if (!threadId) {
+    console.log("[VOICE] appendRealtimeAssistantMessage NO_THREAD");
+    return;
+  }
 
-  setThreads((prev) =>
-    prev.map((t) => {
+  setThreads((prev) => {
+    console.log(
+      "[VOICE] appendRealtimeAssistantMessage setThreads BEFORE",
+      prev.map((t) => ({
+        id: t.id,
+        count: t.messages.length,
+      }))
+    );
+
+    const next = prev.map((t) => {
       if (t.id !== threadId) return t;
 
       const last = t.messages[t.messages.length - 1];
       const lastText = (last?.text ?? "").trim();
 
-      // ✅ evita duplicar si el último mensaje ya es exactamente el mismo
       if (last?.role === "assistant" && lastText === clean) {
+        console.log("[VOICE] appendRealtimeAssistantMessage BLOCK_DUPLICATE", {
+          threadId,
+          clean,
+        });
         return t;
       }
 
-      return {
+      const updated = {
         ...t,
         updatedAt: Date.now(),
         messages: [
           ...t.messages,
           {
             id: crypto.randomUUID(),
-            role: "assistant",
+            role: "assistant" as const,
             text: clean,
             streaming: false,
             pizarra: null,
@@ -1322,8 +1365,18 @@ function appendRealtimeAssistantMessage(text: string) {
           },
         ],
       };
-    })
-  );
+
+      console.log("[VOICE] appendRealtimeAssistantMessage APPENDED", {
+        threadId,
+        newCount: updated.messages.length,
+        text: clean,
+      });
+
+      return updated;
+    });
+
+    return next;
+  });
 
   shouldStickToBottomRef.current = true;
 }
@@ -3463,7 +3516,6 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
   async function sendMessage() {
-  if (voiceModeRef.current) return;
   if (authLoading) return;
 
     if (enforceLimitIfNeeded()) return;
