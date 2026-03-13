@@ -1246,44 +1246,51 @@ useEffect(() => {
 
 function appendRealtimeUserMessage(text: string) {
   const clean = String(text ?? "").trim();
-
-  console.log("[VOICE] appendRealtimeUserMessage IN", {
-    clean,
-    activeThreadIdRef: activeThreadIdRef.current,
-    activeThreadIdState: activeThread?.id,
-  });
+  console.log("[VOICE] appendRealtimeUserMessage", clean);
 
   if (!clean) return;
+  if (clean.length < 2) return;
 
-  const threadId = activeThreadIdRef.current || activeThread?.id;
-  if (!threadId) {
-    console.log("[VOICE] appendRealtimeUserMessage NO_THREAD");
-    return;
-  }
+  const threadId = activeThread?.id;
+  if (!threadId) return;
 
-  setThreads((prev) => {
-    const next = prev.map((t) => {
+  setThreads((prev) =>
+    prev.map((t) => {
       if (t.id !== threadId) return t;
 
       const last = t.messages[t.messages.length - 1];
       const lastText = (last?.text ?? "").trim();
 
-      if (last?.role === "user" && lastText === clean) {
-        console.log("[VOICE] appendRealtimeUserMessage BLOCK_DUPLICATE", {
-          threadId,
-          clean,
-        });
-        return t;
+      if (last?.role === "user") {
+        const normLast = normalizeSendText(lastText);
+        const normClean = normalizeSendText(clean);
+
+        if (normLast === normClean) return t;
+
+        // Si el nuevo texto contiene al anterior, sustituimos el último en vez de añadir otro
+        if (normLast && normClean.includes(normLast)) {
+          return {
+            ...t,
+            updatedAt: Date.now(),
+            messages: [
+              ...t.messages.slice(0, -1),
+              {
+                ...last,
+                text: clean,
+              },
+            ],
+          };
+        }
       }
 
-      const updated = {
+      return {
         ...t,
         updatedAt: Date.now(),
         messages: [
           ...t.messages,
           {
             id: crypto.randomUUID(),
-            role: "user" as const,
+            role: "user",
             text: clean,
             streaming: false,
             pizarra: null,
@@ -1292,18 +1299,8 @@ function appendRealtimeUserMessage(text: string) {
           },
         ],
       };
-
-      console.log("[VOICE] appendRealtimeUserMessage APPENDED", {
-        threadId,
-        newCount: updated.messages.length,
-        text: clean,
-      });
-
-      return updated;
-    });
-
-    return next;
-  });
+    })
+  );
 
   shouldStickToBottomRef.current = true;
 }
@@ -1444,13 +1441,12 @@ function handleVoiceMessageForChat(text: string) {
   const clean = (text ?? "").trim();
   console.log("[VOICE] handleVoiceMessageForChat IN", clean);
 
-  if (!clean) return;
   if (!voiceModeRef.current) return;
+  if (!clean) return;
 
   const prev = normalizeSendText(realtimeLastUserTextRef.current || "");
   const next = normalizeSendText(clean);
 
-  // evita repetir exactamente lo mismo
   if (prev && prev === next) {
     console.log("[VOICE] blocked duplicate", { prev, next });
     return;
@@ -1458,10 +1454,7 @@ function handleVoiceMessageForChat(text: string) {
 
   realtimeLastUserTextRef.current = clean;
 
-  console.log("[VOICE] appending USER message", clean);
   appendRealtimeUserMessage(clean);
-
-  console.log("[VOICE] creating WRITTEN reply from voice", clean);
   void createWrittenReplyFromVoice(clean);
 }
 
@@ -1526,24 +1519,20 @@ async function toggleConversation() {
     return;
   }
 
-  try {
+      try {
     stopTTS();
   } catch {}
 
+  try {
+    stopMic();
+  } catch {}
 
+  setListeningPurpose(null);
+  setIsListening(false);
   clearSilenceTimer();
 
-    realtimeManualCloseRef.current = false;
-    try {
-  stopMic();
-} catch {}
+  realtimeLastUserTextRef.current = "";
 
-setListeningPurpose(null);
-setIsListening(false);
-
-clearSilenceTimer();
-
-setMicMsg("Conectando con Vonu por voz…");
   setMicMsg("Conectando con Vonu por voz…");
   setRealtimeStatus("connecting");
 
@@ -1617,7 +1606,6 @@ setMicMsg("Conectando con Vonu por voz…");
   transcript &&
   (
     type === "conversation.item.input_audio_transcription.completed" ||
-    (type === "conversation.item.created" && event?.item?.role === "user") ||
     (type === "conversation.item.completed" && event?.item?.role === "user")
   )
 ) {
@@ -1886,7 +1874,6 @@ ttsCooldownUntilRef.current = Date.now() + 1200;
       setTimeout(() => {
         try {
           if (voiceModeRef.current) if (!voiceModeRef.current) {
-  startMic("conversation");
 };
         } catch {}
       }, 200);
@@ -1976,7 +1963,6 @@ if (voiceModeRef.current) {
     if (isTyping) return;
     if (inTtsCooldown()) return;
     if (!voiceModeRef.current) {
-  startMic("conversation");
 };
   }, isDesktopPointer() ? 320 : 720);
 }
@@ -2251,7 +2237,6 @@ if (purpose === "conversation" && inTtsCooldown()) {
     if (isTyping) return;
     if (inTtsCooldown()) return;
     if (!voiceModeRef.current) {
-  startMic("conversation");
 };
   }, isDesktopPointer() ? 700 : 1100);
   return;
@@ -2460,7 +2445,6 @@ const purposeAtStart = purpose; // snapshot
       if (recognitionRef.current) return;
       if (micSessionIdRef.current !== mySessionId) return;
       if (!voiceModeRef.current) {
-  startMic("conversation");
 };
     }, waitMs);
   }
