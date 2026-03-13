@@ -1246,6 +1246,8 @@ useEffect(() => {
 
 function appendRealtimeUserMessage(text: string) {
   const clean = String(text ?? "").trim();
+  console.log("[VOICE] appendRealtimeUserMessage", clean);
+
   if (!clean) return;
 
   const threadId = activeThreadIdRef.current || activeThread?.id;
@@ -1387,17 +1389,25 @@ async function createWrittenReplyFromVoice(userText: string) {
 
 function handleVoiceMessageForChat(text: string) {
   const clean = (text ?? "").trim();
+  console.log("[VOICE] handleVoiceMessageForChat IN", clean);
+
   if (!clean) return;
 
   const prev = normalizeSendText(realtimeLastUserTextRef.current || "");
   const next = normalizeSendText(clean);
 
   // evita repetir exactamente lo mismo
-  if (prev && prev === next) return;
+  if (prev && prev === next) {
+    console.log("[VOICE] blocked duplicate", { prev, next });
+    return;
+  }
 
   realtimeLastUserTextRef.current = clean;
 
+  console.log("[VOICE] appending USER message", clean);
   appendRealtimeUserMessage(clean);
+
+  console.log("[VOICE] creating WRITTEN reply from voice", clean);
   void createWrittenReplyFromVoice(clean);
 }
 
@@ -2920,11 +2930,10 @@ useEffect(() => {
   const userMsgCountInThread = useMemo(() => messages.filter((m) => m.role === "user").length, [messages]);
 
   const canSend = useMemo(() => {
-  if (voiceMode) return false;
   const basicReady = !isTyping && (!!input.trim() || !!imagePreview);
   if (isBlockedByPaywall) return false;
   return basicReady;
-}, [voiceMode, isTyping, input, imagePreview, isBlockedByPaywall]);
+}, [isTyping, input, imagePreview, isBlockedByPaywall]);
 
   const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
 
@@ -3196,7 +3205,7 @@ useEffect(() => {
   }
 
   async function sendQuickMessage(textPreset: string, modePreset: ThreadMode) {
-  if (voiceModeRef.current) return;
+
   if (authLoading) return;
 
     if (enforceLimitIfNeeded()) return;
@@ -5020,12 +5029,12 @@ title={
 }
 
   }}
-  disabled={!!isTyping || voiceMode}
+  disabled={!!isTyping}
 placeholder={
-  voiceMode
-    ? "Modo conversación activo…"
-    : isTyping
+  isTyping
     ? "Vonu está respondiendo…"
+    : voiceMode
+    ? "Modo conversación activo… también puedes escribir"
     : isListening
     ? "Escuchando… habla ahora"
     : "Escribe tu mensaje…"
