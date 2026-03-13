@@ -1858,45 +1858,25 @@ function stopTTS() {
 }
 
 async function speakTTS(text: string) {
-  const inConversation = voiceModeRef.current;
-  // ✅ Si estamos en conversación, paramos micro mientras Vonu habla (evita eco)
-if (inConversation && isListening) {
-  try { stopMic(); } catch {}
-}
+  // ✅ MUY IMPORTANTE:
+  // En modo conversación NO usamos nunca la voz del navegador.
+  // La voz la pone OpenAI Realtime.
+  if (voiceModeRef.current) return;
 
-// ✅ cooldown inicial: aunque alguien llame a startMic mientras habla
-ttsCooldownUntilRef.current = Date.now() + 1200;
+  // ✅ Solo leer en voz alta fuera del modo conversación
+  if (!supportsTTS()) return;
+  if (!ttsEnabled) return;
 
+  const clean = stripMarkdownForTTS(text);
+  if (!clean) return;
 
-  // ✅ Si no hay soporte real de TTS, en conversación volvemos a escuchar y fuera.
-  if (!supportsTTS()) {
-    if (inConversation) {
-      setTimeout(() => {
-        try {
-          if (voiceModeRef.current) if (!voiceModeRef.current) {
-};
-        } catch {}
-      }, 200);
-    }
-    return;
-  }
-
-  // ✅ En conversación: hablamos aunque ttsEnabled esté desincronizado por state.
-  // En modo normal: solo si el usuario activó lectura.
-  if (!ttsEnabled && !inConversation) return;
-
-
-    // si ya estaba hablando, cortamos y arrancamos limpio
   stopTTS();
 
-  // ✅ Re-unlock ANTES de hablar (sin timers que cancelen)
   try {
     await primeTTSAsync({ hardCancel: false });
   } catch {}
 
-
-  const voiceText = voiceModeRef.current ? shortenForVoice(text) : stripMarkdownForTTS(text);
-  const chunks = chunkForTTS(voiceText);
+  const chunks = chunkForTTS(clean);
   if (!chunks.length) return;
 
   setTtsSpeaking(true);
@@ -1906,7 +1886,6 @@ ttsCooldownUntilRef.current = Date.now() + 1200;
     synth.resume?.();
   } catch {}
 
-  // ✅ Elegir voz (mejor hacerlo “vivo”, no con snapshot)
   const pickVoiceLive = () => {
     let vs: SpeechSynthesisVoice[] = [];
     try {
@@ -1916,13 +1895,10 @@ ttsCooldownUntilRef.current = Date.now() + 1200;
     return es ?? vs[0] ?? null;
   };
 
-    // ✅ En Chrome a veces no hay voces aún: esperamos un poco
   try {
     await getVoicesAsync(900);
   } catch {}
 
-
-  // ✅ Pequeño micro-delay: ayuda en Safari/iOS tras cancel()
   await new Promise((r) => setTimeout(r, 30));
 
   for (const ch of chunks) {
@@ -1940,35 +1916,17 @@ ttsCooldownUntilRef.current = Date.now() + 1200;
       u.onend = () => resolve();
       u.onerror = () => resolve();
       try {
-        try {
-          synth.resume?.();
-        } catch {}
+        synth.resume?.();
         synth.speak(u);
       } catch {
         resolve();
       }
     });
 
-    if (!ttsEnabled && !voiceModeRef.current) break;
+    if (!ttsEnabled) break;
   }
 
   setTtsSpeaking(false);
-
-// ✅ Anti-eco: mini cooldown (más corto para que no se sienta “lento”)
-ttsCooldownUntilRef.current = Date.now() + (isDesktopPointer() ? 280 : 650);
-
-if (voiceModeRef.current) {
-  setTimeout(() => {
-    if (!voiceModeRef.current) return;
-    if (isTyping) return;
-    if (inTtsCooldown()) return;
-    if (!voiceModeRef.current) {
-};
-  }, isDesktopPointer() ? 320 : 720);
-}
-
-
-
 }
 
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -3432,8 +3390,10 @@ if (voiceMode) stopMic();
         setIsTyping(false);
         sendGuardRef.current.busy = false;
 
-// ✅ habla la respuesta final (solo si TTS activado)
-speakTTS(fullText);
+// ✅ Solo usamos la voz del navegador fuera del modo conversación
+if (!voiceModeRef.current) {
+  speakTTS(fullText);
+}
 
 if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
@@ -3483,8 +3443,10 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
             setIsTyping(false);
             sendGuardRef.current.busy = false;
 
-// ✅ habla la respuesta final también en CHAT normal
-speakTTS(fullText);
+// ✅ Solo usamos la voz del navegador fuera del modo conversación
+if (!voiceModeRef.current) {
+  speakTTS(fullText);
+}
 
 if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
@@ -3687,9 +3649,13 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
         );
 
         setIsTyping(false);
-        sendGuardRef.current.busy = false;
-        speakTTS(fullText);
-        if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+sendGuardRef.current.busy = false;
+
+if (!voiceModeRef.current) {
+  speakTTS(fullText);
+}
+
+if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       } else {
         // ✅ Chat normal: streaming letra a letra
         let i = 0;
@@ -3737,8 +3703,10 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
             setIsTyping(false);
             sendGuardRef.current.busy = false;
 
-// ✅ HABLAR respuesta (y esto re-activa micro si voiceMode sigue ON)
-speakTTS(fullText);
+// ✅ Solo usar TTS del navegador fuera del modo conversación
+if (!voiceModeRef.current) {
+  speakTTS(fullText);
+}
 
 if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
