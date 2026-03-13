@@ -1320,7 +1320,7 @@ function appendRealtimeAssistantMessage(text: string) {
 
   if (!clean) return;
 
-  const threadId = activeThreadIdRef.current || activeThread?.id;
+  const threadId = activeThread?.id;
   if (!threadId) {
     console.log("[VOICE] appendRealtimeAssistantMessage NO_THREAD");
     return;
@@ -1445,6 +1445,7 @@ function handleVoiceMessageForChat(text: string) {
   console.log("[VOICE] handleVoiceMessageForChat IN", clean);
 
   if (!clean) return;
+  if (!voiceModeRef.current) return;
 
   const prev = normalizeSendText(realtimeLastUserTextRef.current || "");
   const next = normalizeSendText(clean);
@@ -1533,6 +1534,16 @@ async function toggleConversation() {
   clearSilenceTimer();
 
     realtimeManualCloseRef.current = false;
+    try {
+  stopMic();
+} catch {}
+
+setListeningPurpose(null);
+setIsListening(false);
+
+clearSilenceTimer();
+
+setMicMsg("Conectando con Vonu por voz…");
   setMicMsg("Conectando con Vonu por voz…");
   setRealtimeStatus("connecting");
 
@@ -1604,9 +1615,11 @@ async function toggleConversation() {
 
           if (
   transcript &&
-  (type === "conversation.item.input_audio_transcription.completed" ||
-    type === "conversation.item.created" ||
-    type === "conversation.item.completed")
+  (
+    type === "conversation.item.input_audio_transcription.completed" ||
+    (type === "conversation.item.created" && event?.item?.role === "user") ||
+    (type === "conversation.item.completed" && event?.item?.role === "user")
+  )
 ) {
   console.log("[VOICE] fallback transcript", transcript);
   handleVoiceMessageForChat(transcript);
@@ -1872,7 +1885,9 @@ ttsCooldownUntilRef.current = Date.now() + 1200;
     if (inConversation) {
       setTimeout(() => {
         try {
-          if (voiceModeRef.current) startMic("conversation");
+          if (voiceModeRef.current) if (!voiceModeRef.current) {
+  startMic("conversation");
+};
         } catch {}
       }, 200);
     }
@@ -1960,7 +1975,9 @@ if (voiceModeRef.current) {
     if (!voiceModeRef.current) return;
     if (isTyping) return;
     if (inTtsCooldown()) return;
-    startMic("conversation");
+    if (!voiceModeRef.current) {
+  startMic("conversation");
+};
   }, isDesktopPointer() ? 320 : 720);
 }
 
@@ -2233,7 +2250,9 @@ if (purpose === "conversation" && inTtsCooldown()) {
     if (!voiceModeRef.current) return;
     if (isTyping) return;
     if (inTtsCooldown()) return;
-    startMic("conversation");
+    if (!voiceModeRef.current) {
+  startMic("conversation");
+};
   }, isDesktopPointer() ? 700 : 1100);
   return;
 }
@@ -2420,7 +2439,7 @@ const purposeAtStart = purpose; // snapshot
       if (curNorm && prevNorm === curNorm && now - prev.ts < WINDOW_MS) {
         // duplicado reciente: ignorar
       } else if (!isTyping) {
-        const threadId = activeThreadIdRef.current || (activeThread?.id ?? "");
+        const threadId = activeThread?.id;
         const lastUser = threadId ? getLastUserTextInThread(threadId) : "";
 
         if (!isNearlySameVoice(finalText, lastUser)) {
@@ -2440,7 +2459,9 @@ const purposeAtStart = purpose; // snapshot
       if (isTyping) return;
       if (recognitionRef.current) return;
       if (micSessionIdRef.current !== mySessionId) return;
-      startMic("conversation");
+      if (!voiceModeRef.current) {
+  startMic("conversation");
+};
     }, waitMs);
   }
 };
@@ -4984,7 +5005,7 @@ return (
   {/* 🎙️ Dictado (solo escribir) */}
   <button
     onClick={toggleDictation}
-    disabled={!!isTyping || !speechSupported}
+    disabled={!!isTyping || !speechSupported || voiceMode}
     className={[
       "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
       "bg-white",
@@ -5028,10 +5049,14 @@ title={
   ].join(" ")}
   aria-label={voiceMode ? "Desactivar conversación" : "Activar conversación"}
   title={
-    voiceMode
-      ? `Conversación ON · estado: ${realtimeStatus}`
-      : "Activar conversación natural"
-  }
+  voiceMode
+    ? "El dictado está desactivado durante el modo conversación"
+    : !speechSupported
+    ? "Tu navegador no soporta dictado"
+    : isListening && listeningPurpose === "dictation"
+    ? "Parar dictado"
+    : "Dictar por voz"
+}
 >
   <div className="relative">
     <TalkIcon className="h-5 w-5" />
