@@ -1526,7 +1526,7 @@ async function toggleConversation() {
         setRealtimeStatus(status);
 
                 if (status === "connected") {
-          setMicMsg("✅ Conectado. Habla cuando quieras.");
+          setMicMsg("🟢 Conectado. Habla cuando quieras.");
         }
 
         if (status === "listening") {
