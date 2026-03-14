@@ -3,7 +3,7 @@
 
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Children, Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
@@ -156,6 +156,16 @@ function renderTextWithFractions(text: string) {
   return parts.map((p, i) => {
     if (typeof p === "string") return <span key={i}>{p}</span>;
     return <Fraction key={i} a={p.a} b={p.b} />;
+  });
+}
+
+function renderChildrenWithFractions(children: ReactNode) {
+  return Children.map(children, (child, index) => {
+    if (typeof child === "string") {
+      return <Fragment key={index}>{renderTextWithFractions(child)}</Fragment>;
+    }
+
+    return child;
   });
 }
 
@@ -2612,40 +2622,38 @@ function toggleMic() {
 ) {
   return {
   // ✅ Lista ordenada con contador “badge” (como tu captura)
-  ol({ children, ...props }: any) {
+    ol({ children, ...props }: any) {
     return (
-      <ol className="my-3 space-y-2 list-none [counter-reset:item]" {...props}>
-        {children}
+      <ol className="my-3 pl-5 list-decimal space-y-2 text-zinc-900" {...props}>
+        {renderChildrenWithFractions(children)}
       </ol>
+    );
+  },
+
+  ul({ children, ...props }: any) {
+    return (
+      <ul className="my-3 pl-5 list-disc space-y-2 text-zinc-900" {...props}>
+        {renderChildrenWithFractions(children)}
+      </ul>
     );
   },
 
   li({ children, ...props }: any) {
     return (
-      <li
-        className="
-          relative pl-10 leading-relaxed text-zinc-900
-          before:absolute before:left-0 before:top-0.5
-          before:inline-flex before:h-6 before:w-6 before:items-center before:justify-center
-          before:rounded-md before:border before:border-blue-200
-          before:bg-blue-50 before:text-blue-700 before:text-xs before:font-semibold
-          before:[counter-increment:item] before:content-[counter(item)]
-        "
-        {...props}
-      >
-        {children}
+      <li className="leading-relaxed text-zinc-900" {...props}>
+        {renderChildrenWithFractions(children)}
       </li>
     );
   },
 
     // ✅ Títulos y negritas más potentes
-  h1({ children, ...props }: any) {
+    h1({ children, ...props }: any) {
     return (
       <h1
         className="mt-4 mb-2 text-[24px] md:text-[28px] leading-tight font-extrabold tracking-tight text-zinc-900"
         {...props}
       >
-        {children}
+        {renderChildrenWithFractions(children)}
       </h1>
     );
   },
@@ -2656,7 +2664,7 @@ function toggleMic() {
         className="mt-4 mb-2 text-[20px] md:text-[23px] leading-tight font-extrabold tracking-tight text-zinc-900"
         {...props}
       >
-        {children}
+        {renderChildrenWithFractions(children)}
       </h2>
     );
   },
@@ -2667,24 +2675,24 @@ function toggleMic() {
         className="mt-3 mb-1.5 text-[17px] md:text-[19px] leading-snug font-bold text-zinc-900"
         {...props}
       >
-        {children}
+        {renderChildrenWithFractions(children)}
       </h3>
     );
   },
 
-    p({ children, ...props }: any) {
-  return (
-    <p className="my-2 leading-7 text-zinc-900" {...props}>
-      {children}
-    </p>
-  );
-},
+  p({ children, ...props }: any) {
+    return (
+      <p className="my-2 leading-7 text-zinc-900" {...props}>
+        {renderChildrenWithFractions(children)}
+      </p>
+    );
+  },
 
   // ✅ Negritas más visibles
   strong({ children, ...props }: any) {
     return (
       <strong className="font-extrabold text-blue-700" {...props}>
-        {children}
+        {renderChildrenWithFractions(children)}
       </strong>
     );
   },
