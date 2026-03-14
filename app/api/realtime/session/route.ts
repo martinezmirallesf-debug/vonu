@@ -34,7 +34,7 @@ export async function POST() {
             },
           },
           output: {
-            voice: "marin",
+            voice: "shimer",
           },
         },
       },
