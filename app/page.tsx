@@ -2913,6 +2913,15 @@ useEffect(() => {
   return basicReady;
 }, [isTyping, input, imagePreview, isBlockedByPaywall]);
 
+const voiceUiState = useMemo<"idle" | "listening" | "speaking">(() => {
+  if (!voiceMode) return "idle";
+  if (realtimeStatus === "listening") return "listening";
+  if (realtimeStatus === "speaking" || realtimeStatus === "connecting" || realtimeStatus === "connected") {
+    return "speaking";
+  }
+  return "idle";
+}, [voiceMode, realtimeStatus]);
+
   const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
 
 const quickPrompts = useMemo(
@@ -4938,19 +4947,64 @@ return (
   onClick={toggleConversation}
   disabled={!!isTyping}
   className={[
-    "h-10 w-10 rounded-full transition-all shrink-0 grid place-items-center p-0",
-    "text-white shadow-[0_8px_22px_rgba(37,99,235,0.32)]",
-    voiceMode
-      ? "bg-gradient-to-br from-[#1d4ed8] via-[#2563eb] to-[#22c1ee] ring-2 ring-blue-200 animate-[voicePulse_1.8s_ease-out_infinite]"
-      : "bg-gradient-to-br from-[#1e40af] via-[#2563eb] to-[#38bdf8] hover:brightness-110",
+    "relative h-10 w-10 rounded-full shrink-0 grid place-items-center p-0",
+    "border transition-all duration-300",
+    voiceUiState === "idle"
+      ? "border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50"
+      : voiceUiState === "listening"
+      ? "border-cyan-300 text-white shadow-[0_8px_26px_rgba(34,211,238,0.30)]"
+      : "border-blue-300 text-white shadow-[0_10px_30px_rgba(59,130,246,0.34)]",
     !!isTyping ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
   ].join(" ")}
-  aria-label={voiceMode ? "Desactivar conversación con Vonu" : "Hablar con Vonu"}
-  title={voiceMode ? "Desactivar conversación con Vonu" : "Hablar con Vonu"}
+  style={
+    voiceUiState === "idle"
+      ? undefined
+      : voiceUiState === "listening"
+      ? {
+          background:
+            "linear-gradient(135deg, #06b6d4 0%, #38bdf8 45%, #2563eb 100%)",
+        }
+      : {
+          background:
+            "linear-gradient(135deg, #2563eb 0%, #3b82f6 45%, #60a5fa 100%)",
+        }
+  }
+  aria-label={voiceMode ? "Desactivar conversación" : "Activar conversación"}
+  title={
+    voiceMode
+      ? realtimeStatus === "listening"
+        ? "Vonu te está escuchando"
+        : realtimeStatus === "speaking"
+        ? "Vonu te está respondiendo"
+        : "Modo conversación activo"
+      : "Hablar con Vonu"
+  }
 >
-  <div className="relative">
-  <MicIcon className="h-[18px] w-[18px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)]" />
-</div>
+  {voiceUiState !== "idle" ? (
+    <>
+      <span
+        className={[
+          "absolute inset-[-3px] rounded-full pointer-events-none",
+          voiceUiState === "listening"
+            ? "animate-ping bg-cyan-400/25"
+            : "animate-pulse bg-blue-400/20",
+        ].join(" ")}
+        aria-hidden="true"
+      />
+      <span
+        className="absolute inset-[1px] rounded-full opacity-20 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.38), rgba(255,255,255,0.02))",
+        }}
+        aria-hidden="true"
+      />
+    </>
+  ) : null}
+
+  <div className="relative z-10">
+    <MicIcon className="h-5 w-5" />
+  </div>
 </button>
 
   {/* ⬆️ ENVIAR */}  
