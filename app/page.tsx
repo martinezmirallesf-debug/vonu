@@ -1378,63 +1378,11 @@ function appendRealtimeAssistantMessage(text: string) {
   shouldStickToBottomRef.current = true;
 }
 
-async function createWrittenReplyFromVoice(userText: string) {
-  const cleanUserText = (userText ?? "").trim();
-  if (!cleanUserText) return;
-  if (realtimeWriteBusyRef.current) return;
-
-  const threadId = activeThreadIdRef.current || activeThread?.id;
-  if (!threadId) return;
-
-  const threadNow = threadsRef.current.find((x) => x.id === threadId) ?? activeThread;
-  if (!threadNow) return;
-
-  realtimeWriteBusyRef.current = true;
-  voiceWriteGuardRef.current.markGenerating(cleanUserText);
-
-  try {
-    const convoForApi = (threadNow.messages ?? [])
-      .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
-      .map((m) => ({
-        role: m.role,
-        content: m.text ?? "",
-      }));
-
-    const augmentedPrompt =
-      `El usuario te ha hablado por voz y ahora necesita una RESPUESTA ESCRITA útil para el chat.\n` +
-      `No hagas una transcripción del audio ni de tu respuesta hablada.\n` +
-      `Genera directamente el resultado escrito final que el usuario necesita.\n\n` +
-      `Petición del usuario:\n${cleanUserText}`;
-
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      cache: "no-store",
-      body: JSON.stringify({
-        messages: convoForApi,
-        userText: augmentedPrompt,
-        imageBase64: null,
-        mode: threadNow.mode ?? "chat",
-        tutorLevel: threadNow.tutorProfile?.level ?? "adult",
-      }),
-    });
-
-    const data = await res.json().catch(() => null);
-
-    const text =
-      typeof data?.text === "string" && data.text.trim()
-        ? data.text.trim()
-        : "";
-
-    if (!text) return;
-
-    appendRealtimeAssistantMessage(text);
-  } catch {
-    // no rompemos la conversación
-  } finally {
-    realtimeWriteBusyRef.current = false;
-    voiceWriteGuardRef.current.markFinished();
-  }
+async function createWrittenReplyFromVoice(_userText: string) {
+  // ✅ Desactivado:
+  // en modo conversación usamos la respuesta nativa de Realtime,
+  // y esa misma se pinta en el chat con onAssistantFinalText.
+  return;
 }
 
 function handleVoiceMessageForChat(text: string) {
@@ -1454,8 +1402,9 @@ function handleVoiceMessageForChat(text: string) {
 
   realtimeLastUserTextRef.current = clean;
 
+  // ✅ Solo pintamos en chat lo que tú has dicho.
+  // ❌ NO pedimos una segunda respuesta escrita por /api/chat.
   appendRealtimeUserMessage(clean);
-  void createWrittenReplyFromVoice(clean);
 }
 
 function setVoiceModeOff() {
