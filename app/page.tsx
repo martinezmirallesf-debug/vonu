@@ -401,17 +401,17 @@ function MicIcon({ className }: { className?: string }) {
         strokeWidth="2"
       />
 
-      {/* arco más abierto */}
+      {/* arco un pelín más abierto */}
       <path
-  d="M6 11.4c0 3.8 2.8 6.5 6 6.5s6-2.7 6-6.5"
-  stroke="currentColor"
-  strokeWidth="2"
-  strokeLinecap="round"
-/>
+        d="M5.5 11.2c0 4.1 3 7 6.5 7s6.5-2.9 6.5-7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
 
-      {/* palo que llega hasta el arco */}
+      {/* palo un poco más largo, arrancando justo debajo del arco */}
       <path
-        d="M12 17.5v2.8"
+        d="M12 18.25v2.25"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
