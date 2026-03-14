@@ -2672,9 +2672,28 @@ function toggleMic() {
     );
   },
 
-  p({ children, ...props }: any) {
+    p({ children, ...props }: any) {
+    const raw =
+      typeof children === "string"
+        ? children
+        : Array.isArray(children)
+        ? children.map((c) => (typeof c === "string" ? c : "")).join("")
+        : "";
+
+    const looksMathLine =
+      /[=+\-×÷<>≈]/.test(raw) ||
+      /\d+\s*\/\s*\d+/.test(raw) ||
+      /\b(x|y|z)\b/i.test(raw);
+
     return (
-      <p className="my-2 leading-7 text-zinc-900" {...props}>
+      <p
+        className={
+          looksMathLine
+            ? "my-3 leading-8 text-zinc-900 font-medium"
+            : "my-2 leading-7 text-zinc-900"
+        }
+        {...props}
+      >
         {children}
       </p>
     );
@@ -2711,17 +2730,24 @@ function toggleMic() {
       );
     }
 
-    // ✅ inline code: lo dejamos, pero con Poppins (no monospace)
-    if (isInline) {
-      return (
-        <code
-          className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]"
-          style={{ fontFamily: "var(--font-poppins), ui-sans-serif, system-ui" }}
-        >
-          {clean}
-        </code>
-      );
-    }
+      // ✅ inline code: útil también para fórmulas cortas
+  if (isInline) {
+    const looksMathInline =
+      /[=+\-×÷<>≈]/.test(clean) || /\d+\s*\/\s*\d+/.test(clean);
+
+    return (
+      <code
+        className={
+          looksMathInline
+            ? "px-1.5 py-[2px] rounded-md bg-blue-50 border border-blue-200 text-[13px] font-semibold text-zinc-900"
+            : "px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]"
+        }
+        style={{ fontFamily: "var(--font-poppins), ui-sans-serif, system-ui" }}
+      >
+        {clean}
+      </code>
+    );
+  }
 
     // ✅ code block normal: SOLO para modo chat real (esto sí puede ser monospace)
     return (
@@ -4865,8 +4891,10 @@ return (
             {!hasText ? <TypingDots /> : <TypingCaret />}
           </span>
         ) : (
-          <ReactMarkdown components={makeMdComponents(m.boardImageB64, m.boardImagePlacement, m.pizarra)}>
-            {mdText}
+                    <ReactMarkdown
+            components={makeMdComponents(m.boardImageB64, m.boardImagePlacement, m.pizarra)}
+          >
+            {renderTextWithFractions(mdText as string) as any}
           </ReactMarkdown>
         )}
       </div>
