@@ -2638,10 +2638,52 @@ function toggleMic() {
     );
   },
 
-  // ✅ Negritas “bonitas” (azul)
+    // ✅ Títulos y negritas más potentes
+  h1({ children, ...props }: any) {
+    return (
+      <h1
+        className="mt-4 mb-2 text-[24px] md:text-[28px] leading-tight font-extrabold tracking-tight text-zinc-900"
+        {...props}
+      >
+        {children}
+      </h1>
+    );
+  },
+
+  h2({ children, ...props }: any) {
+    return (
+      <h2
+        className="mt-4 mb-2 text-[20px] md:text-[23px] leading-tight font-extrabold tracking-tight text-zinc-900"
+        {...props}
+      >
+        {children}
+      </h2>
+    );
+  },
+
+  h3({ children, ...props }: any) {
+    return (
+      <h3
+        className="mt-3 mb-1.5 text-[17px] md:text-[19px] leading-snug font-bold text-zinc-900"
+        {...props}
+      >
+        {children}
+      </h3>
+    );
+  },
+
+  p({ children, ...props }: any) {
+    return (
+      <p className="my-2 leading-7 text-zinc-900" {...props}>
+        {children}
+      </p>
+    );
+  },
+
+  // ✅ Negritas más visibles
   strong({ children, ...props }: any) {
     return (
-      <strong className="font-semibold text-blue-700" {...props}>
+      <strong className="font-extrabold text-blue-700" {...props}>
         {children}
       </strong>
     );
@@ -4814,7 +4856,7 @@ return (
     )}
 
     {(m.text || m.streaming) && (
-      <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 font-sans">
+            <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans">
         {isStreaming ? (
           <span className="whitespace-pre-wrap">
             {mdText.includes('"elements"') || mdText.includes("```excalidraw")
