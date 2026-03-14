@@ -2673,31 +2673,12 @@ function toggleMic() {
   },
 
     p({ children, ...props }: any) {
-    const raw =
-      typeof children === "string"
-        ? children
-        : Array.isArray(children)
-        ? children.map((c) => (typeof c === "string" ? c : "")).join("")
-        : "";
-
-    const looksMathLine =
-      /[=+\-×÷<>≈]/.test(raw) ||
-      /\d+\s*\/\s*\d+/.test(raw) ||
-      /\b(x|y|z)\b/i.test(raw);
-
-    return (
-      <p
-        className={
-          looksMathLine
-            ? "my-3 leading-8 text-zinc-900 font-medium"
-            : "my-2 leading-7 text-zinc-900"
-        }
-        {...props}
-      >
-        {children}
-      </p>
-    );
-  },
+  return (
+    <p className="my-2 leading-7 text-zinc-900" {...props}>
+      {children}
+    </p>
+  );
+},
 
   // ✅ Negritas más visibles
   strong({ children, ...props }: any) {
@@ -4891,11 +4872,9 @@ return (
             {!hasText ? <TypingDots /> : <TypingCaret />}
           </span>
         ) : (
-                    <ReactMarkdown
-            components={makeMdComponents(m.boardImageB64, m.boardImagePlacement, m.pizarra)}
-          >
-            {renderTextWithFractions(mdText as string) as any}
-          </ReactMarkdown>
+                    <ReactMarkdown components={makeMdComponents(m.boardImageB64, m.boardImagePlacement, m.pizarra)}>
+  {mdText}
+</ReactMarkdown>
         )}
       </div>
     )}
