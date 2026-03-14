@@ -2622,9 +2622,12 @@ function toggleMic() {
 ) {
   return {
   // ✅ Lista ordenada con contador “badge” (como tu captura)
-    ol({ children, ...props }: any) {
+      ol({ children, ...props }: any) {
     return (
-      <ol className="my-3 pl-5 list-decimal space-y-2 text-zinc-900" {...props}>
+      <ol
+        className="my-3 pl-6 list-decimal space-y-2 text-zinc-900 marker:text-blue-700 marker:font-bold"
+        {...props}
+      >
         {renderChildrenWithFractions(children)}
       </ol>
     );
@@ -2638,9 +2641,9 @@ function toggleMic() {
     );
   },
 
-  li({ children, ...props }: any) {
+    li({ children, ...props }: any) {
     return (
-      <li className="leading-relaxed text-zinc-900" {...props}>
+      <li className="leading-relaxed text-zinc-900 pl-1" {...props}>
         {renderChildrenWithFractions(children)}
       </li>
     );
