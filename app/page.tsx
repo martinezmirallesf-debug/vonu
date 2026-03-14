@@ -1587,33 +1587,11 @@ async function toggleConversation() {
       },
 
       onEvent: (event) => {
-        try {
-          const type = String(event?.type ?? "");
-          console.log("[VOICE] raw event", type, event);
-
-          // ✅ fallback extra: si por lo que sea el callback principal no entra,
-          // intentamos sacar el transcript del evento aquí también
-          const transcript =
-            (typeof event?.transcript === "string" && event.transcript.trim()) ||
-            (typeof event?.item?.formatted?.transcript === "string" &&
-              event.item.formatted.transcript.trim()) ||
-            (Array.isArray(event?.item?.content)
-              ? event.item.content.find((p: any) => typeof p?.transcript === "string" && p.transcript.trim())?.transcript
-              : "") ||
-            "";
-
-          if (
-  transcript &&
-  (
-    type === "conversation.item.input_audio_transcription.completed" ||
-    (type === "conversation.item.completed" && event?.item?.role === "user")
-  )
-) {
-  console.log("[VOICE] fallback transcript", transcript);
-  handleVoiceMessageForChat(transcript);
-}
-        } catch {}
-      },
+  try {
+    const type = String(event?.type ?? "");
+    console.log("[VOICE] raw event", type, event);
+  } catch {}
+},
     });
 
         realtimeConnRef.current = conn;

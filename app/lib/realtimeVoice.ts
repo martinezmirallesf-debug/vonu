@@ -49,6 +49,7 @@ function pickTranscriptFromContentArray(content: any[]): string {
 function extractUserTranscriptFromEvent(data: any): string {
   if (!data || typeof data !== "object") return "";
 
+  // ✅ SOLO aceptamos transcripción final cerrada
   if (
     data?.type === "conversation.item.input_audio_transcription.completed" &&
     cleanText(data?.transcript)
@@ -56,15 +57,9 @@ function extractUserTranscriptFromEvent(data: any): string {
     return cleanText(data.transcript);
   }
 
-  if (
-    data?.type === "conversation.item.input_audio_transcription.delta" &&
-    cleanText(data?.delta)
-  ) {
-    return cleanText(data.delta);
-  }
-
+  // ✅ Fallback: solo si llega un item de usuario YA completado
   const item = data?.item;
-  if (item?.role === "user") {
+  if (item?.role === "user" && item?.status === "completed") {
     const fromContent = pickTranscriptFromContentArray(item?.content);
     if (fromContent) return fromContent;
 
