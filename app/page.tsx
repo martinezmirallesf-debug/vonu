@@ -403,11 +403,11 @@ function MicIcon({ className }: { className?: string }) {
 
       {/* arco más abierto */}
       <path
-        d="M6.6 11.6c0 3.4 2.5 5.9 5.4 5.9s5.4-2.5 5.4-5.9"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+  d="M6 11.4c0 3.8 2.8 6.5 6 6.5s6-2.7 6-6.5"
+  stroke="currentColor"
+  strokeWidth="2"
+  strokeLinecap="round"
+/>
 
       {/* palo que llega hasta el arco */}
       <path
@@ -4949,14 +4949,8 @@ return (
   title={voiceMode ? "Desactivar conversación con Vonu" : "Hablar con Vonu"}
 >
   <div className="relative">
-    <MicIcon className="h-[18px] w-[18px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)]" />
-    {voiceMode ? (
-      <span
-        className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-white"
-        aria-hidden="true"
-      />
-    ) : null}
-  </div>
+  <MicIcon className="h-[18px] w-[18px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)]" />
+</div>
 </button>
 
   {/* ⬆️ ENVIAR */}  
