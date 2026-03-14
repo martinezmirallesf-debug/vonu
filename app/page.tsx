@@ -384,11 +384,54 @@ function inferTutorLevel(text: string): TutorLevel {
 
 function MicIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M7 11a5 5 0 0 0 10 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M12 16v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M9 20h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <svg
+      className={className ?? "h-5 w-5"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      {/* cápsula superior */}
+      <rect
+        x="9"
+        y="3.2"
+        width="6"
+        height="10.2"
+        rx="3"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+
+      {/* pequeño hueco visual */}
+      <path
+        d="M12 14.9V15.8"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+
+      {/* soporte exterior */}
+      <path
+        d="M7.2 11.8c0 3 2.2 5.2 4.8 5.2s4.8-2.2 4.8-5.2"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+
+      {/* palo */}
+      <path
+        d="M12 17.8v2.6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+
+      {/* base */}
+      <path
+        d="M9.2 20.6h5.6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -3816,6 +3859,21 @@ return (
       filter: blur(0px);
     }
   }
+
+  @keyframes voicePulse {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.28);
+    }
+    70% {
+      transform: scale(1.045);
+      box-shadow: 0 0 0 10px rgba(37, 99, 235, 0);
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+    }
+  }
 `}</style>
 
       {/* TOAST */}
@@ -4883,22 +4941,23 @@ return (
 <div className="absolute right-2.5 bottom-[34px] z-[60] flex items-center gap-2">
 
   {/* 🎙️ Hablar con Vonu */}
+{/* 🎙️ Hablar con Vonu */}
 <button
   onClick={toggleConversation}
   disabled={!!isTyping}
   className={[
     "h-10 w-10 rounded-full transition-all shrink-0 grid place-items-center p-0",
-    "text-white shadow-sm",
+    "text-white shadow-[0_8px_22px_rgba(37,99,235,0.32)]",
     voiceMode
-      ? "bg-gradient-to-br from-[#2563eb] via-[#3b82f6] to-[#06b6d4] ring-2 ring-blue-200"
-      : "bg-gradient-to-br from-[#1d4ed8] via-[#2563eb] to-[#0ea5e9] hover:brightness-110",
+      ? "bg-gradient-to-br from-[#1d4ed8] via-[#2563eb] to-[#22c1ee] ring-2 ring-blue-200 animate-[voicePulse_1.8s_ease-out_infinite]"
+      : "bg-gradient-to-br from-[#1e40af] via-[#2563eb] to-[#38bdf8] hover:brightness-110",
     !!isTyping ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
   ].join(" ")}
   aria-label={voiceMode ? "Desactivar conversación con Vonu" : "Hablar con Vonu"}
   title={voiceMode ? "Desactivar conversación con Vonu" : "Hablar con Vonu"}
 >
   <div className="relative">
-    <MicIcon className="h-5 w-5" />
+    <MicIcon className="h-[18px] w-[18px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)]" />
     {voiceMode ? (
       <span
         className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-white"
