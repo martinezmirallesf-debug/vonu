@@ -393,7 +393,7 @@ function MicIcon({ className }: { className?: string }) {
       {/* cápsula superior */}
       <rect
         x="9"
-        y="3"
+        y="3.6"
         width="6"
         height="10.5"
         rx="3"
@@ -401,17 +401,17 @@ function MicIcon({ className }: { className?: string }) {
         strokeWidth="2"
       />
 
-      {/* arco un pelín más abierto */}
+      {/* arco más abierto */}
       <path
-        d="M5.5 11.2c0 4.1 3 7 6.5 7s6.5-2.9 6.5-7"
+        d="M5.5 11.8c0 4.1 3 7 6.5 7s6.5-2.9 6.5-7"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
       />
 
-      {/* palo un poco más largo, arrancando justo debajo del arco */}
+      {/* palo ligeramente más largo */}
       <path
-        d="M12 18.25v2.25"
+        d="M12 19.3v2.5"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
@@ -419,7 +419,7 @@ function MicIcon({ className }: { className?: string }) {
 
       {/* base */}
       <path
-        d="M9 20.5h6"
+        d="M9 21.8h6"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
