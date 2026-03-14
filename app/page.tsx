@@ -2633,17 +2633,17 @@ function toggleMic() {
     );
   },
 
-  ul({ children, ...props }: any) {
+      ul({ children, ...props }: any) {
     return (
-      <ul className="my-3 pl-5 list-disc space-y-2 text-zinc-900" {...props}>
+      <ul className="my-3 space-y-2 text-zinc-900" {...props}>
         {renderChildrenWithFractions(children)}
       </ul>
     );
   },
 
-    li({ children, ...props }: any) {
+      li({ children, ...props }: any) {
     return (
-      <li className="leading-relaxed text-zinc-900 pl-1" {...props}>
+      <li className="leading-relaxed text-zinc-900" {...props}>
         {renderChildrenWithFractions(children)}
       </li>
     );
@@ -4835,10 +4835,26 @@ const mdTextRaw = isUser
   : normalizeAssistantText(rawText);
 
 // ✅ Anti-LaTeX + formato limpio “como la imagen”
-const mdText =
-  !isUser && activeThread?.mode === "tutor"
-    ? sanitizeTutorLikeImage(mdTextRaw)
-    : mdTextRaw;
+const mdText = !isUser
+  ? sanitizeTutorLikeImage(
+      normalizeAssistantText(mdTextRaw)
+        // \frac{1}{4} -> 1/4
+        .replace(/\\frac\s*\{([^}]+)\}\s*\{([^}]+)\}/g, "$1/$2")
+        // casos con espacios raros
+        .replace(/frac\s*\{([^}]+)\}\s*\{([^}]+)\}/g, "$1/$2")
+        // \times -> ×
+        .replace(/\\times/g, "×")
+        // \div -> ÷
+        .replace(/\\div/g, "÷")
+        // quitar wrappers tipo \( \)
+        .replace(/\\\(/g, "")
+        .replace(/\\\)/g, "")
+        .replace(/\\\[/g, "")
+        .replace(/\\\]/g, "")
+        // quitar backslashes sueltos
+        .replace(/\\/g, "")
+    )
+  : mdTextRaw;
 
 
 const isStreaming = !!m.streaming;
