@@ -4881,67 +4881,27 @@ return (
 
   {/* RIGHT ICONS */}
 <div className="absolute right-2.5 bottom-[34px] z-[60] flex items-center gap-2">
-  {/* 🎙️ Dictado (solo escribir) */}
-  <button
-    onClick={toggleDictation}
-    disabled={!!isTyping || !speechSupported || voiceMode}
-    className={[
-      "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
-      "bg-white",
-      !speechSupported
-        ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
-        : (isListening && listeningPurpose === "dictation")
-? "border-red-200 bg-red-50 text-red-700"
-        : "border-zinc-200 hover:bg-zinc-50 text-zinc-900",
-      !!isTyping ? "opacity-50" : "",
-    ].join(" ")}
-    aria-label={isListening && listeningPurpose === "dictation" ? "Parar dictado" : "Dictar por voz"}
-title={
-  !speechSupported
-    ? "Tu navegador no soporta dictado"
-    : isListening && listeningPurpose === "dictation"
-    ? "Parar dictado"
-    : "Dictar por voz"
-}
 
-  >
-    <div className="relative">
-      <MicIcon className="h-5 w-5" />
-      {isListening && listeningPurpose === "dictation" ? (
-  <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />
-) : null}
-
-    </div>
-  </button>
-
-  {/* 🗣️ Conversación (turnos: habla + escucha) */}
-  <button
+  {/* 🎙️ Hablar con Vonu */}
+<button
   onClick={toggleConversation}
   disabled={!!isTyping}
   className={[
-    "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
-    "bg-white",
+    "h-10 w-10 rounded-full transition-all shrink-0 grid place-items-center p-0",
+    "text-white shadow-sm",
     voiceMode
-      ? "border-blue-200 bg-blue-50 text-blue-800"
-      : "border-zinc-200 hover:bg-zinc-50 text-zinc-900",
-    !!isTyping ? "opacity-50 cursor-not-allowed" : "",
+      ? "bg-gradient-to-br from-[#2563eb] via-[#3b82f6] to-[#06b6d4] ring-2 ring-blue-200"
+      : "bg-gradient-to-br from-[#1d4ed8] via-[#2563eb] to-[#0ea5e9] hover:brightness-110",
+    !!isTyping ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
   ].join(" ")}
-  aria-label={voiceMode ? "Desactivar conversación" : "Activar conversación"}
-  title={
-  voiceMode
-    ? "El dictado está desactivado durante el modo conversación"
-    : !speechSupported
-    ? "Tu navegador no soporta dictado"
-    : isListening && listeningPurpose === "dictation"
-    ? "Parar dictado"
-    : "Dictar por voz"
-}
+  aria-label={voiceMode ? "Desactivar conversación con Vonu" : "Hablar con Vonu"}
+  title={voiceMode ? "Desactivar conversación con Vonu" : "Hablar con Vonu"}
 >
   <div className="relative">
-    <TalkIcon className="h-5 w-5" />
+    <MicIcon className="h-5 w-5" />
     {voiceMode ? (
       <span
-        className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-blue-500"
+        className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-white"
         aria-hidden="true"
       />
     ) : null}
