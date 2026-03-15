@@ -4085,8 +4085,8 @@ return (
 
   .prose .katex-display {
     display: block;
-    margin: 0.9rem auto !important;
-    text-align: center;
+    margin: 0.9rem 0 !important;
+    text-align: left !important;
     overflow-x: auto;
     overflow-y: hidden;
     padding: 0.15rem 0.2rem;
@@ -4125,7 +4125,8 @@ return (
     }
 
     .prose .katex-display {
-      margin: 0.75rem auto !important;
+      margin: 0.75rem 0 !important;
+      text-align: left !important;
       padding: 0.1rem 0.1rem;
     }
 
