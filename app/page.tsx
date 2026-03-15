@@ -3,7 +3,7 @@
 
 "use client";
 
-import { Children, Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import React, { Children, Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
@@ -204,10 +204,29 @@ function renderTextWithFractions(text: string) {
   });
 }
 
-function renderChildrenWithFractions(children: ReactNode) {
+function renderChildrenWithFractions(children: ReactNode): ReactNode {
   return Children.map(children, (child, index) => {
     if (typeof child === "string") {
       return <Fragment key={index}>{renderTextWithFractions(child)}</Fragment>;
+    }
+
+    if (typeof child === "number") {
+      return <Fragment key={index}>{renderTextWithFractions(String(child))}</Fragment>;
+    }
+
+    if (!child || typeof child !== "object") {
+      return child;
+    }
+
+    // ✅ Si es un elemento React con hijos, recorremos también sus hijos
+    if (React.isValidElement(child)) {
+      const el = child as React.ReactElement<any>;
+
+      if (!el.props?.children) return child;
+
+      return React.cloneElement(el, {
+        children: renderChildrenWithFractions(el.props.children),
+      });
     }
 
     return child;
