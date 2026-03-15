@@ -2876,19 +2876,19 @@ function toggleMic() {
   div({ className, children, ...props }: any) {
     const cn = typeof className === "string" ? className : "";
 
-    if (cn.includes("katex-display")) {
-      return (
-        <div
-          className={`${className ?? ""} my-4 overflow-x-auto rounded-2xl bg-white/45 px-3 py-3`}
-          style={{
-            WebkitOverflowScrolling: "touch",
-          }}
-          {...props}
-        >
-          {children}
-        </div>
-      );
-    }
+if (cn.includes("katex-display")) {
+  return (
+    <div
+      className={`${className ?? ""} my-4 overflow-x-auto rounded-2xl bg-white/45 px-3 py-3 text-left`}
+      style={{
+        WebkitOverflowScrolling: "touch",
+      }}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
 
     return (
       <div className={className} {...props}>
