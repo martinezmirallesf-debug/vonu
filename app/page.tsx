@@ -8,6 +8,10 @@ import { Children, Fragment, useCallback, useEffect, useMemo, useRef, useState, 
 import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
 import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
+
 import ChalkboardTutorBoard from "@/app/components/ChalkboardTutorBoard";
 import {
   startRealtimeVoice,
@@ -2818,8 +2822,53 @@ function toggleMic() {
   },
 
   // ✅ Por si el Markdown mete <pre> directo (dependiendo del parser)
-  pre({ children }: any) {
+    pre({ children }: any) {
     return <>{children}</>;
+  },
+
+  span({ className, children, ...props }: any) {
+    const cn = typeof className === "string" ? className : "";
+
+    if (cn.includes("katex")) {
+      return (
+        <span
+          className="text-zinc-900"
+          style={{
+            fontSize: "1.04em",
+            lineHeight: 1.7,
+          }}
+          {...props}
+        >
+          {children}
+        </span>
+      );
+    }
+
+    return (
+      <span {...props}>
+        {renderChildrenWithFractions(children)}
+      </span>
+    );
+  },
+
+  div({ className, children, ...props }: any) {
+    const cn = typeof className === "string" ? className : "";
+
+    if (cn.includes("katex-display")) {
+      return (
+        <div
+          className="my-4 overflow-x-auto rounded-2xl bg-white/45 px-3 py-3"
+          style={{
+            WebkitOverflowScrolling: "touch",
+          }}
+          {...props}
+        >
+          {children}
+        </div>
+      );
+    }
+
+    return <div {...props}>{children}</div>;
   },
 } as any;
 }
@@ -4965,7 +5014,11 @@ return (
             {!hasText ? <TypingDots /> : <TypingCaret />}
           </span>
         ) : (
-                    <ReactMarkdown components={makeMdComponents(m.boardImageB64, m.boardImagePlacement, m.pizarra)}>
+                    <ReactMarkdown
+  remarkPlugins={[remarkMath]}
+  rehypePlugins={[rehypeKatex]}
+  components={makeMdComponents(m.boardImageB64, m.boardImagePlacement, m.pizarra)}
+>
   {mdText}
 </ReactMarkdown>
         )}
