@@ -152,11 +152,18 @@ function renderTextWithFractions(text: string) {
   const s = String(text ?? "");
   if (!s) return s;
 
-  // ✅ SOLO convierte:
-  // - fracciones simples: 1/4, 21/36
-  // - fracciones con expresiones entre paréntesis: (1 × 9)/(4 × 9), (9 + 12)/36
-  // ❌ NO convierte expresiones sueltas tipo 4 + 3/9 mezclándolo todo
-  const re = /(\([^()\n]+\)|[0-9a-zA-Z]+)\s*\/\s*(\([^()\n]+\)|[0-9a-zA-Z]+)/g;
+  // ✅ SOLO convierte fracciones matemáticas reales:
+  // - 1/4
+  // - 21/36
+  // - (1 × 9)/(4 × 9)
+  // - (9 + 12)/36
+  //
+  // ❌ NO convierte unidades o ratios tipo:
+  // - km/h
+  // - m/s
+  // - kg/m3
+  // - N/m
+  const re = /(\([^()\n]+\)|\d+)\s*\/\s*(\([^()\n]+\)|\d+)/g;
 
   const parts: Array<string | { a: string; b: string }> = [];
 
@@ -172,7 +179,16 @@ function renderTextWithFractions(text: string) {
     const a = String(m[1] ?? "").trim();
     const b = String(m[2] ?? "").trim();
 
-    parts.push({ a, b });
+    const isPureNumericOrParen =
+      (/^\d+$/.test(a) || /^\([^()\n]+\)$/.test(a)) &&
+      (/^\d+$/.test(b) || /^\([^()\n]+\)$/.test(b));
+
+    if (isPureNumericOrParen) {
+      parts.push({ a, b });
+    } else {
+      parts.push(s.slice(start, end));
+    }
+
     last = end;
   }
 
