@@ -130,12 +130,17 @@ function Fraction({ a, b }: { a: string; b: string }) {
 }
 
 function renderTextWithFractions(text: string) {
-  // Convierte "12/5" => fracción vertical.
-  // Nota: evitamos tocar texto vacío.
   const s = String(text ?? "");
   if (!s) return s;
 
-  const re = /(\d+)\s*\/\s*(\d+)/g;
+  // ✅ soporta:
+  // 1/4
+  // 21/36
+  // (1 × 9)/(4 × 9)
+  // (3 + 2)/(7 - 1)
+  const re =
+    /(\([^()\n]+\)|[0-9a-zA-Z]+(?:\s*[×÷+\-]\s*[0-9a-zA-Z]+)*)\s*\/\s*(\([^()\n]+\)|[0-9a-zA-Z]+(?:\s*[×÷+\-]\s*[0-9a-zA-Z]+)*)/g;
+
   const parts: Array<string | { a: string; b: string }> = [];
 
   let last = 0;
@@ -146,8 +151,11 @@ function renderTextWithFractions(text: string) {
     const end = re.lastIndex;
 
     if (start > last) parts.push(s.slice(last, start));
-    parts.push({ a: m[1], b: m[2] });
 
+    const a = String(m[1] ?? "").trim();
+    const b = String(m[2] ?? "").trim();
+
+    parts.push({ a, b });
     last = end;
   }
 
