@@ -2868,24 +2868,24 @@ function toggleMic() {
   },
 
   div({ className, children, ...props }: any) {
-    const cn = typeof className === "string" ? className : "";
+  const cn = typeof className === "string" ? className : "";
 
-    if (cn.includes("katex-display")) {
-      return (
-        <div
-          className="my-4 overflow-x-auto rounded-2xl bg-white/45 px-3 py-3"
-          style={{
-            WebkitOverflowScrolling: "touch",
-          }}
-          {...props}
-        >
-          {children}
-        </div>
-      );
-    }
+  if (cn.includes("katex-display")) {
+    return (
+      <div
+        className="my-3 overflow-x-auto rounded-2xl bg-white/35 px-2 py-2"
+        style={{
+          WebkitOverflowScrolling: "touch",
+        }}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  }
 
-    return <div {...props}>{children}</div>;
-  },
+  return <div {...props}>{children}</div>;
+},
 } as any;
 }
 
@@ -4064,6 +4064,64 @@ return (
     100% {
       transform: scale(1);
       box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+    }
+  }
+
+  /* ===== KaTeX bonito y controlado ===== */
+  .prose .katex {
+    font-size: 1.02em !important;
+    line-height: 1.2 !important;
+  }
+
+  .prose .katex-display {
+    display: block;
+    margin: 0.9rem auto !important;
+    text-align: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.15rem 0.2rem;
+  }
+
+  .prose .katex-display > .katex {
+    display: inline-block;
+    max-width: 100%;
+    font-size: 1.12em !important;
+    line-height: 1.15 !important;
+  }
+
+  /* Ajusta mejor raíces, fracciones y operadores altos */
+  .prose .katex .sqrt > .root {
+    margin-right: 0.12em !important;
+  }
+
+  .prose .katex .mfrac .frac-line {
+    border-bottom-width: 0.06em !important;
+  }
+
+  .prose .katex .mord,
+  .prose .katex .mop,
+  .prose .katex .mbin,
+  .prose .katex .mrel,
+  .prose .katex .mopen,
+  .prose .katex .mclose,
+  .prose .katex .mpunct {
+    vertical-align: middle;
+  }
+
+  /* En móvil: un poco más compacto */
+  @media (max-width: 768px) {
+    .prose .katex {
+      font-size: 0.98em !important;
+    }
+
+    .prose .katex-display {
+      margin: 0.75rem auto !important;
+      padding: 0.1rem 0.1rem;
+    }
+
+    .prose .katex-display > .katex {
+      font-size: 1.02em !important;
+      line-height: 1.08 !important;
     }
   }
 `}</style>
