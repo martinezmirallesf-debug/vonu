@@ -141,9 +141,9 @@ function Fraction({ a, b }: { a: string; b: string }) {
           {top}
         </span>
         <span
-          className="h-[1.5px] bg-zinc-900/80 my-[3px] rounded-full"
-          style={{ width: `${dynamicWidth}px` }}
-        />
+  className="h-[1.5px] my-[3px] rounded-full bg-current"
+  style={{ width: `${dynamicWidth}px`, opacity: 0.9 }}
+/>
         <span className="text-[0.92em] font-semibold text-center whitespace-nowrap px-[3px] pt-[1px]">
           {bottom}
         </span>
@@ -2779,12 +2779,12 @@ function toggleMic() {
 
   // ✅ Negritas más visibles
   strong({ children, ...props }: any) {
-    return (
-      <strong className="font-extrabold text-blue-700" {...props}>
-        {renderChildrenWithFractions(children)}
-      </strong>
-    );
-  },
+  return (
+    <strong className="font-extrabold text-zinc-900" {...props}>
+      {renderChildrenWithFractions(children)}
+    </strong>
+  );
+},
 
   // ✅ Bloques de código
   code({ inline, className, children, ...props }: any) {
@@ -4092,7 +4092,7 @@ return (
 .prose li::marker {
   content: "" !important;
 }
-  
+
   /* ===== KaTeX bonito y controlado ===== */
   .prose .katex {
     font-size: 1.02em !important;
