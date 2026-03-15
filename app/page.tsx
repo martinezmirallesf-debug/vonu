@@ -364,6 +364,32 @@ function sanitizeTutorLikeImage(text: string) {
   return s.trim();
 }
 
+function normalizeMathMarkdown(text: string) {
+  let s = String(text ?? "");
+
+  // Normalizar saltos
+  s = s.replace(/\r\n/g, "\n");
+
+  // \[ ... \]  -> $$ ... $$
+  s = s.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_match, expr) => {
+    return `\n$$\n${String(expr).trim()}\n$$\n`;
+  });
+
+  // \( ... \) -> $ ... $
+  s = s.replace(/\\\(\s*([\s\S]*?)\s*\\\)/g, (_match, expr) => {
+    return `$${String(expr).trim()}$`;
+  });
+
+  // Si a veces llega como [ ... ] y dentro hay LaTeX claro, también lo convertimos
+  s = s.replace(/^\[\s*(\\[\s\S]+?)\s*\]$/gm, (_match, expr) => {
+    return `$$${String(expr).trim()}$$`;
+  });
+
+  // compactar saltos excesivos
+  s = s.replace(/\n{3,}/g, "\n\n");
+
+  return s.trim();
+}
 
 
 // ===== TUTOR (detección ligera frontend) =====
@@ -4941,8 +4967,10 @@ const mdTextRaw = isUser
 
 
 const mdText = !isUser
-  ? sanitizeTutorLikeImage(
-      normalizeAssistantText(mdTextRaw)
+  ? normalizeMathMarkdown(
+      sanitizeTutorLikeImage(
+        normalizeAssistantText(mdTextRaw)
+      )
     )
   : mdTextRaw;
 
