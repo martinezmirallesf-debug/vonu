@@ -10,7 +10,7 @@ import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
-import "katex/dist/katex.min.css";
+
 
 import ChalkboardTutorBoard from "@/app/components/ChalkboardTutorBoard";
 import {
@@ -2844,48 +2844,58 @@ function toggleMic() {
 
   span({ className, children, ...props }: any) {
     const cn = typeof className === "string" ? className : "";
+    const isKatexTree =
+      cn.includes("katex") ||
+      cn.includes("mord") ||
+      cn.includes("mfrac") ||
+      cn.includes("msupsub") ||
+      cn.includes("sqrt") ||
+      cn.includes("root") ||
+      cn.includes("vlist") ||
+      cn.includes("vlist-t") ||
+      cn.includes("base") ||
+      cn.includes("strut");
 
-    if (cn.includes("katex")) {
+    // ✅ MUY IMPORTANTE:
+    // si el span pertenece al árbol interno de KaTeX, NO lo tocamos
+    if (isKatexTree) {
       return (
-        <span
-          className="text-zinc-900"
-          style={{
-            fontSize: "1.04em",
-            lineHeight: 1.7,
-          }}
-          {...props}
-        >
+        <span className={className} {...props}>
           {children}
         </span>
       );
     }
 
     return (
-      <span {...props}>
+      <span className={className} {...props}>
         {renderChildrenWithFractions(children)}
       </span>
     );
   },
 
   div({ className, children, ...props }: any) {
-  const cn = typeof className === "string" ? className : "";
+    const cn = typeof className === "string" ? className : "";
 
-  if (cn.includes("katex-display")) {
+    if (cn.includes("katex-display")) {
+      return (
+        <div
+          className={`${className ?? ""} my-4 overflow-x-auto rounded-2xl bg-white/45 px-3 py-3`}
+          style={{
+            WebkitOverflowScrolling: "touch",
+          }}
+          {...props}
+        >
+          {children}
+        </div>
+      );
+    }
+
     return (
-      <div
-        className="my-3 overflow-x-auto rounded-2xl bg-white/35 px-2 py-2"
-        style={{
-          WebkitOverflowScrolling: "touch",
-        }}
-        {...props}
-      >
+      <div className={className} {...props}>
         {children}
       </div>
     );
-  }
-
-  return <div {...props}>{children}</div>;
-},
+  },
 } as any;
 }
 
