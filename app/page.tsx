@@ -118,12 +118,31 @@ function isDesktopPointer() {
 }
 
 function Fraction({ a, b }: { a: string; b: string }) {
+  const top = String(a ?? "").trim();
+  const bottom = String(b ?? "").trim();
+
+  const maxLen = Math.max(top.length, bottom.length);
+  const dynamicWidth = Math.max(22, Math.min(72, maxLen * 7));
+
   return (
-    <span className="inline-flex align-middle mx-[2px]" style={{ transform: "translateY(1px)" }}>
-      <span className="inline-flex flex-col items-center leading-none">
-        <span className="text-[0.90em] font-semibold">{a}</span>
-        <span className="h-[1px] w-[1.15em] bg-zinc-900/70 my-[1px]" />
-        <span className="text-[0.90em] font-semibold">{b}</span>
+    <span
+      className="inline-flex align-middle mx-[4px]"
+      style={{ transform: "translateY(2px)" }}
+    >
+      <span
+        className="inline-flex flex-col items-center justify-center"
+        style={{ lineHeight: 1.05, minWidth: `${dynamicWidth}px` }}
+      >
+        <span className="text-[0.92em] font-semibold text-center whitespace-nowrap px-[2px]">
+          {top}
+        </span>
+        <span
+          className="h-[1.5px] bg-zinc-900/80 my-[2px] rounded-full"
+          style={{ width: `${dynamicWidth}px` }}
+        />
+        <span className="text-[0.92em] font-semibold text-center whitespace-nowrap px-[2px]">
+          {bottom}
+        </span>
       </span>
     </span>
   );
