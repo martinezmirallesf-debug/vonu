@@ -2700,7 +2700,72 @@ function toggleMic() {
   boardImagePlacement?: { x: number; y: number; w: number; h: number } | null,
   pizarraValue?: string | null
 ) {
+  function extractPlainText(node: any): string {
+    if (typeof node === "string" || typeof node === "number") return String(node);
+    if (Array.isArray(node)) return node.map(extractPlainText).join("");
+    if (node && typeof node === "object" && "props" in node) {
+      return extractPlainText((node as any).props?.children);
+    }
+    return "";
+  }
+
+  function looksLikeEquationLine(text: string) {
+    const t = String(text ?? "").trim();
+    if (!t) return false;
+    if (t.length > 120) return false;
+
+    // Si lleva encabezados o frases largas, no lo tratamos como ecuación
+    if (/^#{1,6}\s/.test(t)) return false;
+    if (/^[A-ZÁÉÍÓÚÑa-záéíóúñ]+\:$/.test(t)) return false;
+
+    const hasOperator =
+      t.includes("=") ||
+      t.includes("≈") ||
+      t.includes("≃") ||
+      t.includes("≤") ||
+      t.includes("≥") ||
+      t.includes("<") ||
+      t.includes(">");
+
+    if (!hasOperator) return false;
+
+    // Evita párrafos demasiado narrativos
+    const words = t.split(/\s+/).length;
+    if (words > 12 && !/[0-9xXyYa-zA-Z]/.test(t)) return false;
+
+    return true;
+  }
+
+  function splitEquation(text: string) {
+    const t = String(text ?? "").trim();
+
+    const match = t.match(/^(.*?)(≈|≃|=|≤|≥|<|>)(.*)$/);
+    if (!match) return null;
+
+    return {
+      left: match[1].trim(),
+      op: match[2].trim(),
+      right: match[3].trim(),
+    };
+  }
+
+  function renderEquationLine(text: string) {
+    const parts = splitEquation(text);
+    if (!parts) return renderTextWithFractions(text);
+
+    return (
+      <div className="my-3 overflow-x-auto">
+        <div className="inline-flex items-baseline gap-2 min-w-fit text-zinc-900 font-medium text-[1.04em] leading-8">
+          <span>{renderTextWithFractions(parts.left)}</span>
+          <span className="font-semibold">{parts.op}</span>
+          <span>{renderTextWithFractions(parts.right)}</span>
+        </div>
+      </div>
+    );
+  }
+
   return {
+
   // ✅ Lista ordenada con contador “badge” (como tu captura)
       ol({ children, ...props }: any) {
     return (
@@ -2763,38 +2828,35 @@ function toggleMic() {
     );
   },
 
-    p({ children, ...props }: any) {
-    const raw =
-      typeof children === "string"
-        ? children
-        : Array.isArray(children)
-        ? children
-            .map((c) => {
-              if (typeof c === "string") return c;
-              if (c && typeof c === "object" && "props" in c && typeof (c as any).props?.children === "string") {
-                return (c as any).props.children;
-              }
-              return "";
-            })
-            .join("")
-        : "";
+        p({ children, ...props }: any) {
+      const raw = extractPlainText(children).trim();
 
-    const looksMathLine =
-      /[=×÷]/.test(raw) || /[0-9]+\s*\/\s*[0-9]+/.test(raw);
+      const looksMathLine =
+        /[=≈≃≤≥<>×÷]/.test(raw) || /[0-9]+\s*\/\s*[0-9]+/.test(raw);
 
-    return (
-      <p
-        className={
-          looksMathLine
-            ? "my-4 leading-8 text-zinc-900 font-medium"
-            : "my-2 leading-7 text-zinc-900"
-        }
-        {...props}
-      >
-        {renderChildrenWithFractions(children)}
-      </p>
-    );
-  },
+      const isEquation = looksLikeEquationLine(raw);
+
+      if (isEquation) {
+        return (
+          <div className="my-2 text-zinc-900" {...props}>
+            {renderEquationLine(raw)}
+          </div>
+        );
+      }
+
+      return (
+        <p
+          className={
+            looksMathLine
+              ? "my-4 leading-8 text-zinc-900 font-medium"
+              : "my-2 leading-7 text-zinc-900"
+          }
+          {...props}
+        >
+          {renderChildrenWithFractions(children)}
+        </p>
+      );
+    },
 
   // ✅ Negritas más visibles
   strong({ children, ...props }: any) {
