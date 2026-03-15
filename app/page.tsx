@@ -2708,30 +2708,38 @@ function toggleMic() {
     );
   },
 
-  p({ children, ...props }: any) {
-  const raw =
-    typeof children === "string"
-      ? children
-      : Array.isArray(children)
-      ? children.map((c) => (typeof c === "string" ? c : "")).join("")
-      : "";
+    p({ children, ...props }: any) {
+    const raw =
+      typeof children === "string"
+        ? children
+        : Array.isArray(children)
+        ? children
+            .map((c) => {
+              if (typeof c === "string") return c;
+              if (c && typeof c === "object" && "props" in c && typeof (c as any).props?.children === "string") {
+                return (c as any).props.children;
+              }
+              return "";
+            })
+            .join("")
+        : "";
 
-  const looksMathLine =
-    /[=×÷]/.test(raw) || /[0-9]+\s*\/\s*[0-9]+/.test(raw);
+    const looksMathLine =
+      /[=×÷]/.test(raw) || /[0-9]+\s*\/\s*[0-9]+/.test(raw);
 
-  return (
-    <p
-      className={
-        looksMathLine
-          ? "my-4 leading-8 text-zinc-900 font-medium"
-          : "my-2 leading-7 text-zinc-900"
-      }
-      {...props}
-    >
-      {children}
-    </p>
-  );
-},
+    return (
+      <p
+        className={
+          looksMathLine
+            ? "my-4 leading-8 text-zinc-900 font-medium"
+            : "my-2 leading-7 text-zinc-900"
+        }
+        {...props}
+      >
+        {renderChildrenWithFractions(children)}
+      </p>
+    );
+  },
 
   // ✅ Negritas más visibles
   strong({ children, ...props }: any) {
