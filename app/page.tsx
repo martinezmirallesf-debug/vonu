@@ -4077,6 +4077,22 @@ return (
     }
   }
 
+  /* Quitar azul de enlaces dentro del chat */
+.prose a {
+  color: #18181b !important;
+  text-decoration: none !important;
+}
+
+/* Quitar numeración automática de listas */
+.prose ol {
+  list-style: none !important;
+  padding-left: 0 !important;
+}
+
+.prose li::marker {
+  content: "" !important;
+}
+  
   /* ===== KaTeX bonito y controlado ===== */
   .prose .katex {
     font-size: 1.02em !important;
