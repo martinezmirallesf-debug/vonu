@@ -358,16 +358,6 @@ function normalizeAssistantText(text: string) {
 function sanitizeTutorLikeImage(text: string) {
   let s = String(text ?? "");
 
-  // Quitar envoltorios típicos de LaTeX inline/display
-  s = s.replace(/\\\(|\\\)|\\\[|\\\]/g, "");
-
-  // Convertir \frac{a}{b} => a/b
-  s = s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "$1/$2");
-
-  // Convertir \times y \cdot si cuela alguno
-  s = s.replace(/\\times/g, "×");
-  s = s.replace(/\\cdot/g, "·");
-
   // Normalizar saltos
   s = s.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n");
 
@@ -4949,25 +4939,10 @@ const mdTextRaw = isUser
   ? rawText
   : normalizeAssistantText(rawText);
 
-// ✅ Anti-LaTeX + formato limpio “como la imagen”
+
 const mdText = !isUser
   ? sanitizeTutorLikeImage(
       normalizeAssistantText(mdTextRaw)
-        // \frac{1}{4} -> 1/4
-        .replace(/\\frac\s*\{([^}]+)\}\s*\{([^}]+)\}/g, "$1/$2")
-        // casos con espacios raros
-        .replace(/frac\s*\{([^}]+)\}\s*\{([^}]+)\}/g, "$1/$2")
-        // \times -> ×
-        .replace(/\\times/g, "×")
-        // \div -> ÷
-        .replace(/\\div/g, "÷")
-        // quitar wrappers tipo \( \)
-        .replace(/\\\(/g, "")
-        .replace(/\\\)/g, "")
-        .replace(/\\\[/g, "")
-        .replace(/\\\]/g, "")
-        // quitar backslashes sueltos
-        .replace(/\\/g, "")
     )
   : mdTextRaw;
 
