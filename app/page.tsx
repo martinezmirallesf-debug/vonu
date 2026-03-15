@@ -122,25 +122,25 @@ function Fraction({ a, b }: { a: string; b: string }) {
   const bottom = String(b ?? "").trim();
 
   const maxLen = Math.max(top.length, bottom.length);
-  const dynamicWidth = Math.max(22, Math.min(72, maxLen * 7));
+  const dynamicWidth = Math.max(24, Math.min(88, maxLen * 7.5));
 
   return (
     <span
-      className="inline-flex align-middle mx-[4px]"
-      style={{ transform: "translateY(2px)" }}
+      className="inline-flex align-middle mx-[5px]"
+      style={{ transform: "translateY(3px)" }}
     >
       <span
         className="inline-flex flex-col items-center justify-center"
-        style={{ lineHeight: 1.05, minWidth: `${dynamicWidth}px` }}
+        style={{ lineHeight: 1.18, minWidth: `${dynamicWidth}px` }}
       >
-        <span className="text-[0.92em] font-semibold text-center whitespace-nowrap px-[2px]">
+        <span className="text-[0.92em] font-semibold text-center whitespace-nowrap px-[3px] pb-[1px]">
           {top}
         </span>
         <span
-          className="h-[1.5px] bg-zinc-900/80 my-[2px] rounded-full"
+          className="h-[1.5px] bg-zinc-900/80 my-[3px] rounded-full"
           style={{ width: `${dynamicWidth}px` }}
         />
-        <span className="text-[0.92em] font-semibold text-center whitespace-nowrap px-[2px]">
+        <span className="text-[0.92em] font-semibold text-center whitespace-nowrap px-[3px] pt-[1px]">
           {bottom}
         </span>
       </span>
@@ -152,13 +152,11 @@ function renderTextWithFractions(text: string) {
   const s = String(text ?? "");
   if (!s) return s;
 
-  // ✅ soporta:
-  // 1/4
-  // 21/36
-  // (1 × 9)/(4 × 9)
-  // (3 + 2)/(7 - 1)
-  const re =
-    /(\([^()\n]+\)|[0-9a-zA-Z]+(?:\s*[×÷+\-]\s*[0-9a-zA-Z]+)*)\s*\/\s*(\([^()\n]+\)|[0-9a-zA-Z]+(?:\s*[×÷+\-]\s*[0-9a-zA-Z]+)*)/g;
+  // ✅ SOLO convierte:
+  // - fracciones simples: 1/4, 21/36
+  // - fracciones con expresiones entre paréntesis: (1 × 9)/(4 × 9), (9 + 12)/36
+  // ❌ NO convierte expresiones sueltas tipo 4 + 3/9 mezclándolo todo
+  const re = /(\([^()\n]+\)|[0-9a-zA-Z]+)\s*\/\s*(\([^()\n]+\)|[0-9a-zA-Z]+)/g;
 
   const parts: Array<string | { a: string; b: string }> = [];
 
