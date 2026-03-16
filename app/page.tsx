@@ -4175,10 +4175,10 @@ return (
 }
 
   /* ===== KaTeX bonito y controlado ===== */
-  .prose .katex {
-    font-size: 1.02em !important;
-    line-height: 1.2 !important;
-  }
+.prose .katex {
+  font-size: 1.08em !important;
+  line-height: 1.25 !important;
+}
 
   .prose .katex-display {
     display: block;
@@ -4189,12 +4189,12 @@ return (
     padding: 0.15rem 0.2rem;
   }
 
-  .prose .katex-display > .katex {
-    display: inline-block;
-    max-width: 100%;
-    font-size: 1.12em !important;
-    line-height: 1.15 !important;
-  }
+.prose .katex-display > .katex {
+  display: inline-block;
+  max-width: 100%;
+  font-size: 1.08em !important;
+  line-height: 1.25 !important;
+}
 
   /* Ajusta mejor raíces, fracciones y operadores altos */
   .prose .katex .sqrt > .root {
@@ -4215,23 +4215,24 @@ return (
     vertical-align: middle;
   }
 
-  /* En móvil: un poco más compacto */
-  @media (max-width: 768px) {
-    .prose .katex {
-      font-size: 0.98em !important;
-    }
-
-    .prose .katex-display {
-      margin: 0.75rem 0 !important;
-      text-align: left !important;
-      padding: 0.1rem 0.1rem;
-    }
-
-    .prose .katex-display > .katex {
-      font-size: 1.02em !important;
-      line-height: 1.08 !important;
-    }
+/* En móvil: matemáticas más legibles */
+@media (max-width: 768px) {
+  .prose .katex {
+    font-size: 1.02em !important;
+    line-height: 1.16 !important;
   }
+
+  .prose .katex-display {
+    margin: 0.75rem 0 !important;
+    text-align: left !important;
+    padding: 0.1rem 0.1rem;
+  }
+
+  .prose .katex-display > .katex {
+    font-size: 1.02em !important;
+    line-height: 1.16 !important;
+  }
+}
 `}</style>
 
       {/* TOAST */}
