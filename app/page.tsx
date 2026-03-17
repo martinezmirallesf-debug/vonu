@@ -1565,6 +1565,13 @@ async function toggleConversation() {
     !!navigator.mediaDevices &&
     !!navigator.mediaDevices.getUserMedia;
 
+      if (!isLoggedIn) {
+    setMicMsg("Debes iniciar sesión para usar el modo conversación.");
+    setTimeout(() => setMicMsg(null), 2400);
+    openLoginModal("signin");
+    return;
+  }
+
   if (!supportsMic) {
     setMicMsg("Tu navegador no soporta micrófono en este modo.");
     setTimeout(() => setMicMsg(null), 2400);
@@ -5310,7 +5317,7 @@ return (
 {/* 🎙️ Hablar con Vonu */}
 <button
   onClick={toggleConversation}
-  disabled={!!isTyping}
+  disabled={!!isTyping || !isLoggedIn}
   className={[
     "relative h-10 w-10 rounded-full shrink-0 grid place-items-center p-0",
     "border transition-all duration-300",
@@ -5319,7 +5326,7 @@ return (
       : voiceUiState === "listening"
       ? "border-cyan-300 text-white shadow-[0_8px_26px_rgba(34,211,238,0.30)]"
       : "border-blue-300 text-white shadow-[0_10px_30px_rgba(59,130,246,0.34)]",
-    !!isTyping ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+        (!!isTyping || !isLoggedIn) ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
   ].join(" ")}
   style={
     voiceUiState === "idle"
