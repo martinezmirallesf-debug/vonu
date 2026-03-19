@@ -1993,6 +1993,13 @@ async function speakTTS(text: string) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
 
+  const [usageInfo, setUsageInfo] = useState<{
+  plan_id: string;
+  messages_used: number;
+  messages_limit: number;
+  messages_left: number;
+} | null>(null);
+
   // =========================
   // ✅ ANTI-DUPLICADO / SEND LOCK
   // Evita que el mismo mensaje se envíe 2-3 veces por:
@@ -3190,6 +3197,15 @@ useEffect(() => {
 
   const messages = activeThread?.messages ?? [];
 
+  const showSoftLimitWarning =
+  !!usageInfo &&
+  usageInfo.messages_left > 0 &&
+  usageInfo.messages_left <= 5;
+
+const showHardLimitWarning =
+  !!usageInfo &&
+  usageInfo.messages_left <= 0;
+
   const sortedThreads = useMemo(() => {
     return [...threads].sort((a, b) => b.updatedAt - a.updatedAt);
   }, [threads]);
@@ -3606,6 +3622,10 @@ const res = await fetch("/api/chat", {
 
       const data = await res.json().catch(() => ({} as any));
 
+      if (data?.usage) {
+  setUsageInfo(data.usage);
+}
+
       const fullText =
         typeof data?.text === "string" && data.text.trim()
           ? data.text
@@ -3869,6 +3889,10 @@ const res = await fetch("/api/chat", {
       }
 
       const data = await res.json().catch(() => ({} as any));
+
+      if (data?.usage) {
+  setUsageInfo(data.usage);
+}
 
       const fullText =
         typeof data?.text === "string" && data.text.trim()
@@ -5082,6 +5106,49 @@ return (
   className="mx-auto max-w-3xl px-3 md:px-6"
   style={{ paddingTop: 124, paddingBottom: hasUserMessage ? chatBottomPad : 18 }}
 >
+
+{showSoftLimitWarning ? (
+  <div className="flex justify-start">
+    <div className="max-w-[92%] md:max-w-[85%] rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-zinc-900 shadow-sm">
+      <div className="text-[14px] font-semibold">
+        Te quedan {usageInfo?.messages_left} mensajes este mes
+      </div>
+      <div className="mt-1 text-[13px] text-zinc-700 leading-6">
+        Cuando quieras, puedes revisar tu plan o ampliarlo desde el botón de arriba.
+      </div>
+      <div className="mt-3">
+        <button
+          onClick={handleOpenPlansCTA}
+          className="h-9 px-4 rounded-full bg-black hover:bg-zinc-900 text-white text-[12px] font-semibold"
+        >
+          Ver planes
+        </button>
+      </div>
+    </div>
+  </div>
+) : null}
+
+{showHardLimitWarning ? (
+  <div className="flex justify-start">
+    <div className="max-w-[92%] md:max-w-[85%] rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-zinc-900 shadow-sm">
+      <div className="text-[15px] font-semibold">
+        Has llegado al límite de mensajes de este mes
+      </div>
+      <div className="mt-1 text-[13px] text-zinc-700 leading-6">
+        Puedes seguir usando Vonu mejorando tu plan y, más adelante, también podrás añadir mensajes extra si lo necesitas.
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          onClick={handleOpenPlansCTA}
+          className="h-9 px-4 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold"
+        >
+          Ver planes
+        </button>
+      </div>
+    </div>
+  </div>
+) : null}
+
     <div className="flex flex-col gap-4 py-6 md:pt-6">
       {/* Badge modo tutor */}
       {activeThread?.mode === "tutor" ? (
