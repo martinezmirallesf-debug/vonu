@@ -604,7 +604,7 @@ export default function Page() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const isLoggedIn = !authLoading && !!authUserId;
-  const isBlockedByPaywall = !authLoading && !!authUserId && !proLoading && !isPro;
+  const isBlockedByPaywall = false;
 
   // ===== Copy marketing (visible) =====
   const PLUS_TEXT = "Plus+";
