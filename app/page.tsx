@@ -4803,14 +4803,7 @@ return (
       <div className="text-[11px] text-zinc-500">Uso mensual</div>
 
       <div className="mt-2 flex items-center justify-between gap-3 text-[12px]">
-        <span className="text-zinc-600">Mensajes usados</span>
-        <span className="font-semibold text-zinc-900">
-          {usageInfo.messages_used} / {usageInfo.messages_limit}
-        </span>
-      </div>
-
-      <div className="mt-2 flex items-center justify-between gap-3 text-[12px]">
-        <span className="text-zinc-600">Mensajes restantes</span>
+        <span className="text-zinc-600">Mensajes restantes este mes</span>
         <span className="font-semibold text-zinc-900">
           {usageInfo.messages_left}
         </span>
