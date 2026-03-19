@@ -759,37 +759,6 @@ export default function Page() {
   }
 }
 
-  async function refreshUsageInfo() {
-  try {
-    const { data } = await supabaseBrowser.auth.getSession();
-    const token = data?.session?.access_token;
-
-    if (!token) {
-      setUsageInfo(null);
-      return;
-    }
-
-    const res = await fetch("/api/usage/status", {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
-      cache: "no-store",
-    });
-
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setUsageInfo(null);
-      return;
-    }
-
-    if (json?.usage) {
-      setUsageInfo(json.usage);
-    } else {
-      setUsageInfo(null);
-    }
-  } catch {
-    setUsageInfo(null);
-  }
-}
 
   function computeProfileFromUser(u: any) {
     const { identityData } = bestIdentityFromUser(u);
