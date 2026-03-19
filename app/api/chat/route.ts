@@ -292,11 +292,14 @@ const FOOTBALL_DISABLED = process.env.VONU_DISABLE_FOOTBALL === "1";
 
     const authHeader = req.headers.get("authorization") || "";
 
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      apikey: supabaseAnonKey,
-      Authorization: authHeader.startsWith("Bearer ") ? authHeader : `Bearer ${supabaseAnonKey}`,
-    };
+const headers: Record<string, string> = {
+  "Content-Type": "application/json",
+  apikey: supabaseAnonKey,
+};
+
+if (authHeader.startsWith("Bearer ")) {
+  headers.Authorization = authHeader;
+}
 
     const resp = await fetch(edgeUrl, {
       method: "POST",
