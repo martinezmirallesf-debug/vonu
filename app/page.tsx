@@ -4737,13 +4737,41 @@ return (
                 </div>
 
                 <div className="mt-5 rounded-[16px] border border-zinc-200 bg-zinc-50 px-4 py-3">
-                  <div className="text-[12px] text-zinc-500">Cuenta</div>
-                  <div className="mt-1 text-[14px] font-semibold text-zinc-900 truncate">{authUserName ?? "Usuario"}</div>
-                  <div className="text-[12px] text-zinc-600 truncate">{authUserEmail ?? "Email no disponible"}</div>
-                  <div className="mt-2 text-[12px] text-zinc-600">
-                    Plan: <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? PLUS_NODE : "Gratis"}</span>
-                  </div>
-                </div>
+  <div className="text-[12px] text-zinc-500">Cuenta</div>
+  <div className="mt-1 text-[14px] font-semibold text-zinc-900 truncate">
+    {authUserName ?? "Usuario"}
+  </div>
+  <div className="text-[12px] text-zinc-600 truncate">
+    {authUserEmail ?? "Email no disponible"}
+  </div>
+
+  <div className="mt-2 text-[12px] text-zinc-600">
+    Plan:{" "}
+    <span className="font-semibold text-zinc-900">
+      {proLoading ? "comprobando…" : isPro ? PLUS_NODE : "Gratis"}
+    </span>
+  </div>
+
+  {usageInfo ? (
+    <div className="mt-3 rounded-[12px] border border-zinc-200 bg-white px-3 py-3">
+      <div className="text-[11px] text-zinc-500">Uso mensual</div>
+
+      <div className="mt-2 flex items-center justify-between gap-3 text-[12px]">
+        <span className="text-zinc-600">Mensajes usados</span>
+        <span className="font-semibold text-zinc-900">
+          {usageInfo.messages_used} / {usageInfo.messages_limit}
+        </span>
+      </div>
+
+      <div className="mt-2 flex items-center justify-between gap-3 text-[12px]">
+        <span className="text-zinc-600">Mensajes restantes</span>
+        <span className="font-semibold text-zinc-900">
+          {usageInfo.messages_left}
+        </span>
+      </div>
+    </div>
+  ) : null}
+</div>
 
                 <div className="mt-4 flex gap-2">
                   <button
