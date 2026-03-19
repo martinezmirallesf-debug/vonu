@@ -743,6 +743,39 @@ export default function Page() {
     });
 
     const json = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      setUsageInfo(null);
+      return;
+    }
+
+    if (json?.usage) {
+      setUsageInfo(json.usage);
+    } else {
+      setUsageInfo(null);
+    }
+  } catch {
+    setUsageInfo(null);
+  }
+}
+
+  async function refreshUsageInfo() {
+  try {
+    const { data } = await supabaseBrowser.auth.getSession();
+    const token = data?.session?.access_token;
+
+    if (!token) {
+      setUsageInfo(null);
+      return;
+    }
+
+    const res = await fetch("/api/usage/status", {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+
+    const json = await res.json().catch(() => ({}));
     if (!res.ok) {
       setUsageInfo(null);
       return;
@@ -957,8 +990,9 @@ export default function Page() {
 
     (async () => {
       await handleOAuthReturnIfPresent();
-      await refreshAuthSession();
-      await refreshProStatus();
+await refreshAuthSession();
+await refreshProStatus();
+await refreshUsageInfo();
 
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
         const u = session?.user;
@@ -983,8 +1017,9 @@ export default function Page() {
         setAuthUserName(profile.name);
 
         setTimeout(() => {
-          refreshProStatus();
-        }, 80);
+  refreshProStatus();
+  refreshUsageInfo();
+}, 80);
       });
 
       unsub = () => sub.subscription.unsubscribe();
@@ -1009,7 +1044,8 @@ export default function Page() {
       busy = true;
       try {
         await refreshAuthSession();
-        await refreshProStatus();
+await refreshProStatus();
+await refreshUsageInfo();
       } finally {
         busy = false;
       }
