@@ -3580,18 +3580,24 @@ if (voiceMode) stopMic();
           content: m.text ?? "",
         }));
 
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        cache: "no-store",
-        body: JSON.stringify({
-          messages: convoForApi,
-          userText,
-          imageBase64: null,
-          mode: modePreset,
-          tutorLevel: threadNow?.tutorProfile?.level ?? "adult",
-        }),
-      });
+      const { data: sessionData } = await supabaseBrowser.auth.getSession();
+const accessToken = sessionData?.session?.access_token ?? null;
+
+const res = await fetch("/api/chat", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  },
+  cache: "no-store",
+  body: JSON.stringify({
+    messages: convoForApi,
+    userText,
+    imageBase64: null,
+    mode: modePreset,
+    tutorLevel: threadNow?.tutorProfile?.level ?? "adult",
+  }),
+});
 
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
@@ -3838,18 +3844,24 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
           content: m.text ?? "",
         }));
 
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        cache: "no-store",
-        body: JSON.stringify({
-          messages: convoForApi,
-          userText,
-          imageBase64,
-          mode: nextMode,
-          tutorLevel: nextTutorLevel,
-        }),
-      });
+      const { data: sessionData } = await supabaseBrowser.auth.getSession();
+const accessToken = sessionData?.session?.access_token ?? null;
+
+const res = await fetch("/api/chat", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  },
+  cache: "no-store",
+  body: JSON.stringify({
+    messages: convoForApi,
+    userText,
+    imageBase64,
+    mode: nextMode,
+    tutorLevel: nextTutorLevel,
+  }),
+});
 
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
