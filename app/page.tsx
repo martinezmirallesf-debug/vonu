@@ -759,7 +759,6 @@ export default function Page() {
   }
 }
 
-
   function computeProfileFromUser(u: any) {
     const { identityData } = bestIdentityFromUser(u);
 
