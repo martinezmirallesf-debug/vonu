@@ -113,8 +113,8 @@ function makeTitleFromText(text: string) {
 const STORAGE_KEY = "vonu_threads_v2";
 const HOME_URL = "https://vonuai.com";
 
-// ✅ regla: tras 2 análisis, pedir login/pago
-const FREE_MESSAGE_LIMIT = 2;
+// ✅ regla: tras 1 mensaje, pedir login/pago
+const GUEST_MESSAGE_LIMIT = 1;
 
 function isDesktopPointer() {
   if (typeof window === "undefined") return true;
@@ -3527,23 +3527,20 @@ useEffect(() => {
 
   // ✅ regla: tras 2 mensajes, bloquear el siguiente y pedir login/pago
   function enforceLimitIfNeeded(): boolean {
-    const nextUserCount = userMsgCountInThread + 1;
-    if (nextUserCount <= FREE_MESSAGE_LIMIT) return false;
+  const nextUserCount = userMsgCountInThread + 1;
 
-    if (!isLoggedIn) {
-      setLoginMsg("Para seguir, inicia sesión (y así guardas tu historial).");
-      openLoginModal("signin");
-      return true;
-    }
+  // ✅ Invitado: solo 1 mensaje de prueba
+  if (!isLoggedIn) {
+    if (nextUserCount <= GUEST_MESSAGE_LIMIT) return false;
 
-    if (!isPro) {
-      setPayMsg(`Has llegado al límite del plan Gratis. Desbloquea Plus+ para seguir usando Vonu.`);
-      openPlansModal();
-      return true;
-    }
-
-    return false;
+    setLoginMsg("Puedes probar Vonu con 1 mensaje. Para seguir, inicia sesión.");
+    openLoginModal("signin");
+    return true;
   }
+
+  // ✅ Usuario loggeado: el límite real lo controla Supabase / analyze.ts
+  return false;
+}
 
   async function sendQuickMessage(textPreset: string, modePreset: ThreadMode) {
 
