@@ -726,6 +726,38 @@ export default function Page() {
     }
   }
 
+  async function refreshUsageInfo() {
+  try {
+    const { data } = await supabaseBrowser.auth.getSession();
+    const token = data?.session?.access_token;
+
+    if (!token) {
+      setUsageInfo(null);
+      return;
+    }
+
+    const res = await fetch("/api/usage/status", {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setUsageInfo(null);
+      return;
+    }
+
+    if (json?.usage) {
+      setUsageInfo(json.usage);
+    } else {
+      setUsageInfo(null);
+    }
+  } catch {
+    setUsageInfo(null);
+  }
+}
+
   function computeProfileFromUser(u: any) {
     const { identityData } = bestIdentityFromUser(u);
 
@@ -1564,6 +1596,19 @@ async function toggleConversation() {
     typeof navigator !== "undefined" &&
     !!navigator.mediaDevices &&
     !!navigator.mediaDevices.getUserMedia;
+
+    if (!isLoggedIn) {
+  setMicMsg("Inicia sesión para usar el modo conversación.");
+  setTimeout(() => setMicMsg(null), 2400);
+  return;
+}
+
+if (usageInfo && usageInfo.plan_id === "free") {
+  setMicMsg("El modo conversación por voz no está disponible en el plan Gratis.");
+  setTimeout(() => setMicMsg(null), 2800);
+  handleOpenPlansCTA();
+  return;
+}
 
       if (!isLoggedIn) {
     setMicMsg("Debes iniciar sesión para usar el modo conversación.");
