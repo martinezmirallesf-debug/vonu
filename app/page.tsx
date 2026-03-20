@@ -2816,8 +2816,8 @@ function toggleMic() {
   if (!parts) return renderTextWithFractions(text);
 
   return (
-    <div className="my-3 w-full overflow-visible">
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-2 w-full text-zinc-900 font-medium text-[1.04em] leading-8">
+  <div className="my-3 w-full overflow-visible py-[2px]">
+    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-2 w-full text-zinc-900 font-medium text-[1.04em] leading-[2.1]">
         <span className="min-w-0 break-words">{renderTextWithFractions(parts.left)}</span>
         <span className="font-semibold shrink-0">{parts.op}</span>
         <span className="min-w-0 break-words">{renderTextWithFractions(parts.right)}</span>
@@ -4146,10 +4146,12 @@ const chatBottomPad = hasUserMessage ? (inputBarH + 22) : 18;
 
   function Frac({ n, d }: { n: string; d: string }) {
   return (
-    <span className="inline-flex flex-col items-center align-middle mx-1">
-      <span className="text-[0.85em] leading-none">{n}</span>
-      <span className="h-[1px] w-[1.6em] bg-current opacity-80 my-[2px]" />
-      <span className="text-[0.85em] leading-none">{d}</span>
+    <span className="inline-flex flex-col items-center align-middle mx-1 my-[6px]">
+      <span className="text-[0.9em] leading-tight mb-[2px]">{n}</span>
+
+<span className="h-[1.5px] w-[1.6em] bg-current opacity-90 my-[3px]" />
+
+<span className="text-[0.9em] leading-tight mt-[2px]">{d}</span>
     </span>
   );
 }
