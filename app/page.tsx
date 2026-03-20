@@ -137,14 +137,14 @@ function Fraction({ a, b }: { a: string; b: string }) {
         className="inline-flex flex-col items-center justify-center"
         style={{ lineHeight: 1.18, minWidth: `${dynamicWidth}px` }}
       >
-        <span className="text-[0.92em] font-semibold text-center whitespace-nowrap px-[3px] pb-[1px]">
+        <span className="text-[0.92em] font-semibold text-center px-[3px] pb-[1px]">
           {top}
         </span>
         <span
   className="h-[1.5px] my-[3px] rounded-full bg-current"
   style={{ width: `${dynamicWidth}px`, opacity: 0.9 }}
 />
-        <span className="text-[0.92em] font-semibold text-center whitespace-nowrap px-[3px] pt-[1px]">
+        <span className="text-[0.92em] font-semibold text-center px-[3px] pt-[1px]">
           {bottom}
         </span>
       </span>
@@ -2812,19 +2812,19 @@ function toggleMic() {
   }
 
   function renderEquationLine(text: string) {
-    const parts = splitEquation(text);
-    if (!parts) return renderTextWithFractions(text);
+  const parts = splitEquation(text);
+  if (!parts) return renderTextWithFractions(text);
 
-    return (
-      <div className="my-3 overflow-x-auto">
-        <div className="inline-flex items-baseline gap-2 min-w-fit text-zinc-900 font-medium text-[1.04em] leading-8">
-          <span>{renderTextWithFractions(parts.left)}</span>
-          <span className="font-semibold">{parts.op}</span>
-          <span>{renderTextWithFractions(parts.right)}</span>
-        </div>
+  return (
+    <div className="my-3 w-full overflow-visible">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-2 w-full text-zinc-900 font-medium text-[1.04em] leading-8">
+        <span className="min-w-0 break-words">{renderTextWithFractions(parts.left)}</span>
+        <span className="font-semibold shrink-0">{parts.op}</span>
+        <span className="min-w-0 break-words">{renderTextWithFractions(parts.right)}</span>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return {
 
