@@ -2309,8 +2309,8 @@ if (purpose === "conversation" && inTtsCooldown()) {
     if (!voiceModeRef.current) return;
     if (isTyping) return;
     if (inTtsCooldown()) return;
-    if (!voiceModeRef.current) {
-};
+    if (recognitionRef.current) return;
+    startMic("conversation");
   }, isDesktopPointer() ? 700 : 1100);
   return;
 }
@@ -2513,13 +2513,12 @@ const purposeAtStart = purpose; // snapshot
     const waitMs = isDesktopPointer() ? 450 : 1200;
 
     setTimeout(() => {
-      if (!voiceModeRef.current) return;
-      if (isTyping) return;
-      if (recognitionRef.current) return;
-      if (micSessionIdRef.current !== mySessionId) return;
-      if (!voiceModeRef.current) {
-};
-    }, waitMs);
+  if (!voiceModeRef.current) return;
+  if (isTyping) return;
+  if (recognitionRef.current) return;
+  if (micSessionIdRef.current !== mySessionId) return;
+  startMic("conversation");
+}, waitMs);
   }
 };
 
@@ -3023,9 +3022,11 @@ function toggleMic() {
 if (cn.includes("katex-display")) {
   return (
     <div
-      className={`${className ?? ""} my-4 overflow-x-auto rounded-2xl bg-white/45 px-3 py-3 text-left`}
+      className={`${className ?? ""} my-4 rounded-2xl bg-white/45 px-2 py-2 text-left`}
       style={{
-        WebkitOverflowScrolling: "touch",
+        overflow: "visible",
+        maxWidth: "100%",
+        WebkitOverflowScrolling: "auto",
       }}
       {...props}
     >
@@ -4270,19 +4271,22 @@ return (
 }
 
   .prose .katex-display {
-    display: block;
-    margin: 0.9rem 0 !important;
-    text-align: left !important;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 0.15rem 0.2rem;
-  }
+  display: block;
+  margin: 0.9rem 0 !important;
+  text-align: left !important;
+  overflow: visible !important;
+  padding: 0.1rem 0;
+  max-width: 100%;
+}
 
 .prose .katex-display > .katex {
-  display: inline-block;
+  display: block;
+  width: 100%;
   max-width: 100%;
-  font-size: 1.08em !important;
-  line-height: 1.25 !important;
+  font-size: 1.05em !important;
+  line-height: 1.15 !important;
+  white-space: normal !important;
+  word-break: break-word;
 }
 
   /* Ajusta mejor raíces, fracciones y operadores altos */
@@ -4307,19 +4311,21 @@ return (
 /* En móvil: matemáticas más legibles */
 @media (max-width: 768px) {
   .prose .katex {
-    font-size: 1.02em !important;
-    line-height: 1.16 !important;
+    font-size: 0.95em !important;
+    line-height: 1.12 !important;
   }
 
   .prose .katex-display {
-    margin: 0.75rem 0 !important;
+    margin: 0.6rem 0 !important;
     text-align: left !important;
-    padding: 0.1rem 0.1rem;
+    overflow: visible !important;
+    padding: 0 !important;
   }
 
   .prose .katex-display > .katex {
-    font-size: 1.02em !important;
-    line-height: 1.16 !important;
+    font-size: 0.98em !important;
+    line-height: 1.1 !important;
+    white-space: normal !important;
   }
 }
 `}</style>
@@ -5328,7 +5334,7 @@ return (
     )}
 
     {(m.text || m.streaming) && (
-            <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans">
+            <div className="prose prose-sm max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans">
         {isStreaming ? (
           <span className="whitespace-pre-wrap">
             {mdText.includes('"elements"') || mdText.includes("```excalidraw")
