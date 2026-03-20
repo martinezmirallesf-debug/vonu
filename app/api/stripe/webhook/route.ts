@@ -117,20 +117,22 @@ export async function POST(req: Request) {
       }
 
       const { error } = await supabaseAdmin
-        .from("subscriptions")
-        .upsert(
-          {
-            user_id: userId, // 👈 ya NO será null si existía
-            stripe_customer_id: params.stripeCustomerId,
-            stripe_subscription_id: params.stripeSubscriptionId,
-            status: params.status,
-            current_period_end: params.currentPeriodEndIso,
-            price_id: params.priceId,
-          },
-          { onConflict: "stripe_subscription_id" }
-        );
+  .from("subscriptions")
+  .upsert(
+    {
+      user_id: userId, // 👈 ya NO será null si existía
+      stripe_customer_id: params.stripeCustomerId,
+      stripe_subscription_id: params.stripeSubscriptionId,
+      status: params.status,
+      current_period_end: params.currentPeriodEndIso,
+      price_id: params.priceId,
+    },
+    { onConflict: "stripe_subscription_id" }
+  );
 
-      if (error) throw new Error(error.message);
+if (error) throw new Error(error.message);
+
+return userId;
     }
 
     async function syncProfilePlan(params: {
@@ -188,21 +190,26 @@ export async function POST(req: Request) {
         const priceId =
           (sub.items?.data?.[0]?.price?.id as string | undefined) ?? null;
 
-        await upsertSubscriptionRow({
-          userId,
-          stripeCustomerId,
-          stripeSubscriptionId: subscriptionId,
-          status: sub.status ?? null,
-          currentPeriodEndIso,
-          priceId,
-        });
+        const resolvedUserId = await upsertSubscriptionRow({
+  userId,
+  stripeCustomerId,
+  stripeSubscriptionId: subscriptionId,
+  status: sub.status ?? null,
+  currentPeriodEndIso,
+  priceId,
+});
 
-        return NextResponse.json({
-          ok: true,
-          event: event.type,
-          userId,
-          subscriptionId,
-        });
+await syncProfilePlan({
+  userId: resolvedUserId,
+  subscriptionStatus: sub.status ?? null,
+});
+
+return NextResponse.json({
+  ok: true,
+  event: event.type,
+  userId: resolvedUserId,
+  subscriptionId,
+});
       }
 
       case "customer.subscription.created":
@@ -220,20 +227,26 @@ export async function POST(req: Request) {
         const priceId =
           (sub.items?.data?.[0]?.price?.id as string | undefined) ?? null;
 
-        await upsertSubscriptionRow({
-          userId: null, // ✅ lo resolverá por customer o conservará el existente
-          stripeCustomerId,
-          stripeSubscriptionId,
-          status: sub.status ?? null,
-          currentPeriodEndIso,
-          priceId,
-        });
+        const resolvedUserId = await upsertSubscriptionRow({
+  userId: null, // ✅ lo resolverá por customer o conservará el existente
+  stripeCustomerId,
+  stripeSubscriptionId,
+  status: sub.status ?? null,
+  currentPeriodEndIso,
+  priceId,
+});
 
-        return NextResponse.json({
-          ok: true,
-          event: event.type,
-          subscriptionId: stripeSubscriptionId,
-        });
+await syncProfilePlan({
+  userId: resolvedUserId,
+  subscriptionStatus: sub.status ?? null,
+});
+
+return NextResponse.json({
+  ok: true,
+  event: event.type,
+  subscriptionId: stripeSubscriptionId,
+  userId: resolvedUserId,
+});
       }
 
       default: {
