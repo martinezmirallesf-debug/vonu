@@ -109,7 +109,11 @@ export async function POST(req: NextRequest) {
       // Esto ayuda con "pagar con Wallets" y datos de cliente (si Stripe lo necesita)
       customer_update: { address: "auto", name: "auto" },
 
-      metadata: { supabase_user_id: user.id, plan },
+      metadata: {
+  supabase_user_id: user.id,
+  billing_cycle: plan,
+  app_plan: "pro",
+},
     });
 
     return NextResponse.json({ url: session.url }, { status: 200 });
