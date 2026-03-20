@@ -133,6 +133,32 @@ export async function POST(req: Request) {
       if (error) throw new Error(error.message);
     }
 
+    async function syncProfilePlan(params: {
+  userId: string | null;
+  subscriptionStatus: string | null;
+}) {
+  if (!params.userId) return;
+
+  const isActive =
+    params.subscriptionStatus === "active" ||
+    params.subscriptionStatus === "trialing";
+
+  const nextPlan = isActive ? "pro" : "free";
+
+  const { error } = await supabaseAdmin
+    .from("profiles")
+    .upsert(
+      {
+        id: params.userId,
+        plan: nextPlan,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" }
+    );
+
+  if (error) throw new Error(error.message);
+}
+
     // ---- Eventos ----
     switch (event.type) {
       case "checkout.session.completed": {
