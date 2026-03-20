@@ -26,24 +26,34 @@ function getAppUrl(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const plan = (body?.plan ?? "monthly").toString(); // "monthly" | "yearly"
 
-    if (plan !== "monthly" && plan !== "yearly") {
-      return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
-    }
+const plan = (body?.plan ?? "").toString() as "plus" | "max";
+const billing = (body?.billing ?? "").toString() as "monthly" | "yearly";
 
-    // Env IDs
-    const priceMonthly = process.env.STRIPE_PRICE_MONTHLY;
-    const priceYearly = process.env.STRIPE_PRICE_YEARLY;
+if (!["plus", "max"].includes(plan) || !["monthly", "yearly"].includes(billing)) {
+  return NextResponse.json({ error: "Invalid checkout params" }, { status: 400 });
+}
 
-    if (!priceMonthly || !priceYearly) {
-      return NextResponse.json(
-        { error: "Missing STRIPE_PRICE_MONTHLY or STRIPE_PRICE_YEARLY in env" },
-        { status: 500 }
-      );
-    }
+// Env IDs
+const priceMap = {
+  plus: {
+    monthly: process.env.STRIPE_PRICE_PLUS_MONTHLY,
+    yearly: process.env.STRIPE_PRICE_PLUS_YEARLY,
+  },
+  max: {
+    monthly: process.env.STRIPE_PRICE_MAX_MONTHLY,
+    yearly: process.env.STRIPE_PRICE_MAX_YEARLY,
+  },
+} as const;
 
-    const priceId = plan === "yearly" ? priceYearly : priceMonthly;
+const priceId = priceMap[plan][billing];
+
+if (!priceId) {
+  return NextResponse.json(
+    { error: "Missing Stripe price env vars for selected plan/billing" },
+    { status: 500 }
+  );
+}
 
     // Auth
     const { user, error } = await getUserFromRequest(req);
@@ -111,8 +121,8 @@ export async function POST(req: NextRequest) {
 
       metadata: {
   supabase_user_id: user.id,
-  billing_cycle: plan,
-  app_plan: "pro",
+  billing_cycle: billing,
+  app_plan: plan,
 },
     });
 

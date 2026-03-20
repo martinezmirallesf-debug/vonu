@@ -592,13 +592,17 @@ export default function Page() {
   const [isPro, setIsPro] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
 
-  // ✅ Paywall como en la foto: anual / mensual / seguir gratis
-  const [plan, setPlan] = useState<"monthly" | "yearly" | "free">("yearly");
-  const [payLoading, setPayLoading] = useState(false);
-  const [payMsg, setPayMsg] = useState<string | null>(null);
+// ✅ Paywall final: plan + facturación
+const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
+const [plan, setPlan] = useState<"plus" | "max" | "free">("plus");
+const [payLoading, setPayLoading] = useState(false);
+const [payMsg, setPayMsg] = useState<string | null>(null);
 
-  // ✅ Si el usuario intenta pagar estando logout, guardamos el plan y tras login lanzamos checkout
-  const [pendingCheckoutPlan, setPendingCheckoutPlan] = useState<"monthly" | "yearly" | null>(null);
+// ✅ Si el usuario intenta pagar estando logout, guardamos plan + billing y tras login lanzamos checkout
+const [pendingCheckout, setPendingCheckout] = useState<{
+  plan: "plus" | "max";
+  billing: "monthly" | "yearly";
+} | null>(null);
 
   // Mensaje post-checkout
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -1044,20 +1048,20 @@ await refreshUsageInfo();
 
   // ✅ Si acabamos de loguearnos y había un checkout pendiente, lanzarlo automáticamente
   useEffect(() => {
-    if (authLoading) return;
-    if (!isLoggedIn) return;
-    if (!pendingCheckoutPlan) return;
+  if (authLoading) return;
+  if (!isLoggedIn) return;
+  if (!pendingCheckout) return;
 
-    setLoginOpen(false);
+  setLoginOpen(false);
 
-    const chosen = pendingCheckoutPlan;
-    setPendingCheckoutPlan(null);
+  const chosen = pendingCheckout;
+  setPendingCheckout(null);
 
-    setTimeout(() => {
-      startCheckout(chosen);
-    }, 120);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, isLoggedIn, pendingCheckoutPlan]);
+  setTimeout(() => {
+    startCheckout(chosen);
+  }, 120);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [authLoading, isLoggedIn, pendingCheckout]);
 
   // Detectar retorno de Stripe (?checkout=success|cancel)
   useEffect(() => {
@@ -1101,37 +1105,44 @@ await refreshUsageInfo();
   }
 
   function openPlansModal() {
-    setPayMsg(null);
-    // si ya es Pro, por defecto marcamos "Seguir gratis"
-    setPlan(isPro ? "free" : "yearly");
-    setPaywallOpen(true);
-  }
+  setPayMsg(null);
+  setBilling("monthly");
+  setPlan(isPro ? "free" : "plus");
+  setPaywallOpen(true);
+}
 
   function handleOpenPlansCTA() {
     openPlansModal();
   }
 
-  async function startCheckout(chosen: "monthly" | "yearly") {
-    setPayLoading(true);
-    setPayMsg(null);
-    try {
-      const { data } = await supabaseBrowser.auth.getSession();
-      const token = data?.session?.access_token;
+  async function startCheckout(chosen: {
+  plan: "plus" | "max";
+  billing: "monthly" | "yearly";
+}) {
+  setPayLoading(true);
+  setPayMsg(null);
 
-      if (!token) {
-        setPayLoading(false);
-        setPayMsg("Para continuar al pago, inicia sesión.");
-        setPendingCheckoutPlan(chosen);
-        openLoginModal("signin");
-        return;
-      }
+  try {
+    const { data } = await supabaseBrowser.auth.getSession();
+    const token = data?.session?.access_token;
 
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        cache: "no-store",
-        body: JSON.stringify({ plan: chosen }),
-      });
+    if (!token) {
+      setPayLoading(false);
+      setPayMsg("Para continuar al pago, inicia sesión.");
+      setPendingCheckout(chosen);
+      openLoginModal("signin");
+      return;
+    }
+
+    const res = await fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+      body: JSON.stringify(chosen),
+    });
 
       const raw = await res.text().catch(() => "");
       let json: any = null;
@@ -1300,17 +1311,17 @@ await refreshUsageInfo();
   }
 
   async function logout() {
-    try {
-      await supabaseBrowser.auth.signOut();
-      setAuthUserEmail(null);
-      setAuthUserId(null);
-      setAuthUserName(null);
-      setIsPro(false);
-      setPaywallOpen(false);
-      setPendingCheckoutPlan(null);
-      setAuthLoading(false);
-    } catch {}
-  }
+  try {
+    await supabaseBrowser.auth.signOut();
+    setAuthUserEmail(null);
+    setAuthUserId(null);
+    setAuthUserName(null);
+    setIsPro(false);
+    setPaywallOpen(false);
+    setPendingCheckout(null);
+    setAuthLoading(false);
+  } catch {}
+}
 
   // -------- Persistencia local --------
 const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
@@ -4571,200 +4582,185 @@ return (
       )}
 
       {/* ===== PAYWALL ===== */}
-      {paywallOpen && (
-        <div className="fixed inset-0 z-[70]">
-          <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-white to-white" onClick={closePaywall} aria-hidden="true" />
+{paywallOpen && (
+  <div className="fixed inset-0 z-[70]">
+    <div
+      className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+      onClick={closePaywall}
+    />
 
-          <div className="absolute -top-28 left-1/2 -translate-x-1/2 h-[320px] w-[680px] rounded-full bg-blue-500/15 blur-3xl pointer-events-none" />
-          <div className="absolute top-[26%] -left-28 h-[240px] w-[240px] rounded-full bg-blue-600/10 blur-3xl pointer-events-none" />
-          <div className="absolute top-[48%] -right-24 h-[280px] w-[280px] rounded-full bg-zinc-900/5 blur-3xl pointer-events-none" />
+    <div className="relative h-full w-full flex items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-[28px] bg-white shadow-[0_30px_100px_rgba(0,0,0,0.25)] border border-zinc-200 overflow-hidden">
 
-          <div className="relative h-full w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="mx-auto h-full w-full max-w-md px-3 pb-[env(safe-area-inset-bottom)] flex flex-col min-h-0">
-              <div className="pt-2 flex items-center justify-between">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="h-10 w-10 rounded-full bg-white/90 backdrop-blur-xl border border-zinc-200 grid place-items-center shadow-sm">
-                    <img src={"/vonu-icon.png?v=2"} alt="Vonu" className="h-6 w-6" draggable={false} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[13px] font-semibold text-zinc-900 leading-5">{payTitleNode}</div>
-                    <div className="text-[11px] text-zinc-500 leading-4">
-                      Plan: <span className="font-semibold text-zinc-900">{planLabel}</span>
-                      {proLoading ? <span className="ml-2 text-zinc-400">· comprobando…</span> : null}
-                    </div>
-                  </div>
-                </div>
+        {/* HEADER + LOGO */}
+        <div className="px-5 pt-5 pb-4 border-b border-zinc-100 bg-gradient-to-b from-blue-50 to-white">
+          <div className="flex items-center justify-between">
 
-                <button
-                  onClick={closePaywall}
-                  className={[
-                    "h-10 w-10 aspect-square rounded-full",
-                    "bg-white/90 backdrop-blur-xl border border-zinc-200",
-                    "hover:bg-white transition-colors",
-                    "grid place-items-center",
-                    "cursor-pointer disabled:opacity-50 shadow-sm",
-                    "p-0",
-                  ].join(" ")}
-                  aria-label="Cerrar"
-                  disabled={!!payLoading}
-                  title="Cerrar"
-                >
-                  <span className="text-zinc-700 text-[20px] leading-none relative top-[-0.5px]">×</span>
-                </button>
-              </div>
-
-              <div className="mt-2 flex-1 min-h-0 rounded-[26px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden">
-                <div className="h-full flex flex-col p-3">
-                  <div className="rounded-[20px] border border-zinc-200 bg-white p-3">
-                    <div className="text-[12.5px] font-semibold text-zinc-900">Elige tu plan</div>
-
-                    <div className="mt-2 grid gap-2">
-                      <button
-                        onClick={() => setPlan("yearly")}
-                        disabled={!!payLoading}
-                        className={[
-                          "w-full rounded-[18px] border transition-colors text-left",
-                          "px-3 py-2.5 flex items-start gap-3",
-                          plan === "yearly" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                      >
-                        <div className="pt-[2px]">
-                          <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "yearly" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
-                            {plan === "yearly" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
-                          </div>
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className="text-[12.5px] font-semibold text-zinc-900">Anual</div>
-                              <span className="text-[10px] px-2 py-[2px] rounded-full bg-blue-600 text-white font-semibold">{BEST_VALUE_BADGE}</span>
-                            </div>
-                            <div className="text-[11px] text-zinc-500">{YEAR_SAVE_BADGE}</div>
-                          </div>
-
-                          <div className="mt-1 flex items-baseline gap-2">
-                            <div className="text-[20px] font-semibold text-zinc-900 leading-6">{PRICE_YEAR}</div>
-                            <div className="text-[11px] text-zinc-600">≈ {PRICE_YEAR_PER_MONTH}/mes</div>
-                          </div>
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => setPlan("monthly")}
-                        disabled={!!payLoading}
-                        className={[
-                          "w-full rounded-[18px] border transition-colors text-left",
-                          "px-3 py-2.5 flex items-start gap-3",
-                          plan === "monthly" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                      >
-                        <div className="pt-[2px]">
-                          <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "monthly" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
-                            {plan === "monthly" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
-                          </div>
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="text-[12.5px] font-semibold text-zinc-900">Mensual</div>
-                            <div className="text-[11px] text-zinc-500">Flexible</div>
-                          </div>
-
-                          <div className="mt-1 flex items-baseline gap-2">
-                            <div className="text-[20px] font-semibold text-zinc-900 leading-6">{PRICE_MONTH}</div>
-                            <div className="text-[11px] text-zinc-600">cancela cuando quieras</div>
-                          </div>
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => setPlan("free")}
-                        disabled={!!payLoading}
-                        className={[
-                          "w-full rounded-[18px] border transition-colors text-left",
-                          "px-3 py-2.5 flex items-start gap-3",
-                          plan === "free" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                      >
-                        <div className="pt-[2px]">
-                          <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "free" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
-                            {plan === "free" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
-                          </div>
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="text-[12.5px] font-semibold text-zinc-900">Seguir gratis</div>
-                            <div className="text-[12px] font-semibold text-zinc-900">0€</div>
-                          </div>
-                          <div className="mt-1 text-[11px] text-zinc-600">Análisis limitados.</div>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="mt-2 rounded-[20px] border border-zinc-200 bg-white p-3">
-                    <div className="text-[12.5px] font-semibold text-zinc-900">Gratis</div>
-                    <div className="mt-2 grid gap-1.5">
-                      {["Análisis limitados", "Decidir con calma"].map((x) => (
-                        <div key={x} className="flex items-start gap-2">
-                          <span className="mt-[1px] text-blue-700">
-                            <CheckIcon className="h-4 w-4" />
-                          </span>
-                          <div className="text-[12px] text-zinc-700 leading-5">{x}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {payMsg ? (
-                    <div className="mt-2 rounded-[16px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">{payMsg}</div>
-                  ) : (
-                    <div className="mt-2 opacity-0 select-none text-[12px] px-3 py-2">placeholder</div>
-                  )}
-
-                  <div className="mt-auto pt-1 pb-[calc(env(safe-area-inset-bottom)+8px)]">
-                    <button
-                      onClick={() => {
-                        if (payLoading) return;
-                        if (plan === "free") {
-                          closePaywall();
-                          return;
-                        }
-                        startCheckout(plan);
-                      }}
-                      className={["w-full h-11 rounded-full text-[14px] font-semibold transition-colors cursor-pointer disabled:opacity-50", "bg-black text-white hover:bg-zinc-900"].join(" ")}
-                      disabled={!!payLoading}
-                    >
-                      {payLoading ? "Procesando…" : plan === "free" ? "Volver al chat" : "Continuar con el pago"}
-                    </button>
-
-                    <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
-                      <span className="text-blue-700">
-                        <ShieldIcon className="h-4 w-4" />
-                      </span>
-                      <span>Pago seguro con Stripe.</span>
-                    </div>
-
-                    {isPro ? (
-                      <button
-                        onClick={cancelSubscriptionFromHere}
-                        className="mt-2 w-full h-10 rounded-full border border-red-200 hover:bg-red-50 text-[12px] text-red-700 cursor-pointer disabled:opacity-50"
-                        disabled={!!payLoading}
-                      >
-                        Cancelar suscripción
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-
-              <div className="h-2" />
+            {/* LOGO */}
+            <div className="flex items-center gap-2">
+              <img src="/vonu-icon.png?v=2" className="h-6 w-6" />
+              <span className="font-semibold text-zinc-900">Vonu</span>
             </div>
+
+            <button
+              onClick={closePaywall}
+              className="h-9 w-9 rounded-full border border-zinc-200 hover:bg-zinc-50 grid place-items-center"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="mt-4 text-[20px] font-extrabold text-zinc-900 leading-tight">
+            Toma decisiones con seguridad
+          </div>
+
+          <div className="mt-1 text-[13px] text-zinc-600">
+            Evita errores antes de que te cuesten dinero o problemas.
           </div>
         </div>
-      )}
+
+        <div className="px-5 py-5">
+
+          {/* SELECTOR MENSUAL / ANUAL */}
+          <div className="flex rounded-full border border-zinc-200 p-1 bg-zinc-50">
+            {["monthly", "yearly"].map((b) => (
+              <button
+                key={b}
+                onClick={() => setBilling(b as any)}
+                className={[
+                  "flex-1 h-9 rounded-full text-[13px] font-semibold transition-all",
+                  billing === b
+                    ? "bg-white shadow text-zinc-900"
+                    : "text-zinc-500",
+                ].join(" ")}
+              >
+                {b === "monthly" ? "Mensual" : "Anual"}
+              </button>
+            ))}
+          </div>
+
+          {billing === "yearly" && (
+            <div className="mt-2 text-center text-[12px] text-blue-700 font-medium">
+              Ahorra 2 meses
+            </div>
+          )}
+
+          {/* PLANES */}
+          <div className="mt-4 space-y-3">
+
+            {/* PLUS */}
+            <button
+              onClick={() => setPlan("plus")}
+              className={[
+                "w-full text-left rounded-[20px] border px-4 py-4 transition-all",
+                plan === "plus"
+                  ? "border-blue-600 bg-blue-50"
+                  : "border-zinc-200 bg-white hover:bg-zinc-50",
+              ].join(" ")}
+            >
+              <div className="flex justify-between">
+                <div className="font-semibold text-zinc-900">Plus</div>
+                <div className="text-[13px] text-zinc-500">Uso habitual</div>
+              </div>
+
+              <div className="mt-1 text-[24px] font-extrabold text-zinc-900">
+                {billing === "monthly" ? "9,99€" : "79€"}
+              </div>
+
+              <div className="text-[12px] text-zinc-600">
+                {billing === "monthly" ? "/ mes" : "/ año"}
+              </div>
+
+              <div className="mt-2 text-[12.5px] text-zinc-700">
+                250 mensajes · 15 min voz
+              </div>
+            </button>
+
+            {/* MAX */}
+            <button
+              onClick={() => setPlan("max")}
+              className={[
+                "w-full text-left rounded-[20px] border px-4 py-4 transition-all relative",
+                plan === "max"
+                  ? "border-blue-600 bg-blue-50"
+                  : "border-zinc-200 bg-white hover:bg-zinc-50",
+              ].join(" ")}
+            >
+              <div className="absolute top-2 right-3 text-[10px] px-2 py-[2px] bg-blue-600 text-white rounded-full">
+                Más completo
+              </div>
+
+              <div className="flex justify-between">
+                <div className="font-semibold text-zinc-900">Max</div>
+                <div className="text-[13px] text-zinc-500">Uso intensivo</div>
+              </div>
+
+              <div className="mt-1 text-[24px] font-extrabold text-zinc-900">
+                {billing === "monthly" ? "19,99€" : "159€"}
+              </div>
+
+              <div className="text-[12px] text-zinc-600">
+                {billing === "monthly" ? "/ mes" : "/ año"}
+              </div>
+
+              <div className="mt-2 text-[12.5px] text-zinc-700">
+                800 mensajes · 45 min voz
+              </div>
+            </button>
+
+            {/* FREE */}
+            <button
+              onClick={() => setPlan("free")}
+              className={[
+                "w-full text-left rounded-[20px] border px-4 py-3 transition-all",
+                plan === "free"
+                  ? "border-blue-600 bg-blue-50"
+                  : "border-zinc-200 bg-white hover:bg-zinc-50",
+              ].join(" ")}
+            >
+              <div className="flex justify-between">
+                <div className="font-semibold text-zinc-900">Gratis</div>
+                <div className="text-[13px] text-zinc-500">0€</div>
+              </div>
+
+              <div className="mt-1 text-[12.5px] text-zinc-600">
+                20 mensajes al mes · sin voz
+              </div>
+
+              <div className="mt-1 text-[11px] text-zinc-500">
+                1 mensaje de prueba sin cuenta
+              </div>
+            </button>
+          </div>
+
+          {/* COPY PSICOLÓGICO */}
+          <div className="mt-4 text-[12.5px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-[16px] px-3 py-3">
+            La mayoría de errores se podrían evitar con 1 minuto más de análisis.
+          </div>
+
+          {/* CTA */}
+          <button
+            onClick={() => {
+              if (plan === "free") {
+                closePaywall();
+                return;
+              }
+              startCheckout({ plan, billing });
+            }}
+            className="mt-5 w-full h-12 rounded-full bg-black text-white hover:bg-zinc-900 font-semibold"
+          >
+            {plan === "free" ? "Volver al chat" : "Empezar ahora"}
+          </button>
+
+          <div className="mt-2 text-center text-[12px] text-zinc-500">
+            Cancela cuando quieras
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* ===== LOGIN MODAL ===== */}
       {loginOpen && (
