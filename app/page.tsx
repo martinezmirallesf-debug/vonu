@@ -2049,6 +2049,9 @@ async function speakTTS(text: string) {
   messages_used: number;
   messages_limit: number;
   messages_left: number;
+  realtime_seconds_used: number;
+  realtime_seconds_limit: number;
+  realtime_seconds_left: number;
 } | null>(null);
 
   // =========================
@@ -4108,7 +4111,7 @@ const chatBottomPad = hasUserMessage ? (inputBarH + 22) : 18;
   );
 
   // ✅ UI estado botones top-right (plan + cuenta)
-  const currentPlanId = usageInfo?.plan_id ?? (isLoggedIn ? "free" : null);
+  const currentPlanId = usageInfo?.plan_id ?? null;
 
 const topPlanLabel =
   authLoading
@@ -4342,8 +4345,6 @@ return (
 
     .paywall-scroll::-webkit-scrollbar {
   display: none;
-}
-  }
 }
 `}</style>
 
@@ -4883,24 +4884,61 @@ return (
   </div>
 
   <div className="mt-2 text-[12px] text-zinc-600">
-    Plan:{" "}
-    <span className="font-semibold text-zinc-900">
-      {proLoading ? "comprobando…" : isPro ? PLUS_NODE : "Gratis"}
-    </span>
-  </div>
+  Plan:{" "}
+  <span className="font-semibold text-zinc-900">
+    {authLoading || proLoading
+      ? "comprobando…"
+      : usageInfo?.plan_id === "plus"
+      ? "Plus"
+      : usageInfo?.plan_id === "max"
+      ? "Max"
+      : "Gratis"}
+  </span>
+</div>
+
+  <div className="mt-3 rounded-[12px] border border-zinc-200 bg-white px-3 py-3">
+  <div className="text-[11px] text-zinc-500">Uso mensual</div>
 
   {usageInfo ? (
-    <div className="mt-3 rounded-[12px] border border-zinc-200 bg-white px-3 py-3">
-      <div className="text-[11px] text-zinc-500">Uso mensual</div>
-
-      <div className="mt-2 flex items-center justify-between gap-3 text-[12px]">
-        <span className="text-zinc-600">Mensajes restantes este mes</span>
+    <div className="mt-2 space-y-2">
+      <div className="flex items-center justify-between gap-3 text-[12px]">
+        <span className="text-zinc-600">Mensajes restantes</span>
         <span className="font-semibold text-zinc-900">
           {usageInfo.messages_left}
         </span>
       </div>
+
+      <div className="flex items-center justify-between gap-3 text-[12px]">
+        <span className="text-zinc-600">Mensajes usados</span>
+        <span className="font-semibold text-zinc-900">
+          {usageInfo.messages_used} / {usageInfo.messages_limit}
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 text-[12px]">
+        <span className="text-zinc-600">Minutos de voz restantes</span>
+        <span className="font-semibold text-zinc-900">
+          {Math.max(
+            0,
+            Math.floor((usageInfo.realtime_seconds_left ?? 0) / 60)
+          )} min
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 text-[12px]">
+        <span className="text-zinc-600">Voz usada</span>
+        <span className="font-semibold text-zinc-900">
+          {Math.floor((usageInfo.realtime_seconds_used ?? 0) / 60)} /{" "}
+          {Math.floor((usageInfo.realtime_seconds_limit ?? 0) / 60)} min
+        </span>
+      </div>
     </div>
-  ) : null}
+  ) : (
+    <div className="mt-2 text-[12px] text-zinc-500">
+      Cargando uso mensual…
+    </div>
+  )}
+</div>
 </div>
 
                 <div className="mt-4 flex gap-2">
