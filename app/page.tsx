@@ -4249,7 +4249,7 @@ return (
 .modal-close-btn span {
   transform: translateY(-1px);
 }
-  
+
   @keyframes chalkIn {
     from {
       opacity: 0;
@@ -4638,11 +4638,11 @@ return (
 
             <button
   onClick={closePaywall}
-  className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 flex items-center justify-center cursor-pointer shrink-0"
+  className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 cursor-pointer shrink-0 relative"
   aria-label="Cerrar"
   disabled={!!payLoading}
 >
-  <span className="block text-[20px] leading-none translate-y-[-1px]">
+  <span className="absolute inset-0 flex items-center justify-center text-[19px]">
     ×
   </span>
 </button>
