@@ -30,23 +30,22 @@ function getSupabaseAdmin() {
   });
 }
 
-function getAppPlanFromPriceId(priceId: string | null): "plus" | "max" | null {
-  if (!priceId) return null;
+function getCurrentMonth() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
 
-  const plusPrices = [
-    process.env.STRIPE_PRICE_PLUS_MONTHLY,
-    process.env.STRIPE_PRICE_PLUS_YEARLY,
-  ].filter(Boolean) as string[];
-
-  const maxPrices = [
-    process.env.STRIPE_PRICE_MAX_MONTHLY,
-    process.env.STRIPE_PRICE_MAX_YEARLY,
-  ].filter(Boolean) as string[];
-
-  if (plusPrices.includes(priceId)) return "plus";
-  if (maxPrices.includes(priceId)) return "max";
-
-  return null;
+function getTopupValues(pack: string | null) {
+  switch (pack) {
+    case "basic":
+      return { messages: 50, seconds: 300 };
+    case "medium":
+      return { messages: 150, seconds: 900 };
+    case "large":
+      return { messages: 400, seconds: 2400 };
+    default:
+      return null;
+  }
 }
 
 export async function POST(req: Request) {
@@ -68,49 +67,44 @@ export async function POST(req: Request) {
     }
 
     const rawBody = await req.text();
-
     const stripe = getStripe();
-    let event: Stripe.Event;
 
+    let event: Stripe.Event;
     try {
       event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
     } catch (err: any) {
       return NextResponse.json(
-        {
-          error: `Webhook signature verification failed: ${
-            err?.message ?? "unknown"
-          }`,
-        },
+        { error: `Webhook signature verification failed: ${err?.message}` },
         { status: 400 }
       );
     }
 
     const supabaseAdmin = getSupabaseAdmin();
 
+    // -------------------------
+    // HELPERS
+    // -------------------------
+
     async function resolveUserIdFromCustomer(stripeCustomerId: string | null) {
       if (!stripeCustomerId) return null;
 
-      const { data, error } = await supabaseAdmin
+      const { data } = await supabaseAdmin
         .from("profiles")
         .select("id")
         .eq("stripe_customer_id", stripeCustomerId)
         .maybeSingle();
 
-      if (error) return null;
-      return (data?.id as string | undefined) ?? null;
+      return data?.id ?? null;
     }
 
-    async function getExistingUserIdBySubscription(
-      stripeSubscriptionId: string
-    ) {
-      const { data, error } = await supabaseAdmin
+    async function getExistingUserIdBySubscription(stripeSubscriptionId: string) {
+      const { data } = await supabaseAdmin
         .from("subscriptions")
         .select("user_id")
         .eq("stripe_subscription_id", stripeSubscriptionId)
         .maybeSingle();
 
-      if (error) return null;
-      return (data?.user_id as string | null) ?? null;
+      return data?.user_id ?? null;
     }
 
     async function upsertSubscriptionRow(params: {
@@ -132,17 +126,19 @@ export async function POST(req: Request) {
         );
       }
 
-      const { error } = await supabaseAdmin.from("subscriptions").upsert(
-        {
-          user_id: userId,
-          stripe_customer_id: params.stripeCustomerId,
-          stripe_subscription_id: params.stripeSubscriptionId,
-          status: params.status,
-          current_period_end: params.currentPeriodEndIso,
-          price_id: params.priceId,
-        },
-        { onConflict: "stripe_subscription_id" }
-      );
+      const { error } = await supabaseAdmin
+        .from("subscriptions")
+        .upsert(
+          {
+            user_id: userId,
+            stripe_customer_id: params.stripeCustomerId,
+            stripe_subscription_id: params.stripeSubscriptionId,
+            status: params.status,
+            current_period_end: params.currentPeriodEndIso,
+            price_id: params.priceId,
+          },
+          { onConflict: "stripe_subscription_id" }
+        );
 
       if (error) throw new Error(error.message);
 
@@ -160,44 +156,114 @@ export async function POST(req: Request) {
         params.subscriptionStatus === "active" ||
         params.subscriptionStatus === "trialing";
 
-      const nextPlan = isActive ? (params.appPlan ?? "free") : "free";
+      const nextPlan = isActive ? params.appPlan ?? "free" : "free";
 
-      const { error } = await supabaseAdmin.from("profiles").upsert(
-        {
-          id: params.userId,
-          plan: nextPlan,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "id" }
-      );
+      const { error } = await supabaseAdmin
+        .from("profiles")
+        .upsert(
+          {
+            id: params.userId,
+            plan: nextPlan,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "id" }
+        );
 
       if (error) throw new Error(error.message);
     }
+
+    function getAppPlanFromPriceId(priceId: string | null): "plus" | "max" | null {
+      if (!priceId) return null;
+
+      const plusPrices = [
+        process.env.STRIPE_PRICE_PLUS_MONTHLY,
+        process.env.STRIPE_PRICE_PLUS_YEARLY,
+      ].filter(Boolean);
+
+      const maxPrices = [
+        process.env.STRIPE_PRICE_MAX_MONTHLY,
+        process.env.STRIPE_PRICE_MAX_YEARLY,
+      ].filter(Boolean);
+
+      if (plusPrices.includes(priceId)) return "plus";
+      if (maxPrices.includes(priceId)) return "max";
+
+      return null;
+    }
+
+    async function insertTopup(params: {
+      userId: string;
+      pack: string | null;
+      stripeSessionId: string | null;
+    }) {
+      const values = getTopupValues(params.pack);
+      if (!values) return;
+
+      const month = getCurrentMonth();
+
+      const { error } = await supabaseAdmin.from("usage_topups").insert({
+        user_id: params.userId,
+        month,
+        extra_messages: values.messages,
+        extra_realtime_seconds: values.seconds,
+        source: "stripe",
+        stripe_checkout_session_id: params.stripeSessionId,
+      });
+
+      if (error) throw new Error(error.message);
+    }
+
+    // -------------------------
+    // EVENTOS
+    // -------------------------
 
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
 
-        const subscriptionId =
-          typeof session.subscription === "string" ? session.subscription : null;
+        const metadata = session.metadata || {};
+        const kind = metadata.kind || null;
+        const userIdFromMeta = metadata.supabase_user_id || null;
 
-        if (!subscriptionId) {
+        // -------- TOPUP --------
+        if (kind === "topup") {
+          const pack = metadata.topup_pack || null;
+          const userId =
+            userIdFromMeta ||
+            (await resolveUserIdFromCustomer(
+              typeof session.customer === "string"
+                ? session.customer
+                : null
+            ));
+
+          if (userId) {
+            await insertTopup({
+              userId,
+              pack,
+              stripeSessionId: session.id,
+            });
+          }
+
           return NextResponse.json({
             ok: true,
-            ignored: "no_subscription_in_session",
+            type: "topup",
           });
+        }
+
+        // -------- SUBSCRIPTION --------
+        const subscriptionId =
+          typeof session.subscription === "string"
+            ? session.subscription
+            : null;
+
+        if (!subscriptionId) {
+          return NextResponse.json({ ok: true });
         }
 
         const stripeCustomerId =
           typeof session.customer === "string" ? session.customer : null;
 
         const userId = (session.metadata?.supabase_user_id as string) || null;
-
-        const sessionAppPlan =
-          session.metadata?.app_plan === "plus" ||
-          session.metadata?.app_plan === "max"
-            ? (session.metadata.app_plan as "plus" | "max")
-            : null;
 
         const sub = await stripe.subscriptions.retrieve(subscriptionId);
 
@@ -207,6 +273,8 @@ export async function POST(req: Request) {
 
         const priceId =
           (sub.items?.data?.[0]?.price?.id as string | undefined) ?? null;
+
+        const appPlan = getAppPlanFromPriceId(priceId);
 
         const resolvedUserId = await upsertSubscriptionRow({
           userId,
@@ -220,18 +288,15 @@ export async function POST(req: Request) {
         await syncProfilePlan({
           userId: resolvedUserId,
           subscriptionStatus: sub.status ?? null,
-          appPlan: sessionAppPlan ?? getAppPlanFromPriceId(priceId),
+          appPlan,
         });
 
         return NextResponse.json({
           ok: true,
-          event: event.type,
-          userId: resolvedUserId,
-          subscriptionId,
+          type: "subscription",
         });
       }
 
-      case "customer.subscription.created":
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
@@ -266,15 +331,12 @@ export async function POST(req: Request) {
 
         return NextResponse.json({
           ok: true,
-          event: event.type,
-          subscriptionId: stripeSubscriptionId,
-          userId: resolvedUserId,
+          type: "subscription_update",
         });
       }
 
-      default: {
+      default:
         return NextResponse.json({ ok: true, ignored: event.type });
-      }
     }
   } catch (e: any) {
     console.error("[webhook] fatal:", e);
