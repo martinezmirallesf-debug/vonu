@@ -1642,12 +1642,12 @@ async function toggleConversation() {
     return;
   }
 
-  if (usageInfo && usageInfo.plan_id === "free") {
-    setMicMsg("El modo conversación por voz no está disponible en el plan Gratis.");
-    setTimeout(() => setMicMsg(null), 2800);
-    handleOpenPlansCTA();
-    return;
-  }
+  if (usageInfo && !["plus", "max"].includes(usageInfo.plan_id)) {
+  setMicMsg("El modo conversación por voz no está disponible en tu plan actual.");
+  setTimeout(() => setMicMsg(null), 2800);
+  handleOpenPlansCTA();
+  return;
+}
 
   if (!supportsMic) {
     setMicMsg("Tu navegador no soporta micrófono en este modo.");
@@ -4108,7 +4108,16 @@ const chatBottomPad = hasUserMessage ? (inputBarH + 22) : 18;
   );
 
   // ✅ UI estado botones top-right (plan + cuenta)
-  const topPlanLabel = authLoading ? "…" : isPro ? PLUS_NODE : isLoggedIn ? "Gratis" : PLUS_NODE;
+  const currentPlanId = usageInfo?.plan_id ?? (isLoggedIn ? "free" : null);
+
+const topPlanLabel =
+  authLoading
+    ? "…"
+    : currentPlanId === "plus"
+    ? "Plus"
+    : currentPlanId === "max"
+    ? "Max"
+    : "Mejorar";
 
   const userInitial = (() => {
     const base = (authUserName ?? authUserEmail ?? "").trim();
@@ -4330,6 +4339,10 @@ return (
     font-size: 0.98em !important;
     line-height: 1.1 !important;
     white-space: normal !important;
+
+    .paywall-scroll::-webkit-scrollbar {
+  display: none;
+}
   }
 }
 `}</style>
@@ -4592,7 +4605,7 @@ return (
       >
         <div className="flex max-h-[calc(var(--vvh,100dvh)-24px)] flex-col">
           {/* HEADER */}
-          <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-zinc-100 shrink-0">
+          <div className="flex items-center justify-between px-5 pt-4 pb-3 shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               <img
                 src="/vonu-icon.png?v=2"
@@ -4610,23 +4623,29 @@ return (
 
             <button
               onClick={closePaywall}
-              className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer p-0 shrink-0"
+              className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer p-0 shrink-0 leading-none"
               aria-label="Cerrar"
               disabled={!!payLoading}
             >
-              <span className="text-[22px] leading-none relative top-[-0.5px]">×</span>
+              <span className="text-[22px] leading-none">×</span>
             </button>
           </div>
 
           {/* SCROLLABLE CONTENT */}
-          <div className="overflow-y-auto px-4 md:px-5 py-4">
+          <div
+  className="overflow-y-auto px-4 md:px-5 py-4"
+  style={{
+    scrollbarWidth: "none",
+    msOverflowStyle: "none",
+  }}
+>
             {/* BILLING */}
-            <div className="rounded-[18px] border border-zinc-200 bg-zinc-50 p-1 grid grid-cols-2 gap-1">
+            <div className="rounded-full border border-zinc-200 bg-zinc-50 p-1 grid grid-cols-2 gap-1">
               <button
                 onClick={() => setBilling("monthly")}
                 disabled={!!payLoading}
                 className={[
-                  "h-11 rounded-[14px] text-[14px] font-semibold transition-all",
+                  "h-11 rounded-full text-[14px] font-semibold transition-all",
                   billing === "monthly"
                     ? "bg-white text-zinc-900 shadow-sm"
                     : "text-zinc-500",
@@ -4639,7 +4658,7 @@ return (
                 onClick={() => setBilling("yearly")}
                 disabled={!!payLoading}
                 className={[
-                  "h-11 rounded-[14px] text-[14px] font-semibold transition-all",
+                  "h-11 rounded-full text-[14px] font-semibold transition-all",
                   billing === "yearly"
                     ? "bg-white text-zinc-900 shadow-sm"
                     : "text-zinc-500",
@@ -4647,11 +4666,6 @@ return (
               >
                 Anual
               </button>
-            </div>
-
-            {/* espacio fijo para no mover el modal */}
-            <div className="h-5 mt-2 text-center text-[12px] font-medium text-emerald-600">
-              {billing === "yearly" ? "Mejor precio anual" : <span className="invisible">placeholder</span>}
             </div>
 
             {/* PLANES */}
@@ -4675,9 +4689,9 @@ return (
                     </div>
                   </div>
 
-                  <div className="text-[12px] text-zinc-500 mt-1 shrink-0">
-                    Uso habitual
-                  </div>
+                  <div className="text-[12px] text-zinc-500 mt-1 shrink-0 text-right">
+  Uso intensivo
+</div>
                 </div>
 
                 <div className="mt-4 space-y-2.5">
@@ -4714,7 +4728,7 @@ return (
                   Más completo
                 </div>
 
-                <div className="flex items-start justify-between gap-3 pr-24">
+                <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-[15px] font-semibold text-zinc-900">Max</div>
                     <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
@@ -4792,7 +4806,7 @@ return (
           </div>
 
           {/* FOOTER CTA */}
-          <div className="px-4 md:px-5 pb-4 pt-3 border-t border-zinc-100 bg-white shrink-0">
+          <div className="px-4 md:px-5 pb-4 pt-3 bg-white shrink-0">
             <button
               onClick={() => {
                 if (payLoading) return;
