@@ -593,7 +593,7 @@ export default function Page() {
   const [paywallOpen, setPaywallOpen] = useState(false);
 
 // ✅ Paywall final: plan + facturación
-const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
+const [billing, setBilling] = useState<"monthly" | "yearly" | "topup">("monthly");
 const [plan, setPlan] = useState<"plus" | "max" | "free">("plus");
 const [payLoading, setPayLoading] = useState(false);
 const [payMsg, setPayMsg] = useState<string | null>(null);
@@ -1062,6 +1062,39 @@ await refreshUsageInfo();
   }, 120);
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [authLoading, isLoggedIn, pendingCheckout]);
+
+async function startTopupCheckout(pack: "basic" | "medium" | "large") {
+  try {
+    const { data } = await supabaseBrowser.auth.getSession();
+    const token = data?.session?.access_token;
+
+    if (!token) {
+      setPayMsg("Para comprar una recarga, inicia sesión.");
+      openLoginModal("signin");
+      return;
+    }
+
+    const res = await fetch("/api/stripe/topup/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+      body: JSON.stringify({ pack }),
+    });
+
+    const json = await res.json().catch(() => ({}));
+
+    if (!res.ok || !json?.url) {
+      throw new Error(json?.error || "No se pudo iniciar la recarga.");
+    }
+
+    window.location.href = json.url;
+  } catch (e: any) {
+    setPayMsg(e?.message ?? "No se pudo iniciar la recarga.");
+  }
+}
 
   // Detectar retorno de Stripe (?checkout=success|cancel)
   useEffect(() => {
@@ -4637,183 +4670,310 @@ return (
             </div>
 
             <button
-  onClick={closePaywall}
-  className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 cursor-pointer shrink-0 relative"
-  aria-label="Cerrar"
-  disabled={!!payLoading}
->
-  <span className="absolute inset-0 flex items-center justify-center text-[19px]">
-    ×
-  </span>
-</button>
+              onClick={closePaywall}
+              className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 cursor-pointer shrink-0 relative"
+              aria-label="Cerrar"
+              disabled={!!payLoading}
+            >
+              <span className="absolute inset-0 flex items-center justify-center text-[19px]">
+                ×
+              </span>
+            </button>
           </div>
 
           {/* SCROLLABLE CONTENT */}
           <div
-  className="overflow-y-auto px-4 md:px-5 py-4"
-  style={{
-    scrollbarWidth: "none",
-    msOverflowStyle: "none",
-  }}
->
-            {/* BILLING */}
-            <div className="rounded-full border border-zinc-200 bg-zinc-50 p-1 grid grid-cols-2 gap-1">
+            className="paywall-scroll overflow-y-auto px-4 md:px-5 py-4"
+            style={{
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+            }}
+          >
+            {/* BILLING / TABS */}
+            <div className="flex rounded-full border border-zinc-200 p-1 bg-white">
               <button
                 onClick={() => setBilling("monthly")}
-                disabled={!!payLoading}
-                className={[
-                  "h-11 rounded-full text-[14px] font-semibold transition-all",
+                className={`px-4 h-9 rounded-full text-sm font-semibold transition-colors ${
                   billing === "monthly"
-                    ? "bg-white text-zinc-900 shadow-sm"
-                    : "text-zinc-500",
-                ].join(" ")}
+                    ? "bg-blue-600 text-white"
+                    : "text-zinc-700 hover:bg-zinc-100"
+                }`}
               >
                 Mensual
               </button>
 
               <button
                 onClick={() => setBilling("yearly")}
-                disabled={!!payLoading}
-                className={[
-                  "h-11 rounded-full text-[14px] font-semibold transition-all",
+                className={`px-4 h-9 rounded-full text-sm font-semibold transition-colors ${
                   billing === "yearly"
-                    ? "bg-white text-zinc-900 shadow-sm"
-                    : "text-zinc-500",
-                ].join(" ")}
+                    ? "bg-blue-600 text-white"
+                    : "text-zinc-700 hover:bg-zinc-100"
+                }`}
               >
                 Anual
+              </button>
+
+              <button
+                onClick={() => setBilling("topup")}
+                className={`px-4 h-9 rounded-full text-sm font-semibold transition-colors ${
+                  billing === "topup"
+                    ? "bg-blue-600 text-white"
+                    : "text-zinc-700 hover:bg-zinc-100"
+                }`}
+              >
+                Recargas
               </button>
             </div>
 
             {/* PLANES */}
-            <div className="mt-2 space-y-3">
-              {/* PLUS */}
-              <button
-                onClick={() => setPlan("plus")}
-                disabled={!!payLoading}
-                className={[
-                  "w-full text-left rounded-[22px] border px-4 py-4 transition-all",
-                  plan === "plus"
-                    ? "border-blue-600 bg-blue-50"
-                    : "border-zinc-200 bg-white hover:bg-zinc-50",
-                ].join(" ")}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-[15px] font-semibold text-zinc-900">Plus</div>
-                    <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
-                      {billing === "monthly" ? "9,99€" : "79,99€"}
+            {billing !== "topup" && (
+              <div className="mt-2 space-y-3">
+                {/* PLUS */}
+                <button
+                  onClick={() => setPlan("plus")}
+                  disabled={!!payLoading}
+                  className={[
+                    "w-full text-left rounded-[22px] border px-4 py-4 transition-all",
+                    plan === "plus"
+                      ? "border-blue-600 bg-blue-50"
+                      : "border-zinc-200 bg-white hover:bg-zinc-50",
+                  ].join(" ")}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-[15px] font-semibold text-zinc-900">
+                        Plus
+                      </div>
+                      <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+                        {billing === "monthly" ? "9,99€" : "79,99€"}
+                      </div>
+                    </div>
+
+                    <div className="text-[12px] text-zinc-500 mt-1 shrink-0 text-right">
+                      Uso habitual
                     </div>
                   </div>
 
-                  <div className="text-[12px] text-zinc-500 mt-1 shrink-0 text-right">
-  Uso intensivo
-</div>
-                </div>
+                  <div className="mt-4 space-y-2.5">
+                    {[
+                      "250 mensajes al mes",
+                      "15 min de conversación por voz",
+                      "Análisis de posibles estafas y fraudes",
+                      "Modo tutor y ayuda paso a paso",
+                      "Consultas sobre situaciones personales o delicadas",
+                      "Orientación preventiva en dudas legales cotidianas",
+                    ].map((item) => (
+                      <div key={item} className="flex items-start gap-2">
+                        <span className="mt-[1px] text-blue-600 shrink-0">
+                          <CheckIcon className="h-4 w-4" />
+                        </span>
+                        <div className="text-[13px] leading-5 text-zinc-800">
+                          {item}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </button>
 
-                <div className="mt-4 space-y-2.5">
-                  {[
-                    "250 mensajes al mes",
-                    "15 min de conversación por voz",
-                    "Análisis de posibles estafas y fraudes",
-                    "Modo tutor y ayuda paso a paso",
-                    "Consultas sobre situaciones personales o delicadas",
-                    "Orientación preventiva en dudas legales cotidianas",
-                  ].map((item) => (
-                    <div key={item} className="flex items-start gap-2">
-                      <span className="mt-[1px] text-blue-600 shrink-0">
-                        <CheckIcon className="h-4 w-4" />
-                      </span>
-                      <div className="text-[13px] leading-5 text-zinc-800">{item}</div>
+                {/* MAX */}
+                <button
+                  onClick={() => setPlan("max")}
+                  disabled={!!payLoading}
+                  className={[
+                    "w-full text-left rounded-[22px] border px-4 py-4 transition-all",
+                    plan === "max"
+                      ? "border-blue-600 bg-blue-50"
+                      : "border-zinc-200 bg-white hover:bg-zinc-50",
+                  ].join(" ")}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-[15px] font-semibold text-zinc-900">
+                        Max
+                      </div>
+                      <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+                        {billing === "monthly" ? "19,99€" : "159,99€"}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </button>
 
-              {/* MAX */}
-              <button
-                onClick={() => setPlan("max")}
-                disabled={!!payLoading}
-                className={[
-                  "w-full text-left rounded-[22px] border px-4 py-4 transition-all relative",
-                  plan === "max"
-                    ? "border-blue-600 bg-blue-50"
-                    : "border-zinc-200 bg-white hover:bg-zinc-50",
-                ].join(" ")}
-              >
-                <div className="absolute top-3 right-3 text-[10px] px-2 py-[3px] rounded-full bg-blue-600 text-white font-semibold">
-                  Más completo
-                </div>
-
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-[15px] font-semibold text-zinc-900">Max</div>
-                    <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
-                      {billing === "monthly" ? "19,99€" : "159,99€"}
+                    <div className="text-[12px] text-zinc-500 mt-1 shrink-0 text-right">
+                      Uso intensivo
                     </div>
                   </div>
 
-                  <div className="text-[12px] text-zinc-500 mt-1 shrink-0">
-                    Uso intensivo
+                  <div className="mt-4 space-y-2.5">
+                    {[
+                      "800 mensajes al mes",
+                      "45 min de conversación por voz",
+                      "Ideal para estudiantes y uso frecuente",
+                      "Más margen para tutor, estudio y explicaciones",
+                      "Más espacio para consultas complejas o largas",
+                      "Todo lo incluido en Plus",
+                    ].map((item) => (
+                      <div key={item} className="flex items-start gap-2">
+                        <span className="mt-[1px] text-blue-600 shrink-0">
+                          <CheckIcon className="h-4 w-4" />
+                        </span>
+                        <div className="text-[13px] leading-5 text-zinc-800">
+                          {item}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
+                </button>
 
-                <div className="mt-4 space-y-2.5">
-                  {[
-                    "800 mensajes al mes",
-                    "45 min de conversación por voz",
-                    "Ideal para estudiantes y uso frecuente",
-                    "Más margen para tutor, estudio y explicaciones",
-                    "Más espacio para consultas complejas o largas",
-                    "Todo lo incluido en Plus",
-                  ].map((item) => (
-                    <div key={item} className="flex items-start gap-2">
-                      <span className="mt-[1px] text-blue-600 shrink-0">
-                        <CheckIcon className="h-4 w-4" />
-                      </span>
-                      <div className="text-[13px] leading-5 text-zinc-800">{item}</div>
-                    </div>
-                  ))}
-                </div>
-              </button>
-
-              {/* FREE */}
-              <button
-                onClick={() => setPlan("free")}
-                disabled={!!payLoading}
-                className={[
-                  "w-full text-left rounded-[22px] border px-4 py-4 transition-all",
-                  plan === "free"
-                    ? "border-blue-600 bg-blue-50"
-                    : "border-zinc-200 bg-white hover:bg-zinc-50",
-                ].join(" ")}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-[15px] font-semibold text-zinc-900">Gratis</div>
-                    <div className="mt-1 text-[28px] leading-none font-extrabold tracking-tight text-zinc-900">
-                      0€
+                {/* FREE */}
+                <button
+                  onClick={() => setPlan("free")}
+                  disabled={!!payLoading}
+                  className={[
+                    "w-full text-left rounded-[22px] border px-4 py-4 transition-all",
+                    plan === "free"
+                      ? "border-blue-600 bg-blue-50"
+                      : "border-zinc-200 bg-white hover:bg-zinc-50",
+                  ].join(" ")}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-[15px] font-semibold text-zinc-900">
+                        Gratis
+                      </div>
+                      <div className="mt-1 text-[28px] leading-none font-extrabold tracking-tight text-zinc-900">
+                        0€
+                      </div>
                     </div>
                   </div>
+
+                  <div className="mt-4 space-y-2.5">
+                    {[
+                      "20 mensajes al mes",
+                      "Analiza mensajes, dudas y situaciones con calma",
+                      "Pruébalo sin compromiso",
+                      "Sin cuenta, puedes enviar 1 mensaje de prueba",
+                    ].map((item) => (
+                      <div key={item} className="flex items-start gap-2">
+                        <span className="mt-[1px] text-blue-600 shrink-0">
+                          <CheckIcon className="h-4 w-4" />
+                        </span>
+                        <div className="text-[13px] leading-5 text-zinc-800">
+                          {item}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </button>
+              </div>
+            )}
+
+            {/* RECARGAS */}
+            {billing === "topup" && (
+              <div className="mt-2 grid gap-3 md:grid-cols-3">
+                {/* BÁSICA */}
+                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4">
+                  <div className="text-[15px] font-semibold text-zinc-900">
+                    Recarga básica
+                  </div>
+
+                  <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+                    2,99€
+                  </div>
+
+                  <div className="mt-4 space-y-2.5">
+                    {[
+                      "50 mensajes extra",
+                      "5 min de voz",
+                      "Para seguir usando Vonu este mes",
+                    ].map((item) => (
+                      <div key={item} className="flex items-start gap-2">
+                        <span className="mt-[1px] text-blue-600 shrink-0">
+                          <CheckIcon className="h-4 w-4" />
+                        </span>
+                        <div className="text-[13px] leading-5 text-zinc-800">
+                          {item}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => startTopupCheckout("basic")}
+                    className="mt-4 w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold"
+                  >
+                    Comprar
+                  </button>
                 </div>
 
-                <div className="mt-4 space-y-2.5">
-                  {[
-                    "20 mensajes al mes",
-                    "Analiza mensajes, dudas y situaciones con calma",
-                    "Pruébalo sin compromiso",
-                    "Sin cuenta, puedes enviar 1 mensaje de prueba",
-                  ].map((item) => (
-                    <div key={item} className="flex items-start gap-2">
-                      <span className="mt-[1px] text-blue-600 shrink-0">
-                        <CheckIcon className="h-4 w-4" />
-                      </span>
-                      <div className="text-[13px] leading-5 text-zinc-800">{item}</div>
-                    </div>
-                  ))}
+                {/* MEDIA */}
+                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4">
+                  <div className="text-[15px] font-semibold text-zinc-900">
+                    Recarga media
+                  </div>
+
+                  <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+                    6,99€
+                  </div>
+
+                  <div className="mt-4 space-y-2.5">
+                    {[
+                      "150 mensajes extra",
+                      "15 min de voz",
+                      "Ideal si este mes se te ha quedado corto",
+                    ].map((item) => (
+                      <div key={item} className="flex items-start gap-2">
+                        <span className="mt-[1px] text-blue-600 shrink-0">
+                          <CheckIcon className="h-4 w-4" />
+                        </span>
+                        <div className="text-[13px] leading-5 text-zinc-800">
+                          {item}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => startTopupCheckout("medium")}
+                    className="mt-4 w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold"
+                  >
+                    Comprar
+                  </button>
                 </div>
-              </button>
-            </div>
+
+                {/* GRANDE */}
+                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4">
+                  <div className="text-[15px] font-semibold text-zinc-900">
+                    Recarga grande
+                  </div>
+
+                  <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+                    14,99€
+                  </div>
+
+                  <div className="mt-4 space-y-2.5">
+                    {[
+                      "400 mensajes extra",
+                      "40 min de voz",
+                      "Para seguir sin cambiar de plan",
+                    ].map((item) => (
+                      <div key={item} className="flex items-start gap-2">
+                        <span className="mt-[1px] text-blue-600 shrink-0">
+                          <CheckIcon className="h-4 w-4" />
+                        </span>
+                        <div className="text-[13px] leading-5 text-zinc-800">
+                          {item}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => startTopupCheckout("large")}
+                    className="mt-4 w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold"
+                  >
+                    Comprar
+                  </button>
+                </div>
+              </div>
+            )}
 
             {payMsg ? (
               <div className="mt-4 rounded-[16px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">
@@ -4824,23 +4984,33 @@ return (
 
           {/* FOOTER CTA */}
           <div className="px-4 md:px-5 pb-4 pt-3 bg-white shrink-0">
-            <button
-              onClick={() => {
-                if (payLoading) return;
-                if (plan === "free") {
-                  closePaywall();
-                  return;
-                }
-                startCheckout({ plan, billing });
-              }}
-              className="w-full h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[15px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
-              disabled={!!payLoading}
-            >
-              {payLoading ? "Procesando…" : plan === "free" ? "Volver al chat" : "Empezar ahora"}
-            </button>
+            {billing !== "topup" ? (
+              <button
+                onClick={() => {
+                  if (payLoading) return;
+                  if (plan === "free") {
+                    closePaywall();
+                    return;
+                  }
+                  startCheckout({ plan, billing });
+                }}
+                className="w-full h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[15px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                disabled={!!payLoading}
+              >
+                {payLoading
+                  ? "Procesando…"
+                  : plan === "free"
+                  ? "Volver al chat"
+                  : "Empezar ahora"}
+              </button>
+            ) : (
+              <div className="text-center text-[12px] text-zinc-500">
+                Elige una recarga para continuar usando Vonu este mes.
+              </div>
+            )}
 
             <div className="mt-2 text-center text-[12px] text-zinc-500">
-              Cancela cuando quieras
+              {billing === "topup" ? "Pago único" : "Cancela cuando quieras"}
             </div>
 
             <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
@@ -4850,7 +5020,7 @@ return (
               <span>Pago seguro con Stripe.</span>
             </div>
 
-            {isPro ? (
+            {isPro && billing !== "topup" ? (
               <button
                 onClick={cancelSubscriptionFromHere}
                 className="mt-3 w-full h-10 rounded-full border border-red-200 hover:bg-red-50 text-[12px] text-red-700 cursor-pointer disabled:opacity-50"
