@@ -4240,6 +4240,16 @@ return (
     }
   }
 
+.modal-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close-btn span {
+  transform: translateY(-1px);
+}
+  
   @keyframes chalkIn {
     from {
       opacity: 0;
@@ -4627,13 +4637,15 @@ return (
             </div>
 
             <button
-              onClick={closePaywall}
-              className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer p-0 shrink-0 leading-none"
-              aria-label="Cerrar"
-              disabled={!!payLoading}
-            >
-              <span className="text-[22px] leading-none">×</span>
-            </button>
+  onClick={closePaywall}
+  className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 flex items-center justify-center cursor-pointer shrink-0"
+  aria-label="Cerrar"
+  disabled={!!payLoading}
+>
+  <span className="block text-[20px] leading-none translate-y-[-1px]">
+    ×
+  </span>
+</button>
           </div>
 
           {/* SCROLLABLE CONTENT */}
