@@ -1099,10 +1099,14 @@ await refreshUsageInfo();
   }, [loginOpen]);
 
   function openLoginModal(mode: AuthCardMode = "signin") {
-    setLoginMsg(null);
-    setAuthMode(mode);
-    setLoginOpen(true);
+  setLoginMsg(null);
+  setAuthMode(mode);
+  setLoginOpen(true);
+
+  if (isLoggedIn) {
+    refreshUsageInfo();
   }
+}
 
   function openPlansModal() {
   setPayMsg(null);
@@ -4909,27 +4913,12 @@ return (
       </div>
 
       <div className="flex items-center justify-between gap-3 text-[12px]">
-        <span className="text-zinc-600">Mensajes usados</span>
-        <span className="font-semibold text-zinc-900">
-          {usageInfo.messages_used} / {usageInfo.messages_limit}
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between gap-3 text-[12px]">
         <span className="text-zinc-600">Minutos de voz restantes</span>
         <span className="font-semibold text-zinc-900">
           {Math.max(
             0,
             Math.floor((usageInfo.realtime_seconds_left ?? 0) / 60)
           )} min
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between gap-3 text-[12px]">
-        <span className="text-zinc-600">Voz usada</span>
-        <span className="font-semibold text-zinc-900">
-          {Math.floor((usageInfo.realtime_seconds_used ?? 0) / 60)} /{" "}
-          {Math.floor((usageInfo.realtime_seconds_limit ?? 0) / 60)} min
         </span>
       </div>
     </div>
