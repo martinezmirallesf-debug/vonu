@@ -69,7 +69,10 @@ export async function GET(req: Request) {
         .single();
 
       if (insertError) {
-        return NextResponse.json({ error: insertError.message }, { status: 500 });
+        return NextResponse.json(
+          { error: insertError.message },
+          { status: 500 }
+        );
       }
 
       usage = newUsage;
@@ -97,21 +100,57 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: planError.message }, { status: 500 });
     }
 
-    const messagesLimit = plan?.messages_limit ?? 20;
-    const realtimeSecondsLimit = plan?.realtime_seconds_limit ?? 0;
+    // ✅ Recargas del mes
+    const { data: topups, error: topupsError } = await supabase
+      .from("usage_topups")
+      .select("extra_messages, extra_realtime_seconds")
+      .eq("user_id", user.id)
+      .eq("month", month);
+
+    if (topupsError) {
+      return NextResponse.json({ error: topupsError.message }, { status: 500 });
+    }
+
+    const extraMessages = (topups ?? []).reduce(
+      (acc, row) => acc + (row.extra_messages ?? 0),
+      0
+    );
+
+    const extraRealtimeSeconds = (topups ?? []).reduce(
+      (acc, row) => acc + (row.extra_realtime_seconds ?? 0),
+      0
+    );
+
+    const baseMessagesLimit = plan?.messages_limit ?? 20;
+    const baseRealtimeSecondsLimit = plan?.realtime_seconds_limit ?? 0;
+
+    const messagesLimit = baseMessagesLimit + extraMessages;
+    const realtimeSecondsLimit =
+      baseRealtimeSecondsLimit + extraRealtimeSeconds;
+
+    const messagesUsed = usage?.messages_used ?? 0;
+    const realtimeSecondsUsed = usage?.realtime_seconds ?? 0;
 
     return NextResponse.json({
       usage: {
         plan_id: planId,
-        messages_used: usage?.messages_used ?? 0,
+
+        messages_used: messagesUsed,
         messages_limit: messagesLimit,
-        messages_left: Math.max(0, messagesLimit - (usage?.messages_used ?? 0)),
-        realtime_seconds_used: usage?.realtime_seconds ?? 0,
+        messages_left: Math.max(0, messagesLimit - messagesUsed),
+
+        realtime_seconds_used: realtimeSecondsUsed,
         realtime_seconds_limit: realtimeSecondsLimit,
         realtime_seconds_left: Math.max(
           0,
-          realtimeSecondsLimit - (usage?.realtime_seconds ?? 0)
+          realtimeSecondsLimit - realtimeSecondsUsed
         ),
+
+        // opcional, por si luego quieres mostrar desglose
+        base_messages_limit: baseMessagesLimit,
+        base_realtime_seconds_limit: baseRealtimeSecondsLimit,
+        extra_messages: extraMessages,
+        extra_realtime_seconds: extraRealtimeSeconds,
       },
     });
   } catch (e: any) {
