@@ -1612,34 +1612,8 @@ async function toggleConversation() {
     !!navigator.mediaDevices &&
     !!navigator.mediaDevices.getUserMedia;
 
-    if (!isLoggedIn) {
-  setMicMsg("Inicia sesión para usar el modo conversación.");
-  setTimeout(() => setMicMsg(null), 2400);
-  return;
-}
-
-if (usageInfo && usageInfo.plan_id === "free") {
-  setMicMsg("El modo conversación por voz no está disponible en el plan Gratis.");
-  setTimeout(() => setMicMsg(null), 2800);
-  handleOpenPlansCTA();
-  return;
-}
-
-      if (!isLoggedIn) {
-    setMicMsg("Debes iniciar sesión para usar el modo conversación.");
-    setTimeout(() => setMicMsg(null), 2400);
-    openLoginModal("signin");
-    return;
-  }
-
-  if (!supportsMic) {
-    setMicMsg("Tu navegador no soporta micrófono en este modo.");
-    setTimeout(() => setMicMsg(null), 2400);
-    return;
-  }
-
-  // ✅ Si ya está activo, apagar
-    if (voiceModeRef.current) {
+  // ✅ SI YA ESTÁ ACTIVO, PRIMERO APAGAR SIEMPRE
+  if (voiceModeRef.current) {
     realtimeManualCloseRef.current = true;
 
     try {
@@ -1651,7 +1625,7 @@ if (usageInfo && usageInfo.plan_id === "free") {
     setVoiceMode(false);
     setRealtimeStatus("closed");
 
-        setTtsEnabled(false);
+    setTtsEnabled(false);
     stopTTS();
     clearSilenceTimer();
 
@@ -1660,7 +1634,28 @@ if (usageInfo && usageInfo.plan_id === "free") {
     return;
   }
 
-      try {
+  // ✅ A partir de aquí solo estamos intentando ENCENDERLO
+  if (!isLoggedIn) {
+    setMicMsg("Debes iniciar sesión para usar el modo conversación.");
+    setTimeout(() => setMicMsg(null), 2400);
+    openLoginModal("signin");
+    return;
+  }
+
+  if (usageInfo && usageInfo.plan_id === "free") {
+    setMicMsg("El modo conversación por voz no está disponible en el plan Gratis.");
+    setTimeout(() => setMicMsg(null), 2800);
+    handleOpenPlansCTA();
+    return;
+  }
+
+  if (!supportsMic) {
+    setMicMsg("Tu navegador no soporta micrófono en este modo.");
+    setTimeout(() => setMicMsg(null), 2400);
+    return;
+  }
+
+  try {
     stopTTS();
   } catch {}
 
@@ -1682,7 +1677,7 @@ if (usageInfo && usageInfo.plan_id === "free") {
       onStatus: (status) => {
         setRealtimeStatus(status);
 
-                if (status === "connected") {
+        if (status === "connected") {
           setMicMsg("🟢 Conectado. Habla cuando quieras.");
         }
 
@@ -1695,13 +1690,13 @@ if (usageInfo && usageInfo.plan_id === "free") {
         }
 
         if (status === "closed") {
-  if (realtimeManualCloseRef.current) {
-    setMicMsg("Modo conversación desactivado.");
-  }
-}
+          if (realtimeManualCloseRef.current) {
+            setMicMsg("Modo conversación desactivado.");
+          }
+        }
       },
 
-            onError: (message) => {
+      onError: (message) => {
         realtimeManualCloseRef.current = false;
         setMicMsg(message || "Error en el modo conversación.");
 
@@ -1717,40 +1712,36 @@ if (usageInfo && usageInfo.plan_id === "free") {
         setRealtimeStatus("error");
       },
 
-                                    onUserFinalTranscript: (text) => {
+      onUserFinalTranscript: (text) => {
         console.log("[VOICE] onUserFinalTranscript", text);
         handleVoiceMessageForChat(text);
       },
 
       onAssistantFinalText: (text) => {
-  console.log("[VOICE] onAssistantFinalText", text);
-  appendRealtimeAssistantMessage(text);
+        console.log("[VOICE] onAssistantFinalText", text);
+        appendRealtimeAssistantMessage(text);
       },
 
       onEvent: (event) => {
-  try {
-    const type = String(event?.type ?? "");
-    console.log("[VOICE] raw event", type, event);
-  } catch {}
-},
+        try {
+          const type = String(event?.type ?? "");
+          console.log("[VOICE] raw event", type, event);
+        } catch {}
+      },
     });
 
-        realtimeConnRef.current = conn;
+    realtimeConnRef.current = conn;
     voiceModeRef.current = true;
     setVoiceMode(true);
     setTtsEnabled(false);
     setMicMsg("✅ Conectando modo conversación…");
-
-        // ✅ No arrancamos SpeechRecognition local en modo conversación.
-    // El chat escrito vendrá del transcript de OpenAI Realtime.
-    
   } catch (e: any) {
     try {
       realtimeConnRef.current?.stop();
     } catch {}
     realtimeConnRef.current = null;
 
-        voiceModeRef.current = false;
+    voiceModeRef.current = false;
     setVoiceMode(false);
     setRealtimeStatus("closed");
     voiceWriteGuardRef.current.reset();
@@ -4587,175 +4578,257 @@ return (
     <div
       className="absolute inset-0 bg-black/30 backdrop-blur-sm"
       onClick={closePaywall}
+      aria-hidden="true"
     />
 
-    <div className="relative h-full w-full flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-[28px] bg-white shadow-[0_30px_100px_rgba(0,0,0,0.25)] border border-zinc-200 overflow-hidden">
-
-        {/* HEADER + LOGO */}
-        <div className="px-5 pt-5 pb-4 border-b border-zinc-100 bg-gradient-to-b from-blue-50 to-white">
-          <div className="flex items-center justify-between">
-
-            {/* LOGO */}
-            <div className="flex items-center gap-2">
-              <img src="/vonu-icon.png?v=2" className="h-6 w-6" />
-              <span className="font-semibold text-zinc-900">Vonu</span>
+    <div
+      className="relative h-full w-full flex items-center justify-center px-3 py-3"
+      onClick={(e) => e.stopPropagation()}
+      style={{ fontFamily: "var(--font-poppins), ui-sans-serif, system-ui" }}
+    >
+      <div
+        className="w-full max-w-[560px] rounded-[28px] bg-white shadow-[0_30px_100px_rgba(0,0,0,0.22)] border border-zinc-200 overflow-hidden"
+        style={{ maxHeight: "calc(var(--vvh, 100dvh) - 24px)" }}
+      >
+        <div className="flex max-h-[calc(var(--vvh,100dvh)-24px)] flex-col">
+          {/* HEADER */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-zinc-100 shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <img
+                src="/vonu-icon.png?v=2"
+                alt="Vonu"
+                className="h-7 w-7 shrink-0"
+                draggable={false}
+              />
+              <img
+                src="/vonu-wordmark.png?v=2"
+                alt="Vonu"
+                className="h-4 w-auto"
+                draggable={false}
+              />
             </div>
 
             <button
               onClick={closePaywall}
-              className="h-9 w-9 rounded-full border border-zinc-200 hover:bg-zinc-50 grid place-items-center"
+              className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer p-0 shrink-0"
+              aria-label="Cerrar"
+              disabled={!!payLoading}
             >
-              ×
+              <span className="text-[22px] leading-none relative top-[-0.5px]">×</span>
             </button>
           </div>
 
-          <div className="mt-4 text-[20px] font-extrabold text-zinc-900 leading-tight">
-            Toma decisiones con seguridad
-          </div>
-
-          <div className="mt-1 text-[13px] text-zinc-600">
-            Evita errores antes de que te cuesten dinero o problemas.
-          </div>
-        </div>
-
-        <div className="px-5 py-5">
-
-          {/* SELECTOR MENSUAL / ANUAL */}
-          <div className="flex rounded-full border border-zinc-200 p-1 bg-zinc-50">
-            {["monthly", "yearly"].map((b) => (
+          {/* SCROLLABLE CONTENT */}
+          <div className="overflow-y-auto px-4 md:px-5 py-4">
+            {/* BILLING */}
+            <div className="rounded-[18px] border border-zinc-200 bg-zinc-50 p-1 grid grid-cols-2 gap-1">
               <button
-                key={b}
-                onClick={() => setBilling(b as any)}
+                onClick={() => setBilling("monthly")}
+                disabled={!!payLoading}
                 className={[
-                  "flex-1 h-9 rounded-full text-[13px] font-semibold transition-all",
-                  billing === b
-                    ? "bg-white shadow text-zinc-900"
+                  "h-11 rounded-[14px] text-[14px] font-semibold transition-all",
+                  billing === "monthly"
+                    ? "bg-white text-zinc-900 shadow-sm"
                     : "text-zinc-500",
                 ].join(" ")}
               >
-                {b === "monthly" ? "Mensual" : "Anual"}
+                Mensual
               </button>
-            ))}
-          </div>
 
-          {billing === "yearly" && (
-            <div className="mt-2 text-center text-[12px] text-blue-700 font-medium">
-              Ahorra 2 meses
+              <button
+                onClick={() => setBilling("yearly")}
+                disabled={!!payLoading}
+                className={[
+                  "h-11 rounded-[14px] text-[14px] font-semibold transition-all",
+                  billing === "yearly"
+                    ? "bg-white text-zinc-900 shadow-sm"
+                    : "text-zinc-500",
+                ].join(" ")}
+              >
+                Anual
+              </button>
             </div>
-          )}
 
-          {/* PLANES */}
-          <div className="mt-4 space-y-3">
+            {/* espacio fijo para no mover el modal */}
+            <div className="h-5 mt-2 text-center text-[12px] font-medium text-emerald-600">
+              {billing === "yearly" ? "Mejor precio anual" : <span className="invisible">placeholder</span>}
+            </div>
 
-            {/* PLUS */}
-            <button
-              onClick={() => setPlan("plus")}
-              className={[
-                "w-full text-left rounded-[20px] border px-4 py-4 transition-all",
-                plan === "plus"
-                  ? "border-blue-600 bg-blue-50"
-                  : "border-zinc-200 bg-white hover:bg-zinc-50",
-              ].join(" ")}
-            >
-              <div className="flex justify-between">
-                <div className="font-semibold text-zinc-900">Plus</div>
-                <div className="text-[13px] text-zinc-500">Uso habitual</div>
+            {/* PLANES */}
+            <div className="mt-2 space-y-3">
+              {/* PLUS */}
+              <button
+                onClick={() => setPlan("plus")}
+                disabled={!!payLoading}
+                className={[
+                  "w-full text-left rounded-[22px] border px-4 py-4 transition-all",
+                  plan === "plus"
+                    ? "border-blue-600 bg-blue-50"
+                    : "border-zinc-200 bg-white hover:bg-zinc-50",
+                ].join(" ")}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[15px] font-semibold text-zinc-900">Plus</div>
+                    <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+                      {billing === "monthly" ? "9,99€" : "79,99€"}
+                    </div>
+                  </div>
+
+                  <div className="text-[12px] text-zinc-500 mt-1 shrink-0">
+                    Uso habitual
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-2.5">
+                  {[
+                    "250 mensajes al mes",
+                    "15 min de conversación por voz",
+                    "Análisis de posibles estafas y fraudes",
+                    "Modo tutor y ayuda paso a paso",
+                    "Consultas sobre situaciones personales o delicadas",
+                    "Orientación preventiva en dudas legales cotidianas",
+                  ].map((item) => (
+                    <div key={item} className="flex items-start gap-2">
+                      <span className="mt-[1px] text-blue-600 shrink-0">
+                        <CheckIcon className="h-4 w-4" />
+                      </span>
+                      <div className="text-[13px] leading-5 text-zinc-800">{item}</div>
+                    </div>
+                  ))}
+                </div>
+              </button>
+
+              {/* MAX */}
+              <button
+                onClick={() => setPlan("max")}
+                disabled={!!payLoading}
+                className={[
+                  "w-full text-left rounded-[22px] border px-4 py-4 transition-all relative",
+                  plan === "max"
+                    ? "border-blue-600 bg-blue-50"
+                    : "border-zinc-200 bg-white hover:bg-zinc-50",
+                ].join(" ")}
+              >
+                <div className="absolute top-3 right-3 text-[10px] px-2 py-[3px] rounded-full bg-blue-600 text-white font-semibold">
+                  Más completo
+                </div>
+
+                <div className="flex items-start justify-between gap-3 pr-24">
+                  <div>
+                    <div className="text-[15px] font-semibold text-zinc-900">Max</div>
+                    <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+                      {billing === "monthly" ? "19,99€" : "159,99€"}
+                    </div>
+                  </div>
+
+                  <div className="text-[12px] text-zinc-500 mt-1 shrink-0">
+                    Uso intensivo
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-2.5">
+                  {[
+                    "800 mensajes al mes",
+                    "45 min de conversación por voz",
+                    "Ideal para estudiantes y uso frecuente",
+                    "Más margen para tutor, estudio y explicaciones",
+                    "Más espacio para consultas complejas o largas",
+                    "Todo lo incluido en Plus",
+                  ].map((item) => (
+                    <div key={item} className="flex items-start gap-2">
+                      <span className="mt-[1px] text-blue-600 shrink-0">
+                        <CheckIcon className="h-4 w-4" />
+                      </span>
+                      <div className="text-[13px] leading-5 text-zinc-800">{item}</div>
+                    </div>
+                  ))}
+                </div>
+              </button>
+
+              {/* FREE */}
+              <button
+                onClick={() => setPlan("free")}
+                disabled={!!payLoading}
+                className={[
+                  "w-full text-left rounded-[22px] border px-4 py-4 transition-all",
+                  plan === "free"
+                    ? "border-blue-600 bg-blue-50"
+                    : "border-zinc-200 bg-white hover:bg-zinc-50",
+                ].join(" ")}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[15px] font-semibold text-zinc-900">Gratis</div>
+                    <div className="mt-1 text-[28px] leading-none font-extrabold tracking-tight text-zinc-900">
+                      0€
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-2.5">
+                  {[
+                    "20 mensajes al mes",
+                    "Analiza mensajes, dudas y situaciones con calma",
+                    "Pruébalo sin compromiso",
+                    "Sin cuenta, puedes enviar 1 mensaje de prueba",
+                  ].map((item) => (
+                    <div key={item} className="flex items-start gap-2">
+                      <span className="mt-[1px] text-blue-600 shrink-0">
+                        <CheckIcon className="h-4 w-4" />
+                      </span>
+                      <div className="text-[13px] leading-5 text-zinc-800">{item}</div>
+                    </div>
+                  ))}
+                </div>
+              </button>
+            </div>
+
+            {payMsg ? (
+              <div className="mt-4 rounded-[16px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">
+                {payMsg}
               </div>
-
-              <div className="mt-1 text-[24px] font-extrabold text-zinc-900">
-                {billing === "monthly" ? "9,99€" : "79€"}
-              </div>
-
-              <div className="text-[12px] text-zinc-600">
-                {billing === "monthly" ? "/ mes" : "/ año"}
-              </div>
-
-              <div className="mt-2 text-[12.5px] text-zinc-700">
-                250 mensajes · 15 min voz
-              </div>
-            </button>
-
-            {/* MAX */}
-            <button
-              onClick={() => setPlan("max")}
-              className={[
-                "w-full text-left rounded-[20px] border px-4 py-4 transition-all relative",
-                plan === "max"
-                  ? "border-blue-600 bg-blue-50"
-                  : "border-zinc-200 bg-white hover:bg-zinc-50",
-              ].join(" ")}
-            >
-              <div className="absolute top-2 right-3 text-[10px] px-2 py-[2px] bg-blue-600 text-white rounded-full">
-                Más completo
-              </div>
-
-              <div className="flex justify-between">
-                <div className="font-semibold text-zinc-900">Max</div>
-                <div className="text-[13px] text-zinc-500">Uso intensivo</div>
-              </div>
-
-              <div className="mt-1 text-[24px] font-extrabold text-zinc-900">
-                {billing === "monthly" ? "19,99€" : "159€"}
-              </div>
-
-              <div className="text-[12px] text-zinc-600">
-                {billing === "monthly" ? "/ mes" : "/ año"}
-              </div>
-
-              <div className="mt-2 text-[12.5px] text-zinc-700">
-                800 mensajes · 45 min voz
-              </div>
-            </button>
-
-            {/* FREE */}
-            <button
-              onClick={() => setPlan("free")}
-              className={[
-                "w-full text-left rounded-[20px] border px-4 py-3 transition-all",
-                plan === "free"
-                  ? "border-blue-600 bg-blue-50"
-                  : "border-zinc-200 bg-white hover:bg-zinc-50",
-              ].join(" ")}
-            >
-              <div className="flex justify-between">
-                <div className="font-semibold text-zinc-900">Gratis</div>
-                <div className="text-[13px] text-zinc-500">0€</div>
-              </div>
-
-              <div className="mt-1 text-[12.5px] text-zinc-600">
-                20 mensajes al mes · sin voz
-              </div>
-
-              <div className="mt-1 text-[11px] text-zinc-500">
-                1 mensaje de prueba sin cuenta
-              </div>
-            </button>
+            ) : null}
           </div>
 
-          {/* COPY PSICOLÓGICO */}
-          <div className="mt-4 text-[12.5px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-[16px] px-3 py-3">
-            La mayoría de errores se podrían evitar con 1 minuto más de análisis.
+          {/* FOOTER CTA */}
+          <div className="px-4 md:px-5 pb-4 pt-3 border-t border-zinc-100 bg-white shrink-0">
+            <button
+              onClick={() => {
+                if (payLoading) return;
+                if (plan === "free") {
+                  closePaywall();
+                  return;
+                }
+                startCheckout({ plan, billing });
+              }}
+              className="w-full h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[15px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
+              disabled={!!payLoading}
+            >
+              {payLoading ? "Procesando…" : plan === "free" ? "Volver al chat" : "Empezar ahora"}
+            </button>
+
+            <div className="mt-2 text-center text-[12px] text-zinc-500">
+              Cancela cuando quieras
+            </div>
+
+            <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
+              <span className="text-blue-700">
+                <ShieldIcon className="h-4 w-4" />
+              </span>
+              <span>Pago seguro con Stripe.</span>
+            </div>
+
+            {isPro ? (
+              <button
+                onClick={cancelSubscriptionFromHere}
+                className="mt-3 w-full h-10 rounded-full border border-red-200 hover:bg-red-50 text-[12px] text-red-700 cursor-pointer disabled:opacity-50"
+                disabled={!!payLoading}
+              >
+                Cancelar suscripción
+              </button>
+            ) : null}
           </div>
-
-          {/* CTA */}
-          <button
-            onClick={() => {
-              if (plan === "free") {
-                closePaywall();
-                return;
-              }
-              startCheckout({ plan, billing });
-            }}
-            className="mt-5 w-full h-12 rounded-full bg-black text-white hover:bg-zinc-900 font-semibold"
-          >
-            {plan === "free" ? "Volver al chat" : "Empezar ahora"}
-          </button>
-
-          <div className="mt-2 text-center text-[12px] text-zinc-500">
-            Cancela cuando quieras
-          </div>
-
         </div>
       </div>
     </div>
