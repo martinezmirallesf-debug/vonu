@@ -4867,8 +4867,9 @@ return (
 )}
 
             {/* RECARGAS */}
+{/* RECARGAS */}
 {billing === "topup" && (
-  <div className="mt-3 flex flex-col min-h-[380px]">
+  <div className="mt-3 flex flex-col min-h-[420px]">
     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch">
       {/* BÁSICA */}
       <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
@@ -4986,10 +4987,6 @@ return (
     </div>
 
     <div className="flex-1" />
-
-    <div className="pt-3 text-center text-[12px] text-zinc-500">
-      Elige una recarga para continuar usando Vonu.
-    </div>
   </div>
 )}
 
