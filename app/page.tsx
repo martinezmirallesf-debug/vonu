@@ -4280,7 +4280,7 @@ return (
 }
 
 .modal-close-btn span {
-  transform: translateY(-1px);
+  transform: translateY(-0.5px);
 }
 
   @keyframes chalkIn {
@@ -4677,7 +4677,7 @@ return (
   aria-label="Cerrar"
   disabled={!!payLoading}
 >
-  <span className="block text-[18px] leading-none">×</span>
+  <span className="block text-[21px] leading-none">×</span>
 </button>
           </div>
 
@@ -4855,9 +4855,9 @@ return (
 
             {/* RECARGAS */}
             {billing === "topup" && (
-  <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch min-h-[360px]">
+  <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch min-h-[380px]">
                 {/* BÁSICA */}
-                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
+                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[320px]">
                   <div className="text-[15px] font-semibold text-zinc-900">
                     Recarga básica
                   </div>
@@ -4974,7 +4974,7 @@ return (
           </div>
 
           {/* FOOTER CTA */}
-          <div className="px-4 md:px-5 pb-4 pt-2 bg-white shrink-0">
+          <div className="px-4 md:px-5 pb-4 pt-3 bg-white shrink-0">
             {billing !== "topup" ? (
               <button
   onClick={() => {
@@ -4995,7 +4995,7 @@ return (
                   : "Empezar ahora"}
               </button>
             ) : (
-              <div className="text-center text-[12px] text-zinc-500">
+              <div className="mt-2 text-center text-[12px] text-zinc-500">
   Elige una recarga para continuar usando Vonu.
 </div>
             )}
