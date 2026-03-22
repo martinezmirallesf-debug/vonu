@@ -3697,26 +3697,42 @@ if (voiceModeRef.current) {
     );
 
     const userMsg: Message = {
-      id: crypto.randomUUID(),
-      role: "user",
-      text: userText,
-    };
+  id: crypto.randomUUID(),
+  role: "user",
+  text: userText,
+};
 
-    // ✅ Si el modo conversación está activo, sincronizamos este texto con realtime
+// ✅ Si el modo conversación está activo, añadimos solo el mensaje del usuario
+// ✅ y dejamos que la respuesta la genere exclusivamente realtime
 if (voiceModeRef.current) {
+  shouldStickToBottomRef.current = true;
+
+  setThreads((prev) =>
+    prev.map((t) => {
+      if (t.id !== targetThreadId) return t;
+      return {
+        ...t,
+        updatedAt: Date.now(),
+        messages: [...t.messages, userMsg],
+      };
+    })
+  );
+
   sendTextToRealtime(userText);
+  sendGuardRef.current.busy = false;
+  return;
 }
 
-    const assistantId = crypto.randomUUID();
-    const assistantMsg: Message = {
-      id: assistantId,
-      role: "assistant",
-      text: "",
-      streaming: true,
-      pizarra: null,
-      boardImageB64: null,
-      boardImagePlacement: null,
-    };
+const assistantId = crypto.randomUUID();
+const assistantMsg: Message = {
+  id: assistantId,
+  role: "assistant",
+  text: "",
+  streaming: true,
+  pizarra: null,
+  boardImageB64: null,
+  boardImagePlacement: null,
+};
 
     shouldStickToBottomRef.current = true;
 
@@ -3969,27 +3985,46 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
 
 
     const userMsg: Message = {
-      id: crypto.randomUUID(),
-      role: "user",
-      text: userText || (imageBase64 ? "He adjuntado una imagen." : undefined),
-      image: imageBase64 || undefined,
-    };
+  id: crypto.randomUUID(),
+  role: "user",
+  text: userText || (imageBase64 ? "He adjuntado una imagen." : undefined),
+  image: imageBase64 || undefined,
+};
 
-    // ✅ Si el modo conversación está activo, sincronizamos este mensaje escrito con realtime
+// ✅ Si el modo conversación está activo, añadimos solo el mensaje del usuario
+// ✅ y la respuesta la hará exclusivamente realtime
 if (voiceModeRef.current && userText) {
+  shouldStickToBottomRef.current = true;
+
+  setThreads((prev) =>
+    prev.map((t) => {
+      if (t.id !== targetThreadId) return t;
+      return {
+        ...t,
+        updatedAt: Date.now(),
+        messages: [...t.messages, userMsg],
+      };
+    })
+  );
+
+  setInput("");
+  setImagePreview(null);
+
   sendTextToRealtime(userText);
+  sendGuardRef.current.busy = false;
+  return;
 }
 
-    const assistantId = crypto.randomUUID();
-    const assistantMsg: Message = {
-      id: assistantId,
-      role: "assistant",
-      text: "",
-      streaming: true,
-      pizarra: null,
-      boardImageB64: null,
-      boardImagePlacement: null,
-    };
+const assistantId = crypto.randomUUID();
+const assistantMsg: Message = {
+  id: assistantId,
+  role: "assistant",
+  text: "",
+  streaming: true,
+  pizarra: null,
+  boardImageB64: null,
+  boardImagePlacement: null,
+};
 
     shouldStickToBottomRef.current = true;
 
