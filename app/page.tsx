@@ -4855,9 +4855,9 @@ return (
 
             {/* RECARGAS */}
             {billing === "topup" && (
-  <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+  <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch min-h-[420px]">
                 {/* BÁSICA */}
-                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[340px]">
+                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[360px]">
                   <div className="text-[15px] font-semibold text-zinc-900">
                     Recarga básica
                   </div>
@@ -4885,14 +4885,14 @@ return (
 
                   <button
   onClick={() => startTopupCheckout("medium")}
-  className="mt-auto pt-4 w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold"
+  className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold flex items-center justify-center"
 >
   Comprar
 </button>
                 </div>
 
                 {/* MEDIA */}
-                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[340px]">
+                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[360px]">
                   <div className="text-[15px] font-semibold text-zinc-900">
                     Recarga media
                   </div>
@@ -4920,14 +4920,14 @@ return (
 
                   <button
   onClick={() => startTopupCheckout("large")}
-  className="mt-auto pt-4 w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold"
+  className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold flex items-center justify-center"
 >
   Comprar
 </button>
                 </div>
 
                 {/* GRANDE */}
-                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[340px]">
+                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[360px]">
                   <div className="text-[15px] font-semibold text-zinc-900">
                     Recarga grande
                   </div>
@@ -4982,7 +4982,7 @@ return (
     }
     startCheckout({ plan, billing });
   }}
-  className="w-full md:w-[360px] md:mx-auto h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[15px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
+  className="w-full md:w-[360px] h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[15px] font-semibold transition-colors cursor-pointer disabled:opacity-50 block mx-auto"
   disabled={!!payLoading}
 >
                 {payLoading
