@@ -4867,123 +4867,131 @@ return (
 )}
 
             {/* RECARGAS */}
-            {billing === "topup" && (
-  <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch min-h-[380px]">
-                {/* BÁSICA */}
-                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
-                  <div className="text-[15px] font-semibold text-zinc-900">
-                    Recarga básica
-                  </div>
+{billing === "topup" && (
+  <div className="mt-3 flex flex-col min-h-[380px]">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch">
+      {/* BÁSICA */}
+      <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
+        <div className="text-[15px] font-semibold text-zinc-900">
+          Recarga básica
+        </div>
 
-                  <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
-                    2,99€
-                  </div>
+        <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+          2,99€
+        </div>
 
-                  <div className="mt-4 space-y-2.5">
-                    {[
-  "50 mensajes extra",
-  "5 min de voz",
-  "Pago único",
-  "Vuelve a tener margen enseguida",
-].map((item) => (
-                      <div key={item} className="flex items-start gap-2">
-                        <span className="mt-[1px] text-blue-600 shrink-0">
-                          <CheckIcon className="h-4 w-4" />
-                        </span>
-                        <div className="text-[13px] leading-5 text-zinc-800">
-                          {item}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button
-  onClick={() => startTopupCheckout("medium")}
-  className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold p-0"
->
-  <span className="flex h-full w-full items-center justify-center leading-none">
-    Comprar
-  </span>
-</button>
-                </div>
-
-                {/* MEDIA */}
-                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
-                  <div className="text-[15px] font-semibold text-zinc-900">
-                    Recarga media
-                  </div>
-
-                  <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
-                    6,99€
-                  </div>
-
-                  <div className="mt-4 space-y-2.5">
-                    {[
-  "150 mensajes extra",
-  "15 min de voz",
-  "Pago único",
-  "La opción más equilibrada",
-].map((item) => (
-                      <div key={item} className="flex items-start gap-2">
-                        <span className="mt-[1px] text-blue-600 shrink-0">
-                          <CheckIcon className="h-4 w-4" />
-                        </span>
-                        <div className="text-[13px] leading-5 text-zinc-800">
-                          {item}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button
-  onClick={() => startTopupCheckout("large")}
-  className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold p-0"
->
-  <span className="flex h-full w-full items-center justify-center leading-none">
-    Comprar
-  </span>
-</button>
-                </div>
-
-                {/* GRANDE */}
-                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
-                  <div className="text-[15px] font-semibold text-zinc-900">
-                    Recarga grande
-                  </div>
-
-                  <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
-                    14,99€
-                  </div>
-
-                  <div className="mt-4 space-y-2.5">
-                    {[
-  "400 mensajes extra",
-  "40 min de voz",
-  "Pago único",
-  "La mejor para uso intensivo",
-].map((item) => (
-                      <div key={item} className="flex items-start gap-2">
-                        <span className="mt-[1px] text-blue-600 shrink-0">
-                          <CheckIcon className="h-4 w-4" />
-                        </span>
-                        <div className="text-[13px] leading-5 text-zinc-800">
-                          {item}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button
-  onClick={() => startTopupCheckout("basic")}
-  className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold p-0"
->
-  <span className="flex h-full w-full items-center justify-center leading-none">
-    Comprar
-  </span>
-</button>
-                </div>
+        <div className="mt-4 space-y-2.5">
+          {[
+            "50 mensajes extra",
+            "5 min de voz",
+            "Pago único",
+            "Vuelve a tener margen enseguida",
+          ].map((item) => (
+            <div key={item} className="flex items-start gap-2">
+              <span className="mt-[1px] text-blue-600 shrink-0">
+                <CheckIcon className="h-4 w-4" />
+              </span>
+              <div className="text-[13px] leading-5 text-zinc-800">
+                {item}
               </div>
-            )}
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={() => startTopupCheckout("basic")}
+          className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold p-0"
+        >
+          <span className="flex h-full w-full items-center justify-center leading-none">
+            Comprar
+          </span>
+        </button>
+      </div>
+
+      {/* MEDIA */}
+      <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
+        <div className="text-[15px] font-semibold text-zinc-900">
+          Recarga media
+        </div>
+
+        <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+          6,99€
+        </div>
+
+        <div className="mt-4 space-y-2.5">
+          {[
+            "150 mensajes extra",
+            "15 min de voz",
+            "Pago único",
+            "La opción más equilibrada",
+          ].map((item) => (
+            <div key={item} className="flex items-start gap-2">
+              <span className="mt-[1px] text-blue-600 shrink-0">
+                <CheckIcon className="h-4 w-4" />
+              </span>
+              <div className="text-[13px] leading-5 text-zinc-800">
+                {item}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={() => startTopupCheckout("medium")}
+          className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold p-0"
+        >
+          <span className="flex h-full w-full items-center justify-center leading-none">
+            Comprar
+          </span>
+        </button>
+      </div>
+
+      {/* GRANDE */}
+      <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
+        <div className="text-[15px] font-semibold text-zinc-900">
+          Recarga grande
+        </div>
+
+        <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+          14,99€
+        </div>
+
+        <div className="mt-4 space-y-2.5">
+          {[
+            "400 mensajes extra",
+            "40 min de voz",
+            "Pago único",
+            "La mejor para uso intensivo",
+          ].map((item) => (
+            <div key={item} className="flex items-start gap-2">
+              <span className="mt-[1px] text-blue-600 shrink-0">
+                <CheckIcon className="h-4 w-4" />
+              </span>
+              <div className="text-[13px] leading-5 text-zinc-800">
+                {item}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={() => startTopupCheckout("large")}
+          className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold p-0"
+        >
+          <span className="flex h-full w-full items-center justify-center leading-none">
+            Comprar
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <div className="flex-1" />
+
+    <div className="pt-3 text-center text-[12px] text-zinc-500">
+      Elige una recarga para continuar usando Vonu.
+    </div>
+  </div>
+)}
 
             {payMsg ? (
               <div className="mt-4 rounded-[16px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">
@@ -4995,32 +5003,28 @@ return (
           {/* FOOTER CTA */}
           <div className="px-4 md:px-5 pb-4 pt-3 bg-white shrink-0">
             {billing !== "topup" ? (
-              <button
-  onClick={() => {
-    if (payLoading) return;
-    if (plan === "free") {
-      closePaywall();
-      return;
-    }
-    startCheckout({ plan, billing });
-  }}
-  className="w-full md:w-[360px] h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[15px] font-semibold transition-colors cursor-pointer disabled:opacity-50 block mx-auto"
-  disabled={!!payLoading}
->
-                {payLoading
-                  ? "Procesando…"
-                  : plan === "free"
-                  ? "Volver al chat"
-                  : "Empezar ahora"}
-              </button>
-            ) : (
-              <div className="mt-3 text-center text-[12px] text-zinc-500">
-  Elige una recarga para continuar usando Vonu.
-</div>
-            )}
+  <button
+    onClick={() => {
+      if (payLoading) return;
+      if (plan === "free") {
+        closePaywall();
+        return;
+      }
+      startCheckout({ plan, billing });
+    }}
+    className="w-full md:w-[360px] h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[15px] font-semibold transition-colors cursor-pointer disabled:opacity-50 block mx-auto"
+    disabled={!!payLoading}
+  >
+    {payLoading
+      ? "Procesando…"
+      : plan === "free"
+      ? "Volver al chat"
+      : "Empezar ahora"}
+  </button>
+) : null}
 
             <div className="mt-2 text-center text-[12px] text-zinc-500">
-  {billing === "topup" ? "" : "Cancela cuando quieras"}
+  {billing === "topup" ? null : "Cancela cuando quieras"}
 </div>
 
             <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
