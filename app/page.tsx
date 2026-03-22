@@ -1616,6 +1616,19 @@ function handleVoiceMessageForChat(text: string) {
   appendRealtimeUserMessage(clean);
 }
 
+function sendTextToRealtime(text: string) {
+  const clean = String(text ?? "").trim();
+  if (!clean) return;
+
+  try {
+    realtimeLastUserTextRef.current = clean;
+    realtimeConnRef.current?.sendText(clean);
+  } catch (e) {
+    console.error("Error enviando texto a realtime:", e);
+  }
+}
+
+
 function setVoiceModeOff() {
   voiceModeRef.current = false;
   setVoiceMode(false);
@@ -1690,6 +1703,8 @@ async function toggleConversation() {
     typeof navigator !== "undefined" &&
     !!navigator.mediaDevices &&
     !!navigator.mediaDevices.getUserMedia;
+
+
 
   // ✅ SI YA ESTÁ ACTIVO, PRIMERO APAGAR SIEMPRE
   if (voiceModeRef.current) {
@@ -3687,6 +3702,11 @@ if (voiceModeRef.current) {
       text: userText,
     };
 
+    // ✅ Si el modo conversación está activo, sincronizamos este texto con realtime
+if (voiceModeRef.current) {
+  sendTextToRealtime(userText);
+}
+
     const assistantId = crypto.randomUUID();
     const assistantMsg: Message = {
       id: assistantId,
@@ -3954,6 +3974,11 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
       text: userText || (imageBase64 ? "He adjuntado una imagen." : undefined),
       image: imageBase64 || undefined,
     };
+
+    // ✅ Si el modo conversación está activo, sincronizamos este mensaje escrito con realtime
+if (voiceModeRef.current && userText) {
+  sendTextToRealtime(userText);
+}
 
     const assistantId = crypto.randomUUID();
     const assistantMsg: Message = {
@@ -5817,7 +5842,6 @@ return (
   {/* RIGHT ICONS */}
 <div className="absolute right-2.5 bottom-[34px] z-[60] flex items-center gap-2">
 
-  {/* 🎙️ Hablar con Vonu */}
 {/* 🎙️ Hablar con Vonu */}
 <button
   onClick={toggleConversation}
