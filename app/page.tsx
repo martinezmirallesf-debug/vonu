@@ -4648,9 +4648,9 @@ return (
       style={{ fontFamily: "var(--font-poppins), ui-sans-serif, system-ui" }}
     >
       <div
-        className="w-full max-w-[560px] rounded-[28px] bg-white shadow-[0_30px_100px_rgba(0,0,0,0.22)] border border-zinc-200 overflow-hidden"
-        style={{ maxHeight: "calc(var(--vvh, 100dvh) - 24px)" }}
-      >
+  className="w-full max-w-[980px] rounded-[28px] bg-white shadow-[0_30px_100px_rgba(0,0,0,0.22)] border border-zinc-200 overflow-hidden"
+  style={{ maxHeight: "calc(var(--vvh, 100dvh) - 24px)" }}
+>
         <div className="flex max-h-[calc(var(--vvh,100dvh)-24px)] flex-col">
           {/* HEADER */}
           <div className="flex items-center justify-between px-5 pt-4 pb-3 shrink-0">
@@ -4670,15 +4670,15 @@ return (
             </div>
 
             <button
-              onClick={closePaywall}
-              className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 cursor-pointer shrink-0 relative"
-              aria-label="Cerrar"
-              disabled={!!payLoading}
-            >
-              <span className="absolute inset-0 flex items-center justify-center text-[19px]">
-                ×
-              </span>
-            </button>
+  onClick={closePaywall}
+  className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 cursor-pointer shrink-0 relative p-0"
+  aria-label="Cerrar"
+  disabled={!!payLoading}
+>
+  <span className="absolute inset-0 flex items-center justify-center text-[18px] leading-none translate-x-[0.5px] -translate-y-[0.5px]">
+    ×
+  </span>
+</button>
           </div>
 
           {/* SCROLLABLE CONTENT */}
@@ -4690,184 +4690,172 @@ return (
             }}
           >
             {/* BILLING / TABS */}
-            <div className="flex rounded-full border border-zinc-200 p-1 bg-white">
-              <button
-                onClick={() => setBilling("monthly")}
-                className={`px-4 h-9 rounded-full text-sm font-semibold transition-colors ${
-                  billing === "monthly"
-                    ? "bg-blue-600 text-white"
-                    : "text-zinc-700 hover:bg-zinc-100"
-                }`}
-              >
-                Mensual
-              </button>
+            <div className="grid grid-cols-3 gap-1 rounded-full border border-zinc-200 p-1 bg-white w-full">
+  <button
+    onClick={() => setBilling("monthly")}
+    className={`h-10 rounded-full text-[14px] font-semibold transition-colors ${
+      billing === "monthly"
+        ? "bg-blue-600 text-white"
+        : "text-zinc-700 hover:bg-zinc-100"
+    }`}
+  >
+    Mensual
+  </button>
 
-              <button
-                onClick={() => setBilling("yearly")}
-                className={`px-4 h-9 rounded-full text-sm font-semibold transition-colors ${
-                  billing === "yearly"
-                    ? "bg-blue-600 text-white"
-                    : "text-zinc-700 hover:bg-zinc-100"
-                }`}
-              >
-                Anual
-              </button>
+  <button
+    onClick={() => setBilling("yearly")}
+    className={`h-10 rounded-full text-[14px] font-semibold transition-colors ${
+      billing === "yearly"
+        ? "bg-blue-600 text-white"
+        : "text-zinc-700 hover:bg-zinc-100"
+    }`}
+  >
+    Anual
+  </button>
 
-              <button
-                onClick={() => setBilling("topup")}
-                className={`px-4 h-9 rounded-full text-sm font-semibold transition-colors ${
-                  billing === "topup"
-                    ? "bg-blue-600 text-white"
-                    : "text-zinc-700 hover:bg-zinc-100"
-                }`}
-              >
-                Recargas
-              </button>
-            </div>
+  <button
+    onClick={() => setBilling("topup")}
+    className={`h-10 rounded-full text-[14px] font-semibold transition-colors ${
+      billing === "topup"
+        ? "bg-blue-600 text-white"
+        : "text-zinc-700 hover:bg-zinc-100"
+    }`}
+  >
+    Recargas
+  </button>
+</div>
 
             {/* PLANES */}
             {billing !== "topup" && (
-              <div className="mt-2 space-y-3">
-                {/* PLUS */}
-                <button
-                  onClick={() => setPlan("plus")}
-                  disabled={!!payLoading}
-                  className={[
-                    "w-full text-left rounded-[22px] border px-4 py-4 transition-all",
-                    plan === "plus"
-                      ? "border-blue-600 bg-blue-50"
-                      : "border-zinc-200 bg-white hover:bg-zinc-50",
-                  ].join(" ")}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-[15px] font-semibold text-zinc-900">
-                        Plus
-                      </div>
-                      <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
-                        {billing === "monthly" ? "9,99€" : "79,99€"}
-                      </div>
-                    </div>
+  <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+    {/* FREE */}
+    <button
+      onClick={() => setPlan("free")}
+      disabled={!!payLoading}
+      className={[
+        "w-full text-left rounded-[22px] border px-4 py-4 transition-all h-full flex flex-col",
+        plan === "free"
+          ? "border-blue-600 bg-blue-50"
+          : "border-zinc-200 bg-white hover:bg-zinc-50",
+      ].join(" ")}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[15px] font-semibold text-zinc-900">Gratis</div>
+          <div className="mt-1 text-[28px] leading-none font-extrabold tracking-tight text-zinc-900">
+            0€
+          </div>
+        </div>
+      </div>
 
-                    <div className="text-[12px] text-zinc-500 mt-1 shrink-0 text-right">
-                      Uso habitual
-                    </div>
-                  </div>
+      <div className="mt-4 space-y-2.5">
+        {[
+          "20 mensajes al mes",
+          "Analiza mensajes, dudas y situaciones con calma",
+          "Pruébalo sin compromiso",
+          "1 mensaje de prueba sin cuenta",
+        ].map((item) => (
+          <div key={item} className="flex items-start gap-2">
+            <span className="mt-[1px] text-blue-600 shrink-0">
+              <CheckIcon className="h-4 w-4" />
+            </span>
+            <div className="text-[13px] leading-5 text-zinc-800">{item}</div>
+          </div>
+        ))}
+      </div>
+    </button>
 
-                  <div className="mt-4 space-y-2.5">
-                    {[
-                      "250 mensajes al mes",
-                      "15 min de conversación por voz",
-                      "Análisis de posibles estafas y fraudes",
-                      "Modo tutor y ayuda paso a paso",
-                      "Consultas sobre situaciones personales o delicadas",
-                      "Orientación preventiva en dudas legales cotidianas",
-                    ].map((item) => (
-                      <div key={item} className="flex items-start gap-2">
-                        <span className="mt-[1px] text-blue-600 shrink-0">
-                          <CheckIcon className="h-4 w-4" />
-                        </span>
-                        <div className="text-[13px] leading-5 text-zinc-800">
-                          {item}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </button>
+    {/* PLUS */}
+    <button
+      onClick={() => setPlan("plus")}
+      disabled={!!payLoading}
+      className={[
+        "w-full text-left rounded-[22px] border px-4 py-4 transition-all h-full flex flex-col",
+        plan === "plus"
+          ? "border-blue-600 bg-blue-50"
+          : "border-zinc-200 bg-white hover:bg-zinc-50",
+      ].join(" ")}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[15px] font-semibold text-zinc-900">Plus</div>
+          <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+            {billing === "monthly" ? "9,99€" : "79,99€"}
+          </div>
+        </div>
 
-                {/* MAX */}
-                <button
-                  onClick={() => setPlan("max")}
-                  disabled={!!payLoading}
-                  className={[
-                    "w-full text-left rounded-[22px] border px-4 py-4 transition-all",
-                    plan === "max"
-                      ? "border-blue-600 bg-blue-50"
-                      : "border-zinc-200 bg-white hover:bg-zinc-50",
-                  ].join(" ")}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-[15px] font-semibold text-zinc-900">
-                        Max
-                      </div>
-                      <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
-                        {billing === "monthly" ? "19,99€" : "159,99€"}
-                      </div>
-                    </div>
+        <div className="text-[12px] text-zinc-500 mt-1 shrink-0 text-right">
+          Uso habitual
+        </div>
+      </div>
 
-                    <div className="text-[12px] text-zinc-500 mt-1 shrink-0 text-right">
-                      Uso intensivo
-                    </div>
-                  </div>
+      <div className="mt-4 space-y-2.5">
+        {[
+          "250 mensajes al mes",
+          "15 min de conversación por voz",
+          "Análisis de posibles estafas y fraudes",
+          "Modo tutor y ayuda paso a paso",
+          "Consultas sobre situaciones personales o delicadas",
+          "Orientación preventiva en dudas legales cotidianas",
+        ].map((item) => (
+          <div key={item} className="flex items-start gap-2">
+            <span className="mt-[1px] text-blue-600 shrink-0">
+              <CheckIcon className="h-4 w-4" />
+            </span>
+            <div className="text-[13px] leading-5 text-zinc-800">{item}</div>
+          </div>
+        ))}
+      </div>
+    </button>
 
-                  <div className="mt-4 space-y-2.5">
-                    {[
-                      "800 mensajes al mes",
-                      "45 min de conversación por voz",
-                      "Ideal para estudiantes y uso frecuente",
-                      "Más margen para tutor, estudio y explicaciones",
-                      "Más espacio para consultas complejas o largas",
-                      "Todo lo incluido en Plus",
-                    ].map((item) => (
-                      <div key={item} className="flex items-start gap-2">
-                        <span className="mt-[1px] text-blue-600 shrink-0">
-                          <CheckIcon className="h-4 w-4" />
-                        </span>
-                        <div className="text-[13px] leading-5 text-zinc-800">
-                          {item}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </button>
+    {/* MAX */}
+    <button
+      onClick={() => setPlan("max")}
+      disabled={!!payLoading}
+      className={[
+        "w-full text-left rounded-[22px] border px-4 py-4 transition-all h-full flex flex-col",
+        plan === "max"
+          ? "border-blue-600 bg-blue-50"
+          : "border-zinc-200 bg-white hover:bg-zinc-50",
+      ].join(" ")}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[15px] font-semibold text-zinc-900">Max</div>
+          <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+            {billing === "monthly" ? "19,99€" : "159,99€"}
+          </div>
+        </div>
 
-                {/* FREE */}
-                <button
-                  onClick={() => setPlan("free")}
-                  disabled={!!payLoading}
-                  className={[
-                    "w-full text-left rounded-[22px] border px-4 py-4 transition-all",
-                    plan === "free"
-                      ? "border-blue-600 bg-blue-50"
-                      : "border-zinc-200 bg-white hover:bg-zinc-50",
-                  ].join(" ")}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-[15px] font-semibold text-zinc-900">
-                        Gratis
-                      </div>
-                      <div className="mt-1 text-[28px] leading-none font-extrabold tracking-tight text-zinc-900">
-                        0€
-                      </div>
-                    </div>
-                  </div>
+        <div className="text-[12px] text-zinc-500 mt-1 shrink-0 text-right">
+          Uso intensivo
+        </div>
+      </div>
 
-                  <div className="mt-4 space-y-2.5">
-                    {[
-                      "20 mensajes al mes",
-                      "Analiza mensajes, dudas y situaciones con calma",
-                      "Pruébalo sin compromiso",
-                      "Sin cuenta, puedes enviar 1 mensaje de prueba",
-                    ].map((item) => (
-                      <div key={item} className="flex items-start gap-2">
-                        <span className="mt-[1px] text-blue-600 shrink-0">
-                          <CheckIcon className="h-4 w-4" />
-                        </span>
-                        <div className="text-[13px] leading-5 text-zinc-800">
-                          {item}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </button>
-              </div>
-            )}
+      <div className="mt-4 space-y-2.5">
+        {[
+          "800 mensajes al mes",
+          "45 min de conversación por voz",
+          "Ideal para estudiantes y uso frecuente",
+          "Más margen para tutor, estudio y explicaciones",
+          "Más espacio para consultas complejas o largas",
+          "Todo lo incluido en Plus",
+        ].map((item) => (
+          <div key={item} className="flex items-start gap-2">
+            <span className="mt-[1px] text-blue-600 shrink-0">
+              <CheckIcon className="h-4 w-4" />
+            </span>
+            <div className="text-[13px] leading-5 text-zinc-800">{item}</div>
+          </div>
+        ))}
+      </div>
+    </button>
+  </div>
+)}
 
             {/* RECARGAS */}
             {billing === "topup" && (
-              <div className="mt-2 grid gap-3 md:grid-cols-3">
+  <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
                 {/* BÁSICA */}
                 <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4">
                   <div className="text-[15px] font-semibold text-zinc-900">
