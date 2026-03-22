@@ -4699,7 +4699,7 @@ return (
   style={{
     scrollbarWidth: "none",
     msOverflowStyle: "none",
-    minHeight: isDesktopPointer() ? 500 : 0,
+    minHeight: isDesktopPointer() ? 470 : 0,
   }}
 >
             {/* BILLING / TABS */}
@@ -4870,7 +4870,7 @@ return (
             {billing === "topup" && (
   <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch min-h-[380px]">
                 {/* BÁSICA */}
-                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[320px]">
+                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
                   <div className="text-[15px] font-semibold text-zinc-900">
                     Recarga básica
                   </div>
@@ -5014,7 +5014,7 @@ return (
                   : "Empezar ahora"}
               </button>
             ) : (
-              <div className="mt-2 text-center text-[12px] text-zinc-500">
+              <div className="mt-3 text-center text-[12px] text-zinc-500">
   Elige una recarga para continuar usando Vonu.
 </div>
             )}
