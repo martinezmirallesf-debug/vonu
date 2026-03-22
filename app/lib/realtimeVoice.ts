@@ -49,7 +49,6 @@ function pickTranscriptFromContentArray(content: any[]): string {
 function extractUserTranscriptFromEvent(data: any): string {
   if (!data || typeof data !== "object") return "";
 
-  // ✅ SOLO aceptamos transcripción final cerrada
   if (
     data?.type === "conversation.item.input_audio_transcription.completed" &&
     cleanText(data?.transcript)
@@ -57,7 +56,6 @@ function extractUserTranscriptFromEvent(data: any): string {
     return cleanText(data.transcript);
   }
 
-  // ✅ Fallback: solo si llega un item de usuario YA completado
   const item = data?.item;
   if (item?.role === "user" && item?.status === "completed") {
     const fromContent = pickTranscriptFromContentArray(item?.content);
@@ -183,10 +181,7 @@ export async function startRealtimeVoice(
       throw new Error(details);
     }
 
-    const ephemeralKey =
-      tokenJson?.client_secret?.value ||
-      tokenJson?.value ||
-      null;
+    const ephemeralKey = tokenJson?.client_secret?.value || tokenJson?.value || null;
 
     if (!ephemeralKey) {
       throw new Error("La respuesta no trae client_secret.value");
@@ -240,15 +235,14 @@ export async function startRealtimeVoice(
     dc.addEventListener("open", () => {
       setStatus("connected");
 
-      // ✅ Solo instrucciones. La config de audio ya viene desde /api/realtime/session
       const sessionUpdate = {
-  type: "session.update",
-  session: {
-    type: "realtime",
-    instructions:
-      "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico.",
-  },
-};
+        type: "session.update",
+        session: {
+          type: "realtime",
+          instructions:
+            "Eres Vonu. Habla siempre en español de España, con tono natural, cercano, claro y humano. Usa acento castellano neutro. Evita sonar robótico. Sé útil y breve. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico.",
+        },
+      };
 
       try {
         dc.send(JSON.stringify(sessionUpdate));
@@ -292,10 +286,7 @@ export async function startRealtimeVoice(
       }
 
       const userTranscript = extractUserTranscriptFromEvent(data);
-      if (
-        userTranscript &&
-        userTranscript !== lastDeliveredUserTranscript
-      ) {
+      if (userTranscript && userTranscript !== lastDeliveredUserTranscript) {
         lastDeliveredUserTranscript = userTranscript;
         try {
           onUserFinalTranscript?.(userTranscript);
@@ -312,18 +303,10 @@ export async function startRealtimeVoice(
         assistantTextBuffer = assistant.done;
       }
 
-      if (
-        data?.type === "response.done" ||
-        data?.type === "output_audio_buffer.stopped" ||
-        data?.type === "response.output_item.done" ||
-        data?.type === "conversation.item.done"
-      ) {
+      if (data?.type === "response.done") {
         const finalText = cleanText(assistantTextBuffer);
 
-        if (
-          finalText &&
-          finalText !== lastDeliveredAssistantTranscript
-        ) {
+        if (finalText && finalText !== lastDeliveredAssistantTranscript) {
           lastDeliveredAssistantTranscript = finalText;
           try {
             onAssistantFinalText?.(finalText);
@@ -410,8 +393,7 @@ export async function startRealtimeVoice(
 
       try {
         if (remoteAudio.srcObject) {
-          const tracks =
-            (remoteAudio.srcObject as MediaStream).getTracks?.() || [];
+          const tracks = (remoteAudio.srcObject as MediaStream).getTracks?.() || [];
           tracks.forEach((t) => {
             try {
               t.stop();
