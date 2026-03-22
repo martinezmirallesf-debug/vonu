@@ -4675,9 +4675,9 @@ return (
   aria-label="Cerrar"
   disabled={!!payLoading}
 >
-  <span className="absolute inset-0 flex items-center justify-center text-[18px] leading-none translate-x-[0.5px] -translate-y-[0.5px]">
-    ×
-  </span>
+  <span className="absolute inset-0 flex items-center justify-center text-[18px] leading-none translate-x-[0.5px] -translate-y-[1px]">
+  ×
+</span>
 </button>
           </div>
 
@@ -4726,8 +4726,8 @@ return (
 </div>
 
             {/* PLANES */}
-            {billing !== "topup" && (
-  <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+            {billing === "topup" && (
+  <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch">
     {/* FREE */}
     <button
       onClick={() => setPlan("free")}
@@ -4857,7 +4857,7 @@ return (
             {billing === "topup" && (
   <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
                 {/* BÁSICA */}
-                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4">
+                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[340px]">
                   <div className="text-[15px] font-semibold text-zinc-900">
                     Recarga básica
                   </div>
@@ -4870,7 +4870,7 @@ return (
                     {[
                       "50 mensajes extra",
                       "5 min de voz",
-                      "Para seguir usando Vonu este mes",
+                      "Vuelve a tener margen enseguida",
                     ].map((item) => (
                       <div key={item} className="flex items-start gap-2">
                         <span className="mt-[1px] text-blue-600 shrink-0">
@@ -4884,9 +4884,9 @@ return (
                   </div>
 
                   <button
-                    onClick={() => startTopupCheckout("basic")}
-                    className="mt-4 w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold"
-                  >
+  onClick={() => startTopupCheckout("basic")}
+  className="mt-auto pt-4 w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold"
+>
                     Comprar
                   </button>
                 </div>
@@ -4905,7 +4905,7 @@ return (
                     {[
                       "150 mensajes extra",
                       "15 min de voz",
-                      "Ideal si este mes se te ha quedado corto",
+                      "La opción más equilibrada",
                     ].map((item) => (
                       <div key={item} className="flex items-start gap-2">
                         <span className="mt-[1px] text-blue-600 shrink-0">
@@ -4919,9 +4919,9 @@ return (
                   </div>
 
                   <button
-                    onClick={() => startTopupCheckout("medium")}
-                    className="mt-4 w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold"
-                  >
+  onClick={() => startTopupCheckout("basic")}
+  className="mt-auto pt-4 w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold"
+>
                     Comprar
                   </button>
                 </div>
@@ -4940,7 +4940,7 @@ return (
                     {[
                       "400 mensajes extra",
                       "40 min de voz",
-                      "Para seguir sin cambiar de plan",
+                      "La mejor para uso intensivo",
                     ].map((item) => (
                       <div key={item} className="flex items-start gap-2">
                         <span className="mt-[1px] text-blue-600 shrink-0">
@@ -4954,9 +4954,9 @@ return (
                   </div>
 
                   <button
-                    onClick={() => startTopupCheckout("large")}
-                    className="mt-4 w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold"
-                  >
+  onClick={() => startTopupCheckout("basic")}
+  className="mt-auto pt-4 w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold"
+>
                     Comprar
                   </button>
                 </div>
@@ -4974,17 +4974,17 @@ return (
           <div className="px-4 md:px-5 pb-4 pt-3 bg-white shrink-0">
             {billing !== "topup" ? (
               <button
-                onClick={() => {
-                  if (payLoading) return;
-                  if (plan === "free") {
-                    closePaywall();
-                    return;
-                  }
-                  startCheckout({ plan, billing });
-                }}
-                className="w-full h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[15px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
-                disabled={!!payLoading}
-              >
+  onClick={() => {
+    if (payLoading) return;
+    if (plan === "free") {
+      closePaywall();
+      return;
+    }
+    startCheckout({ plan, billing });
+  }}
+  className="w-full md:w-[360px] md:mx-auto h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[15px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
+  disabled={!!payLoading}
+>
                 {payLoading
                   ? "Procesando…"
                   : plan === "free"
@@ -4993,7 +4993,7 @@ return (
               </button>
             ) : (
               <div className="text-center text-[12px] text-zinc-500">
-                Elige una recarga para continuar usando Vonu este mes.
+                Elige una recarga para continuar usando Vonu.
               </div>
             )}
 
