@@ -4695,10 +4695,11 @@ return (
 
           {/* SCROLLABLE CONTENT */}
           <div
-  className="paywall-scroll overflow-y-auto px-4 md:px-5 py-4"
+  className="paywall-scroll overflow-y-scroll px-4 md:px-5 py-4 h-full"
   style={{
     scrollbarWidth: "none",
     msOverflowStyle: "none",
+    scrollbarGutter: "stable",
     minHeight: isDesktopPointer() ? 470 : 0,
   }}
 >
