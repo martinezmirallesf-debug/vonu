@@ -4866,7 +4866,6 @@ return (
   </div>
 )}
 
-            {/* RECARGAS */}
 {/* RECARGAS */}
 {billing === "topup" && (
   <div className="mt-3 flex flex-col min-h-[420px]">
@@ -4998,49 +4997,53 @@ return (
           </div>
 
           {/* FOOTER CTA */}
-          <div className="px-4 md:px-5 pb-4 pt-3 bg-white shrink-0">
-            {billing !== "topup" ? (
-  <button
-    onClick={() => {
-      if (payLoading) return;
-      if (plan === "free") {
-        closePaywall();
-        return;
-      }
-      startCheckout({ plan, billing });
-    }}
-    className="w-full md:w-[360px] h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[15px] font-semibold transition-colors cursor-pointer disabled:opacity-50 block mx-auto"
-    disabled={!!payLoading}
-  >
-    {payLoading
-      ? "Procesando…"
-      : plan === "free"
-      ? "Volver al chat"
-      : "Empezar ahora"}
-  </button>
-) : null}
+<div className="px-4 md:px-5 pb-4 pt-3 bg-white shrink-0">
+  <div className="min-h-[48px] flex items-center justify-center">
+    {billing !== "topup" ? (
+      <button
+        onClick={() => {
+          if (payLoading) return;
+          if (plan === "free") {
+            closePaywall();
+            return;
+          }
+          startCheckout({ plan, billing });
+        }}
+        className="w-full md:w-[360px] h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[15px] font-semibold transition-colors cursor-pointer disabled:opacity-50 block mx-auto"
+        disabled={!!payLoading}
+      >
+        {payLoading
+          ? "Procesando…"
+          : plan === "free"
+          ? "Volver al chat"
+          : "Empezar ahora"}
+      </button>
+    ) : null}
+  </div>
 
-            <div className="mt-2 text-center text-[12px] text-zinc-500">
-  {billing === "topup" ? null : "Cancela cuando quieras"}
+  <div className="mt-2 min-h-[20px] text-center text-[12px] text-zinc-500">
+    {billing === "topup"
+      ? "Elige una recarga para continuar usando Vonu."
+      : "Cancela cuando quieras"}
+  </div>
+
+  <div className="mt-2 min-h-[18px] flex items-center justify-center gap-2 text-[11px] text-zinc-500">
+    <span className="text-blue-700">
+      <ShieldIcon className="h-4 w-4" />
+    </span>
+    <span>Pago seguro con Stripe.</span>
+  </div>
+
+  {isPro && billing !== "topup" ? (
+    <button
+      onClick={cancelSubscriptionFromHere}
+      className="mt-3 w-full h-10 rounded-full border border-red-200 hover:bg-red-50 text-[12px] text-red-700 cursor-pointer disabled:opacity-50"
+      disabled={!!payLoading}
+    >
+      Cancelar suscripción
+    </button>
+  ) : null}
 </div>
-
-            <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
-              <span className="text-blue-700">
-                <ShieldIcon className="h-4 w-4" />
-              </span>
-              <span>Pago seguro con Stripe.</span>
-            </div>
-
-            {isPro && billing !== "topup" ? (
-              <button
-                onClick={cancelSubscriptionFromHere}
-                className="mt-3 w-full h-10 rounded-full border border-red-200 hover:bg-red-50 text-[12px] text-red-700 cursor-pointer disabled:opacity-50"
-                disabled={!!payLoading}
-              >
-                Cancelar suscripción
-              </button>
-            ) : null}
-          </div>
         </div>
       </div>
     </div>
