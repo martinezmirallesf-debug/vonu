@@ -4699,7 +4699,7 @@ return (
   style={{
     scrollbarWidth: "none",
     msOverflowStyle: "none",
-    minHeight: isDesktopPointer() ? 560 : 0,
+    minHeight: isDesktopPointer() ? 500 : 0,
   }}
 >
             {/* BILLING / TABS */}
