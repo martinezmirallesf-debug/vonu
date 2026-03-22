@@ -4673,22 +4673,35 @@ return (
 
             <button
   onClick={closePaywall}
-  className="modal-close-btn h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 cursor-pointer shrink-0 p-0"
+  className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 cursor-pointer shrink-0 p-0 grid place-items-center"
   aria-label="Cerrar"
   disabled={!!payLoading}
 >
-  <span className="block text-[21px] leading-none">×</span>
+  <svg
+    viewBox="0 0 24 24"
+    className="h-[18px] w-[18px]"
+    fill="none"
+    aria-hidden="true"
+  >
+    <path
+      d="M6 6l12 12M18 6L6 18"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+    />
+  </svg>
 </button>
           </div>
 
           {/* SCROLLABLE CONTENT */}
           <div
-            className="paywall-scroll overflow-y-auto px-4 md:px-5 py-4"
-            style={{
-              scrollbarWidth: "none",
-              msOverflowStyle: "none",
-            }}
-          >
+  className="paywall-scroll overflow-y-auto px-4 md:px-5 py-4"
+  style={{
+    scrollbarWidth: "none",
+    msOverflowStyle: "none",
+    minHeight: isDesktopPointer() ? 560 : 0,
+  }}
+>
             {/* BILLING / TABS */}
             <div className="grid grid-cols-3 gap-1 rounded-full border border-zinc-200 p-1 bg-white w-full">
   <button
@@ -4886,9 +4899,11 @@ return (
 
                   <button
   onClick={() => startTopupCheckout("medium")}
-  className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold flex items-center justify-center"
+  className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold p-0"
 >
-  Comprar
+  <span className="flex h-full w-full items-center justify-center leading-none">
+    Comprar
+  </span>
 </button>
                 </div>
 
@@ -4922,9 +4937,11 @@ return (
 
                   <button
   onClick={() => startTopupCheckout("large")}
-  className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold flex items-center justify-center leading-none"
+  className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold p-0"
 >
-  Comprar
+  <span className="flex h-full w-full items-center justify-center leading-none">
+    Comprar
+  </span>
 </button>
                 </div>
 
@@ -4958,10 +4975,12 @@ return (
 
                   <button
   onClick={() => startTopupCheckout("basic")}
-  className="mt-auto pt-4 w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold"
+  className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold p-0"
 >
-                    Comprar
-                  </button>
+  <span className="flex h-full w-full items-center justify-center leading-none">
+    Comprar
+  </span>
+</button>
                 </div>
               </div>
             )}
