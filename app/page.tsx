@@ -1617,9 +1617,51 @@ function handleVoiceMessageForChat(text: string) {
 }
 
 function setVoiceModeOff() {
+  voiceModeRef.current = false;
   setVoiceMode(false);
+  setRealtimeStatus("closed");
+
+  try {
+    realtimeConnRef.current?.stop();
+  } catch {}
+  realtimeConnRef.current = null;
+
+  try {
+    stopMic();
+  } catch {}
+
   stopTTS();
   clearSilenceTimer();
+
+  realtimeLastUserTextRef.current = "";
+  realtimeManualCloseRef.current = false;
+}
+
+function stopConversationModeBeforeTypedSend() {
+  if (!voiceModeRef.current) return;
+
+  realtimeManualCloseRef.current = true;
+
+  try {
+    realtimeConnRef.current?.stop();
+  } catch {}
+  realtimeConnRef.current = null;
+
+  try {
+    stopMic();
+  } catch {}
+
+  voiceModeRef.current = false;
+  setVoiceMode(false);
+  setRealtimeStatus("closed");
+
+  stopTTS();
+  clearSilenceTimer();
+
+  realtimeLastUserTextRef.current = "";
+
+  setMicMsg("Modo conversación desactivado para continuar por escrito.");
+  setTimeout(() => setMicMsg(null), 1800);
 }
 
 function toggleDictation() {
@@ -3619,9 +3661,10 @@ useEffect(() => {
     }
 
 
-    setUiError(null);
-    // ✅ premium turnos: si voiceMode está ON, cerramos micro al enviar (turno de Vonu)
-if (voiceMode) stopMic();
+    // ✅ Si el usuario escribe o lanza un quick prompt, salimos del modo conversación
+if (voiceModeRef.current) {
+  stopConversationModeBeforeTypedSend();
+}
 
 
     // ✅ Guardamos modo en el thread (así el backend recibe el modo correcto)
