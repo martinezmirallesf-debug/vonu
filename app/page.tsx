@@ -4855,9 +4855,9 @@ return (
 
             {/* RECARGAS */}
             {billing === "topup" && (
-  <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch min-h-[420px]">
+  <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch min-h-[360px]">
                 {/* BÁSICA */}
-                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[360px]">
+                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
                   <div className="text-[15px] font-semibold text-zinc-900">
                     Recarga básica
                   </div>
@@ -4868,10 +4868,11 @@ return (
 
                   <div className="mt-4 space-y-2.5">
                     {[
-                      "50 mensajes extra",
-                      "5 min de voz",
-                      "Vuelve a tener margen enseguida",
-                    ].map((item) => (
+  "50 mensajes extra",
+  "5 min de voz",
+  "Pago único",
+  "Vuelve a tener margen enseguida",
+].map((item) => (
                       <div key={item} className="flex items-start gap-2">
                         <span className="mt-[1px] text-blue-600 shrink-0">
                           <CheckIcon className="h-4 w-4" />
@@ -4892,7 +4893,7 @@ return (
                 </div>
 
                 {/* MEDIA */}
-                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[360px]">
+                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
                   <div className="text-[15px] font-semibold text-zinc-900">
                     Recarga media
                   </div>
@@ -4903,10 +4904,11 @@ return (
 
                   <div className="mt-4 space-y-2.5">
                     {[
-                      "150 mensajes extra",
-                      "15 min de voz",
-                      "La opción más equilibrada",
-                    ].map((item) => (
+  "150 mensajes extra",
+  "15 min de voz",
+  "Pago único",
+  "La opción más equilibrada",
+].map((item) => (
                       <div key={item} className="flex items-start gap-2">
                         <span className="mt-[1px] text-blue-600 shrink-0">
                           <CheckIcon className="h-4 w-4" />
@@ -4920,14 +4922,14 @@ return (
 
                   <button
   onClick={() => startTopupCheckout("large")}
-  className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold flex items-center justify-center"
+  className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold flex items-center justify-center leading-none"
 >
   Comprar
 </button>
                 </div>
 
                 {/* GRANDE */}
-                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[360px]">
+                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
                   <div className="text-[15px] font-semibold text-zinc-900">
                     Recarga grande
                   </div>
@@ -4938,10 +4940,11 @@ return (
 
                   <div className="mt-4 space-y-2.5">
                     {[
-                      "400 mensajes extra",
-                      "40 min de voz",
-                      "La mejor para uso intensivo",
-                    ].map((item) => (
+  "400 mensajes extra",
+  "40 min de voz",
+  "Pago único",
+  "La mejor para uso intensivo",
+].map((item) => (
                       <div key={item} className="flex items-start gap-2">
                         <span className="mt-[1px] text-blue-600 shrink-0">
                           <CheckIcon className="h-4 w-4" />
@@ -4971,7 +4974,7 @@ return (
           </div>
 
           {/* FOOTER CTA */}
-          <div className="px-4 md:px-5 pb-4 pt-3 bg-white shrink-0">
+          <div className="px-4 md:px-5 pb-4 pt-2 bg-white shrink-0">
             {billing !== "topup" ? (
               <button
   onClick={() => {
@@ -4993,13 +4996,13 @@ return (
               </button>
             ) : (
               <div className="text-center text-[12px] text-zinc-500">
-                Elige una recarga para continuar usando Vonu.
-              </div>
+  Elige una recarga para continuar usando Vonu.
+</div>
             )}
 
             <div className="mt-2 text-center text-[12px] text-zinc-500">
-              {billing === "topup" ? "Pago único" : "Cancela cuando quieras"}
-            </div>
+  {billing === "topup" ? "" : "Cancela cuando quieras"}
+</div>
 
             <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
               <span className="text-blue-700">
