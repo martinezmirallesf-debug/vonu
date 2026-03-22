@@ -4389,8 +4389,10 @@ return (
     font-size: 0.98em !important;
     line-height: 1.1 !important;
     white-space: normal !important;
+  }
+}
 
-    .paywall-scroll::-webkit-scrollbar {
+.paywall-scroll::-webkit-scrollbar {
   display: none;
 }
 `}</style>
@@ -4671,13 +4673,11 @@ return (
 
             <button
   onClick={closePaywall}
-  className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 cursor-pointer shrink-0 relative p-0"
+  className="modal-close-btn h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 cursor-pointer shrink-0 p-0"
   aria-label="Cerrar"
   disabled={!!payLoading}
 >
-  <span className="absolute inset-0 flex items-center justify-center text-[18px] leading-none translate-x-[0.5px] -translate-y-[1px]">
-  ×
-</span>
+  <span className="block text-[18px] leading-none">×</span>
 </button>
           </div>
 
@@ -4726,7 +4726,7 @@ return (
 </div>
 
             {/* PLANES */}
-            {billing === "topup" && (
+            {billing !== "topup" && (
   <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch">
     {/* FREE */}
     <button
@@ -4884,15 +4884,15 @@ return (
                   </div>
 
                   <button
-  onClick={() => startTopupCheckout("basic")}
+  onClick={() => startTopupCheckout("medium")}
   className="mt-auto pt-4 w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold"
 >
-                    Comprar
-                  </button>
+  Comprar
+</button>
                 </div>
 
                 {/* MEDIA */}
-                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4">
+                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[340px]">
                   <div className="text-[15px] font-semibold text-zinc-900">
                     Recarga media
                   </div>
@@ -4919,15 +4919,15 @@ return (
                   </div>
 
                   <button
-  onClick={() => startTopupCheckout("basic")}
+  onClick={() => startTopupCheckout("large")}
   className="mt-auto pt-4 w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold"
 >
-                    Comprar
-                  </button>
+  Comprar
+</button>
                 </div>
 
                 {/* GRANDE */}
-                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4">
+                <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[340px]">
                   <div className="text-[15px] font-semibold text-zinc-900">
                     Recarga grande
                   </div>
