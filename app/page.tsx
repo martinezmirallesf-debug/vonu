@@ -4748,6 +4748,8 @@ return (
   setBilling={setBilling}
   plan={plan}
   setPlan={setPlan}
+  payLoading={payLoading}
+  startCheckout={startCheckout}
 />
 
 <LoginModal />

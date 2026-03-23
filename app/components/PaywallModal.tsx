@@ -13,6 +13,11 @@ type PaywallModalProps = {
   setPlan: React.Dispatch<
     React.SetStateAction<"free" | "plus" | "max">
   >;
+  payLoading: boolean;
+  startCheckout: (chosen: {
+    plan: "plus" | "max";
+    billing: "monthly" | "yearly";
+  }) => void;
 };
 
 export default function PaywallModal({
@@ -22,6 +27,8 @@ export default function PaywallModal({
   setBilling,
   plan,
   setPlan,
+  payLoading,
+  startCheckout,
 }: PaywallModalProps) {
   if (!paywallOpen) return null;
 
@@ -191,6 +198,38 @@ export default function PaywallModal({
                   </button>
                 </div>
               )}
+                          <div className="px-4 md:px-5 pb-4 pt-3 bg-white shrink-0">
+              <div className="min-h-[48px] flex items-center justify-center">
+                {billing !== "topup" ? (
+                  <button
+                    onClick={() => {
+                      if (payLoading) return;
+
+                      if (plan === "free") {
+                        closePaywall();
+                        return;
+                      }
+
+                      startCheckout({ plan, billing });
+                    }}
+                    className="w-full md:w-[360px] h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[15px] font-semibold transition-colors cursor-pointer disabled:opacity-50 block mx-auto"
+                    disabled={!!payLoading}
+                  >
+                    {payLoading
+                      ? "Procesando…"
+                      : plan === "free"
+                      ? "Volver al chat"
+                      : "Empezar ahora"}
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="mt-2 min-h-[20px] text-center text-[12px] text-zinc-500">
+                {billing === "topup"
+                  ? "Elige una recarga para continuar usando Vonu."
+                  : "Cancela cuando quieras"}
+              </div>
+            </div>
             </div>
           </div>
         </div>
