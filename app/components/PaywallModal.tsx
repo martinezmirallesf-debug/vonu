@@ -5,11 +5,17 @@ import React from "react";
 type PaywallModalProps = {
   paywallOpen: boolean;
   closePaywall: () => void;
+  billing: "monthly" | "yearly" | "topup";
+  setBilling: React.Dispatch<
+    React.SetStateAction<"monthly" | "yearly" | "topup">
+  >;
 };
 
 export default function PaywallModal({
   paywallOpen,
   closePaywall,
+  billing,
+  setBilling,
 }: PaywallModalProps) {
   if (!paywallOpen) return null;
 
@@ -68,8 +74,45 @@ export default function PaywallModal({
               </button>
             </div>
 
-            <div className="p-6 text-sm text-zinc-500">
-              Aquí seguirá el contenido del paywall.
+            <div className="px-4 md:px-5 py-4">
+              <div className="grid grid-cols-3 gap-1 rounded-full border border-zinc-200 p-1 bg-white w-full">
+                <button
+                  onClick={() => setBilling("monthly")}
+                  className={`h-10 rounded-full text-[14px] font-semibold transition-colors ${
+                    billing === "monthly"
+                      ? "bg-blue-600 text-white"
+                      : "text-zinc-700 hover:bg-zinc-100"
+                  }`}
+                >
+                  Mensual
+                </button>
+
+                <button
+                  onClick={() => setBilling("yearly")}
+                  className={`h-10 rounded-full text-[14px] font-semibold transition-colors ${
+                    billing === "yearly"
+                      ? "bg-blue-600 text-white"
+                      : "text-zinc-700 hover:bg-zinc-100"
+                  }`}
+                >
+                  Anual
+                </button>
+
+                <button
+                  onClick={() => setBilling("topup")}
+                  className={`h-10 rounded-full text-[14px] font-semibold transition-colors ${
+                    billing === "topup"
+                      ? "bg-blue-600 text-white"
+                      : "text-zinc-700 hover:bg-zinc-100"
+                  }`}
+                >
+                  Recargas
+                </button>
+              </div>
+
+              <div className="p-6 text-sm text-zinc-500">
+                Aquí seguirá el contenido del paywall.
+              </div>
             </div>
           </div>
         </div>
