@@ -18,6 +18,7 @@ type PaywallModalProps = {
     plan: "plus" | "max";
     billing: "monthly" | "yearly";
   }) => void;
+  startTopupCheckout: (pack: "basic" | "medium" | "large") => void;
 };
 
 export default function PaywallModal({
@@ -29,6 +30,7 @@ export default function PaywallModal({
   setPlan,
   payLoading,
   startCheckout,
+  startTopupCheckout,
 }: PaywallModalProps) {
   if (!paywallOpen) return null;
 
@@ -123,79 +125,82 @@ export default function PaywallModal({
                 </button>
               </div>
 
-              {billing !== "topup" && (
+                            {billing === "topup" && (
                 <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch px-1">
-                  {/* FREE */}
-                  <button
-                    onClick={() => setPlan("free")}
-                    className={[
-                      "w-full text-left rounded-[22px] border px-4 py-4 transition-all h-full flex flex-col",
-                      plan === "free"
-                        ? "border-blue-600 bg-blue-50"
-                        : "border-zinc-200 bg-white hover:bg-zinc-50",
-                    ].join(" ")}
-                  >
+                  {/* BÁSICA */}
+                  <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[280px]">
                     <div className="text-[15px] font-semibold text-zinc-900">
-                      Gratis
-                    </div>
-                    <div className="mt-1 text-[28px] leading-none font-extrabold tracking-tight text-zinc-900">
-                      0€
+                      Recarga básica
                     </div>
 
-                    <div className="mt-4 space-y-2 text-[13px] text-zinc-800">
-                      <div>20 mensajes al mes</div>
-                      <div>Analiza mensajes y situaciones</div>
-                      <div>Pruébalo sin compromiso</div>
-                    </div>
-                  </button>
-
-                  {/* PLUS */}
-                  <button
-                    onClick={() => setPlan("plus")}
-                    className={[
-                      "w-full text-left rounded-[22px] border px-4 py-4 transition-all h-full flex flex-col",
-                      plan === "plus"
-                        ? "border-blue-600 bg-blue-50"
-                        : "border-zinc-200 bg-white hover:bg-zinc-50",
-                    ].join(" ")}
-                  >
-                    <div className="text-[15px] font-semibold text-zinc-900">
-                      Plus
-                    </div>
                     <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
-                      {billing === "monthly" ? "9,99€" : "79,99€"}
+                      2,99€
                     </div>
 
-                    <div className="mt-4 space-y-2 text-[13px] text-zinc-800">
-                      <div>250 mensajes al mes</div>
+                    <div className="mt-4 space-y-2.5 text-[13px] text-zinc-800">
+                      <div>50 mensajes extra</div>
+                      <div>5 min de voz</div>
+                      <div>Pago único</div>
+                      <div>Vuelve a tener margen enseguida</div>
+                    </div>
+
+                    <button
+                      onClick={() => startTopupCheckout("basic")}
+                      className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold"
+                    >
+                      Comprar
+                    </button>
+                  </div>
+
+                  {/* MEDIA */}
+                  <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[280px]">
+                    <div className="text-[15px] font-semibold text-zinc-900">
+                      Recarga media
+                    </div>
+
+                    <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+                      6,99€
+                    </div>
+
+                    <div className="mt-4 space-y-2.5 text-[13px] text-zinc-800">
+                      <div>150 mensajes extra</div>
                       <div>15 min de voz</div>
-                      <div>Modo tutor</div>
+                      <div>Pago único</div>
+                      <div>La opción más equilibrada</div>
                     </div>
-                  </button>
 
-                  {/* MAX */}
-                  <button
-                    onClick={() => setPlan("max")}
-                    className={[
-                      "w-full text-left rounded-[22px] border px-4 py-4 transition-all h-full flex flex-col",
-                      plan === "max"
-                        ? "border-blue-600 bg-blue-50"
-                        : "border-zinc-200 bg-white hover:bg-zinc-50",
-                    ].join(" ")}
-                  >
+                    <button
+                      onClick={() => startTopupCheckout("medium")}
+                      className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold"
+                    >
+                      Comprar
+                    </button>
+                  </div>
+
+                  {/* GRANDE */}
+                  <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[280px]">
                     <div className="text-[15px] font-semibold text-zinc-900">
-                      Max
-                    </div>
-                    <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
-                      {billing === "monthly" ? "19,99€" : "159,99€"}
+                      Recarga grande
                     </div>
 
-                    <div className="mt-4 space-y-2 text-[13px] text-zinc-800">
-                      <div>800 mensajes al mes</div>
-                      <div>45 min de voz</div>
-                      <div>Uso intensivo</div>
+                    <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+                      14,99€
                     </div>
-                  </button>
+
+                    <div className="mt-4 space-y-2.5 text-[13px] text-zinc-800">
+                      <div>400 mensajes extra</div>
+                      <div>40 min de voz</div>
+                      <div>Pago único</div>
+                      <div>La mejor para uso intensivo</div>
+                    </div>
+
+                    <button
+                      onClick={() => startTopupCheckout("large")}
+                      className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold"
+                    >
+                      Comprar
+                    </button>
+                  </div>
                 </div>
               )}
                           <div className="px-4 md:px-5 pb-4 pt-3 bg-white shrink-0">
