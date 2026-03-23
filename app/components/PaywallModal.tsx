@@ -9,6 +9,10 @@ type PaywallModalProps = {
   setBilling: React.Dispatch<
     React.SetStateAction<"monthly" | "yearly" | "topup">
   >;
+  plan: "free" | "plus" | "max";
+  setPlan: React.Dispatch<
+    React.SetStateAction<"free" | "plus" | "max">
+  >;
 };
 
 export default function PaywallModal({
@@ -16,6 +20,8 @@ export default function PaywallModal({
   closePaywall,
   billing,
   setBilling,
+  plan,
+  setPlan,
 }: PaywallModalProps) {
   if (!paywallOpen) return null;
 
@@ -110,9 +116,81 @@ export default function PaywallModal({
                 </button>
               </div>
 
-              <div className="p-6 text-sm text-zinc-500">
-                Aquí seguirá el contenido del paywall.
-              </div>
+              {billing !== "topup" && (
+                <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch px-1">
+                  {/* FREE */}
+                  <button
+                    onClick={() => setPlan("free")}
+                    className={[
+                      "w-full text-left rounded-[22px] border px-4 py-4 transition-all h-full flex flex-col",
+                      plan === "free"
+                        ? "border-blue-600 bg-blue-50"
+                        : "border-zinc-200 bg-white hover:bg-zinc-50",
+                    ].join(" ")}
+                  >
+                    <div className="text-[15px] font-semibold text-zinc-900">
+                      Gratis
+                    </div>
+                    <div className="mt-1 text-[28px] leading-none font-extrabold tracking-tight text-zinc-900">
+                      0€
+                    </div>
+
+                    <div className="mt-4 space-y-2 text-[13px] text-zinc-800">
+                      <div>20 mensajes al mes</div>
+                      <div>Analiza mensajes y situaciones</div>
+                      <div>Pruébalo sin compromiso</div>
+                    </div>
+                  </button>
+
+                  {/* PLUS */}
+                  <button
+                    onClick={() => setPlan("plus")}
+                    className={[
+                      "w-full text-left rounded-[22px] border px-4 py-4 transition-all h-full flex flex-col",
+                      plan === "plus"
+                        ? "border-blue-600 bg-blue-50"
+                        : "border-zinc-200 bg-white hover:bg-zinc-50",
+                    ].join(" ")}
+                  >
+                    <div className="text-[15px] font-semibold text-zinc-900">
+                      Plus
+                    </div>
+                    <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+                      {billing === "monthly" ? "9,99€" : "79,99€"}
+                    </div>
+
+                    <div className="mt-4 space-y-2 text-[13px] text-zinc-800">
+                      <div>250 mensajes al mes</div>
+                      <div>15 min de voz</div>
+                      <div>Modo tutor</div>
+                    </div>
+                  </button>
+
+                  {/* MAX */}
+                  <button
+                    onClick={() => setPlan("max")}
+                    className={[
+                      "w-full text-left rounded-[22px] border px-4 py-4 transition-all h-full flex flex-col",
+                      plan === "max"
+                        ? "border-blue-600 bg-blue-50"
+                        : "border-zinc-200 bg-white hover:bg-zinc-50",
+                    ].join(" ")}
+                  >
+                    <div className="text-[15px] font-semibold text-zinc-900">
+                      Max
+                    </div>
+                    <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+                      {billing === "monthly" ? "19,99€" : "159,99€"}
+                    </div>
+
+                    <div className="mt-4 space-y-2 text-[13px] text-zinc-800">
+                      <div>800 mensajes al mes</div>
+                      <div>45 min de voz</div>
+                      <div>Uso intensivo</div>
+                    </div>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

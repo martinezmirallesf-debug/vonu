@@ -4746,6 +4746,8 @@ return (
   closePaywall={closePaywall}
   billing={billing}
   setBilling={setBilling}
+  plan={plan}
+  setPlan={setPlan}
 />
 
 <LoginModal />
