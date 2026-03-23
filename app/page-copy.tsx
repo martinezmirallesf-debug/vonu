@@ -3,12 +3,25 @@
 
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { Children, Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
 import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+
+import PaywallModal from "./components/PaywallModal";
+import LoginModal from "./components/LoginModal";
+
+
 import ChalkboardTutorBoard from "@/app/components/ChalkboardTutorBoard";
+import {
+  startRealtimeVoice,
+  type RealtimeVoiceConnection,
+  type RealtimeVoiceStatus,
+} from "@/app/lib/realtimeVoice";
+import { makeVoiceWriteGuard } from "@/app/lib/voiceWriteIntent";
 
 
 type Placement = { x: number; y: number; w: number; h: number };
@@ -103,8 +116,8 @@ function makeTitleFromText(text: string) {
 const STORAGE_KEY = "vonu_threads_v2";
 const HOME_URL = "https://vonuai.com";
 
-// ✅ regla: tras 2 análisis, pedir login/pago
-const FREE_MESSAGE_LIMIT = 2;
+// ✅ regla: tras 1 mensaje, pedir login/pago
+const GUEST_MESSAGE_LIMIT = 1;
 
 function isDesktopPointer() {
   if (typeof window === "undefined") return true;
@@ -112,24 +125,53 @@ function isDesktopPointer() {
 }
 
 function Fraction({ a, b }: { a: string; b: string }) {
+  const top = String(a ?? "").trim();
+  const bottom = String(b ?? "").trim();
+
+  const maxLen = Math.max(top.length, bottom.length);
+  const dynamicWidth = Math.max(24, Math.min(88, maxLen * 7.5));
+
   return (
-    <span className="inline-flex align-middle mx-[2px]" style={{ transform: "translateY(1px)" }}>
-      <span className="inline-flex flex-col items-center leading-none">
-        <span className="text-[0.90em] font-semibold">{a}</span>
-        <span className="h-[1px] w-[1.15em] bg-zinc-900/70 my-[1px]" />
-        <span className="text-[0.90em] font-semibold">{b}</span>
+    <span
+      className="inline-flex align-middle mx-[5px]"
+      style={{ transform: "translateY(3px)" }}
+    >
+      <span
+        className="inline-flex flex-col items-center justify-center"
+        style={{ lineHeight: 1.18, minWidth: `${dynamicWidth}px` }}
+      >
+        <span className="text-[0.92em] font-semibold text-center px-[3px] pb-[1px]">
+          {top}
+        </span>
+        <span
+  className="h-[1.5px] my-[3px] rounded-full bg-current"
+  style={{ width: `${dynamicWidth}px`, opacity: 0.9 }}
+/>
+        <span className="text-[0.92em] font-semibold text-center px-[3px] pt-[1px]">
+          {bottom}
+        </span>
       </span>
     </span>
   );
 }
 
 function renderTextWithFractions(text: string) {
-  // Convierte "12/5" => fracción vertical.
-  // Nota: evitamos tocar texto vacío.
   const s = String(text ?? "");
   if (!s) return s;
 
-  const re = /(\d+)\s*\/\s*(\d+)/g;
+  // ✅ SOLO convierte fracciones matemáticas reales:
+  // - 1/4
+  // - 21/36
+  // - (1 × 9)/(4 × 9)
+  // - (9 + 12)/36
+  //
+  // ❌ NO convierte unidades o ratios tipo:
+  // - km/h
+  // - m/s
+  // - kg/m3
+  // - N/m
+  const re = /(\([^()\n]+\)|\d+)\s*\/\s*(\([^()\n]+\)|\d+)/g;
+
   const parts: Array<string | { a: string; b: string }> = [];
 
   let last = 0;
@@ -140,7 +182,19 @@ function renderTextWithFractions(text: string) {
     const end = re.lastIndex;
 
     if (start > last) parts.push(s.slice(last, start));
-    parts.push({ a: m[1], b: m[2] });
+
+    const a = String(m[1] ?? "").trim();
+    const b = String(m[2] ?? "").trim();
+
+    const isPureNumericOrParen =
+      (/^\d+$/.test(a) || /^\([^()\n]+\)$/.test(a)) &&
+      (/^\d+$/.test(b) || /^\([^()\n]+\)$/.test(b));
+
+    if (isPureNumericOrParen) {
+      parts.push({ a, b });
+    } else {
+      parts.push(s.slice(start, end));
+    }
 
     last = end;
   }
@@ -150,6 +204,35 @@ function renderTextWithFractions(text: string) {
   return parts.map((p, i) => {
     if (typeof p === "string") return <span key={i}>{p}</span>;
     return <Fraction key={i} a={p.a} b={p.b} />;
+  });
+}
+
+function renderChildrenWithFractions(children: ReactNode): ReactNode {
+  return Children.map(children, (child, index) => {
+    if (typeof child === "string") {
+      return <Fragment key={index}>{renderTextWithFractions(child)}</Fragment>;
+    }
+
+    if (typeof child === "number") {
+      return <Fragment key={index}>{renderTextWithFractions(String(child))}</Fragment>;
+    }
+
+    if (!child || typeof child !== "object") {
+      return child;
+    }
+
+    // ✅ Si es un elemento React con hijos, recorremos también sus hijos
+    if (React.isValidElement(child)) {
+      const el = child as React.ReactElement<any>;
+
+      if (!el.props?.children) return child;
+
+      return React.cloneElement(el, {
+        children: renderChildrenWithFractions(el.props.children),
+      });
+    }
+
+    return child;
   });
 }
 
@@ -297,22 +380,38 @@ function normalizeAssistantText(text: string) {
 function sanitizeTutorLikeImage(text: string) {
   let s = String(text ?? "");
 
-  // Quitar envoltorios típicos de LaTeX inline/display
-  s = s.replace(/\\\(|\\\)|\\\[|\\\]/g, "");
-
-  // Convertir \frac{a}{b} => a/b
-  s = s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "$1/$2");
-
-  // Convertir \times y \cdot si cuela alguno
-  s = s.replace(/\\times/g, "×");
-  s = s.replace(/\\cdot/g, "·");
-
   // Normalizar saltos
   s = s.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n");
 
   return s.trim();
 }
 
+function normalizeMathMarkdown(text: string) {
+  let s = String(text ?? "");
+
+  // Normalizar saltos
+  s = s.replace(/\r\n/g, "\n");
+
+  // \[ ... \]  -> $$ ... $$
+  s = s.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_match, expr) => {
+    return `\n$$\n${String(expr).trim()}\n$$\n`;
+  });
+
+  // \( ... \) -> $ ... $
+  s = s.replace(/\\\(\s*([\s\S]*?)\s*\\\)/g, (_match, expr) => {
+    return `$${String(expr).trim()}$`;
+  });
+
+  // Si a veces llega como [ ... ] y dentro hay LaTeX claro, también lo convertimos
+  s = s.replace(/^\[\s*(\\[\s\S]+?)\s*\]$/gm, (_match, expr) => {
+    return `$$${String(expr).trim()}$$`;
+  });
+
+  // compactar saltos excesivos
+  s = s.replace(/\n{3,}/g, "\n\n");
+
+  return s.trim();
+}
 
 
 // ===== TUTOR (detección ligera frontend) =====
@@ -378,11 +477,46 @@ function inferTutorLevel(text: string): TutorLevel {
 
 function MicIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M7 11a5 5 0 0 0 10 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M12 16v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M9 20h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <svg
+      className={className ?? "h-5 w-5"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      {/* cápsula superior */}
+      <rect
+        x="9"
+        y="3.6"
+        width="6"
+        height="10.5"
+        rx="3"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+
+      {/* arco más abierto */}
+      <path
+        d="M5.5 11.8c0 4.1 3 7 6.5 7s6.5-2.9 6.5-7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+
+      {/* palo ligeramente más largo */}
+      <path
+        d="M12 19.3v2.5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+
+      {/* base */}
+      <path
+        d="M9 21.8h6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -461,19 +595,23 @@ export default function Page() {
   const [isPro, setIsPro] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
 
-  // ✅ Paywall como en la foto: anual / mensual / seguir gratis
-  const [plan, setPlan] = useState<"monthly" | "yearly" | "free">("yearly");
-  const [payLoading, setPayLoading] = useState(false);
-  const [payMsg, setPayMsg] = useState<string | null>(null);
+// ✅ Paywall final: plan + facturación
+const [billing, setBilling] = useState<"monthly" | "yearly" | "topup">("monthly");
+const [plan, setPlan] = useState<"plus" | "max" | "free">("plus");
+const [payLoading, setPayLoading] = useState(false);
+const [payMsg, setPayMsg] = useState<string | null>(null);
 
-  // ✅ Si el usuario intenta pagar estando logout, guardamos el plan y tras login lanzamos checkout
-  const [pendingCheckoutPlan, setPendingCheckoutPlan] = useState<"monthly" | "yearly" | null>(null);
+// ✅ Si el usuario intenta pagar estando logout, guardamos plan + billing y tras login lanzamos checkout
+const [pendingCheckout, setPendingCheckout] = useState<{
+  plan: "plus" | "max";
+  billing: "monthly" | "yearly";
+} | null>(null);
 
   // Mensaje post-checkout
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const isLoggedIn = !authLoading && !!authUserId;
-  const isBlockedByPaywall = !authLoading && !!authUserId && !proLoading && !isPro;
+  const isBlockedByPaywall = false;
 
   // ===== Copy marketing (visible) =====
   const PLUS_TEXT = "Plus+";
@@ -594,6 +732,39 @@ export default function Page() {
       setProLoading(false);
     }
   }
+
+  async function refreshUsageInfo() {
+  try {
+    const { data } = await supabaseBrowser.auth.getSession();
+    const token = data?.session?.access_token;
+
+    if (!token) {
+      setUsageInfo(null);
+      return;
+    }
+
+    const res = await fetch("/api/usage/status", {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+
+    const json = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      setUsageInfo(null);
+      return;
+    }
+
+    if (json?.usage) {
+      setUsageInfo(json.usage);
+    } else {
+      setUsageInfo(null);
+    }
+  } catch {
+    setUsageInfo(null);
+  }
+}
 
   function computeProfileFromUser(u: any) {
     const { identityData } = bestIdentityFromUser(u);
@@ -794,8 +965,9 @@ export default function Page() {
 
     (async () => {
       await handleOAuthReturnIfPresent();
-      await refreshAuthSession();
-      await refreshProStatus();
+await refreshAuthSession();
+await refreshProStatus();
+await refreshUsageInfo();
 
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
         const u = session?.user;
@@ -820,8 +992,9 @@ export default function Page() {
         setAuthUserName(profile.name);
 
         setTimeout(() => {
-          refreshProStatus();
-        }, 80);
+  refreshProStatus();
+  refreshUsageInfo();
+}, 80);
       });
 
       unsub = () => sub.subscription.unsubscribe();
@@ -846,7 +1019,8 @@ export default function Page() {
       busy = true;
       try {
         await refreshAuthSession();
-        await refreshProStatus();
+await refreshProStatus();
+await refreshUsageInfo();
       } finally {
         busy = false;
       }
@@ -877,20 +1051,53 @@ export default function Page() {
 
   // ✅ Si acabamos de loguearnos y había un checkout pendiente, lanzarlo automáticamente
   useEffect(() => {
-    if (authLoading) return;
-    if (!isLoggedIn) return;
-    if (!pendingCheckoutPlan) return;
+  if (authLoading) return;
+  if (!isLoggedIn) return;
+  if (!pendingCheckout) return;
 
-    setLoginOpen(false);
+  setLoginOpen(false);
 
-    const chosen = pendingCheckoutPlan;
-    setPendingCheckoutPlan(null);
+  const chosen = pendingCheckout;
+  setPendingCheckout(null);
 
-    setTimeout(() => {
-      startCheckout(chosen);
-    }, 120);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, isLoggedIn, pendingCheckoutPlan]);
+  setTimeout(() => {
+    startCheckout(chosen);
+  }, 120);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [authLoading, isLoggedIn, pendingCheckout]);
+
+async function startTopupCheckout(pack: "basic" | "medium" | "large") {
+  try {
+    const { data } = await supabaseBrowser.auth.getSession();
+    const token = data?.session?.access_token;
+
+    if (!token) {
+      setPayMsg("Para comprar una recarga, inicia sesión.");
+      openLoginModal("signin");
+      return;
+    }
+
+    const res = await fetch("/api/stripe/topup/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+      body: JSON.stringify({ pack }),
+    });
+
+    const json = await res.json().catch(() => ({}));
+
+    if (!res.ok || !json?.url) {
+      throw new Error(json?.error || "No se pudo iniciar la recarga.");
+    }
+
+    window.location.href = json.url;
+  } catch (e: any) {
+    setPayMsg(e?.message ?? "No se pudo iniciar la recarga.");
+  }
+}
 
   // Detectar retorno de Stripe (?checkout=success|cancel)
   useEffect(() => {
@@ -928,43 +1135,54 @@ export default function Page() {
   }, [loginOpen]);
 
   function openLoginModal(mode: AuthCardMode = "signin") {
-    setLoginMsg(null);
-    setAuthMode(mode);
-    setLoginOpen(true);
+  setLoginMsg(null);
+  setAuthMode(mode);
+  setLoginOpen(true);
+
+  if (isLoggedIn) {
+    refreshUsageInfo();
   }
+}
 
   function openPlansModal() {
-    setPayMsg(null);
-    // si ya es Pro, por defecto marcamos "Seguir gratis"
-    setPlan(isPro ? "free" : "yearly");
-    setPaywallOpen(true);
-  }
+  setPayMsg(null);
+  setBilling("monthly");
+  setPlan(isPro ? "free" : "plus");
+  setPaywallOpen(true);
+}
 
   function handleOpenPlansCTA() {
     openPlansModal();
   }
 
-  async function startCheckout(chosen: "monthly" | "yearly") {
-    setPayLoading(true);
-    setPayMsg(null);
-    try {
-      const { data } = await supabaseBrowser.auth.getSession();
-      const token = data?.session?.access_token;
+  async function startCheckout(chosen: {
+  plan: "plus" | "max";
+  billing: "monthly" | "yearly";
+}) {
+  setPayLoading(true);
+  setPayMsg(null);
 
-      if (!token) {
-        setPayLoading(false);
-        setPayMsg("Para continuar al pago, inicia sesión.");
-        setPendingCheckoutPlan(chosen);
-        openLoginModal("signin");
-        return;
-      }
+  try {
+    const { data } = await supabaseBrowser.auth.getSession();
+    const token = data?.session?.access_token;
 
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        cache: "no-store",
-        body: JSON.stringify({ plan: chosen }),
-      });
+    if (!token) {
+      setPayLoading(false);
+      setPayMsg("Para continuar al pago, inicia sesión.");
+      setPendingCheckout(chosen);
+      openLoginModal("signin");
+      return;
+    }
+
+    const res = await fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+      body: JSON.stringify(chosen),
+    });
 
       const raw = await res.text().catch(() => "");
       let json: any = null;
@@ -1133,22 +1351,28 @@ export default function Page() {
   }
 
   async function logout() {
-    try {
-      await supabaseBrowser.auth.signOut();
-      setAuthUserEmail(null);
-      setAuthUserId(null);
-      setAuthUserName(null);
-      setIsPro(false);
-      setPaywallOpen(false);
-      setPendingCheckoutPlan(null);
-      setAuthLoading(false);
-    } catch {}
-  }
+  try {
+    await supabaseBrowser.auth.signOut();
+    setAuthUserEmail(null);
+    setAuthUserId(null);
+    setAuthUserName(null);
+    setIsPro(false);
+    setPaywallOpen(false);
+    setPendingCheckout(null);
+    setAuthLoading(false);
+  } catch {}
+}
 
   // -------- Persistencia local --------
-  const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
-  const [activeThreadId, setActiveThreadId] = useState<string>("");
-  const activeThreadIdRef = useRef<string>("");
+const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
+const threadsRef = useRef<ChatThread[]>([]);
+const [activeThreadId, setActiveThreadId] = useState<string>("");
+const activeThreadIdRef = useRef<string>("");
+
+useEffect(() => {
+  threadsRef.current = threads;
+}, [threads]);
+
 
   useEffect(() => {
     try {
@@ -1199,8 +1423,23 @@ export default function Page() {
 const [ttsEnabled, setTtsEnabled] = useState(false);
 const [ttsSpeaking, setTtsSpeaking] = useState(false);
 
-// ✅ Modo conversación (voz + hablar por turnos)
+// ✅ Modo conversación (nuevo: OpenAI Realtime)
 const [voiceMode, setVoiceMode] = useState(false);
+const [realtimeStatus, setRealtimeStatus] = useState<RealtimeVoiceStatus>("idle");
+const realtimeConnRef = useRef<RealtimeVoiceConnection | null>(null);
+const realtimeLastUserTextRef = useRef<string>("");
+const realtimeWriteBusyRef = useRef(false);
+const voiceWriteGuardRef = useRef(makeVoiceWriteGuard());
+const realtimeManualCloseRef = useRef(false);
+
+// ✅ Anti-eco: tras hablar (TTS), esperamos antes de escuchar
+const ttsCooldownUntilRef = useRef<number>(0);
+
+// helper
+function inTtsCooldown() {
+  return Date.now() < (ttsCooldownUntilRef.current || 0);
+}
+
 
 const voiceModeRef = useRef(false);
 
@@ -1208,12 +1447,237 @@ useEffect(() => {
   voiceModeRef.current = voiceMode;
 }, [voiceMode]);
 
+useEffect(() => {
+  return () => {
+    try {
+      realtimeConnRef.current?.stop();
+    } catch {}
+    realtimeConnRef.current = null;
+  };
+}, []);
+
+function appendRealtimeUserMessage(text: string) {
+  const clean = String(text ?? "").trim();
+  console.log("[VOICE] appendRealtimeUserMessage", clean);
+
+  if (!clean) return;
+  if (clean.length < 2) return;
+
+  const threadId = activeThread?.id;
+  if (!threadId) return;
+
+  setThreads((prev) =>
+    prev.map((t) => {
+      if (t.id !== threadId) return t;
+
+      const last = t.messages[t.messages.length - 1];
+      const lastText = (last?.text ?? "").trim();
+
+      if (last?.role === "user") {
+        const normLast = normalizeSendText(lastText);
+        const normClean = normalizeSendText(clean);
+
+        if (normLast === normClean) return t;
+
+        // Si el nuevo texto contiene al anterior, sustituimos el último en vez de añadir otro
+        if (normLast && normClean.includes(normLast)) {
+          return {
+            ...t,
+            updatedAt: Date.now(),
+            messages: [
+              ...t.messages.slice(0, -1),
+              {
+                ...last,
+                text: clean,
+              },
+            ],
+          };
+        }
+      }
+
+      return {
+        ...t,
+        updatedAt: Date.now(),
+        messages: [
+          ...t.messages,
+          {
+            id: crypto.randomUUID(),
+            role: "user",
+            text: clean,
+            streaming: false,
+            pizarra: null,
+            boardImageB64: null,
+            boardImagePlacement: null,
+          },
+        ],
+      };
+    })
+  );
+
+  shouldStickToBottomRef.current = true;
+}
+
+function appendRealtimeAssistantMessage(text: string) {
+  const clean = normalizeAssistantText(String(text ?? "").trim());
+
+  console.log("[VOICE] appendRealtimeAssistantMessage IN", {
+    raw: text,
+    clean,
+    activeThreadIdRef: activeThreadIdRef.current,
+    activeThreadIdState: activeThread?.id,
+  });
+
+  if (!clean) return;
+
+  const threadId = activeThread?.id;
+  if (!threadId) {
+    console.log("[VOICE] appendRealtimeAssistantMessage NO_THREAD");
+    return;
+  }
+
+  setThreads((prev) => {
+    console.log(
+      "[VOICE] appendRealtimeAssistantMessage setThreads BEFORE",
+      prev.map((t) => ({
+        id: t.id,
+        count: t.messages.length,
+      }))
+    );
+
+    const next = prev.map((t) => {
+      if (t.id !== threadId) return t;
+
+      const last = t.messages[t.messages.length - 1];
+      const lastText = (last?.text ?? "").trim();
+
+      if (last?.role === "assistant" && lastText === clean) {
+        console.log("[VOICE] appendRealtimeAssistantMessage BLOCK_DUPLICATE", {
+          threadId,
+          clean,
+        });
+        return t;
+      }
+
+      const updated = {
+        ...t,
+        updatedAt: Date.now(),
+        messages: [
+          ...t.messages,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant" as const,
+            text: clean,
+            streaming: false,
+            pizarra: null,
+            boardImageB64: null,
+            boardImagePlacement: null,
+          },
+        ],
+      };
+
+      console.log("[VOICE] appendRealtimeAssistantMessage APPENDED", {
+        threadId,
+        newCount: updated.messages.length,
+        text: clean,
+      });
+
+      return updated;
+    });
+
+    return next;
+  });
+
+  shouldStickToBottomRef.current = true;
+}
+
+async function createWrittenReplyFromVoice(_userText: string) {
+  // ✅ Desactivado:
+  // en modo conversación usamos la respuesta nativa de Realtime,
+  // y esa misma se pinta en el chat con onAssistantFinalText.
+  return;
+}
+
+function handleVoiceMessageForChat(text: string) {
+  const clean = (text ?? "").trim();
+  console.log("[VOICE] handleVoiceMessageForChat IN", clean);
+
+  if (!voiceModeRef.current) return;
+  if (!clean) return;
+
+  const prev = normalizeSendText(realtimeLastUserTextRef.current || "");
+  const next = normalizeSendText(clean);
+
+  if (prev && prev === next) {
+    console.log("[VOICE] blocked duplicate", { prev, next });
+    return;
+  }
+
+  realtimeLastUserTextRef.current = clean;
+
+  // ✅ Solo pintamos en chat lo que tú has dicho.
+  // ❌ NO pedimos una segunda respuesta escrita por /api/chat.
+  appendRealtimeUserMessage(clean);
+}
+
+function sendTextToRealtime(text: string) {
+  const clean = String(text ?? "").trim();
+  if (!clean) return;
+
+  try {
+    realtimeLastUserTextRef.current = clean;
+    realtimeConnRef.current?.sendText(clean);
+  } catch (e) {
+    console.error("Error enviando texto a realtime:", e);
+  }
+}
+
 
 function setVoiceModeOff() {
+  voiceModeRef.current = false;
   setVoiceMode(false);
+  setRealtimeStatus("closed");
+
+  try {
+    realtimeConnRef.current?.stop();
+  } catch {}
+  realtimeConnRef.current = null;
+
+  try {
+    stopMic();
+  } catch {}
+
   stopTTS();
-  stopMic();
   clearSilenceTimer();
+
+  realtimeLastUserTextRef.current = "";
+  realtimeManualCloseRef.current = false;
+}
+
+function stopConversationModeBeforeTypedSend() {
+  if (!voiceModeRef.current) return;
+
+  realtimeManualCloseRef.current = true;
+
+  try {
+    realtimeConnRef.current?.stop();
+  } catch {}
+  realtimeConnRef.current = null;
+
+  try {
+    stopMic();
+  } catch {}
+
+  voiceModeRef.current = false;
+  setVoiceMode(false);
+  setRealtimeStatus("closed");
+
+  stopTTS();
+  clearSilenceTimer();
+
+  realtimeLastUserTextRef.current = "";
+
+  setMicMsg("Modo conversación desactivado para continuar por escrito.");
+  setTimeout(() => setMicMsg(null), 1800);
 }
 
 function toggleDictation() {
@@ -1237,54 +1701,151 @@ function toggleDictation() {
   toggleMic();
 }
 
-function toggleConversation() {
-  if (!speechSupported) {
-    setMicMsg("Tu navegador no soporta modo conversación (micro). Prueba Chrome/Edge.");
+async function toggleConversation() {
+  const supportsMic =
+    typeof navigator !== "undefined" &&
+    !!navigator.mediaDevices &&
+    !!navigator.mediaDevices.getUserMedia;
+
+
+
+  // ✅ SI YA ESTÁ ACTIVO, PRIMERO APAGAR SIEMPRE
+  if (voiceModeRef.current) {
+    realtimeManualCloseRef.current = true;
+
+    try {
+      realtimeConnRef.current?.stop();
+    } catch {}
+    realtimeConnRef.current = null;
+
+    voiceModeRef.current = false;
+    setVoiceMode(false);
+    setRealtimeStatus("closed");
+
+    setTtsEnabled(false);
+    stopTTS();
+    clearSilenceTimer();
+
+    setMicMsg("Modo conversación desactivado.");
+    setTimeout(() => setMicMsg(null), 1800);
+    return;
+  }
+
+  // ✅ A partir de aquí solo estamos intentando ENCENDERLO
+  if (!isLoggedIn) {
+    setMicMsg("Debes iniciar sesión para usar el modo conversación.");
+    setTimeout(() => setMicMsg(null), 2400);
+    openLoginModal("signin");
+    return;
+  }
+
+  if (usageInfo && !["plus", "max"].includes(usageInfo.plan_id)) {
+  setMicMsg("El modo conversación por voz no está disponible en tu plan actual.");
+  setTimeout(() => setMicMsg(null), 2800);
+  handleOpenPlansCTA();
+  return;
+}
+
+  if (!supportsMic) {
+    setMicMsg("Tu navegador no soporta micrófono en este modo.");
     setTimeout(() => setMicMsg(null), 2400);
     return;
   }
 
-  if (!supportsTTS()) {
-  setMicMsg("Tu navegador no soporta voz (TTS). Prueba Safari en iPhone o Chrome/Edge en desktop.");
-  setTimeout(() => setMicMsg(null), 2600);
-  return; // ✅ CLAVE: sin TTS no activamos conversación
-}
+  try {
+    stopTTS();
+  } catch {}
 
+  try {
+    stopMic();
+  } catch {}
 
-  if (voiceModeRef.current) {
-  // OFF (blindado)
-  voiceModeRef.current = false;
-  setVoiceMode(false);
-  setTtsEnabled(false);
+  setListeningPurpose(null);
+  setIsListening(false);
   clearSilenceTimer();
-  stopMic();
-  stopTTS();
-  return;
-}
 
+  realtimeLastUserTextRef.current = "";
 
-  // ✅ Si estaba dictando, paramos el micro antes de entrar en conversación
-  if (isListening) stopMic();
+  setMicMsg("Conectando con Vonu por voz…");
+  setRealtimeStatus("connecting");
 
-// ON
-voiceModeRef.current = true;
-setVoiceMode(true);
+  try {
+    const conn = await startRealtimeVoice({
+      onStatus: (status) => {
+        setRealtimeStatus(status);
 
-setTtsEnabled(true);
+        if (status === "connected") {
+          setMicMsg("🟢 Conectado. Habla cuando quieras.");
+        }
 
-// ✅ desbloquear TTS tras el click (sin cancelar la voz real)
-primeTTSAsync({ hardCancel: true });
-setTimeout(() => {
-  primeTTSAsync({ hardCancel: true });
-}, 180);
+        if (status === "listening") {
+          setMicMsg("🎙️ Te estoy escuchando…");
+        }
 
+        if (status === "speaking") {
+          setMicMsg("🗣️ Vonu está respondiendo…");
+        }
 
+        if (status === "closed") {
+          if (realtimeManualCloseRef.current) {
+            setMicMsg("Modo conversación desactivado.");
+          }
+        }
+      },
 
+      onError: (message) => {
+        realtimeManualCloseRef.current = false;
+        setMicMsg(message || "Error en el modo conversación.");
 
-// arrancar escucha en modo conversación
-setTimeout(() => {
-  if (voiceModeRef.current) startMic("conversation");
-}, 180);
+        console.error("[Realtime UI error]", message);
+
+        try {
+          realtimeConnRef.current?.stop();
+        } catch {}
+        realtimeConnRef.current = null;
+
+        voiceModeRef.current = false;
+        setVoiceMode(false);
+        setRealtimeStatus("error");
+      },
+
+      onUserFinalTranscript: (text) => {
+        console.log("[VOICE] onUserFinalTranscript", text);
+        handleVoiceMessageForChat(text);
+      },
+
+      onAssistantFinalText: (text) => {
+        console.log("[VOICE] onAssistantFinalText", text);
+        appendRealtimeAssistantMessage(text);
+      },
+
+      onEvent: (event) => {
+        try {
+          const type = String(event?.type ?? "");
+          console.log("[VOICE] raw event", type, event);
+        } catch {}
+      },
+    });
+
+    realtimeConnRef.current = conn;
+    voiceModeRef.current = true;
+    setVoiceMode(true);
+    setTtsEnabled(false);
+    setMicMsg("✅ Conectando modo conversación…");
+  } catch (e: any) {
+    try {
+      realtimeConnRef.current?.stop();
+    } catch {}
+    realtimeConnRef.current = null;
+
+    voiceModeRef.current = false;
+    setVoiceMode(false);
+    setRealtimeStatus("closed");
+    voiceWriteGuardRef.current.reset();
+
+    setMicMsg(e?.message ?? "No se pudo iniciar el modo conversación.");
+    setTimeout(() => setMicMsg(null), 3200);
+  }
 }
 
 
@@ -1504,36 +2065,25 @@ function stopTTS() {
 }
 
 async function speakTTS(text: string) {
-  const inConversation = voiceModeRef.current;
+  // ✅ MUY IMPORTANTE:
+  // En modo conversación NO usamos nunca la voz del navegador.
+  // La voz la pone OpenAI Realtime.
+  if (voiceModeRef.current) return;
 
-  // ✅ Si no hay soporte real de TTS, en conversación volvemos a escuchar y fuera.
-  if (!supportsTTS()) {
-    if (inConversation) {
-      setTimeout(() => {
-        try {
-          if (voiceModeRef.current) startMic("conversation");
-        } catch {}
-      }, 200);
-    }
-    return;
-  }
+  // ✅ Solo leer en voz alta fuera del modo conversación
+  if (!supportsTTS()) return;
+  if (!ttsEnabled) return;
 
-  // ✅ En conversación: hablamos aunque ttsEnabled esté desincronizado por state.
-  // En modo normal: solo si el usuario activó lectura.
-  if (!ttsEnabled && !inConversation) return;
+  const clean = stripMarkdownForTTS(text);
+  if (!clean) return;
 
-
-    // si ya estaba hablando, cortamos y arrancamos limpio
   stopTTS();
 
-  // ✅ Re-unlock ANTES de hablar (sin timers que cancelen)
   try {
     await primeTTSAsync({ hardCancel: false });
   } catch {}
 
-
-  const voiceText = voiceModeRef.current ? shortenForVoice(text) : stripMarkdownForTTS(text);
-  const chunks = chunkForTTS(voiceText);
+  const chunks = chunkForTTS(clean);
   if (!chunks.length) return;
 
   setTtsSpeaking(true);
@@ -1543,7 +2093,6 @@ async function speakTTS(text: string) {
     synth.resume?.();
   } catch {}
 
-  // ✅ Elegir voz (mejor hacerlo “vivo”, no con snapshot)
   const pickVoiceLive = () => {
     let vs: SpeechSynthesisVoice[] = [];
     try {
@@ -1553,13 +2102,10 @@ async function speakTTS(text: string) {
     return es ?? vs[0] ?? null;
   };
 
-    // ✅ En Chrome a veces no hay voces aún: esperamos un poco
   try {
     await getVoicesAsync(900);
   } catch {}
 
-
-  // ✅ Pequeño micro-delay: ayuda en Safari/iOS tras cancel()
   await new Promise((r) => setTimeout(r, 30));
 
   for (const ch of chunks) {
@@ -1577,34 +2123,33 @@ async function speakTTS(text: string) {
       u.onend = () => resolve();
       u.onerror = () => resolve();
       try {
-        try {
-          synth.resume?.();
-        } catch {}
+        synth.resume?.();
         synth.speak(u);
       } catch {
         resolve();
       }
     });
 
-    if (!ttsEnabled && !voiceModeRef.current) break;
+    if (!ttsEnabled) break;
   }
 
   setTtsSpeaking(false);
-
-  // ✅ modo conversación: si sigue ON, volvemos a escuchar
-  if (voiceModeRef.current) {
-    setTimeout(() => {
-  if (voiceModeRef.current) startMic("conversation");
-}, 320); // un pelín más humano
-  }
-
-
 }
 
     const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
+
+  const [usageInfo, setUsageInfo] = useState<{
+  plan_id: string;
+  messages_used: number;
+  messages_limit: number;
+  messages_left: number;
+  realtime_seconds_used: number;
+  realtime_seconds_limit: number;
+  realtime_seconds_left: number;
+} | null>(null);
 
   // =========================
   // ✅ ANTI-DUPLICADO / SEND LOCK
@@ -1627,6 +2172,8 @@ async function speakTTS(text: string) {
       .replace(/\s+/g, " ")
       .toLowerCase();
   }
+
+
 
   function shouldBlockDuplicateSend(threadId: string, rawText: string) {
     const now = Date.now();
@@ -1676,6 +2223,56 @@ function cleanRepeatedWords(text: string) {
   return result.join(" ");
 }
 
+function dedupeGrowingTranscript(prev: string, next: string) {
+  const p = (prev ?? "").replace(/\s+/g, " ").trim();
+  const n = (next ?? "").replace(/\s+/g, " ").trim();
+
+  if (!p) return n;
+  if (!n) return p;
+
+  // típico móvil: el nuevo contiene al anterior (va “creciendo”)
+  if (n.toLowerCase().startsWith(p.toLowerCase())) return n;
+  // raro: llega uno más corto después
+  if (p.toLowerCase().startsWith(n.toLowerCase())) return p;
+
+  // merge por solape: sufijo de prev == prefijo de next
+  const pl = p.toLowerCase();
+  const nl = n.toLowerCase();
+  const max = Math.min(pl.length, nl.length);
+
+  for (let len = max; len >= 12; len--) {
+    if (pl.slice(-len) === nl.slice(0, len)) {
+      return (p + " " + n.slice(len)).replace(/\s+/g, " ").trim();
+    }
+  }
+
+  // si no hay solape claro, nos quedamos con el más largo
+  return n.length >= p.length ? n : p;
+}
+
+function beepReady() {
+  if (typeof window === "undefined") return;
+  try {
+    const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.value = 880; // beep agudo corto
+    g.gain.value = 0.03;
+
+    o.connect(g);
+    g.connect(ctx.destination);
+
+    o.start();
+    setTimeout(() => {
+      try { o.stop(); } catch {}
+      try { ctx.close(); } catch {}
+    }, 90);
+  } catch {}
+}
+
 const [speechSupported, setSpeechSupported] = useState(false);
 const [isListening, setIsListening] = useState(false);
 const [micMsg, setMicMsg] = useState<string | null>(null);
@@ -1687,9 +2284,12 @@ const micPurposeRef = useRef<MicPurpose>("dictation");
 
 // ✅ refs internas del motor de reconocimiento
 const recognitionRef = useRef<any | null>(null);
+const micStoppingRef = useRef(false); // ✅ evita onend fantasma (stop/abort programático)
 const micBaseRef = useRef<string>("");
 const micFinalRef = useRef<string>("");
 const micInterimRef = useRef<string>("");
+const micLastFullRef = useRef<string>("");
+
 // ✅ evita duplicados en Android Chrome: recuerda el último índice final ya procesado
 const micLastFinalIndexRef = useRef<number>(-1);
 // ✅ Android: guarda cada trozo final por índice y reconstruye (evita repeticiones bestia)
@@ -1698,6 +2298,40 @@ const micFinalByIndexRef = useRef<Record<number, string>>({});
 
 // ✅ anti-duplicado de envíos en conversación
 const lastMicSendRef = useRef<{ text: string; ts: number }>({ text: "", ts: 0 });
+function normalizeVoiceSendText(s: string) {
+  return (s ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[.,;:!?¡¿]+/g, "")
+    .replace(/["'`()\[\]{}]/g, "");
+}
+
+// Similaridad simple: bloquea si uno contiene al otro (muy útil con motores móviles)
+function isNearlySameVoice(a: string, b: string) {
+  const A = normalizeVoiceSendText(a);
+  const B = normalizeVoiceSendText(b);
+  if (!A || !B) return false;
+  if (A === B) return true;
+  if (A.length >= 8 && (B.includes(A) || A.includes(B))) return true;
+  return false;
+}
+
+function getLastUserTextInThread(threadId: string) {
+  try {
+    const t = threadsRef.current.find((x) => x.id === threadId);
+    if (!t) return "";
+    for (let i = (t.messages?.length ?? 0) - 1; i >= 0; i--) {
+      const m = t.messages[i];
+      if (m?.role === "user" && typeof m.text === "string" && m.text.trim()) {
+        return m.text.trim();
+      }
+    }
+  } catch {}
+  return "";
+}
+
+
 
 // ✅ NUEVO: control de sesión + silencios (evita “colgados” y timeouts huérfanos)
 const micSessionIdRef = useRef<number>(0);
@@ -1720,9 +2354,22 @@ useEffect(() => {
 }, []);
 
 function stopMic() {
+  // ✅ marcamos stop “programático” para ignorar el onend que llega tarde
+  micStoppingRef.current = true;
+
+  // ✅ invalidar sesión para que callbacks viejos no toquen estado actual
+  micSessionIdRef.current += 1;
+
   // ✅ limpiar silencio SIEMPRE (antes de tocar el motor)
   clearSilenceTimer();
   micHadSpeechRef.current = false;
+
+  // ✅ limpiar buffers (evita que onend mande texto viejo)
+  micBaseRef.current = "";
+  micFinalRef.current = "";
+  micInterimRef.current = "";
+  micLastFinalIndexRef.current = -1;
+  micFinalByIndexRef.current = {};
 
   try {
     const rec = recognitionRef.current;
@@ -1748,12 +2395,28 @@ function stopMic() {
   recognitionRef.current = null;
   setIsListening(false);
   setListeningPurpose(null);
-}
 
+  // ✅ liberamos el flag un pelín después (por si entra un onend tardío)
+  setTimeout(() => {
+    micStoppingRef.current = false;
+  }, 250);
+}
 
 
 async function startMic(purpose: MicPurpose) {
   if (isTyping) return;
+  // ✅ Anti-eco: no arrancar escucha mientras acaba de hablar Vonu
+if (purpose === "conversation" && inTtsCooldown()) {
+  setTimeout(() => {
+    if (!voiceModeRef.current) return;
+    if (isTyping) return;
+    if (inTtsCooldown()) return;
+    if (recognitionRef.current) return;
+    startMic("conversation");
+  }, isDesktopPointer() ? 700 : 1100);
+  return;
+}
+
 
   const SR = typeof window !== "undefined" ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition : null;
   if (!SR) {
@@ -1779,6 +2442,10 @@ setListeningPurpose(purpose);
     const rec = new SR();
     recognitionRef.current = rec;
 
+    if (purpose === "conversation") {
+  setMicMsg("Preparando micrófono…");
+}
+
     rec.lang = "es-ES";
     rec.continuous = purpose === "conversation"; // ✅ conversación tolera pausas
 rec.interimResults = true;
@@ -1790,8 +2457,9 @@ rec.maxAlternatives = 1;
 micInterimRef.current = "";
 micLastFinalIndexRef.current = -1;
 micFinalByIndexRef.current = {}; // ✅ reset del mapa
-
-
+// ✅ Para dictado: conserva lo que había escrito antes de empezar a dictar
+micBaseRef.current = purpose === "dictation" ? ((input ?? "").trim() ? (input.trim() + " ") : "") : "";
+micLastFullRef.current = micBaseRef.current.trim();
 
 
 // ✅ NUEVO: “sesión” del micro (evita eventos viejos tocando el estado actual)
@@ -1799,7 +2467,7 @@ micSessionIdRef.current += 1;
 const mySessionId = micSessionIdRef.current;
 
 // ✅ En PC cortamos antes (se siente más rápido). En móvil dejamos más margen.
-const SILENCE_MS = isDesktopPointer() ? 1100 : 1700;
+const SILENCE_MS = isDesktopPointer() ? 1100 : 2300;
 
 const armSilence = () => {
   if (purpose !== "conversation") return;
@@ -1831,6 +2499,11 @@ const armSilence = () => {
 
   setIsListening(true);
   micHadSpeechRef.current = false;
+  if (purpose === "conversation") {
+  beepReady();
+  setMicMsg("🎙️ Tu turno");
+  setTimeout(() => setMicMsg(null), 650);
+}
   armSilence();
 };
 
@@ -1867,45 +2540,87 @@ const armSilence = () => {
     rec.onend = () => {
   // ✅ si es un evento viejo, ignorar (evita “dobles onend”)
   if (micSessionIdRef.current !== mySessionId) return;
+  // ✅ si hemos parado nosotros el micro, ignorar este onend (móvil lo dispara tarde)
+if (micStoppingRef.current) return;
+
 
   setIsListening(false);
   setListeningPurpose(null);
   recognitionRef.current = null;
 
-  const finalText = cleanRepeatedWords((micFinalRef.current || "").replace(/\s+/g, " ").trim());
-  micInterimRef.current = "";
+  const combined = `${micFinalRef.current || ""} ${micInterimRef.current || ""}`.replace(/\s+/g, " ").trim();
 
-  clearSilenceTimer();
+let finalText = cleanRepeatedWords(combined);
+finalText = dedupeGrowingTranscript("", finalText);
 
-  const purposeAtStart = purpose; // snapshot
+// ✅ ANDROID: si el motor devuelve “frase frase”, nos quedamos con la primera
+function cutRepeatedSentence(text: string) {
+  const t = (text || "").trim();
+  if (!t) return t;
 
-  // ✅ conversación: enviar automático si hay texto
+  // caso típico: el texto es literalmente el mismo 2 veces
+  const half = Math.floor(t.length / 2);
+  const first = t.slice(0, half).trim();
+  const second = t.slice(half).trim();
+
+  if (first && second && second.startsWith(first)) return first;
+
+  // fallback: cortar repetición por palabras (último recurso)
+  const words = t.split(/\s+/g);
+  const midWords = Math.floor(words.length / 2);
+  if (midWords >= 3) {
+    const left = words.slice(0, midWords).join(" ");
+    const right = words.slice(midWords).join(" ");
+    if (right.toLowerCase().startsWith(left.toLowerCase())) return left;
+  }
+
+  return t;
+}
+
+finalText = cutRepeatedSentence(finalText);
+
+micInterimRef.current = "";
+clearSilenceTimer();
+
+const purposeAtStart = purpose; // snapshot
+
+
+    // ✅ conversación: enviar automático al chat escrito si hay texto
   if (purposeAtStart === "conversation" && voiceModeRef.current) {
     if (finalText) {
       const now = Date.now();
       const prev = lastMicSendRef.current;
 
-      if (prev.text === finalText && now - prev.ts < 2500) {
-        // ignorar duplicado
-      } else if (isTyping) {
-        // si Vonu está respondiendo, no mandamos otro
-      } else {
-        lastMicSendRef.current = { text: finalText, ts: now };
-        sendQuickMessage(finalText, activeThread?.mode ?? "chat");
+      const curNorm = normalizeVoiceSendText(finalText);
+      const prevNorm = normalizeVoiceSendText(prev.text);
+
+      const WINDOW_MS = isDesktopPointer() ? 2500 : 4200;
+
+      if (curNorm && prevNorm === curNorm && now - prev.ts < WINDOW_MS) {
+        // duplicado reciente: ignorar
+      } else if (!isTyping) {
+        const threadId = activeThread?.id;
+        const lastUser = threadId ? getLastUserTextInThread(threadId) : "";
+
+        if (!isNearlySameVoice(finalText, lastUser)) {
+          lastMicSendRef.current = { text: finalText, ts: now };
+          handleVoiceMessageForChat(finalText);
+        }
       }
+
       return;
     }
 
-    // ✅ Si no hubo voz real, NO reiniciar agresivo (en móvil hace bucle)
+    // Si no hubo texto final, rearmamos escucha suave
     const waitMs = isDesktopPointer() ? 450 : 1200;
 
     setTimeout(() => {
-      if (!voiceModeRef.current) return;
-      if (isTyping) return;
-      if (recognitionRef.current) return;
-      if (micSessionIdRef.current !== mySessionId) return;
-      startMic("conversation");
-    }, waitMs);
+  if (!voiceModeRef.current) return;
+  if (isTyping) return;
+  if (recognitionRef.current) return;
+  if (micSessionIdRef.current !== mySessionId) return;
+  startMic("conversation");
+}, waitMs);
   }
 };
 
@@ -1914,60 +2629,67 @@ const armSilence = () => {
     rec.onresult = (event: any) => {
   if (micSessionIdRef.current !== mySessionId) return;
 
-  const results = event?.results ?? [];
-  const startIndex = typeof event?.resultIndex === "number" ? event.resultIndex : 0;
+  // ✅ Anti-eco: si Vonu acaba de hablar, ignoramos lo que “oye” el micro
+  if (micPurposeRef.current === "conversation" && inTtsCooldown()) return;
 
-  // Vamos guardando finals por índice (si el mismo índice cambia, se reemplaza)
-  const finalMap = micFinalByIndexRef.current || {};
+  const results = event?.results ?? [];
+
+  let finalText = "";
   let interimText = "";
 
-  for (let i = startIndex; i < results.length; i++) {
+  // ✅ Construimos transcript completo de forma estable (Android)
+  for (let i = 0; i < results.length; i++) {
     const res = results[i];
     const txt = (res?.[0]?.transcript ?? "").trim();
     if (!txt) continue;
 
     if (res.isFinal) {
-      finalMap[i] = txt; // ✅ reemplaza si Android lo re-emite/actualiza
-      if (i > micLastFinalIndexRef.current) micLastFinalIndexRef.current = i;
+      finalText += txt + " ";
     } else {
-      interimText += txt + " ";
+      // en móvil el interim suele ser “el que crece”
+      interimText = txt;
     }
   }
 
-  micFinalByIndexRef.current = finalMap;
+  const finalClean = finalText.replace(/\s+/g, " ").trim();
+  const interimClean = interimText.replace(/\s+/g, " ").trim();
 
-  // Reconstruimos el final en orden (0..lastFinalIndex)
-  let finalText = "";
-  const lastIdx = micLastFinalIndexRef.current;
 
-  if (lastIdx >= 0) {
-    for (let i = 0; i <= lastIdx; i++) {
-      const piece = finalMap[i];
-      if (piece && piece.trim()) finalText += piece.trim() + " ";
-    }
-  }
+  micFinalRef.current = finalClean;
+  micInterimRef.current = interimClean;
 
-  micFinalRef.current = finalText;
-  micInterimRef.current = interimText;
-
-  if ((interimText && interimText.trim()) || (finalText && finalText.trim())) {
+  if (finalClean || interimClean) {
     micHadSpeechRef.current = true;
     armSilence();
   }
 
-  const raw = micBaseRef.current + finalText + interimText;
-  const cleaned = cleanRepeatedWords(raw.replace(/\s+/g, " ").trim());
+  // ✅ Texto completo
+  const rawFull =
+    (micPurposeRef.current === "dictation" ? micBaseRef.current : "") +
+    (finalClean ? finalClean + " " : "") +
+    (interimClean ? interimClean : "");
 
-  // ✅ Dictado: actualizar input en vivo
-  if (micPurposeRef.current === "dictation") {
-    setInput(cleaned);
-  }
+  let full = rawFull.replace(/\s+/g, " ").trim();
+  full = cleanRepeatedWords(full);
 
-  // Si quieres ver en conversación mientras hablas:
-  // if (micPurposeRef.current === "conversation") setInput(cleaned);
+  // ✅ Clave: dedupe por crecimiento/solape
+  full = dedupeGrowingTranscript(micLastFullRef.current, full);
+  micLastFullRef.current = full;
+
+  // ✅ dictado: usar SIEMPRE los “clean” (evita repeticiones por espacios / parciales)
+let dictationText = `${finalClean}${interimClean ? " " + interimClean : ""}`.replace(/\s+/g, " ").trim();
+
+// ✅ limpieza ligera (solo palabras consecutivas idénticas)
+dictationText = cleanRepeatedWords(dictationText);
+
+// ✅ dedupe por crecimiento (Android repite el inicio al ampliar)
+dictationText = dedupeGrowingTranscript(micLastFullRef.current, dictationText);
+micLastFullRef.current = dictationText;
+
+if (micPurposeRef.current === "dictation") {
+  setInput(dictationText);
+}
 };
-
-
 
     rec.start();
   } catch {
@@ -2142,62 +2864,287 @@ function toggleMic() {
   boardImagePlacement?: { x: number; y: number; w: number; h: number } | null,
   pizarraValue?: string | null
 ) {
+  function extractPlainText(node: any): string {
+    if (typeof node === "string" || typeof node === "number") return String(node);
+    if (Array.isArray(node)) return node.map(extractPlainText).join("");
+    if (node && typeof node === "object" && "props" in node) {
+      return extractPlainText((node as any).props?.children);
+    }
+    return "";
+  }
+
+  function looksLikeEquationLine(text: string) {
+    const t = String(text ?? "").trim();
+    if (!t) return false;
+    if (t.length > 120) return false;
+
+    // Si lleva encabezados o frases largas, no lo tratamos como ecuación
+    if (/^#{1,6}\s/.test(t)) return false;
+    if (/^[A-ZÁÉÍÓÚÑa-záéíóúñ]+\:$/.test(t)) return false;
+
+    const hasOperator =
+      t.includes("=") ||
+      t.includes("≈") ||
+      t.includes("≃") ||
+      t.includes("≤") ||
+      t.includes("≥") ||
+      t.includes("<") ||
+      t.includes(">");
+
+    if (!hasOperator) return false;
+
+    // Evita párrafos demasiado narrativos
+    const words = t.split(/\s+/).length;
+    if (words > 12 && !/[0-9xXyYa-zA-Z]/.test(t)) return false;
+
+    return true;
+  }
+
+  function splitEquation(text: string) {
+    const t = String(text ?? "").trim();
+
+    const match = t.match(/^(.*?)(≈|≃|=|≤|≥|<|>)(.*)$/);
+    if (!match) return null;
+
+    return {
+      left: match[1].trim(),
+      op: match[2].trim(),
+      right: match[3].trim(),
+    };
+  }
+
+  function renderEquationLine(text: string) {
+  const parts = splitEquation(text);
+  if (!parts) return renderTextWithFractions(text);
+
+  return (
+  <div className="my-3 w-full overflow-visible py-[2px]">
+    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-2 w-full text-zinc-900 font-medium text-[1.04em] leading-[2.1]">
+        <span className="min-w-0 break-words">{renderTextWithFractions(parts.left)}</span>
+        <span className="font-semibold shrink-0">{parts.op}</span>
+        <span className="min-w-0 break-words">{renderTextWithFractions(parts.right)}</span>
+      </div>
+    </div>
+  );
+}
+
   return {
-    // ✅ Bloques de código
-    code({ inline, className, children, ...props }: any) {
-      const isInline = !!inline;
 
-      const cn = typeof className === "string" ? className : "";
-      const match = cn.match(/language-([a-zA-Z0-9_-]+)/);
-      const lang = (match?.[1] || "").toLowerCase();
+  // ✅ Lista ordenada con contador “badge” (como tu captura)
+      ol({ children, ...props }: any) {
+    return (
+      <ol
+        className="my-3 pl-6 list-decimal space-y-2 text-zinc-900 marker:text-blue-700 marker:font-bold"
+        {...props}
+      >
+        {renderChildrenWithFractions(children)}
+      </ol>
+    );
+  },
 
-      const content = Array.isArray(children) ? children.join("") : String(children ?? "");
-      const clean = content.replace(/\n$/, "");
+      ul({ children, ...props }: any) {
+    return (
+      <ul className="my-3 space-y-2 text-zinc-900" {...props}>
+        {renderChildrenWithFractions(children)}
+      </ul>
+    );
+  },
 
-      // ✅ PIZARRA: si viene ```pizarra``` o ```whiteboard``` => texto "cuaderno", NO código
-      if (!isInline && (lang === "pizarra" || lang === "whiteboard")) {
-        const boardValue = pizarraValue && String(pizarraValue).trim() ? String(pizarraValue) : clean;
+      li({ children, ...props }: any) {
+    return (
+      <li className="leading-relaxed text-zinc-900" {...props}>
+        {renderChildrenWithFractions(children)}
+      </li>
+    );
+  },
 
+    // ✅ Títulos y negritas más potentes
+    h1({ children, ...props }: any) {
+    return (
+      <h1
+        className="mt-4 mb-2 text-[24px] md:text-[28px] leading-tight font-extrabold tracking-tight text-zinc-900"
+        {...props}
+      >
+        {renderChildrenWithFractions(children)}
+      </h1>
+    );
+  },
+
+  h2({ children, ...props }: any) {
+    return (
+      <h2
+        className="mt-4 mb-2 text-[20px] md:text-[23px] leading-tight font-extrabold tracking-tight text-zinc-900"
+        {...props}
+      >
+        {renderChildrenWithFractions(children)}
+      </h2>
+    );
+  },
+
+  h3({ children, ...props }: any) {
+    return (
+      <h3
+        className="mt-3 mb-1.5 text-[17px] md:text-[19px] leading-snug font-bold text-zinc-900"
+        {...props}
+      >
+        {renderChildrenWithFractions(children)}
+      </h3>
+    );
+  },
+
+        p({ children, ...props }: any) {
+      const raw = extractPlainText(children).trim();
+
+      const looksMathLine =
+        /[=≈≃≤≥<>×÷]/.test(raw) || /[0-9]+\s*\/\s*[0-9]+/.test(raw);
+
+      const isEquation = looksLikeEquationLine(raw);
+
+      if (isEquation) {
         return (
-  <div className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-zinc-900 font-sans">
-    {boardValue}
-  </div>
-);
-
-      }
-
-      // ✅ inline code: lo dejamos, pero con Poppins (no monospace)
-      if (isInline) {
-        return (
-          <code
-            className="px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]"
-            style={{ fontFamily: "var(--font-poppins), ui-sans-serif, system-ui" }}
-          >
-            {clean}
-          </code>
+          <div className="my-2 text-zinc-900" {...props}>
+            {renderEquationLine(raw)}
+          </div>
         );
       }
 
-      // ✅ code block normal: SOLO para modo chat real (esto sí puede ser monospace)
       return (
-        <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
-          <code className="text-[12.5px]" {...props}>
-            {clean}
-          </code>
-        </pre>
+        <p
+          className={
+            looksMathLine
+              ? "my-4 leading-8 text-zinc-900 font-medium"
+              : "my-2 leading-7 text-zinc-900"
+          }
+          {...props}
+        >
+          {renderChildrenWithFractions(children)}
+        </p>
       );
     },
 
-    // ✅ Por si el Markdown mete <pre> directo (dependiendo del parser)
+  // ✅ Negritas más visibles
+  strong({ children, ...props }: any) {
+  return (
+    <strong className="font-extrabold text-zinc-900" {...props}>
+      {renderChildrenWithFractions(children)}
+    </strong>
+  );
+},
+
+  // ✅ Bloques de código
+  code({ inline, className, children, ...props }: any) {
+    const isInline = !!inline;
+
+    const cn = typeof className === "string" ? className : "";
+    const match = cn.match(/language-([a-zA-Z0-9_-]+)/);
+    const lang = (match?.[1] || "").toLowerCase();
+
+    const content = Array.isArray(children) ? children.join("") : String(children ?? "");
+    const clean = content.replace(/\n$/, "");
+
+    // ✅ PIZARRA: si viene ```pizarra``` o ```whiteboard``` => texto "cuaderno", NO código
+    if (!isInline && (lang === "pizarra" || lang === "whiteboard")) {
+      const boardValue = pizarraValue && String(pizarraValue).trim() ? String(pizarraValue) : clean;
+
+      return (
+        <div className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-zinc-900 font-sans">
+          {boardValue}
+        </div>
+      );
+    }
+
+      // ✅ inline code: útil también para fórmulas cortas
+  if (isInline) {
+    const looksMathInline =
+      /[=+\-×÷<>≈]/.test(clean) || /\d+\s*\/\s*\d+/.test(clean);
+
+    return (
+      <code
+        className={
+          looksMathInline
+            ? "px-1.5 py-[2px] rounded-md bg-blue-50 border border-blue-200 text-[13px] font-semibold text-zinc-900"
+            : "px-1 py-[1px] rounded bg-zinc-100 border border-zinc-200 text-[12.5px]"
+        }
+        style={{ fontFamily: "var(--font-poppins), ui-sans-serif, system-ui" }}
+      >
+        {clean}
+      </code>
+    );
+  }
+
+    // ✅ code block normal: SOLO para modo chat real (esto sí puede ser monospace)
+    return (
+      <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
+        <code className="text-[12.5px]" {...props}>
+          {clean}
+        </code>
+      </pre>
+    );
+  },
+
+  // ✅ Por si el Markdown mete <pre> directo (dependiendo del parser)
     pre({ children }: any) {
-      return <>{children}</>;
-    },
-  } as any;
+    return <>{children}</>;
+  },
+
+  span({ className, children, ...props }: any) {
+    const cn = typeof className === "string" ? className : "";
+    const isKatexTree =
+      cn.includes("katex") ||
+      cn.includes("mord") ||
+      cn.includes("mfrac") ||
+      cn.includes("msupsub") ||
+      cn.includes("sqrt") ||
+      cn.includes("root") ||
+      cn.includes("vlist") ||
+      cn.includes("vlist-t") ||
+      cn.includes("base") ||
+      cn.includes("strut");
+
+    // ✅ MUY IMPORTANTE:
+    // si el span pertenece al árbol interno de KaTeX, NO lo tocamos
+    if (isKatexTree) {
+      return (
+        <span className={className} {...props}>
+          {children}
+        </span>
+      );
+    }
+
+    return (
+      <span className={className} {...props}>
+        {renderChildrenWithFractions(children)}
+      </span>
+    );
+  },
+
+  div({ className, children, ...props }: any) {
+    const cn = typeof className === "string" ? className : "";
+
+if (cn.includes("katex-display")) {
+  return (
+    <div
+      className={`${className ?? ""} my-4 rounded-2xl bg-white/45 px-2 py-2 text-left`}
+      style={{
+        overflow: "visible",
+        maxWidth: "100%",
+        WebkitOverflowScrolling: "auto",
+      }}
+      {...props}
+    >
+      {children}
+    </div>
+  );
 }
 
-
-
-
+    return (
+      <div className={className} {...props}>
+        {children}
+      </div>
+    );
+  },
+} as any;
+}
 
 
   function closeBoard() {
@@ -2402,6 +3349,15 @@ useEffect(() => {
 
   const messages = activeThread?.messages ?? [];
 
+  const showSoftLimitWarning =
+  !!usageInfo &&
+  usageInfo.messages_left > 0 &&
+  usageInfo.messages_left <= 5;
+
+const showHardLimitWarning =
+  !!usageInfo &&
+  usageInfo.messages_left <= 0;
+
   const sortedThreads = useMemo(() => {
     return [...threads].sort((a, b) => b.updatedAt - a.updatedAt);
   }, [threads]);
@@ -2409,12 +3365,22 @@ useEffect(() => {
   const userMsgCountInThread = useMemo(() => messages.filter((m) => m.role === "user").length, [messages]);
 
   const canSend = useMemo(() => {
-    const basicReady = !isTyping && (!!input.trim() || !!imagePreview);
-    if (isBlockedByPaywall) return false;
-    return basicReady;
-  }, [isTyping, input, imagePreview, isBlockedByPaywall]);
+  const basicReady = !isTyping && (!!input.trim() || !!imagePreview);
+  if (isBlockedByPaywall) return false;
+  return basicReady;
+}, [isTyping, input, imagePreview, isBlockedByPaywall]);
+
+const voiceUiState = useMemo<"idle" | "listening" | "speaking">(() => {
+  if (!voiceMode) return "idle";
+  if (realtimeStatus === "listening") return "listening";
+  if (realtimeStatus === "speaking" || realtimeStatus === "connecting" || realtimeStatus === "connected") {
+    return "speaking";
+  }
+  return "idle";
+}, [voiceMode, realtimeStatus]);
 
   const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
+
 const quickPrompts = useMemo(
   () => [
     { label: "Hacer deberes", mode: "tutor" as ThreadMode, text: "Tengo este ejercicio. Explícamelo paso a paso como profe:" },
@@ -2451,16 +3417,21 @@ function applyQuickPrompt(p: { label: string; mode: ThreadMode; text: string }) 
 }
 
 
-  // textarea autoresize
-  useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
+  // textarea autoresize (robusto)
+useEffect(() => {
+  const el = textareaRef.current;
+  if (!el) return;
 
-    el.style.height = "0px";
-    const next = Math.min(el.scrollHeight, 140);
+  const raf = requestAnimationFrame(() => {
+    el.style.height = "auto";
+    const next = Math.min(el.scrollHeight, 220); // puedes subir a 260 si quieres
     el.style.height = next + "px";
-    setInputExpanded(next > 52);
-  }, [input]);
+    setInputExpanded(next > 60);
+  });
+
+  return () => cancelAnimationFrame(raf);
+}, [input, imagePreview, isTyping]);
+
 
   function handleChatScroll() {
     const el = scrollRef.current;
@@ -2501,16 +3472,63 @@ function applyQuickPrompt(p: { label: string; mode: ThreadMode; text: string }) 
     return () => clearTimeout(t);
   }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId, loginOpen, paywallOpen, boardOpen]);
 
-  function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => setImagePreview(reader.result as string);
-    reader.readAsDataURL(file);
-
+  try {
+    // Limpiar input file para poder volver a elegir el mismo archivo
     e.target.value = "";
+
+    // Solo imágenes
+    if (!file.type.startsWith("image/")) {
+      setMicMsg("Ese archivo no es una imagen.");
+      setTimeout(() => setMicMsg(null), 2200);
+      return;
+    }
+
+    // ✅ Comprimir: máx 1400px lado largo, JPEG calidad 0.82
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("No se pudo leer la imagen."));
+      reader.readAsDataURL(file);
+    });
+
+    const img = document.createElement("img");
+    img.src = dataUrl;
+
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("No se pudo cargar la imagen."));
+    });
+
+    const MAX = 1400;
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+
+    const scale = Math.min(1, MAX / Math.max(w, h));
+    const nw = Math.max(1, Math.round(w * scale));
+    const nh = Math.max(1, Math.round(h * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = nw;
+    canvas.height = nh;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas no disponible.");
+
+    ctx.drawImage(img, 0, 0, nw, nh);
+
+    // JPEG reduce muchísimo tamaño (sobre todo fotos de móvil)
+    const compressed = canvas.toDataURL("image/jpeg", 0.82);
+
+    setImagePreview(compressed);
+  } catch (err: any) {
+    setMicMsg(err?.message || "No se pudo adjuntar la imagen.");
+    setTimeout(() => setMicMsg(null), 2400);
   }
+}
 
   function createThreadAndActivate() {
     const t = makeNewThread();
@@ -2612,26 +3630,24 @@ function applyQuickPrompt(p: { label: string; mode: ThreadMode; text: string }) 
 
   // ✅ regla: tras 2 mensajes, bloquear el siguiente y pedir login/pago
   function enforceLimitIfNeeded(): boolean {
-    const nextUserCount = userMsgCountInThread + 1;
-    if (nextUserCount <= FREE_MESSAGE_LIMIT) return false;
+  const nextUserCount = userMsgCountInThread + 1;
 
-    if (!isLoggedIn) {
-      setLoginMsg("Para seguir, inicia sesión (y así guardas tu historial).");
-      openLoginModal("signin");
-      return true;
-    }
+  // ✅ Invitado: solo 1 mensaje de prueba
+  if (!isLoggedIn) {
+    if (nextUserCount <= GUEST_MESSAGE_LIMIT) return false;
 
-    if (!isPro) {
-      setPayMsg(`Has llegado al límite del plan Gratis. Desbloquea Plus+ para seguir usando Vonu.`);
-      openPlansModal();
-      return true;
-    }
-
-    return false;
+    setLoginMsg("Puedes probar Vonu con 1 mensaje. Para seguir, inicia sesión.");
+    openLoginModal("signin");
+    return true;
   }
 
+  // ✅ Usuario loggeado: el límite real lo controla Supabase / analyze.ts
+  return false;
+}
+
   async function sendQuickMessage(textPreset: string, modePreset: ThreadMode) {
-    if (authLoading) return;
+
+  if (authLoading) return;
 
     if (enforceLimitIfNeeded()) return;
 
@@ -2663,9 +3679,10 @@ function applyQuickPrompt(p: { label: string; mode: ThreadMode; text: string }) 
     }
 
 
-    setUiError(null);
-    // ✅ premium turnos: si voiceMode está ON, cerramos micro al enviar (turno de Vonu)
-if (voiceMode) stopMic();
+    // ✅ Si el usuario escribe o lanza un quick prompt, salimos del modo conversación
+if (voiceModeRef.current) {
+  stopConversationModeBeforeTypedSend();
+}
 
 
     // ✅ Guardamos modo en el thread (así el backend recibe el modo correcto)
@@ -2683,21 +3700,42 @@ if (voiceMode) stopMic();
     );
 
     const userMsg: Message = {
-      id: crypto.randomUUID(),
-      role: "user",
-      text: userText,
-    };
+  id: crypto.randomUUID(),
+  role: "user",
+  text: userText,
+};
 
-    const assistantId = crypto.randomUUID();
-    const assistantMsg: Message = {
-      id: assistantId,
-      role: "assistant",
-      text: "",
-      streaming: true,
-      pizarra: null,
-      boardImageB64: null,
-      boardImagePlacement: null,
-    };
+// ✅ Si el modo conversación está activo, añadimos solo el mensaje del usuario
+// ✅ y dejamos que la respuesta la genere exclusivamente realtime
+if (voiceModeRef.current) {
+  shouldStickToBottomRef.current = true;
+
+  setThreads((prev) =>
+    prev.map((t) => {
+      if (t.id !== targetThreadId) return t;
+      return {
+        ...t,
+        updatedAt: Date.now(),
+        messages: [...t.messages, userMsg],
+      };
+    })
+  );
+
+  sendTextToRealtime(userText);
+  sendGuardRef.current.busy = false;
+  return;
+}
+
+const assistantId = crypto.randomUUID();
+const assistantMsg: Message = {
+  id: assistantId,
+  role: "assistant",
+  text: "",
+  streaming: true,
+  pizarra: null,
+  boardImageB64: null,
+  boardImagePlacement: null,
+};
 
     shouldStickToBottomRef.current = true;
 
@@ -2720,7 +3758,7 @@ if (voiceMode) stopMic();
       await sleep(200);
 
       // ⚠️ Importante: usamos el estado "prev" más fiable: leemos del localStorage state actual
-      const threadNow = (threads.find((x) => x.id === targetThreadId) ?? activeThread) as ChatThread;
+      const threadNow = (threadsRef.current.find((x) => x.id === targetThreadId) ?? activeThread) as ChatThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
         .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
@@ -2729,18 +3767,24 @@ if (voiceMode) stopMic();
           content: m.text ?? "",
         }));
 
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        cache: "no-store",
-        body: JSON.stringify({
-          messages: convoForApi,
-          userText,
-          imageBase64: null,
-          mode: modePreset,
-          tutorLevel: activeThread?.tutorProfile?.level ?? "adult",
-        }),
-      });
+      const { data: sessionData } = await supabaseBrowser.auth.getSession();
+const accessToken = sessionData?.session?.access_token ?? null;
+
+const res = await fetch("/api/chat", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  },
+  cache: "no-store",
+  body: JSON.stringify({
+    messages: convoForApi,
+    userText,
+    imageBase64: null,
+    mode: modePreset,
+    tutorLevel: threadNow?.tutorProfile?.level ?? "adult",
+  }),
+});
 
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
@@ -2748,6 +3792,10 @@ if (voiceMode) stopMic();
       }
 
       const data = await res.json().catch(() => ({} as any));
+
+      if (data?.usage) {
+  setUsageInfo(data.usage);
+}
 
       const fullText =
         typeof data?.text === "string" && data.text.trim()
@@ -2799,8 +3847,10 @@ if (voiceMode) stopMic();
         setIsTyping(false);
         sendGuardRef.current.busy = false;
 
-// ✅ habla la respuesta final (solo si TTS activado)
-speakTTS(fullText);
+// ✅ Solo usamos la voz del navegador fuera del modo conversación
+if (!voiceModeRef.current) {
+  speakTTS(fullText);
+}
 
 if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
@@ -2850,8 +3900,10 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
             setIsTyping(false);
             sendGuardRef.current.busy = false;
 
-// ✅ habla la respuesta final también en CHAT normal
-speakTTS(fullText);
+// ✅ Solo usamos la voz del navegador fuera del modo conversación
+if (!voiceModeRef.current) {
+  speakTTS(fullText);
+}
 
 if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
@@ -2888,7 +3940,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
   async function sendMessage() {
-    if (authLoading) return;
+  if (authLoading) return;
 
     if (enforceLimitIfNeeded()) return;
 
@@ -2936,22 +3988,46 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
 
 
     const userMsg: Message = {
-      id: crypto.randomUUID(),
-      role: "user",
-      text: userText || (imageBase64 ? "He adjuntado una imagen." : undefined),
-      image: imageBase64 || undefined,
-    };
+  id: crypto.randomUUID(),
+  role: "user",
+  text: userText || (imageBase64 ? "He adjuntado una imagen." : undefined),
+  image: imageBase64 || undefined,
+};
 
-    const assistantId = crypto.randomUUID();
-    const assistantMsg: Message = {
-      id: assistantId,
-      role: "assistant",
-      text: "",
-      streaming: true,
-      pizarra: null,
-      boardImageB64: null,
-      boardImagePlacement: null,
-    };
+// ✅ Si el modo conversación está activo, añadimos solo el mensaje del usuario
+// ✅ y la respuesta la hará exclusivamente realtime
+if (voiceModeRef.current && userText) {
+  shouldStickToBottomRef.current = true;
+
+  setThreads((prev) =>
+    prev.map((t) => {
+      if (t.id !== targetThreadId) return t;
+      return {
+        ...t,
+        updatedAt: Date.now(),
+        messages: [...t.messages, userMsg],
+      };
+    })
+  );
+
+  setInput("");
+  setImagePreview(null);
+
+  sendTextToRealtime(userText);
+  sendGuardRef.current.busy = false;
+  return;
+}
+
+const assistantId = crypto.randomUUID();
+const assistantMsg: Message = {
+  id: assistantId,
+  role: "assistant",
+  text: "",
+  streaming: true,
+  pizarra: null,
+  boardImageB64: null,
+  boardImagePlacement: null,
+};
 
     shouldStickToBottomRef.current = true;
 
@@ -2974,7 +4050,7 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
     try {
       await sleep(220);
 
-      const threadNow = threads.find((x) => x.id === targetThreadId) ?? activeThread;
+      const threadNow = threadsRef.current.find((x) => x.id === targetThreadId) ?? activeThread;
 
       const convoForApi = [...(threadNow?.messages ?? []), userMsg]
         .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
@@ -2983,18 +4059,24 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
           content: m.text ?? "",
         }));
 
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        cache: "no-store",
-        body: JSON.stringify({
-          messages: convoForApi,
-          userText,
-          imageBase64,
-          mode: nextMode,
-          tutorLevel: nextTutorLevel,
-        }),
-      });
+      const { data: sessionData } = await supabaseBrowser.auth.getSession();
+const accessToken = sessionData?.session?.access_token ?? null;
+
+const res = await fetch("/api/chat", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  },
+  cache: "no-store",
+  body: JSON.stringify({
+    messages: convoForApi,
+    userText,
+    imageBase64,
+    mode: nextMode,
+    tutorLevel: nextTutorLevel,
+  }),
+});
 
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
@@ -3002,6 +4084,10 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
       }
 
       const data = await res.json().catch(() => ({} as any));
+
+      if (data?.usage) {
+  setUsageInfo(data.usage);
+}
 
       const fullText =
         typeof data?.text === "string" && data.text.trim()
@@ -3054,9 +4140,13 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
         );
 
         setIsTyping(false);
-        sendGuardRef.current.busy = false;
-        speakTTS(fullText);
-        if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+sendGuardRef.current.busy = false;
+
+if (!voiceModeRef.current) {
+  speakTTS(fullText);
+}
+
+if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       } else {
         // ✅ Chat normal: streaming letra a letra
         let i = 0;
@@ -3104,8 +4194,10 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
             setIsTyping(false);
             sendGuardRef.current.busy = false;
 
-// ✅ HABLAR respuesta (y esto re-activa micro si voiceMode sigue ON)
-speakTTS(fullText);
+// ✅ Solo usar TTS del navegador fuera del modo conversación
+if (!voiceModeRef.current) {
+  speakTTS(fullText);
+}
 
 if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
@@ -3141,6 +4233,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
     }
   }
 
+
   // ✅ padding dinámico según la altura REAL del input bar (evita que se “corte” en PC)
 const chatBottomPad = hasUserMessage ? (inputBarH + 22) : 18;
 
@@ -3161,7 +4254,16 @@ const chatBottomPad = hasUserMessage ? (inputBarH + 22) : 18;
   );
 
   // ✅ UI estado botones top-right (plan + cuenta)
-  const topPlanLabel = authLoading ? "…" : isPro ? PLUS_NODE : isLoggedIn ? "Gratis" : PLUS_NODE;
+  const currentPlanId = usageInfo?.plan_id ?? null;
+
+const topPlanLabel =
+  authLoading
+    ? "…"
+    : currentPlanId === "plus"
+    ? "Plus"
+    : currentPlanId === "max"
+    ? "Max"
+    : "Mejorar";
 
   const userInitial = (() => {
     const base = (authUserName ?? authUserEmail ?? "").trim();
@@ -3201,10 +4303,12 @@ const chatBottomPad = hasUserMessage ? (inputBarH + 22) : 18;
 
   function Frac({ n, d }: { n: string; d: string }) {
   return (
-    <span className="inline-flex flex-col items-center align-middle mx-1">
-      <span className="text-[0.85em] leading-none">{n}</span>
-      <span className="h-[1px] w-[1.6em] bg-current opacity-80 my-[2px]" />
-      <span className="text-[0.85em] leading-none">{d}</span>
+    <span className="inline-flex flex-col items-center align-middle mx-1 my-[6px]">
+      <span className="text-[0.9em] leading-tight mb-[2px]">{n}</span>
+
+<span className="h-[1.5px] w-[1.6em] bg-current opacity-90 my-[3px]" />
+
+<span className="text-[0.9em] leading-tight mt-[2px]">{d}</span>
     </span>
   );
 }
@@ -3275,6 +4379,16 @@ return (
     }
   }
 
+.modal-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close-btn span {
+  transform: translateY(-0.5px);
+}
+
   @keyframes chalkIn {
     from {
       opacity: 0;
@@ -3287,6 +4401,106 @@ return (
       filter: blur(0px);
     }
   }
+
+  @keyframes voicePulse {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.28);
+    }
+    70% {
+      transform: scale(1.045);
+      box-shadow: 0 0 0 10px rgba(37, 99, 235, 0);
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+    }
+  }
+
+  /* Quitar azul de enlaces dentro del chat */
+.prose a {
+  color: #18181b !important;
+  text-decoration: none !important;
+}
+
+/* Quitar numeración automática de listas */
+.prose ol {
+  list-style: none !important;
+  padding-left: 0 !important;
+}
+
+.prose li::marker {
+  content: "" !important;
+}
+
+  /* ===== KaTeX bonito y controlado ===== */
+.prose .katex {
+  font-size: 1.08em !important;
+  line-height: 1.25 !important;
+}
+
+  .prose .katex-display {
+  display: block;
+  margin: 0.9rem 0 !important;
+  text-align: left !important;
+  overflow: visible !important;
+  padding: 0.1rem 0;
+  max-width: 100%;
+}
+
+.prose .katex-display > .katex {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  font-size: 1.05em !important;
+  line-height: 1.15 !important;
+  white-space: normal !important;
+  word-break: break-word;
+}
+
+  /* Ajusta mejor raíces, fracciones y operadores altos */
+  .prose .katex .sqrt > .root {
+    margin-right: 0.12em !important;
+  }
+
+  .prose .katex .mfrac .frac-line {
+    border-bottom-width: 0.06em !important;
+  }
+
+  .prose .katex .mord,
+  .prose .katex .mop,
+  .prose .katex .mbin,
+  .prose .katex .mrel,
+  .prose .katex .mopen,
+  .prose .katex .mclose,
+  .prose .katex .mpunct {
+    vertical-align: middle;
+  }
+
+/* En móvil: matemáticas más legibles */
+@media (max-width: 768px) {
+  .prose .katex {
+    font-size: 0.95em !important;
+    line-height: 1.12 !important;
+  }
+
+  .prose .katex-display {
+    margin: 0.6rem 0 !important;
+    text-align: left !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  .prose .katex-display > .katex {
+    font-size: 0.98em !important;
+    line-height: 1.1 !important;
+    white-space: normal !important;
+  }
+}
+
+.paywall-scroll::-webkit-scrollbar {
+  display: none;
+}
 `}</style>
 
       {/* TOAST */}
@@ -3528,200 +4742,420 @@ return (
       )}
 
       {/* ===== PAYWALL ===== */}
-      {paywallOpen && (
-        <div className="fixed inset-0 z-[70]">
-          <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-white to-white" onClick={closePaywall} aria-hidden="true" />
+{paywallOpen && (
+  <div className="fixed inset-0 z-[70]">
+    <div
+      className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+      onClick={closePaywall}
+      aria-hidden="true"
+    />
 
-          <div className="absolute -top-28 left-1/2 -translate-x-1/2 h-[320px] w-[680px] rounded-full bg-blue-500/15 blur-3xl pointer-events-none" />
-          <div className="absolute top-[26%] -left-28 h-[240px] w-[240px] rounded-full bg-blue-600/10 blur-3xl pointer-events-none" />
-          <div className="absolute top-[48%] -right-24 h-[280px] w-[280px] rounded-full bg-zinc-900/5 blur-3xl pointer-events-none" />
-
-          <div className="relative h-full w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="mx-auto h-full w-full max-w-md px-3 pb-[env(safe-area-inset-bottom)] flex flex-col min-h-0">
-              <div className="pt-2 flex items-center justify-between">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="h-10 w-10 rounded-full bg-white/90 backdrop-blur-xl border border-zinc-200 grid place-items-center shadow-sm">
-                    <img src={"/vonu-icon.png?v=2"} alt="Vonu" className="h-6 w-6" draggable={false} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[13px] font-semibold text-zinc-900 leading-5">{payTitleNode}</div>
-                    <div className="text-[11px] text-zinc-500 leading-4">
-                      Plan: <span className="font-semibold text-zinc-900">{planLabel}</span>
-                      {proLoading ? <span className="ml-2 text-zinc-400">· comprobando…</span> : null}
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={closePaywall}
-                  className={[
-                    "h-10 w-10 aspect-square rounded-full",
-                    "bg-white/90 backdrop-blur-xl border border-zinc-200",
-                    "hover:bg-white transition-colors",
-                    "grid place-items-center",
-                    "cursor-pointer disabled:opacity-50 shadow-sm",
-                    "p-0",
-                  ].join(" ")}
-                  aria-label="Cerrar"
-                  disabled={!!payLoading}
-                  title="Cerrar"
-                >
-                  <span className="text-zinc-700 text-[20px] leading-none relative top-[-0.5px]">×</span>
-                </button>
-              </div>
-
-              <div className="mt-2 flex-1 min-h-0 rounded-[26px] border border-zinc-200 bg-white/85 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden">
-                <div className="h-full flex flex-col p-3">
-                  <div className="rounded-[20px] border border-zinc-200 bg-white p-3">
-                    <div className="text-[12.5px] font-semibold text-zinc-900">Elige tu plan</div>
-
-                    <div className="mt-2 grid gap-2">
-                      <button
-                        onClick={() => setPlan("yearly")}
-                        disabled={!!payLoading}
-                        className={[
-                          "w-full rounded-[18px] border transition-colors text-left",
-                          "px-3 py-2.5 flex items-start gap-3",
-                          plan === "yearly" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                      >
-                        <div className="pt-[2px]">
-                          <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "yearly" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
-                            {plan === "yearly" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
-                          </div>
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className="text-[12.5px] font-semibold text-zinc-900">Anual</div>
-                              <span className="text-[10px] px-2 py-[2px] rounded-full bg-blue-600 text-white font-semibold">{BEST_VALUE_BADGE}</span>
-                            </div>
-                            <div className="text-[11px] text-zinc-500">{YEAR_SAVE_BADGE}</div>
-                          </div>
-
-                          <div className="mt-1 flex items-baseline gap-2">
-                            <div className="text-[20px] font-semibold text-zinc-900 leading-6">{PRICE_YEAR}</div>
-                            <div className="text-[11px] text-zinc-600">≈ {PRICE_YEAR_PER_MONTH}/mes</div>
-                          </div>
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => setPlan("monthly")}
-                        disabled={!!payLoading}
-                        className={[
-                          "w-full rounded-[18px] border transition-colors text-left",
-                          "px-3 py-2.5 flex items-start gap-3",
-                          plan === "monthly" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                      >
-                        <div className="pt-[2px]">
-                          <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "monthly" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
-                            {plan === "monthly" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
-                          </div>
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="text-[12.5px] font-semibold text-zinc-900">Mensual</div>
-                            <div className="text-[11px] text-zinc-500">Flexible</div>
-                          </div>
-
-                          <div className="mt-1 flex items-baseline gap-2">
-                            <div className="text-[20px] font-semibold text-zinc-900 leading-6">{PRICE_MONTH}</div>
-                            <div className="text-[11px] text-zinc-600">cancela cuando quieras</div>
-                          </div>
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => setPlan("free")}
-                        disabled={!!payLoading}
-                        className={[
-                          "w-full rounded-[18px] border transition-colors text-left",
-                          "px-3 py-2.5 flex items-start gap-3",
-                          plan === "free" ? "border-blue-600 bg-blue-50/70" : "border-zinc-200 bg-white hover:bg-zinc-50",
-                        ].join(" ")}
-                      >
-                        <div className="pt-[2px]">
-                          <div className={["h-5 w-5 rounded-full border grid place-items-center", plan === "free" ? "border-blue-600" : "border-zinc-300"].join(" ")}>
-                            {plan === "free" ? <div className="h-2.5 w-2.5 rounded-full bg-blue-600" /> : null}
-                          </div>
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="text-[12.5px] font-semibold text-zinc-900">Seguir gratis</div>
-                            <div className="text-[12px] font-semibold text-zinc-900">0€</div>
-                          </div>
-                          <div className="mt-1 text-[11px] text-zinc-600">Análisis limitados.</div>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="mt-2 rounded-[20px] border border-zinc-200 bg-white p-3">
-                    <div className="text-[12.5px] font-semibold text-zinc-900">Gratis</div>
-                    <div className="mt-2 grid gap-1.5">
-                      {["Análisis limitados", "Decidir con calma"].map((x) => (
-                        <div key={x} className="flex items-start gap-2">
-                          <span className="mt-[1px] text-blue-700">
-                            <CheckIcon className="h-4 w-4" />
-                          </span>
-                          <div className="text-[12px] text-zinc-700 leading-5">{x}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {payMsg ? (
-                    <div className="mt-2 rounded-[16px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">{payMsg}</div>
-                  ) : (
-                    <div className="mt-2 opacity-0 select-none text-[12px] px-3 py-2">placeholder</div>
-                  )}
-
-                  <div className="mt-auto pt-1 pb-[calc(env(safe-area-inset-bottom)+8px)]">
-                    <button
-                      onClick={() => {
-                        if (payLoading) return;
-                        if (plan === "free") {
-                          closePaywall();
-                          return;
-                        }
-                        startCheckout(plan);
-                      }}
-                      className={["w-full h-11 rounded-full text-[14px] font-semibold transition-colors cursor-pointer disabled:opacity-50", "bg-black text-white hover:bg-zinc-900"].join(" ")}
-                      disabled={!!payLoading}
-                    >
-                      {payLoading ? "Procesando…" : plan === "free" ? "Volver al chat" : "Continuar con el pago"}
-                    </button>
-
-                    <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
-                      <span className="text-blue-700">
-                        <ShieldIcon className="h-4 w-4" />
-                      </span>
-                      <span>Pago seguro con Stripe.</span>
-                    </div>
-
-                    {isPro ? (
-                      <button
-                        onClick={cancelSubscriptionFromHere}
-                        className="mt-2 w-full h-10 rounded-full border border-red-200 hover:bg-red-50 text-[12px] text-red-700 cursor-pointer disabled:opacity-50"
-                        disabled={!!payLoading}
-                      >
-                        Cancelar suscripción
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-
-              <div className="h-2" />
+    <div
+      className="relative h-full w-full flex items-center justify-center px-3 py-3"
+      onClick={(e) => e.stopPropagation()}
+      style={{ fontFamily: "var(--font-poppins), ui-sans-serif, system-ui" }}
+    >
+      <div
+  className="w-full max-w-[980px] rounded-[28px] bg-white shadow-[0_30px_100px_rgba(0,0,0,0.22)] border border-zinc-200 overflow-hidden"
+  style={{ maxHeight: "calc(var(--vvh, 100dvh) - 24px)" }}
+>
+        <div className="flex max-h-[calc(var(--vvh,100dvh)-24px)] flex-col">
+          {/* HEADER */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-3 shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <img
+                src="/vonu-icon.png?v=2"
+                alt="Vonu"
+                className="h-7 w-7 shrink-0"
+                draggable={false}
+              />
+              <img
+                src="/vonu-wordmark.png?v=2"
+                alt="Vonu"
+                className="h-4 w-auto"
+                draggable={false}
+              />
             </div>
+
+            <button
+  onClick={closePaywall}
+  className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 cursor-pointer shrink-0 p-0 grid place-items-center"
+  aria-label="Cerrar"
+  disabled={!!payLoading}
+>
+  <svg
+    viewBox="0 0 24 24"
+    className="h-[18px] w-[18px]"
+    fill="none"
+    aria-hidden="true"
+  >
+    <path
+      d="M6 6l12 12M18 6L6 18"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+    />
+  </svg>
+</button>
+          </div>
+
+          {/* SCROLLABLE CONTENT */}
+          <div
+  className="paywall-scroll overflow-y-scroll px-4 md:px-5 py-4 h-full"
+  style={{
+    scrollbarWidth: "none",
+    msOverflowStyle: "none",
+    scrollbarGutter: "stable",
+    minHeight: isDesktopPointer() ? 470 : 0,
+  }}
+>
+            {/* BILLING / TABS */}
+            <div className="grid grid-cols-3 gap-1 rounded-full border border-zinc-200 p-1 bg-white w-full">
+  <button
+    onClick={() => setBilling("monthly")}
+    className={`h-10 rounded-full text-[14px] font-semibold transition-colors ${
+      billing === "monthly"
+        ? "bg-blue-600 text-white"
+        : "text-zinc-700 hover:bg-zinc-100"
+    }`}
+  >
+    Mensual
+  </button>
+
+  <button
+    onClick={() => setBilling("yearly")}
+    className={`h-10 rounded-full text-[14px] font-semibold transition-colors ${
+      billing === "yearly"
+        ? "bg-blue-600 text-white"
+        : "text-zinc-700 hover:bg-zinc-100"
+    }`}
+  >
+    Anual
+  </button>
+
+  <button
+    onClick={() => setBilling("topup")}
+    className={`h-10 rounded-full text-[14px] font-semibold transition-colors ${
+      billing === "topup"
+        ? "bg-blue-600 text-white"
+        : "text-zinc-700 hover:bg-zinc-100"
+    }`}
+  >
+    Recargas
+  </button>
+</div>
+
+            {/* PLANES */}
+            {billing !== "topup" && (
+  <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch">
+    {/* FREE */}
+    <button
+      onClick={() => setPlan("free")}
+      disabled={!!payLoading}
+      className={[
+        "w-full text-left rounded-[22px] border px-4 py-4 transition-all h-full flex flex-col",
+        plan === "free"
+          ? "border-blue-600 bg-blue-50"
+          : "border-zinc-200 bg-white hover:bg-zinc-50",
+      ].join(" ")}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[15px] font-semibold text-zinc-900">Gratis</div>
+          <div className="mt-1 text-[28px] leading-none font-extrabold tracking-tight text-zinc-900">
+            0€
           </div>
         </div>
-      )}
+      </div>
+
+      <div className="mt-4 space-y-2.5">
+        {[
+          "20 mensajes al mes",
+          "Analiza mensajes, dudas y situaciones con calma",
+          "Pruébalo sin compromiso",
+          "1 mensaje de prueba sin cuenta",
+        ].map((item) => (
+          <div key={item} className="flex items-start gap-2">
+            <span className="mt-[1px] text-blue-600 shrink-0">
+              <CheckIcon className="h-4 w-4" />
+            </span>
+            <div className="text-[13px] leading-5 text-zinc-800">{item}</div>
+          </div>
+        ))}
+      </div>
+    </button>
+
+    {/* PLUS */}
+    <button
+      onClick={() => setPlan("plus")}
+      disabled={!!payLoading}
+      className={[
+        "w-full text-left rounded-[22px] border px-4 py-4 transition-all h-full flex flex-col",
+        plan === "plus"
+          ? "border-blue-600 bg-blue-50"
+          : "border-zinc-200 bg-white hover:bg-zinc-50",
+      ].join(" ")}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[15px] font-semibold text-zinc-900">Plus</div>
+          <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+            {billing === "monthly" ? "9,99€" : "79,99€"}
+          </div>
+        </div>
+
+        <div className="text-[12px] text-zinc-500 mt-1 shrink-0 text-right">
+          Uso habitual
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-2.5">
+        {[
+          "250 mensajes al mes",
+          "15 min de conversación por voz",
+          "Análisis de posibles estafas y fraudes",
+          "Modo tutor y ayuda paso a paso",
+          "Consultas sobre situaciones personales o delicadas",
+          "Orientación preventiva en dudas legales cotidianas",
+        ].map((item) => (
+          <div key={item} className="flex items-start gap-2">
+            <span className="mt-[1px] text-blue-600 shrink-0">
+              <CheckIcon className="h-4 w-4" />
+            </span>
+            <div className="text-[13px] leading-5 text-zinc-800">{item}</div>
+          </div>
+        ))}
+      </div>
+    </button>
+
+    {/* MAX */}
+    <button
+      onClick={() => setPlan("max")}
+      disabled={!!payLoading}
+      className={[
+        "w-full text-left rounded-[22px] border px-4 py-4 transition-all h-full flex flex-col",
+        plan === "max"
+          ? "border-blue-600 bg-blue-50"
+          : "border-zinc-200 bg-white hover:bg-zinc-50",
+      ].join(" ")}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[15px] font-semibold text-zinc-900">Max</div>
+          <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+            {billing === "monthly" ? "19,99€" : "159,99€"}
+          </div>
+        </div>
+
+        <div className="text-[12px] text-zinc-500 mt-1 shrink-0 text-right">
+          Uso intensivo
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-2.5">
+        {[
+          "800 mensajes al mes",
+          "45 min de conversación por voz",
+          "Ideal para estudiantes y uso frecuente",
+          "Más margen para tutor, estudio y explicaciones",
+          "Más espacio para consultas complejas o largas",
+          "Todo lo incluido en Plus",
+        ].map((item) => (
+          <div key={item} className="flex items-start gap-2">
+            <span className="mt-[1px] text-blue-600 shrink-0">
+              <CheckIcon className="h-4 w-4" />
+            </span>
+            <div className="text-[13px] leading-5 text-zinc-800">{item}</div>
+          </div>
+        ))}
+      </div>
+    </button>
+  </div>
+)}
+
+{/* RECARGAS */}
+{billing === "topup" && (
+  <div className="mt-3 flex flex-col min-h-[420px]">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch">
+      {/* BÁSICA */}
+      <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
+        <div className="text-[15px] font-semibold text-zinc-900">
+          Recarga básica
+        </div>
+
+        <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+          2,99€
+        </div>
+
+        <div className="mt-4 space-y-2.5">
+          {[
+            "50 mensajes extra",
+            "5 min de voz",
+            "Pago único",
+            "Vuelve a tener margen enseguida",
+          ].map((item) => (
+            <div key={item} className="flex items-start gap-2">
+              <span className="mt-[1px] text-blue-600 shrink-0">
+                <CheckIcon className="h-4 w-4" />
+              </span>
+              <div className="text-[13px] leading-5 text-zinc-800">
+                {item}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={() => startTopupCheckout("basic")}
+          className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold p-0"
+        >
+          <span className="flex h-full w-full items-center justify-center leading-none">
+            Comprar
+          </span>
+        </button>
+      </div>
+
+      {/* MEDIA */}
+      <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
+        <div className="text-[15px] font-semibold text-zinc-900">
+          Recarga media
+        </div>
+
+        <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+          6,99€
+        </div>
+
+        <div className="mt-4 space-y-2.5">
+          {[
+            "150 mensajes extra",
+            "15 min de voz",
+            "Pago único",
+            "La opción más equilibrada",
+          ].map((item) => (
+            <div key={item} className="flex items-start gap-2">
+              <span className="mt-[1px] text-blue-600 shrink-0">
+                <CheckIcon className="h-4 w-4" />
+              </span>
+              <div className="text-[13px] leading-5 text-zinc-800">
+                {item}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={() => startTopupCheckout("medium")}
+          className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold p-0"
+        >
+          <span className="flex h-full w-full items-center justify-center leading-none">
+            Comprar
+          </span>
+        </button>
+      </div>
+
+      {/* GRANDE */}
+      <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
+        <div className="text-[15px] font-semibold text-zinc-900">
+          Recarga grande
+        </div>
+
+        <div className="mt-1 text-[31px] leading-none font-extrabold tracking-tight text-zinc-900">
+          14,99€
+        </div>
+
+        <div className="mt-4 space-y-2.5">
+          {[
+            "400 mensajes extra",
+            "40 min de voz",
+            "Pago único",
+            "La mejor para uso intensivo",
+          ].map((item) => (
+            <div key={item} className="flex items-start gap-2">
+              <span className="mt-[1px] text-blue-600 shrink-0">
+                <CheckIcon className="h-4 w-4" />
+              </span>
+              <div className="text-[13px] leading-5 text-zinc-800">
+                {item}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={() => startTopupCheckout("large")}
+          className="mt-auto w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold p-0"
+        >
+          <span className="flex h-full w-full items-center justify-center leading-none">
+            Comprar
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <div className="flex-1" />
+  </div>
+)}
+
+            {payMsg ? (
+              <div className="mt-4 rounded-[16px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">
+                {payMsg}
+              </div>
+            ) : null}
+          </div>
+
+          {/* FOOTER CTA */}
+<div className="px-4 md:px-5 pb-4 pt-3 bg-white shrink-0">
+  <div className="min-h-[48px] flex items-center justify-center">
+    {billing !== "topup" ? (
+      <button
+        onClick={() => {
+          if (payLoading) return;
+          if (plan === "free") {
+            closePaywall();
+            return;
+          }
+          startCheckout({ plan, billing });
+        }}
+        className="w-full md:w-[360px] h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[15px] font-semibold transition-colors cursor-pointer disabled:opacity-50 block mx-auto"
+        disabled={!!payLoading}
+      >
+        {payLoading
+          ? "Procesando…"
+          : plan === "free"
+          ? "Volver al chat"
+          : "Empezar ahora"}
+      </button>
+    ) : null}
+  </div>
+
+  <div className="mt-2 min-h-[20px] text-center text-[12px] text-zinc-500">
+    {billing === "topup"
+      ? "Elige una recarga para continuar usando Vonu."
+      : "Cancela cuando quieras"}
+  </div>
+
+  <div className="mt-2 min-h-[18px] flex items-center justify-center gap-2 text-[11px] text-zinc-500">
+    <span className="text-blue-700">
+      <ShieldIcon className="h-4 w-4" />
+    </span>
+    <span>Pago seguro con Stripe.</span>
+  </div>
+
+  {isPro && billing !== "topup" ? (
+    <button
+      onClick={cancelSubscriptionFromHere}
+      className="mt-3 w-full h-10 rounded-full border border-red-200 hover:bg-red-50 text-[12px] text-red-700 cursor-pointer disabled:opacity-50"
+      disabled={!!payLoading}
+    >
+      Cancelar suscripción
+    </button>
+  ) : null}
+</div>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* ===== LOGIN MODAL ===== */}
       {loginOpen && (
@@ -3748,13 +5182,56 @@ return (
                 </div>
 
                 <div className="mt-5 rounded-[16px] border border-zinc-200 bg-zinc-50 px-4 py-3">
-                  <div className="text-[12px] text-zinc-500">Cuenta</div>
-                  <div className="mt-1 text-[14px] font-semibold text-zinc-900 truncate">{authUserName ?? "Usuario"}</div>
-                  <div className="text-[12px] text-zinc-600 truncate">{authUserEmail ?? "Email no disponible"}</div>
-                  <div className="mt-2 text-[12px] text-zinc-600">
-                    Plan: <span className="font-semibold text-zinc-900">{proLoading ? "comprobando…" : isPro ? PLUS_NODE : "Gratis"}</span>
-                  </div>
-                </div>
+  <div className="text-[12px] text-zinc-500">Cuenta</div>
+  <div className="mt-1 text-[14px] font-semibold text-zinc-900 truncate">
+    {authUserName ?? "Usuario"}
+  </div>
+  <div className="text-[12px] text-zinc-600 truncate">
+    {authUserEmail ?? "Email no disponible"}
+  </div>
+
+  <div className="mt-2 text-[12px] text-zinc-600">
+  Plan:{" "}
+  <span className="font-semibold text-zinc-900">
+    {authLoading || proLoading
+      ? "comprobando…"
+      : usageInfo?.plan_id === "plus"
+      ? "Plus"
+      : usageInfo?.plan_id === "max"
+      ? "Max"
+      : "Gratis"}
+  </span>
+</div>
+
+  <div className="mt-3 rounded-[12px] border border-zinc-200 bg-white px-3 py-3">
+  <div className="text-[11px] text-zinc-500">Uso mensual</div>
+
+  {usageInfo ? (
+    <div className="mt-2 space-y-2">
+      <div className="flex items-center justify-between gap-3 text-[12px]">
+        <span className="text-zinc-600">Mensajes restantes</span>
+        <span className="font-semibold text-zinc-900">
+          {usageInfo.messages_left}
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 text-[12px]">
+        <span className="text-zinc-600">Minutos de voz restantes</span>
+        <span className="font-semibold text-zinc-900">
+          {Math.max(
+            0,
+            Math.floor((usageInfo.realtime_seconds_left ?? 0) / 60)
+          )} min
+        </span>
+      </div>
+    </div>
+  ) : (
+    <div className="mt-2 text-[12px] text-zinc-500">
+      Cargando uso mensual…
+    </div>
+  )}
+</div>
+</div>
 
                 <div className="mt-4 flex gap-2">
                   <button
@@ -4117,6 +5594,49 @@ return (
   className="mx-auto max-w-3xl px-3 md:px-6"
   style={{ paddingTop: 124, paddingBottom: hasUserMessage ? chatBottomPad : 18 }}
 >
+
+{showSoftLimitWarning ? (
+  <div className="flex justify-start">
+    <div className="max-w-[92%] md:max-w-[85%] rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-zinc-900 shadow-sm">
+      <div className="text-[14px] font-semibold">
+        Te quedan {usageInfo?.messages_left} mensajes este mes
+      </div>
+      <div className="mt-1 text-[13px] text-zinc-700 leading-6">
+        Cuando quieras, puedes revisar tu plan o ampliarlo desde el botón de arriba.
+      </div>
+      <div className="mt-3">
+        <button
+          onClick={handleOpenPlansCTA}
+          className="h-9 px-4 rounded-full bg-black hover:bg-zinc-900 text-white text-[12px] font-semibold"
+        >
+          Ver planes
+        </button>
+      </div>
+    </div>
+  </div>
+) : null}
+
+{showHardLimitWarning ? (
+  <div className="flex justify-start">
+    <div className="max-w-[92%] md:max-w-[85%] rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-zinc-900 shadow-sm">
+      <div className="text-[15px] font-semibold">
+        Has llegado al límite de mensajes de este mes
+      </div>
+      <div className="mt-1 text-[13px] text-zinc-700 leading-6">
+        Puedes seguir usando Vonu mejorando tu plan y, más adelante, también podrás añadir mensajes extra si lo necesitas.
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          onClick={handleOpenPlansCTA}
+          className="h-9 px-4 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold"
+        >
+          Ver planes
+        </button>
+      </div>
+    </div>
+  </div>
+) : null}
+
     <div className="flex flex-col gap-4 py-6 md:pt-6">
       {/* Badge modo tutor */}
       {activeThread?.mode === "tutor" ? (
@@ -4186,11 +5706,14 @@ const mdTextRaw = isUser
   ? rawText
   : normalizeAssistantText(rawText);
 
-// ✅ Anti-LaTeX + formato limpio “como la imagen”
-const mdText =
-  !isUser && activeThread?.mode === "tutor"
-    ? sanitizeTutorLikeImage(mdTextRaw)
-    : mdTextRaw;
+
+const mdText = !isUser
+  ? normalizeMathMarkdown(
+      sanitizeTutorLikeImage(
+        normalizeAssistantText(mdTextRaw)
+      )
+    )
+  : mdTextRaw;
 
 
 const isStreaming = !!m.streaming;
@@ -4226,7 +5749,7 @@ return (
     )}
 
     {(m.text || m.streaming) && (
-      <div className="prose prose-sm max-w-none min-w-0 overflow-hidden break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 font-sans">
+            <div className="prose prose-sm max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans">
         {isStreaming ? (
           <span className="whitespace-pre-wrap">
             {mdText.includes('"elements"') || mdText.includes("```excalidraw")
@@ -4235,9 +5758,13 @@ return (
             {!hasText ? <TypingDots /> : <TypingCaret />}
           </span>
         ) : (
-          <ReactMarkdown components={makeMdComponents(m.boardImageB64, m.boardImagePlacement, m.pizarra)}>
-            {mdText}
-          </ReactMarkdown>
+                    <ReactMarkdown
+  remarkPlugins={[remarkMath]}
+  rehypePlugins={[rehypeKatex]}
+  components={makeMdComponents(m.boardImageB64, m.boardImagePlacement, m.pizarra)}
+>
+  {mdText}
+</ReactMarkdown>
         )}
       </div>
     )}
@@ -4352,63 +5879,71 @@ return (
 
   {/* RIGHT ICONS */}
 <div className="absolute right-2.5 bottom-[34px] z-[60] flex items-center gap-2">
-  {/* 🎙️ Dictado (solo escribir) */}
-  <button
-    onClick={toggleDictation}
-    disabled={!!isTyping || !speechSupported}
-    className={[
-      "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
-      "bg-white",
-      !speechSupported
-        ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
-        : (isListening && listeningPurpose === "dictation")
-? "border-red-200 bg-red-50 text-red-700"
-        : "border-zinc-200 hover:bg-zinc-50 text-zinc-900",
-      !!isTyping ? "opacity-50" : "",
-    ].join(" ")}
-    aria-label={isListening ? "Parar dictado" : "Dictar por voz"}
-    title={!speechSupported ? "Tu navegador no soporta dictado" : isListening ? "Parar dictado" : "Dictar por voz"}
-  >
-    <div className="relative">
-      <MicIcon className="h-5 w-5" />
-      {isListening && listeningPurpose === "dictation" ? (
-  <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />
-) : null}
 
-    </div>
-  </button>
+{/* 🎙️ Hablar con Vonu */}
+<button
+  onClick={toggleConversation}
+  disabled={!!isTyping || !isLoggedIn}
+  className={[
+    "relative h-10 w-10 rounded-full shrink-0 grid place-items-center p-0",
+    "border transition-all duration-300",
+    voiceUiState === "idle"
+      ? "border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50"
+      : voiceUiState === "listening"
+      ? "border-cyan-300 text-white shadow-[0_8px_26px_rgba(34,211,238,0.30)]"
+      : "border-blue-300 text-white shadow-[0_10px_30px_rgba(59,130,246,0.34)]",
+        (!!isTyping || !isLoggedIn) ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+  ].join(" ")}
+  style={
+    voiceUiState === "idle"
+      ? undefined
+      : voiceUiState === "listening"
+      ? {
+          background:
+            "linear-gradient(135deg, #06b6d4 0%, #38bdf8 45%, #2563eb 100%)",
+        }
+      : {
+          background:
+            "linear-gradient(135deg, #2563eb 0%, #3b82f6 45%, #60a5fa 100%)",
+        }
+  }
+  aria-label={voiceMode ? "Desactivar conversación" : "Activar conversación"}
+  title={
+    voiceMode
+      ? realtimeStatus === "listening"
+        ? "Vonu te está escuchando"
+        : realtimeStatus === "speaking"
+        ? "Vonu te está respondiendo"
+        : "Modo conversación activo"
+      : "Hablar con Vonu"
+  }
+>
+  {voiceUiState !== "idle" ? (
+    <>
+      <span
+        className={[
+          "absolute inset-[-3px] rounded-full pointer-events-none",
+          voiceUiState === "listening"
+            ? "animate-ping bg-cyan-400/25"
+            : "animate-pulse bg-blue-400/20",
+        ].join(" ")}
+        aria-hidden="true"
+      />
+      <span
+        className="absolute inset-[1px] rounded-full opacity-20 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.38), rgba(255,255,255,0.02))",
+        }}
+        aria-hidden="true"
+      />
+    </>
+  ) : null}
 
-  {/* 🗣️ Conversación (turnos: habla + escucha) */}
-  <button
-    onClick={toggleConversation}
-    disabled={!!isTyping || !speechSupported || !supportsTTS()}
-    className={[
-      "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
-      "bg-white",
-      !speechSupported
-        ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
-        : voiceMode
-        ? "border-blue-200 bg-blue-50 text-blue-800"
-        : "border-zinc-200 hover:bg-zinc-50 text-zinc-900",
-      !!isTyping ? "opacity-50 cursor-not-allowed" : "",
-    ].join(" ")}
-    aria-label={voiceMode ? "Desactivar conversación" : "Activar conversación"}
-    title={
-  !speechSupported
-    ? "Tu navegador no soporta micrófono (SpeechRecognition)"
-    : !supportsTTS()
-    ? "Tu navegador no soporta voz (TTS)"
-    : voiceMode
-    ? "Conversación ON (clic para apagar)"
-    : "Conversación OFF (clic para encender)"
-}
-  >
-    <div className="relative">
-  <TalkIcon className="h-5 w-5" />
-</div>
-
-
-  </button>
+  <div className="relative z-10">
+    <MicIcon className="h-5 w-5" />
+  </div>
+</button>
 
   {/* ⬆️ ENVIAR */}  
 <button
@@ -4441,12 +5976,22 @@ return (
   onChange={(e) => setInput(e.target.value)}
   onKeyDown={(e) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+  e.preventDefault();
+  if (!canSend) return;
+  sendMessage();
+}
+
   }}
   disabled={!!isTyping}
-  placeholder={isTyping ? "Vonu está respondiendo…" : isListening ? "Escuchando… habla ahora" : "Escribe tu mensaje…"}
+placeholder={
+  isTyping
+    ? "Vonu está respondiendo…"
+    : voiceMode
+    ? "Modo conversación activo… también puedes escribir"
+    : isListening
+    ? "Escuchando… habla ahora"
+    : "Escribe tu mensaje…"
+}
   className={[
     "block w-full resize-none outline-none",
     "bg-white",
