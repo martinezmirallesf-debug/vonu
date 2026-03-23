@@ -4750,6 +4750,7 @@ return (
   setPlan={setPlan}
   payLoading={payLoading}
   startCheckout={startCheckout}
+  startTopupCheckout={startTopupCheckout}
 />
 
 <LoginModal />
