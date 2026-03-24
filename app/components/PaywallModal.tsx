@@ -5,21 +5,30 @@ import React from "react";
 type PaywallModalProps = {
   paywallOpen: boolean;
   closePaywall: () => void;
+
   billing: "monthly" | "yearly" | "topup";
   setBilling: React.Dispatch<
     React.SetStateAction<"monthly" | "yearly" | "topup">
   >;
+
   plan: "free" | "plus" | "max";
   setPlan: React.Dispatch<
     React.SetStateAction<"free" | "plus" | "max">
   >;
+
   payLoading: boolean;
   payMsg: string | null;
+
+  isPro: boolean;
+
   startCheckout: (chosen: {
     plan: "plus" | "max";
     billing: "monthly" | "yearly";
   }) => void;
+
   startTopupCheckout: (pack: "basic" | "medium" | "large") => void;
+  cancelSubscriptionFromHere: () => void;
+
   ShieldIcon: React.ComponentType<{ className?: string }>;
 };
 
@@ -32,10 +41,13 @@ export default function PaywallModal({
   setPlan,
   payLoading,
   payMsg,
+  isPro,
   startCheckout,
   startTopupCheckout,
+  cancelSubscriptionFromHere,
   ShieldIcon,
 }: PaywallModalProps) {
+  if (!paywallOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[70]">
@@ -52,9 +64,10 @@ export default function PaywallModal({
       >
         <div
           className="w-full max-w-[980px] rounded-[28px] bg-white shadow-[0_30px_100px_rgba(0,0,0,0.22)] border border-zinc-200 overflow-hidden"
-          style={{ maxHeight: "calc(var(--vvh, 100dvh) - 24px)" }}
+          style={{ height: "min(760px, calc(var(--vvh, 100dvh) - 24px))" }}
         >
-          <div className="flex max-h-[calc(var(--vvh,100dvh)-24px)] flex-col">
+          <div className="flex h-full flex-col">
+            {/* HEADER */}
             <div className="flex items-center justify-between px-5 pt-4 pb-3 shrink-0">
               <div className="flex items-center gap-2 min-w-0">
                 <img
@@ -75,6 +88,7 @@ export default function PaywallModal({
                 onClick={closePaywall}
                 className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 cursor-pointer shrink-0 p-0 grid place-items-center"
                 aria-label="Cerrar"
+                disabled={!!payLoading}
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -92,7 +106,9 @@ export default function PaywallModal({
               </button>
             </div>
 
-                        <div className="px-4 md:px-5 py-4 flex-1 overflow-y-auto">
+            {/* CONTENIDO FIJO CON SCROLL INTERNO */}
+            <div className="px-4 md:px-5 py-4 flex-1 overflow-y-auto">
+              {/* TABS */}
               <div className="grid grid-cols-3 gap-1 rounded-full border border-zinc-200 p-1 bg-white w-full">
                 <button
                   onClick={() => setBilling("monthly")}
@@ -128,11 +144,12 @@ export default function PaywallModal({
                 </button>
               </div>
 
+              {/* PLANES */}
               {billing !== "topup" && (
-                <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch px-1">
-                  {/* FREE */}
+                <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch">
                   <button
                     onClick={() => setPlan("free")}
+                    disabled={!!payLoading}
                     className={[
                       "w-full text-left rounded-[22px] border px-4 py-4 transition-all h-full flex flex-col",
                       plan === "free"
@@ -154,9 +171,9 @@ export default function PaywallModal({
                     </div>
                   </button>
 
-                  {/* PLUS */}
                   <button
                     onClick={() => setPlan("plus")}
+                    disabled={!!payLoading}
                     className={[
                       "w-full text-left rounded-[22px] border px-4 py-4 transition-all h-full flex flex-col",
                       plan === "plus"
@@ -178,9 +195,9 @@ export default function PaywallModal({
                     </div>
                   </button>
 
-                  {/* MAX */}
                   <button
                     onClick={() => setPlan("max")}
+                    disabled={!!payLoading}
                     className={[
                       "w-full text-left rounded-[22px] border px-4 py-4 transition-all h-full flex flex-col",
                       plan === "max"
@@ -204,10 +221,10 @@ export default function PaywallModal({
                 </div>
               )}
 
+              {/* RECARGAS */}
               {billing === "topup" && (
-                <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch px-1">
-                  {/* BÁSICA */}
-                  <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[280px]">
+                <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch">
+                  <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
                     <div className="text-[15px] font-semibold text-zinc-900">
                       Recarga básica
                     </div>
@@ -231,8 +248,7 @@ export default function PaywallModal({
                     </button>
                   </div>
 
-                  {/* MEDIA */}
-                  <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[280px]">
+                  <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
                     <div className="text-[15px] font-semibold text-zinc-900">
                       Recarga media
                     </div>
@@ -256,8 +272,7 @@ export default function PaywallModal({
                     </button>
                   </div>
 
-                  {/* GRANDE */}
-                  <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[280px]">
+                  <div className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 h-full flex flex-col min-h-[300px]">
                     <div className="text-[15px] font-semibold text-zinc-900">
                       Recarga grande
                     </div>
@@ -282,7 +297,16 @@ export default function PaywallModal({
                   </div>
                 </div>
               )}
-                          <div className="px-4 md:px-5 pb-4 pt-3 bg-white shrink-0">
+
+              {payMsg ? (
+                <div className="mt-4 rounded-[16px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">
+                  {payMsg}
+                </div>
+              ) : null}
+            </div>
+
+            {/* FOOTER FIJO */}
+            <div className="px-4 md:px-5 pb-4 pt-3 bg-white shrink-0 border-t border-zinc-100">
               <div className="min-h-[48px] flex items-center justify-center">
                 {billing !== "topup" ? (
                   <button
@@ -308,24 +332,28 @@ export default function PaywallModal({
                 ) : null}
               </div>
 
-                            {payMsg ? (
-                <div className="mt-4 rounded-[16px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">
-                  {payMsg}
-                </div>
-              ) : null}
-
               <div className="mt-2 min-h-[20px] text-center text-[12px] text-zinc-500">
                 {billing === "topup"
                   ? "Elige una recarga para continuar usando Vonu."
                   : "Cancela cuando quieras"}
               </div>
+
               <div className="mt-2 min-h-[18px] flex items-center justify-center gap-2 text-[11px] text-zinc-500">
-  <span className="text-blue-700">
-    <ShieldIcon className="h-4 w-4" />
-  </span>
-  <span>Pago seguro con Stripe.</span>
-</div>
-            </div>
+                <span className="text-blue-700">
+                  <ShieldIcon className="h-4 w-4" />
+                </span>
+                <span>Pago seguro con Stripe.</span>
+              </div>
+
+              {isPro && billing !== "topup" ? (
+                <button
+                  onClick={cancelSubscriptionFromHere}
+                  className="mt-3 w-full h-10 rounded-full border border-red-200 hover:bg-red-50 text-[12px] text-red-700 cursor-pointer disabled:opacity-50"
+                  disabled={!!payLoading}
+                >
+                  Cancelar suscripción
+                </button>
+              ) : null}
             </div>
           </div>
         </div>
