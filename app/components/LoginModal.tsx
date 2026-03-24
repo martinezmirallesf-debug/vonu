@@ -94,109 +94,105 @@ export default function LoginModal({
         onClick={(e) => e.stopPropagation()}
       >
         {isLoggedIn ? (
-          <>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-[18px] font-semibold text-zinc-900">
-                  Sesión iniciada
-                </div>
-                <div className="text-[12.5px] text-zinc-500 mt-1">
-                  Estás dentro. Aquí tienes tu estado.
-                </div>
-              </div>
-
-              <button
-                onClick={() => {
-                  setLoginOpen(false);
-                  setLoginMsg(null);
-                }}
-                className="h-9 w-9 aspect-square rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer p-0"
-                aria-label="Cerrar"
-              >
-                <span className="text-[18px] leading-none relative top-[-0.5px]">
-                  ×
-                </span>
-              </button>
-            </div>
-
-            <div className="mt-5 rounded-[16px] border border-zinc-200 bg-zinc-50 px-4 py-3">
-              <div className="text-[12px] text-zinc-500">Cuenta</div>
-              <div className="mt-1 text-[14px] font-semibold text-zinc-900 truncate">
-                {authUserName ?? "Usuario"}
-              </div>
-              <div className="text-[12px] text-zinc-600 truncate">
-                {authUserEmail ?? "Email no disponible"}
-              </div>
-
-              <div className="mt-2 text-[12px] text-zinc-600">
-                Plan:{" "}
-                <span className="font-semibold text-zinc-900">
-                  {authLoading || proLoading
-                    ? "comprobando…"
-                    : usageInfo?.plan_id === "plus"
-                    ? "Plus"
-                    : usageInfo?.plan_id === "max"
-                    ? "Max"
-                    : "Gratis"}
-                </span>
-              </div>
-
-              <div className="mt-3 rounded-[12px] border border-zinc-200 bg-white px-3 py-3">
-                <div className="text-[11px] text-zinc-500">Uso mensual</div>
-
-                {usageInfo ? (
-                  <div className="mt-2 space-y-2">
-                    <div className="flex items-center justify-between gap-3 text-[12px]">
-                      <span className="text-zinc-600">Mensajes restantes</span>
-                      <span className="font-semibold text-zinc-900">
-                        {usageInfo.messages_left}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-3 text-[12px]">
-                      <span className="text-zinc-600">
-                        Minutos de voz restantes
-                      </span>
-                      <span className="font-semibold text-zinc-900">
-                        {Math.max(
-                          0,
-                          Math.floor((usageInfo.realtime_seconds_left ?? 0) / 60)
-                        )}{" "}
-                        min
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-2 text-[12px] text-zinc-500">
-                    Cargando uso mensual…
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-4 flex gap-2">
-              <button
-                onClick={async () => {
-                  await logout();
-                  setLoginMsg(null);
-                  setLoginOpen(false);
-                }}
-                className="flex-1 h-11 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm font-semibold transition-colors cursor-pointer"
-              >
-                Cerrar sesión
-              </button>
-              <button
-                onClick={() => {
-                  setLoginOpen(false);
-                  setLoginMsg(null);
-                }}
-                className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors cursor-pointer"
-              >
-                Volver
-              </button>
-            </div>
-          </>
+  <>
+    {/* CABECERA PERFIL */}
+    <div className="rounded-[18px] border border-zinc-200 bg-[#eef2f3] px-4 py-5">
+      <div className="flex flex-col items-center text-center">
+        {/* Avatar */}
+        {authUserEmail ? (
+          <div className="h-16 w-16 rounded-full bg-zinc-300 flex items-center justify-center text-[22px] font-semibold text-white overflow-hidden">
+            {/* Si más adelante guardamos avatar_url, aquí pondremos la imagen */}
+            <span>
+              {(authUserName ?? authUserEmail ?? "U")
+                .charAt(0)
+                .toUpperCase()}
+            </span>
+          </div>
         ) : (
+          <div className="h-16 w-16 rounded-full bg-zinc-300 flex items-center justify-center text-[22px] font-semibold text-white">
+            U
+          </div>
+        )}
+
+        <div className="mt-3 text-[15px] font-semibold text-zinc-900">
+          {authUserName ?? "Usuario"}
+        </div>
+        <div className="text-[12.5px] text-zinc-600">
+          {authUserEmail ?? ""}
+        </div>
+      </div>
+    </div>
+
+    {/* TARJETA PLAN Y USO */}
+    <div className="mt-4 rounded-[16px] border border-zinc-200 bg-white px-4 py-3">
+      <div className="text-[12px] text-zinc-500">Plan actual</div>
+      <div className="mt-1 text-[14px] font-semibold text-zinc-900">
+        {authLoading || proLoading
+          ? "Comprobando…"
+          : usageInfo?.plan_id === "plus"
+          ? "Plus"
+          : usageInfo?.plan_id === "max"
+          ? "Max"
+          : "Gratis"}
+      </div>
+
+      <div className="mt-3 border-t border-zinc-100 pt-3">
+        <div className="text-[12px] text-zinc-500">Uso mensual</div>
+
+        {usageInfo ? (
+          <div className="mt-2 space-y-2">
+            <div className="flex items-center justify-between gap-3 text-[12px]">
+              <span className="text-zinc-600">Mensajes restantes</span>
+              <span className="font-semibold text-zinc-900">
+                {usageInfo.messages_left}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 text-[12px]">
+              <span className="text-zinc-600">
+                Minutos de voz restantes
+              </span>
+              <span className="font-semibold text-zinc-900">
+                {Math.max(
+                  0,
+                  Math.floor((usageInfo.realtime_seconds_left ?? 0) / 60)
+                )}{" "}
+                min
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-2 text-[12px] text-zinc-500">
+            Cargando uso mensual…
+          </div>
+        )}
+      </div>
+    </div>
+
+    {/* BOTONES */}
+    <div className="mt-4 flex gap-2">
+      <button
+        onClick={async () => {
+          await logout();
+          setLoginMsg(null);
+          setLoginOpen(false);
+        }}
+        className="flex-1 h-11 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm font-semibold transition-colors cursor-pointer"
+      >
+        Cerrar sesión
+      </button>
+      <button
+        onClick={() => {
+          setLoginOpen(false);
+          setLoginMsg(null);
+        }}
+        className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors cursor-pointer"
+      >
+        Volver
+      </button>
+    </div>
+  </>
+) : (
           <>
             <div className="flex items-start justify-between gap-3">
               <div>
