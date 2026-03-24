@@ -12,6 +12,7 @@ type ChatInputBarProps = {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   canSend: boolean;
+  sendMessage: () => void;
 };
 
 export default function ChatInputBar({
@@ -24,6 +25,7 @@ export default function ChatInputBar({
   textareaRef,
   handleKeyDown,
   canSend,
+  sendMessage,
 }: ChatInputBarProps) {
   return (
     <div
@@ -74,8 +76,27 @@ export default function ChatInputBar({
             }
             disabled={isTyping}
             rows={1}
-            className="w-full resize-none bg-transparent outline-none text-[15px] px-3 pt-2 pb-10"
+            className="w-full resize-none bg-transparent outline-none text-[15px] px-3 pt-2 pb-10 pr-12"
           />
+
+          {/* BOTÓN ENVIAR */}
+          <button
+            onClick={sendMessage}
+            disabled={!canSend}
+            className={[
+              "absolute right-3 bottom-3",
+              "h-9 w-9 rounded-full",
+              "bg-black text-white",
+              "flex items-center justify-center",
+              "transition-all",
+              canSend
+                ? "opacity-100 hover:scale-105"
+                : "opacity-40 cursor-not-allowed",
+            ].join(" ")}
+            aria-label="Enviar"
+          >
+            ↑
+          </button>
 
           {/* DISCLAIMER */}
           <div
@@ -90,13 +111,6 @@ export default function ChatInputBar({
           >
             Orientación preventiva · No sustituye profesionales.
           </div>
-
-          {/* ESTADO */}
-          {!canSend && input && (
-            <div className="absolute right-4 bottom-9 text-[11px] text-zinc-400">
-              Vonu está respondiendo…
-            </div>
-          )}
         </div>
       </div>
     </div>

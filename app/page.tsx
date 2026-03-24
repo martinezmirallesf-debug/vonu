@@ -5200,6 +5200,7 @@ return (
   textareaRef={textareaRef}
   handleKeyDown={handleKeyDown}
   canSend={canSend}
+  sendMessage={sendMessage}
 />
     </div>
   </div>
