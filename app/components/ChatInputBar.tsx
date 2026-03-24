@@ -76,27 +76,27 @@ export default function ChatInputBar({
             }
             disabled={isTyping}
             rows={1}
-            className="w-full resize-none bg-transparent outline-none text-[15px] px-3 pt-2 pb-10 pr-12"
+            className="w-full resize-none bg-transparent outline-none text-[15px] px-3 pt-2 pb-14 pr-14"
           />
 
           {/* BOTÓN ENVIAR */}
           <button
-            onClick={sendMessage}
-            disabled={!canSend}
-            className={[
-              "absolute right-3 bottom-3",
-              "h-9 w-9 rounded-full",
-              "bg-black text-white",
-              "flex items-center justify-center",
-              "transition-all",
-              canSend
-                ? "opacity-100 hover:scale-105"
-                : "opacity-40 cursor-not-allowed",
-            ].join(" ")}
-            aria-label="Enviar"
-          >
-            ↑
-          </button>
+  onClick={sendMessage}
+  disabled={!canSend}
+  className={[
+    "absolute right-3 bottom-10",
+    "h-10 w-10 rounded-full",
+    "bg-black text-white",
+    "flex items-center justify-center",
+    "transition-all",
+    canSend
+      ? "opacity-100 hover:scale-105"
+      : "opacity-40 cursor-not-allowed",
+  ].join(" ")}
+  aria-label="Enviar"
+>
+  ↑
+</button>
 
           {/* DISCLAIMER */}
           <div
