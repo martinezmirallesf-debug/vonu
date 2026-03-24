@@ -63,54 +63,56 @@ export default function ChatInputBar({
             "px-3 pt-2 pb-2",
           ].join(" ")}
         >
-          {/* TEXTAREA */}
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={
-              isTyping
-                ? "Vonu está respondiendo…"
-                : "Escribe tu duda, pega un mensaje, una web, una situación…"
-            }
-            disabled={isTyping}
-            rows={1}
-            className="w-full resize-none bg-transparent outline-none text-[15px] px-3 pt-2 pb-14 pr-14"
-          />
-
-          {/* BOTÓN ENVIAR */}
-          <button
-  onClick={sendMessage}
-  disabled={!canSend}
-  className={[
-    "absolute right-3 bottom-10",
-    "h-10 w-10 rounded-full",
-    "bg-black text-white",
-    "flex items-center justify-center",
-    "transition-all",
-    canSend
-      ? "opacity-100 hover:scale-105"
-      : "opacity-40 cursor-not-allowed",
-  ].join(" ")}
-  aria-label="Enviar"
->
-  ↑
-</button>
-
-          {/* DISCLAIMER */}
           <div
-            className={[
-              "absolute left-0 right-0 bottom-0",
-              "px-4 py-2",
-              "text-center text-[11.5px] md:text-[12px]",
-              "text-zinc-500",
-              "bg-white",
-              "rounded-b-3xl",
-            ].join(" ")}
-          >
-            Orientación preventiva · No sustituye profesionales.
-          </div>
+  className={[
+    "relative w-full rounded-3xl",
+    "bg-white",
+    "border border-zinc-200/70",
+    "ring-1 ring-zinc-900/[0.03]",
+    "shadow-[0_22px_70px_rgba(0,0,0,0.18)]",
+    "px-3 pt-2 pb-2",
+  ].join(" ")}
+>
+  {/* TEXTAREA */}
+  <textarea
+    ref={textareaRef}
+    value={input}
+    onChange={(e) => setInput(e.target.value)}
+    onKeyDown={handleKeyDown}
+    placeholder={
+      isTyping
+        ? "Vonu está respondiendo…"
+        : "Escribe tu duda, pega un mensaje, una web, una situación…"
+    }
+    disabled={isTyping}
+    rows={1}
+    className="w-full resize-none bg-transparent outline-none text-[15px] px-3 pt-2 pb-12 pr-12"
+  />
+
+  {/* BOTÓN ENVIAR */}
+  <button
+    onClick={sendMessage}
+    disabled={!canSend}
+    className={[
+      "absolute right-3 bottom-3",
+      "h-8 w-8 rounded-full",
+      "bg-black text-white",
+      "flex items-center justify-center",
+      "transition-all",
+      canSend
+        ? "opacity-100 hover:scale-105"
+        : "opacity-40 cursor-not-allowed",
+    ].join(" ")}
+    aria-label="Enviar"
+  >
+    ↑
+  </button>
+</div>
+
+{/* DISCLAIMER FUERA */}
+<div className="mt-2 text-center text-[11.5px] text-zinc-500">
+  Orientación preventiva · No sustituye profesionales.
+</div>
         </div>
       </div>
     </div>
