@@ -4372,7 +4372,7 @@ function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
 }
 
 return (
-    <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
+    <div className="bg-[#f8f9fa] flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
       <style jsx global>{`
   @keyframes fadeIn {
     from {

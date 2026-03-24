@@ -56,7 +56,7 @@ export default function ChatInputBar({
         {/* CONTENEDOR EXTERIOR TRANSPARENTE */}
         <div className="w-full bg-transparent border-none shadow-none">
           {/* INPUT REAL */}
-          <div className="relative w-full rounded-[28px] bg-[#f1f3f4] px-3 pt-2 pb-2 shadow-[0_4px_14px_rgba(0,0,0,0.06)] md:rounded-[24px]">
+          <div className="relative w-full rounded-[28px] bg-white border border-zinc-200 px-3 pt-2 pb-2 shadow-[0_6px_18px_rgba(0,0,0,0.08)] md:rounded-[22px]">
             <textarea
               ref={textareaRef}
               value={input}
@@ -70,21 +70,21 @@ export default function ChatInputBar({
 
             {/* BOTÓN ENVIAR */}
             <button
-              onClick={sendMessage}
-              disabled={!canSend}
-              className={[
-                "absolute right-3 bottom-3",
-                "h-9 w-9 rounded-full",
-                "bg-blue-600 text-white",
-                "flex items-center justify-center",
-                "transition-all",
-                canSend
-                  ? "opacity-100 hover:scale-105 active:scale-[0.98]"
-                  : "opacity-40 cursor-not-allowed",
-              ].join(" ")}
-              aria-label="Enviar"
-              title="Enviar"
-            >
+  onClick={sendMessage}
+  disabled={!canSend}
+  className={[
+    "absolute right-3 bottom-3",
+    "h-9 w-9 rounded-full",
+    "bg-[#1a73e8] text-white",
+    "flex items-center justify-center",
+    "transition-all",
+    canSend
+      ? "opacity-100 hover:bg-[#1669c1] hover:scale-105 active:scale-[0.98]"
+      : "opacity-40 cursor-not-allowed",
+  ].join(" ")}
+  aria-label="Enviar"
+  title="Enviar"
+>
               <svg
                 viewBox="0 0 24 24"
                 className="h-[18px] w-[18px]"
