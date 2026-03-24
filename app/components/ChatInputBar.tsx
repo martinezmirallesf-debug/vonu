@@ -203,7 +203,7 @@ export default function ChatInputBar({
               placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
               disabled={isTyping}
               rows={1}
-              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[58px] pr-[88px] pt-3 pb-12 leading-6 min-h-[50px] max-h-[180px] md:pl-[56px]"
+              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[40px] pr-[88px] pt-3 pb-12 leading-6 min-h-[46px] max-h-[180px]"
             />
 
             <div className="absolute right-2.5 bottom-2.5 z-10 flex items-center gap-1.5">
