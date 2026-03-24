@@ -26,6 +26,9 @@ type ChatInputBarProps = {
   realtimeStatus: RealtimeVoiceStatus;
   isLoggedIn: boolean;
   toggleConversation: () => void;
+  openBoard: () => void;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  onSelectImage: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
 function MicIcon({ className }: { className?: string }) {
@@ -43,26 +46,59 @@ function MicIcon({ className }: { className?: string }) {
         height="10.5"
         rx="3"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.2"
       />
       <path
         d="M5.5 11.8c0 4.1 3 7 6.5 7s6.5-2.9 6.5-7"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.2"
         strokeLinecap="round"
       />
       <path
-        d="M12 19.3v2.5"
+        d="M12 19.3v2.3"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.2"
         strokeLinecap="round"
       />
       <path
-        d="M9 21.8h6"
+        d="M9 21.6h6"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.2"
         strokeLinecap="round"
       />
+    </svg>
+  );
+}
+
+function PencilIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className ?? "h-5 w-5"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path d="M12 20h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function PlusIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className ?? "h-5 w-5"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path d="M12 5v14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+      <path d="M5 12h14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
     </svg>
   );
 }
@@ -82,6 +118,9 @@ export default function ChatInputBar({
   realtimeStatus,
   isLoggedIn,
   toggleConversation,
+  openBoard,
+  fileInputRef,
+  onSelectImage,
 }: ChatInputBarProps) {
   useEffect(() => {
     const el = textareaRef.current;
@@ -126,6 +165,36 @@ export default function ChatInputBar({
 
         <div className="w-full bg-transparent border-none shadow-none">
           <div className="relative w-full rounded-[22px] md:rounded-[20px] bg-white border border-zinc-200 px-2.5 pt-2 pb-2 shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
+            <div className="absolute left-2.5 bottom-2.5 z-10 flex items-center gap-1.5">
+              <button
+                onClick={openBoard}
+                disabled={!!isTyping}
+                className="h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
+                aria-label="Pizarra"
+                title="Pizarra"
+              >
+                <PencilIcon className="h-[17px] w-[17px]" />
+              </button>
+
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={!!isTyping}
+                className="h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
+                aria-label="Adjuntar"
+                title="Adjuntar imagen"
+              >
+                <PlusIcon className="h-[17px] w-[17px]" />
+              </button>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={onSelectImage}
+                className="hidden"
+              />
+            </div>
+
             <textarea
               ref={textareaRef}
               value={input}
@@ -134,83 +203,83 @@ export default function ChatInputBar({
               placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
               disabled={isTyping}
               rows={1}
-              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] text-zinc-900 placeholder:text-zinc-500 px-3 pt-3 pb-12 pr-24 leading-6 min-h-[50px] max-h-[180px]"
+              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[88px] pt-3 pb-12 pr-[88px] leading-6 min-h-[50px] max-h-[180px]"
             />
 
-            {/* BOTÓN HABLAR CON VONU */}
-            <button
-              onClick={toggleConversation}
-              disabled={!!isTyping || !isLoggedIn}
-              className={[
-                "absolute right-12 bottom-2.5",
-                "h-8 w-8 rounded-full",
-                "border transition-all duration-300",
-                voiceUiState === "idle"
-                  ? "border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50"
-                  : voiceUiState === "listening"
-                  ? "border-cyan-300 text-white shadow-[0_6px_20px_rgba(34,211,238,0.26)]"
-                  : "border-blue-300 text-white shadow-[0_8px_22px_rgba(59,130,246,0.30)]",
-                !!isTyping || !isLoggedIn
-                  ? "opacity-50 cursor-not-allowed"
-                  : "cursor-pointer",
-              ].join(" ")}
-              style={
-                voiceUiState === "idle"
-                  ? undefined
-                  : voiceUiState === "listening"
-                  ? {
-                      background:
-                        "linear-gradient(135deg, #06b6d4 0%, #38bdf8 45%, #2563eb 100%)",
-                    }
-                  : {
-                      background:
-                        "linear-gradient(135deg, #2563eb 0%, #3b82f6 45%, #60a5fa 100%)",
-                    }
-              }
-              aria-label={voiceMode ? "Desactivar conversación" : "Hablar con Vonu"}
-              title={voiceMode ? "Modo conversación activo" : "Hablar con Vonu"}
-            >
-              <MicIcon className="h-4 w-4" />
-            </button>
-
-            {/* BOTÓN ENVIAR */}
-            <button
-              onClick={sendMessage}
-              disabled={!canSend}
-              className={[
-                "absolute right-3 bottom-2.5",
-                "h-8 w-8 rounded-full",
-                "bg-[#1a73e8] text-white",
-                "flex items-center justify-center",
-                "transition-all",
-                canSend
-                  ? "opacity-100 hover:bg-[#1669c1] hover:scale-105 active:scale-[0.98]"
-                  : "opacity-40 cursor-not-allowed",
-              ].join(" ")}
-              aria-label="Enviar"
-              title="Enviar"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                className="h-[19px] w-[19px]"
-                fill="none"
-                aria-hidden="true"
+            <div className="absolute right-2.5 bottom-2.5 z-10 flex items-center gap-1.5">
+              <button
+                onClick={toggleConversation}
+                disabled={!!isTyping || !isLoggedIn}
+                className={[
+                  "relative h-8 w-8 rounded-full",
+                  "transition-all duration-300",
+                  voiceUiState === "idle"
+                    ? "text-zinc-700 hover:bg-zinc-100"
+                    : "text-white shadow-[0_8px_24px_rgba(26,115,232,0.30)]",
+                  !!isTyping || !isLoggedIn
+                    ? "opacity-50 cursor-not-allowed"
+                    : "cursor-pointer",
+                ].join(" ")}
+                style={
+                  voiceUiState === "idle"
+                    ? undefined
+                    : {
+                        background:
+                          "linear-gradient(135deg, #1a73e8 0%, #3b82f6 45%, #60a5fa 100%)",
+                      }
+                }
+                aria-label={voiceMode ? "Desactivar conversación" : "Hablar con Vonu"}
+                title={voiceMode ? "Modo conversación activo" : "Hablar con Vonu"}
               >
-                <path
-                  d="M12 18V7"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M7 10.7 12 5.7l5 5"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
+                {voiceUiState !== "idle" ? (
+                  <span
+                    className="absolute inset-[-2px] rounded-full bg-blue-400/20 animate-pulse pointer-events-none"
+                    aria-hidden="true"
+                  />
+                ) : null}
+
+                <span className="relative z-10 flex h-full w-full items-center justify-center">
+                  <MicIcon className="h-[15px] w-[15px]" />
+                </span>
+              </button>
+
+              <button
+                onClick={sendMessage}
+                disabled={!canSend}
+                className={[
+                  "h-8 w-8 rounded-full",
+                  "bg-[#1a73e8] text-white",
+                  "flex items-center justify-center",
+                  "transition-all",
+                  canSend
+                    ? "opacity-100 hover:bg-[#1669c1] hover:scale-105 active:scale-[0.98]"
+                    : "opacity-40 cursor-not-allowed",
+                ].join(" ")}
+                aria-label="Enviar"
+                title="Enviar"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-[19px] w-[19px]"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M12 18V7"
+                    stroke="currentColor"
+                    strokeWidth="3.1"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M7 10.7 12 5.7l5 5"
+                    stroke="currentColor"
+                    strokeWidth="3.1"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div className="mt-1.5 text-center text-[11.5px] text-zinc-500">

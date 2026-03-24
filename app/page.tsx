@@ -5205,6 +5205,9 @@ return (
   realtimeStatus={realtimeStatus}
   isLoggedIn={isLoggedIn}
   toggleConversation={toggleConversation}
+  openBoard={openBoard}
+  fileInputRef={fileInputRef}
+  onSelectImage={onSelectImage}
 />
     </div>
   </div>
