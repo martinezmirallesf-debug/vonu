@@ -4749,6 +4749,7 @@ return (
   plan={plan}
   setPlan={setPlan}
   payLoading={payLoading}
+  payMsg={payMsg}
   startCheckout={startCheckout}
   startTopupCheckout={startTopupCheckout}
 />

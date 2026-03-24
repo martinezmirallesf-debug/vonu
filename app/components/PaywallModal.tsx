@@ -14,6 +14,7 @@ type PaywallModalProps = {
     React.SetStateAction<"free" | "plus" | "max">
   >;
   payLoading: boolean;
+  payMsg: string | null;
   startCheckout: (chosen: {
     plan: "plus" | "max";
     billing: "monthly" | "yearly";
@@ -29,10 +30,10 @@ export default function PaywallModal({
   plan,
   setPlan,
   payLoading,
+  payMsg,
   startCheckout,
   startTopupCheckout,
 }: PaywallModalProps) {
-  if (!paywallOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[70]">
@@ -304,6 +305,12 @@ export default function PaywallModal({
                   </button>
                 ) : null}
               </div>
+
+                            {payMsg ? (
+                <div className="mt-4 rounded-[16px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700 leading-5">
+                  {payMsg}
+                </div>
+              ) : null}
 
               <div className="mt-2 min-h-[20px] text-center text-[12px] text-zinc-500">
                 {billing === "topup"
