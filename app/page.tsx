@@ -13,6 +13,7 @@ import rehypeKatex from "rehype-katex";
 
 import PaywallModal from "@/app/components/PaywallModal";
 import LoginModal from "@/app/components/LoginModal";
+import ChatInputBar from "@/app/components/ChatInputBar";
 
 import ChalkboardTutorBoard from "@/app/components/ChalkboardTutorBoard";
 import {
@@ -5066,330 +5067,125 @@ return (
 
       {/* ✅ SIEMPRE bubbles (chat y tutor). En tutor solo cambia el contenido */}
       
-      <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4">
         {messages.map((m) => {
           const isUser = m.role === "user";
 
-          // ✅ NO pintar el mensaje inicial (saludo) como pizarra en modo tutor
           if (!isUser && m.id === "init" && !m.pizarra) {
             return null;
           }
 
           const rawText = isUser ? (m.text ?? "") : (m.text ?? "");
 
-// ✅ En tutor, el texto principal SIEMPRE viene de m.text (como en la imagen).
-// La pizarra (m.pizarra / boardImage) solo es un EXTRA visual, nunca sustituye el texto.
-const mdTextRaw = isUser
-  ? rawText
-  : m.streaming
-  ? rawText
-  : normalizeAssistantText(rawText);
+          const mdTextRaw = isUser
+            ? rawText
+            : m.streaming
+            ? rawText
+            : normalizeAssistantText(rawText);
 
+          const mdText = !isUser
+            ? normalizeMathMarkdown(
+                sanitizeTutorLikeImage(normalizeAssistantText(mdTextRaw))
+              )
+            : mdTextRaw;
 
-const mdText = !isUser
-  ? normalizeMathMarkdown(
-      sanitizeTutorLikeImage(
-        normalizeAssistantText(mdTextRaw)
-      )
-    )
-  : mdTextRaw;
+          const isStreaming = !!m.streaming;
+          const hasText = (m.text ?? "").length > 0;
 
+          const bubbleColor = isUser ? "#dcf8c6" : "#e8f0fe";
 
-const isStreaming = !!m.streaming;
-const hasText = (m.text ?? "").length > 0;
+          return (
+            <div
+              key={m.id}
+              className={`flex w-full ${
+                isUser ? "justify-end" : "justify-start"
+              } animate-[fadeIn_240ms_ease-out]`}
+            >
+              <div
+                className={[
+                  "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
+                  "md:shadow-sm",
+                  isUser
+                    ? "bg-[#dcf8c6] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-none mr-2"
+                    : "bg-[#e8f0fe] text-zinc-900 rounded-r-2xl rounded-bl-2xl rounded-tl-none ml-2",
+                ].join(" ")}
+              >
+                <BubbleTail
+                  side={isUser ? "right" : "left"}
+                  color={bubbleColor}
+                />
 
-const bubbleColor = isUser ? "#dcf8c6" : "#e8f0fe";
+                <div className="relative z-10">
+                  {m.image && (
+                    <div className="mb-2">
+                      <img
+                        src={m.image}
+                        alt="Adjunto"
+                        className="rounded-md max-h-60 max-w-full object-cover"
+                      />
+                    </div>
+                  )}
 
-return (
-  <div
-    key={m.id}
-    className={`flex w-full ${isUser ? "justify-end" : "justify-start"} animate-[fadeIn_240ms_ease-out]`}
-  >
+                  {(m.text || m.streaming) && (
+                    <div className="prose prose-sm max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans">
+                      {isStreaming ? (
+                        <span className="whitespace-pre-wrap">
+                          {mdText.includes('"elements"') ||
+                          mdText.includes("```excalidraw")
+                            ? "✍️ El tutor está dibujando en la pizarra..."
+                            : mdText}
+                          {!hasText ? <TypingDots /> : <TypingCaret />}
+                        </span>
+                      ) : (
+                        <ReactMarkdown
+                          remarkPlugins={[remarkMath]}
+                          rehypePlugins={[rehypeKatex]}
+                          components={makeMdComponents(
+                            m.boardImageB64,
+                            m.boardImagePlacement,
+                            m.pizarra
+                          )}
+                        >
+                          {mdText}
+                        </ReactMarkdown>
+                      )}
+                    </div>
+                  )}
 
-    <div
-  className={[
-  "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
-  "md:shadow-sm", // 👈 sombra SOLO en desktop
-  isUser
-  ? "bg-[#dcf8c6] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-none mr-2"
-  : "bg-[#e8f0fe] text-zinc-900 rounded-r-2xl rounded-bl-2xl rounded-tl-none ml-2",
-].join(" ")}
+                  {!isUser &&
+                  activeThread?.mode === "tutor" &&
+                  m.boardImageB64 ? (
+                    <div className="mt-3">
+                      <ChalkboardTutorBoard
+                        className="w-full"
+                        value={""}
+                        boardImageB64={m.boardImageB64}
+                        boardImagePlacement={m.boardImagePlacement}
+                      />
+                    </div>
+                  ) : null}
 
->
-  {/* ✅ piquito por detrás */}
-  <BubbleTail side={isUser ? "right" : "left"} color={bubbleColor} />
-
-  {/* ✅ contenido por encima (para que la cola no tape nada) */}
-  <div className="relative z-10">
-    {m.image && (
-      <div className="mb-2">
-        <img src={m.image} alt="Adjunto" className="rounded-md max-h-60 max-w-full object-cover" />
-      </div>
-    )}
-
-    {(m.text || m.streaming) && (
-            <div className="prose prose-sm max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans">
-        {isStreaming ? (
-          <span className="whitespace-pre-wrap">
-            {mdText.includes('"elements"') || mdText.includes("```excalidraw")
-              ? "✍️ El tutor está dibujando en la pizarra..."
-              : mdText}
-            {!hasText ? <TypingDots /> : <TypingCaret />}
-          </span>
-        ) : (
-                    <ReactMarkdown
-  remarkPlugins={[remarkMath]}
-  rehypePlugins={[rehypeKatex]}
-  components={makeMdComponents(m.boardImageB64, m.boardImagePlacement, m.pizarra)}
->
-  {mdText}
-</ReactMarkdown>
-        )}
-      </div>
-    )}
-
-    {!isUser && activeThread?.mode === "tutor" && m.boardImageB64 ? (
-      <div className="mt-3">
-        <ChalkboardTutorBoard
-          className="w-full"
-          value={""}
-          boardImageB64={m.boardImageB64}
-          boardImagePlacement={m.boardImagePlacement}
-        />
-      </div>
-    ) : null}
-
-    {!isUser && activeThread?.mode === "tutor" && isStreaming && !((m.text ?? "").trim()) ? (
-      <div className="mt-2 text-[12px] text-zinc-600 flex items-center gap-2">
-        <span>✍️ El tutor está preparando la explicación</span>
-        <TypingDots />
-      </div>
-    ) : null}
-  </div>
-</div>
-
-  </div>
-);
+                  {!isUser &&
+                  activeThread?.mode === "tutor" &&
+                  isStreaming &&
+                  !((m.text ?? "").trim()) ? (
+                    <div className="mt-2 text-[12px] text-zinc-600 flex items-center gap-2">
+                      <span>✍️ El tutor está preparando la explicación</span>
+                      <TypingDots />
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          );
         })}
       </div>
     </div>
   </div>
 </div>
 
-
-
-        {/* ===== INPUT BAR ===== */}
-        <div
-  ref={inputBarRef}
-  className="fixed left-0 right-0 z-30 bg-transparent"
-  style={{
-    bottom: "var(--vvb, 0px)",
-    paddingBottom: "env(safe-area-inset-bottom)",
-  }}
->
-
-          <div className="mx-auto max-w-3xl px-3 md:px-6 pt-3 pb-2">
-            {imagePreview && (
-              <div className="mb-2 relative w-fit">
-                <img src={imagePreview} alt="Preview" className="rounded-3xl border border-zinc-200 max-h-40" />
-                <button
-                  onClick={() => setImagePreview(null)}
-                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs transition-colors cursor-pointer grid place-items-center p-0"
-                  aria-label="Quitar imagen"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-
-            {micMsg && <div className="mb-2 text-[12px] text-zinc-600 bg-white border border-zinc-200 rounded-2xl px-3 py-2">{micMsg}</div>}
-
-            <div
-  className={[
-    "relative w-full rounded-3xl",
-    "bg-white",
-    "border border-zinc-200/70",
-    "ring-1 ring-zinc-900/[0.03]",               // ✅ micro borde óptico
-    "shadow-[0_22px_70px_rgba(0,0,0,0.18)]",
-    "px-3 pt-2 pb-2",
-  ].join(" ")}
->
-
-
-{/* ✅ Disclaimer dentro del input (full width en móvil, estilo Gemini) */}
-<div
-  className={[
-    "absolute left-0 right-0 bottom-0",
-    "px-4 py-2",
-    "text-center text-[11.5px] md:text-[12px]",
-    "text-zinc-500",
-    "bg-white",          // ✅ blanco sólido
-    "rounded-b-3xl",
-  ].join(" ")}
->
-  Orientación preventiva · No sustituye profesionales.
-</div>
-
-
-  {/* LEFT ICONS */}
-  <div className="absolute left-2.5 bottom-[34px] z-[60] flex items-center gap-1">
-    <button
-      onClick={openBoard}
-      className="h-10 w-10 rounded-full hover:bg-white/60 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
-      aria-label="Pizarra"
-      title="Pizarra"
-      disabled={!!isTyping}
-    >
-      <PencilIcon className="h-5 w-5 text-zinc-800" />
-    </button>
-
-    <button
-      onClick={() => fileInputRef.current?.click()}
-      className="h-10 w-10 rounded-full hover:bg-white/60 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0"
-      aria-label="Adjuntar"
-      title="Adjuntar imagen"
-      disabled={!!isTyping}
-    >
-      <PlusIcon className="h-5 w-5 text-zinc-800" />
-    </button>
-
-    <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectImage} className="hidden" />
-  </div>
-
-  {/* RIGHT ICONS */}
-<div className="absolute right-2.5 bottom-[34px] z-[60] flex items-center gap-2">
-
-{/* 🎙️ Hablar con Vonu */}
-<button
-  onClick={toggleConversation}
-  disabled={!!isTyping || !isLoggedIn}
-  className={[
-    "relative h-10 w-10 rounded-full shrink-0 grid place-items-center p-0",
-    "border transition-all duration-300",
-    voiceUiState === "idle"
-      ? "border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50"
-      : voiceUiState === "listening"
-      ? "border-cyan-300 text-white shadow-[0_8px_26px_rgba(34,211,238,0.30)]"
-      : "border-blue-300 text-white shadow-[0_10px_30px_rgba(59,130,246,0.34)]",
-        (!!isTyping || !isLoggedIn) ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
-  ].join(" ")}
-  style={
-    voiceUiState === "idle"
-      ? undefined
-      : voiceUiState === "listening"
-      ? {
-          background:
-            "linear-gradient(135deg, #06b6d4 0%, #38bdf8 45%, #2563eb 100%)",
-        }
-      : {
-          background:
-            "linear-gradient(135deg, #2563eb 0%, #3b82f6 45%, #60a5fa 100%)",
-        }
-  }
-  aria-label={voiceMode ? "Desactivar conversación" : "Activar conversación"}
-  title={
-    voiceMode
-      ? realtimeStatus === "listening"
-        ? "Vonu te está escuchando"
-        : realtimeStatus === "speaking"
-        ? "Vonu te está respondiendo"
-        : "Modo conversación activo"
-      : "Hablar con Vonu"
-  }
->
-  {voiceUiState !== "idle" ? (
-    <>
-      <span
-        className={[
-          "absolute inset-[-3px] rounded-full pointer-events-none",
-          voiceUiState === "listening"
-            ? "animate-ping bg-cyan-400/25"
-            : "animate-pulse bg-blue-400/20",
-        ].join(" ")}
-        aria-hidden="true"
-      />
-      <span
-        className="absolute inset-[1px] rounded-full opacity-20 pointer-events-none"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0.38), rgba(255,255,255,0.02))",
-        }}
-        aria-hidden="true"
-      />
-    </>
-  ) : null}
-
-  <div className="relative z-10">
-    <MicIcon className="h-5 w-5" />
-  </div>
-</button>
-
-  {/* ⬆️ ENVIAR */}  
-<button
-  onClick={() => {
-    if (!canSend) return;
-    sendMessage();
-  }}
-  aria-disabled={!canSend}
-  className={[
-    "h-10 w-10 rounded-full border transition-colors shrink-0 grid place-items-center p-0",
-    canSend
-      ? "bg-blue-600 border-blue-700/10 text-white hover:bg-blue-700 cursor-pointer"
-      : "bg-zinc-200 border-zinc-200 text-zinc-500 cursor-default",
-    !!isTyping ? "opacity-60 cursor-default" : "",
-  ].join(" ")}
-  aria-label="Enviar"
-  title="Enviar"
->
-  <ArrowUpIcon className="h-5 w-5" />
-</button>
-
-</div>
-
-
-
-  {/* ✅ Textarea BLANCA (sin gris, sin borde, sin “caja”) */}
-  <textarea
-  ref={textareaRef}
-  value={input}
-  onChange={(e) => setInput(e.target.value)}
-  onKeyDown={(e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-  e.preventDefault();
-  if (!canSend) return;
-  sendMessage();
-}
-
-  }}
-  disabled={!!isTyping}
-placeholder={
-  isTyping
-    ? "Vonu está respondiendo…"
-    : voiceMode
-    ? "Modo conversación activo… también puedes escribir"
-    : isListening
-    ? "Escuchando… habla ahora"
-    : "Escribe tu mensaje…"
-}
-  className={[
-    "block w-full resize-none outline-none",
-    "bg-white",
-    "rounded-2xl",
-    "text-[15px] leading-5 text-zinc-900 placeholder:text-zinc-400",
-    "px-4 pt-3",
-    "pb-[92px]", // 👈 ahora hay espacio para botones + disclaimer dentro
-    "overflow-hidden",
-    inputExpanded ? "min-h-[60px]" : "min-h-[48px]",
-  ].join(" ")}
-  rows={1}
-/>
-</div>
-
-          </div>
-        </div>
-      </div>
+            <ChatInputBar inputBarRef={inputBarRef} />
     </div>
+  </div>
   );
 }
-
-
