@@ -54,15 +54,14 @@ export default function ChatInputBar({
         )}
 
         <div
-          className={[
-            "relative w-full rounded-3xl",
-            "bg-white",
-            "border border-zinc-200/70",
-            "ring-1 ring-zinc-900/[0.03]",
-            "shadow-[0_22px_70px_rgba(0,0,0,0.18)]",
-            "px-3 pt-2 pb-2",
-          ].join(" ")}
-        >
+  className={[
+    "relative w-full rounded-3xl",
+    "bg-white",
+    "border border-transparent",
+    "shadow-[0_10px_30px_rgba(0,0,0,0.10)]",
+    "px-3 pt-2 pb-2",
+  ].join(" ")}
+>
           <div
   className={[
     "relative w-full rounded-3xl",
@@ -91,22 +90,24 @@ export default function ChatInputBar({
 
   {/* BOTÓN ENVIAR */}
   <button
-    onClick={sendMessage}
-    disabled={!canSend}
-    className={[
-      "absolute right-3 bottom-3",
-      "h-8 w-8 rounded-full",
-      "bg-black text-white",
-      "flex items-center justify-center",
-      "transition-all",
-      canSend
-        ? "opacity-100 hover:scale-105"
-        : "opacity-40 cursor-not-allowed",
-    ].join(" ")}
-    aria-label="Enviar"
-  >
+  onClick={sendMessage}
+  disabled={!canSend}
+  className={[
+    "absolute right-3 bottom-3",
+    "h-8 w-8 rounded-full",
+    "bg-blue-600 text-white",
+    "flex items-center justify-center",
+    "transition-all",
+    canSend
+      ? "opacity-100 hover:scale-105"
+      : "opacity-40 cursor-not-allowed",
+  ].join(" ")}
+  aria-label="Enviar"
+>
+  <span className="text-[14px] font-bold leading-none relative top-[-1px]">
     ↑
-  </button>
+  </span>
+</button>
 </div>
 
 {/* DISCLAIMER FUERA */}
