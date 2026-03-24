@@ -4363,7 +4363,13 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
   );
 }
 
-
+function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    if (!canSend) return;
+    sendMessage();
+  }
+}
 
 return (
     <div className="bg-white flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
@@ -5189,7 +5195,11 @@ return (
   imagePreview={imagePreview}
   micMsg={micMsg}
   input={input}
+  setInput={setInput}
   isTyping={isTyping}
+  textareaRef={textareaRef}
+  handleKeyDown={handleKeyDown}
+  canSend={canSend}
 />
     </div>
   </div>

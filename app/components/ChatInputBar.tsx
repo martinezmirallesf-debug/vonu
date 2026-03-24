@@ -7,7 +7,11 @@ type ChatInputBarProps = {
   imagePreview: string | null;
   micMsg: string | null;
   input: string;
+  setInput: React.Dispatch<React.SetStateAction<string>>;
   isTyping: boolean;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  canSend: boolean;
 };
 
 export default function ChatInputBar({
@@ -15,7 +19,11 @@ export default function ChatInputBar({
   imagePreview,
   micMsg,
   input,
+  setInput,
   isTyping,
+  textareaRef,
+  handleKeyDown,
+  canSend,
 }: ChatInputBarProps) {
   return (
     <div
@@ -53,6 +61,23 @@ export default function ChatInputBar({
             "px-3 pt-2 pb-2",
           ].join(" ")}
         >
+          {/* TEXTAREA */}
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={
+              isTyping
+                ? "Vonu está respondiendo…"
+                : "Escribe tu duda, pega un mensaje, una web, una situación…"
+            }
+            disabled={isTyping}
+            rows={1}
+            className="w-full resize-none bg-transparent outline-none text-[15px] px-3 pt-2 pb-10"
+          />
+
+          {/* DISCLAIMER */}
           <div
             className={[
               "absolute left-0 right-0 bottom-0",
@@ -66,13 +91,12 @@ export default function ChatInputBar({
             Orientación preventiva · No sustituye profesionales.
           </div>
 
-          <div className="min-h-[120px] flex items-center justify-center text-sm text-zinc-400 text-center px-4">
-            {isTyping
-              ? "Vonu está respondiendo…"
-              : input
-              ? "El textarea real vuelve en el siguiente paso"
-              : "Aquí volverá el input real de Vonu"}
-          </div>
+          {/* ESTADO */}
+          {!canSend && input && (
+            <div className="absolute right-4 bottom-9 text-[11px] text-zinc-400">
+              Vonu está respondiendo…
+            </div>
+          )}
         </div>
       </div>
     </div>
