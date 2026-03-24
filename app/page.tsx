@@ -5201,6 +5201,10 @@ return (
   handleKeyDown={handleKeyDown}
   canSend={canSend}
   sendMessage={sendMessage}
+  voiceMode={voiceMode}
+  realtimeStatus={realtimeStatus}
+  isLoggedIn={isLoggedIn}
+  toggleConversation={toggleConversation}
 />
     </div>
   </div>
