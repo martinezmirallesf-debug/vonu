@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 
 type ChatInputBarProps = {
   inputBarRef: React.RefObject<HTMLDivElement | null>;
@@ -27,6 +27,15 @@ export default function ChatInputBar({
   canSend,
   sendMessage,
 }: ChatInputBarProps) {
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+
+    el.style.height = "0px";
+    const next = Math.min(el.scrollHeight, 180);
+    el.style.height = `${next}px`;
+  }, [input, textareaRef]);
+
   return (
     <div
       ref={inputBarRef}
@@ -53,9 +62,7 @@ export default function ChatInputBar({
           </div>
         )}
 
-        {/* CONTENEDOR EXTERIOR TRANSPARENTE */}
         <div className="w-full bg-transparent border-none shadow-none">
-          {/* INPUT REAL */}
           <div className="relative w-full rounded-[28px] bg-white border border-zinc-200 px-3 pt-2 pb-2 shadow-[0_6px_18px_rgba(0,0,0,0.08)] md:rounded-[22px]">
             <textarea
               ref={textareaRef}
@@ -65,26 +72,25 @@ export default function ChatInputBar({
               placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
               disabled={isTyping}
               rows={1}
-              className="w-full resize-none bg-transparent outline-none text-[15px] text-zinc-900 placeholder:text-zinc-500 px-3 pt-3 pb-12 pr-14 md:pb-11 md:pr-14"
+              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] text-zinc-900 placeholder:text-zinc-500 px-3 pt-3 pb-12 pr-14 leading-6 min-h-[50px] max-h-[180px]"
             />
 
-            {/* BOTÓN ENVIAR */}
             <button
-  onClick={sendMessage}
-  disabled={!canSend}
-  className={[
-    "absolute right-3 bottom-3",
-    "h-9 w-9 rounded-full",
-    "bg-[#1a73e8] text-white",
-    "flex items-center justify-center",
-    "transition-all",
-    canSend
-      ? "opacity-100 hover:bg-[#1669c1] hover:scale-105 active:scale-[0.98]"
-      : "opacity-40 cursor-not-allowed",
-  ].join(" ")}
-  aria-label="Enviar"
-  title="Enviar"
->
+              onClick={sendMessage}
+              disabled={!canSend}
+              className={[
+                "absolute right-3 bottom-3",
+                "h-9 w-9 rounded-full",
+                "bg-[#1a73e8] text-white",
+                "flex items-center justify-center",
+                "transition-all",
+                canSend
+                  ? "opacity-100 hover:bg-[#1669c1] hover:scale-105 active:scale-[0.98]"
+                  : "opacity-40 cursor-not-allowed",
+              ].join(" ")}
+              aria-label="Enviar"
+              title="Enviar"
+            >
               <svg
                 viewBox="0 0 24 24"
                 className="h-[18px] w-[18px]"
@@ -108,7 +114,6 @@ export default function ChatInputBar({
             </button>
           </div>
 
-          {/* DISCLAIMER FUERA */}
           <div className="mt-2 text-center text-[11.5px] text-zinc-500">
             Orientación preventiva · No sustituye profesionales.
           </div>
