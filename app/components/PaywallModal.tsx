@@ -20,6 +20,7 @@ type PaywallModalProps = {
     billing: "monthly" | "yearly";
   }) => void;
   startTopupCheckout: (pack: "basic" | "medium" | "large") => void;
+  ShieldIcon: React.ComponentType<{ className?: string }>;
 };
 
 export default function PaywallModal({
@@ -33,6 +34,7 @@ export default function PaywallModal({
   payMsg,
   startCheckout,
   startTopupCheckout,
+  ShieldIcon,
 }: PaywallModalProps) {
 
   return (
@@ -317,6 +319,12 @@ export default function PaywallModal({
                   ? "Elige una recarga para continuar usando Vonu."
                   : "Cancela cuando quieras"}
               </div>
+              <div className="mt-2 min-h-[18px] flex items-center justify-center gap-2 text-[11px] text-zinc-500">
+  <span className="text-blue-700">
+    <ShieldIcon className="h-4 w-4" />
+  </span>
+  <span>Pago seguro con Stripe.</span>
+</div>
             </div>
             </div>
           </div>

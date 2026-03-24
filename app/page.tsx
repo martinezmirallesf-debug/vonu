@@ -4752,6 +4752,7 @@ return (
   payMsg={payMsg}
   startCheckout={startCheckout}
   startTopupCheckout={startTopupCheckout}
+  ShieldIcon={ShieldIcon}
 />
 
 <LoginModal />
