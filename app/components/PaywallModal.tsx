@@ -89,7 +89,7 @@ export default function PaywallModal({
               </button>
             </div>
 
-                        <div className="px-4 md:px-5 py-4 min-h-[420px]">
+                        <div className="px-4 md:px-5 py-4 flex-1 overflow-y-auto">
               <div className="grid grid-cols-3 gap-1 rounded-full border border-zinc-200 p-1 bg-white w-full">
                 <button
                   onClick={() => setBilling("monthly")}
