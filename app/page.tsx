@@ -4757,7 +4757,33 @@ return (
   ShieldIcon={ShieldIcon}
 />
 
-<LoginModal />
+<LoginModal
+  loginOpen={loginOpen}
+  setLoginOpen={setLoginOpen}
+  isLoggedIn={isLoggedIn}
+  loginSending={loginSending}
+  loginMsg={loginMsg}
+  setLoginMsg={setLoginMsg}
+  authMode={authMode}
+  setAuthMode={setAuthMode}
+  loginEmail={loginEmail}
+  setLoginEmail={setLoginEmail}
+  loginPassword={loginPassword}
+  setLoginPassword={setLoginPassword}
+  keepSignedIn={keepSignedIn}
+  setKeepSignedIn={setKeepSignedIn}
+  authUserName={authUserName}
+  authUserEmail={authUserEmail}
+  authLoading={authLoading}
+  proLoading={proLoading}
+  usageInfo={usageInfo}
+  loginEmailRef={loginEmailRef}
+  signInWithPassword={signInWithPassword}
+  signUpWithPassword={signUpWithPassword}
+  signInWithOAuth={signInWithOAuth}
+  logout={logout}
+  OAuthLogo={OAuthLogo}
+/>
 
       {/* ===== TOP BUBBLES ===== */}
       <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
