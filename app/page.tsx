@@ -4750,8 +4750,10 @@ return (
   setPlan={setPlan}
   payLoading={payLoading}
   payMsg={payMsg}
+  isPro={isPro}
   startCheckout={startCheckout}
   startTopupCheckout={startTopupCheckout}
+  cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   ShieldIcon={ShieldIcon}
 />
 
