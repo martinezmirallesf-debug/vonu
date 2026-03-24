@@ -5184,7 +5184,13 @@ return (
   </div>
 </div>
 
-            <ChatInputBar inputBarRef={inputBarRef} />
+            <ChatInputBar
+  inputBarRef={inputBarRef}
+  imagePreview={imagePreview}
+  micMsg={micMsg}
+  input={input}
+  isTyping={isTyping}
+/>
     </div>
   </div>
   );

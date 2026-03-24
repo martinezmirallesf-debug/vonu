@@ -4,10 +4,18 @@ import React from "react";
 
 type ChatInputBarProps = {
   inputBarRef: React.RefObject<HTMLDivElement | null>;
+  imagePreview: string | null;
+  micMsg: string | null;
+  input: string;
+  isTyping: boolean;
 };
 
 export default function ChatInputBar({
   inputBarRef,
+  imagePreview,
+  micMsg,
+  input,
+  isTyping,
 }: ChatInputBarProps) {
   return (
     <div
@@ -19,6 +27,22 @@ export default function ChatInputBar({
       }}
     >
       <div className="mx-auto max-w-3xl px-3 md:px-6 pt-3 pb-2">
+        {imagePreview && (
+          <div className="mb-2 relative w-fit">
+            <img
+              src={imagePreview}
+              alt="Preview"
+              className="rounded-3xl border border-zinc-200 max-h-40"
+            />
+          </div>
+        )}
+
+        {micMsg && (
+          <div className="mb-2 text-[12px] text-zinc-600 bg-white border border-zinc-200 rounded-2xl px-3 py-2">
+            {micMsg}
+          </div>
+        )}
+
         <div
           className={[
             "relative w-full rounded-3xl",
@@ -42,8 +66,12 @@ export default function ChatInputBar({
             Orientación preventiva · No sustituye profesionales.
           </div>
 
-          <div className="min-h-[120px] flex items-center justify-center text-sm text-zinc-400">
-            Aquí irá el input real de Vonu
+          <div className="min-h-[120px] flex items-center justify-center text-sm text-zinc-400 text-center px-4">
+            {isTyping
+              ? "Vonu está respondiendo…"
+              : input
+              ? "El textarea real vuelve en el siguiente paso"
+              : "Aquí volverá el input real de Vonu"}
           </div>
         </div>
       </div>
