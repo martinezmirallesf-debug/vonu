@@ -16,6 +16,7 @@ import LoginModal from "@/app/components/LoginModal";
 import ChatInputBar from "@/app/components/ChatInputBar";
 import TopBar from "@/app/components/TopBar";
 import Sidebar from "@/app/components/Sidebar";
+import VonuThinking from "@/app/components/VonuThinking";
 
 import ChalkboardTutorBoard from "@/app/components/ChalkboardTutorBoard";
 import {
@@ -4987,9 +4988,8 @@ return (
 ) : null}
 
 
-      {/* ✅ SIEMPRE bubbles (chat y tutor). En tutor solo cambia el contenido */}
-      
-            <div className="flex flex-col gap-4">
+      {/* ✅ Mensajes usuario / Vonu */}
+      <div className="flex flex-col gap-4">
         {messages.map((m) => {
           const isUser = m.role === "user";
 
@@ -5014,30 +5014,73 @@ return (
           const isStreaming = !!m.streaming;
           const hasText = (m.text ?? "").length > 0;
 
-          const bubbleColor = isUser ? "#dcf8c6" : "#e8f0fe";
+          // ===== USUARIO =====
+          if (isUser) {
+            return (
+              <div
+                key={m.id}
+                className="flex w-full justify-end animate-[fadeIn_240ms_ease-out]"
+              >
+                <div
+                  className={[
+                    "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
+                    "md:shadow-sm bg-[#dcf8c6] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-none mr-2",
+                  ].join(" ")}
+                >
+                  <BubbleTail side="right" color="#dcf8c6" />
 
-          return (
+                  <div className="relative z-10">
+                    {m.image && (
+                      <div className="mb-2">
+                        <img
+                          src={m.image}
+                          alt="Adjunto"
+                          className="rounded-md max-h-60 max-w-full object-cover"
+                        />
+                      </div>
+                    )}
+
+                    {(m.text || m.streaming) && (
+                      <div className="prose prose-sm max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans">
+                        <span className="whitespace-pre-wrap">{mdText}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          // ===== VONU PENSANDO (solo logo) =====
+          if (isStreaming && !((m.text ?? "").trim())) {
+            return (
+              <div
+                key={m.id}
+                className="flex w-full justify-start animate-[fadeIn_240ms_ease-out]"
+              >
+                <div className="ml-2">
+                  <VonuThinking />
+                </div>
+              </div>
+            );
+          }
+
+          // ===== VONU RESPONDIENDO (sin burbuja) =====
+                    return (
             <div
               key={m.id}
-              className={`flex w-full ${
-                isUser ? "justify-end" : "justify-start"
-              } animate-[fadeIn_240ms_ease-out]`}
+              className="flex w-full justify-start animate-[fadeIn_240ms_ease-out]"
             >
-              <div
-                className={[
-                  "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
-                  "md:shadow-sm",
-                  isUser
-                    ? "bg-[#dcf8c6] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-none mr-2"
-                    : "bg-[#e8f0fe] text-zinc-900 rounded-r-2xl rounded-bl-2xl rounded-tl-none ml-2",
-                ].join(" ")}
-              >
-                <BubbleTail
-                  side={isUser ? "right" : "left"}
-                  color={bubbleColor}
-                />
+              <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-2 md:gap-3">
+                <div className="mt-[2px] shrink-0">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-[0_0_0_1px_rgba(37,99,235,0.08)]">
+                    <span className="text-[14px] font-semibold leading-none tracking-[-0.03em] text-blue-600">
+                      ()
+                    </span>
+                  </div>
+                </div>
 
-                <div className="relative z-10">
+                <div className="min-w-0 flex-1">
                   {m.image && (
                     <div className="mb-2">
                       <img
@@ -5049,14 +5092,14 @@ return (
                   )}
 
                   {(m.text || m.streaming) && (
-                    <div className="prose prose-sm max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans">
+                    <div className="prose prose-sm max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-zinc-900">
                       {isStreaming ? (
                         <span className="whitespace-pre-wrap">
                           {mdText.includes('"elements"') ||
                           mdText.includes("```excalidraw")
-                            ? "✍️ El tutor está dibujando en la pizarra..."
+                            ? ""
                             : mdText}
-                          {!hasText ? <TypingDots /> : <TypingCaret />}
+                          {!hasText ? null : <TypingCaret />}
                         </span>
                       ) : (
                         <ReactMarkdown
@@ -5074,9 +5117,7 @@ return (
                     </div>
                   )}
 
-                  {!isUser &&
-                  activeThread?.mode === "tutor" &&
-                  m.boardImageB64 ? (
+                  {activeThread?.mode === "tutor" && m.boardImageB64 ? (
                     <div className="mt-3">
                       <ChalkboardTutorBoard
                         className="w-full"
@@ -5084,16 +5125,6 @@ return (
                         boardImageB64={m.boardImageB64}
                         boardImagePlacement={m.boardImagePlacement}
                       />
-                    </div>
-                  ) : null}
-
-                  {!isUser &&
-                  activeThread?.mode === "tutor" &&
-                  isStreaming &&
-                  !((m.text ?? "").trim()) ? (
-                    <div className="mt-2 text-[12px] text-zinc-600 flex items-center gap-2">
-                      <span>✍️ El tutor está preparando la explicación</span>
-                      <TypingDots />
                     </div>
                   ) : null}
                 </div>
