@@ -2,12 +2,17 @@
 import "./globals.css";
 import "katex/dist/katex.min.css";
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { Inter, Space_Mono } from "next/font/google";
 
-const poppins = Poppins({
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-poppins",
+  variable: "--font-inter",
+});
+
+const spaceMono = Space_Mono({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
@@ -19,26 +24,15 @@ export const metadata: Metadata = {
     icon: "/icon.png",
     apple: "/apple-touch-icon.png",
   },
-  openGraph: {
-    title: "Vonu — tu asistente para tomar decisiones seguras",
-    description:
-      "Analiza mensajes, enlaces y situaciones para decidir con calma. Vonu te ayuda a detectar riesgos y actuar de forma segura.",
-    url: "https://app.vonuai.com",
-    siteName: "Vonu",
-    type: "website",
-    images: [{ url: "/icon.png" }],
-  },
-  twitter: {
-    card: "summary",
-    title: "Vonu — decisiones seguras",
-    description: "Analiza mensajes, enlaces y situaciones para decidir con calma.",
-    images: ["/icon.png"],
-  },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="es" className={poppins.variable}>
+    <html lang="es" className={`${inter.variable} ${spaceMono.variable}`}>
       <body className="font-sans">{children}</body>
     </html>
   );
