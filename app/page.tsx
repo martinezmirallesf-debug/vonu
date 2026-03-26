@@ -4506,6 +4506,50 @@ return (
   }
 }
 
+@keyframes vonuRingSpin {
+  0% {
+    transform: rotate(0deg) scale(0.96);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.04);
+  }
+  100% {
+    transform: rotate(360deg) scale(0.96);
+  }
+}
+
+@keyframes vonuHaloPulse {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.18;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.38;
+  }
+}
+
+.vonu-thinking-ring {
+  background:
+    conic-gradient(
+      from 0deg,
+      rgba(37, 99, 235, 0.00) 0deg,
+      rgba(37, 99, 235, 0.95) 70deg,
+      rgba(96, 165, 250, 0.95) 145deg,
+      rgba(37, 99, 235, 0.12) 220deg,
+      rgba(37, 99, 235, 0.00) 360deg
+    );
+  animation: vonuRingSpin 2.4s linear infinite;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), black calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), black calc(100% - 2px));
+}
+
+.vonu-thinking-halo {
+  background:
+    radial-gradient(circle, rgba(96,165,250,0.32) 0%, rgba(37,99,235,0.12) 45%, rgba(37,99,235,0.00) 72%);
+  animation: vonuHaloPulse 1.8s ease-in-out infinite;
+}
+
 .paywall-scroll::-webkit-scrollbar {
   display: none;
 }
