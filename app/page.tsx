@@ -5084,8 +5084,8 @@ return (
               key={m.id}
               className="flex w-full justify-start animate-[fadeIn_240ms_ease-out]"
             >
-              <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
-                <div className="mt-[7px] md:mt-[6px] shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center">
+              <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1 pt-0.5 md:pt-1">
+                <div className="mt-[7px] md:mt-[9px] shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center">
   <img
     src="/logo/vonu-cube-black.png?v=3"
     alt="Vonu"

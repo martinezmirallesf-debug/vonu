@@ -45,16 +45,16 @@ export default function TopBar({
   aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
   title={menuOpen ? "Cerrar menú" : "Menú"}
 >
-  <span className="relative block h-5 w-5">
+  <span className="relative block h-5 w-[17px]">
     <span
       className={[
-        "absolute left-0 top-[5px] block h-[2.8px] w-[16px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
+        "absolute left-0 top-[5px] block h-[2.8px] w-[17px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
         menuOpen ? "top-[8px] rotate-45" : "",
       ].join(" ")}
     />
     <span
       className={[
-        "absolute left-0 top-[11px] block h-[2.8px] w-[16px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
+        "absolute left-0 top-[11px] block h-[2.8px] w-[17px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
         menuOpen ? "top-[8px] -rotate-45" : "",
       ].join(" ")}
     />
