@@ -18,7 +18,7 @@ export default function VonuThinking({ size = 32 }: VonuThinkingProps) {
 
         <span className="absolute inset-0 flex items-center justify-center vonu-thinking-logo">
           <img
-            src="/logo/vonu-cube-black.png"
+            src="/logo/vonu-cube-black.png?v=3"
             alt="Vonu"
             className="h-[18px] w-[18px] object-contain"
             draggable={false}

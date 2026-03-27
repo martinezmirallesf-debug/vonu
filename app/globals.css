@@ -13,31 +13,53 @@
   letter-spacing: -0.015em;
 }
 
-/* ✅ Poppins en TODO el proyecto */
-:root {
-  font-family: var(--font-poppins), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans",
-    "Apple Color Emoji", "Segoe UI Emoji";
-}
-
-/* ✅ Asegura que Tailwind "font-sans" sea Poppins */
-.font-sans {
-  font-family: var(--font-poppins), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans",
-    "Apple Color Emoji", "Segoe UI Emoji";
-}
-
-/* ✅ Importante: react-markdown + prose a veces mete otra font */
-.prose,
-.prose * {
-  font-family: var(--font-poppins), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans",
-    "Apple Color Emoji", "Segoe UI Emoji" !important;
-}
-
-
-/* ✅ Poppins global (fallback sólido) */
 html,
 body {
-  font-family: var(--font-poppins), ui-sans-serif, system-ui, -apple-system,
-    Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji",
+    "Segoe UI Emoji";
+}
+
+.font-sans {
+  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji",
+    "Segoe UI Emoji";
+}
+
+.font-mono {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.prose,
+.prose * {
+  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji",
+    "Segoe UI Emoji" !important;
+}
+
+.prose {
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.prose p,
+.prose li {
+  font-weight: 500;
+}
+
+.prose strong,
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.vonu-thinking-text {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, "Liberation Mono", "Courier New", monospace !important;
 }
 
 /* ---------- Animaciones UI Vonu ---------- */
