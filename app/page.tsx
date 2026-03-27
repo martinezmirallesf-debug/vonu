@@ -4530,6 +4530,19 @@ return (
   }
 }
 
+@keyframes vonuLogoFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translateY(-1.5px) rotate(-4deg) scale(1.04);
+  }
+}
+
+.vonu-thinking-logo {
+  animation: vonuLogoFloat 1.9s ease-in-out infinite;
+}
+
 .vonu-thinking-ring {
   background:
     conic-gradient(
@@ -5024,10 +5037,10 @@ return (
                 <div
                   className={[
                     "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
-                    "md:shadow-sm bg-[#f1f3f4] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-none mr-2",
+                    "md:shadow-sm bg-[#e9edf1] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-none mr-2",
                   ].join(" ")}
                 >
-                  <BubbleTail side="right" color="#dcf8c6" />
+                  <BubbleTail side="right" color="#e9edf1" />
 
                   <div className="relative z-10">
                     {m.image && (
@@ -5041,7 +5054,7 @@ return (
                     )}
 
                     {(m.text || m.streaming) && (
-                      <div className="prose prose-sm max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans">
+                      <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[16px] leading-7">
                         <span className="whitespace-pre-wrap">{mdText}</span>
                       </div>
                     )}
@@ -5071,7 +5084,7 @@ return (
               key={m.id}
               className="flex w-full justify-start animate-[fadeIn_240ms_ease-out]"
             >
-              <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-2 md:gap-3">
+              <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-2 md:gap-2.5">
                 <div className="mt-[2px] shrink-0 flex h-8 w-8 items-center justify-center">
   <img
     src="/logo/vonu-cube-black.png"
@@ -5093,7 +5106,7 @@ return (
                   )}
 
                   {(m.text || m.streaming) && (
-                    <div className="prose prose-sm max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-zinc-900">
+                    <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[16px] leading-7">
                       {isStreaming ? (
                         <span className="whitespace-pre-wrap">
                           {mdText.includes('"elements"') ||

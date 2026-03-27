@@ -48,13 +48,13 @@ export default function TopBar({
       <span className="relative flex h-5 w-5 flex-col items-center justify-center">
         <span
           className={[
-            "absolute block h-[2px] w-4 rounded-full bg-zinc-900 transition-all duration-300 ease-out",
+            "absolute block h-[2.5px] w-4 rounded-full bg-zinc-900 transition-all duration-300 ease-out",
             menuOpen ? "rotate-45 translate-y-0" : "-translate-y-[4px]",
           ].join(" ")}
         />
         <span
           className={[
-            "absolute block h-[2px] w-4 rounded-full bg-zinc-900 transition-all duration-300 ease-out",
+            "absolute block h-[2.5px] w-[13px] rounded-full bg-zinc-900 transition-all duration-300 ease-out",
             menuOpen ? "-rotate-45 translate-y-0" : "translate-y-[4px]",
           ].join(" ")}
         />
@@ -67,9 +67,9 @@ export default function TopBar({
       aria-label="Ir a la home"
       title="Ir a la home"
     >
-      <span className="font-sans text-[17px] leading-none tracking-[-0.03em] text-zinc-900">
-        Vonu<span className="font-semibold">AI</span>
-      </span>
+      <span className="font-sans text-[18px] leading-none tracking-[-0.03em] text-zinc-900 font-semibold">
+  VonuAI
+</span>
     </a>
   </div>
 </div>
