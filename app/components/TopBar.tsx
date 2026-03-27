@@ -40,26 +40,26 @@ export default function TopBar({
       <div className="pointer-events-auto">
   <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden pl-1 pr-4">
     <button
-      onClick={() => setMenuOpen((v) => !v)}
-      className="h-11 w-11 grid place-items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95 p-0"
-      aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-      title={menuOpen ? "Cerrar menú" : "Menú"}
-    >
-      <span className="relative flex h-5 w-5 flex-col items-center justify-center">
-        <span
-          className={[
-            "absolute block h-[2.5px] w-4 rounded-full bg-zinc-900 transition-all duration-300 ease-out",
-            menuOpen ? "rotate-45 translate-y-0" : "-translate-y-[4px]",
-          ].join(" ")}
-        />
-        <span
-          className={[
-            "absolute block h-[2.5px] w-[13px] rounded-full bg-zinc-900 transition-all duration-300 ease-out",
-            menuOpen ? "-rotate-45 translate-y-0" : "translate-y-[4px]",
-          ].join(" ")}
-        />
-      </span>
-    </button>
+  onClick={() => setMenuOpen((v) => !v)}
+  className="h-11 w-11 flex items-center justify-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95 p-0"
+  aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+  title={menuOpen ? "Cerrar menú" : "Menú"}
+>
+  <span className="relative block h-5 w-5">
+    <span
+      className={[
+        "absolute left-0 top-[5px] block h-[2.8px] w-[16px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
+        menuOpen ? "top-[8px] rotate-45" : "",
+      ].join(" ")}
+    />
+    <span
+      className={[
+        "absolute left-0 top-[11px] block h-[2.8px] w-[16px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
+        menuOpen ? "top-[8px] -rotate-45" : "",
+      ].join(" ")}
+    />
+  </span>
+</button>
 
     <a
       href={HOME_URL}
@@ -67,7 +67,7 @@ export default function TopBar({
       aria-label="Ir a la home"
       title="Ir a la home"
     >
-      <span className="font-sans text-[18px] leading-none tracking-[-0.03em] text-zinc-900 font-semibold">
+      <span className="font-sans text-[19px] leading-none tracking-[-0.03em] text-zinc-900 font-semibold">
   VonuAI
 </span>
     </a>

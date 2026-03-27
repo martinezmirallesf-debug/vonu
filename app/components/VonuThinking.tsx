@@ -6,9 +6,9 @@ type VonuThinkingProps = {
   size?: number;
 };
 
-export default function VonuThinking({ size = 32 }: VonuThinkingProps) {
+export default function VonuThinking({ size = 34 }: VonuThinkingProps) {
   return (
-    <div className="flex items-center gap-2 py-2">
+    <div className="flex items-center py-2">
       <div
         className="relative shrink-0"
         style={{ width: size, height: size }}
@@ -20,15 +20,11 @@ export default function VonuThinking({ size = 32 }: VonuThinkingProps) {
           <img
             src="/logo/vonu-cube-black.png?v=3"
             alt="Vonu"
-            className="h-[18px] w-[18px] object-contain"
+            className="h-[20px] w-[20px] object-contain"
             draggable={false}
           />
         </span>
       </div>
-
-      <span className="font-mono text-[12px] text-zinc-400 tracking-[-0.01em]">
-        Vonu está pensando...
-      </span>
     </div>
   );
 }
