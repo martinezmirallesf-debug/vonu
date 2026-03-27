@@ -38,38 +38,41 @@ export default function TopBar({
   return (
     <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
       <div className="pointer-events-auto">
-        <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center gap-0 overflow-hidden px-1">
-          <button
-            onClick={() => setMenuOpen((v) => !v)}
-            className="h-11 w-11 grid place-items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95 p-0"
-            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-            title={menuOpen ? "Cerrar menú" : "Menú"}
-          >
-            <img
-              src={"/vonu-icon.png?v=2"}
-              alt="Menú"
-              className={`h-6 w-6 transition-transform duration-300 ease-out ${
-                menuOpen ? "rotate-90" : "rotate-0"
-              }`}
-              draggable={false}
-            />
-          </button>
+  <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden pl-1 pr-4">
+    <button
+      onClick={() => setMenuOpen((v) => !v)}
+      className="h-11 w-11 grid place-items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95 p-0"
+      aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+      title={menuOpen ? "Cerrar menú" : "Menú"}
+    >
+      <span className="relative flex h-5 w-5 flex-col items-center justify-center">
+        <span
+          className={[
+            "absolute block h-[2px] w-4 rounded-full bg-zinc-900 transition-all duration-300 ease-out",
+            menuOpen ? "rotate-45 translate-y-0" : "-translate-y-[4px]",
+          ].join(" ")}
+        />
+        <span
+          className={[
+            "absolute block h-[2px] w-4 rounded-full bg-zinc-900 transition-all duration-300 ease-out",
+            menuOpen ? "-rotate-45 translate-y-0" : "translate-y-[4px]",
+          ].join(" ")}
+        />
+      </span>
+    </button>
 
-          <a
-            href={HOME_URL}
-            className="h-11 -ml-0.5 pr-2 flex items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
-            aria-label="Ir a la home"
-            title="Ir a la home"
-          >
-            <img
-              src={"/vonu-wordmark.png?v=2"}
-              alt="Vonu"
-              className="h-4 w-auto"
-              draggable={false}
-            />
-          </a>
-        </div>
-      </div>
+    <a
+      href={HOME_URL}
+      className="h-11 flex items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
+      aria-label="Ir a la home"
+      title="Ir a la home"
+    >
+      <span className="font-sans text-[17px] leading-none tracking-[-0.03em] text-zinc-900">
+        Vonu<span className="font-semibold">AI</span>
+      </span>
+    </a>
+  </div>
+</div>
 
       <div className="pointer-events-auto flex items-center gap-2">
         <button

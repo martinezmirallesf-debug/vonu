@@ -5024,7 +5024,7 @@ return (
                 <div
                   className={[
                     "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
-                    "md:shadow-sm bg-[#dcf8c6] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-none mr-2",
+                    "md:shadow-sm bg-[#f1f3f4] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-none mr-2",
                   ].join(" ")}
                 >
                   <BubbleTail side="right" color="#dcf8c6" />
@@ -5072,13 +5072,14 @@ return (
               className="flex w-full justify-start animate-[fadeIn_240ms_ease-out]"
             >
               <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-2 md:gap-3">
-                <div className="mt-[2px] shrink-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-[0_0_0_1px_rgba(37,99,235,0.08)]">
-                    <span className="text-[14px] font-semibold leading-none tracking-[-0.03em] text-blue-600">
-                      ()
-                    </span>
-                  </div>
-                </div>
+                <div className="mt-[2px] shrink-0 flex h-8 w-8 items-center justify-center">
+  <img
+    src="/logo/vonu-cube-black.png"
+    alt="Vonu"
+    className="block h-5 w-5 object-contain"
+    draggable={false}
+  />
+</div>
 
                 <div className="min-w-0 flex-1">
                   {m.image && (

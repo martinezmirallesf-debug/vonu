@@ -19,15 +19,14 @@ export default function VonuThinking({ size = 32 }: VonuThinkingProps) {
         {/* aro girando */}
         <span className="absolute inset-[-1px] rounded-full vonu-thinking-ring" />
 
-        {/* núcleo */}
-        <span className="absolute inset-[6px] rounded-full bg-white shadow-[0_0_0_1px_rgba(37,99,235,0.10)]" />
-
-        {/* símbolo Vonu */}
         <span className="absolute inset-0 flex items-center justify-center">
-          <span className="text-[15px] font-semibold text-blue-600 leading-none tracking-[-0.02em]">
-            ()
-          </span>
-        </span>
+  <img
+    src="/logo/vonu-cube-black.png"
+    alt="Vonu"
+    className="h-[18px] w-[18px] object-contain"
+    draggable={false}
+  />
+</span>
       </div>
     </div>
   );
