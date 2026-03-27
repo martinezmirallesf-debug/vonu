@@ -5054,7 +5054,7 @@ return (
                     )}
 
                     {(m.text || m.streaming) && (
-                      <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[17px] md:text-[18px] leading-7 md:leading-8">
+                      <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[18px] md:text-[19px] leading-8 md:leading-8 text-zinc-900">
                         <span className="whitespace-pre-wrap">{mdText}</span>
                       </div>
                     )}
@@ -5084,12 +5084,12 @@ return (
               key={m.id}
               className="flex w-full justify-start animate-[fadeIn_240ms_ease-out]"
             >
-              <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-1 md:gap-1.5">
-                <div className="mt-[5px] md:mt-[4px] shrink-0 flex h-8 w-8 items-start justify-center">
+              <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
+                <div className="mt-[7px] md:mt-[6px] shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center">
   <img
     src="/logo/vonu-cube-black.png?v=3"
     alt="Vonu"
-    className="block h-[21px] w-[21px] md:h-[20px] md:w-[20px] object-contain"
+    className="block h-[20px] w-[20px] md:h-[21px] md:w-[21px] object-contain"
     draggable={false}
   />
 </div>
@@ -5106,7 +5106,7 @@ return (
                   )}
 
                   {(m.text || m.streaming) && (
-                    <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[17px] md:text-[18px] leading-7 md:leading-8 text-zinc-900">
+                    <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[18px] md:text-[19px] leading-8 md:leading-8">
                       {isStreaming ? (
                         <span className="whitespace-pre-wrap">
                           {mdText.includes('"elements"') ||
