@@ -48,14 +48,14 @@ export default function TopBar({
   <span className="relative block h-5 w-[17px]">
     <span
       className={[
-        "absolute left-0 top-[5px] block h-[2.8px] w-[17px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
-        menuOpen ? "top-[8px] rotate-45" : "",
+        "absolute left-0 top-[5px] block h-[2.8px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
+        menuOpen ? "top-[8px] w-[16px] rotate-45" : "w-[16px]",
       ].join(" ")}
     />
     <span
       className={[
-        "absolute left-0 top-[11px] block h-[2.8px] w-[17px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
-        menuOpen ? "top-[8px] -rotate-45" : "",
+        "absolute left-0 top-[11px] block h-[2.8px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
+        menuOpen ? "top-[8px] w-[16px] -rotate-45" : "w-[12px]",
       ].join(" ")}
     />
   </span>
