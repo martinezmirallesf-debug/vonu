@@ -4485,76 +4485,6 @@ return (
   }
 }
 
-@keyframes vonuRingSpin {
-  0% {
-    transform: rotate(0deg) scale(0.96);
-  }
-  50% {
-    transform: rotate(180deg) scale(1.04);
-  }
-  100% {
-    transform: rotate(360deg) scale(0.96);
-  }
-}
-
-@keyframes vonuDotsBuild {
-  0% {
-    clip-path: inset(0 100% 0 0);
-  }
-  70% {
-    clip-path: inset(0 0 0 0);
-  }
-  100% {
-    clip-path: inset(0 0 0 0);
-  }
-}
-
-@keyframes vonuDotsPulse {
-  0%, 100% {
-    transform: scale(0.96);
-    opacity: 0.92;
-  }
-  50% {
-    transform: scale(1.03);
-    opacity: 1;
-  }
-}
-
-.vonu-dotmark-wrap {
-  animation: vonuDotsPulse 1.6s ease-in-out infinite;
-}
-
-.vonu-dotmark-base,
-.vonu-dotmark-fill {
-  -webkit-mask: url("/logo/vonu-cube-black.png") center / contain no-repeat;
-  mask: url("/logo/vonu-cube-black.png") center / contain no-repeat;
-}
-
-.vonu-dotmark-base {
-  background-image: radial-gradient(circle, #d1d5db 1.1px, transparent 1.2px);
-  background-size: 6px 6px;
-  background-position: center;
-  opacity: 1;
-}
-
-.vonu-dotmark-fill {
-  background-image: radial-gradient(circle, #111111 1.1px, transparent 1.2px);
-  background-size: 6px 6px;
-  background-position: center;
-  animation: vonuDotsBuild 1.4s steps(10, end) infinite;
-}
-
-@keyframes vonuHaloPulse {
-  0%, 100% {
-    transform: scale(0.9);
-    opacity: 0.18;
-  }
-  50% {
-    transform: scale(1.12);
-    opacity: 0.38;
-  }
-}
-
 @keyframes vonuLogoPulse {
   0%, 100% {
     transform: scale(0.96);
@@ -4568,53 +4498,6 @@ return (
 
 .vonu-thinking-logo {
   animation: vonuLogoPulse 1.65s ease-in-out infinite;
-}
-
-@keyframes vonuDotsBuild {
-  0% {
-    clip-path: inset(0 100% 0 0);
-  }
-  70% {
-    clip-path: inset(0 0 0 0);
-  }
-  100% {
-    clip-path: inset(0 0 0 0);
-  }
-}
-
-@keyframes vonuDotsPulse {
-  0%, 100% {
-    transform: scale(0.96);
-    opacity: 0.92;
-  }
-  50% {
-    transform: scale(1.03);
-    opacity: 1;
-  }
-}
-
-.vonu-dotmark-wrap {
-  animation: vonuDotsPulse 1.6s ease-in-out infinite;
-}
-
-.vonu-dotmark-base,
-.vonu-dotmark-fill {
-  -webkit-mask: url("/logo/vonu-mark-black.png?v=1") center / contain no-repeat;
-  mask: url("/logo/vonu-mark-black.png?v=1") center / contain no-repeat;
-}
-
-.vonu-dotmark-base {
-  background-image: radial-gradient(circle, #cfd4dc 1.05px, transparent 1.15px);
-  background-size: 5.5px 5.5px;
-  background-position: center;
-  opacity: 1;
-}
-
-.vonu-dotmark-fill {
-  background-image: radial-gradient(circle, #111111 1.05px, transparent 1.15px);
-  background-size: 5.5px 5.5px;
-  background-position: center;
-  animation: vonuDotsBuild 1.35s steps(8, end) infinite;
 }
 
 .assistant-md h1,
