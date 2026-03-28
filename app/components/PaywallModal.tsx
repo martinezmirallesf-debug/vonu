@@ -71,7 +71,7 @@ export default function PaywallModal({
             <div className="flex items-center justify-between px-5 pt-4 pb-3 shrink-0">
   <div className="flex items-center gap-2 min-w-0">
     <img
-      src="/logo/vonu-mark-black.png?v=1"
+      src="/logo/vonu-cube-black.png?v=1"
       alt="Vonu"
       className="h-7 w-7 shrink-0 object-contain"
       draggable={false}

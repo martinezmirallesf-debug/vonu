@@ -4523,25 +4523,51 @@ return (
   animation: vonuLogoPulse 1.65s ease-in-out infinite;
 }
 
-.vonu-thinking-ring {
-  background:
-    conic-gradient(
-      from 0deg,
-      rgba(37, 99, 235, 0.00) 0deg,
-      rgba(37, 99, 235, 0.95) 70deg,
-      rgba(96, 165, 250, 0.95) 145deg,
-      rgba(37, 99, 235, 0.12) 220deg,
-      rgba(37, 99, 235, 0.00) 360deg
-    );
-  animation: vonuRingSpin 2.4s linear infinite;
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), black calc(100% - 2px));
-  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), black calc(100% - 2px));
+@keyframes vonuDotsBuild {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+  70% {
+    clip-path: inset(0 0 0 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
 }
 
-.vonu-thinking-halo {
-  background:
-    radial-gradient(circle, rgba(96,165,250,0.32) 0%, rgba(37,99,235,0.12) 45%, rgba(37,99,235,0.00) 72%);
-  animation: vonuHaloPulse 1.8s ease-in-out infinite;
+@keyframes vonuDotsPulse {
+  0%, 100% {
+    transform: scale(0.96);
+    opacity: 0.92;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+}
+
+.vonu-dotmark-wrap {
+  animation: vonuDotsPulse 1.6s ease-in-out infinite;
+}
+
+.vonu-dotmark-base,
+.vonu-dotmark-fill {
+  -webkit-mask: url("/logo/vonu-mark-black.png?v=1") center / contain no-repeat;
+  mask: url("/logo/vonu-mark-black.png?v=1") center / contain no-repeat;
+}
+
+.vonu-dotmark-base {
+  background-image: radial-gradient(circle, #cfd4dc 1.05px, transparent 1.15px);
+  background-size: 5.5px 5.5px;
+  background-position: center;
+  opacity: 1;
+}
+
+.vonu-dotmark-fill {
+  background-image: radial-gradient(circle, #111111 1.05px, transparent 1.15px);
+  background-size: 5.5px 5.5px;
+  background-position: center;
+  animation: vonuDotsBuild 1.35s steps(8, end) infinite;
 }
 
 .assistant-md h1,
