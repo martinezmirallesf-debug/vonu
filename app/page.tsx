@@ -4335,7 +4335,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
 
   // ✅ padding dinámico según la altura REAL del input bar (evita que se “corte” en PC)
-const chatBottomPad = hasUserMessage ? (inputBarH + 22) : 18;
+const chatBottomPad = hasUserMessage ? (inputBarH + 56) : 18;
 
 
 
@@ -5021,7 +5021,10 @@ return (
 
   <div
   className="mx-auto max-w-3xl px-3 md:px-6"
-  style={{ paddingTop: 124, paddingBottom: hasUserMessage ? chatBottomPad : 18 }}
+  style={{
+    paddingTop: hasUserMessage ? (isDesktopPointer() ? 76 : 64) : 124,
+    paddingBottom: hasUserMessage ? chatBottomPad : 18,
+  }}
 >
 
 {showSoftLimitWarning ? (
@@ -5188,9 +5191,9 @@ if (isStreaming && !((m.text ?? "").trim())) {
       <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
         <div
           className={[
-  "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center",
+  "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center self-start",
   activeThread?.mode === "tutor"
-    ? "mt-[18px] md:mt-[20px]"
+    ? "mt-[22px] md:mt-[24px]"
     : "mt-[10px] md:mt-[12px]"
 ].join(" ")}
         >
@@ -5213,9 +5216,9 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
               <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
                 <div
   className={[
-  "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center",
+  "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center self-start",
   activeThread?.mode === "tutor"
-    ? "mt-[18px] md:mt-[20px]"
+    ? "mt-[22px] md:mt-[24px]"
     : "mt-[10px] md:mt-[12px]"
 ].join(" ")}
 >
