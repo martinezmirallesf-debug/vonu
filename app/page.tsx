@@ -4485,19 +4485,51 @@ return (
   }
 }
 
-@keyframes vonuLogoPulse {
+@keyframes vonuDotsBuild {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+  70% {
+    clip-path: inset(0 0 0 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes vonuDotsPulse {
   0%, 100% {
     transform: scale(0.96);
     opacity: 0.92;
   }
   50% {
-    transform: scale(1.06);
+    transform: scale(1.03);
     opacity: 1;
   }
 }
 
-.vonu-thinking-logo {
-  animation: vonuLogoPulse 1.65s ease-in-out infinite;
+.vonu-dotmark-wrap {
+  animation: vonuDotsPulse 1.6s ease-in-out infinite;
+}
+
+.vonu-dotmark-base,
+.vonu-dotmark-fill {
+  -webkit-mask: url("/logo/vonu-cube-black.png?v=1") center / contain no-repeat;
+  mask: url("/logo/vonu-cube-black.png?v=1") center / contain no-repeat;
+}
+
+.vonu-dotmark-base {
+  background-image: radial-gradient(circle, #cfd4dc 1.05px, transparent 1.15px);
+  background-size: 5.5px 5.5px;
+  background-position: center;
+  opacity: 1;
+}
+
+.vonu-dotmark-fill {
+  background-image: radial-gradient(circle, #111111 1.05px, transparent 1.15px);
+  background-size: 5.5px 5.5px;
+  background-position: center;
+  animation: vonuDotsBuild 1.35s steps(8, end) infinite;
 }
 
 .assistant-md h1,
@@ -5019,8 +5051,8 @@ if (isStreaming && !((m.text ?? "").trim())) {
           className={[
             "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center",
             activeThread?.mode === "tutor"
-              ? "mt-[12px] md:mt-[15px]"
-              : "mt-[10px] md:mt-[12px]",
+  ? "mt-[10px] md:mt-[13px]"
+  : "mt-[10px] md:mt-[12px]"
           ].join(" ")}
         >
           <VonuThinking />
