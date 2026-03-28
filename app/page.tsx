@@ -3837,7 +3837,7 @@ requestAnimationFrame(() => {
 
     const containerRect = container.getBoundingClientRect();
     const msgRect = msgEl.getBoundingClientRect();
-    const topOffset = isDesktopPointer() ? 118 : 110;
+    const topOffset = isDesktopPointer() ? 82 : 72;
 
     const target =
       container.scrollTop + (msgRect.top - containerRect.top) - topOffset;
@@ -5187,12 +5187,7 @@ if (isStreaming && !((m.text ?? "").trim())) {
   >
       <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
         <div
-          className={[
-            "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center",
-            activeThread?.mode === "tutor"
-  ? "mt-[10px] md:mt-[13px]"
-  : "mt-[10px] md:mt-[12px]"
-          ].join(" ")}
+          className="shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center mt-[10px] md:mt-[12px]"
         >
           <VonuThinking />
         </div>
@@ -5212,12 +5207,7 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
             >
               <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
                 <div
-  className={[
-    "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center",
-    activeThread?.mode === "tutor"
-  ? "mt-[12px] md:mt-[15px]"
-  : "mt-[10px] md:mt-[12px]"
-  ].join(" ")}
+  className="shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center mt-[10px] md:mt-[12px]"
 >
   <img
     src="/logo/vonu-cube-black.png?v=3"
