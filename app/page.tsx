@@ -4539,6 +4539,24 @@ return (
   margin-top: 0 !important;
 }
 
+@keyframes vonuAnswerIn {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.vonu-answer-in {
+  animation: vonuAnswerIn 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity, filter;
+}
+
 .paywall-scroll::-webkit-scrollbar {
   display: none;
 }
@@ -5042,10 +5060,10 @@ return (
           // ===== VONU PENSANDO (misma estructura que la respuesta para que no se mueva) =====
 if (isStreaming && !((m.text ?? "").trim())) {
   return (
-    <div
-      key={m.id}
-      className="flex w-full justify-start animate-[fadeIn_240ms_ease-out] mt-3 md:mt-4"
-    >
+  <div
+    key={m.id}
+    className="flex w-full justify-start mt-3 md:mt-4 vonu-answer-in"
+  >
       <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
         <div
           className={[
