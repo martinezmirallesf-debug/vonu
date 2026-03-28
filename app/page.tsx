@@ -5051,19 +5051,30 @@ return (
             );
           }
 
-          // ===== VONU PENSANDO (solo logo) =====
-          if (isStreaming && !((m.text ?? "").trim())) {
-            return (
-              <div
-                key={m.id}
-                className="flex w-full justify-start animate-[fadeIn_240ms_ease-out] mt-3 md:mt-4"
-              >
-                <div className="ml-2">
-                  <VonuThinking />
-                </div>
-              </div>
-            );
-          }
+          // ===== VONU PENSANDO (misma estructura que la respuesta para que no se mueva) =====
+if (isStreaming && !((m.text ?? "").trim())) {
+  return (
+    <div
+      key={m.id}
+      className="flex w-full justify-start animate-[fadeIn_240ms_ease-out] mt-3 md:mt-4"
+    >
+      <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
+        <div
+          className={[
+            "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center",
+            activeThread?.mode === "tutor"
+              ? "mt-[12px] md:mt-[15px]"
+              : "mt-[10px] md:mt-[12px]",
+          ].join(" ")}
+        >
+          <VonuThinking />
+        </div>
+
+        <div className="min-w-0 flex-1" />
+      </div>
+    </div>
+  );
+}
 
           // ===== VONU RESPONDIENDO (sin burbuja) =====
                     return (
