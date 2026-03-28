@@ -80,6 +80,62 @@ type ChatThread = {
   messages: Message[];
 };
 
+function smoothScrollToBottom(el: HTMLElement, duration = 380) {
+  const start = el.scrollTop;
+  const end = el.scrollHeight - el.clientHeight;
+  const distance = end - start;
+
+  if (distance <= 2) return;
+
+  const startTime = performance.now();
+
+  function easeOutCubic(t: number) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function frame(now: number) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = easeOutCubic(progress);
+
+    el.scrollTop = start + distance * eased;
+
+    if (progress < 1) {
+      requestAnimationFrame(frame);
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+
+function smoothScrollToPosition(el: HTMLElement, target: number, duration = 420) {
+  const start = el.scrollTop;
+  const end = Math.max(0, target);
+  const distance = end - start;
+
+  if (Math.abs(distance) <= 2) return;
+
+  const startTime = performance.now();
+
+  function easeOutCubic(t: number) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function frame(now: number) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = easeOutCubic(progress);
+
+    el.scrollTop = start + distance * eased;
+
+    if (progress < 1) {
+      requestAnimationFrame(frame);
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
@@ -3462,17 +3518,14 @@ useEffect(() => {
     shouldStickToBottomRef.current = distToBottom < threshold;
   }
 
-  // ✅ FIX: mientras streamea, NO usar smooth (evita el "bote" constante)
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    if (!shouldStickToBottomRef.current) return;
-
-    el.scrollTo({
-      top: el.scrollHeight,
-      behavior: isTyping ? "auto" : "smooth",
-    });
-  }, [messages, isTyping]);
+// ✅ Nuevo comportamiento:
+// Solo recolocamos el chat cuando el usuario envía un mensaje.
+// Mientras Vonu responde, NO perseguimos el final.
+// Así evitamos el "bote" y dejamos que la respuesta crezca hacia abajo.
+useEffect(() => {
+  // intencionadamente vacío:
+  // eliminamos el auto-scroll reactivo por cambios de mensajes/isTyping
+}, [messages, isTyping]);
 
   // Autofocus (solo chat, solo escritorio)
   useEffect(() => {
@@ -3757,18 +3810,41 @@ const assistantMsg: Message = {
   boardImagePlacement: null,
 };
 
-    shouldStickToBottomRef.current = true;
+    shouldStickToBottomRef.current = false;
 
-    setThreads((prev) =>
-      prev.map((t) => {
-        if (t.id !== targetThreadId) return t;
-        return {
-          ...t,
-          updatedAt: Date.now(),
-          messages: [...t.messages, userMsg, assistantMsg],
-        };
-      })
-    );
+setThreads((prev) =>
+  prev.map((t) => {
+    if (t.id !== targetThreadId) return t;
+    return {
+      ...t,
+      updatedAt: Date.now(),
+      messages: [...t.messages, userMsg, assistantMsg],
+    };
+  })
+);
+
+// ✅ Scroll suave una sola vez, sin helper extra
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const msgEl = container.querySelector(
+      `[data-msg-id="${userMsg.id}"]`
+    ) as HTMLElement | null;
+
+    if (!msgEl) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const msgRect = msgEl.getBoundingClientRect();
+    const topOffset = isDesktopPointer() ? 118 : 110;
+
+    const target =
+      container.scrollTop + (msgRect.top - containerRect.top) - topOffset;
+
+    smoothScrollToPosition(container, target, 440);
+  });
+});
 
     setInput(""); // por si había algo escrito
     setImagePreview(null);
@@ -4049,19 +4125,42 @@ const assistantMsg: Message = {
   boardImagePlacement: null,
 };
 
-    shouldStickToBottomRef.current = true;
+    shouldStickToBottomRef.current = false;
 
-    setThreads((prev) =>
-      prev.map((t) => {
-        if (t.id !== targetThreadId) return t;
+setThreads((prev) =>
+  prev.map((t) => {
+    if (t.id !== targetThreadId) return t;
 
-        return {
-          ...t,
-          updatedAt: Date.now(),
-          messages: [...t.messages, userMsg, assistantMsg],
-        };
-      })
-    );
+    return {
+      ...t,
+      updatedAt: Date.now(),
+      messages: [...t.messages, userMsg, assistantMsg],
+    };
+  })
+);
+
+// ✅ Scroll suave una sola vez, sin helper extra
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const msgEl = container.querySelector(
+      `[data-msg-id="${userMsg.id}"]`
+    ) as HTMLElement | null;
+
+    if (!msgEl) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const msgRect = msgEl.getBoundingClientRect();
+    const topOffset = isDesktopPointer() ? 118 : 110;
+
+    const target =
+      container.scrollTop + (msgRect.top - containerRect.top) - topOffset;
+
+    smoothScrollToPosition(container, target, 440);
+  });
+});
 
     setInput("");
     setImagePreview(null);
@@ -5045,9 +5144,10 @@ return (
           if (isUser) {
             return (
               <div
-                key={m.id}
-                className="flex w-full justify-end animate-[fadeIn_240ms_ease-out]"
-              >
+  key={m.id}
+  data-msg-id={m.id}
+  className="flex w-full justify-end animate-[fadeIn_240ms_ease-out]"
+>
                 <div
                   className={[
                     "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
