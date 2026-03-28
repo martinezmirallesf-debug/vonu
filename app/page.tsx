@@ -4530,17 +4530,19 @@ return (
   }
 }
 
-@keyframes vonuLogoFloat {
+@keyframes vonuLogoPulse {
   0%, 100% {
-    transform: translateY(0px) rotate(0deg) scale(1);
+    transform: scale(0.96);
+    opacity: 0.92;
   }
   50% {
-    transform: translateY(-1.5px) rotate(-4deg) scale(1.04);
+    transform: scale(1.06);
+    opacity: 1;
   }
 }
 
 .vonu-thinking-logo {
-  animation: vonuLogoFloat 1.9s ease-in-out infinite;
+  animation: vonuLogoPulse 1.65s ease-in-out infinite;
 }
 
 .vonu-thinking-ring {
@@ -4562,6 +4564,13 @@ return (
   background:
     radial-gradient(circle, rgba(96,165,250,0.32) 0%, rgba(37,99,235,0.12) 45%, rgba(37,99,235,0.00) 72%);
   animation: vonuHaloPulse 1.8s ease-in-out infinite;
+}
+
+.assistant-md h1,
+.assistant-md h2,
+.assistant-md h3,
+.assistant-md h4 {
+  margin-top: 0 !important;
 }
 
 .paywall-scroll::-webkit-scrollbar {
@@ -5069,7 +5078,7 @@ return (
             return (
               <div
                 key={m.id}
-                className="flex w-full justify-start animate-[fadeIn_240ms_ease-out]"
+                className="flex w-full justify-start animate-[fadeIn_240ms_ease-out] mt-3 md:mt-4"
               >
                 <div className="ml-2">
                   <VonuThinking />
@@ -5082,10 +5091,17 @@ return (
                     return (
             <div
               key={m.id}
-              className="flex w-full justify-start animate-[fadeIn_240ms_ease-out]"
+              className="flex w-full justify-start animate-[fadeIn_240ms_ease-out] mt-3 md:mt-4"
             >
-              <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1 pt-0.5 md:pt-1">
-                <div className="mt-[7px] md:mt-[9px] shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center">
+              <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
+                <div
+  className={[
+    "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center",
+    activeThread?.mode === "tutor"
+  ? "mt-[12px] md:mt-[15px]"
+  : "mt-[7px] md:mt-[9px]"
+  ].join(" ")}
+>
   <img
     src="/logo/vonu-cube-black.png?v=3"
     alt="Vonu"

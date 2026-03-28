@@ -39,27 +39,24 @@ export default function TopBar({
     <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
       <div className="pointer-events-auto">
   <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden pl-1 pr-4">
-    <button
-  onClick={() => setMenuOpen((v) => !v)}
-  className="h-11 w-11 flex items-center justify-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95 p-0"
-  aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-  title={menuOpen ? "Cerrar menú" : "Menú"}
->
-  <span className="relative block h-5 w-[17px]">
-    <span
-      className={[
-        "absolute left-0 top-[5px] block h-[2.8px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
-        menuOpen ? "top-[8px] w-[16px] rotate-45" : "w-[16px]",
-      ].join(" ")}
-    />
-    <span
-      className={[
-        "absolute left-0 top-[11px] block h-[2.8px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
-        menuOpen ? "top-[8px] w-[16px] -rotate-45" : "w-[12px]",
-      ].join(" ")}
-    />
-  </span>
-</button>
+    <span className="relative block h-5 w-5">
+  <span
+    className={[
+      "absolute left-1/2 top-1/2 block h-[2.8px] w-[16px] rounded-full bg-zinc-900 transition-all duration-300 ease-out",
+      menuOpen
+        ? "translate-x-[-50%] translate-y-[-50%] rotate-45"
+        : "translate-x-[-50%] translate-y-[-6px]",
+    ].join(" ")}
+  />
+  <span
+    className={[
+      "absolute left-1/2 top-1/2 block h-[2.8px] rounded-full bg-zinc-900 transition-all duration-300 ease-out",
+      menuOpen
+        ? "w-[16px] translate-x-[-50%] translate-y-[-50%] -rotate-45"
+        : "w-[11px] translate-x-[-50%] translate-y-[4px]",
+    ].join(" ")}
+  />
+</span>
 
     <a
       href={HOME_URL}
