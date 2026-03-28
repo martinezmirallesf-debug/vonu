@@ -69,29 +69,38 @@ export default function PaywallModal({
           <div className="flex h-full flex-col">
             {/* HEADER */}
             <div className="flex items-center justify-between px-5 pt-4 pb-3 shrink-0">
-              div className="flex items-center gap-2 min
+  <div className="flex items-center gap-2 min-w-0">
+    <img
+      src="/logo/vonu-mark-black.png?v=1"
+      alt="Vonu"
+      className="h-7 w-7 shrink-0 object-contain"
+      draggable={false}
+    />
+    <span className="font-sans text-[18px] leading-none tracking-[-0.03em] text-zinc-900 font-semibold">
+      VonuAI
+    </span>
+  </div>
 
-              <button
-                onClick={closePaywall}
-                className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 cursor-pointer shrink-0 p-0 grid place-items-center"
-                aria-label="Cerrar"
-                disabled={!!payLoading}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-[18px] w-[18px]"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M6 6l12 12M18 6L6 18"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
-            </div>
+  <button
+    onClick={closePaywall}
+    className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 cursor-pointer shrink-0 p-0 grid place-items-center"
+    aria-label="Cerrar"
+  >
+    <svg
+      viewBox="0 0 24 24"
+      className="h-[18px] w-[18px]"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M6 6l12 12M18 6L6 18"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+    </svg>
+  </button>
+</div>
 
             {/* CONTENIDO FIJO CON SCROLL INTERNO */}
             <div className="px-4 md:px-5 py-4 flex-1 overflow-y-auto">

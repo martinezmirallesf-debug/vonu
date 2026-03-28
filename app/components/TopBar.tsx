@@ -40,31 +40,31 @@ export default function TopBar({
       <div className="pointer-events-auto">
         <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden pl-1 pr-4">
           <button
-            type="button"
-            onClick={() => setMenuOpen((v) => !v)}
-            className="h-11 w-11 flex items-center justify-center rounded-full bg-white/95 hover:bg-white/95 transition-colors cursor-pointer p-0 shrink-0"
-            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-            title={menuOpen ? "Cerrar menú" : "Menú"}
-          >
-            <span className="relative block h-5 w-[18px]">
-              <span
-                className={[
-                  "absolute left-0 top-[5px] block h-[2.8px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
-                  menuOpen
-                    ? "w-[16px] top-[8px] rotate-45"
-                    : "w-[16px]",
-                ].join(" ")}
-              />
-              <span
-                className={[
-                  "absolute left-0 top-[11px] block h-[2.8px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
-                  menuOpen
-                    ? "w-[16px] top-[8px] -rotate-45"
-                    : "w-[11px]",
-                ].join(" ")}
-              />
-            </span>
-          </button>
+  type="button"
+  onClick={() => setMenuOpen((v) => !v)}
+  className="h-11 w-11 flex items-center justify-center rounded-full bg-white/95 hover:bg-white/95 transition-colors cursor-pointer p-0 shrink-0"
+  aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+  title={menuOpen ? "Cerrar menú" : "Menú"}
+>
+  <span className="relative block h-5 w-[18px]">
+    <span
+      className={[
+        "absolute left-0 block h-[2.8px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
+        menuOpen
+          ? "top-[8px] w-[16px] rotate-45"
+          : "top-[5px] w-[16px]",
+      ].join(" ")}
+    />
+    <span
+      className={[
+        "absolute left-0 block h-[2.8px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
+        menuOpen
+          ? "top-[8px] w-[16px] -rotate-45"
+          : "top-[11px] w-[11px]",
+      ].join(" ")}
+    />
+  </span>
+</button>
 
           <a
             href={HOME_URL}

@@ -4151,62 +4151,41 @@ if (!voiceModeRef.current) {
 
 if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       } else {
-        // ✅ Chat normal: streaming letra a letra
-        let i = 0;
-        const speedMs = fullText.length > 900 ? 7 : 11;
+        } else {
+  // ✅ Chat normal: mantenemos thinking y mostramos la respuesta final ya renderizada
+  await sleep(220);
 
-        const interval = setInterval(() => {
-          i++;
-          const partial = fullText.slice(0, i);
+  setThreads((prev) =>
+    prev.map((t) => {
+      if (t.id !== targetThreadId) return t;
+      return {
+        ...t,
+        updatedAt: Date.now(),
+        messages: t.messages.map((m) =>
+          m.id === assistantId
+            ? {
+                ...m,
+                text: fullText,
+                streaming: false,
+                pizarra: pizarraJson,
+                boardImageB64,
+                boardImagePlacement,
+              }
+            : m
+        ),
+      };
+    })
+  );
 
-          setThreads((prev) =>
-            prev.map((t) => {
-              if (t.id !== targetThreadId) return t;
-              return {
-                ...t,
-                updatedAt: Date.now(),
-                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
-              };
-            })
-          );
+  setIsTyping(false);
+  sendGuardRef.current.busy = false;
 
-          if (i >= fullText.length) {
-            clearInterval(interval);
+  if (!voiceModeRef.current) {
+    speakTTS(fullText);
+  }
 
-            setThreads((prev) =>
-              prev.map((t) => {
-                if (t.id !== targetThreadId) return t;
-                return {
-                  ...t,
-                  updatedAt: Date.now(),
-                  messages: t.messages.map((m) =>
-                    m.id === assistantId
-                      ? {
-                          ...m,
-                          streaming: false,
-                          pizarra: pizarraJson,
-                          boardImageB64,
-                          boardImagePlacement,
-                        }
-                      : m
-                  ),
-                };
-              })
-            );
-
-            setIsTyping(false);
-            sendGuardRef.current.busy = false;
-
-// ✅ Solo usar TTS del navegador fuera del modo conversación
-if (!voiceModeRef.current) {
-  speakTTS(fullText);
+  if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 }
-
-if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
-
-          }
-        }, speedMs);
-      }
     } catch (err: any) {
       const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
 
@@ -5099,7 +5078,7 @@ return (
     "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center",
     activeThread?.mode === "tutor"
   ? "mt-[12px] md:mt-[15px]"
-  : "mt-[9px] md:mt-[11px]"
+  : "mt-[10px] md:mt-[12px]"
   ].join(" ")}
 >
   <img
