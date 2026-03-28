@@ -4539,17 +4539,17 @@ return (
   margin-top: 0 !important;
 }
 
-@keyframes vonuAnswerIn {
-  0% {
+@keyframes vonuFadeIn {
+  from {
     opacity: 0;
   }
-  100% {
+  to {
     opacity: 1;
   }
 }
 
-.vonu-answer-in {
-  animation: vonuAnswerIn 220ms ease-out;
+.vonu-fade-in {
+  animation: vonuFadeIn 220ms ease-out;
   will-change: opacity;
 }
 
@@ -5082,7 +5082,7 @@ if (isStreaming && !((m.text ?? "").trim())) {
                     return (
             <div
               key={m.id}
-              className="flex w-full justify-start animate-[fadeIn_240ms_ease-out] mt-3 md:mt-4"
+              className="flex w-full justify-start mt-3 md:mt-4 vonu-fade-in"
             >
               <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
                 <div
