@@ -4542,19 +4542,15 @@ return (
 @keyframes vonuAnswerIn {
   0% {
     opacity: 0;
-    transform: translateY(6px);
-    filter: blur(2px);
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
-    filter: blur(0);
   }
 }
 
 .vonu-answer-in {
-  animation: vonuAnswerIn 320ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, opacity, filter;
+  animation: vonuAnswerIn 220ms ease-out;
+  will-change: opacity;
 }
 
 .paywall-scroll::-webkit-scrollbar {
