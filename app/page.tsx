@@ -4151,7 +4151,6 @@ if (!voiceModeRef.current) {
 
 if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       } else {
-        } else {
   // ✅ Chat normal: mantenemos thinking y mostramos la respuesta final ya renderizada
   await sleep(220);
 
