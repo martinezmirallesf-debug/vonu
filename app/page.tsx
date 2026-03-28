@@ -58,13 +58,10 @@ type Message = {
   text?: string;
   image?: string;
   streaming?: boolean;
-
-  // ✅ Tutor: JSON de pizarra (para render sin burbuja en modo tutor)
   pizarra?: string | null;
-
-  // ✅ imagen de pizarra (IA) y su colocación
   boardImageB64?: string | null;
   boardImagePlacement?: { x: number; y: number; w: number; h: number } | null;
+  revealMs?: number;
 };
 
 type ThreadMode = "chat" | "tutor";
@@ -85,6 +82,26 @@ type ChatThread = {
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+function getAdaptiveRevealTimings(text: string) {
+  const len = (text || "").trim().length;
+
+  const thinkMs =
+    len < 120 ? 420 :
+    len < 280 ? 650 :
+    len < 600 ? 950 :
+    len < 1100 ? 1300 :
+    1700;
+
+  const revealMs =
+    len < 120 ? 260 :
+    len < 280 ? 420 :
+    len < 600 ? 700 :
+    len < 1100 ? 1000 :
+    1400;
+
+  return { thinkMs, revealMs };
 }
 
 function initialAssistantMessage(): Message {
@@ -4151,8 +4168,10 @@ if (!voiceModeRef.current) {
 
 if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       } else {
-  // ✅ Chat normal: mantenemos thinking y mostramos la respuesta final ya renderizada
-  await sleep(220);
+  // ✅ Chat normal: thinking adaptativo + reveal suave ya renderizado
+  const { thinkMs, revealMs } = getAdaptiveRevealTimings(fullText);
+
+  await sleep(thinkMs);
 
   setThreads((prev) =>
     prev.map((t) => {
@@ -4169,6 +4188,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
                 pizarra: pizarraJson,
                 boardImageB64,
                 boardImagePlacement,
+                revealMs,
               }
             : m
         ),
@@ -4366,6 +4386,24 @@ return (
     }
   }
 
+  @keyframes vonuRevealIn {
+  0% {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    filter: blur(0);
+  }
+}
+
+.vonu-reveal {
+  animation: vonuRevealIn var(--vonu-reveal-ms, 520ms) ease-out both;
+  will-change: opacity, clip-path, filter;
+}
+
 .modal-close-btn {
   display: flex;
   align-items: center;
@@ -4539,19 +4577,6 @@ return (
   margin-top: 0 !important;
 }
 
-@keyframes vonuFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.vonu-fade-in {
-  animation: vonuFadeIn 220ms ease-out;
-  will-change: opacity;
-}
 
 .paywall-scroll::-webkit-scrollbar {
   display: none;
@@ -5082,7 +5107,8 @@ if (isStreaming && !((m.text ?? "").trim())) {
                     return (
             <div
               key={m.id}
-              className="flex w-full justify-start mt-3 md:mt-4 vonu-fade-in"
+              className="flex w-full justify-start mt-3 md:mt-4"
+style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
             >
               <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
                 <div
@@ -5101,7 +5127,7 @@ if (isStreaming && !((m.text ?? "").trim())) {
   />
 </div>
 
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 vonu-reveal">
                   {m.image && (
                     <div className="mb-2">
                       <img
