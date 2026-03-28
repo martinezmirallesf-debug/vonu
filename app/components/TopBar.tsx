@@ -38,38 +38,46 @@ export default function TopBar({
   return (
     <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
       <div className="pointer-events-auto">
-  <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden pl-1 pr-4">
-    <span className="relative block h-5 w-5">
-  <span
-    className={[
-      "absolute left-1/2 top-1/2 block h-[2.8px] w-[16px] rounded-full bg-zinc-900 transition-all duration-300 ease-out",
-      menuOpen
-        ? "translate-x-[-50%] translate-y-[-50%] rotate-45"
-        : "translate-x-[-50%] translate-y-[-6px]",
-    ].join(" ")}
-  />
-  <span
-    className={[
-      "absolute left-1/2 top-1/2 block h-[2.8px] rounded-full bg-zinc-900 transition-all duration-300 ease-out",
-      menuOpen
-        ? "w-[16px] translate-x-[-50%] translate-y-[-50%] -rotate-45"
-        : "w-[11px] translate-x-[-50%] translate-y-[4px]",
-    ].join(" ")}
-  />
-</span>
+        <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden pl-1 pr-4">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            className="h-11 w-11 flex items-center justify-center rounded-full bg-white/95 hover:bg-white/95 transition-colors cursor-pointer p-0 shrink-0"
+            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+            title={menuOpen ? "Cerrar menú" : "Menú"}
+          >
+            <span className="relative block h-5 w-[18px]">
+              <span
+                className={[
+                  "absolute left-0 top-[5px] block h-[2.8px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
+                  menuOpen
+                    ? "w-[16px] top-[8px] rotate-45"
+                    : "w-[16px]",
+                ].join(" ")}
+              />
+              <span
+                className={[
+                  "absolute left-0 top-[11px] block h-[2.8px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
+                  menuOpen
+                    ? "w-[16px] top-[8px] -rotate-45"
+                    : "w-[11px]",
+                ].join(" ")}
+              />
+            </span>
+          </button>
 
-    <a
-      href={HOME_URL}
-      className="h-11 flex items-center transition-colors cursor-pointer rounded-full bg-white/95 hover:bg-white/95"
-      aria-label="Ir a la home"
-      title="Ir a la home"
-    >
-      <span className="font-sans text-[19px] leading-none tracking-[-0.03em] text-zinc-900 font-semibold">
-  VonuAI
-</span>
-    </a>
-  </div>
-</div>
+          <a
+            href={HOME_URL}
+            className="h-11 flex items-center rounded-full bg-white/95 hover:bg-white/95 transition-colors cursor-pointer pl-1"
+            aria-label="Ir a la home"
+            title="Ir a la home"
+          >
+            <span className="font-sans text-[19px] leading-none tracking-[-0.03em] text-zinc-900 font-semibold">
+              VonuAI
+            </span>
+          </a>
+        </div>
+      </div>
 
       <div className="pointer-events-auto flex items-center gap-2">
         <button

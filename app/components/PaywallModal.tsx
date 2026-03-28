@@ -69,17 +69,7 @@ export default function PaywallModal({
           <div className="flex h-full flex-col">
             {/* HEADER */}
             <div className="flex items-center justify-between px-5 pt-4 pb-3 shrink-0">
-              <div className="flex items-center gap-2 min-w-0">
-  <img
-    src="/logo/vonu-mark-black.png?v=1"
-    alt="Vonu"
-    className="h-7 w-7 shrink-0 object-contain"
-    draggable={false}
-  />
-  <span className="font-sans text-[18px] leading-none tracking-[-0.03em] text-zinc-900 font-semibold">
-    VonuAI
-  </span>
-</div>
+              div className="flex items-center gap-2 min
 
               <button
                 onClick={closePaywall}

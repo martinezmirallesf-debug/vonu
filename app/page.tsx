@@ -5099,7 +5099,7 @@ return (
     "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center",
     activeThread?.mode === "tutor"
   ? "mt-[12px] md:mt-[15px]"
-  : "mt-[7px] md:mt-[9px]"
+  : "mt-[9px] md:mt-[11px]"
   ].join(" ")}
 >
   <img
