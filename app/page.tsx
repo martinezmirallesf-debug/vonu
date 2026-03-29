@@ -1605,7 +1605,7 @@ function appendRealtimeUserMessage(text: string) {
 
       if (!msgEl) return;
 
-      const topOffset = isDesktopPointer() ? 26 : 18;
+      const topOffset = isDesktopPointer() ? 6 : 4;
       const target = msgEl.offsetTop - topOffset;
 
       smoothScrollToPosition(container, target, 440);
@@ -4086,9 +4086,13 @@ if (previewText && shouldBlockDuplicateSend(targetThreadId, previewText)) {
     const userText = input.trim();
     const imageBase64 = imagePreview;
 
-    setUiError(null);
-    // ✅ premium turnos: si voiceMode está ON, cerramos micro al enviar (turno de Vonu)
-if (voiceMode) stopMic();
+        setUiError(null);
+
+    // ✅ Si el usuario escribe mientras está en modo conversación,
+    // salimos del modo conversación y mandamos el mensaje como chat normal
+    if (voiceModeRef.current) {
+      stopConversationModeBeforeTypedSend();
+    }
 
 
 // ===== Tutor auto-activación (DESACTIVADA) =====
@@ -4112,27 +4116,6 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
 
 // ✅ Si el modo conversación está activo, añadimos solo el mensaje del usuario
 // ✅ y la respuesta la hará exclusivamente realtime
-if (voiceModeRef.current && userText) {
-  shouldStickToBottomRef.current = true;
-
-  setThreads((prev) =>
-    prev.map((t) => {
-      if (t.id !== targetThreadId) return t;
-      return {
-        ...t,
-        updatedAt: Date.now(),
-        messages: [...t.messages, userMsg],
-      };
-    })
-  );
-
-  setInput("");
-  setImagePreview(null);
-
-  sendTextToRealtime(userText);
-  sendGuardRef.current.busy = false;
-  return;
-}
 
 const assistantId = crypto.randomUUID();
 const assistantMsg: Message = {
@@ -4171,7 +4154,7 @@ requestAnimationFrame(() => {
 
     if (!msgEl) return;
 
-    const topOffset = isDesktopPointer() ? 26 : 18;
+    const topOffset = isDesktopPointer() ? 6 : 4;
     const target = msgEl.offsetTop - topOffset;
 
     smoothScrollToPosition(container, target, 440);
@@ -5038,7 +5021,7 @@ return (
   <div
   className="mx-auto max-w-3xl px-3 md:px-6"
   style={{
-    paddingTop: hasUserMessage ? (isDesktopPointer() ? 76 : 64) : 124,
+    paddingTop: hasUserMessage ? (isDesktopPointer() ? 20 : 14) : 124,
     paddingBottom: hasUserMessage ? chatBottomPad : 18,
   }}
 >
