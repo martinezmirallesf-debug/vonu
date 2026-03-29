@@ -1592,25 +1592,8 @@ function appendRealtimeUserMessage(text: string) {
     })
   );
 
-  shouldStickToBottomRef.current = false;
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      const container = scrollRef.current;
-      if (!container) return;
-
-      const msgEl = container.querySelector(
-        `[data-msg-id="${newUserMessageId}"]`
-      ) as HTMLElement | null;
-
-      if (!msgEl) return;
-
-      const topOffset = isDesktopPointer() ? 6 : 4;
-      const target = msgEl.offsetTop - topOffset;
-
-      smoothScrollToPosition(container, target, 440);
-    });
-  });
+    shouldStickToBottomRef.current = false;
+  pinUserMessageNearTop(newUserMessageId);
 }
 
 function appendRealtimeAssistantMessage(text: string) {
@@ -2299,6 +2282,26 @@ async function speakTTS(text: string) {
   const inputBarRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  function pinUserMessageNearTop(messageId: string) {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const container = scrollRef.current;
+      if (!container) return;
+
+      const msgEl = container.querySelector(
+        `[data-msg-id="${messageId}"]`
+      ) as HTMLElement | null;
+
+      if (!msgEl) return;
+
+      msgEl.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  });
+}
 
   const [inputBarH, setInputBarH] = useState<number>(140);
   const shouldStickToBottomRef = useRef(true);
@@ -3844,27 +3847,7 @@ setThreads((prev) =>
 );
 
 // ✅ Scroll suave una sola vez, sin helper extra
-requestAnimationFrame(() => {
-  requestAnimationFrame(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-
-    const msgEl = container.querySelector(
-      `[data-msg-id="${userMsg.id}"]`
-    ) as HTMLElement | null;
-
-    if (!msgEl) return;
-
-    const containerRect = container.getBoundingClientRect();
-    const msgRect = msgEl.getBoundingClientRect();
-    const topOffset = isDesktopPointer() ? 42 : 34;
-
-    const target =
-      container.scrollTop + (msgRect.top - containerRect.top) - topOffset;
-
-    smoothScrollToPosition(container, target, 440);
-  });
-});
+pinUserMessageNearTop(userMsg.id);
 
     setInput(""); // por si había algo escrito
     setImagePreview(null);
@@ -5021,7 +5004,7 @@ return (
   <div
   className="mx-auto max-w-3xl px-3 md:px-6"
   style={{
-    paddingTop: hasUserMessage ? (isDesktopPointer() ? 20 : 14) : 124,
+    paddingTop: hasUserMessage ? 0 : 124,
     paddingBottom: hasUserMessage ? chatBottomPad : 18,
   }}
 >
@@ -5149,6 +5132,9 @@ return (
   key={m.id}
   data-msg-id={m.id}
   className="flex w-full justify-end animate-[fadeIn_240ms_ease-out]"
+  style={{
+    scrollMarginTop: isDesktopPointer() ? "72px" : "60px",
+  }}
 >
                 <div
                   className={[
