@@ -1542,6 +1542,8 @@ function appendRealtimeUserMessage(text: string) {
   const threadId = activeThread?.id;
   if (!threadId) return;
 
+  const newUserMessageId = crypto.randomUUID();
+
   setThreads((prev) =>
     prev.map((t) => {
       if (t.id !== threadId) return t;
@@ -1577,7 +1579,7 @@ function appendRealtimeUserMessage(text: string) {
         messages: [
           ...t.messages,
           {
-            id: crypto.randomUUID(),
+            id: newUserMessageId,
             role: "user",
             text: clean,
             streaming: false,
@@ -1590,7 +1592,25 @@ function appendRealtimeUserMessage(text: string) {
     })
   );
 
-  shouldStickToBottomRef.current = true;
+  shouldStickToBottomRef.current = false;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const container = scrollRef.current;
+      if (!container) return;
+
+      const msgEl = container.querySelector(
+        `[data-msg-id="${newUserMessageId}"]`
+      ) as HTMLElement | null;
+
+      if (!msgEl) return;
+
+      const topOffset = isDesktopPointer() ? 26 : 18;
+      const target = msgEl.offsetTop - topOffset;
+
+      smoothScrollToPosition(container, target, 440);
+    });
+  });
 }
 
 function appendRealtimeAssistantMessage(text: string) {
@@ -4151,12 +4171,8 @@ requestAnimationFrame(() => {
 
     if (!msgEl) return;
 
-    const containerRect = container.getBoundingClientRect();
-    const msgRect = msgEl.getBoundingClientRect();
-    const topOffset = isDesktopPointer() ? 118 : 110;
-
-    const target =
-      container.scrollTop + (msgRect.top - containerRect.top) - topOffset;
+    const topOffset = isDesktopPointer() ? 26 : 18;
+    const target = msgEl.offsetTop - topOffset;
 
     smoothScrollToPosition(container, target, 440);
   });
