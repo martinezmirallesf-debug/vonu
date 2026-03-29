@@ -2288,19 +2288,10 @@ async function speakTTS(text: string) {
   const inputBarRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const pendingPinMessageIdRef = useRef<string | null>(null);
 
-  function pinUserMessageNearTop(_messageId: string) {
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      const container = scrollRef.current;
-      if (!container) return;
-
-      container.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
-    });
-  });
+  function pinUserMessageNearTop(messageId: string) {
+  pendingPinMessageIdRef.current = messageId;
 }
 
   const [inputBarH, setInputBarH] = useState<number>(140);
@@ -3509,6 +3500,28 @@ useEffect(() => {
     });
   }
 }, [hasUserMessage]);
+
+useEffect(() => {
+  const messageId = pendingPinMessageIdRef.current;
+  if (!messageId) return;
+
+  const container = scrollRef.current;
+  if (!container) return;
+
+  const msgEl = container.querySelector(
+    `[data-msg-id="${messageId}"]`
+  ) as HTMLElement | null;
+
+  if (!msgEl) return;
+
+  pendingPinMessageIdRef.current = null;
+  shouldStickToBottomRef.current = false;
+
+  const topGap = isDesktopPointer() ? 64 : 56;
+  const targetTop = Math.max(0, msgEl.offsetTop - topGap);
+
+  smoothScrollToPosition(container, targetTop, 420);
+}, [messages]);
 
 function applyQuickPrompt(p: { label: string; mode: ThreadMode; text: string }) {
   // ✅ Envío inmediato: al mandar el primer mensaje, desaparece la pantalla inicial automáticamente
