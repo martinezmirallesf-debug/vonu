@@ -1593,7 +1593,13 @@ function appendRealtimeUserMessage(text: string) {
   );
 
     shouldStickToBottomRef.current = false;
-  pinUserMessageNearTop(newUserMessageId);
+  requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+    container.scrollTo({ top: 0, behavior: "smooth" });
+  });
+});
 }
 
 function appendRealtimeAssistantMessage(text: string) {
@@ -2283,21 +2289,15 @@ async function speakTTS(text: string) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  function pinUserMessageNearTop(messageId: string) {
+  function pinUserMessageNearTop(_messageId: string) {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       const container = scrollRef.current;
       if (!container) return;
 
-      const msgEl = container.querySelector(
-        `[data-msg-id="${messageId}"]`
-      ) as HTMLElement | null;
-
-      if (!msgEl) return;
-
-      msgEl.scrollIntoView({
+      container.scrollTo({
+        top: 0,
         behavior: "smooth",
-        block: "start",
       });
     });
   });
@@ -3847,7 +3847,13 @@ setThreads((prev) =>
 );
 
 // ✅ Scroll suave una sola vez, sin helper extra
-pinUserMessageNearTop(userMsg.id);
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+    container.scrollTo({ top: 0, behavior: "smooth" });
+  });
+});
 
     setInput(""); // por si había algo escrito
     setImagePreview(null);
