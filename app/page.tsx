@@ -3517,8 +3517,19 @@ useEffect(() => {
   pendingPinMessageIdRef.current = null;
   shouldStickToBottomRef.current = false;
 
-  const topGap = isDesktopPointer() ? 130 : 70;
-  const targetTop = Math.max(0, msgEl.offsetTop - topGap);
+  let targetTop: number;
+
+if (isDesktopPointer()) {
+  const viewportH = container.clientHeight;
+  const desiredY = viewportH * 0.72; // 72% de la altura visible
+  targetTop = msgEl.offsetTop - desiredY;
+} else {
+  const topGap = 70; // móvil ya lo tienes perfecto
+  targetTop = msgEl.offsetTop - topGap;
+}
+
+targetTop = Math.max(0, targetTop);
+smoothScrollToPosition(container, targetTop, 420);
 
   smoothScrollToPosition(container, targetTop, 420);
 }, [messages]);
@@ -4337,11 +4348,9 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
   // ✅ padding dinámico según la altura REAL del input bar (evita que se “corte” en PC)
 const chatBottomPad = hasUserMessage
-  ? inputBarH + (isDesktopPointer() ? 420 : 320)
+  ? inputBarH + (isDesktopPointer() ? 260 : 140)
   : 18;
-
-
-
+  
   const TOP_OFFSET_PX = 12;
   const TOP_BUBBLE_H = 44;
   const TOP_GAP_PX = 10;
