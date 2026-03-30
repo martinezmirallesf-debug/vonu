@@ -1592,14 +1592,7 @@ function appendRealtimeUserMessage(text: string) {
     })
   );
 
-    shouldStickToBottomRef.current = false;
-  requestAnimationFrame(() => {
-  requestAnimationFrame(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-    container.scrollTo({ top: 0, behavior: "smooth" });
-  });
-});
+      pinUserMessageNearTop(newUserMessageId);
 }
 
 function appendRealtimeAssistantMessage(text: string) {
@@ -1672,7 +1665,7 @@ function appendRealtimeAssistantMessage(text: string) {
     return next;
   });
 
-  shouldStickToBottomRef.current = true;
+    scrollModeRef.current = "idle";
 }
 
 async function createWrittenReplyFromVoice(_userText: string) {
@@ -2290,10 +2283,13 @@ async function speakTTS(text: string) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const pendingPinMessageIdRef = useRef<string | null>(null);
   const headerRef = useRef<HTMLDivElement>(null);
+  type ScrollMode = "idle" | "pin-user" | "stick-bottom";
+const scrollModeRef = useRef<ScrollMode>("idle");
 
 
   function pinUserMessageNearTop(messageId: string) {
   pendingPinMessageIdRef.current = messageId;
+  scrollModeRef.current = "pin-user";
 }
 
   const [inputBarH, setInputBarH] = useState<number>(140);
@@ -3504,37 +3500,52 @@ useEffect(() => {
 }, [hasUserMessage]);
 
 useEffect(() => {
-  const messageId = pendingPinMessageIdRef.current;
-  if (!messageId) return;
-
   const container = scrollRef.current;
   if (!container) return;
 
-  const msgEl = container.querySelector(
-    `[data-msg-id="${messageId}"]`
-  ) as HTMLElement | null;
+  // ===== 1. Colocar mensaje del usuario en zona de lectura =====
+  if (scrollModeRef.current === "pin-user") {
+    const messageId = pendingPinMessageIdRef.current;
+    if (!messageId) return;
 
-  if (!msgEl) return;
+    const msgEl = container.querySelector(
+      `[data-msg-id="${messageId}"]`
+    ) as HTMLElement | null;
 
-  pendingPinMessageIdRef.current = null;
-  shouldStickToBottomRef.current = false;
+    if (!msgEl) return;
+
+    pendingPinMessageIdRef.current = null;
 
     const headerH = headerRef.current?.offsetHeight ?? 0;
+    const viewportH = container.clientHeight;
 
-  let targetTop: number;
+    let desiredY;
 
-  if (isDesktopPointer()) {
-  const viewportH = container.clientHeight;
-  const desiredY = viewportH * 0.72; // PC
-  targetTop = msgEl.offsetTop - desiredY + headerH;
+    if (isDesktopPointer()) {
+  desiredY = viewportH * 0.72; // PC
 } else {
-  const viewportH = container.clientHeight;
-  const desiredY = viewportH * 0.38; // móvil
-  targetTop = msgEl.offsetTop - desiredY + headerH;
+  desiredY = viewportH * 0.18; // móvil: mucho más arriba
 }
 
-  targetTop = Math.max(0, targetTop);
-  smoothScrollToPosition(container, targetTop, 420);
+    const targetTop = Math.max(
+      0,
+      msgEl.offsetTop - desiredY + headerH
+    );
+
+    smoothScrollToPosition(container, targetTop, 420);
+
+    scrollModeRef.current = "idle";
+    return;
+  }
+
+  // ===== 2. Si el usuario está abajo, seguimos abajo =====
+  if (scrollModeRef.current === "stick-bottom") {
+    smoothScrollToPosition(
+      container,
+      container.scrollHeight,
+      300
+    );
+  }
 }, [messages]);
 
 function applyQuickPrompt(p: { label: string; mode: ThreadMode; text: string }) {
@@ -3560,13 +3571,20 @@ useEffect(() => {
 
 
   function handleChatScroll() {
-    const el = scrollRef.current;
-    if (!el) return;
+  const el = scrollRef.current;
+  if (!el) return;
 
-    const threshold = 140;
-    const distToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    shouldStickToBottomRef.current = distToBottom < threshold;
+  const distanceFromBottom =
+    el.scrollHeight - el.scrollTop - el.clientHeight;
+
+  const isNearBottom = distanceFromBottom < 80;
+
+  if (isNearBottom) {
+    scrollModeRef.current = "stick-bottom";
+  } else {
+    scrollModeRef.current = "idle";
   }
+}
 
 // ✅ Nuevo comportamiento:
 // Solo recolocamos el chat cuando el usuario envía un mensaje.
@@ -3860,9 +3878,7 @@ const assistantMsg: Message = {
   boardImagePlacement: null,
 };
 
-    shouldStickToBottomRef.current = false;
-
-setThreads((prev) =>
+    setThreads((prev) =>
   prev.map((t) => {
     if (t.id !== targetThreadId) return t;
     return {
@@ -3873,14 +3889,8 @@ setThreads((prev) =>
   })
 );
 
-// ✅ Scroll suave una sola vez, sin helper extra
-requestAnimationFrame(() => {
-  requestAnimationFrame(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-    container.scrollTo({ top: 0, behavior: "smooth" });
-  });
-});
+pinUserMessageNearTop(userMsg.id);
+scrollModeRef.current = "idle";
 
     setInput(""); // por si había algo escrito
     setImagePreview(null);
@@ -4144,9 +4154,7 @@ const assistantMsg: Message = {
   boardImagePlacement: null,
 };
 
-    shouldStickToBottomRef.current = false;
-
-setThreads((prev) =>
+    setThreads((prev) =>
   prev.map((t) => {
     if (t.id !== targetThreadId) return t;
 
@@ -4158,24 +4166,8 @@ setThreads((prev) =>
   })
 );
 
-// ✅ Scroll suave una sola vez, sin helper extra
-requestAnimationFrame(() => {
-  requestAnimationFrame(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-
-    const msgEl = container.querySelector(
-      `[data-msg-id="${userMsg.id}"]`
-    ) as HTMLElement | null;
-
-    if (!msgEl) return;
-
-    const topOffset = isDesktopPointer() ? 6 : 4;
-    const target = msgEl.offsetTop - topOffset;
-
-    smoothScrollToPosition(container, target, 440);
-  });
-});
+pinUserMessageNearTop(userMsg.id);
+scrollModeRef.current = "idle";
 
     setInput("");
     setImagePreview(null);
