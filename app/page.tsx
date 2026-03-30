@@ -3519,20 +3519,20 @@ useEffect(() => {
   pendingPinMessageIdRef.current = null;
   shouldStickToBottomRef.current = false;
 
+    const headerH = headerRef.current?.offsetHeight ?? 0;
+
   let targetTop: number;
 
-if (isDesktopPointer()) {
-  const viewportH = container.clientHeight;
-  const desiredY = viewportH * 0.72; // 72% de la altura visible
-  targetTop = msgEl.offsetTop - desiredY;
-} else {
-  const topGap = 70; // móvil ya lo tienes perfecto
-  targetTop = msgEl.offsetTop - topGap;
-}
+  if (isDesktopPointer()) {
+    const viewportH = container.clientHeight;
+    const desiredY = viewportH * 0.72;
+    targetTop = msgEl.offsetTop - desiredY + headerH;
+  } else {
+    const topGap = 70;
+    targetTop = msgEl.offsetTop - topGap + headerH;
+  }
 
-targetTop = Math.max(0, targetTop);
-smoothScrollToPosition(container, targetTop, 420);
-
+  targetTop = Math.max(0, targetTop);
   smoothScrollToPosition(container, targetTop, 420);
 }, [messages]);
 
