@@ -3517,7 +3517,7 @@ useEffect(() => {
   pendingPinMessageIdRef.current = null;
   shouldStickToBottomRef.current = false;
 
-  const topGap = isDesktopPointer() ? 64 : 56;
+  const topGap = isDesktopPointer() ? 130 : 70;
   const targetTop = Math.max(0, msgEl.offsetTop - topGap);
 
   smoothScrollToPosition(container, targetTop, 420);
