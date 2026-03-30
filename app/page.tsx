@@ -4336,7 +4336,9 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
 
   // ✅ padding dinámico según la altura REAL del input bar (evita que se “corte” en PC)
-const chatBottomPad = hasUserMessage ? (inputBarH + 56) : 18;
+const chatBottomPad = hasUserMessage
+  ? inputBarH + (isDesktopPointer() ? 420 : 320)
+  : 18;
 
 
 
