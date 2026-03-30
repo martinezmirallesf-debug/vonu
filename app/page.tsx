@@ -4352,11 +4352,16 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   // ✅ padding dinámico según la altura REAL del input bar (evita que se “corte” en PC)
 const lastMsg = messages[messages.length - 1];
 const isLastFromAssistant = lastMsg?.role === "assistant";
+const isLastFromUser = lastMsg?.role === "user";
 
 const chatBottomPad = hasUserMessage
-  ? inputBarH + (isLastFromAssistant
-      ? (isDesktopPointer() ? 260 : 140)
-      : (isDesktopPointer() ? 120 : 80))
+  ? inputBarH + (
+      isLastFromAssistant
+        ? (isDesktopPointer() ? 260 : 140)
+        : isLastFromUser
+        ? (isDesktopPointer() ? 180 : 260) // ← MUY IMPORTANTE para móvil
+        : 120
+    )
   : 18;
 
   const TOP_OFFSET_PX = 12;
