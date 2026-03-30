@@ -3,6 +3,7 @@
 import React from "react";
 
 type TopBarProps = {
+  topBarRef?: React.RefObject<HTMLDivElement | null>;
   menuOpen: boolean;
   setMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   HOME_URL: string;
@@ -20,6 +21,7 @@ type TopBarProps = {
 };
 
 export default function TopBar({
+  topBarRef,
   menuOpen,
   setMenuOpen,
   HOME_URL,
@@ -36,7 +38,10 @@ export default function TopBar({
   UserIcon,
 }: TopBarProps) {
   return (
-    <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
+  <div
+    ref={topBarRef}
+    className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none"
+  >
       <div className="pointer-events-auto">
         <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden pl-1 pr-4">
           <button

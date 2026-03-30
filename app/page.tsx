@@ -2289,6 +2289,8 @@ async function speakTTS(text: string) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const pendingPinMessageIdRef = useRef<string | null>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+
 
   function pinUserMessageNearTop(messageId: string) {
   pendingPinMessageIdRef.current = messageId;
@@ -4983,6 +4985,7 @@ return (
 />
 
 <TopBar
+  topBarRef={headerRef}
   menuOpen={menuOpen}
   setMenuOpen={setMenuOpen}
   HOME_URL={HOME_URL}
