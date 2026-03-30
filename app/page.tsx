@@ -3524,13 +3524,14 @@ useEffect(() => {
   let targetTop: number;
 
   if (isDesktopPointer()) {
-    const viewportH = container.clientHeight;
-    const desiredY = viewportH * 0.72;
-    targetTop = msgEl.offsetTop - desiredY + headerH;
-  } else {
-    const topGap = 70;
-    targetTop = msgEl.offsetTop - topGap + headerH;
-  }
+  const viewportH = container.clientHeight;
+  const desiredY = viewportH * 0.72; // PC
+  targetTop = msgEl.offsetTop - desiredY + headerH;
+} else {
+  const viewportH = container.clientHeight;
+  const desiredY = viewportH * 0.38; // móvil
+  targetTop = msgEl.offsetTop - desiredY + headerH;
+}
 
   targetTop = Math.max(0, targetTop);
   smoothScrollToPosition(container, targetTop, 420);
