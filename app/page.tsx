@@ -4113,13 +4113,6 @@ if (previewText && shouldBlockDuplicateSend(targetThreadId, previewText)) {
 
         setUiError(null);
 
-    // ✅ Si el usuario escribe mientras está en modo conversación,
-    // salimos del modo conversación y mandamos el mensaje como chat normal
-    if (voiceModeRef.current) {
-      stopConversationModeBeforeTypedSend();
-    }
-
-
 // ===== Tutor auto-activación (DESACTIVADA) =====
 const threadModeNow: ThreadMode = activeThread.mode ?? "chat";
 let nextMode: ThreadMode = threadModeNow;
