@@ -1664,8 +1664,6 @@ function appendRealtimeAssistantMessage(text: string) {
 
     return next;
   });
-
-    scrollModeRef.current = "idle";
 }
 
 async function createWrittenReplyFromVoice(_userText: string) {
@@ -2278,13 +2276,10 @@ async function speakTTS(text: string) {
   const [inputExpanded, setInputExpanded] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputBarRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const pendingPinMessageIdRef = useRef<string | null>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
-  type ScrollMode = "idle" | "pin-user" | "stick-bottom" | "lock";
-const scrollModeRef = useRef<ScrollMode>("idle");
+const inputBarRef = useRef<HTMLDivElement>(null);
+const fileInputRef = useRef<HTMLInputElement>(null);
+const textareaRef = useRef<HTMLTextAreaElement>(null);
+const headerRef = useRef<HTMLDivElement>(null);
 
 
   function pinUserMessageNearTop(messageId: string) {
@@ -2299,16 +2294,12 @@ const scrollModeRef = useRef<ScrollMode>("idle");
 
       if (!msgEl) return;
 
-      const viewportH = container.clientHeight;
+      // Distancia real desde arriba del área visible del chat
+      // Queremos dejar el mensaje justo debajo del header, no “por porcentaje”
+      const topGap = isDesktopPointer() ? 92 : 76;
 
-      let desiredY;
-      if (isDesktopPointer()) {
-        desiredY = viewportH * 0.42;
-      } else {
-        desiredY = viewportH * 0.14;
-      }
+      const targetTop = Math.max(0, msgEl.offsetTop - topGap);
 
-      const targetTop = Math.max(0, msgEl.offsetTop - desiredY);
       smoothScrollToPosition(container, targetTop, 420);
     });
   });
@@ -3522,16 +3513,9 @@ useEffect(() => {
 }, [hasUserMessage]);
 
 useEffect(() => {
-  const container = scrollRef.current;
-  if (!container) return;
-
-  // Si estamos bloqueados, no tocamos scroll (evita sacudidas)
-  if (scrollModeRef.current === "lock") return;
-
-  // Si el usuario está abajo, seguimos abajo cuando responde Vonu
-  if (scrollModeRef.current === "stick-bottom") {
-    smoothScrollToPosition(container, container.scrollHeight, 300);
-  }
+  // intencionadamente vacío
+  // No movemos el chat automáticamente cuando cambian los mensajes.
+  // El scroll solo se recoloca cuando el usuario envía un mensaje.
 }, [messages]);
 
 function applyQuickPrompt(p: { label: string; mode: ThreadMode; text: string }) {
@@ -3557,19 +3541,8 @@ useEffect(() => {
 
 
   function handleChatScroll() {
-  const el = scrollRef.current;
-  if (!el) return;
-
-  const distanceFromBottom =
-    el.scrollHeight - el.scrollTop - el.clientHeight;
-
-  const isNearBottom = distanceFromBottom < 80;
-
-  if (isNearBottom) {
-    scrollModeRef.current = "stick-bottom";
-  } else {
-    scrollModeRef.current = "idle";
-  }
+  // Lo dejamos vacío a propósito.
+  // Más adelante, si quieres, montamos un autoseguimiento fino.
 }
 
 // ✅ Nuevo comportamiento:
@@ -3876,7 +3849,6 @@ const assistantMsg: Message = {
 );
 
 pinUserMessageNearTop(userMsg.id);
-scrollModeRef.current = "lock";
 
 requestAnimationFrame(() => {
   requestAnimationFrame(() => {
@@ -4185,8 +4157,6 @@ requestAnimationFrame(() => {
   });
 });
 
-pinUserMessageNearTop(userMsg.id);
-
     setInput("");
     setImagePreview(null);
     setIsTyping(true);
@@ -4285,7 +4255,6 @@ const res = await fetch("/api/chat", {
 
         setIsTyping(false);
 sendGuardRef.current.busy = false;
-scrollModeRef.current = "idle";
 
 if (!voiceModeRef.current) {
   speakTTS(fullText);
