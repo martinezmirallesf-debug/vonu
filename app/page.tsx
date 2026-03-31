@@ -2283,43 +2283,33 @@ async function speakTTS(text: string) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const pendingPinMessageIdRef = useRef<string | null>(null);
   const headerRef = useRef<HTMLDivElement>(null);
-  type ScrollMode = "idle" | "pin-user" | "stick-bottom";
+  type ScrollMode = "idle" | "pin-user" | "stick-bottom" | "lock";
 const scrollModeRef = useRef<ScrollMode>("idle");
 
 
   function pinUserMessageNearTop(messageId: string) {
-  pendingPinMessageIdRef.current = messageId;
-  scrollModeRef.current = "pin-user";
-
-  // Esperamos a que React renderice TODO (mensaje usuario + posible assistant placeholder)
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const container = scrollRef.current;
-        if (!container) return;
+      const container = scrollRef.current;
+      if (!container) return;
 
-        const msgEl = container.querySelector(
-          `[data-msg-id="${messageId}"]`
-        ) as HTMLElement | null;
+      const msgEl = container.querySelector(
+        `[data-msg-id="${messageId}"]`
+      ) as HTMLElement | null;
 
-        if (!msgEl) return;
+      if (!msgEl) return;
 
-        const viewportH = container.clientHeight;
+      const viewportH = container.clientHeight;
 
-        let desiredY;
-        if (isDesktopPointer()) {
-          desiredY = viewportH * 0.55;
-        } else {
-          desiredY = viewportH * 0.22;
-        }
+      let desiredY;
+      if (isDesktopPointer()) {
+        desiredY = viewportH * 0.42;
+      } else {
+        desiredY = viewportH * 0.14;
+      }
 
-        const targetTop = Math.max(
-          0,
-          msgEl.offsetTop - desiredY
-        );
-
-        smoothScrollToPosition(container, targetTop, 420);
-      });
+      const targetTop = Math.max(0, msgEl.offsetTop - desiredY);
+      smoothScrollToPosition(container, targetTop, 420);
     });
   });
 }
@@ -3535,6 +3525,9 @@ useEffect(() => {
   const container = scrollRef.current;
   if (!container) return;
 
+  // Si estamos bloqueados, no tocamos scroll (evita sacudidas)
+  if (scrollModeRef.current === "lock") return;
+
   // Si el usuario está abajo, seguimos abajo cuando responde Vonu
   if (scrollModeRef.current === "stick-bottom") {
     smoothScrollToPosition(container, container.scrollHeight, 300);
@@ -3883,6 +3876,7 @@ const assistantMsg: Message = {
 );
 
 pinUserMessageNearTop(userMsg.id);
+scrollModeRef.current = "lock";
 
 requestAnimationFrame(() => {
   requestAnimationFrame(() => {
@@ -4291,6 +4285,7 @@ const res = await fetch("/api/chat", {
 
         setIsTyping(false);
 sendGuardRef.current.busy = false;
+scrollModeRef.current = "idle";
 
 if (!voiceModeRef.current) {
   speakTTS(fullText);
