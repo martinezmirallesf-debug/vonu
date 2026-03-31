@@ -2294,11 +2294,15 @@ const headerRef = useRef<HTMLDivElement>(null);
 
       if (!msgEl) return;
 
-      const topGap = isDesktopPointer() ? 92 : 190;
+      const containerRect = container.getBoundingClientRect();
+      const msgRect = msgEl.getBoundingClientRect();
 
-      const targetTop = Math.max(0, msgEl.offsetTop - topGap);
+      const topGap = isDesktopPointer() ? 92 : 88;
 
-      smoothScrollToPosition(container, targetTop, 420);
+      const targetTop =
+        container.scrollTop + (msgRect.top - containerRect.top) - topGap;
+
+      smoothScrollToPosition(container, Math.max(0, targetTop), 420);
     });
   });
 }
