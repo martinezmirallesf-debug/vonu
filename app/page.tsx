@@ -2297,7 +2297,7 @@ const headerRef = useRef<HTMLDivElement>(null);
       const containerRect = container.getBoundingClientRect();
       const msgRect = msgEl.getBoundingClientRect();
 
-      const topGap = isDesktopPointer() ? 92 : 88;
+      const topGap = isDesktopPointer() ? 92 : 125;
 
       const targetTop =
         container.scrollTop + (msgRect.top - containerRect.top) - topGap;
