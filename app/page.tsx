@@ -2290,6 +2290,38 @@ const scrollModeRef = useRef<ScrollMode>("idle");
   function pinUserMessageNearTop(messageId: string) {
   pendingPinMessageIdRef.current = messageId;
   scrollModeRef.current = "pin-user";
+
+  // Esperamos a que React renderice TODO (mensaje usuario + posible assistant placeholder)
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const container = scrollRef.current;
+        if (!container) return;
+
+        const msgEl = container.querySelector(
+          `[data-msg-id="${messageId}"]`
+        ) as HTMLElement | null;
+
+        if (!msgEl) return;
+
+        const viewportH = container.clientHeight;
+
+        let desiredY;
+        if (isDesktopPointer()) {
+          desiredY = viewportH * 0.55;
+        } else {
+          desiredY = viewportH * 0.22;
+        }
+
+        const targetTop = Math.max(
+          0,
+          msgEl.offsetTop - desiredY
+        );
+
+        smoothScrollToPosition(container, targetTop, 420);
+      });
+    });
+  });
 }
 
   const [inputBarH, setInputBarH] = useState<number>(140);
@@ -3503,48 +3535,9 @@ useEffect(() => {
   const container = scrollRef.current;
   if (!container) return;
 
-  // ===== 1. Colocar mensaje del usuario en zona de lectura =====
-  if (scrollModeRef.current === "pin-user") {
-    const messageId = pendingPinMessageIdRef.current;
-    if (!messageId) return;
-
-    const msgEl = container.querySelector(
-      `[data-msg-id="${messageId}"]`
-    ) as HTMLElement | null;
-
-    if (!msgEl) return;
-
-    pendingPinMessageIdRef.current = null;
-
-    const headerH = headerRef.current?.offsetHeight ?? 0;
-    const viewportH = container.clientHeight;
-
-    let desiredY;
-
-    if (isDesktopPointer()) {
-  desiredY = viewportH * 0.58; // PC: más abajo que ahora
-} else {
-  desiredY = viewportH * 0.24; // móvil: un poco más arriba, debajo del header
-}
-
-    const targetTop = Math.max(
-      0,
-      msgEl.offsetTop - desiredY + headerH
-    );
-
-    smoothScrollToPosition(container, targetTop, 420);
-
-    scrollModeRef.current = "idle";
-    return;
-  }
-
-  // ===== 2. Si el usuario está abajo, seguimos abajo =====
+  // Si el usuario está abajo, seguimos abajo cuando responde Vonu
   if (scrollModeRef.current === "stick-bottom") {
-    smoothScrollToPosition(
-      container,
-      container.scrollHeight,
-      300
-    );
+    smoothScrollToPosition(container, container.scrollHeight, 300);
   }
 }, [messages]);
 
@@ -3884,12 +3877,31 @@ const assistantMsg: Message = {
     return {
       ...t,
       updatedAt: Date.now(),
-      messages: [...t.messages, userMsg, assistantMsg],
+      messages: [...t.messages, userMsg],
     };
   })
 );
 
 pinUserMessageNearTop(userMsg.id);
+
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    setThreads((prev) =>
+      prev.map((t) => {
+        if (t.id !== targetThreadId) return t;
+
+        const alreadyExists = t.messages.some((m) => m.id === assistantId);
+        if (alreadyExists) return t;
+
+        return {
+          ...t,
+          updatedAt: Date.now(),
+          messages: [...t.messages, assistantMsg],
+        };
+      })
+    );
+  });
+});
 
     setInput(""); // por si había algo escrito
     setImagePreview(null);
@@ -4153,10 +4165,31 @@ const assistantMsg: Message = {
     return {
       ...t,
       updatedAt: Date.now(),
-      messages: [...t.messages, userMsg, assistantMsg],
+      messages: [...t.messages, userMsg],
     };
   })
 );
+
+pinUserMessageNearTop(userMsg.id);
+
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    setThreads((prev) =>
+      prev.map((t) => {
+        if (t.id !== targetThreadId) return t;
+
+        const alreadyExists = t.messages.some((m) => m.id === assistantId);
+        if (alreadyExists) return t;
+
+        return {
+          ...t,
+          updatedAt: Date.now(),
+          messages: [...t.messages, assistantMsg],
+        };
+      })
+    );
+  });
+});
 
 pinUserMessageNearTop(userMsg.id);
 
