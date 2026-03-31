@@ -3522,9 +3522,9 @@ useEffect(() => {
     let desiredY;
 
     if (isDesktopPointer()) {
-  desiredY = viewportH * 0.72; // PC
+  desiredY = viewportH * 0.58; // PC: más abajo que ahora
 } else {
-  desiredY = viewportH * 0.18; // móvil: mucho más arriba
+  desiredY = viewportH * 0.24; // móvil: un poco más arriba, debajo del header
 }
 
     const targetTop = Math.max(
