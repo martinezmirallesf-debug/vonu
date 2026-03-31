@@ -3890,7 +3890,6 @@ const assistantMsg: Message = {
 );
 
 pinUserMessageNearTop(userMsg.id);
-scrollModeRef.current = "idle";
 
     setInput(""); // por si había algo escrito
     setImagePreview(null);
@@ -4167,7 +4166,6 @@ const assistantMsg: Message = {
 );
 
 pinUserMessageNearTop(userMsg.id);
-scrollModeRef.current = "idle";
 
     setInput("");
     setImagePreview(null);
