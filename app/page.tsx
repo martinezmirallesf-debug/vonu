@@ -2294,9 +2294,7 @@ const headerRef = useRef<HTMLDivElement>(null);
 
       if (!msgEl) return;
 
-      // Distancia real desde arriba del área visible del chat
-      // Queremos dejar el mensaje justo debajo del header, no “por porcentaje”
-      const topGap = isDesktopPointer() ? 92 : 76;
+      const topGap = isDesktopPointer() ? 92 : 190;
 
       const targetTop = Math.max(0, msgEl.offsetTop - topGap);
 
