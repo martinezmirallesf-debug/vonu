@@ -5192,9 +5192,6 @@ return (
   key={m.id}
   data-msg-id={m.id}
   className="flex w-full justify-end animate-[fadeIn_240ms_ease-out]"
-  style={{
-    scrollMarginTop: isDesktopPointer() ? "72px" : "60px",
-  }}
 >
                 <div
                   className={[
