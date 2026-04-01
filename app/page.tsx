@@ -5079,36 +5079,35 @@ return (
   OAuthLogo={OAuthLogo}
 />
 
-<div ref={headerRef} className="relative z-40">
-  <TopBar
-    menuOpen={menuOpen}
-    setMenuOpen={setMenuOpen}
-    HOME_URL={HOME_URL}
-    handleOpenPlansCTA={handleOpenPlansCTA}
-    authLoading={authLoading}
-    isPro={isPro}
-    isLoggedIn={isLoggedIn}
-    topPlanLabel={topPlanLabel}
-    openLoginModal={openLoginModal}
-    authUserEmail={authUserEmail}
-    proLoading={proLoading}
-    planLabelText={planLabelText}
-    userInitial={userInitial}
-    UserIcon={UserIcon}
-  />
+<TopBar
+  topBarRef={headerRef}
+  menuOpen={menuOpen}
+  setMenuOpen={setMenuOpen}
+  HOME_URL={HOME_URL}
+  handleOpenPlansCTA={handleOpenPlansCTA}
+  authLoading={authLoading}
+  isPro={isPro}
+  isLoggedIn={isLoggedIn}
+  topPlanLabel={topPlanLabel}
+  openLoginModal={openLoginModal}
+  authUserEmail={authUserEmail}
+  proLoading={proLoading}
+  planLabelText={planLabelText}
+  userInitial={userInitial}
+  UserIcon={UserIcon}
+/>
 
-  {/* Gradiente blanco debajo del header */}
-  <div
-    className="pointer-events-none absolute left-0 right-0 top-full"
-    style={{
-      height: "70px",
-      background:
-        "linear-gradient(to bottom, rgba(255,255,255,0.96), rgba(255,255,255,0))",
-    }}
-  />
-</div>
+<div
+  className="pointer-events-none fixed left-0 right-0 z-[45]"
+  style={{
+    top: "58px",
+    height: "110px",
+    background:
+      "linear-gradient(to bottom, rgba(248,249,250,1), rgba(248,249,250,0))",
+  }}
+/>
 
- <Sidebar
+<Sidebar
   menuOpen={menuOpen}
   setMenuOpen={setMenuOpen}
   SIDEBAR_TOP={SIDEBAR_TOP}
