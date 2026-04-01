@@ -160,6 +160,51 @@ function getAdaptiveRevealTimings(text: string) {
   return { thinkMs, revealMs };
 }
 
+function splitTextForProgressiveReveal(text: string) {
+  const clean = normalizeAssistantText(text || "").trim();
+  if (!clean) return [];
+
+  const blocks = clean
+    .split(/\n\s*\n/g)
+    .map((b) => b.trim())
+    .filter(Boolean);
+
+  if (blocks.length >= 2) return blocks;
+
+  // fallback: si no hay párrafos claros, partir por frases
+  const sentences = clean
+    .split(/(?<=[\.\?\!])\s+/g)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (sentences.length <= 1) return [clean];
+
+  const chunks: string[] = [];
+  let buf = "";
+
+  for (const s of sentences) {
+    const next = buf ? `${buf} ${s}` : s;
+    if (next.length < 220) {
+      buf = next;
+    } else {
+      if (buf) chunks.push(buf);
+      buf = s;
+    }
+  }
+
+  if (buf) chunks.push(buf);
+
+  return chunks.length ? chunks : [clean];
+}
+
+function getProgressiveChunkDelay(index: number, total: number) {
+  if (total <= 1) return 0;
+  if (index === 0) return 0;
+  if (index === 1) return 220;
+  if (index === 2) return 300;
+  return 360;
+}
+
 function initialAssistantMessage(): Message {
   return {
     id: "init",
@@ -3984,61 +4029,77 @@ if (!voiceModeRef.current) {
 if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
       } else {
-        let i = 0;
-        const speedMs = fullText.length > 900 ? 7 : 11;
+  const { thinkMs, revealMs } = getAdaptiveRevealTimings(fullText);
+  const chunks = splitTextForProgressiveReveal(fullText);
 
-        const interval = setInterval(() => {
-          i++;
-          const partial = fullText.slice(0, i);
+  await sleep(thinkMs);
 
-          setThreads((prev) =>
-            prev.map((t) => {
-              if (t.id !== targetThreadId) return t;
-              return {
-                ...t,
-                updatedAt: Date.now(),
-                messages: t.messages.map((m) => (m.id === assistantId ? { ...m, text: partial } : m)),
-              };
-            })
-          );
+  let built = "";
 
-          if (i >= fullText.length) {
-            clearInterval(interval);
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    built = built ? `${built}\n\n${chunk}` : chunk;
 
-            setThreads((prev) =>
-              prev.map((t) => {
-                if (t.id !== targetThreadId) return t;
-                return {
-                  ...t,
-                  updatedAt: Date.now(),
-                  messages: t.messages.map((m) =>
-                    m.id === assistantId
-                      ? {
-                          ...m,
-                          streaming: false,
-                          pizarra: pizarraJson,
-                          boardImageB64,
-                          boardImagePlacement,
-                        }
-                      : m
-                  ),
-                };
-              })
-            );
+    setThreads((prev) =>
+      prev.map((t) => {
+        if (t.id !== targetThreadId) return t;
+        return {
+          ...t,
+          updatedAt: Date.now(),
+          messages: t.messages.map((m) =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  text: built,
+                  streaming: i < chunks.length - 1,
+                  pizarra: pizarraJson,
+                  boardImageB64,
+                  boardImagePlacement,
+                  revealMs,
+                }
+              : m
+          ),
+        };
+      })
+    );
 
-            setIsTyping(false);
-            sendGuardRef.current.busy = false;
+    if (i < chunks.length - 1) {
+      await sleep(getProgressiveChunkDelay(i + 1, chunks.length));
+    }
+  }
 
-// ✅ Solo usamos la voz del navegador fuera del modo conversación
-if (!voiceModeRef.current) {
-  speakTTS(fullText);
+  setThreads((prev) =>
+    prev.map((t) => {
+      if (t.id !== targetThreadId) return t;
+      return {
+        ...t,
+        updatedAt: Date.now(),
+        messages: t.messages.map((m) =>
+          m.id === assistantId
+            ? {
+                ...m,
+                text: built,
+                streaming: false,
+                pizarra: pizarraJson,
+                boardImageB64,
+                boardImagePlacement,
+                revealMs,
+              }
+            : m
+        ),
+      };
+    })
+  );
+
+  setIsTyping(false);
+  sendGuardRef.current.busy = false;
+
+  if (!voiceModeRef.current) {
+    speakTTS(fullText);
+  }
+
+  if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 }
-
-if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
-
-          }
-        }, speedMs);
-      }
     } catch (err: any) {
       const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
 
@@ -4276,10 +4337,44 @@ if (!voiceModeRef.current) {
 
 if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       } else {
-  // ✅ Chat normal: thinking adaptativo + reveal suave ya renderizado
   const { thinkMs, revealMs } = getAdaptiveRevealTimings(fullText);
+  const chunks = splitTextForProgressiveReveal(fullText);
 
   await sleep(thinkMs);
+
+  let built = "";
+
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    built = built ? `${built}\n\n${chunk}` : chunk;
+
+    setThreads((prev) =>
+      prev.map((t) => {
+        if (t.id !== targetThreadId) return t;
+        return {
+          ...t,
+          updatedAt: Date.now(),
+          messages: t.messages.map((m) =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  text: built,
+                  streaming: i < chunks.length - 1,
+                  pizarra: pizarraJson,
+                  boardImageB64,
+                  boardImagePlacement,
+                  revealMs,
+                }
+              : m
+          ),
+        };
+      })
+    );
+
+    if (i < chunks.length - 1) {
+      await sleep(getProgressiveChunkDelay(i + 1, chunks.length));
+    }
+  }
 
   setThreads((prev) =>
     prev.map((t) => {
@@ -4291,7 +4386,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
           m.id === assistantId
             ? {
                 ...m,
-                text: fullText,
+                text: built,
                 streaming: false,
                 pizarra: pizarraJson,
                 boardImageB64,
