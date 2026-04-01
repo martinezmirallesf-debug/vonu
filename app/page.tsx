@@ -4355,18 +4355,18 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
           ...t,
           updatedAt: Date.now(),
           messages: t.messages.map((m) =>
-            m.id === assistantId
-              ? {
-                  ...m,
-                  text: built,
-                  streaming: i < chunks.length - 1,
-                  pizarra: pizarraJson,
-                  boardImageB64,
-                  boardImagePlacement,
-                  revealMs,
-                }
-              : m
-          ),
+  m.id === assistantId
+    ? {
+        ...m,
+        text: built,
+        streaming: false,
+        pizarra: pizarraJson,
+        boardImageB64,
+        boardImagePlacement,
+        revealMs,
+      }
+    : m
+),
         };
       })
     );
