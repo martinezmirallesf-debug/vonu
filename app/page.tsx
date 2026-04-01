@@ -5098,12 +5098,11 @@ return (
 />
 
 <div
-  className="pointer-events-none fixed left-0 right-0 z-[45] md:hidden"
+  className="pointer-events-none fixed inset-x-0 top-0 z-[45] md:hidden"
   style={{
-    top: "66px",
-    height: "72px",
+    height: "126px",
     background:
-      "linear-gradient(to bottom, rgba(248,249,250,0.96), rgba(248,249,250,0))",
+      "linear-gradient(to bottom, rgba(248,249,250,1) 0%, rgba(248,249,250,0.97) 42%, rgba(248,249,250,0.72) 72%, rgba(248,249,250,0) 100%)",
   }}
 />
 
