@@ -1592,7 +1592,11 @@ function appendRealtimeUserMessage(text: string) {
     })
   );
 
-      pinUserMessageNearTop(newUserMessageId);
+  if (!isDesktopPointer()) {
+    textareaRef.current?.blur();
+  }
+
+  pinUserMessageNearTop(newUserMessageId);
 }
 
 function appendRealtimeAssistantMessage(text: string) {
@@ -3872,8 +3876,12 @@ requestAnimationFrame(() => {
 });
 
     setInput(""); // por si había algo escrito
-    setImagePreview(null);
-    setIsTyping(true);
+setImagePreview(null);
+setIsTyping(true);
+
+if (!isDesktopPointer()) {
+  textareaRef.current?.blur();
+}
 
     try {
       await sleep(200);
@@ -4160,8 +4168,12 @@ requestAnimationFrame(() => {
 });
 
     setInput("");
-    setImagePreview(null);
-    setIsTyping(true);
+setImagePreview(null);
+setIsTyping(true);
+
+if (!isDesktopPointer()) {
+  textareaRef.current?.blur();
+}
 
     try {
       await sleep(220);
