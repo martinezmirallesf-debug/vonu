@@ -5273,13 +5273,13 @@ return (
               <div
   key={m.id}
   data-msg-id={m.id}
-  className="flex w-full justify-end pr-2 md:pr-4 animate-[fadeIn_240ms_ease-out]"
+  className="flex w-full justify-end pr-4 md:pr-0 animate-[fadeIn_240ms_ease-out]"
 >
                 <div
                   className={[
-                    "relative min-w-0 max-w-[92%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
-                    "md:shadow-sm bg-[#e9edf1] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-none mr-2",
-                  ].join(" ")}
+  "relative min-w-0 max-w-[88%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
+  "md:shadow-sm bg-[#e9edf1] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-none mr-1 md:mr-2",
+].join(" ")}
                 >
                   <BubbleTail side="right" color="#e9edf1" />
 
@@ -5312,7 +5312,7 @@ if (isStreaming && !((m.text ?? "").trim())) {
     key={m.id}
     className="flex w-full justify-start mt-3 md:mt-4 vonu-answer-in"
   >
-      <div className="ml-2 mr-2 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
+      <div className="ml-2 mr-3 md:mr-0 flex w-full max-w-[93%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
         <div
           className={[
   "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center self-start",
@@ -5337,7 +5337,7 @@ if (isStreaming && !((m.text ?? "").trim())) {
               className="flex w-full justify-start mt-3 md:mt-4"
 style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
             >
-              <div className="ml-2 mr-2 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
+              <div className="ml-2 mr-3 md:mr-0 flex w-full max-w-[93%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
                 <div
   className={[
   "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center self-start",
