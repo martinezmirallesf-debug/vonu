@@ -5312,7 +5312,7 @@ if (isStreaming && !((m.text ?? "").trim())) {
     key={m.id}
     className="flex w-full justify-start mt-3 md:mt-4 vonu-answer-in"
   >
-      className="ml-2 mr-2 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1"
+      <div className="ml-2 mr-2 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
         <div
           className={[
   "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center self-start",
