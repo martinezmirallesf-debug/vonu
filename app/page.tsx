@@ -5404,65 +5404,71 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
                       />
                     </div>
                   ) : null}
-                  <div className="flex items-center gap-2">
-  <button
-    type="button"
-    aria-label="Copiar"
-    title="Copiar"
-    className="h-10 w-10 rounded-full grid place-items-center text-zinc-700 active:bg-zinc-200/70 transition-colors"
-  >
-    <svg
-      className="h-[22px] w-[22px] translate-y-[0.5px]"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
+                  <div className="mt-4 flex flex-col gap-2">
+  <div className="flex items-center gap-2">
+    <button
+      type="button"
+      aria-label="Copiar"
+      title="Copiar"
+      className="h-10 w-10 rounded-full grid place-items-center text-zinc-700 active:bg-zinc-200/70 transition-colors"
     >
-      <rect x="9" y="9" width="10" height="10" rx="2.2" stroke="currentColor" strokeWidth="1.9" />
-      <path
-        d="M15 9V7.8A1.8 1.8 0 0 0 13.2 6H7.8A1.8 1.8 0 0 0 6 7.8v5.4A1.8 1.8 0 0 0 7.8 15H9"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-      />
-    </svg>
-  </button>
+      <svg
+        className="h-[22px] w-[22px] translate-y-[0.5px]"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
+      >
+        <rect x="9" y="9" width="10" height="10" rx="2.2" stroke="currentColor" strokeWidth="1.9" />
+        <path
+          d="M15 9V7.8A1.8 1.8 0 0 0 13.2 6H7.8A1.8 1.8 0 0 0 6 7.8v5.4A1.8 1.8 0 0 0 7.8 15H9"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+        />
+      </svg>
+    </button>
 
-  <button
-    type="button"
-    aria-label="Compartir"
-    title="Compartir"
-    className="h-10 w-10 rounded-full grid place-items-center text-zinc-700 active:bg-zinc-200/70 transition-colors"
-  >
-    <svg
-      className="h-[22px] w-[22px] translate-y-[0.5px]"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
+    <button
+      type="button"
+      aria-label="Compartir"
+      title="Compartir"
+      className="h-10 w-10 rounded-full grid place-items-center text-zinc-700 active:bg-zinc-200/70 transition-colors"
     >
-      <circle cx="18" cy="5" r="2.2" fill="currentColor" />
-      <circle cx="6" cy="12" r="2.2" fill="currentColor" />
-      <circle cx="18" cy="19" r="2.2" fill="currentColor" />
-      <path d="M8 11l7.6-4.2M8 13l7.6 4.2" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-    </svg>
-  </button>
+      <svg
+        className="h-[22px] w-[22px] translate-y-[0.5px]"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
+      >
+        <circle cx="18" cy="5" r="2.2" fill="currentColor" />
+        <circle cx="6" cy="12" r="2.2" fill="currentColor" />
+        <circle cx="18" cy="19" r="2.2" fill="currentColor" />
+        <path d="M8 11l7.6-4.2M8 13l7.6 4.2" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      </svg>
+    </button>
 
-  <button
-    type="button"
-    aria-label="Descargar PDF"
-    title="Descargar PDF"
-    className="h-10 w-10 rounded-full grid place-items-center text-zinc-700 active:bg-zinc-200/70 transition-colors"
-  >
-    <svg
-      className="h-[22px] w-[22px] translate-y-[1px]"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
+    <button
+      type="button"
+      aria-label="Descargar PDF"
+      title="Descargar PDF"
+      className="h-10 w-10 rounded-full grid place-items-center text-zinc-700 active:bg-zinc-200/70 transition-colors"
     >
-      <path d="M12 4v9" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-      <path d="M8.5 10.5L12 14l3.5-3.5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M5 18.5h14" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-    </svg>
-  </button>
+      <svg
+        className="h-[22px] w-[22px] translate-y-[1px]"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path d="M12 4v9" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+        <path d="M8.5 10.5L12 14l3.5-3.5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M5 18.5h14" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      </svg>
+    </button>
+  </div>
+
+  <div className="text-[10.5px] leading-4 text-zinc-500">
+    Orientación preventiva · No sustituye profesionales.
+  </div>
 </div>
                 </div>
               </div>
