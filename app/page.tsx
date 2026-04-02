@@ -5243,8 +5243,11 @@ return (
 
       {/* ✅ Mensajes usuario / Vonu */}
       <div className="flex flex-col gap-4">
-        {messages.map((m) => {
+        {messages.map((m, i) => {
           const isUser = m.role === "user";
+          const isLastAssistantMessage =
+  m.role === "assistant" &&
+  i === messages.length - 1;
 
           if (!isUser && m.id === "init" && !m.pizarra) {
             return null;
@@ -5401,6 +5404,36 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
                       />
                     </div>
                   ) : null}
+                  {isLastAssistantMessage && !m.streaming && (m.text ?? "").trim() ? (
+  <div className="mt-4 flex flex-col gap-2">
+    <div className="flex items-center gap-2 flex-wrap">
+      <button
+        type="button"
+        className="h-8 px-3 rounded-full border border-zinc-200 bg-white/90 text-[12px] font-medium text-zinc-700 hover:bg-white transition-colors"
+      >
+        Copiar
+      </button>
+
+      <button
+        type="button"
+        className="h-8 px-3 rounded-full border border-zinc-200 bg-white/90 text-[12px] font-medium text-zinc-700 hover:bg-white transition-colors"
+      >
+        Compartir
+      </button>
+
+      <button
+        type="button"
+        className="h-8 px-3 rounded-full border border-zinc-200 bg-white/90 text-[12px] font-medium text-zinc-700 hover:bg-white transition-colors"
+      >
+        PDF
+      </button>
+    </div>
+
+    <div className="text-[11px] leading-5 text-zinc-500">
+      Orientación preventiva · Vonu puede ayudarte a entender riesgos y decidir con más claridad, pero no sustituye asesoramiento profesional cuando sea necesario.
+    </div>
+  </div>
+) : null}
                 </div>
               </div>
             </div>
