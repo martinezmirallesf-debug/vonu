@@ -4542,13 +4542,14 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
       height="14"
       viewBox="0 0 14 14"
       className={[
-        "absolute pointer-events-none top-0 z-0",
-        isRight
-          ? "right-[-8px] md:right-[-13px]"
-          : "left-[-8px] md:left-[-13px]",
+        "absolute pointer-events-none",
+        "top-0",
+        isRight ? "right-[-13px]" : "left-[-13px]",
+        "z-0",
       ].join(" ")}
     >
       {isRight ? (
+        // 👉 derecha (usuario) — redondeamos la punta EXTERIOR (14,0)
         <path
           d="
             M0 0
@@ -4560,6 +4561,7 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
           fill={color}
         />
       ) : (
+        // 👉 izquierda (Vonu) — redondeamos la punta EXTERIOR (0,0)
         <path
           d="
             M14 0
@@ -5338,8 +5340,10 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
               <div className="ml-2 mr-2 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
                 <div
   className={[
-  "relative min-w-0 max-w-[84%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
-  "md:shadow-sm bg-[#e9edf1] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-none mr-3 md:mr-2",
+  "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center self-start",
+  activeThread?.mode === "tutor"
+    ? "mt-[22px] md:mt-[24px]"
+    : "mt-[10px] md:mt-[12px]"
 ].join(" ")}
 >
   <img
