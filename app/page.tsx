@@ -5141,18 +5141,15 @@ return (
 
 {/* ✅ CHAT / TUTOR RENDER     */}
 
-<div
-  ref={scrollRef}
-  onScroll={handleChatScroll}
-  className="flex-1 overflow-y-auto min-h-0 overscroll-contain px-4 md:px-6"
->
+<div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0 overscroll-contain">
+
   <div
-    className="mx-auto w-full max-w-3xl"
-    style={{
-      paddingTop: hasUserMessage ? 0 : 124,
-      paddingBottom: hasUserMessage ? chatBottomPad : 18,
-    }}
-  >
+  className="mx-auto max-w-3xl px-3 md:px-6"
+  style={{
+    paddingTop: hasUserMessage ? 0 : 124,
+    paddingBottom: hasUserMessage ? chatBottomPad : 18,
+  }}
+>
 
 {showSoftLimitWarning ? (
   <div className="flex justify-start">
@@ -5276,7 +5273,7 @@ return (
               <div
   key={m.id}
   data-msg-id={m.id}
-  className="flex w-full justify-end animate-[fadeIn_240ms_ease-out]"
+  className="flex w-full justify-end pr-2 md:pr-4 animate-[fadeIn_240ms_ease-out]"
 >
                 <div
                   className={[
@@ -5315,7 +5312,7 @@ if (isStreaming && !((m.text ?? "").trim())) {
     key={m.id}
     className="flex w-full justify-start mt-3 md:mt-4 vonu-answer-in"
   >
-      <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
+      className="ml-2 mr-2 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1"
         <div
           className={[
   "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center self-start",
@@ -5340,7 +5337,7 @@ if (isStreaming && !((m.text ?? "").trim())) {
               className="flex w-full justify-start mt-3 md:mt-4"
 style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
             >
-              <div className="ml-2 flex w-full max-w-[96%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
+              <div className="ml-2 mr-2 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
                 <div
   className={[
   "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center self-start",
