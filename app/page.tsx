@@ -5138,18 +5138,21 @@ return (
           </div>
         )}
 
-       {/* ========================= */}
-{/* ✅ CHAT / TUTOR RENDER     */}
-{/* ========================= */}
-<div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0 overscroll-contain">
 
-  <div
-  className="mx-auto max-w-3xl px-3 md:px-6"
-  style={{
-    paddingTop: hasUserMessage ? 0 : 124,
-    paddingBottom: hasUserMessage ? chatBottomPad : 18,
-  }}
+{/* ✅ CHAT / TUTOR RENDER     */}
+
+<div
+  ref={scrollRef}
+  onScroll={handleChatScroll}
+  className="flex-1 overflow-y-auto min-h-0 overscroll-contain px-4 md:px-6"
 >
+  <div
+    className="mx-auto w-full max-w-3xl"
+    style={{
+      paddingTop: hasUserMessage ? 0 : 124,
+      paddingBottom: hasUserMessage ? chatBottomPad : 18,
+    }}
+  >
 
 {showSoftLimitWarning ? (
   <div className="flex justify-start">
