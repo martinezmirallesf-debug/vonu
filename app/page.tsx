@@ -4585,6 +4585,24 @@ function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
   }
 }
 
+async function copyConversationToClipboard() {
+  try {
+    const conversationText = messages
+      .filter((msg) => (msg.text ?? "").trim())
+      .map((msg) => {
+        const roleLabel = msg.role === "user" ? "Tú" : "Vonu";
+        return `${roleLabel}:\n${msg.text ?? ""}`;
+      })
+      .join("\n\n");
+
+    if (!conversationText.trim()) return;
+
+    await navigator.clipboard.writeText(conversationText);
+  } catch (err) {
+    console.error("No se pudo copiar la conversación:", err);
+  }
+}
+
 return (
     <div className="bg-[#f8f9fa] flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
       <style jsx global>{`
@@ -5415,11 +5433,12 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
   <div className="mt-4 flex flex-col gap-2">
     <div className="flex items-center gap-2">
       <button
-        type="button"
-        aria-label="Copiar"
-        title="Copiar"
-        className="h-10 w-10 rounded-full grid place-items-center text-zinc-700 active:bg-zinc-200/70 transition-colors"
-      >
+  type="button"
+  aria-label="Copiar"
+  title="Copiar"
+  onClick={copyConversationToClipboard}
+  className="h-10 w-10 rounded-full grid place-items-center text-zinc-700 active:bg-zinc-200/70 transition-colors"
+>
         <svg
           className="h-[22px] w-[22px] translate-y-[0.5px]"
           viewBox="0 0 24 24"
