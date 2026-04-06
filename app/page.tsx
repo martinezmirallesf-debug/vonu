@@ -4662,6 +4662,156 @@ async function shareConversation() {
   }
 }
 
+function escapeHtml(text: string) {
+  return String(text ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function buildConversationForExport() {
+  return messages
+    .filter((msg) => (msg.text ?? "").trim())
+    .map((msg) => {
+      const roleLabel = msg.role === "user" ? "Tú" : "Vonu";
+      const cleanText = stripMarkdownForCopy(msg.text ?? "");
+      return { roleLabel, cleanText };
+    });
+}
+
+function downloadConversationAsPdf() {
+  try {
+    const items = buildConversationForExport();
+    if (!items.length) return;
+
+    const html = `
+      <!doctype html>
+      <html lang="es">
+        <head>
+          <meta charset="utf-8" />
+          <title>Conversación de Vonu</title>
+          <style>
+            @page {
+              size: A4;
+              margin: 18mm 14mm 18mm 14mm;
+            }
+
+            html, body {
+              padding: 0;
+              margin: 0;
+              background: #ffffff;
+              color: #18181b;
+              font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+
+            body {
+              padding: 0;
+            }
+
+            .wrap {
+              max-width: 760px;
+              margin: 0 auto;
+            }
+
+            .title {
+              font-size: 22px;
+              font-weight: 700;
+              letter-spacing: -0.02em;
+              margin: 0 0 6px 0;
+            }
+
+            .subtitle {
+              font-size: 12px;
+              color: #71717a;
+              margin: 0 0 20px 0;
+            }
+
+            .item {
+              margin: 0 0 18px 0;
+              page-break-inside: avoid;
+            }
+
+            .role {
+              font-size: 12px;
+              font-weight: 700;
+              color: #52525b;
+              margin: 0 0 6px 0;
+              text-transform: uppercase;
+              letter-spacing: 0.04em;
+            }
+
+            .bubble {
+              border-radius: 16px;
+              padding: 12px 14px;
+              font-size: 14px;
+              line-height: 1.65;
+              white-space: pre-wrap;
+              word-break: break-word;
+            }
+
+            .bubble.user {
+              background: #e9edf1;
+            }
+
+            .bubble.assistant {
+              background: #ffffff;
+              border: 1px solid #e4e4e7;
+            }
+
+            .footer-note {
+              margin-top: 22px;
+              font-size: 11px;
+              color: #71717a;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="wrap">
+            <h1 class="title">Conversación de Vonu</h1>
+            <p class="subtitle">Exportación lista para guardar como PDF</p>
+
+            ${items
+              .map(
+                (item) => `
+                  <section class="item">
+                    <div class="role">${escapeHtml(item.roleLabel)}</div>
+                    <div class="bubble ${item.roleLabel === "Tú" ? "user" : "assistant"}">${escapeHtml(item.cleanText)}</div>
+                  </section>
+                `
+              )
+              .join("")}
+
+            <div class="footer-note">
+              Orientación preventiva · No sustituye profesionales.
+            </div>
+          </div>
+
+          <script>
+            window.onload = () => {
+              setTimeout(() => {
+                window.print();
+              }, 180);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open("", "_blank", "width=900,height=1200");
+    if (!printWindow) return;
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+  } catch (err) {
+    console.error("No se pudo preparar el PDF:", err);
+  }
+}
+
 return (
     <div className="bg-[#f8f9fa] flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
       <style jsx global>{`
@@ -5546,11 +5696,12 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
       </button>
 
       <button
-        type="button"
-        aria-label="Descargar PDF"
-        title="Descargar PDF"
-        className="h-10 w-10 rounded-full grid place-items-center text-zinc-700 active:bg-zinc-200/70 transition-colors"
-      >
+  type="button"
+  aria-label="Descargar PDF"
+  title="Descargar PDF"
+  onClick={downloadConversationAsPdf}
+  className="h-10 w-10 rounded-full grid place-items-center text-zinc-700 active:bg-zinc-200/70 transition-colors"
+>
         <svg
           className="h-[22px] w-[22px] translate-y-[1px]"
           viewBox="0 0 24 24"
