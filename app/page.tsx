@@ -4585,13 +4585,45 @@ function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
   }
 }
 
+function stripMarkdownForCopy(text: string) {
+  let s = String(text ?? "");
+
+  // bloques de código
+  s = s.replace(/```[\s\S]*?```/g, (match) =>
+    match.replace(/```/g, "").trim()
+  );
+
+  // inline code
+  s = s.replace(/`([^`]+)`/g, "$1");
+
+  // títulos markdown
+  s = s.replace(/^\s{0,3}#{1,6}\s+/gm, "");
+
+  // negritas / cursivas
+  s = s.replace(/\*\*([^*]+)\*\*/g, "$1");
+  s = s.replace(/\*([^*]+)\*/g, "$1");
+  s = s.replace(/_([^_]+)_/g, "$1");
+
+  // links [texto](url) -> texto
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1");
+
+  // listas
+  s = s.replace(/^\s*[-*•]\s+/gm, "• ");
+
+  // demasiados saltos
+  s = s.replace(/\n{3,}/g, "\n\n");
+
+  return s.trim();
+}
+
 async function copyConversationToClipboard() {
   try {
     const conversationText = messages
       .filter((msg) => (msg.text ?? "").trim())
       .map((msg) => {
         const roleLabel = msg.role === "user" ? "Tú" : "Vonu";
-        return `${roleLabel}:\n${msg.text ?? ""}`;
+        const cleanText = stripMarkdownForCopy(msg.text ?? "");
+        return `${roleLabel}:\n${cleanText}`;
       })
       .join("\n\n");
 
