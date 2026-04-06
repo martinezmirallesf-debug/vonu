@@ -5646,7 +5646,7 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
   aria-label="Copiar"
   title="Copiar"
   onClick={copyConversationToClipboard}
-  className="h-10 w-10 rounded-full grid place-items-center text-zinc-500 active:bg-zinc-200/70 transition-colors"
+  className="h-10 w-10 rounded-full grid place-items-center text-zinc-400 active:bg-zinc-200/70 transition-colors"
 >
         <svg
           className="h-[22px] w-[22px] translate-y-[0.5px]"
@@ -5669,7 +5669,7 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
   aria-label="Compartir"
   title="Compartir"
   onClick={shareConversation}
-  className="h-10 w-10 rounded-full grid place-items-center text-zinc-500 active:bg-zinc-200/70 transition-colors"
+  className="h-10 w-10 rounded-full grid place-items-center text-zinc-400 active:bg-zinc-200/70 transition-colors"
 >
         <svg
   className="h-[22px] w-[22px] translate-y-[0.5px]"
@@ -5700,7 +5700,7 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
   aria-label="Descargar PDF"
   title="Descargar PDF"
   onClick={downloadConversationAsPdf}
-  className="h-10 w-10 rounded-full grid place-items-center text-zinc-500 active:bg-zinc-200/70 transition-colors"
+  className="h-10 w-10 rounded-full grid place-items-center text-zinc-400 active:bg-zinc-200/70 transition-colors"
 >
         <svg
           className="h-[22px] w-[22px] translate-y-[1px]"
@@ -5716,7 +5716,7 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
     </div>
 
     {isLastAssistantMessage ? (
-  <div className="text-[10.5px] leading-4 text-zinc-500 md:hidden">
+  <div className="text-[10.5px] leading-4 text-zinc-400 md:hidden">
     Orientación preventiva · No sustituye profesionales.
   </div>
 ) : null}
