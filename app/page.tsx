@@ -5280,9 +5280,9 @@ const isFirstUserMessage =
   key={m.id}
   data-msg-id={m.id}
   className={[
-    "flex w-full justify-end animate-[fadeIn_240ms_ease-out]",
-    isFirstUserMessage ? "mt-10 md:mt-0" : "",
-  ].join(" ")}
+  "flex w-full justify-end animate-[fadeIn_240ms_ease-out]",
+  isFirstUserMessage ? "mt-12 md:mt-0" : "",
+].join(" ")}
 >
                 <div
                   className={[
