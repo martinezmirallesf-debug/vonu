@@ -5654,11 +5654,11 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
           fill="none"
           aria-hidden="true"
         >
-          <rect x="9" y="9" width="10" height="10" rx="2.2" stroke="currentColor" strokeWidth="1.9" />
+          <rect x="9" y="9" width="10" height="10" rx="2.2" stroke="currentColor" strokeWidth="2.2" />
           <path
             d="M15 9V7.8A1.8 1.8 0 0 0 13.2 6H7.8A1.8 1.8 0 0 0 6 7.8v5.4A1.8 1.8 0 0 0 7.8 15H9"
             stroke="currentColor"
-            strokeWidth="1.9"
+            strokeWidth="2.2"
             strokeLinecap="round"
           />
         </svg>
@@ -5708,9 +5708,9 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
           fill="none"
           aria-hidden="true"
         >
-          <path d="M12 4v9" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-          <path d="M8.5 10.5L12 14l3.5-3.5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M5 18.5h14" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+          <path d="M12 4v9" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+<path d="M8.5 10.5L12 14l3.5-3.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+<path d="M5 18.5h14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
         </svg>
       </button>
     </div>
