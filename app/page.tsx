@@ -5678,8 +5678,8 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
   aria-hidden="true"
 >
   <circle cx="18" cy="5" r="2.6" fill="currentColor" />
-<circle cx="6" cy="12" r="2.6" fill="currentColor" />
-<circle cx="18" cy="19" r="2.6" fill="currentColor" />
+  <circle cx="6" cy="12" r="2.6" fill="currentColor" />
+  <circle cx="18" cy="19" r="2.6" fill="currentColor" />
   <path
     d="M7.9 11.1L16.1 6.2"
     stroke="currentColor"
