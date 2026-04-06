@@ -5646,7 +5646,7 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
   aria-label="Copiar"
   title="Copiar"
   onClick={copyConversationToClipboard}
-  className="h-10 w-10 rounded-full grid place-items-center text-zinc-700 active:bg-zinc-200/70 transition-colors"
+  className="h-10 w-10 rounded-full grid place-items-center text-zinc-500 active:bg-zinc-200/70 transition-colors"
 >
         <svg
           className="h-[22px] w-[22px] translate-y-[0.5px]"
