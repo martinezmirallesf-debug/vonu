@@ -57,7 +57,7 @@ export default function Sidebar({
 }: SidebarProps) {
   return (
     <div
-      className={`fixed inset-0 z-40 transition-all duration-300 ${
+      className={`fixed inset-0 z-[80] transition-all duration-300 ${
         menuOpen
           ? "bg-black/20 backdrop-blur-sm pointer-events-auto"
           : "pointer-events-none bg-transparent"
@@ -65,8 +65,8 @@ export default function Sidebar({
       onClick={() => setMenuOpen(false)}
     >
       <aside
-        className={[
-          "absolute left-3 right-3 md:right-auto",
+  className={[
+    "absolute left-3 right-3 md:right-auto z-[81]",
           "bg-white/92 backdrop-blur-xl",
           "rounded-[28px] shadow-[0_18px_60px_rgba(0,0,0,0.18)] border border-zinc-200/80",
           "p-4",

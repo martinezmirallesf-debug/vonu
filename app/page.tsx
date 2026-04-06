@@ -5100,9 +5100,9 @@ return (
 <div
   className="pointer-events-none fixed inset-x-0 top-0 z-[45] md:hidden"
   style={{
-    height: "126px",
+    height: "102px",
     background:
-      "linear-gradient(to bottom, rgba(248,249,250,1) 0%, rgba(248,249,250,0.97) 42%, rgba(248,249,250,0.72) 72%, rgba(248,249,250,0) 100%)",
+      "linear-gradient(to bottom, rgba(248,249,250,1) 0%, rgba(248,249,250,0.96) 36%, rgba(248,249,250,0.45) 68%, rgba(248,249,250,0) 100%)",
   }}
 />
 
@@ -5245,6 +5245,9 @@ return (
       <div className="flex flex-col gap-4">
         {messages.map((m, i) => {
           const isUser = m.role === "user";
+          const firstUserMessageIndex = messages.findIndex((x) => x.role === "user");
+const isFirstUserMessage =
+  isUser && i === firstUserMessageIndex;
           const isLastAssistantMessage =
   m.role === "assistant" &&
   i === messages.length - 1;
@@ -5276,7 +5279,10 @@ return (
               <div
   key={m.id}
   data-msg-id={m.id}
-  className="flex w-full justify-end pr-4 md:pr-0 animate-[fadeIn_240ms_ease-out]"
+  className={[
+    "flex w-full justify-end animate-[fadeIn_240ms_ease-out]",
+    isFirstUserMessage ? "mt-10 md:mt-0" : "",
+  ].join(" ")}
 >
                 <div
                   className={[
@@ -5320,8 +5326,8 @@ if (isStreaming && !((m.text ?? "").trim())) {
           className={[
   "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center self-start",
   activeThread?.mode === "tutor"
-    ? "mt-[22px] md:mt-[24px]"
-    : "mt-[10px] md:mt-[12px]"
+    ? "mt-[22px] md:mt-[24px] -ml-[1px] md:-ml-[2px]"
+    : "mt-[7px] md:mt-[9px] -ml-[2px] md:-ml-[3px]"
 ].join(" ")}
         >
           <VonuThinking />
@@ -5437,16 +5443,27 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
         className="h-10 w-10 rounded-full grid place-items-center text-zinc-700 active:bg-zinc-200/70 transition-colors"
       >
         <svg
-          className="h-[22px] w-[22px] translate-y-[0.5px]"
-          viewBox="0 0 24 24"
-          fill="none"
-          aria-hidden="true"
-        >
-          <circle cx="18" cy="5" r="2.2" fill="currentColor" />
-          <circle cx="6" cy="12" r="2.2" fill="currentColor" />
-          <circle cx="18" cy="19" r="2.2" fill="currentColor" />
-          <path d="M8 11l7.6-4.2M8 13l7.6 4.2" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-        </svg>
+  className="h-[22px] w-[22px] translate-y-[0.5px]"
+  viewBox="0 0 24 24"
+  fill="none"
+  aria-hidden="true"
+>
+  <circle cx="18" cy="5" r="2.2" fill="currentColor" />
+  <circle cx="6" cy="12" r="2.2" fill="currentColor" />
+  <circle cx="18" cy="19" r="2.2" fill="currentColor" />
+  <path
+    d="M7.9 11.1L16.1 6.2"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+  />
+  <path
+    d="M7.9 12.9L16.1 17.8"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+  />
+</svg>
       </button>
 
       <button
@@ -5468,9 +5485,11 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
       </button>
     </div>
 
-    <div className="text-[10.5px] leading-4 text-zinc-500">
-      Orientación preventiva · No sustituye profesionales.
-    </div>
+    {isLastAssistantMessage ? (
+  <div className="text-[10.5px] leading-4 text-zinc-500 md:hidden">
+    Orientación preventiva · No sustituye profesionales.
+  </div>
+) : null}
   </div>
 ) : null}
                 </div>
