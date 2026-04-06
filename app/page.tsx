@@ -5493,9 +5493,9 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
     <div className="flex items-center gap-2">
       <button
   type="button"
-  aria-label="Compartir"
-  title="Compartir"
-  onClick={shareConversation}
+  aria-label="Copiar"
+  title="Copiar"
+  onClick={copyConversationToClipboard}
   className="h-10 w-10 rounded-full grid place-items-center text-zinc-700 active:bg-zinc-200/70 transition-colors"
 >
         <svg
@@ -5515,11 +5515,12 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
       </button>
 
       <button
-        type="button"
-        aria-label="Compartir"
-        title="Compartir"
-        className="h-10 w-10 rounded-full grid place-items-center text-zinc-700 active:bg-zinc-200/70 transition-colors"
-      >
+  type="button"
+  aria-label="Compartir"
+  title="Compartir"
+  onClick={shareConversation}
+  className="h-10 w-10 rounded-full grid place-items-center text-zinc-700 active:bg-zinc-200/70 transition-colors"
+>
         <svg
   className="h-[22px] w-[22px] translate-y-[0.5px]"
   viewBox="0 0 24 24"
