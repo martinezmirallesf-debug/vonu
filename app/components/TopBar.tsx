@@ -40,7 +40,7 @@ export default function TopBar({
   return (
   <div
     ref={topBarRef}
-    className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none"
+    className={`fixed top-3 left-3 right-3 ${menuOpen ? "z-[95]" : "z-50"} flex items-center justify-between pointer-events-none`}
   >
       <div className="pointer-events-auto">
         <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden pl-1 pr-4">
