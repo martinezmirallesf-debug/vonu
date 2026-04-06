@@ -4635,6 +4635,33 @@ async function copyConversationToClipboard() {
   }
 }
 
+async function shareConversation() {
+  try {
+    const conversationText = messages
+      .filter((msg) => (msg.text ?? "").trim())
+      .map((msg) => {
+        const roleLabel = msg.role === "user" ? "Tú" : "Vonu";
+        const cleanText = stripMarkdownForCopy(msg.text ?? "");
+        return `${roleLabel}:\n${cleanText}`;
+      })
+      .join("\n\n");
+
+    if (!conversationText.trim()) return;
+
+    if (navigator.share) {
+      await navigator.share({
+        title: "Conversación de Vonu",
+        text: conversationText,
+      });
+      return;
+    }
+
+    await navigator.clipboard.writeText(conversationText);
+  } catch (err) {
+    console.error("No se pudo compartir la conversación:", err);
+  }
+}
+
 return (
     <div className="bg-[#f8f9fa] flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
       <style jsx global>{`
@@ -5466,9 +5493,9 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
     <div className="flex items-center gap-2">
       <button
   type="button"
-  aria-label="Copiar"
-  title="Copiar"
-  onClick={copyConversationToClipboard}
+  aria-label="Compartir"
+  title="Compartir"
+  onClick={shareConversation}
   className="h-10 w-10 rounded-full grid place-items-center text-zinc-700 active:bg-zinc-200/70 transition-colors"
 >
         <svg
