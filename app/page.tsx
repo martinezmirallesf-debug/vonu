@@ -4163,6 +4163,10 @@ if (previewText && shouldBlockDuplicateSend(targetThreadId, previewText)) {
 
         setUiError(null);
 
+        if (voiceModeRef.current && imageBase64) {
+  stopConversationModeBeforeTypedSend();
+}
+
 // ===== Tutor auto-activación (DESACTIVADA) =====
 const threadModeNow: ThreadMode = activeThread.mode ?? "chat";
 let nextMode: ThreadMode = threadModeNow;
