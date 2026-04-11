@@ -18,6 +18,7 @@ import TopBar from "@/app/components/TopBar";
 import Sidebar from "@/app/components/Sidebar";
 import VonuThinking from "@/app/components/VonuThinking";
 import AssistantMessageActions from "@/app/components/AssistantMessageActions";
+import { analyzeAttachment } from "@/app/lib/analysis/analyzeAttachment";
 
 import ChalkboardTutorBoard from "@/app/components/ChalkboardTutorBoard";
 import {
@@ -4157,15 +4158,10 @@ if (previewText && shouldBlockDuplicateSend(targetThreadId, previewText)) {
   return;
 }
 
+const userText = input.trim();
+const imageBase64 = imagePreview;
 
-    const userText = input.trim();
-    const imageBase64 = imagePreview;
-
-        setUiError(null);
-
-        if (voiceModeRef.current && imageBase64) {
-  stopConversationModeBeforeTypedSend();
-}
+setUiError(null);
 
 // ===== Tutor auto-activación (DESACTIVADA) =====
 const threadModeNow: ThreadMode = activeThread.mode ?? "chat";
@@ -4177,6 +4173,26 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
 // El modo lo decide el usuario (UI) y se guarda en el thread.
 // nextMode y nextTutorLevel quedan como están.
 
+const conversationText = messages
+  .filter((m) => (m.text ?? "").trim())
+  .map((m) => `${m.role === "user" ? "Usuario" : "Vonu"}: ${m.text ?? ""}`)
+  .join("\n\n");
+
+if (imageBase64) {
+  try {
+    const attachmentPreviewResult = await analyzeAttachment({
+      kind: "image",
+      imageBase64,
+      userMessage: userText,
+      conversationText,
+      mode: voiceModeRef.current ? "realtime" : nextMode,
+    });
+
+    console.log("[Attachment analysis preview]", attachmentPreviewResult);
+  } catch (error) {
+    console.error("Error preparando análisis de adjunto:", error);
+  }
+}
 
 
     const userMsg: Message = {
