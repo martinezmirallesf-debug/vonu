@@ -17,6 +17,7 @@ type RealtimeVoiceOptions = {
 
 export type RealtimeVoiceConnection = {
   sendText: (text: string) => void;
+  sendContext: (text: string) => void;
   stop: () => void;
 };
 
@@ -364,79 +365,103 @@ export async function startRealtimeVoice(
     });
 
     const stop = () => {
-      if (stopped) return;
-      stopped = true;
+  if (stopped) return;
+  stopped = true;
 
+  try {
+    dc.close();
+  } catch {}
+
+  try {
+    pc.getSenders().forEach((sender) => {
       try {
-        dc.close();
+        sender.track?.stop();
       } catch {}
+    });
+  } catch {}
 
-      try {
-        pc.getSenders().forEach((sender) => {
-          try {
-            sender.track?.stop();
-          } catch {}
-        });
-      } catch {}
+  try {
+    pc.close();
+  } catch {}
 
-      try {
-        pc.close();
-      } catch {}
+  try {
+    localStream.getTracks().forEach((t) => t.stop());
+  } catch {}
 
-      try {
-        localStream.getTracks().forEach((t) => t.stop());
-      } catch {}
+  try {
+    remoteAudio.pause();
+  } catch {}
 
-      try {
-        remoteAudio.pause();
-      } catch {}
+  try {
+    if (remoteAudio.srcObject) {
+      const tracks = (remoteAudio.srcObject as MediaStream).getTracks?.() || [];
+      tracks.forEach((t) => {
+        try {
+          t.stop();
+        } catch {}
+      });
+    }
+  } catch {}
 
-      try {
-        if (remoteAudio.srcObject) {
-          const tracks = (remoteAudio.srcObject as MediaStream).getTracks?.() || [];
-          tracks.forEach((t) => {
-            try {
-              t.stop();
-            } catch {}
-          });
-        }
-      } catch {}
+  setStatus("closed");
+};
 
-      setStatus("closed");
-    };
+const sendText = (text: string) => {
+  const clean = (text || "").trim();
+  if (!clean || dc.readyState !== "open") return;
 
-    const sendText = (text: string) => {
-      const clean = (text || "").trim();
-      if (!clean || dc.readyState !== "open") return;
-
-      const createItem = {
-        type: "conversation.item.create",
-        item: {
-          type: "message",
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: clean,
-            },
-          ],
+  const createItem = {
+    type: "conversation.item.create",
+    item: {
+      type: "message",
+      role: "user",
+      content: [
+        {
+          type: "input_text",
+          text: clean,
         },
-      };
+      ],
+    },
+  };
 
-      const createResponse = {
-        type: "response.create",
-      };
+  const createResponse = {
+    type: "response.create",
+  };
 
-      try {
-        dc.send(JSON.stringify(createItem));
-        dc.send(JSON.stringify(createResponse));
-      } catch {}
-    };
+  try {
+    dc.send(JSON.stringify(createItem));
+    dc.send(JSON.stringify(createResponse));
+  } catch {}
+};
 
-    return {
-      sendText,
-      stop,
-    };
+const sendContext = (text: string) => {
+  const clean = (text || "").trim();
+  if (!clean || dc.readyState !== "open") return;
+
+  const contextItem = {
+    type: "conversation.item.create",
+    item: {
+      type: "message",
+      role: "assistant",
+      content: [
+        {
+          type: "input_text",
+          text: clean,
+        },
+      ],
+    },
+  };
+
+  try {
+    dc.send(JSON.stringify(contextItem));
+  } catch {}
+};
+
+return {
+  sendText,
+  sendContext,
+  stop,
+};
   } catch (error: any) {
     setStatus("error");
     try {

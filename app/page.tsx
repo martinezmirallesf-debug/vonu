@@ -4300,12 +4300,23 @@ const res = await fetch("/api/chat", {
 }
 
       const fullText =
-        typeof data?.text === "string" && data.text.trim()
-          ? data.text
-          : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
+  typeof data?.text === "string" && data.text.trim()
+    ? data.text
+    : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
 
-      // ✅ NUEVO: imagen de pizarra (si viene)
-      const boardImageB64 = typeof data?.boardImageB64 === "string" && data.boardImageB64 ? data.boardImageB64 : null;
+if (voiceModeRef.current && imageBase64 && fullText.trim()) {
+  try {
+    realtimeConnRef.current?.sendContext(
+      "Contexto importante para la conversación: el usuario ha enviado una imagen y ya ha sido analizada. Resultado del análisis: " +
+        fullText
+    );
+  } catch (error) {
+    console.error("No se pudo sincronizar el análisis con realtime:", error);
+  }
+}
+
+// ✅ NUEVO: imagen de pizarra (si viene)
+const boardImageB64 = typeof data?.boardImageB64 === "string" && data.boardImageB64 ? data.boardImageB64 : null;
 
       const boardImagePlacement =
         data?.boardImagePlacement &&
