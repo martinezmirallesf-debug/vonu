@@ -445,7 +445,7 @@ const sendContext = (text: string) => {
       role: "assistant",
       content: [
         {
-          type: "input_text",
+          type: "output_text",
           text: clean,
         },
       ],
