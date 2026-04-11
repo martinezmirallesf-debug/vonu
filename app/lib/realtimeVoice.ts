@@ -17,7 +17,7 @@ type RealtimeVoiceOptions = {
 
 export type RealtimeVoiceConnection = {
   sendText: (text: string) => void;
-  sendContext: (text: string) => void;
+  sendContext: (text: string, triggerResponse?: boolean) => void;
   stop: () => void;
 };
 
@@ -434,7 +434,7 @@ const sendText = (text: string) => {
   } catch {}
 };
 
-const sendContext = (text: string) => {
+const sendContext = (text: string, triggerResponse = false) => {
   const clean = (text || "").trim();
   if (!clean || dc.readyState !== "open") return;
 
@@ -454,6 +454,18 @@ const sendContext = (text: string) => {
 
   try {
     dc.send(JSON.stringify(contextItem));
+
+    if (triggerResponse) {
+      dc.send(
+        JSON.stringify({
+          type: "response.create",
+          response: {
+            instructions:
+              "Responde ahora al usuario en español de España, de forma natural y útil, basándote en el contexto que acabas de recibir. No digas que no has visto la imagen. No repitas que vas a analizarla: ya está analizada. Describe lo que se ve con claridad y sigue la conversación con normalidad.",
+          },
+        })
+      );
+    }
   } catch {}
 };
 

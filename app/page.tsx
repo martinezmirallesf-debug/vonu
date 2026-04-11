@@ -4305,68 +4305,58 @@ if (voiceModeRef.current && imageBase64) {
     const pizarraJson =
       typeof data?.pizarra === "string" && data.pizarra.trim() ? data.pizarra : null;
 
-    setThreads((prev) =>
-      prev.map((t) => {
-        if (t.id !== targetThreadId) return t;
-        return {
-          ...t,
-          updatedAt: Date.now(),
-          messages: t.messages.map((m) =>
-            m.id === assistantId
-              ? {
-                  ...m,
-                  text: fullText,
-                  streaming: false,
-                  pizarra: pizarraJson,
-                  boardImageB64,
-                  boardImagePlacement,
-                }
-              : m
-          ),
-        };
-      })
-    );
+   setThreads((prev) =>
+  prev.map((t) => {
+    if (t.id !== targetThreadId) return t;
+    return {
+      ...t,
+      updatedAt: Date.now(),
+      messages: t.messages.filter((m) => m.id !== assistantId),
+    };
+  })
+);
 
-    try {
-      realtimeConnRef.current?.sendContext(
-        "Contexto confirmado: el usuario ya ha enviado una imagen en esta conversación y ya ha sido analizada. No digas que no la has recibido. Resumen fiable de la imagen: " +
-          fullText
-      );
-    } catch (error) {
-      console.error("No se pudo sincronizar el análisis con realtime:", error);
-    }
+try {
+  realtimeConnRef.current?.sendContext(
+    "Contexto confirmado: el usuario ya ha enviado una imagen en esta conversación y ya ha sido analizada. No digas que no la has recibido. Resumen fiable de la imagen: " +
+      fullText,
+    true
+  );
+} catch (error) {
+  console.error("No se pudo sincronizar el análisis con realtime:", error);
+}
 
-    setIsTyping(false);
-    sendGuardRef.current.busy = false;
+setIsTyping(false);
+sendGuardRef.current.busy = false;
 
-    return;
-  } catch (err: any) {
-    const msg =
-      typeof err?.message === "string"
-        ? err.message
-        : "Error desconocido conectando con la IA.";
+return;
+} catch (err: any) {
+  const msg =
+    typeof err?.message === "string"
+      ? err.message
+      : "Error desconocido conectando con la IA.";
 
-    setThreads((prev) =>
-      prev.map((t) => {
-        if (t.id !== targetThreadId) return t;
-        return {
-          ...t,
-          updatedAt: Date.now(),
-          messages: t.messages.map((m) =>
-            m.id === assistantId
-              ? {
-                  ...m,
-                  streaming: false,
-                  text:
-                    "⚠️ No he podido analizar la imagen ahora mismo.\n\n**Detalles técnicos:**\n\n```\n" +
-                    msg +
-                    "\n```",
-                }
-              : m
-          ),
-        };
-      })
-    );
+  setThreads((prev) =>
+    prev.map((t) => {
+      if (t.id !== targetThreadId) return t;
+      return {
+        ...t,
+        updatedAt: Date.now(),
+        messages: t.messages.map((m) =>
+          m.id === assistantId
+            ? {
+                ...m,
+                streaming: false,
+                text:
+                  "⚠️ No he podido analizar la imagen ahora mismo.\n\n**Detalles técnicos:**\n\n```\n" +
+                  msg +
+                  "\n```",
+              }
+            : m
+        ),
+      };
+    })
+  );
 
     setUiError(msg);
     setIsTyping(false);
