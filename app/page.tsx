@@ -4195,22 +4195,23 @@ if (imageBase64) {
 }
 
 
-    const userMsg: Message = {
+const userMsg: Message = {
   id: crypto.randomUUID(),
   role: "user",
   text: userText || (imageBase64 ? "He adjuntado una imagen." : undefined),
   image: imageBase64 || undefined,
 };
 
-// ✅ Si el modo conversación está activo, añadimos solo el mensaje del usuario
-// ✅ y la respuesta la hará exclusivamente realtime
-
 const assistantId = crypto.randomUUID();
+
 const assistantMsg: Message = {
   id: assistantId,
   role: "assistant",
-  text: "",
-  streaming: true,
+  text:
+    voiceModeRef.current && imageBase64
+      ? "Dame un momento, voy a revisar la imagen con detenimiento."
+      : "",
+  streaming: !(voiceModeRef.current && imageBase64),
   pizarra: null,
   boardImageB64: null,
   boardImagePlacement: null,
@@ -4223,31 +4224,12 @@ const assistantMsg: Message = {
     return {
       ...t,
       updatedAt: Date.now(),
-      messages: [...t.messages, userMsg],
+      messages: [...t.messages, userMsg, assistantMsg],
     };
   })
 );
 
 pinUserMessageNearTop(userMsg.id);
-
-requestAnimationFrame(() => {
-  requestAnimationFrame(() => {
-    setThreads((prev) =>
-      prev.map((t) => {
-        if (t.id !== targetThreadId) return t;
-
-        const alreadyExists = t.messages.some((m) => m.id === assistantId);
-        if (alreadyExists) return t;
-
-        return {
-          ...t,
-          updatedAt: Date.now(),
-          messages: [...t.messages, assistantMsg],
-        };
-      })
-    );
-  });
-});
 
     setInput("");
 setImagePreview(null);
@@ -4255,6 +4237,142 @@ setIsTyping(true);
 
 if (!isDesktopPointer()) {
   textareaRef.current?.blur();
+}
+
+if (voiceModeRef.current && imageBase64) {
+  try {
+    await sleep(220);
+
+    const threadNow =
+      threadsRef.current.find((x) => x.id === targetThreadId) ?? activeThread;
+
+    const convoForApi = [...(threadNow?.messages ?? []), userMsg]
+      .filter((m) => (m.role === "user" || m.role === "assistant") && (m.text || m.image))
+      .map((m) => ({
+        role: m.role,
+        content: m.text ?? "",
+      }));
+
+    const { data: sessionData } = await supabaseBrowser.auth.getSession();
+    const accessToken = sessionData?.session?.access_token ?? null;
+
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+      cache: "no-store",
+      body: JSON.stringify({
+        messages: convoForApi,
+        userText,
+        imageBase64,
+        mode: nextMode,
+        tutorLevel: nextTutorLevel,
+      }),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`HTTP ${res.status} ${res.statusText} ${txt}`);
+    }
+
+    const data = await res.json().catch(() => ({} as any));
+
+    if (data?.usage) {
+      setUsageInfo(data.usage);
+    }
+
+    const fullText =
+      typeof data?.text === "string" && data.text.trim()
+        ? data.text
+        : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
+
+    const boardImageB64 =
+      typeof data?.boardImageB64 === "string" && data.boardImageB64
+        ? data.boardImageB64
+        : null;
+
+    const boardImagePlacement =
+      data?.boardImagePlacement &&
+      typeof data.boardImagePlacement?.x === "number" &&
+      typeof data.boardImagePlacement?.y === "number" &&
+      typeof data.boardImagePlacement?.w === "number" &&
+      typeof data.boardImagePlacement?.h === "number"
+        ? (data.boardImagePlacement as { x: number; y: number; w: number; h: number })
+        : null;
+
+    const pizarraJson =
+      typeof data?.pizarra === "string" && data.pizarra.trim() ? data.pizarra : null;
+
+    setThreads((prev) =>
+      prev.map((t) => {
+        if (t.id !== targetThreadId) return t;
+        return {
+          ...t,
+          updatedAt: Date.now(),
+          messages: t.messages.map((m) =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  text: fullText,
+                  streaming: false,
+                  pizarra: pizarraJson,
+                  boardImageB64,
+                  boardImagePlacement,
+                }
+              : m
+          ),
+        };
+      })
+    );
+
+    try {
+      realtimeConnRef.current?.sendContext(
+        "Contexto confirmado: el usuario ya ha enviado una imagen en esta conversación y ya ha sido analizada. No digas que no la has recibido. Resumen fiable de la imagen: " +
+          fullText
+      );
+    } catch (error) {
+      console.error("No se pudo sincronizar el análisis con realtime:", error);
+    }
+
+    setIsTyping(false);
+    sendGuardRef.current.busy = false;
+
+    return;
+  } catch (err: any) {
+    const msg =
+      typeof err?.message === "string"
+        ? err.message
+        : "Error desconocido conectando con la IA.";
+
+    setThreads((prev) =>
+      prev.map((t) => {
+        if (t.id !== targetThreadId) return t;
+        return {
+          ...t,
+          updatedAt: Date.now(),
+          messages: t.messages.map((m) =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  streaming: false,
+                  text:
+                    "⚠️ No he podido analizar la imagen ahora mismo.\n\n**Detalles técnicos:**\n\n```\n" +
+                    msg +
+                    "\n```",
+                }
+              : m
+          ),
+        };
+      })
+    );
+
+    setUiError(msg);
+    setIsTyping(false);
+    sendGuardRef.current.busy = false;
+    return;
+  }
 }
 
     try {
