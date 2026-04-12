@@ -167,7 +167,11 @@ useEffect(() => {
   const next = Math.min(rawScrollHeight, maxHeight);
   el.style.height = `${next}px`;
 
-  setShowExpandButton(!inputExpanded && input.trim().length > 280);
+  const hasMeaningfulText = input.trim().length > 0;
+  const hasInternalScroll =
+  !inputExpanded && rawScrollHeight > normalMaxHeight + 12;
+
+  setShowExpandButton(hasMeaningfulText && hasInternalScroll);
 
   requestAnimationFrame(() => {
     el.scrollTop = el.scrollHeight;
