@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useLayoutEffect, useState } from "react";
 
 type RealtimeVoiceStatus =
   | "idle"
@@ -36,51 +36,23 @@ type ChatInputBarProps = {
 
 function MicIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-5 w-5"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <rect
-        x="9"
-        y="3.6"
-        width="6"
-        height="10.5"
-        rx="3"
-        stroke="currentColor"
-        strokeWidth="2.2"
-      />
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="9" y="3.6" width="6" height="10.5" rx="3" stroke="currentColor" strokeWidth="2.2" />
       <path
         d="M5.5 11.8c0 4.1 3 7 6.5 7s6.5-2.9 6.5-7"
         stroke="currentColor"
         strokeWidth="2.2"
         strokeLinecap="round"
       />
-      <path
-        d="M12 19.3v2.3"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M9 21.6h6"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
+      <path d="M12 19.3v2.3" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M9 21.6h6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
     </svg>
   );
 }
 
 function PencilIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-5 w-5"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M12 20h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       <path
         d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5Z"
@@ -94,12 +66,7 @@ function PencilIcon({ className }: { className?: string }) {
 
 function PlusIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-5 w-5"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M12 5v14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
       <path d="M5 12h14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
     </svg>
@@ -108,12 +75,7 @@ function PlusIcon({ className }: { className?: string }) {
 
 function ExpandIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-5 w-5"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M9 4.75H5.75V8"
         stroke="currentColor"
@@ -156,32 +118,33 @@ export default function ChatInputBar({
 }: ChatInputBarProps) {
   const [showExpandButton, setShowExpandButton] = useState(false);
 
-  useEffect(() => {
-  const el = textareaRef.current;
-  if (!el) return;
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
 
-  const normalMaxHeight = 260;
-  const expandedMaxHeight = 520;
-  const maxHeight = inputExpanded ? expandedMaxHeight : normalMaxHeight;
+    const normalMaxHeight = 220;
+    const expandedMaxHeight = 420;
+    const maxHeight = inputExpanded ? expandedMaxHeight : normalMaxHeight;
 
-  el.style.height = "auto";
+    el.style.height = "auto";
 
-  const fullScrollHeight = el.scrollHeight;
-  const nextHeight = Math.min(fullScrollHeight, maxHeight);
-  el.style.height = `${nextHeight}px`;
+    const contentHeight = el.scrollHeight;
+    const appliedHeight = Math.min(contentHeight, maxHeight);
+    el.style.height = `${appliedHeight}px`;
 
-  const hasMeaningfulText = input.trim().length > 0;
+    const hasText = input.trim().length > 0;
 
-  // ✅ Solo aparece cuando YA hemos llegado al techo normal
-  const reachedNormalLimit =
-    !inputExpanded && nextHeight >= normalMaxHeight - 2 && fullScrollHeight > normalMaxHeight;
+    // ✅ Solo mostrar cuando YA hemos llegado al techo normal
+    // y además el contenido sigue desbordando.
+    const reachedNormalCap = !inputExpanded && appliedHeight >= normalMaxHeight - 1;
+    const stillOverflowing = !inputExpanded && contentHeight > normalMaxHeight + 6;
 
-  setShowExpandButton(hasMeaningfulText && reachedNormalLimit);
+    setShowExpandButton(hasText && reachedNormalCap && stillOverflowing);
 
-  requestAnimationFrame(() => {
-    el.scrollTop = el.scrollHeight;
-  });
-}, [input, textareaRef, inputExpanded]);
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
+  }, [input, inputExpanded, textareaRef]);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
     ? "idle"
@@ -207,20 +170,19 @@ export default function ChatInputBar({
 
         <div className="w-full bg-transparent border-none shadow-none">
           <div
-  className="relative w-full md:rounded-[20px] bg-white border-zinc-200 px-2.5 pt-1.5 pb-1.5 md:border md:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200"
-  style={{
-    borderTopLeftRadius: "22px",
-    borderTopRightRadius: "22px",
-    borderBottomLeftRadius: "0px",
-    borderBottomRightRadius: "0px",
-    borderTopWidth: "1px",
-    borderLeftWidth: "0px",
-    borderRightWidth: "0px",
-    borderBottomWidth: "0px",
-    boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
-    minHeight: inputExpanded ? "48vh" : undefined,
-  }}
->
+            className="relative w-full md:rounded-[20px] bg-white border-zinc-200 px-2.5 pt-1.5 pb-1.5 md:border md:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200"
+            style={{
+              borderTopLeftRadius: "22px",
+              borderTopRightRadius: "22px",
+              borderBottomLeftRadius: "0px",
+              borderBottomRightRadius: "0px",
+              borderTopWidth: "1px",
+              borderLeftWidth: "0px",
+              borderRightWidth: "0px",
+              borderBottomWidth: "0px",
+              boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
+            }}
+          >
             {imagePreview && (
               <div className="mb-2 px-1">
                 <div className="relative inline-flex rounded-2xl border border-zinc-200 bg-zinc-50/80 p-1.5 shadow-sm">
@@ -282,8 +244,8 @@ export default function ChatInputBar({
               disabled={isTyping}
               rows={1}
               className={`w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[20px] pt-3 leading-6 min-h-[30px] [scrollbar-width:none] ${
-  inputExpanded ? "pb-[76px] max-h-[520px]" : "pb-[52px] max-h-[260px]"
-}`}
+                inputExpanded ? "pb-[76px] max-h-[420px]" : "pb-[52px] max-h-[220px]"
+              }`}
             />
 
             {showExpandButton && !inputExpanded && (
@@ -364,12 +326,7 @@ export default function ChatInputBar({
                 aria-label="Enviar"
                 title="Enviar"
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-[19px] w-[19px]"
-                  fill="none"
-                  aria-hidden="true"
-                >
+                <svg viewBox="0 0 24 24" className="h-[19px] w-[19px]" fill="none" aria-hidden="true">
                   <path
                     d="M12 18V7"
                     stroke="currentColor"
