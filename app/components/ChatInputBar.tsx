@@ -139,14 +139,14 @@ export default function ChatInputBar({
 
   return (
     <div
-      ref={inputBarRef}
-      className="fixed left-0 right-0 z-30 bg-transparent"
-      style={{
-        bottom: "var(--vvb, 0px)",
-        paddingBottom: "env(safe-area-inset-bottom)",
-      }}
-    >
-      <div className="mx-auto max-w-3xl px-2 md:px-6 pt-2 pb-1 md:pb-2">
+  ref={inputBarRef}
+  className="fixed left-0 right-0 z-30 bg-transparent"
+  style={{
+    bottom: "var(--vvb, 0px)",
+    paddingBottom: "env(safe-area-inset-bottom)",
+  }}
+>
+      <div className="mx-auto max-w-3xl px-0 md:px-6 pt-0 md:pt-2 pb-0 md:pb-2">
         {imagePreview && (
           <div className="mb-2 relative w-fit">
             <img
@@ -164,7 +164,20 @@ export default function ChatInputBar({
         )}
 
         <div className="w-full bg-transparent border-none shadow-none">
-          <div className="relative w-full rounded-[22px] md:rounded-[20px] bg-white border border-zinc-200 px-2.5 pt-2 pb-2 shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
+  <div
+    className="relative w-full md:rounded-[20px] bg-white border-zinc-200 px-2.5 pt-2 pb-2 md:border md:shadow-[0_4px_16px_rgba(0,0,0,0.06)]"
+    style={{
+      borderTopLeftRadius: "22px",
+      borderTopRightRadius: "22px",
+      borderBottomLeftRadius: "0px",
+      borderBottomRightRadius: "0px",
+      borderTopWidth: "1px",
+      borderLeftWidth: "0px",
+      borderRightWidth: "0px",
+      borderBottomWidth: "0px",
+      boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
+    }}
+  >
             <div className="absolute left-2.5 bottom-2.5 z-10 flex items-center gap-1.5">
               <button
                 onClick={openBoard}
@@ -203,7 +216,7 @@ export default function ChatInputBar({
               placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
               disabled={isTyping}
               rows={1}
-              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[24px] pr-[88px] pt-3 pb-12 leading-6 min-h-[24px] max-h-[180px]"
+              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[24px] pr-[88px] pt-3 pb-12 leading-6 min-h-[24px] max-h-[180px]"
             />
 
             <div className="absolute right-2.5 bottom-2.5 z-10 flex items-center gap-1.5">
@@ -282,9 +295,9 @@ export default function ChatInputBar({
             </div>
           </div>
 
-          <div className="mt-1.5 text-center text-[11.5px] text-zinc-500">
-            Orientación preventiva · No sustituye profesionales.
-          </div>
+          <div className="mt-1.5 px-3 md:px-0 text-center text-[10.5px] md:text-[11.5px] text-zinc-500">
+  Orientación preventiva · No sustituye profesionales.
+</div>
         </div>
       </div>
     </div>
