@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useLayoutEffect, useState } from "react";
+import React, { useEffect } from "react";
 
 type RealtimeVoiceStatus =
   | "idle"
@@ -73,27 +73,6 @@ function PlusIcon({ className }: { className?: string }) {
   );
 }
 
-function ExpandIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M9 4.75H5.75V8"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M15 19.25h3.25V16"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 export default function ChatInputBar({
   inputBarRef,
   imagePreview,
@@ -116,35 +95,19 @@ export default function ChatInputBar({
   inputExpanded,
   setInputExpanded,
 }: ChatInputBarProps) {
-  const [showExpandButton, setShowExpandButton] = useState(false);
 
-  useLayoutEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
+useEffect(() => {
+  const el = textareaRef.current;
+  if (!el) return;
 
-    const normalMaxHeight = 220;
-    const expandedMaxHeight = 420;
-    const maxHeight = inputExpanded ? expandedMaxHeight : normalMaxHeight;
+  el.style.height = "0px";
+  const next = Math.min(el.scrollHeight, 260);
+  el.style.height = `${next}px`;
 
-    el.style.height = "auto";
-
-    const contentHeight = el.scrollHeight;
-    const appliedHeight = Math.min(contentHeight, maxHeight);
-    el.style.height = `${appliedHeight}px`;
-
-    const hasText = input.trim().length > 0;
-
-    // ✅ Solo mostrar cuando YA hemos llegado al techo normal
-    // y además el contenido sigue desbordando.
-    const reachedNormalCap = !inputExpanded && appliedHeight >= normalMaxHeight - 1;
-    const stillOverflowing = !inputExpanded && contentHeight > normalMaxHeight + 6;
-
-    setShowExpandButton(hasText && reachedNormalCap && stillOverflowing);
-
-    requestAnimationFrame(() => {
-      el.scrollTop = el.scrollHeight;
-    });
-  }, [input, inputExpanded, textareaRef]);
+  requestAnimationFrame(() => {
+    el.scrollTop = el.scrollHeight;
+  });
+}, [input, textareaRef]);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
     ? "idle"
@@ -170,19 +133,19 @@ export default function ChatInputBar({
 
         <div className="w-full bg-transparent border-none shadow-none">
           <div
-            className="relative w-full md:rounded-[20px] bg-white border-zinc-200 px-2.5 pt-1.5 pb-1.5 md:border md:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200"
-            style={{
-              borderTopLeftRadius: "22px",
-              borderTopRightRadius: "22px",
-              borderBottomLeftRadius: "0px",
-              borderBottomRightRadius: "0px",
-              borderTopWidth: "1px",
-              borderLeftWidth: "0px",
-              borderRightWidth: "0px",
-              borderBottomWidth: "0px",
-              boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
-            }}
-          >
+  className="relative w-full md:rounded-[20px] bg-white border-zinc-200 px-2.5 pt-1 pb-1 md:border md:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200"
+  style={{
+    borderTopLeftRadius: "22px",
+    borderTopRightRadius: "22px",
+    borderBottomLeftRadius: "0px",
+    borderBottomRightRadius: "0px",
+    borderTopWidth: "1px",
+    borderLeftWidth: "0px",
+    borderRightWidth: "0px",
+    borderBottomWidth: "0px",
+    boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
+  }}
+>
             {imagePreview && (
               <div className="mb-2 px-1">
                 <div className="relative inline-flex rounded-2xl border border-zinc-200 bg-zinc-50/80 p-1.5 shadow-sm">
