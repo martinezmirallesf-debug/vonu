@@ -102,12 +102,9 @@ useEffect(() => {
   const next = Math.min(el.scrollHeight, maxHeight);
   el.style.height = `${next}px`;
 
-  if (el.scrollHeight > maxHeight) {
-    requestAnimationFrame(() => {
-      const safeBottomGap = 78;
-      el.scrollTop = el.scrollHeight - el.clientHeight + safeBottomGap;
-    });
-  }
+  requestAnimationFrame(() => {
+    el.scrollTop = el.scrollHeight;
+  });
 }, [input, textareaRef]);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
@@ -169,36 +166,6 @@ useEffect(() => {
               </div>
             )}
 
-            <div className="absolute left-2.5 bottom-2 z-10 flex items-center gap-1.5">
-              <button
-                onClick={openBoard}
-                disabled={!!isTyping}
-                className="h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
-                aria-label="Pizarra"
-                title="Pizarra"
-              >
-                <PencilIcon className="h-[17px] w-[17px]" />
-              </button>
-
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={!!isTyping}
-                className="h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
-                aria-label="Adjuntar"
-                title="Adjuntar imagen"
-              >
-                <PlusIcon className="h-[17px] w-[17px]" />
-              </button>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={onSelectImage}
-                className="hidden"
-              />
-            </div>
-
             <textarea
   ref={textareaRef}
   value={input}
@@ -207,79 +174,111 @@ useEffect(() => {
   placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
   disabled={isTyping}
   rows={1}
-  className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[14px] pt-3 pb-[78px] leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none] [scroll-padding-bottom:78px]"
+  className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-3 leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none]"
   style={{ WebkitOverflowScrolling: "touch" }}
 />
 
-            <div className="absolute right-2.5 bottom-2.5 z-10 flex items-center gap-1.5">
-              <button
-                onClick={toggleConversation}
-                disabled={!!isTyping || !isLoggedIn}
-                className={[
-                  "relative h-8 w-8 rounded-full",
-                  "transition-all duration-300",
-                  voiceUiState === "idle"
-                    ? "text-zinc-700 hover:bg-zinc-100"
-                    : "text-white shadow-[0_8px_24px_rgba(26,115,232,0.30)]",
-                  !!isTyping || !isLoggedIn
-                    ? "opacity-50 cursor-not-allowed"
-                    : "cursor-pointer",
-                ].join(" ")}
-                style={
-                  voiceUiState === "idle"
-                    ? undefined
-                    : {
-                        background:
-                          "linear-gradient(135deg, #1a73e8 0%, #3b82f6 45%, #60a5fa 100%)",
-                      }
-                }
-                aria-label={voiceMode ? "Desactivar conversación" : "Hablar con Vonu"}
-                title={voiceMode ? "Modo conversación activo" : "Hablar con Vonu"}
-              >
-                {voiceUiState !== "idle" ? (
-                  <span
-                    className="absolute inset-[-2px] rounded-full bg-blue-400/20 animate-pulse pointer-events-none"
-                    aria-hidden="true"
-                  />
-                ) : null}
+<div className="mt-1 flex items-center justify-between px-1 pb-1">
+  <div className="flex items-center gap-1.5">
+    <button
+      onClick={openBoard}
+      disabled={!!isTyping}
+      className="h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
+      aria-label="Pizarra"
+      title="Pizarra"
+    >
+      <PencilIcon className="h-[17px] w-[17px]" />
+    </button>
 
-                <span className="relative z-10 flex h-full w-full items-center justify-center">
-                  <MicIcon className="h-[19px] w-[19px]" />
-                </span>
-              </button>
+    <button
+      onClick={() => fileInputRef.current?.click()}
+      disabled={!!isTyping}
+      className="h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
+      aria-label="Adjuntar"
+      title="Adjuntar imagen"
+    >
+      <PlusIcon className="h-[17px] w-[17px]" />
+    </button>
 
-              <button
-                onClick={sendMessage}
-                disabled={!canSend}
-                className={[
-                  "h-8 w-8 rounded-full",
-                  "bg-[#1a73e8] text-white",
-                  "flex items-center justify-center",
-                  "transition-all",
-                  canSend
-                    ? "opacity-100 hover:bg-[#1669c1] hover:scale-105 active:scale-[0.98]"
-                    : "opacity-40 cursor-not-allowed",
-                ].join(" ")}
-                aria-label="Enviar"
-                title="Enviar"
-              >
-                <svg viewBox="0 0 24 24" className="h-[19px] w-[19px]" fill="none" aria-hidden="true">
-                  <path
-                    d="M12 18V7"
-                    stroke="currentColor"
-                    strokeWidth="3.1"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M7 10.7 12 5.7l5 5"
-                    stroke="currentColor"
-                    strokeWidth="3.1"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            </div>
+    <input
+      ref={fileInputRef}
+      type="file"
+      accept="image/*"
+      onChange={onSelectImage}
+      className="hidden"
+    />
+  </div>
+
+  <div className="flex items-center gap-1.5">
+    <button
+      onClick={toggleConversation}
+      disabled={!!isTyping || !isLoggedIn}
+      className={[
+        "relative h-8 w-8 rounded-full",
+        "transition-all duration-300",
+        voiceUiState === "idle"
+          ? "text-zinc-700 hover:bg-zinc-100"
+          : "text-white shadow-[0_8px_24px_rgba(26,115,232,0.30)]",
+        !!isTyping || !isLoggedIn
+          ? "opacity-50 cursor-not-allowed"
+          : "cursor-pointer",
+      ].join(" ")}
+      style={
+        voiceUiState === "idle"
+          ? undefined
+          : {
+              background:
+                "linear-gradient(135deg, #1a73e8 0%, #3b82f6 45%, #60a5fa 100%)",
+            }
+      }
+      aria-label={voiceMode ? "Desactivar conversación" : "Hablar con Vonu"}
+      title={voiceMode ? "Modo conversación activo" : "Hablar con Vonu"}
+    >
+      {voiceUiState !== "idle" ? (
+        <span
+          className="absolute inset-[-2px] rounded-full bg-blue-400/20 animate-pulse pointer-events-none"
+          aria-hidden="true"
+        />
+      ) : null}
+
+      <span className="relative z-10 flex h-full w-full items-center justify-center">
+        <MicIcon className="h-[19px] w-[19px]" />
+      </span>
+    </button>
+
+    <button
+      onClick={sendMessage}
+      disabled={!canSend}
+      className={[
+        "h-8 w-8 rounded-full",
+        "bg-[#1a73e8] text-white",
+        "flex items-center justify-center",
+        "transition-all",
+        canSend
+          ? "opacity-100 hover:bg-[#1669c1] hover:scale-105 active:scale-[0.98]"
+          : "opacity-40 cursor-not-allowed",
+      ].join(" ")}
+      aria-label="Enviar"
+      title="Enviar"
+    >
+      <svg viewBox="0 0 24 24" className="h-[19px] w-[19px]" fill="none" aria-hidden="true">
+        <path
+          d="M12 18V7"
+          stroke="currentColor"
+          strokeWidth="3.1"
+          strokeLinecap="round"
+        />
+        <path
+          d="M7 10.7 12 5.7l5 5"
+          stroke="currentColor"
+          strokeWidth="3.1"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
+  </div>
+</div>
           </div>
 
           <div className="hidden md:block mt-1.5 px-3 md:px-0 text-center text-[11.5px] text-zinc-500">
