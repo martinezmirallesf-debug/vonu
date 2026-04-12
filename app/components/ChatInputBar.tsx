@@ -223,7 +223,7 @@ return (
     borderRightWidth: "0px",
     borderBottomWidth: "0px",
     boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
-    minHeight: inputExpanded ? "220px" : undefined,
+    minHeight: undefined,
   }}
 >
         {imagePreview && (
