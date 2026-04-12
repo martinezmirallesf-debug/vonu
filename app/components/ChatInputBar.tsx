@@ -181,8 +181,6 @@ useEffect(() => {
             </div>
 
 <div className="flex items-center justify-between px-1 pt-0 pb-1">
-
-<div className="mt-1 flex items-center justify-between border-t border-zinc-100 px-1 pt-2 pb-1">
   <div className="flex items-center gap-1.5">
     <button
       onClick={openBoard}
