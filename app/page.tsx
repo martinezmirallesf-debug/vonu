@@ -5837,6 +5837,7 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
   openBoard={openBoard}
   fileInputRef={fileInputRef}
   onSelectImage={onSelectImage}
+  clearImagePreview={() => setImagePreview(null)}
 />
     </div>
   </div>

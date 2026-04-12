@@ -29,6 +29,7 @@ type ChatInputBarProps = {
   openBoard: () => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   onSelectImage: (e: React.ChangeEvent<HTMLInputElement>) => void;
+clearImagePreview: () => void;
 };
 
 function MicIcon({ className }: { className?: string }) {
@@ -121,13 +122,14 @@ export default function ChatInputBar({
   openBoard,
   fileInputRef,
   onSelectImage,
+clearImagePreview,
 }: ChatInputBarProps) {
   useEffect(() => {
   const el = textareaRef.current;
   if (!el) return;
 
   el.style.height = "0px";
-  const next = Math.min(el.scrollHeight, 180);
+  const next = Math.min(el.scrollHeight, 260);
   el.style.height = `${next}px`;
 
   requestAnimationFrame(() => {
@@ -173,25 +175,27 @@ export default function ChatInputBar({
     }}
   >
         {imagePreview && (
-      <div className="mb-2 px-1">
-        <div className="inline-flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/80 px-2.5 py-2 shadow-sm">
-          <img
-            src={imagePreview}
-            alt="Preview"
-            className="h-14 w-14 rounded-xl object-cover border border-zinc-200"
-          />
-          <div className="min-w-0">
-            <div className="text-[13px] font-medium text-zinc-900 truncate">
-              Imagen adjunta
-            </div>
-            <div className="text-[11px] text-zinc-500">
-              Lista para analizar
-            </div>
-          </div>
-        </div>
-      </div>
-    )}
-            <div className="absolute left-2.5 bottom-2.5 z-10 flex items-center gap-1.5">
+  <div className="mb-2 px-1">
+    <div className="relative inline-flex rounded-2xl border border-zinc-200 bg-zinc-50/80 p-1.5 shadow-sm">
+      <img
+        src={imagePreview}
+        alt="Preview"
+        className="h-16 w-16 rounded-xl object-cover border border-zinc-200"
+      />
+
+      <button
+        type="button"
+        onClick={clearImagePreview}
+        className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white border border-zinc-200 shadow-sm text-zinc-700 flex items-center justify-center"
+        aria-label="Quitar imagen"
+        title="Quitar imagen"
+      >
+        <span className="text-[14px] leading-none">×</span>
+      </button>
+    </div>
+  </div>
+)}
+            <div className="absolute left-2.5 bottom-2 z-10 flex items-center gap-1.5">
               <button
                 onClick={openBoard}
                 disabled={!!isTyping}
@@ -229,10 +233,10 @@ export default function ChatInputBar({
               placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
               disabled={isTyping}
               rows={1}
-              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[24px] pr-[88px] pt-3 pb-12 leading-6 min-h-[24px] max-h-[180px] [scrollbar-width:none]"
+              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[108px] pt-3 pb-12 leading-6 min-h-[24px] max-h-[260px] [scrollbar-width:none]"
             />
 
-            <div className="absolute right-2.5 bottom-2.5 z-10 flex items-center gap-1.5">
+            <div className="absolute right-2.5 bottom-2 z-10 flex items-center gap-1.5">
               <button
                 onClick={toggleConversation}
                 disabled={!!isTyping || !isLoggedIn}
