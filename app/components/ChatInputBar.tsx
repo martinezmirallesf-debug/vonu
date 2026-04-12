@@ -169,7 +169,7 @@ useEffect(() => {
 
   // ✅ Mostrar expandir cuando ya hay bastante texto,
   // no solo cuando sobrepasa el límite exacto
-  setShowExpandButton(!inputExpanded && rawScrollHeight > 215);
+  setShowExpandButton(!inputExpanded && rawScrollHeight > 235);
 
   requestAnimationFrame(() => {
     el.scrollTop = el.scrollHeight;
@@ -275,7 +275,7 @@ return (
               placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
               disabled={isTyping}
               rows={1}
-              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[12px] pt-3 pb-[92px] leading-6 min-h-[30px] max-h-[260px] [scrollbar-width:none]"
+              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[16px] pt-3 pb-[92px] leading-6 min-h-[30px] max-h-[260px] [scrollbar-width:none]"
             />
 
             {showExpandButton && !inputExpanded && (
@@ -287,7 +287,7 @@ return (
     aria-label="Expandir entrada"
     title="Expandir"
   >
-    <ExpandIcon className="h-[16px] w-[16px]" />
+    <ExpandIcon className="h-[15px] w-[15px] -scale-x-100" />
   </button>
 )}
 
@@ -300,7 +300,7 @@ return (
     aria-label="Contraer entrada"
     title="Contraer"
   >
-    <ExpandIcon className="h-[16px] w-[16px] rotate-180" />
+    <ExpandIcon className="h-[15px] w-[15px] rotate-180 -scale-x-100" />
   </button>
 )}
 
