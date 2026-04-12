@@ -29,7 +29,9 @@ type ChatInputBarProps = {
   openBoard: () => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   onSelectImage: (e: React.ChangeEvent<HTMLInputElement>) => void;
-clearImagePreview: () => void;
+  clearImagePreview: () => void;
+  inputExpanded: boolean;
+  setInputExpanded: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 function MicIcon({ className }: { className?: string }) {
@@ -104,6 +106,44 @@ function PlusIcon({ className }: { className?: string }) {
   );
 }
 
+function ExpandIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className ?? "h-5 w-5"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M8 3.8H4.8v3.2"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M4.8 3.8 10 9"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M16 20.2h3.2v-3.2"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M19.2 20.2 14 15"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export default function ChatInputBar({
   inputBarRef,
   imagePreview,
@@ -121,21 +161,24 @@ export default function ChatInputBar({
   toggleConversation,
   openBoard,
   fileInputRef,
-  onSelectImage,
-clearImagePreview,
+    onSelectImage,
+  clearImagePreview,
+  inputExpanded,
+  setInputExpanded,
 }: ChatInputBarProps) {
   useEffect(() => {
   const el = textareaRef.current;
   if (!el) return;
 
   el.style.height = "0px";
-  const next = Math.min(el.scrollHeight, 260);
+  const maxHeight = inputExpanded ? 420 : 260;
+  const next = Math.min(el.scrollHeight, maxHeight);
   el.style.height = `${next}px`;
 
   requestAnimationFrame(() => {
     el.scrollTop = el.scrollHeight;
   });
-}, [input, textareaRef]);
+}, [input, textareaRef, inputExpanded]);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
     ? "idle"
@@ -161,19 +204,20 @@ clearImagePreview,
 
         <div className="w-full bg-transparent border-none shadow-none">
   <div
-    className="relative w-full md:rounded-[20px] bg-white border-zinc-200 px-2.5 pt-2 pb-2 md:border md:shadow-[0_4px_16px_rgba(0,0,0,0.06)]"
-    style={{
-      borderTopLeftRadius: "22px",
-      borderTopRightRadius: "22px",
-      borderBottomLeftRadius: "0px",
-      borderBottomRightRadius: "0px",
-      borderTopWidth: "1px",
-      borderLeftWidth: "0px",
-      borderRightWidth: "0px",
-      borderBottomWidth: "0px",
-      boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
-    }}
-  >
+  className="relative w-full md:rounded-[20px] bg-white border-zinc-200 px-2.5 pt-2 pb-2 md:border md:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200"
+  style={{
+    borderTopLeftRadius: "22px",
+    borderTopRightRadius: "22px",
+    borderBottomLeftRadius: "0px",
+    borderBottomRightRadius: "0px",
+    borderTopWidth: "1px",
+    borderLeftWidth: "0px",
+    borderRightWidth: "0px",
+    borderBottomWidth: "0px",
+    boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
+    minHeight: inputExpanded ? "220px" : undefined,
+  }}
+>
         {imagePreview && (
   <div className="mb-2 px-1">
     <div className="relative inline-flex rounded-2xl border border-zinc-200 bg-zinc-50/80 p-1.5 shadow-sm">
@@ -215,6 +259,17 @@ clearImagePreview,
               >
                 <PlusIcon className="h-[17px] w-[17px]" />
               </button>
+
+              <button
+  type="button"
+  onClick={() => setInputExpanded((v) => !v)}
+  disabled={!!isTyping}
+  className="h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
+  aria-label={inputExpanded ? "Contraer entrada" : "Expandir entrada"}
+  title={inputExpanded ? "Contraer" : "Expandir"}
+>
+  <ExpandIcon className="h-[17px] w-[17px]" />
+</button>
 
               <input
                 ref={fileInputRef}

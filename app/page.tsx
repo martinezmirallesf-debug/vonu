@@ -5838,6 +5838,8 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
   fileInputRef={fileInputRef}
   onSelectImage={onSelectImage}
   clearImagePreview={() => setImagePreview(null)}
+  inputExpanded={inputExpanded}
+  setInputExpanded={setInputExpanded}
 />
     </div>
   </div>
