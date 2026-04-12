@@ -157,34 +157,31 @@ export default function ChatInputBar({
   const [showExpandButton, setShowExpandButton] = useState(false);
 
   useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
+  const el = textareaRef.current;
+  if (!el) return;
 
-    const normalMaxHeight = 260;
-    const expandedMaxHeight = 420;
-    const maxHeight = inputExpanded ? expandedMaxHeight : normalMaxHeight;
+  const normalMaxHeight = 260;
+  const expandedMaxHeight = 520;
+  const maxHeight = inputExpanded ? expandedMaxHeight : normalMaxHeight;
 
-    // Reset para recalcular bien la altura real
-    el.style.height = "auto";
+  el.style.height = "auto";
 
-    const fullScrollHeight = el.scrollHeight;
-    const nextHeight = Math.min(fullScrollHeight, maxHeight);
-    el.style.height = `${nextHeight}px`;
+  const fullScrollHeight = el.scrollHeight;
+  const nextHeight = Math.min(fullScrollHeight, maxHeight);
+  el.style.height = `${nextHeight}px`;
 
-    // Solo mostrar expandir cuando:
-    // 1) hay texto real
-    // 2) NO está expandido
-    // 3) el contenido ya supera la altura normal y por tanto entra scroll real
-    const hasMeaningfulText = input.trim().length > 0;
-    const hasRealOverflow =
-      !inputExpanded && fullScrollHeight > normalMaxHeight + 1;
+  const hasMeaningfulText = input.trim().length > 0;
 
-    setShowExpandButton(hasMeaningfulText && hasRealOverflow);
+  // ✅ Solo aparece cuando YA hemos llegado al techo normal
+  const reachedNormalLimit =
+    !inputExpanded && nextHeight >= normalMaxHeight - 2 && fullScrollHeight > normalMaxHeight;
 
-    requestAnimationFrame(() => {
-      el.scrollTop = el.scrollHeight;
-    });
-  }, [input, textareaRef, inputExpanded]);
+  setShowExpandButton(hasMeaningfulText && reachedNormalLimit);
+
+  requestAnimationFrame(() => {
+    el.scrollTop = el.scrollHeight;
+  });
+}, [input, textareaRef, inputExpanded]);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
     ? "idle"
@@ -210,19 +207,20 @@ export default function ChatInputBar({
 
         <div className="w-full bg-transparent border-none shadow-none">
           <div
-            className="relative w-full md:rounded-[20px] bg-white border-zinc-200 px-2.5 pt-1.5 pb-1.5 md:border md:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200"
-            style={{
-              borderTopLeftRadius: "22px",
-              borderTopRightRadius: "22px",
-              borderBottomLeftRadius: "0px",
-              borderBottomRightRadius: "0px",
-              borderTopWidth: "1px",
-              borderLeftWidth: "0px",
-              borderRightWidth: "0px",
-              borderBottomWidth: "0px",
-              boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
-            }}
-          >
+  className="relative w-full md:rounded-[20px] bg-white border-zinc-200 px-2.5 pt-1.5 pb-1.5 md:border md:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200"
+  style={{
+    borderTopLeftRadius: "22px",
+    borderTopRightRadius: "22px",
+    borderBottomLeftRadius: "0px",
+    borderBottomRightRadius: "0px",
+    borderTopWidth: "1px",
+    borderLeftWidth: "0px",
+    borderRightWidth: "0px",
+    borderBottomWidth: "0px",
+    boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
+    minHeight: inputExpanded ? "48vh" : undefined,
+  }}
+>
             {imagePreview && (
               <div className="mb-2 px-1">
                 <div className="relative inline-flex rounded-2xl border border-zinc-200 bg-zinc-50/80 p-1.5 shadow-sm">
@@ -283,7 +281,9 @@ export default function ChatInputBar({
               placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
               disabled={isTyping}
               rows={1}
-              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[20px] pt-3 pb-[52px] leading-6 min-h-[30px] max-h-[260px] [scrollbar-width:none]"
+              className={`w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[20px] pt-3 leading-6 min-h-[30px] [scrollbar-width:none] ${
+  inputExpanded ? "pb-[76px] max-h-[520px]" : "pb-[52px] max-h-[260px]"
+}`}
             />
 
             {showExpandButton && !inputExpanded && (
