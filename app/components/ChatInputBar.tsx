@@ -115,27 +115,27 @@ function ExpandIcon({ className }: { className?: string }) {
       aria-hidden="true"
     >
       <path
-        d="M8 3.8H4.8v3.2"
+        d="M15.5 4.5H19.5V8.5"
         stroke="currentColor"
         strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
-        d="M4.8 3.8 10 9"
+        d="M19.5 4.5L14 10"
         stroke="currentColor"
         strokeWidth="2.2"
         strokeLinecap="round"
       />
       <path
-        d="M16 20.2h3.2v-3.2"
+        d="M8.5 19.5H4.5V15.5"
         stroke="currentColor"
         strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
-        d="M19.2 20.2 14 15"
+        d="M4.5 19.5L10 14"
         stroke="currentColor"
         strokeWidth="2.2"
         strokeLinecap="round"
@@ -166,35 +166,43 @@ export default function ChatInputBar({
   inputExpanded,
   setInputExpanded,
 }: ChatInputBarProps) {
-  useEffect(() => {
+useEffect(() => {
   const el = textareaRef.current;
   if (!el) return;
 
+  const normalMaxHeight = 260;
+  const expandedMaxHeight = 420;
+  const maxHeight = inputExpanded ? expandedMaxHeight : normalMaxHeight;
+
   el.style.height = "0px";
-  const maxHeight = inputExpanded ? 420 : 260;
-  const next = Math.min(el.scrollHeight, maxHeight);
+  const rawScrollHeight = el.scrollHeight;
+  const next = Math.min(rawScrollHeight, maxHeight);
   el.style.height = `${next}px`;
+
+  setShowExpandButton(!inputExpanded && rawScrollHeight > normalMaxHeight);
 
   requestAnimationFrame(() => {
     el.scrollTop = el.scrollHeight;
   });
 }, [input, textareaRef, inputExpanded]);
 
-  const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
-    ? "idle"
-    : realtimeStatus === "listening"
-    ? "listening"
-    : "speaking";
+const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
+  ? "idle"
+  : realtimeStatus === "listening"
+  ? "listening"
+  : "speaking";
 
-  return (
-    <div
-  ref={inputBarRef}
-  className="fixed left-0 right-0 z-30 bg-transparent"
-  style={{
-    bottom: "var(--vvb, 0px)",
-    paddingBottom: "env(safe-area-inset-bottom)",
-  }}
->
+const [showExpandButton, setShowExpandButton] = React.useState(false);
+
+return (
+  <div
+    ref={inputBarRef}
+    className="fixed left-0 right-0 z-30 bg-transparent"
+    style={{
+      bottom: "var(--vvb, 0px)",
+      paddingBottom: "env(safe-area-inset-bottom)",
+    }}
+  >
       <div className="mx-auto max-w-3xl px-0 md:px-6 pt-0 md:pt-2 pb-0 md:pb-2">
         {micMsg && (
           <div className="mb-2 text-[12px] text-zinc-600 bg-white/95 border border-zinc-200 rounded-2xl px-3 py-2 shadow-sm">
@@ -260,17 +268,6 @@ export default function ChatInputBar({
                 <PlusIcon className="h-[17px] w-[17px]" />
               </button>
 
-              <button
-  type="button"
-  onClick={() => setInputExpanded((v) => !v)}
-  disabled={!!isTyping}
-  className="h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
-  aria-label={inputExpanded ? "Contraer entrada" : "Expandir entrada"}
-  title={inputExpanded ? "Contraer" : "Expandir"}
->
-  <ExpandIcon className="h-[17px] w-[17px]" />
-</button>
-
               <input
                 ref={fileInputRef}
                 type="file"
@@ -288,8 +285,21 @@ export default function ChatInputBar({
               placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
               disabled={isTyping}
               rows={1}
-              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[12px] pt-3 pb-[72px] leading-6 min-h-[24px] max-h-[260px] [scrollbar-width:none]"
+              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[12px] pt-3 pb-[72px] leading-6 min-h-[30px] max-h-[260px] [scrollbar-width:none]"
             />
+
+            {showExpandButton && (
+  <button
+    type="button"
+    onClick={() => setInputExpanded(true)}
+    disabled={!!isTyping}
+    className="absolute top-2.5 right-2.5 z-10 h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-white/80"
+    aria-label="Expandir entrada"
+    title="Expandir"
+  >
+    <ExpandIcon className="h-[16px] w-[16px]" />
+  </button>
+)}
 
             <div className="absolute right-2.5 bottom-2.5 z-10 flex items-center gap-1.5">
               <button
