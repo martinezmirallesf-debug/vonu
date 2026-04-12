@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 type RealtimeVoiceStatus =
   | "idle"
@@ -149,52 +149,58 @@ export default function ChatInputBar({
   toggleConversation,
   openBoard,
   fileInputRef,
-    onSelectImage,
+  onSelectImage,
   clearImagePreview,
   inputExpanded,
   setInputExpanded,
 }: ChatInputBarProps) {
-useEffect(() => {
-  const el = textareaRef.current;
-  if (!el) return;
+  const [showExpandButton, setShowExpandButton] = useState(false);
 
-  const normalMaxHeight = 260;
-  const expandedMaxHeight = 420;
-  const maxHeight = inputExpanded ? expandedMaxHeight : normalMaxHeight;
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
 
-  el.style.height = "0px";
-  const rawScrollHeight = el.scrollHeight;
-  const next = Math.min(rawScrollHeight, maxHeight);
-  el.style.height = `${next}px`;
+    const normalMaxHeight = 260;
+    const expandedMaxHeight = 420;
+    const maxHeight = inputExpanded ? expandedMaxHeight : normalMaxHeight;
 
-  const hasMeaningfulText = input.trim().length > 0;
-  const hasInternalScroll =
-  !inputExpanded && rawScrollHeight > normalMaxHeight + 12;
+    // Reset para recalcular bien la altura real
+    el.style.height = "auto";
 
-  setShowExpandButton(hasMeaningfulText && hasInternalScroll);
+    const fullScrollHeight = el.scrollHeight;
+    const nextHeight = Math.min(fullScrollHeight, maxHeight);
+    el.style.height = `${nextHeight}px`;
 
-  requestAnimationFrame(() => {
-    el.scrollTop = el.scrollHeight;
-  });
-}, [input, textareaRef, inputExpanded]);
+    // Solo mostrar expandir cuando:
+    // 1) hay texto real
+    // 2) NO está expandido
+    // 3) el contenido ya supera la altura normal y por tanto entra scroll real
+    const hasMeaningfulText = input.trim().length > 0;
+    const hasRealOverflow =
+      !inputExpanded && fullScrollHeight > normalMaxHeight + 1;
 
-const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
-  ? "idle"
-  : realtimeStatus === "listening"
-  ? "listening"
-  : "speaking";
+    setShowExpandButton(hasMeaningfulText && hasRealOverflow);
 
-const [showExpandButton, setShowExpandButton] = React.useState(false);
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
+  }, [input, textareaRef, inputExpanded]);
 
-return (
-  <div
-    ref={inputBarRef}
-    className="fixed left-0 right-0 z-30 bg-transparent"
-    style={{
-      bottom: "var(--vvb, 0px)",
-      paddingBottom: "env(safe-area-inset-bottom)",
-    }}
-  >
+  const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
+    ? "idle"
+    : realtimeStatus === "listening"
+    ? "listening"
+    : "speaking";
+
+  return (
+    <div
+      ref={inputBarRef}
+      className="fixed left-0 right-0 z-30 bg-transparent"
+      style={{
+        bottom: "var(--vvb, 0px)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
+    >
       <div className="mx-auto max-w-3xl px-0 md:px-6 pt-0 md:pt-2 pb-0 md:pb-2">
         {micMsg && (
           <div className="mb-2 text-[12px] text-zinc-600 bg-white/95 border border-zinc-200 rounded-2xl px-3 py-2 shadow-sm">
@@ -203,42 +209,42 @@ return (
         )}
 
         <div className="w-full bg-transparent border-none shadow-none">
-  <div
-  className="relative w-full md:rounded-[20px] bg-white border-zinc-200 px-2.5 pt-1.5 pb-1.5 md:border md:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200"
-  style={{
-    borderTopLeftRadius: "22px",
-    borderTopRightRadius: "22px",
-    borderBottomLeftRadius: "0px",
-    borderBottomRightRadius: "0px",
-    borderTopWidth: "1px",
-    borderLeftWidth: "0px",
-    borderRightWidth: "0px",
-    borderBottomWidth: "0px",
-    boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
-    minHeight: undefined,
-  }}
->
-        {imagePreview && (
-  <div className="mb-2 px-1">
-    <div className="relative inline-flex rounded-2xl border border-zinc-200 bg-zinc-50/80 p-1.5 shadow-sm">
-      <img
-        src={imagePreview}
-        alt="Preview"
-        className="h-16 w-16 rounded-xl object-cover border border-zinc-200"
-      />
+          <div
+            className="relative w-full md:rounded-[20px] bg-white border-zinc-200 px-2.5 pt-1.5 pb-1.5 md:border md:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200"
+            style={{
+              borderTopLeftRadius: "22px",
+              borderTopRightRadius: "22px",
+              borderBottomLeftRadius: "0px",
+              borderBottomRightRadius: "0px",
+              borderTopWidth: "1px",
+              borderLeftWidth: "0px",
+              borderRightWidth: "0px",
+              borderBottomWidth: "0px",
+              boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
+            }}
+          >
+            {imagePreview && (
+              <div className="mb-2 px-1">
+                <div className="relative inline-flex rounded-2xl border border-zinc-200 bg-zinc-50/80 p-1.5 shadow-sm">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="h-16 w-16 rounded-xl object-cover border border-zinc-200"
+                  />
 
-      <button
-        type="button"
-        onClick={clearImagePreview}
-        className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white border border-zinc-200 shadow-sm text-zinc-700 flex items-center justify-center"
-        aria-label="Quitar imagen"
-        title="Quitar imagen"
-      >
-        <span className="text-[14px] leading-none">×</span>
-      </button>
-    </div>
-  </div>
-)}
+                  <button
+                    type="button"
+                    onClick={clearImagePreview}
+                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white border border-zinc-200 shadow-sm text-zinc-700 flex items-center justify-center"
+                    aria-label="Quitar imagen"
+                    title="Quitar imagen"
+                  >
+                    <span className="text-[14px] leading-none">×</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="absolute left-2.5 bottom-2 z-10 flex items-center gap-1.5">
               <button
                 onClick={openBoard}
@@ -277,34 +283,34 @@ return (
               placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
               disabled={isTyping}
               rows={1}
-              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[18px] pt-3 pb-[52px] leading-6 min-h-[30px] max-h-[260px] [scrollbar-width:none]"
+              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[20px] pt-3 pb-[52px] leading-6 min-h-[30px] max-h-[260px] [scrollbar-width:none]"
             />
 
-  {showExpandButton && !inputExpanded && (
-  <button
-    type="button"
-    onClick={() => setInputExpanded(true)}
-    disabled={!!isTyping}
-    className="absolute top-2 right-2 z-20 h-9 w-9 rounded-full text-zinc-700 active:bg-zinc-200/70 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
-    aria-label="Expandir entrada"
-    title="Expandir"
-  >
-    <ExpandIcon className="h-[18px] w-[18px] -scale-x-100" />
-  </button>
-)}
+            {showExpandButton && !inputExpanded && (
+              <button
+                type="button"
+                onClick={() => setInputExpanded(true)}
+                disabled={!!isTyping}
+                className="absolute top-2 right-2 z-20 h-9 w-9 rounded-full text-zinc-700 active:bg-zinc-200/70 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
+                aria-label="Expandir entrada"
+                title="Expandir"
+              >
+                <ExpandIcon className="h-[18px] w-[18px] -scale-x-100" />
+              </button>
+            )}
 
-{inputExpanded && (
-  <button
-    type="button"
-    onClick={() => setInputExpanded(false)}
-    disabled={!!isTyping}
-    className="absolute top-2 right-2 z-20 h-9 w-9 rounded-full text-zinc-700 active:bg-zinc-200/70 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
-    aria-label="Contraer entrada"
-    title="Contraer"
-  >
-    <ExpandIcon className="h-[18px] w-[18px] rotate-180 -scale-x-100" />
-  </button>
-)}
+            {inputExpanded && (
+              <button
+                type="button"
+                onClick={() => setInputExpanded(false)}
+                disabled={!!isTyping}
+                className="absolute top-2 right-2 z-20 h-9 w-9 rounded-full text-zinc-700 active:bg-zinc-200/70 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
+                aria-label="Contraer entrada"
+                title="Contraer"
+              >
+                <ExpandIcon className="h-[18px] w-[18px] rotate-180 -scale-x-100" />
+              </button>
+            )}
 
             <div className="absolute right-2.5 bottom-2.5 z-10 flex items-center gap-1.5">
               <button
@@ -383,8 +389,8 @@ return (
           </div>
 
           <div className="hidden md:block mt-1.5 px-3 md:px-0 text-center text-[11.5px] text-zinc-500">
-  Orientación preventiva · No sustituye profesionales.
-</div>
+            Orientación preventiva · No sustituye profesionales.
+          </div>
         </div>
       </div>
     </div>
