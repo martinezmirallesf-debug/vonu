@@ -167,13 +167,7 @@ useEffect(() => {
   const next = Math.min(rawScrollHeight, maxHeight);
   el.style.height = `${next}px`;
 
-  const hasMeaningfulText = input.trim().length > 0;
-  const shouldShow =
-    !inputExpanded &&
-    hasMeaningfulText &&
-    (rawScrollHeight >= normalMaxHeight - 8 || input.trim().length > 220);
-
-  setShowExpandButton(shouldShow);
+  setShowExpandButton(!inputExpanded && input.trim().length > 280);
 
   requestAnimationFrame(() => {
     el.scrollTop = el.scrollHeight;
@@ -206,7 +200,7 @@ return (
 
         <div className="w-full bg-transparent border-none shadow-none">
   <div
-  className="relative w-full md:rounded-[20px] bg-white border-zinc-200 px-2.5 pt-2 pb-2 md:border md:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200"
+  className="relative w-full md:rounded-[20px] bg-white border-zinc-200 px-2.5 pt-1.5 pb-1.5 md:border md:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200"
   style={{
     borderTopLeftRadius: "22px",
     borderTopRightRadius: "22px",
@@ -279,7 +273,7 @@ return (
               placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
               disabled={isTyping}
               rows={1}
-              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[18px] pt-3 pb-[68px] leading-6 min-h-[30px] max-h-[260px] [scrollbar-width:none]"
+              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[18px] pt-3 pb-[52px] leading-6 min-h-[30px] max-h-[260px] [scrollbar-width:none]"
             />
 
   {showExpandButton && !inputExpanded && (
