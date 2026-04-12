@@ -5514,7 +5514,7 @@ return (
   className="mx-auto max-w-3xl px-3 md:px-6"
   style={{
     paddingTop: hasUserMessage ? 0 : 124,
-    paddingBottom: hasUserMessage ? chatBottomPad : 18,
+    paddingBottom: hasUserMessage ? chatBottomPad : inputBarH + 54,
   }}
 >
 
@@ -5574,46 +5574,46 @@ return (
       ) : null}
 {!hasUserMessage ? (
   <div className="px-1">
-    <div className="pt-[118px] md:pt-[120px] ml-2">
-      <div className="flex items-center gap-3 mb-5 md:mb-6">
+    <div className="pt-[84px] md:pt-[96px] ml-2">
+      <div className="flex items-center gap-3 mb-4 md:mb-5">
         <img
           src="/logo/vonu-cube-black.png?v=3"
           alt="Vonu"
-          className="block h-[20px] w-[20px] md:h-[22px] md:w-[22px] object-contain"
+          className="block h-[18px] w-[18px] md:h-[20px] md:w-[20px] object-contain"
           draggable={false}
         />
 
         <div
-  className="text-[28px] md:text-[34px] leading-none text-zinc-900"
-  style={{
-    fontFamily: "var(--font-playfair-display)",
-    fontWeight: 500,
-  }}
->
-  Hola{" "}
-  <span style={{ fontStyle: "italic" }}>
-    {authUserName?.trim() || "Invitado"}
-  </span>
-  ,
-</div>
+          className="text-[24px] md:text-[32px] leading-none text-zinc-900"
+          style={{
+            fontFamily: "var(--font-playfair-display)",
+            fontWeight: 500,
+          }}
+        >
+          Hola{" "}
+          <span style={{ fontStyle: "italic" }}>
+            {authUserName?.trim() || "Invitado"}
+          </span>
+          ,
+        </div>
       </div>
 
       <div className="max-w-[720px]">
-        <div className="text-zinc-900 font-black tracking-[-0.05em] leading-[0.92] text-[58px] md:text-[84px]">
+        <div className="text-zinc-900 font-black tracking-[-0.045em] leading-[0.94] text-[52px] md:text-[84px]">
           ¿Qué quieres
           <br />
           hacer hoy?
         </div>
       </div>
 
-      <div className="mt-10 md:mt-12 flex flex-wrap gap-4">
+      <div className="mt-9 md:mt-12 flex flex-wrap gap-4">
         {quickPrompts.map((p) => (
           <button
             key={p.label}
             onClick={() => applyQuickPrompt(p)}
             className={[
               "inline-flex items-center justify-center",
-              "rounded-full border border-zinc-900/20 bg-white/96",
+              "rounded-full border border-zinc-900/18 bg-white/96",
               "px-6 py-3 md:px-7 md:py-3.5",
               "text-[15px] md:text-[16px] font-semibold text-zinc-900",
               "shadow-[0_2px_10px_rgba(0,0,0,0.06)]",
