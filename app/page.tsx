@@ -5574,7 +5574,7 @@ return (
       ) : null}
 {!hasUserMessage ? (
   <div className="px-1">
-    <div className="pt-[12px] md:pt-[64px] ml-2">
+    <div className="pt-[10px] md:pt-[46px] ml-2">
       <div className="flex items-center gap-3 mb-4 md:mb-5">
         <img
           src="/logo/vonu-cube-black.png?v=3"
