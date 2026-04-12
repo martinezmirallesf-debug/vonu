@@ -98,13 +98,9 @@ useEffect(() => {
 
   const maxHeight = 260;
 
-  el.style.height = "0px";
+  el.style.height = "auto";
   const next = Math.min(el.scrollHeight, maxHeight);
   el.style.height = `${next}px`;
-
-  requestAnimationFrame(() => {
-    el.scrollTop = el.scrollHeight;
-  });
 }, [input, textareaRef]);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
@@ -166,19 +162,21 @@ useEffect(() => {
               </div>
             )}
 
-            <textarea
-  ref={textareaRef}
-  value={input}
-  onChange={(e) => setInput(e.target.value)}
-  onKeyDown={handleKeyDown}
-  placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
-  disabled={isTyping}
-  rows={1}
-  className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-3 leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none]"
-  style={{ WebkitOverflowScrolling: "touch" }}
-/>
+                        <div className="px-1">
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
+                disabled={isTyping}
+                rows={1}
+                className="block w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-5 leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none]"
+                style={{ WebkitOverflowScrolling: "touch" }}
+              />
+            </div>
 
-<div className="mt-1 flex items-center justify-between px-1 pb-1">
+<div className="mt-1 flex items-center justify-between border-t border-zinc-100 px-1 pt-2 pb-1">
   <div className="flex items-center gap-1.5">
     <button
       onClick={openBoard}
