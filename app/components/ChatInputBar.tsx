@@ -115,30 +115,18 @@ function ExpandIcon({ className }: { className?: string }) {
       aria-hidden="true"
     >
       <path
-        d="M15.5 4.5H19.5V8.5"
+        d="M9 4.75H5.75V8"
         stroke="currentColor"
-        strokeWidth="2.2"
+        strokeWidth="2.1"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
-        d="M19.5 4.5L14 10"
+        d="M15 19.25h3.25V16"
         stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M8.5 19.5H4.5V15.5"
-        stroke="currentColor"
-        strokeWidth="2.2"
+        strokeWidth="2.1"
         strokeLinecap="round"
         strokeLinejoin="round"
-      />
-      <path
-        d="M4.5 19.5L10 14"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
       />
     </svg>
   );
@@ -181,7 +169,7 @@ useEffect(() => {
 
   // ✅ Mostrar expandir cuando ya hay bastante texto,
   // no solo cuando sobrepasa el límite exacto
-  setShowExpandButton(!inputExpanded && rawScrollHeight > 170);
+  setShowExpandButton(!inputExpanded && rawScrollHeight > 215);
 
   requestAnimationFrame(() => {
     el.scrollTop = el.scrollHeight;
@@ -295,7 +283,7 @@ return (
     type="button"
     onClick={() => setInputExpanded(true)}
     disabled={!!isTyping}
-    className="absolute top-2 right-2 z-20 h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border border-zinc-200 bg-white shadow-sm"
+    className="absolute top-2 right-2 z-20 h-8 w-8 rounded-full text-zinc-700 active:bg-zinc-200/70 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
     aria-label="Expandir entrada"
     title="Expandir"
   >
@@ -308,7 +296,7 @@ return (
     type="button"
     onClick={() => setInputExpanded(false)}
     disabled={!!isTyping}
-    className="absolute top-2 right-2 z-20 h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border border-zinc-200 bg-white shadow-sm"
+    className="absolute top-2 right-2 z-20 h-8 w-8 rounded-full text-zinc-700 active:bg-zinc-200/70 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
     aria-label="Contraer entrada"
     title="Contraer"
   >
