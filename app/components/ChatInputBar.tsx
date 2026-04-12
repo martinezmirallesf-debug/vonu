@@ -96,15 +96,18 @@ useEffect(() => {
   const el = textareaRef.current;
   if (!el) return;
 
-  el.style.height = "0px";
-const next = Math.min(el.scrollHeight, 260);
-el.style.height = `${next}px`;
+  const maxHeight = 260;
 
-if (el.scrollHeight > 260) {
-  requestAnimationFrame(() => {
-    el.scrollTop = el.scrollHeight;
-  });
-}
+  el.style.height = "0px";
+  const next = Math.min(el.scrollHeight, maxHeight);
+  el.style.height = `${next}px`;
+
+  if (el.scrollHeight > maxHeight) {
+    requestAnimationFrame(() => {
+      const safeBottomGap = 78;
+      el.scrollTop = el.scrollHeight - el.clientHeight + safeBottomGap;
+    });
+  }
 }, [input, textareaRef]);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
@@ -197,15 +200,16 @@ if (el.scrollHeight > 260) {
             </div>
 
             <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
-              disabled={isTyping}
-              rows={1}
-              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[14px] pt-3 pb-[64px] leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none]"
-            />
+  ref={textareaRef}
+  value={input}
+  onChange={(e) => setInput(e.target.value)}
+  onKeyDown={handleKeyDown}
+  placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
+  disabled={isTyping}
+  rows={1}
+  className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[14px] pt-3 pb-[78px] leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none] [scroll-padding-bottom:78px]"
+  style={{ WebkitOverflowScrolling: "touch" }}
+/>
 
             <div className="absolute right-2.5 bottom-2.5 z-10 flex items-center gap-1.5">
               <button
