@@ -5513,9 +5513,9 @@ return (
   <div
   className="mx-auto max-w-3xl px-3 md:px-6"
   style={{
-    paddingTop: hasUserMessage ? 0 : 124,
-    paddingBottom: hasUserMessage ? chatBottomPad : inputBarH + 54,
-  }}
+  paddingTop: hasUserMessage ? 0 : 124,
+  paddingBottom: hasUserMessage ? chatBottomPad : inputBarH + 90,
+}}
 >
 
 {showSoftLimitWarning ? (
@@ -5574,7 +5574,7 @@ return (
       ) : null}
 {!hasUserMessage ? (
   <div className="px-1">
-    <div className="pt-[84px] md:pt-[96px] ml-2">
+    <div className="pt-[72px] md:pt-[92px] ml-2">
       <div className="flex items-center gap-3 mb-4 md:mb-5">
         <img
           src="/logo/vonu-cube-black.png?v=3"
@@ -5584,7 +5584,7 @@ return (
         />
 
         <div
-          className="text-[24px] md:text-[32px] leading-none text-zinc-900"
+          className="text-[22px] md:text-[30px] leading-none text-zinc-900"
           style={{
             fontFamily: "var(--font-playfair-display)",
             fontWeight: 500,
@@ -5599,7 +5599,7 @@ return (
       </div>
 
       <div className="max-w-[720px]">
-        <div className="text-zinc-900 font-black tracking-[-0.045em] leading-[0.94] text-[52px] md:text-[84px]">
+        <div className="text-zinc-900 font-[800] tracking-[-0.04em] leading-[0.95] text-[50px] md:text-[78px]">
           ¿Qué quieres
           <br />
           hacer hoy?
