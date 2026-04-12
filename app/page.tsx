@@ -5574,35 +5574,58 @@ return (
       ) : null}
 {!hasUserMessage ? (
   <div className="px-1">
-    <div className="pt-8 md:pt-10 ml-2">
-  <div className="text-zinc-900 font-black tracking-tight leading-[0.92] text-[56px] md:text-[72px]">
-        ¿Qué
-        <br />
-        quieres
-        <br />
-        hacer?
+    <div className="pt-[118px] md:pt-[120px] ml-2">
+      <div className="flex items-center gap-3 mb-5 md:mb-6">
+        <img
+          src="/logo/vonu-cube-black.png?v=3"
+          alt="Vonu"
+          className="block h-[20px] w-[20px] md:h-[22px] md:w-[22px] object-contain"
+          draggable={false}
+        />
+
+        <div
+  className="text-[28px] md:text-[34px] leading-none text-zinc-900"
+  style={{
+    fontFamily: "var(--font-playfair-display)",
+    fontWeight: 500,
+  }}
+>
+  Hola{" "}
+  <span style={{ fontStyle: "italic" }}>
+    {authUserName?.trim() || "Invitado"}
+  </span>
+  ,
+</div>
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-3">
-  {quickPrompts.map((p) => (
-    <button
-      key={p.label}
-      onClick={() => applyQuickPrompt(p)}
-      className={[
-        "inline-flex items-center justify-center",
-        "rounded-full border border-zinc-900/35 bg-white",
-        "px-5 py-2.5 text-[13px] font-semibold text-zinc-900",
-        "shadow-sm hover:bg-zinc-50 transition-colors",
-        "active:scale-[0.99]",
-        "whitespace-nowrap",
-      ].join(" ")}
-    >
-      {p.label === "Identificar posible estafa" ? "Posible estafa" : p.label}
-    </button>
-  ))}
-</div>
+      <div className="max-w-[720px]">
+        <div className="text-zinc-900 font-black tracking-[-0.05em] leading-[0.92] text-[58px] md:text-[84px]">
+          ¿Qué quieres
+          <br />
+          hacer hoy?
+        </div>
+      </div>
 
-
+      <div className="mt-10 md:mt-12 flex flex-wrap gap-4">
+        {quickPrompts.map((p) => (
+          <button
+            key={p.label}
+            onClick={() => applyQuickPrompt(p)}
+            className={[
+              "inline-flex items-center justify-center",
+              "rounded-full border border-zinc-900/20 bg-white/96",
+              "px-6 py-3 md:px-7 md:py-3.5",
+              "text-[15px] md:text-[16px] font-semibold text-zinc-900",
+              "shadow-[0_2px_10px_rgba(0,0,0,0.06)]",
+              "hover:bg-white transition-all duration-200",
+              "active:scale-[0.99]",
+              "whitespace-nowrap",
+            ].join(" ")}
+          >
+            {p.label === "Identificar posible estafa" ? "Posible estafa" : p.label}
+          </button>
+        ))}
+      </div>
     </div>
   </div>
 ) : null}
