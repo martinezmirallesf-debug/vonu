@@ -5599,7 +5599,7 @@ return (
       </div>
 
       <div className="max-w-[720px]">
-        <div className="text-zinc-900 font-[800] tracking-[-0.04em] leading-[0.95] text-[50px] md:text-[78px]">
+        <div className="text-zinc-900 font-[700] tracking-[-0.035em] leading-[0.96] text-[44px] md:text-[68px]">
           ¿Qué quieres
           <br />
           hacer hoy?
