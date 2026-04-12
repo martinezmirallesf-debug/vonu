@@ -101,6 +101,7 @@ useEffect(() => {
   el.style.height = "auto";
   const next = Math.min(el.scrollHeight, maxHeight);
   el.style.height = `${next}px`;
+  el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
 }, [input, textareaRef]);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
@@ -162,7 +163,7 @@ useEffect(() => {
               </div>
             )}
 
-                        <div className="px-1">
+                                    <div className="px-1 overflow-hidden">
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -171,10 +172,15 @@ useEffect(() => {
                 placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
                 disabled={isTyping}
                 rows={1}
-                className="block w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-5 leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none]"
-                style={{ WebkitOverflowScrolling: "touch" }}
+                className="block w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-3 leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none] mb-1"
+                style={{
+                  WebkitOverflowScrolling: "touch",
+                  boxSizing: "border-box",
+                }}
               />
             </div>
+
+<div className="flex items-center justify-between px-1 pt-0 pb-1">
 
 <div className="mt-1 flex items-center justify-between border-t border-zinc-100 px-1 pt-2 pb-1">
   <div className="flex items-center gap-1.5">
