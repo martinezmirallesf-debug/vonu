@@ -123,13 +123,17 @@ export default function ChatInputBar({
   onSelectImage,
 }: ChatInputBarProps) {
   useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
+  const el = textareaRef.current;
+  if (!el) return;
 
-    el.style.height = "0px";
-    const next = Math.min(el.scrollHeight, 180);
-    el.style.height = `${next}px`;
-  }, [input, textareaRef]);
+  el.style.height = "0px";
+  const next = Math.min(el.scrollHeight, 180);
+  el.style.height = `${next}px`;
+
+  requestAnimationFrame(() => {
+    el.scrollTop = el.scrollHeight;
+  });
+}, [input, textareaRef]);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
     ? "idle"
@@ -147,16 +151,6 @@ export default function ChatInputBar({
   }}
 >
       <div className="mx-auto max-w-3xl px-0 md:px-6 pt-0 md:pt-2 pb-0 md:pb-2">
-        {imagePreview && (
-          <div className="mb-2 relative w-fit">
-            <img
-              src={imagePreview}
-              alt="Preview"
-              className="rounded-2xl border border-zinc-200 max-h-40"
-            />
-          </div>
-        )}
-
         {micMsg && (
           <div className="mb-2 text-[12px] text-zinc-600 bg-white/95 border border-zinc-200 rounded-2xl px-3 py-2 shadow-sm">
             {micMsg}
@@ -178,6 +172,25 @@ export default function ChatInputBar({
       boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
     }}
   >
+        {imagePreview && (
+      <div className="mb-2 px-1">
+        <div className="inline-flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/80 px-2.5 py-2 shadow-sm">
+          <img
+            src={imagePreview}
+            alt="Preview"
+            className="h-14 w-14 rounded-xl object-cover border border-zinc-200"
+          />
+          <div className="min-w-0">
+            <div className="text-[13px] font-medium text-zinc-900 truncate">
+              Imagen adjunta
+            </div>
+            <div className="text-[11px] text-zinc-500">
+              Lista para analizar
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
             <div className="absolute left-2.5 bottom-2.5 z-10 flex items-center gap-1.5">
               <button
                 onClick={openBoard}
@@ -216,7 +229,7 @@ export default function ChatInputBar({
               placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
               disabled={isTyping}
               rows={1}
-              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[24px] pr-[88px] pt-3 pb-12 leading-6 min-h-[24px] max-h-[180px]"
+              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[24px] pr-[88px] pt-3 pb-12 leading-6 min-h-[24px] max-h-[180px] [scrollbar-width:none]"
             />
 
             <div className="absolute right-2.5 bottom-2.5 z-10 flex items-center gap-1.5">
@@ -295,7 +308,7 @@ export default function ChatInputBar({
             </div>
           </div>
 
-          <div className="mt-1.5 px-3 md:px-0 text-center text-[10.5px] md:text-[11.5px] text-zinc-500">
+          <div className="hidden md:block mt-1.5 px-3 md:px-0 text-center text-[11.5px] text-zinc-500">
   Orientación preventiva · No sustituye profesionales.
 </div>
         </div>
