@@ -233,7 +233,7 @@ clearImagePreview,
               placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
               disabled={isTyping}
               rows={1}
-              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[82px] pt-3 pb-16 leading-6 min-h-[24px] max-h-[260px] [scrollbar-width:none]"
+              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[68px] pt-3 pb-16 leading-6 min-h-[24px] max-h-[260px] [scrollbar-width:none]"
             />
 
             <div className="absolute right-2.5 bottom-2.5 z-10 flex items-center gap-1.5">
