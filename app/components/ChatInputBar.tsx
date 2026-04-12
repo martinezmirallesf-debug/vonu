@@ -30,8 +30,6 @@ type ChatInputBarProps = {
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   onSelectImage: (e: React.ChangeEvent<HTMLInputElement>) => void;
   clearImagePreview: () => void;
-  inputExpanded: boolean;
-  setInputExpanded: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 function MicIcon({ className }: { className?: string }) {
@@ -92,8 +90,6 @@ export default function ChatInputBar({
   fileInputRef,
   onSelectImage,
   clearImagePreview,
-  inputExpanded,
-  setInputExpanded,
 }: ChatInputBarProps) {
 
 useEffect(() => {
@@ -206,36 +202,8 @@ useEffect(() => {
               placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
               disabled={isTyping}
               rows={1}
-              className={`w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[20px] pt-3 leading-6 min-h-[30px] [scrollbar-width:none] ${
-                inputExpanded ? "pb-[76px] max-h-[420px]" : "pb-[52px] max-h-[220px]"
-              }`}
+              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[14px] pt-3 pb-[48px] leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none]"
             />
-
-            {showExpandButton && !inputExpanded && (
-              <button
-                type="button"
-                onClick={() => setInputExpanded(true)}
-                disabled={!!isTyping}
-                className="absolute top-2 right-2 z-20 h-9 w-9 rounded-full text-zinc-700 active:bg-zinc-200/70 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
-                aria-label="Expandir entrada"
-                title="Expandir"
-              >
-                <ExpandIcon className="h-[18px] w-[18px] -scale-x-100" />
-              </button>
-            )}
-
-            {inputExpanded && (
-              <button
-                type="button"
-                onClick={() => setInputExpanded(false)}
-                disabled={!!isTyping}
-                className="absolute top-2 right-2 z-20 h-9 w-9 rounded-full text-zinc-700 active:bg-zinc-200/70 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
-                aria-label="Contraer entrada"
-                title="Contraer"
-              >
-                <ExpandIcon className="h-[18px] w-[18px] rotate-180 -scale-x-100" />
-              </button>
-            )}
 
             <div className="absolute right-2.5 bottom-2.5 z-10 flex items-center gap-1.5">
               <button
