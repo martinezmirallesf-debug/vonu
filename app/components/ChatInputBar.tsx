@@ -127,8 +127,8 @@ useEffect(() => {
         )}
 
         <div className="w-full bg-transparent border-none shadow-none">
-          <div
-  className="relative w-full md:rounded-[20px] bg-white border-zinc-200 px-2.5 pt-1 pb-1 md:border md:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200"
+                    <div
+  className="relative w-full overflow-hidden md:rounded-[20px] bg-white border-zinc-200 px-2.5 pt-1 pb-1 md:border md:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200"
   style={{
     borderTopLeftRadius: "22px",
     borderTopRightRadius: "22px",
@@ -163,7 +163,7 @@ useEffect(() => {
               </div>
             )}
 
-                                    <div className="px-1 overflow-hidden">
+                                                <div className="px-1">
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -172,7 +172,7 @@ useEffect(() => {
                 placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
                 disabled={isTyping}
                 rows={1}
-                className="block w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-3 leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none] mb-1"
+                className="block w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-[14px] leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none]"
                 style={{
                   WebkitOverflowScrolling: "touch",
                   boxSizing: "border-box",
@@ -180,7 +180,7 @@ useEffect(() => {
               />
             </div>
 
-<div className="flex items-center justify-between px-1 pt-0 pb-1">
+<div className="relative z-10 -mt-[2px] flex items-center justify-between bg-white px-1 pt-0.5 pb-1">
   <div className="flex items-center gap-1.5">
     <button
       onClick={openBoard}
