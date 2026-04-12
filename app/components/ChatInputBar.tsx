@@ -179,7 +179,9 @@ useEffect(() => {
   const next = Math.min(rawScrollHeight, maxHeight);
   el.style.height = `${next}px`;
 
-  setShowExpandButton(!inputExpanded && rawScrollHeight > normalMaxHeight);
+  // ✅ Mostrar expandir cuando ya hay bastante texto,
+  // no solo cuando sobrepasa el límite exacto
+  setShowExpandButton(!inputExpanded && rawScrollHeight > 170);
 
   requestAnimationFrame(() => {
     el.scrollTop = el.scrollHeight;
@@ -285,19 +287,32 @@ return (
               placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
               disabled={isTyping}
               rows={1}
-              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[12px] pt-3 pb-[72px] leading-6 min-h-[30px] max-h-[260px] [scrollbar-width:none]"
+              className="w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 pl-[12px] pr-[12px] pt-3 pb-[92px] leading-6 min-h-[30px] max-h-[260px] [scrollbar-width:none]"
             />
 
-            {showExpandButton && (
+            {showExpandButton && !inputExpanded && (
   <button
     type="button"
     onClick={() => setInputExpanded(true)}
     disabled={!!isTyping}
-    className="absolute top-2.5 right-2.5 z-10 h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-white/80"
+    className="absolute top-2 right-2 z-20 h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border border-zinc-200 bg-white shadow-sm"
     aria-label="Expandir entrada"
     title="Expandir"
   >
     <ExpandIcon className="h-[16px] w-[16px]" />
+  </button>
+)}
+
+{inputExpanded && (
+  <button
+    type="button"
+    onClick={() => setInputExpanded(false)}
+    disabled={!!isTyping}
+    className="absolute top-2 right-2 z-20 h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border border-zinc-200 bg-white shadow-sm"
+    aria-label="Contraer entrada"
+    title="Contraer"
+  >
+    <ExpandIcon className="h-[16px] w-[16px] rotate-180" />
   </button>
 )}
 
