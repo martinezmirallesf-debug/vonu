@@ -182,7 +182,7 @@ export default function ChatInputBar({
     style={{
       boxSizing: "border-box",
       WebkitOverflowScrolling: "touch",
-      scrollPaddingBottom: "84px",
+      scrollPaddingBottom: "92px",
     }}
   />
 </div>
