@@ -126,9 +126,9 @@ export default function ChatInputBar({
       ref={inputBarRef}
       className="fixed left-0 right-0 z-30 bg-transparent"
       style={{
-        bottom: "var(--vvb, 0px)",
-        paddingBottom: "env(safe-area-inset-bottom)",
-      }}
+  bottom: "calc(var(--vvb, 0px) - 10px)",
+  paddingBottom: "env(safe-area-inset-bottom)",
+}}
     >
       <div className="mx-auto max-w-3xl px-0 md:px-6 pt-0 md:pt-2 pb-0 md:pb-2">
         {micMsg && (
@@ -138,7 +138,16 @@ export default function ChatInputBar({
         )}
 
         <div className="relative w-full">
-  <div className="absolute inset-0 hidden md:block rounded-[22px] bg-[#f8f9fa] pointer-events-none" />
+  <div
+  className="absolute inset-x-0 top-0 hidden md:block bg-[#f8f9fa] pointer-events-none"
+  style={{
+    bottom: "-80px",
+    borderTopLeftRadius: "22px",
+    borderTopRightRadius: "22px",
+    borderBottomLeftRadius: "0px",
+    borderBottomRightRadius: "0px",
+  }}
+/>
 
   <div className="relative z-10 w-full bg-transparent border-none shadow-none">
             <div
