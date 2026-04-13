@@ -71,23 +71,16 @@ function TrashIcon({ className }: { className?: string }) {
   );
 }
 
-function PinIcon({
-  className,
-  style,
-}: {
-  className?: string;
-  style?: React.CSSProperties;
-}) {
+function PinIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className ?? "h-5 w-5"}
-      style={style}
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden="true"
     >
       <path
-        d="M14.8 3.8c.6 0 1.1.5 1.1 1.1v2.1l2.2 2.2c.4.4.4 1 0 1.4l-3.5 3.5v4.2c0 .4-.2.7-.6.9-.3.1-.7.1-1-.2l-2.2-2.2-3.8 3.8c-.4.4-1 .4-1.4 0s-.4-1 0-1.4l3.8-3.8-2.2-2.2c-.3-.3-.4-.7-.2-1 .1-.4.5-.6.9-.6h4.2l3.5-3.5c.4-.4 1-.4 1.4 0l.2.2V4.9c0-.6.5-1.1 1.1-1.1"
+        d="M14 3l7 7-2.8.8-3.4 3.4.8 2.8-1.4 1.4-4.2-4.2-4.9 4.9a1 1 0 0 1-1.4-1.4l4.9-4.9-4.2-4.2 1.4-1.4 2.8.8 3.4-3.4L14 3Z"
         stroke="currentColor"
         strokeWidth="1.9"
         strokeLinecap="round"
@@ -531,10 +524,10 @@ export default function Sidebar({
                 onClick={togglePinFromMenu}
                 className="w-full flex items-center gap-3 rounded-[20px] px-4 py-3 hover:bg-zinc-50 transition-colors cursor-pointer"
               >
-                <PinIcon className="h-[18px] w-[18px]" style={{ color: BRAND_BLUE } as React.CSSProperties} />
+                <PinIcon className="h-[18px] w-[18px] text-zinc-900" />
                 <span className="text-[15px] font-medium text-zinc-900">
-                  {selectedIsPinned ? "Quitar de fijadas" : "Fijar"}
-                </span>
+  {selectedIsPinned ? "Quitar de fijadas" : "Fijar"}
+</span>
               </button>
 
               <button
