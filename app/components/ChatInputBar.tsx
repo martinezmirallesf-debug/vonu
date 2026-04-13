@@ -138,14 +138,6 @@ export default function ChatInputBar({
         )}
 
         <div className="relative w-full">
-          <div
-  className="absolute inset-x-0 hidden md:block pointer-events-none bg-[#f8f9fa] z-0"
-  style={{
-    bottom: 0,
-    height: "220px",
-    transform: "translateY(100%)",
-  }}
-/>
 
           <div className="relative z-10 w-full bg-transparent border-none shadow-none">
             <div
@@ -297,9 +289,11 @@ export default function ChatInputBar({
               </div>
             </div>
 
-            <div className="hidden md:block mt-1.5 px-3 md:px-0 text-center text-[11.5px] text-zinc-500">
-              Orientación preventiva · No sustituye profesionales.
-            </div>
+            <div className="hidden md:block relative z-10 mt-1.5 rounded-b-[20px] bg-[#f8f9fa] px-3 md:px-0 pt-3 pb-2">
+  <div className="text-center text-[11.5px] text-zinc-500">
+    Orientación preventiva · No sustituye profesionales.
+  </div>
+</div>
           </div>
         </div>
       </div>
