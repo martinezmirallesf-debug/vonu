@@ -187,7 +187,7 @@ export default function ChatInputBar({
     placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
     disabled={isTyping}
     rows={1}
-    className="block w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-2.5 pb-9 leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none]"
+    className="block w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-10 leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none]"
     style={{
       boxSizing: "border-box",
       WebkitOverflowScrolling: "touch",
