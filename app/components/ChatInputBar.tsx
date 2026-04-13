@@ -151,9 +151,10 @@ export default function ChatInputBar({
 
   <div className="relative z-10 w-full bg-transparent border-none shadow-none">
             <div
-  className="relative w-full overflow-hidden overscroll-none bg-white px-2.5 pt-1 pb-1.5 md:pb-1 transition-all duration-200 rounded-t-[22px] rounded-b-none md:rounded-[20px] md:border md:border-zinc-200 md:shadow-[0_4px_16px_rgba(0,0,0,0.06)]"
+  className="relative w-full overflow-hidden overscroll-none bg-white px-2.5 pt-1 pb-1.5 md:pb-1 transition-all duration-200 rounded-t-[22px] rounded-b-none md:rounded-[20px] border border-zinc-300/90 md:border-zinc-300"
   style={{
-    boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
+    boxShadow: "0 -6px 20px rgba(0,0,0,0.085)",
+    borderBottomWidth: 0,
   }}
 >
               <div
