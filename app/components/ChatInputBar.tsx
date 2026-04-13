@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useLayoutEffect } from "react";
 
 type RealtimeVoiceStatus =
   | "idle"
@@ -92,11 +92,12 @@ export default function ChatInputBar({
   clearImagePreview,
 }: ChatInputBarProps) {
 
-  useEffect(() => {
+  useLayoutEffect(() => {
   const el = textareaRef.current;
   if (!el) return;
 
   const maxHeight = 260;
+  const bottomSafeGap = 76;
 
   el.style.height = "auto";
   const next = Math.min(el.scrollHeight, maxHeight);
@@ -107,7 +108,7 @@ export default function ChatInputBar({
 
   if (shouldScroll) {
     requestAnimationFrame(() => {
-      el.scrollTop = el.scrollHeight;
+      el.scrollTop = el.scrollHeight + bottomSafeGap;
     });
   } else {
     el.scrollTop = 0;
@@ -137,7 +138,7 @@ export default function ChatInputBar({
         )}
 
         <div className="relative w-full">
-          <div className="absolute inset-x-0 bottom-[-20px] hidden md:block h-[160px] bg-[#f5f5f5] pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-[-48px] hidden md:block h-[220px] bg-[#f8f9fa] pointer-events-none" />
 
           <div className="relative z-10 w-full bg-transparent border-none shadow-none">
             <div
@@ -177,11 +178,11 @@ export default function ChatInputBar({
     placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
     disabled={isTyping}
     rows={1}
-    className="block w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-7 leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none]"
+    className="block w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-10 leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none]"
     style={{
       boxSizing: "border-box",
       WebkitOverflowScrolling: "touch",
-      scrollPaddingBottom: "56px",
+      scrollPaddingBottom: "84px",
     }}
   />
 </div>
