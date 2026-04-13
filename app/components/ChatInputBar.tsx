@@ -156,27 +156,51 @@ export default function ChatInputBar({
                 boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
               }}
             >
-              {imagePreview && (
-                <div className="mb-2 px-1">
-                  <div className="relative inline-flex rounded-2xl border border-zinc-200 bg-zinc-50/80 p-1.5 shadow-sm">
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="h-16 w-16 rounded-xl object-cover border border-zinc-200"
-                    />
+              <div
+  className="min-h-0 max-h-[min(52vh,420px)] overflow-y-auto overscroll-contain [scrollbar-width:none]"
+  style={{ WebkitOverflowScrolling: "touch" }}
+>
+  {imagePreview && (
+    <div className="mb-2 px-1">
+      <div className="relative inline-flex rounded-2xl border border-zinc-200 bg-zinc-50/80 p-1.5 shadow-sm">
+        <img
+          src={imagePreview}
+          alt="Preview"
+          className="h-16 w-16 rounded-xl object-cover border border-zinc-200"
+        />
 
-                    <button
-                      type="button"
-                      onClick={clearImagePreview}
-                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white border border-zinc-200 shadow-sm text-zinc-700 flex items-center justify-center"
-                      aria-label="Quitar imagen"
-                      title="Quitar imagen"
-                    >
-                      <span className="text-[14px] leading-none">×</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+        <button
+          type="button"
+          onClick={clearImagePreview}
+          className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white border border-zinc-200 shadow-sm text-zinc-700 flex items-center justify-center"
+          aria-label="Quitar imagen"
+          title="Quitar imagen"
+        >
+          <span className="text-[14px] leading-none">×</span>
+        </button>
+      </div>
+    </div>
+  )}
+
+  <div className="px-1">
+    <textarea
+      ref={textareaRef}
+      value={input}
+      onChange={(e) => setInput(e.target.value)}
+      onKeyDown={handleKeyDown}
+      placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
+      disabled={isTyping}
+      rows={1}
+      className="block w-full resize-none overflow-y-auto bg-transparent outline-none touch-pan-y overscroll-contain text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-10 leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none]"
+      style={{
+        boxSizing: "border-box",
+        WebkitOverflowScrolling: "touch",
+        scrollPaddingBottom: "84px",
+        overscrollBehavior: "contain",
+      }}
+    />
+  </div>
+</div>
 
               <div className="px-1">
   <textarea

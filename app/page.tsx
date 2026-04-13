@@ -5495,6 +5495,7 @@ return (
   PLUS_NODE={PLUS_NODE}
   handleOpenPlansCTA={handleOpenPlansCTA}
   openLoginModal={openLoginModal}
+  currentPlanId={usageInfo?.plan_id ?? null}
 />
 
       {/* MAIN */}

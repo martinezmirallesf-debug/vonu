@@ -30,7 +30,11 @@ type SidebarProps = {
   PLUS_NODE: React.ReactNode;
   handleOpenPlansCTA: () => void;
   openLoginModal: (mode: "signin" | "signup") => void;
+  currentPlanId: string | null;
 };
+
+const BRAND_BLUE = "#4285F4";
+const PINNED_STORAGE_KEY = "vonu_pinned_threads_v1";
 
 function SearchIcon({ className }: { className?: string }) {
   return (
@@ -67,11 +71,28 @@ function TrashIcon({ className }: { className?: string }) {
   );
 }
 
-function PinIcon({ className }: { className?: string }) {
+function PinIcon({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M15.5 4.5 19 8l-3.2 1.8-.7 4.7-1.8 1.8-1.2-5.3-5.3-1.2 1.8-1.8 4.7-.7L15.5 4.5Z" stroke="currentColor" strokeWidth="2.1" strokeLinejoin="round" />
-      <path d="M12 16.5 8 20.5" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
+    <svg
+      className={className ?? "h-5 w-5"}
+      style={style}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M14.8 3.8c.6 0 1.1.5 1.1 1.1v2.1l2.2 2.2c.4.4.4 1 0 1.4l-3.5 3.5v4.2c0 .4-.2.7-.6.9-.3.1-.7.1-1-.2l-2.2-2.2-3.8 3.8c-.4.4-1 .4-1.4 0s-.4-1 0-1.4l3.8-3.8-2.2-2.2c-.3-.3-.4-.7-.2-1 .1-.4.5-.6.9-.6h4.2l3.5-3.5c.4-.4 1-.4 1.4 0l.2.2V4.9c0-.6.5-1.1 1.1-1.1"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -131,13 +152,32 @@ export default function Sidebar({
   PLUS_NODE,
   handleOpenPlansCTA,
   openLoginModal,
+  currentPlanId,
 }: SidebarProps) {
   const desktop = isDesktopPointer();
   const [query, setQuery] = useState("");
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [threadMenuOpen, setThreadMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [pinnedIds, setPinnedIds] = useState<string[]>([]);
   const longPressTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(PINNED_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        setPinnedIds(parsed.filter((x) => typeof x === "string"));
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify(pinnedIds));
+    } catch {}
+  }, [pinnedIds]);
 
   useEffect(() => {
     if (!menuOpen) {
@@ -150,9 +190,15 @@ export default function Sidebar({
 
   const filteredThreads = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return sortedThreads;
-    return sortedThreads.filter((t) => t.title.toLowerCase().includes(q));
-  }, [sortedThreads, query]);
+    const base = !q
+      ? sortedThreads
+      : sortedThreads.filter((t) => t.title.toLowerCase().includes(q));
+
+    const pinned = base.filter((t) => pinnedIds.includes(t.id));
+    const normal = base.filter((t) => !pinnedIds.includes(t.id));
+
+    return [...pinned, ...normal];
+  }, [sortedThreads, query, pinnedIds]);
 
   const currentThread = useMemo(
     () => sortedThreads.find((t) => t.id === (selectedThreadId ?? activeThreadId)) ?? null,
@@ -190,6 +236,18 @@ export default function Sidebar({
     closeThreadActions();
   }
 
+  function togglePinFromMenu() {
+    if (!selectedThreadId) return;
+
+    setPinnedIds((prev) =>
+      prev.includes(selectedThreadId)
+        ? prev.filter((id) => id !== selectedThreadId)
+        : [selectedThreadId, ...prev]
+    );
+
+    closeThreadActions();
+  }
+
   function startLongPress(threadId: string) {
     if (desktop) return;
     clearLongPress();
@@ -207,6 +265,21 @@ export default function Sidebar({
 
   const userLabel = authUserName?.trim() || authUserEmail?.trim() || "Tu cuenta";
   const userInitial = userLabel.charAt(0).toUpperCase() || "U";
+
+  const currentPlanLabel =
+    currentPlanId === "max"
+      ? "Max"
+      : currentPlanId === "plus"
+      ? "Plus"
+      : currentPlanId === "free"
+      ? "Gratis"
+      : proLoading
+      ? "comprobando…"
+      : isPro
+      ? "Plus"
+      : "Gratis";
+
+  const selectedIsPinned = !!selectedThreadId && pinnedIds.includes(selectedThreadId);
 
   return (
     <>
@@ -241,7 +314,8 @@ export default function Sidebar({
                     createThreadAndActivate();
                     setMenuOpen(false);
                   }}
-                  className="flex-1 h-12 rounded-full bg-zinc-900 hover:bg-black text-white transition-colors px-4 flex items-center justify-center gap-2 cursor-pointer"
+                  className="flex-1 h-12 rounded-full text-white transition-colors px-4 flex items-center justify-center gap-2 cursor-pointer"
+                  style={{ backgroundColor: BRAND_BLUE }}
                 >
                   <PlusIcon className="h-[18px] w-[18px]" />
                   <span className="text-[14px] font-semibold">Nueva consulta</span>
@@ -253,7 +327,10 @@ export default function Sidebar({
                   aria-label="Cuenta"
                   title="Cuenta"
                 >
-                  <div className="h-7 w-7 rounded-full bg-zinc-900 text-white text-[12px] font-semibold grid place-items-center">
+                  <div
+                    className="h-7 w-7 rounded-full text-white text-[12px] font-semibold grid place-items-center"
+                    style={{ backgroundColor: BRAND_BLUE }}
+                  >
                     {userInitial}
                   </div>
                 </button>
@@ -274,7 +351,10 @@ export default function Sidebar({
                   {isLoggedIn ? (
                     <>
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-zinc-900 text-white text-[14px] font-semibold grid place-items-center shrink-0">
+                        <div
+                          className="h-10 w-10 rounded-full text-white text-[14px] font-semibold grid place-items-center shrink-0"
+                          style={{ backgroundColor: BRAND_BLUE }}
+                        >
                           {userInitial}
                         </div>
 
@@ -288,7 +368,11 @@ export default function Sidebar({
                         <div className="text-[12px] text-zinc-600">
                           Plan{" "}
                           <span className="font-semibold text-zinc-900">
-                            {proLoading ? "comprobando…" : isPro ? PLUS_NODE : "Gratis"}
+                            {currentPlanLabel === "Max"
+                              ? "Max"
+                              : currentPlanLabel === "Plus"
+                              ? PLUS_NODE
+                              : currentPlanLabel}
                           </span>
                         </div>
 
@@ -297,9 +381,10 @@ export default function Sidebar({
                             handleOpenPlansCTA();
                             setMenuOpen(false);
                           }}
-                          className="h-8 px-3 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-[12px] font-semibold text-zinc-800 transition-colors cursor-pointer"
+                          className="h-8 px-3 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-[12px] font-semibold transition-colors cursor-pointer"
+                          style={{ color: BRAND_BLUE }}
                         >
-                          {isPro ? "Ver" : "Mejorar"}
+                          {currentPlanLabel === "Gratis" ? "Mejorar" : "Ver"}
                         </button>
                       </div>
 
@@ -331,7 +416,8 @@ export default function Sidebar({
                           openLoginModal("signin");
                           setMenuOpen(false);
                         }}
-                        className="mt-3 w-full h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold transition-colors cursor-pointer"
+                        className="mt-3 w-full h-10 rounded-full text-white text-[13px] font-semibold transition-colors cursor-pointer"
+                        style={{ backgroundColor: BRAND_BLUE }}
                       >
                         Iniciar sesión
                       </button>
@@ -341,7 +427,7 @@ export default function Sidebar({
               ) : null}
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2">
+            <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2 [scrollbar-width:thin]">
               <div className="px-2 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
                 Recientes
               </div>
@@ -350,6 +436,7 @@ export default function Sidebar({
                 {filteredThreads.map((t) => {
                   const active = t.id === activeThreadId;
                   const when = mounted ? new Date(t.updatedAt).toLocaleDateString() : "";
+                  const pinned = pinnedIds.includes(t.id);
 
                   return (
                     <div
@@ -384,10 +471,15 @@ export default function Sidebar({
                               {t.title}
                             </div>
 
-                            <div className="mt-1 text-[11px] text-zinc-400 truncate">{when}</div>
+                            <div className="mt-1 flex items-center gap-2 text-[11px] text-zinc-400 truncate">
+                              <span>{when}</span>
+                              {pinned ? <span style={{ color: BRAND_BLUE }}>• Fijada</span> : null}
+                            </div>
                           </div>
 
-                          {active ? <div className="h-2.5 w-2.5 rounded-full bg-blue-500 shrink-0" /> : null}
+                          {active ? (
+                            <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: BRAND_BLUE }} />
+                          ) : null}
                         </div>
                       </button>
 
@@ -436,11 +528,13 @@ export default function Sidebar({
 
             <div className="p-2">
               <button
-                onClick={closeThreadActions}
+                onClick={togglePinFromMenu}
                 className="w-full flex items-center gap-3 rounded-[20px] px-4 py-3 hover:bg-zinc-50 transition-colors cursor-pointer"
               >
-                <PinIcon className="h-[18px] w-[18px] text-zinc-700" />
-                <span className="text-[15px] font-medium text-zinc-900">Fijar</span>
+                <PinIcon className="h-[18px] w-[18px]" style={{ color: BRAND_BLUE } as React.CSSProperties} />
+                <span className="text-[15px] font-medium text-zinc-900">
+                  {selectedIsPinned ? "Quitar de fijadas" : "Fijar"}
+                </span>
               </button>
 
               <button
