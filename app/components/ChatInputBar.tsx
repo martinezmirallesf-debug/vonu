@@ -289,7 +289,7 @@ export default function ChatInputBar({
               </div>
             </div>
 
-            <div className="hidden md:block relative z-10 mt-1.5 rounded-b-[20px] bg-[#f8f9fa] px-3 md:px-0 pt-3 pb-2">
+            <div className="hidden md:block relative z-10 -mt-[1px] bg-[#f8f9fa] px-3 pt-3 pb-6 md:mx-0 md:px-3 rounded-b-[20px]">
   <div className="text-center text-[11.5px] text-zinc-500">
     Orientación preventiva · No sustituye profesionales.
   </div>
