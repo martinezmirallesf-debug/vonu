@@ -123,7 +123,7 @@ useEffect(() => {
         )}
 
         <div className="w-full bg-transparent border-none shadow-none">
-                                        <div
+<div
   className="relative w-full overflow-hidden bg-white px-2.5 pt-1 pb-1 transition-all duration-200 rounded-t-[22px] rounded-b-none md:rounded-[20px] md:border md:border-zinc-200 md:shadow-[0_4px_16px_rgba(0,0,0,0.06)]"
   style={{
     boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
@@ -151,30 +151,30 @@ useEffect(() => {
               </div>
             )}
 
-                                                                        <div
-              className="px-1 max-h-[260px] overflow-y-auto [scrollbar-width:none]"
-              style={{ WebkitOverflowScrolling: "touch" }}
-            >
-              <div className="px-[12px] pt-3 pb-2">
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
-                  disabled={isTyping}
-                  rows={1}
-                  className="block w-full resize-none overflow-hidden bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 leading-6 min-h-[28px]"
-                  style={{
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-
-              <div className="h-2" aria-hidden="true" />
+                                                                                    <div className="grid max-h-[308px] grid-rows-[minmax(0,1fr)_auto]">
+              <div
+                className="min-h-0 overflow-y-auto [scrollbar-width:none]"
+                style={{ WebkitOverflowScrolling: "touch" }}
+              >
+                <div className="px-1">
+                  <textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
+                    disabled={isTyping}
+                    rows={1}
+                    className="block w-full resize-none overflow-hidden bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-3 leading-6 min-h-[28px]"
+                    style={{
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
             </div>
+          </div>
 
-<div className="relative z-10 flex items-center justify-between bg-white px-1 pt-0 pb-1">
+              <div className="relative z-10 flex items-center justify-between bg-white px-1 pt-0 pb-1">
   <div className="flex items-center gap-1.5">
     <button
       onClick={openBoard}
