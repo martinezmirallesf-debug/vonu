@@ -315,17 +315,17 @@ export default function Sidebar({
                 </button>
 
                 <button
-                  onClick={() => setAccountOpen((v) => !v)}
-                  className="h-12 min-w-12 px-3 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors flex items-center justify-center gap-2 cursor-pointer shrink-0"
-                  aria-label="Cuenta"
-                  title="Cuenta"
-                >
+  onClick={() => setAccountOpen((v) => !v)}
+  className="h-12 min-w-12 px-0 rounded-full bg-transparent hover:bg-zinc-100 active:bg-zinc-100 transition-colors flex items-center justify-center cursor-pointer shrink-0"
+  aria-label="Cuenta"
+  title="Cuenta"
+>
                   <div
-                    className="h-7 w-7 rounded-full text-white text-[12px] font-semibold grid place-items-center"
-                    style={{ backgroundColor: BRAND_BLUE }}
-                  >
-                    {userInitial}
-                  </div>
+  className="h-10 w-10 rounded-full text-white text-[14px] font-semibold grid place-items-center"
+  style={{ backgroundColor: BRAND_BLUE }}
+>
+  {userInitial}
+</div>
                 </button>
               </div>
 
@@ -370,24 +370,24 @@ export default function Sidebar({
                         </div>
 
                         <button
-                          onClick={() => {
-                            handleOpenPlansCTA();
-                            setMenuOpen(false);
-                          }}
-                          className="h-8 px-3 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-[12px] font-semibold transition-colors cursor-pointer"
-                          style={{ color: BRAND_BLUE }}
-                        >
+  onClick={() => {
+    handleOpenPlansCTA();
+    setMenuOpen(false);
+  }}
+  className="h-8 px-3 rounded-full bg-transparent hover:bg-zinc-100 active:bg-zinc-100 text-[12px] font-semibold transition-colors cursor-pointer"
+  style={{ color: BRAND_BLUE }}
+>
                           {currentPlanLabel === "Gratis" ? "Mejorar" : "Ver"}
                         </button>
                       </div>
 
                       <button
-                        onClick={() => {
-                          logout();
-                          setMenuOpen(false);
-                        }}
-                        className="mt-3 w-full h-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-[13px] font-semibold text-zinc-800 transition-colors cursor-pointer"
-                      >
+  onClick={() => {
+    logout();
+    setMenuOpen(false);
+  }}
+  className="mt-3 w-full h-10 rounded-full bg-transparent hover:bg-zinc-100 active:bg-zinc-100 text-[13px] font-semibold text-zinc-800 transition-colors cursor-pointer"
+>
                         Cerrar sesión
                       </button>
                     </>
