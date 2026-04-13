@@ -1646,6 +1646,19 @@ function appendRealtimeUserMessage(text: string) {
   pinUserMessageNearTop(newUserMessageId);
 }
 
+function scrollToBottomNow(behavior: ScrollBehavior = "smooth") {
+  const el = scrollRef.current;
+  if (!el) return;
+
+  el.scrollTo({
+    top: el.scrollHeight,
+    behavior,
+  });
+
+  setShowScrollToBottom(false);
+  shouldStickToBottomRef.current = true;
+}
+
 function appendRealtimeAssistantMessage(text: string) {
   const clean = normalizeAssistantText(String(text ?? "").trim());
 
@@ -2359,8 +2372,9 @@ const pendingScrollToBottomRef = useRef(false);
   });
 }
 
-  const [inputBarH, setInputBarH] = useState<number>(140);
-  const shouldStickToBottomRef = useRef(true);
+ const [inputBarH, setInputBarH] = useState<number>(140);
+const shouldStickToBottomRef = useRef(true);
+const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
  // =======================
 // 🎙️ MIC (SpeechRecognition) — SIN DUPLICADOS
@@ -3518,6 +3532,8 @@ useEffect(() => {
         behavior: "auto",
       });
       pendingScrollToBottomRef.current = false;
+      setShowScrollToBottom(false);
+      shouldStickToBottomRef.current = true;
     });
   });
 }, [activeThreadId, messages.length]);
@@ -3613,8 +3629,14 @@ useEffect(() => {
 
 
   function handleChatScroll() {
-  // Lo dejamos vacío a propósito.
-  // Más adelante, si quieres, montamos un autoseguimiento fino.
+  const el = scrollRef.current;
+  if (!el) return;
+
+  const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+  const isNearBottom = distanceFromBottom < 120;
+
+  setShowScrollToBottom(!isNearBottom);
+  shouldStickToBottomRef.current = isNearBottom;
 }
 
 // ✅ Nuevo comportamiento:
@@ -3922,6 +3944,19 @@ const assistantMsg: Message = {
 );
 
 pinUserMessageNearTop(userMsg.id);
+
+function scrollToBottomNow(behavior: ScrollBehavior = "smooth") {
+  const el = scrollRef.current;
+  if (!el) return;
+
+  el.scrollTo({
+    top: el.scrollHeight,
+    behavior,
+  });
+
+  setShowScrollToBottom(false);
+  shouldStickToBottomRef.current = true;
+}
 
 requestAnimationFrame(() => {
   requestAnimationFrame(() => {
@@ -5841,6 +5876,35 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
     </div>
   </div>
 </div>
+
+{showScrollToBottom && hasUserMessage && !paywallOpen && (
+  <button
+    type="button"
+    onClick={() => scrollToBottomNow("smooth")}
+    className="fixed right-5 md:right-8 z-[65] h-11 w-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-[0_8px_24px_rgba(0,0,0,0.12)] hover:bg-white transition-all cursor-pointer grid place-items-center"
+    style={{
+      bottom: `calc(${inputBarH}px + env(safe-area-inset-bottom) + 14px)`,
+    }}
+    aria-label="Ir al final del chat"
+    title="Ir al final"
+  >
+    <svg viewBox="0 0 24 24" className="h-[19px] w-[19px] text-zinc-800" fill="none" aria-hidden="true">
+      <path
+        d="M12 6v11"
+        stroke="currentColor"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+      />
+      <path
+        d="M7 14.5 12 19.5l5-5"
+        stroke="currentColor"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  </button>
+)}
 
             {!paywallOpen && (
   <ChatInputBar
