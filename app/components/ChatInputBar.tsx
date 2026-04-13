@@ -123,13 +123,13 @@ export default function ChatInputBar({
 
   return (
     <div
-      ref={inputBarRef}
-      className="fixed left-0 right-0 z-30 bg-transparent"
-      style={{
-  bottom: "calc(var(--vvb, 0px) - 10px)",
-  paddingBottom: "env(safe-area-inset-bottom)",
-}}
-    >
+  ref={inputBarRef}
+  className="fixed left-0 right-0 z-30 bg-transparent"
+  style={{
+    bottom: "var(--vvb, 0px)",
+    paddingBottom: "max(env(safe-area-inset-bottom), 10px)",
+  }}
+>
       <div className="mx-auto max-w-3xl px-0 md:px-6 pt-0 md:pt-2 pb-0 md:pb-2">
         {micMsg && (
           <div className="mb-2 text-[12px] text-zinc-600 bg-white/95 border border-zinc-200 rounded-2xl px-3 py-2 shadow-sm">
@@ -151,7 +151,7 @@ export default function ChatInputBar({
 
   <div className="relative z-10 w-full bg-transparent border-none shadow-none">
             <div
-              className="relative w-full overflow-hidden bg-white px-2.5 pt-1 pb-1 transition-all duration-200 rounded-t-[22px] rounded-b-none md:rounded-[20px] md:border md:border-zinc-200 md:shadow-[0_4px_16px_rgba(0,0,0,0.06)]"
+              className="relative w-full overflow-hidden bg-white px-2.5 pt-1 pb-2 md:pb-1 transition-all duration-200 rounded-t-[22px] rounded-b-none md:rounded-[20px] md:border md:border-zinc-200 md:shadow-[0_4px_16px_rgba(0,0,0,0.06)]"
               style={{
                 boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
               }}
@@ -196,7 +196,7 @@ export default function ChatInputBar({
   />
 </div>
 
-              <div className="relative z-10 flex items-center justify-between bg-white px-1 pt-0 pb-1">
+              <div className="relative z-10 flex items-center justify-between bg-white px-1 pt-0 pb-2 md:pb-1">
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={openBoard}
