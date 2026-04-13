@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 
 type RealtimeVoiceStatus =
   | "idle"
@@ -91,30 +91,28 @@ export default function ChatInputBar({
   onSelectImage,
   clearImagePreview,
 }: ChatInputBarProps) {
-  const textScrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const el = textareaRef.current;
-    const scrollEl = textScrollRef.current;
-    if (!el || !scrollEl) return;
+  const el = textareaRef.current;
+  if (!el) return;
 
-    const maxHeight = 260;
+  const maxHeight = 260;
 
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
+  el.style.height = "auto";
+  const next = Math.min(el.scrollHeight, maxHeight);
+  el.style.height = `${next}px`;
 
-    const shouldScroll = el.scrollHeight > maxHeight;
+  const shouldScroll = el.scrollHeight > maxHeight;
+  el.style.overflowY = shouldScroll ? "auto" : "hidden";
 
-    scrollEl.style.overflowY = shouldScroll ? "auto" : "hidden";
-
-    if (shouldScroll) {
-      requestAnimationFrame(() => {
-        scrollEl.scrollTop = scrollEl.scrollHeight;
-      });
-    } else {
-      scrollEl.scrollTop = 0;
-    }
-  }, [input, textareaRef]);
+  if (shouldScroll) {
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
+  } else {
+    el.scrollTop = 0;
+  }
+}, [input, textareaRef]);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
     ? "idle"
@@ -139,7 +137,7 @@ export default function ChatInputBar({
         )}
 
         <div className="relative w-full">
-          <div className="absolute inset-x-0 bottom-0 hidden md:block h-[92px] rounded-b-[24px] bg-white pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-[-20px] hidden md:block h-[160px] bg-[#f5f5f5] pointer-events-none" />
 
           <div className="relative z-10 w-full bg-transparent border-none shadow-none">
             <div
@@ -170,29 +168,23 @@ export default function ChatInputBar({
                 </div>
               )}
 
-              <div
-                ref={textScrollRef}
-                className="max-h-[260px] [scrollbar-width:none]"
-                style={{ WebkitOverflowScrolling: "touch" }}
-              >
-                <div className="px-1">
-                  <textarea
-                    ref={textareaRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
-                    disabled={isTyping}
-                    rows={1}
-                    className="block w-full resize-none overflow-hidden bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-2 leading-6 min-h-[28px]"
-                    style={{
-                      boxSizing: "border-box",
-                    }}
-                  />
-                </div>
-
-                <div className="h-2" aria-hidden="true" />
-              </div>
+              <div className="px-1">
+  <textarea
+    ref={textareaRef}
+    value={input}
+    onChange={(e) => setInput(e.target.value)}
+    onKeyDown={handleKeyDown}
+    placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
+    disabled={isTyping}
+    rows={1}
+    className="block w-full resize-none overflow-y-auto bg-transparent outline-none text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-7 leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none]"
+    style={{
+      boxSizing: "border-box",
+      WebkitOverflowScrolling: "touch",
+      scrollPaddingBottom: "56px",
+    }}
+  />
+</div>
 
               <div className="relative z-10 flex items-center justify-between bg-white px-1 pt-0 pb-1">
                 <div className="flex items-center gap-1.5">
