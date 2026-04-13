@@ -138,7 +138,14 @@ export default function ChatInputBar({
         )}
 
         <div className="relative w-full">
-          <div className="absolute inset-x-0 hidden md:block pointer-events-none bg-[#f8f9fa] z-0" style={{ top: "100%", height: "220px" }} />
+          <div
+  className="absolute inset-x-0 hidden md:block pointer-events-none bg-[#f8f9fa] z-0"
+  style={{
+    bottom: 0,
+    height: "220px",
+    transform: "translateY(100%)",
+  }}
+/>
 
           <div className="relative z-10 w-full bg-transparent border-none shadow-none">
             <div
