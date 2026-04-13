@@ -151,14 +151,14 @@ export default function ChatInputBar({
 
   <div className="relative z-10 w-full bg-transparent border-none shadow-none">
             <div
-  className="relative w-full overflow-hidden overscroll-none bg-white px-2.5 pt-1 pb-1.5 md:pb-1 transition-all duration-200 rounded-t-[22px] rounded-b-none md:rounded-[20px] md:border md:border-zinc-200 md:shadow-[0_4px_16px_rgba(0,0,0,0.06)]"
+  className="relative flex flex-col w-full overflow-hidden overscroll-none bg-white px-2.5 pt-1 pb-1.5 md:pb-1 transition-all duration-200 rounded-t-[22px] rounded-b-none md:rounded-[20px] md:border md:border-zinc-200 md:shadow-[0_4px_16px_rgba(0,0,0,0.06)]"
   style={{
     boxShadow: "0 -8px 30px rgba(0,0,0,0.05)",
     maxHeight: "min(72vh, calc(var(--vvh, 100dvh) - 120px))",
   }}
 >
               <div
-  className="min-h-0 max-h-[min(52vh,420px)] overflow-y-auto overscroll-contain [scrollbar-width:none]"
+  className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:none]"
   style={{ WebkitOverflowScrolling: "touch" }}
 >
   {imagePreview && (
@@ -171,12 +171,12 @@ export default function ChatInputBar({
         />
 
         <button
-          type="button"
-          onClick={clearImagePreview}
-          className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white border border-zinc-200 shadow-sm text-zinc-700 flex items-center justify-center"
-          aria-label="Quitar imagen"
-          title="Quitar imagen"
-        >
+  type="button"
+  onClick={clearImagePreview}
+  className="absolute top-1 right-1 h-6 w-6 rounded-full bg-white border border-zinc-200 shadow-sm text-zinc-700 flex items-center justify-center"
+  aria-label="Quitar imagen"
+  title="Quitar imagen"
+>
           <span className="text-[14px] leading-none">×</span>
         </button>
       </div>

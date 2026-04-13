@@ -321,7 +321,7 @@ export default function Sidebar({
   title="Cuenta"
 >
                   <div
-  className="h-10 w-10 rounded-full text-white text-[14px] font-semibold grid place-items-center"
+  className="h-12 w-12 rounded-full text-white text-[15px] font-semibold grid place-items-center"
   style={{ backgroundColor: BRAND_BLUE }}
 >
   {userInitial}
