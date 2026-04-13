@@ -2326,11 +2326,12 @@ async function speakTTS(text: string) {
 
   const [inputExpanded, setInputExpanded] = useState(false);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+const scrollRef = useRef<HTMLDivElement>(null);
 const inputBarRef = useRef<HTMLDivElement>(null);
 const fileInputRef = useRef<HTMLInputElement>(null);
 const textareaRef = useRef<HTMLTextAreaElement>(null);
 const headerRef = useRef<HTMLDivElement>(null);
+const pendingScrollToBottomRef = useRef(false);
 
 
   function pinUserMessageNearTop(messageId: string) {
@@ -3487,23 +3488,41 @@ useEffect(() => {
     return () => ro.disconnect();
   }, []);
 
-  // asegurar thread activo
-  useEffect(() => {
-    if (!activeThreadId && threads[0]?.id) setActiveThreadId(threads[0].id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [threads.length]);
+// asegurar thread activo
+useEffect(() => {
+  if (!activeThreadId && threads[0]?.id) setActiveThreadId(threads[0].id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [threads.length]);
 
-  useEffect(() => {
-    activeThreadIdRef.current = activeThreadId;
-  }, [activeThreadId]);
+useEffect(() => {
+  activeThreadIdRef.current = activeThreadId;
+}, [activeThreadId]);
 
-  const activeThread = useMemo(() => {
-    return threads.find((t) => t.id === activeThreadId) ?? threads[0];
-  }, [threads, activeThreadId]);
+const activeThread = useMemo(() => {
+  return threads.find((t) => t.id === activeThreadId) ?? threads[0];
+}, [threads, activeThreadId]);
 
-  const messages = activeThread?.messages ?? [];
+const messages = activeThread?.messages ?? [];
 
-  const showSoftLimitWarning =
+useEffect(() => {
+  if (!pendingScrollToBottomRef.current) return;
+
+  const el = scrollRef.current;
+  if (!el) return;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const target = el.scrollHeight - el.clientHeight;
+      el.scrollTo({
+        top: Math.max(0, target),
+        behavior: "auto",
+      });
+      pendingScrollToBottomRef.current = false;
+    });
+  });
+}, [activeThreadId, messages.length]);
+
+const showSoftLimitWarning =
   !!usageInfo &&
   usageInfo.messages_left > 0 &&
   usageInfo.messages_left <= 5;
@@ -3700,31 +3719,32 @@ useEffect(() => {
     if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
-  function activateThread(id: string) {
-    setActiveThreadId(id);
-    setMenuOpen(false);
-    setUiError(null);
-    setInput("");
-    setImagePreview(null);
+ function activateThread(id: string) {
+  setActiveThreadId(id);
+  setMenuOpen(false);
+  setUiError(null);
+  setInput("");
+  setImagePreview(null);
+
+  const thread = threads.find((x) => x.id === id);
+  const isFresh = (thread?.messages ?? []).filter((m) => m.role === "user").length === 0;
+
+  if (isFresh) {
+    pendingScrollToBottomRef.current = false;
+    shouldStickToBottomRef.current = false;
 
     requestAnimationFrame(() => {
       const el = scrollRef.current;
       if (!el) return;
-
-      const thread = threads.find((x) => x.id === id);
-      const isFresh = (thread?.messages ?? []).filter((m) => m.role === "user").length === 0;
-
-      if (isFresh) {
-        el.scrollTo({ top: 0, behavior: "auto" });
-        shouldStickToBottomRef.current = false;
-      } else {
-        el.scrollTo({ top: el.scrollHeight, behavior: "auto" });
-        shouldStickToBottomRef.current = true;
-      }
+      el.scrollTo({ top: 0, behavior: "auto" });
     });
-
-    if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+  } else {
+    pendingScrollToBottomRef.current = true;
+    shouldStickToBottomRef.current = true;
   }
+
+  if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+}
 
   function openRename() {
     if (!activeThread) return;
