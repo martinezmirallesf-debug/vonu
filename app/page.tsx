@@ -4583,12 +4583,14 @@ const lastMsg = messages[messages.length - 1];
 const isLastFromAssistant = lastMsg?.role === "assistant";
 const isLastFromUser = lastMsg?.role === "user";
 
-const chatBottomPad = hasUserMessage
+const chatBottomPad = paywallOpen
+  ? 24
+  : hasUserMessage
   ? inputBarH + (
       isLastFromAssistant
         ? (isDesktopPointer() ? 260 : 140)
         : isLastFromUser
-        ? (isDesktopPointer() ? 180 : 260) // ← MUY IMPORTANTE para móvil
+        ? (isDesktopPointer() ? 180 : 260)
         : 120
     )
   : 18;
@@ -5514,9 +5516,9 @@ return (
   <div
   className="mx-auto max-w-3xl px-3 md:px-6"
   style={{
-  paddingTop: hasUserMessage ? 0 : 124,
-  paddingBottom: hasUserMessage ? chatBottomPad : inputBarH + 90,
-}}
+    paddingTop: hasUserMessage ? 0 : 118,
+    paddingBottom: hasUserMessage ? chatBottomPad : inputBarH + 20,
+  }}
 >
 
 {showSoftLimitWarning ? (
@@ -5820,26 +5822,28 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
   </div>
 </div>
 
-            <ChatInputBar
-  inputBarRef={inputBarRef}
-  imagePreview={imagePreview}
-  micMsg={micMsg}
-  input={input}
-  setInput={setInput}
-  isTyping={isTyping}
-  textareaRef={textareaRef}
-  handleKeyDown={handleKeyDown}
-  canSend={canSend}
-  sendMessage={sendMessage}
-  voiceMode={voiceMode}
-  realtimeStatus={realtimeStatus}
-  isLoggedIn={isLoggedIn}
-  toggleConversation={toggleConversation}
-  openBoard={openBoard}
-  fileInputRef={fileInputRef}
-  onSelectImage={onSelectImage}
-  clearImagePreview={() => setImagePreview(null)}
-/>
+            {!paywallOpen && (
+  <ChatInputBar
+    inputBarRef={inputBarRef}
+    imagePreview={imagePreview}
+    micMsg={micMsg}
+    input={input}
+    setInput={setInput}
+    isTyping={isTyping}
+    textareaRef={textareaRef}
+    handleKeyDown={handleKeyDown}
+    canSend={canSend}
+    sendMessage={sendMessage}
+    voiceMode={voiceMode}
+    realtimeStatus={realtimeStatus}
+    isLoggedIn={isLoggedIn}
+    toggleConversation={toggleConversation}
+    openBoard={openBoard}
+    fileInputRef={fileInputRef}
+    onSelectImage={onSelectImage}
+    clearImagePreview={() => setImagePreview(null)}
+  />
+)}
     </div>
   </div>
   );

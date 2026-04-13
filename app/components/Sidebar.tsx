@@ -33,7 +33,7 @@ type SidebarProps = {
   currentPlanId: string | null;
 };
 
-const BRAND_BLUE = "#4285F4";
+const BRAND_BLUE = "#1a73e8";
 const PINNED_STORAGE_KEY = "vonu_pinned_threads_v1";
 
 function SearchIcon({ className }: { className?: string }) {
