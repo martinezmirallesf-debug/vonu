@@ -139,7 +139,7 @@ export default function ChatInputBar({
 
         <div className="relative w-full">
   <div
-  className="absolute inset-x-0 top-0 hidden md:block bg-[#f8f9fa] pointer-events-none"
+  className="absolute inset-x-0 top-0 hidden md:block bg-[#f8f9fa] pointer-events-none z-0"
   style={{
     bottom: "-80px",
     borderTopLeftRadius: "22px",
@@ -149,12 +149,11 @@ export default function ChatInputBar({
   }}
 />
 
-  <div className="relative z-10 w-full bg-transparent border-none shadow-none">
+  <div className="relative z-20 w-full bg-transparent border-none shadow-none">
             <div
-  className="relative w-full overflow-hidden overscroll-none bg-white px-2.5 pt-1 pb-1.5 md:pb-1 transition-all duration-200 rounded-t-[22px] rounded-b-none md:rounded-[20px] border border-zinc-300/90 md:border-zinc-300"
+  className="relative w-full overflow-hidden overscroll-none bg-white px-2.5 pt-1 pb-1.5 md:pb-1 transition-all duration-200 rounded-t-[22px] rounded-b-none md:rounded-[20px] border border-zinc-300/90 border-b-0 md:border md:border-zinc-300 md:border-b"
   style={{
     boxShadow: "0 -6px 20px rgba(0,0,0,0.085), 0 2px 10px rgba(0,0,0,0.055)",
-    borderBottomWidth: 0,
   }}
 >
               <div
@@ -304,9 +303,8 @@ export default function ChatInputBar({
                 </div>
               </div>
             </div>
-            
-<div className="hidden md:block absolute inset-x-0 bottom-0 h-px bg-zinc-300/90 pointer-events-none" />
-            <div className="hidden md:block relative z-10 -mt-[1px] px-3 pt-3 pb-6 md:mx-0 md:px-3 rounded-b-[20px]">
+
+            <div className="hidden md:block relative z-10 mt-2 px-3 pb-6 md:mx-0 md:px-3">
   <div className="text-center text-[11.5px] text-zinc-500">
     Orientación preventiva · No sustituye profesionales.
   </div>
