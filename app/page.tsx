@@ -3569,31 +3569,36 @@ if (cn.includes("katex-display")) {
     }
   }
 
-  // VisualViewport (altura visible + inset inferior cuando aparece teclado)
+// VisualViewport (altura visible + inset inferior cuando aparece teclado)
 useEffect(() => {
   if (typeof window === "undefined") return;
+
   const vv = window.visualViewport;
-  if (!vv) return;
 
   const setVars = () => {
-    // altura visible real
-    document.documentElement.style.setProperty("--vvh", `${vv.height}px`);
+    const viewportHeight = vv?.height ?? window.innerHeight;
+    const viewportTop = vv?.offsetTop ?? 0;
 
-    // cuánto “tapa” el teclado (inset inferior)
-    const bottomInset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    document.documentElement.style.setProperty("--vvh", `${viewportHeight}px`);
+
+    const bottomInset = Math.max(
+      0,
+      window.innerHeight - (viewportHeight + viewportTop)
+    );
+
     document.documentElement.style.setProperty("--vvb", `${bottomInset}px`);
   };
 
   setVars();
-  vv.addEventListener("resize", setVars);
-  vv.addEventListener("scroll", setVars);
 
+  vv?.addEventListener("resize", setVars);
+  vv?.addEventListener("scroll", setVars);
   window.addEventListener("resize", setVars);
   window.addEventListener("orientationchange", setVars);
 
   return () => {
-    vv.removeEventListener("resize", setVars);
-    vv.removeEventListener("scroll", setVars);
+    vv?.removeEventListener("resize", setVars);
+    vv?.removeEventListener("scroll", setVars);
     window.removeEventListener("resize", setVars);
     window.removeEventListener("orientationchange", setVars);
   };

@@ -128,11 +128,11 @@ export default function ChatInputBar({
   ref={inputBarRef}
   className="fixed left-0 right-0 z-[70] bg-transparent"
   style={{
-    bottom: "var(--vvb, 0px)",
-    paddingBottom: "env(safe-area-inset-bottom)",
+    bottom: "max(var(--vvb, 0px), 0px)",
+    paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 2px)",
   }}
 >
-      <div className="mx-auto max-w-3xl px-0 md:px-6 pt-0 md:pt-2 pb-0 md:pb-2">
+      <div className="mx-auto max-w-3xl px-2 md:px-6 pt-0 md:pt-2 pb-0 md:pb-2">
         {micMsg && (
           <div className="mb-2 text-[12px] text-zinc-600 bg-white/95 border border-zinc-200 rounded-2xl px-3 py-2 shadow-sm">
             {micMsg}
@@ -174,7 +174,7 @@ export default function ChatInputBar({
         <button
   type="button"
   onClick={clearImagePreview}
-  className="absolute top-0.5 right-0.5 h-6 w-6 rounded-full bg-white shadow-sm text-zinc-700 flex items-center justify-center"
+  className="absolute top-1 right-1 h-6 w-6 rounded-full bg-white shadow-sm text-zinc-700 flex items-center justify-center"
   aria-label="Quitar imagen"
   title="Quitar imagen"
 >
@@ -193,7 +193,7 @@ export default function ChatInputBar({
       placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
       disabled={isTyping}
       rows={1}
-      className="block w-full resize-none overflow-y-auto bg-transparent outline-none touch-pan-y overscroll-contain text-[15px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-10 leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none]"
+      className="block w-full resize-none overflow-y-auto bg-transparent outline-none touch-pan-y overscroll-contain text-[16px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-10 leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none]"
       style={{
         boxSizing: "border-box",
         WebkitOverflowScrolling: "touch",

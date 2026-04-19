@@ -1,7 +1,7 @@
 // app/layout.tsx
 import "./globals.css";
 import "katex/dist/katex.min.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Space_Mono, Playfair_Display } from "next/font/google";
 
 const inter = Inter({
@@ -34,13 +34,22 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${inter.variable} ${spaceMono.variable} ${playfairDisplay.variable}`}>
+    <html
+      lang="es"
+      className={`${inter.variable} ${spaceMono.variable} ${playfairDisplay.variable}`}
+    >
       <body className="font-sans">{children}</body>
     </html>
   );
