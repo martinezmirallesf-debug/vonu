@@ -132,7 +132,7 @@ export default function ChatInputBar({
     paddingBottom: "calc(env(safe-area-inset-bottom, 0px) - 1px)",
   }}
 >
-      <div className="mx-auto max-w-3xl px-0 md:px-6 pt-0 md:pt-2 pb-0 md:pb-2 -mx-[3px] md:mx-auto">
+      <div className="mx-auto max-w-3xl px-0 md:px-6 pt-0 md:pt-2 pb-0 md:pb-2 -mx-[4px] md:mx-auto">
         {micMsg && (
           <div className="mb-2 text-[12px] text-zinc-600 bg-white/95 border border-zinc-200 rounded-2xl px-3 py-2 shadow-sm">
             {micMsg}
