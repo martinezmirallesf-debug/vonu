@@ -19,6 +19,7 @@ import Sidebar from "@/app/components/Sidebar";
 import VonuThinking from "@/app/components/VonuThinking";
 import AssistantMessageActions from "@/app/components/AssistantMessageActions";
 import { analyzeAttachment } from "@/app/lib/analysis/analyzeAttachment";
+import FilePickerModal from "@/app/components/FilePickerModal";
 
 import ChalkboardTutorBoard from "@/app/components/ChalkboardTutorBoard";
 import {
@@ -1659,6 +1660,24 @@ function scrollToBottomNow(behavior: ScrollBehavior = "smooth") {
   shouldStickToBottomRef.current = true;
 }
 
+function handlePickFileType(type: "image" | "pdf" | "audio" | "video" | "url") {
+  setFilePickerOpen(false);
+  setPendingFileType(type);
+
+  if (type === "image") {
+    fileInputRef.current?.click();
+    return;
+  }
+
+  if (type === "url") {
+    setUrlInputOpen(true);
+    return;
+  }
+
+  setMicMsg(`Pronto podrás subir ${type === "pdf" ? "PDFs" : type === "audio" ? "audios" : "vídeos"} para analizarlos.`);
+  setTimeout(() => setMicMsg(null), 2200);
+}
+
 function appendRealtimeAssistantMessage(text: string) {
   const clean = normalizeAssistantText(String(text ?? "").trim());
 
@@ -2280,6 +2299,11 @@ async function speakTTS(text: string) {
   const [isTyping, setIsTyping] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
+
+  const [filePickerOpen, setFilePickerOpen] = useState(false);
+const [pendingFileType, setPendingFileType] = useState<"image" | "pdf" | "audio" | "video" | "url" | null>(null);
+const [urlInputOpen, setUrlInputOpen] = useState(false);
+const [urlDraft, setUrlDraft] = useState("");
 
   const [usageInfo, setUsageInfo] = useState<{
   plan_id: string;
@@ -5501,6 +5525,81 @@ return (
   OAuthLogo={OAuthLogo}
 />
 
+<FilePickerModal
+  open={filePickerOpen}
+  onClose={() => setFilePickerOpen(false)}
+  onPickType={handlePickFileType}
+/>
+
+{urlInputOpen && (
+  <div className="fixed inset-0 z-[115]">
+    <div
+      className="absolute inset-0 bg-black/25 backdrop-blur-[6px]"
+      onClick={() => setUrlInputOpen(false)}
+      aria-hidden="true"
+    />
+
+    <div className="absolute inset-x-3 bottom-3 md:inset-0 md:flex md:items-center md:justify-center md:p-6">
+      <div
+        className="mx-auto w-full max-w-[560px] rounded-[30px] border border-zinc-200 bg-white/92 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.22)] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-5 pt-5 pb-3 border-b border-zinc-100">
+          <div className="text-[19px] font-semibold tracking-[-0.02em] text-zinc-900">
+            Pega el enlace
+          </div>
+          <div className="mt-1 text-[13px] text-zinc-500">
+            Lo revisamos juntos dentro de la conversación.
+          </div>
+        </div>
+
+        <div className="p-4">
+          <input
+            value={urlDraft}
+            onChange={(e) => setUrlDraft(e.target.value)}
+            placeholder="https://..."
+            className="w-full h-12 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-[14px] text-zinc-900 placeholder:text-zinc-500 outline-none focus:border-zinc-300"
+            autoFocus
+          />
+        </div>
+
+        <div className="px-4 pb-4 flex gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setUrlInputOpen(false);
+              setUrlDraft("");
+            }}
+            className="flex-1 h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-[14px] font-semibold text-zinc-800 transition-colors cursor-pointer"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const clean = urlDraft.trim();
+              if (!clean) return;
+
+              setInput((prev) =>
+                prev.trim()
+                  ? `${prev}\n${clean}`
+                  : clean
+              );
+
+              setUrlInputOpen(false);
+              setUrlDraft("");
+            }}
+            className="flex-1 h-11 rounded-full bg-[#1a73e8] hover:bg-[#1669c1] text-white text-[14px] font-semibold transition-colors cursor-pointer"
+          >
+            Usar enlace
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
 <TopBar
   topBarRef={headerRef}
   menuOpen={menuOpen}
@@ -5906,25 +6005,26 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
 
             {!paywallOpen && (
   <ChatInputBar
-    inputBarRef={inputBarRef}
-    imagePreview={imagePreview}
-    micMsg={micMsg}
-    input={input}
-    setInput={setInput}
-    isTyping={isTyping}
-    textareaRef={textareaRef}
-    handleKeyDown={handleKeyDown}
-    canSend={canSend}
-    sendMessage={sendMessage}
-    voiceMode={voiceMode}
-    realtimeStatus={realtimeStatus}
-    isLoggedIn={isLoggedIn}
-    toggleConversation={toggleConversation}
-    openBoard={openBoard}
-    fileInputRef={fileInputRef}
-    onSelectImage={onSelectImage}
-    clearImagePreview={() => setImagePreview(null)}
-  />
+  inputBarRef={inputBarRef}
+  imagePreview={imagePreview}
+  micMsg={micMsg}
+  input={input}
+  setInput={setInput}
+  isTyping={isTyping}
+  textareaRef={textareaRef}
+  handleKeyDown={handleKeyDown}
+  canSend={canSend}
+  sendMessage={sendMessage}
+  voiceMode={voiceMode}
+  realtimeStatus={realtimeStatus}
+  isLoggedIn={isLoggedIn}
+  toggleConversation={toggleConversation}
+  openBoard={openBoard}
+  openFilePicker={() => setFilePickerOpen(true)}
+  fileInputRef={fileInputRef}
+  onSelectImage={onSelectImage}
+  clearImagePreview={() => setImagePreview(null)}
+/>
 )}
     </div>
   </div>

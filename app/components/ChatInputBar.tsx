@@ -27,6 +27,7 @@ type ChatInputBarProps = {
   isLoggedIn: boolean;
   toggleConversation: () => void;
   openBoard: () => void;
+  openFilePicker: () => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   onSelectImage: (e: React.ChangeEvent<HTMLInputElement>) => void;
   clearImagePreview: () => void;
@@ -87,6 +88,7 @@ export default function ChatInputBar({
   isLoggedIn,
   toggleConversation,
   openBoard,
+  openFilePicker,
   fileInputRef,
   onSelectImage,
   clearImagePreview,
@@ -214,12 +216,12 @@ export default function ChatInputBar({
                   </button>
 
                   <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={!!isTyping}
-                    className="h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
-                    aria-label="Adjuntar"
-                    title="Adjuntar imagen"
-                  >
+  onClick={openFilePicker}
+  disabled={!!isTyping}
+  className="h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
+  aria-label="Adjuntar"
+  title="Subir archivo para analizar"
+>
                     <PlusIcon className="h-[17px] w-[17px]" />
                   </button>
 
