@@ -4739,11 +4739,11 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
       height="11"
       viewBox="0 0 11 11"
       className={[
-        "absolute pointer-events-none",
-        "top-[1px]",
-        isRight ? "right-[-9px]" : "left-[-9px]",
-        "z-0",
-      ].join(" ")}
+  "absolute pointer-events-none",
+  "top-0",
+  isRight ? "right-[-9px]" : "left-[-9px]",
+  "z-0",
+].join(" ")}
     >
       {isRight ? (
         <path
