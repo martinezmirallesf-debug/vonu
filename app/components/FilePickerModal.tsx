@@ -86,7 +86,7 @@ function LinkIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
       />
       <path
-        d="M8.8 15.2 15.2 8.8"
+        d="M8.55 15.45 15.45 8.55"
         stroke="currentColor"
         strokeWidth="1.9"
         strokeLinecap="round"
