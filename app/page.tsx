@@ -4735,36 +4735,34 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
   return (
     <svg
       aria-hidden="true"
-      width="14"
-      height="14"
-      viewBox="0 0 14 14"
+      width="11"
+      height="11"
+      viewBox="0 0 11 11"
       className={[
         "absolute pointer-events-none",
-        "top-0",
-        isRight ? "right-[-13px]" : "left-[-13px]",
+        "top-[1px]",
+        isRight ? "right-[-9px]" : "left-[-9px]",
         "z-0",
       ].join(" ")}
     >
       {isRight ? (
-        // 👉 derecha (usuario) — redondeamos la punta EXTERIOR (14,0)
         <path
           d="
             M0 0
-            L12.0 0
-            Q14 0 14 2.0
-            L0 14
+            L8.6 0
+            Q10 0 10 1.7
+            L0 10
             Z
           "
           fill={color}
         />
       ) : (
-        // 👉 izquierda (Vonu) — redondeamos la punta EXTERIOR (0,0)
         <path
           d="
-            M14 0
-            L2.0 0
-            Q0 0 0 2.0
-            L14 14
+            M10 0
+            L1.4 0
+            Q0 0 0 1.7
+            L10 10
             Z
           "
           fill={color}

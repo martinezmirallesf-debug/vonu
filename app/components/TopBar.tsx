@@ -39,9 +39,12 @@ export default function TopBar({
 }: TopBarProps) {
   return (
   <div
-    ref={topBarRef}
-    className={`fixed top-3 left-3 right-3 ${menuOpen ? "z-[95]" : "z-50"} flex items-center justify-between pointer-events-none`}
-  >
+  ref={topBarRef}
+  className={`fixed left-4 right-4 md:left-3 md:right-3 ${menuOpen ? "z-[95]" : "z-50"} flex items-center justify-between pointer-events-none`}
+  style={{
+    top: "calc(env(safe-area-inset-top) + 14px)",
+  }}
+>
       <div className="pointer-events-auto">
         <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden pl-1 pr-4">
           <button
