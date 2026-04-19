@@ -63,7 +63,7 @@ function VideoIcon({ className }: { className?: string }) {
     <svg className={className ?? "h-9 w-9"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <rect x="3.5" y="6" width="12" height="12" rx="2.8" stroke="currentColor" strokeWidth="1.9" />
       <path d="m15.5 10 5-3v10l-5-3" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
-      <path d="m8.8 9.4 3.9 2.6-3.9 2.6V9.4Z" fill="currentColor" />
+      <path d="M9.15 9.2 12.85 12l-3.7 2.8V9.2Z" fill="currentColor" />
     </svg>
   );
 }
@@ -139,30 +139,27 @@ export default function FilePickerModal({
         aria-hidden="true"
       />
 
-      <div className="absolute inset-x-3 bottom-3 top-auto md:inset-0 md:flex md:items-center md:justify-center md:p-6">
+      <div className="absolute inset-0 flex items-center justify-center p-3 md:p-6">
         <div
           className="mx-auto w-full max-w-[420px] rounded-[30px] border border-zinc-200 bg-white/92 backdrop-blur-xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex justify-center pt-3 md:hidden">
-            <div className="h-1.5 w-12 rounded-full bg-zinc-300" />
-          </div>
 
-          <div className="flex items-center justify-between px-4 pt-4 pb-2">
-            <div className="text-[17px] md:text-[18px] font-semibold tracking-[-0.02em] text-zinc-900">
-              Subir para analizar
-            </div>
+          <div className="relative px-4 pt-5 pb-2">
+  <div className="text-[17px] md:text-[18px] font-semibold tracking-[-0.02em] text-zinc-900">
+    Subir para analizar
+  </div>
 
-            <button
-              type="button"
-              onClick={onClose}
-              className="h-9 w-9 rounded-full hover:bg-zinc-100 transition-colors grid place-items-center text-zinc-700 cursor-pointer shrink-0"
-              aria-label="Cerrar"
-              title="Cerrar"
-            >
-              <CloseIcon className="h-[18px] w-[18px]" />
-            </button>
-          </div>
+  <button
+    type="button"
+    onClick={onClose}
+    className="absolute top-4 right-4 h-9 w-9 rounded-full border border-zinc-200 bg-white hover:bg-zinc-100 transition-colors grid place-items-center text-zinc-700 cursor-pointer shrink-0"
+    aria-label="Cerrar"
+    title="Cerrar"
+  >
+    <CloseIcon className="h-[18px] w-[18px]" />
+  </button>
+</div>
 
           <div className="p-3 pt-2 grid grid-cols-2 gap-3">
             <OptionButton
