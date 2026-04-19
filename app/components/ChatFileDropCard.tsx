@@ -30,14 +30,9 @@ export default function ChatFileDropCard({
       type="button"
       onClick={onClick}
       className={[
-        "group w-full rounded-[28px] border border-zinc-200/90",
-        "bg-white/88 backdrop-blur-xl",
-        "shadow-[0_10px_30px_rgba(0,0,0,0.06)]",
-        "transition-all duration-200",
-        "hover:bg-white hover:shadow-[0_14px_34px_rgba(0,0,0,0.08)]",
-        "active:scale-[0.995]",
-        "cursor-pointer text-center",
-        compact ? "px-5 py-5" : "px-6 py-6 md:px-7 md:py-7",
+        "group w-full text-center cursor-pointer transition-all duration-200",
+        "hover:opacity-100 active:scale-[0.995]",
+        compact ? "px-4 py-4" : "px-5 py-5 md:px-6 md:py-6",
       ].join(" ")}
       aria-label="Sube un archivo para analizar"
       title="Sube un archivo para analizar"
@@ -45,14 +40,12 @@ export default function ChatFileDropCard({
       <div className="flex flex-col items-center justify-center">
         <div
           className={[
-            "rounded-[18px] border border-zinc-200 bg-zinc-50/95",
-            "grid place-items-center text-zinc-800",
-            "transition-colors duration-200",
-            "group-hover:bg-zinc-100",
-            compact ? "h-12 w-12" : "h-13 w-13 md:h-14 md:w-14",
+            "grid place-items-center text-zinc-800 bg-white/82 backdrop-blur-md border border-zinc-200/90 shadow-[0_8px_18px_rgba(0,0,0,0.05)] transition-colors duration-200",
+            "group-hover:bg-white",
+            compact ? "h-11 w-11 rounded-[14px]" : "h-12 w-12 rounded-[15px] md:h-[52px] md:w-[52px] md:rounded-[16px]",
           ].join(" ")}
         >
-          <PlusIcon className={compact ? "h-[20px] w-[20px]" : "h-[22px] w-[22px]"} />
+          <PlusIcon className={compact ? "h-[19px] w-[19px]" : "h-[20px] w-[20px]"} />
         </div>
 
         <div className="mt-4 text-[16px] md:text-[17px] font-semibold tracking-[-0.02em] text-zinc-900">

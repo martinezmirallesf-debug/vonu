@@ -3630,30 +3630,38 @@ useEffect(() => {
     return;
   }
 
-  const hasPreview = !!imagePreview;
-  if (hasPreview) {
+  if (imagePreview) {
     setShowContextualFileCard(false);
     setContextualFilePrompt("");
     return;
   }
 
-  const lastUserMessage = [...messages].reverse().find((m) => m.role === "user" && (m.text ?? "").trim());
-  if (!lastUserMessage?.text) {
+  const lastMessage = messages[messages.length - 1];
+  const lastRealUserMessage = [...messages]
+    .reverse()
+    .find((m) => m.role === "user" && (m.text ?? "").trim());
+
+  if (!lastRealUserMessage?.text) {
     setShowContextualFileCard(false);
     setContextualFilePrompt("");
     return;
   }
 
-  const shouldSuggest = shouldSuggestFileUploadFromText(lastUserMessage.text);
+  const shouldSuggest = shouldSuggestFileUploadFromText(lastRealUserMessage.text);
 
-  if (!shouldSuggest) {
+  const assistantHasJustAnswered =
+    !!lastMessage &&
+    lastMessage.role === "assistant" &&
+    !lastMessage.streaming &&
+    !!(lastMessage.text ?? "").trim();
+
+  if (shouldSuggest && assistantHasJustAnswered) {
+    setContextualFilePrompt(buildNaturalUploadPrompt(lastRealUserMessage.text));
+    setShowContextualFileCard(true);
+  } else {
     setShowContextualFileCard(false);
     setContextualFilePrompt("");
-    return;
   }
-
-  setContextualFilePrompt(buildNaturalUploadPrompt(lastUserMessage.text));
-  setShowContextualFileCard(true);
 }, [activeThreadId, messages, imagePreview]);
 
 useEffect(() => {
@@ -6086,18 +6094,18 @@ return (
         })}
 
         {showContextualFileCard && !paywallOpen ? (
-          <div className="flex justify-center pt-2 pb-1">
-            <div className="w-full max-w-[520px]">
-              {contextualFilePrompt ? (
-                <div className="mb-3 text-center text-[14px] leading-6 text-zinc-600 px-4">
-                  {contextualFilePrompt}
-                </div>
-              ) : null}
+  <div className="flex justify-center pt-2 pb-1 animate-[fadeIn_260ms_ease-out]">
+    <div className="w-full max-w-[520px]">
+      {contextualFilePrompt ? (
+        <div className="mb-3 text-center text-[14px] leading-6 text-zinc-600 px-4">
+          {contextualFilePrompt}
+        </div>
+      ) : null}
 
-              <ChatFileDropCard onClick={() => setFilePickerOpen(true)} />
-            </div>
-          </div>
-        ) : null}
+      <ChatFileDropCard onClick={() => setFilePickerOpen(true)} />
+    </div>
+  </div>
+) : null}
       </div>
     </div>
   </div>
