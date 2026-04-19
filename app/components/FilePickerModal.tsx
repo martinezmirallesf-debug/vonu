@@ -63,7 +63,7 @@ function VideoIcon({ className }: { className?: string }) {
     <svg className={className ?? "h-9 w-9"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <rect x="3.5" y="6" width="12" height="12" rx="2.8" stroke="currentColor" strokeWidth="1.9" />
       <path d="m15.5 10 5-3v10l-5-3" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
-      <path d="M9.15 9.2 12.85 12l-3.7 2.8V9.2Z" fill="currentColor" />
+      <path d="M8.1 9.25 11.9 12l-3.8 2.75V9.25Z" fill="currentColor" />
     </svg>
   );
 }
@@ -71,9 +71,26 @@ function VideoIcon({ className }: { className?: string }) {
 function LinkIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-9 w-9"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M10 13.6 8.1 15.5a3.4 3.4 0 1 1-4.8-4.8l2.9-2.9a3.4 3.4 0 0 1 4.8 0" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-      <path d="M14 10.4 15.9 8.5a3.4 3.4 0 1 1 4.8 4.8l-2.9 2.9a3.4 3.4 0 0 1-4.8 0" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-      <path d="M9.2 14.8 14.8 9.2" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <path
+        d="M9.9 13.9 8.2 15.6a3.35 3.35 0 1 1-4.74-4.74l2.7-2.7a3.35 3.35 0 0 1 4.74 0"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M14.1 10.1 15.8 8.4a3.35 3.35 0 1 1 4.74 4.74l-2.7 2.7a3.35 3.35 0 0 1-4.74 0"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9.2 14.8 14.8 9.2"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
