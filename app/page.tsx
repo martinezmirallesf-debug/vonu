@@ -538,7 +538,6 @@ function normalizeMathMarkdown(text: string) {
   return s.trim();
 }
 
-
 // ===== TUTOR (detección ligera frontend) =====
 function looksLikeTutorIntent(text: string) {
   const t = (text || "").toLowerCase();
@@ -583,6 +582,73 @@ function looksLikeTutorIntent(text: string) {
   ];
 
   return strong.some((k) => t.includes(k));
+}
+
+function shouldSuggestFileUploadFromText(text: string) {
+  const t = (text || "").toLowerCase();
+
+  const triggers = [
+    "captura",
+    "screenshot",
+    "pantallazo",
+    "foto",
+    "imagen",
+    "pdf",
+    "contrato",
+    "documento",
+    "audio",
+    "vídeo",
+    "video",
+    "enlace",
+    "link",
+    "url",
+    "web",
+    "página",
+    "pagina",
+    "correo",
+    "email",
+  ];
+
+  return triggers.some((k) => t.includes(k));
+}
+
+function buildNaturalUploadPrompt(text: string) {
+  const t = (text || "").toLowerCase();
+
+  if (t.includes("contrato") || t.includes("pdf") || t.includes("documento")) {
+    return "Si quieres, súbemelo y te digo qué me preocuparía o qué revisaría antes de seguir.";
+  }
+
+  if (t.includes("audio")) {
+    return "Si lo tienes a mano, súbelo y saco contigo lo importante para verlo más claro.";
+  }
+
+  if (t.includes("vídeo") || t.includes("video")) {
+    return "Si quieres, súbelo y lo revisamos juntos para ver si hay algo raro o importante.";
+  }
+
+  if (
+    t.includes("web") ||
+    t.includes("enlace") ||
+    t.includes("link") ||
+    t.includes("url") ||
+    t.includes("página") ||
+    t.includes("pagina")
+  ) {
+    return "Pásamelo y lo miro contigo; así te puedo decir mejor si hay algo que me haría frenar.";
+  }
+
+  if (
+    t.includes("captura") ||
+    t.includes("pantallazo") ||
+    t.includes("screenshot") ||
+    t.includes("foto") ||
+    t.includes("imagen")
+  ) {
+    return "Si quieres, súbemela y la reviso contigo para afinar mejor lo que estamos viendo.";
+  }
+
+  return "Si quieres, súbemelo y lo reviso contigo.";
 }
 
 function inferTutorLevel(text: string): TutorLevel {
@@ -692,6 +758,9 @@ function PlusIcon({ className }: { className?: string }) {
 export default function Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  const [showContextualFileCard, setShowContextualFileCard] = useState(false);
+const [contextualFilePrompt, setContextualFilePrompt] = useState("");
 
   // ✅ FIX: usar el origin real del navegador para evitar PKCE cross-domain (vonuai.com vs app.vonuai.com vs preview)
   const SITE_URL =
@@ -3544,6 +3613,39 @@ const activeThread = useMemo(() => {
 const messages = activeThread?.messages ?? [];
 
 useEffect(() => {
+  if (!activeThread) {
+    setShowContextualFileCard(false);
+    setContextualFilePrompt("");
+    return;
+  }
+
+  const hasPreview = !!imagePreview;
+  if (hasPreview) {
+    setShowContextualFileCard(false);
+    setContextualFilePrompt("");
+    return;
+  }
+
+  const lastUserMessage = [...messages].reverse().find((m) => m.role === "user" && (m.text ?? "").trim());
+  if (!lastUserMessage?.text) {
+    setShowContextualFileCard(false);
+    setContextualFilePrompt("");
+    return;
+  }
+
+  const shouldSuggest = shouldSuggestFileUploadFromText(lastUserMessage.text);
+
+  if (!shouldSuggest) {
+    setShowContextualFileCard(false);
+    setContextualFilePrompt("");
+    return;
+  }
+
+  setContextualFilePrompt(buildNaturalUploadPrompt(lastUserMessage.text));
+  setShowContextualFileCard(true);
+}, [activeThreadId, messages, imagePreview]);
+
+useEffect(() => {
   if (!pendingScrollToBottomRef.current) return;
 
   const el = scrollRef.current;
@@ -5783,9 +5885,6 @@ return (
         ))}
       </div>
 
-      <div className="mt-5 md:mt-6 max-w-[520px]">
-  <ChatFileDropCard onClick={() => setFilePickerOpen(true)} />
-</div>
     </div>
   </div>
 ) : null}
@@ -5796,11 +5895,11 @@ return (
         {messages.map((m, i) => {
           const isUser = m.role === "user";
           const firstUserMessageIndex = messages.findIndex((x) => x.role === "user");
-const isFirstUserMessage =
-  isUser && i === firstUserMessageIndex;
+          const isFirstUserMessage =
+            isUser && i === firstUserMessageIndex;
           const isLastAssistantMessage =
-  m.role === "assistant" &&
-  i === messages.length - 1;
+            m.role === "assistant" &&
+            i === messages.length - 1;
 
           if (!isUser && m.id === "init" && !m.pizarra) {
             return null;
@@ -5827,18 +5926,18 @@ const isFirstUserMessage =
           if (isUser) {
             return (
               <div
-  key={m.id}
-  data-msg-id={m.id}
-  className={[
-  "flex w-full justify-end animate-[fadeIn_240ms_ease-out]",
-  isFirstUserMessage ? "mt-12 md:mt-0" : "",
-].join(" ")}
->
+                key={m.id}
+                data-msg-id={m.id}
+                className={[
+                  "flex w-full justify-end animate-[fadeIn_240ms_ease-out]",
+                  isFirstUserMessage ? "mt-12 md:mt-0" : "",
+                ].join(" ")}
+              >
                 <div
                   className={[
-  "relative min-w-0 max-w-[88%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
-  "md:shadow-sm bg-[#e9edf1] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-none mr-1 md:mr-2",
-].join(" ")}
+                    "relative min-w-0 max-w-[88%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
+                    "md:shadow-sm bg-[#e9edf1] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-none mr-1 md:mr-2",
+                  ].join(" ")}
                 >
                   <BubbleTail side="right" color="#e9edf1" />
 
@@ -5865,53 +5964,53 @@ const isFirstUserMessage =
           }
 
           // ===== VONU PENSANDO (misma estructura que la respuesta para que no se mueva) =====
-if (isStreaming && !((m.text ?? "").trim())) {
-  return (
-  <div
-    key={m.id}
-    className="flex w-full justify-start mt-3 md:mt-4 vonu-answer-in"
-  >
-      <div className="ml-2 mr-3 md:mr-0 flex w-full max-w-[93%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
-        <div
-          className={[
-  "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center self-start",
-  activeThread?.mode === "tutor"
-    ? "mt-[22px] md:mt-[24px] -ml-[1px] md:-ml-[2px]"
-    : "mt-[7px] md:mt-[9px] -ml-[2px] md:-ml-[3px]"
-].join(" ")}
-        >
-          <VonuThinking />
-        </div>
+          if (isStreaming && !((m.text ?? "").trim())) {
+            return (
+              <div
+                key={m.id}
+                className="flex w-full justify-start mt-3 md:mt-4 vonu-answer-in"
+              >
+                <div className="ml-2 mr-3 md:mr-0 flex w-full max-w-[93%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
+                  <div
+                    className={[
+                      "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center self-start",
+                      activeThread?.mode === "tutor"
+                        ? "mt-[22px] md:mt-[24px] -ml-[1px] md:-ml-[2px]"
+                        : "mt-[7px] md:mt-[9px] -ml-[2px] md:-ml-[3px]",
+                    ].join(" ")}
+                  >
+                    <VonuThinking />
+                  </div>
 
-        <div className="min-w-0 flex-1" />
-      </div>
-    </div>
-  );
-}
+                  <div className="min-w-0 flex-1" />
+                </div>
+              </div>
+            );
+          }
 
           // ===== VONU RESPONDIENDO (sin burbuja) =====
-                    return (
+          return (
             <div
               key={m.id}
               className="flex w-full justify-start mt-3 md:mt-4"
-style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
+              style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
             >
               <div className="ml-2 mr-2 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
                 <div
-  className={[
-  "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center self-start",
-  activeThread?.mode === "tutor"
-    ? "mt-[22px] md:mt-[24px]"
-    : "mt-[10px] md:mt-[12px]"
-].join(" ")}
->
-  <img
-    src="/logo/vonu-cube-black.png?v=3"
-    alt="Vonu"
-    className="block h-[20px] w-[20px] md:h-[21px] md:w-[21px] object-contain"
-    draggable={false}
-  />
-</div>
+                  className={[
+                    "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center self-start",
+                    activeThread?.mode === "tutor"
+                      ? "mt-[22px] md:mt-[24px]"
+                      : "mt-[10px] md:mt-[12px]",
+                  ].join(" ")}
+                >
+                  <img
+                    src="/logo/vonu-cube-black.png?v=3"
+                    alt="Vonu"
+                    className="block h-[20px] w-[20px] md:h-[21px] md:w-[21px] object-contain"
+                    draggable={false}
+                  />
+                </div>
 
                 <div className="min-w-0 flex-1 vonu-reveal">
                   {m.image && (
@@ -5960,20 +6059,34 @@ style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
                       />
                     </div>
                   ) : null}
-                  
+
                   <AssistantMessageActions
-  isLastAssistantMessage={isLastAssistantMessage}
-  isStreaming={!!m.streaming}
-  hasText={!!(m.text ?? "").trim()}
-  onCopy={copyConversationToClipboard}
-  onShare={shareConversation}
-  onDownloadPdf={downloadConversationAsPdf}
-/>
+                    isLastAssistantMessage={isLastAssistantMessage}
+                    isStreaming={!!m.streaming}
+                    hasText={!!(m.text ?? "").trim()}
+                    onCopy={copyConversationToClipboard}
+                    onShare={shareConversation}
+                    onDownloadPdf={downloadConversationAsPdf}
+                  />
                 </div>
               </div>
             </div>
           );
         })}
+
+        {showContextualFileCard && !paywallOpen ? (
+          <div className="flex justify-center pt-2 pb-1">
+            <div className="w-full max-w-[520px]">
+              {contextualFilePrompt ? (
+                <div className="mb-3 text-center text-[14px] leading-6 text-zinc-600 px-4">
+                  {contextualFilePrompt}
+                </div>
+              ) : null}
+
+              <ChatFileDropCard onClick={() => setFilePickerOpen(true)} />
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   </div>
