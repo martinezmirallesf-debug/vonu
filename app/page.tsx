@@ -1741,7 +1741,7 @@ function scrollToBottomNow(behavior: ScrollBehavior = "smooth") {
   shouldStickToBottomRef.current = true;
 }
 
-function handlePickFileType(type: "image" | "pdf" | "audio" | "video" | "url") {
+function handlePickFileType(type: "image" | "pdf" | "audio" | "video" | "url" | "phone") {
   setShowContextualFileCard(false);
   setFilePickerOpen(false);
   setPendingFileType(type);
@@ -1756,9 +1756,18 @@ function handlePickFileType(type: "image" | "pdf" | "audio" | "video" | "url") {
     return;
   }
 
+  if (type === "phone") {
+    setPhoneInputOpen(true);
+    return;
+  }
+
   setMicMsg(
     `Pronto podrás subir ${
-      type === "pdf" ? "PDFs" : type === "audio" ? "audios" : "vídeos"
+      type === "pdf"
+        ? "PDFs"
+        : type === "audio"
+        ? "audios"
+        : "vídeos"
     } para analizarlos.`
   );
   setTimeout(() => setMicMsg(null), 2200);
@@ -2387,9 +2396,11 @@ async function speakTTS(text: string) {
   const [uiError, setUiError] = useState<string | null>(null);
 
   const [filePickerOpen, setFilePickerOpen] = useState(false);
-const [pendingFileType, setPendingFileType] = useState<"image" | "pdf" | "audio" | "video" | "url" | null>(null);
+const [pendingFileType, setPendingFileType] = useState<"image" | "pdf" | "audio" | "video" | "url" | "phone" | null>(null);
 const [urlInputOpen, setUrlInputOpen] = useState(false);
 const [urlDraft, setUrlDraft] = useState("");
+const [phoneInputOpen, setPhoneInputOpen] = useState(false);
+const [phoneDraft, setPhoneDraft] = useState("");
 
   const [usageInfo, setUsageInfo] = useState<{
   plan_id: string;
@@ -5684,9 +5695,9 @@ return (
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 pt-5 pb-3 border-b border-zinc-100">
-          <div className="text-[19px] font-semibold tracking-[-0.02em] text-zinc-900">
-            Pega el enlace
-          </div>
+          <div className="text-[18px] font-semibold tracking-[-0.02em] text-zinc-900">
+  Introduce el enlace
+</div>
           <div className="mt-1 text-[13px] text-zinc-500">
             Lo revisamos juntos dentro de la conversación.
           </div>
@@ -5732,6 +5743,73 @@ return (
             className="flex-1 h-11 rounded-full bg-[#1a73e8] hover:bg-[#1669c1] text-white text-[14px] font-semibold transition-colors cursor-pointer"
           >
             Usar enlace
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+{phoneInputOpen && (
+  <div className="fixed inset-0 z-[116]">
+    <div
+      className="absolute inset-0 bg-black/25 backdrop-blur-[6px]"
+      onClick={() => setPhoneInputOpen(false)}
+      aria-hidden="true"
+    />
+
+    <div className="absolute inset-x-3 bottom-3 md:inset-0 md:flex md:items-center md:justify-center md:p-6">
+      <div
+        className="mx-auto w-full max-w-[520px] rounded-[30px] border border-zinc-200 bg-white/92 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.22)] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-5 pt-5 pb-3 border-b border-zinc-100">
+          <div className="text-[18px] font-semibold tracking-[-0.02em] text-zinc-900">
+            Introduce el número
+          </div>
+        </div>
+
+        <div className="p-4">
+          <input
+            value={phoneDraft}
+            onChange={(e) => setPhoneDraft(e.target.value)}
+            placeholder="+34 600 000 000"
+            className="w-full h-12 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-[14px] text-zinc-900 placeholder:text-zinc-500 outline-none focus:border-zinc-300"
+            autoFocus
+            inputMode="tel"
+          />
+        </div>
+
+        <div className="px-4 pb-4 flex gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setPhoneInputOpen(false);
+              setPhoneDraft("");
+            }}
+            className="flex-1 h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-[14px] font-semibold text-zinc-800 transition-colors cursor-pointer"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const clean = phoneDraft.trim();
+              if (!clean) return;
+
+              setInput((prev) =>
+                prev.trim()
+                  ? `${prev}\nNúmero a analizar: ${clean}`
+                  : `Número a analizar: ${clean}`
+              );
+
+              setPhoneInputOpen(false);
+              setPhoneDraft("");
+            }}
+            className="flex-1 h-11 rounded-full bg-[#1a73e8] hover:bg-[#1669c1] text-white text-[14px] font-semibold transition-colors cursor-pointer"
+          >
+            Analizar
           </button>
         </div>
       </div>

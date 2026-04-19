@@ -2,7 +2,7 @@
 
 import React from "react";
 
-type FilePickerType = "image" | "pdf" | "audio" | "video" | "url";
+type FilePickerType = "image" | "pdf" | "audio" | "video" | "url" | "phone";
 
 type FilePickerModalProps = {
   open: boolean;
@@ -58,6 +58,19 @@ function LinkIcon({ className }: { className?: string }) {
   );
 }
 
+function PhoneIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M6.8 4.5h2.1c.5 0 .9.34 1.02.83l.56 2.24c.09.36 0 .73-.26 1.01l-1.1 1.2a14.3 14.3 0 0 0 5.61 5.61l1.2-1.1c.28-.26.65-.35 1.01-.26l2.24.56c.49.12.83.52.83 1.02v2.1c0 .6-.49 1.09-1.09 1.09C10.91 19 5 13.09 5 5.59c0-.6.49-1.09 1.09-1.09Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function CloseIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -69,29 +82,25 @@ function CloseIcon({ className }: { className?: string }) {
 
 function OptionButton({
   icon,
-  title,
-  subtitle,
+  label,
   onClick,
 }: {
   icon: React.ReactNode;
-  title: string;
-  subtitle: string;
+  label: string;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full rounded-[22px] bg-white/92 border border-zinc-200 px-4 py-4 text-left shadow-sm hover:bg-white transition-colors cursor-pointer"
+      className="aspect-square w-full rounded-[24px] bg-white/92 border border-zinc-200 shadow-sm hover:bg-white transition-colors cursor-pointer"
     >
-      <div className="flex items-start gap-3">
-        <div className="h-11 w-11 rounded-[16px] bg-zinc-50 border border-zinc-200 text-zinc-800 grid place-items-center shrink-0">
+      <div className="flex h-full flex-col items-center justify-center px-3">
+        <div className="h-11 w-11 rounded-[16px] border border-zinc-200 bg-zinc-50 text-zinc-800 grid place-items-center">
           {icon}
         </div>
-
-        <div className="min-w-0">
-          <div className="text-[15px] font-semibold text-zinc-900">{title}</div>
-          <div className="mt-1 text-[12.5px] leading-5 text-zinc-500">{subtitle}</div>
+        <div className="mt-3 text-[13px] md:text-[14px] font-medium tracking-[-0.01em] text-zinc-900 text-center">
+          {label}
         </div>
       </div>
     </button>
@@ -113,29 +122,24 @@ export default function FilePickerModal({
         aria-hidden="true"
       />
 
-      <div className="absolute inset-x-3 bottom-3 md:inset-0 md:flex md:items-center md:justify-center md:p-6">
+      <div className="absolute inset-x-3 bottom-3 top-auto md:inset-0 md:flex md:items-center md:justify-center md:p-6">
         <div
-          className="mx-auto w-full max-w-[620px] rounded-[30px] border border-zinc-200 bg-white/90 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.22)] overflow-hidden"
+          className="mx-auto w-full max-w-[420px] rounded-[30px] border border-zinc-200 bg-white/90 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.22)] overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex justify-center pt-3 md:hidden">
             <div className="h-1.5 w-12 rounded-full bg-zinc-300" />
           </div>
 
-          <div className="flex items-start justify-between gap-4 px-5 pt-4 pb-3 border-b border-zinc-100">
-            <div>
-              <div className="text-[19px] md:text-[21px] font-semibold tracking-[-0.02em] text-zinc-900">
-                ¿Qué quieres que analice?
-              </div>
-              <div className="mt-1 text-[13px] md:text-[14px] text-zinc-500">
-                Elige lo que tengas y lo revisamos juntos.
-              </div>
+          <div className="flex items-center justify-between px-4 pt-4 pb-2">
+            <div className="text-[17px] md:text-[18px] font-semibold tracking-[-0.02em] text-zinc-900">
+              Subir para analizar
             </div>
 
             <button
               type="button"
               onClick={onClose}
-              className="h-10 w-10 rounded-full hover:bg-zinc-100 transition-colors grid place-items-center text-zinc-700 cursor-pointer shrink-0"
+              className="h-9 w-9 rounded-full hover:bg-zinc-100 transition-colors grid place-items-center text-zinc-700 cursor-pointer shrink-0"
               aria-label="Cerrar"
               title="Cerrar"
             >
@@ -143,50 +147,40 @@ export default function FilePickerModal({
             </button>
           </div>
 
-          <div className="p-3 md:p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="p-3 pt-2 grid grid-cols-2 gap-3">
             <OptionButton
               icon={<ImageIcon className="h-[19px] w-[19px]" />}
-              title="Imagen o captura"
-              subtitle="Revisar señales, contexto y detalles visuales."
+              label="Imagen"
               onClick={() => onPickType("image")}
             />
-
             <OptionButton
               icon={<PdfIcon className="h-[19px] w-[19px]" />}
-              title="PDF o contrato"
-              subtitle="Resumir y detectar puntos importantes."
+              label="PDF"
               onClick={() => onPickType("pdf")}
             />
-
             <OptionButton
               icon={<AudioIcon className="h-[19px] w-[19px]" />}
-              title="Audio"
-              subtitle="Extraer lo importante y revisar tono o presión."
+              label="Audio"
               onClick={() => onPickType("audio")}
             />
-
             <OptionButton
               icon={<VideoIcon className="h-[19px] w-[19px]" />}
-              title="Vídeo"
-              subtitle="Analizar contenido y posibles señales raras."
+              label="Vídeo"
               onClick={() => onPickType("video")}
             />
-
-            <div className="md:col-span-2">
-              <OptionButton
-                icon={<LinkIcon className="h-[19px] w-[19px]" />}
-                title="Web o enlace"
-                subtitle="Ver si inspira confianza o hay motivos para frenar."
-                onClick={() => onPickType("url")}
-              />
-            </div>
+            <OptionButton
+              icon={<LinkIcon className="h-[19px] w-[19px]" />}
+              label="Enlace"
+              onClick={() => onPickType("url")}
+            />
+            <OptionButton
+              icon={<PhoneIcon className="h-[19px] w-[19px]" />}
+              label="Nº teléfono"
+              onClick={() => onPickType("phone")}
+            />
           </div>
 
-          <div className="px-5 pb-5 pt-1">
-            <div className="text-[12px] leading-5 text-zinc-500">
-              Vonu te ayudará a entender lo importante y a decidir el siguiente paso con más claridad.
-            </div>
-          </div>
+          <div className="pb-3" />
         </div>
       </div>
     </div>
