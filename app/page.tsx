@@ -20,6 +20,7 @@ import VonuThinking from "@/app/components/VonuThinking";
 import AssistantMessageActions from "@/app/components/AssistantMessageActions";
 import { analyzeAttachment } from "@/app/lib/analysis/analyzeAttachment";
 import FilePickerModal from "@/app/components/FilePickerModal";
+import ChatFileDropCard from "@/app/components/ChatFileDropCard";
 
 import ChalkboardTutorBoard from "@/app/components/ChalkboardTutorBoard";
 import {
@@ -5781,6 +5782,10 @@ return (
           </button>
         ))}
       </div>
+
+      <div className="mt-5 md:mt-6 max-w-[520px]">
+  <ChatFileDropCard onClick={() => setFilePickerOpen(true)} />
+</div>
     </div>
   </div>
 ) : null}
