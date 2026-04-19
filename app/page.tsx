@@ -1742,6 +1742,7 @@ function scrollToBottomNow(behavior: ScrollBehavior = "smooth") {
 }
 
 function handlePickFileType(type: "image" | "pdf" | "audio" | "video" | "url") {
+  setShowContextualFileCard(false);
   setFilePickerOpen(false);
   setPendingFileType(type);
 
@@ -1755,7 +1756,11 @@ function handlePickFileType(type: "image" | "pdf" | "audio" | "video" | "url") {
     return;
   }
 
-  setMicMsg(`Pronto podrás subir ${type === "pdf" ? "PDFs" : type === "audio" ? "audios" : "vídeos"} para analizarlos.`);
+  setMicMsg(
+    `Pronto podrás subir ${
+      type === "pdf" ? "PDFs" : type === "audio" ? "audios" : "vídeos"
+    } para analizarlos.`
+  );
   setTimeout(() => setMicMsg(null), 2200);
 }
 
@@ -2450,6 +2455,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
 const textareaRef = useRef<HTMLTextAreaElement>(null);
 const headerRef = useRef<HTMLDivElement>(null);
 const pendingScrollToBottomRef = useRef(false);
+const shownFileCardForMessageRef = useRef<Set<string>>(new Set());
 
 
   function pinUserMessageNearTop(messageId: string) {
@@ -3637,11 +3643,12 @@ useEffect(() => {
   }
 
   const lastMessage = messages[messages.length - 1];
+
   const lastRealUserMessage = [...messages]
     .reverse()
     .find((m) => m.role === "user" && (m.text ?? "").trim());
 
-  if (!lastRealUserMessage?.text) {
+  if (!lastRealUserMessage?.text || !lastRealUserMessage?.id) {
     setShowContextualFileCard(false);
     setContextualFilePrompt("");
     return;
@@ -3655,14 +3662,19 @@ useEffect(() => {
     !lastMessage.streaming &&
     !!(lastMessage.text ?? "").trim();
 
-  if (shouldSuggest && assistantHasJustAnswered) {
+  const alreadyShownForThisUserMessage =
+    shownFileCardForMessageRef.current.has(lastRealUserMessage.id);
+
+  if (shouldSuggest && assistantHasJustAnswered && !alreadyShownForThisUserMessage) {
     setContextualFilePrompt(buildNaturalUploadPrompt(lastRealUserMessage.text));
     setShowContextualFileCard(true);
+
+    shownFileCardForMessageRef.current.add(lastRealUserMessage.id);
   } else {
     setShowContextualFileCard(false);
     setContextualFilePrompt("");
   }
-}, [activeThreadId, messages, imagePreview]);
+}, [activeThread, messages, imagePreview]);
 
 useEffect(() => {
   if (!pendingScrollToBottomRef.current) return;
@@ -6102,7 +6114,12 @@ return (
         </div>
       ) : null}
 
-      <ChatFileDropCard onClick={() => setFilePickerOpen(true)} />
+      <ChatFileDropCard
+  onClick={() => {
+    setShowContextualFileCard(false);
+    setFilePickerOpen(true);
+  }}
+/>
     </div>
   </div>
 ) : null}
