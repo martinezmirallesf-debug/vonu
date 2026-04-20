@@ -5726,24 +5726,20 @@ return (
           </button>
 
           <button
-            type="button"
-            onClick={() => {
-              const clean = urlDraft.trim();
-              if (!clean) return;
+  type="button"
+  onClick={() => {
+    const clean = urlDraft.trim();
+    if (!clean) return;
 
-              setInput((prev) =>
-                prev.trim()
-                  ? `${prev}\n${clean}`
-                  : clean
-              );
+    setUrlInputOpen(false);
+    setUrlDraft("");
 
-              setUrlInputOpen(false);
-              setUrlDraft("");
-            }}
-            className="flex-1 h-11 rounded-full bg-[#1a73e8] hover:bg-[#1669c1] text-white text-[14px] font-semibold transition-colors cursor-pointer"
-          >
-            Usar enlace
-          </button>
+    sendQuickMessage(`Quiero que analices este enlace y me digas si ves algo sospechoso o importante: ${clean}`, activeThread?.mode ?? "chat");
+  }}
+  className="flex-1 h-11 rounded-full bg-[#1a73e8] hover:bg-[#1669c1] text-white text-[14px] font-semibold transition-colors cursor-pointer"
+>
+  Analizar
+</button>
         </div>
       </div>
     </div>
@@ -5793,24 +5789,20 @@ return (
           </button>
 
           <button
-            type="button"
-            onClick={() => {
-              const clean = phoneDraft.trim();
-              if (!clean) return;
+  type="button"
+  onClick={() => {
+    const clean = phoneDraft.trim();
+    if (!clean) return;
 
-              setInput((prev) =>
-                prev.trim()
-                  ? `${prev}\nNúmero a analizar: ${clean}`
-                  : `Número a analizar: ${clean}`
-              );
+    setPhoneInputOpen(false);
+    setPhoneDraft("");
 
-              setPhoneInputOpen(false);
-              setPhoneDraft("");
-            }}
-            className="flex-1 h-11 rounded-full bg-[#1a73e8] hover:bg-[#1669c1] text-white text-[14px] font-semibold transition-colors cursor-pointer"
-          >
-            Analizar
-          </button>
+    sendQuickMessage(`Quiero que analices este número de teléfono y me digas si ves señales de riesgo, fraude o algo importante: ${clean}`, activeThread?.mode ?? "chat");
+  }}
+  className="flex-1 h-11 rounded-full bg-[#1a73e8] hover:bg-[#1669c1] text-white text-[14px] font-semibold transition-colors cursor-pointer"
+>
+  Analizar
+</button>
         </div>
       </div>
     </div>
