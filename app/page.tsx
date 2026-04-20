@@ -5689,7 +5689,7 @@ return (
       aria-hidden="true"
     />
 
-    <div className="absolute inset-x-3 bottom-3 md:inset-0 md:flex md:items-center md:justify-center md:p-6">
+    <div className="absolute inset-x-3 top-[10vh] md:inset-0 md:flex md:items-center md:justify-center md:p-6">
       <div
         className="mx-auto w-full max-w-[560px] rounded-[30px] border border-zinc-200 bg-white/92 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.22)] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -5758,7 +5758,7 @@ return (
       aria-hidden="true"
     />
 
-    <div className="absolute inset-x-3 bottom-3 md:inset-0 md:flex md:items-center md:justify-center md:p-6">
+    <div className="absolute inset-x-3 top-[10vh] md:inset-0 md:flex md:items-center md:justify-center md:p-6">
       <div
         className="mx-auto w-full max-w-[520px] rounded-[30px] border border-zinc-200 bg-white/92 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.22)] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
