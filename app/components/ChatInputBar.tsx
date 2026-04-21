@@ -20,6 +20,7 @@ type ChatInputBarProps = {
   isTyping: boolean;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  handlePaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void;
   canSend: boolean;
   sendMessage: () => void;
   voiceMode: boolean;
@@ -81,6 +82,7 @@ export default function ChatInputBar({
   isTyping,
   textareaRef,
   handleKeyDown,
+  handlePaste,
   canSend,
   sendMessage,
   voiceMode,
@@ -186,10 +188,11 @@ export default function ChatInputBar({
 
   <div className="px-1">
     <textarea
-      ref={textareaRef}
-      value={input}
-      onChange={(e) => setInput(e.target.value)}
-      onKeyDown={handleKeyDown}
+  ref={textareaRef}
+  value={input}
+  onChange={(e) => setInput(e.target.value)}
+  onKeyDown={handleKeyDown}
+  onPaste={handlePaste}
       placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
       disabled={isTyping}
       rows={1}

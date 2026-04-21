@@ -1674,9 +1674,12 @@ useEffect(() => {
     } catch {}
   }, [threads, mounted]);
 
-  // -------- UI --------
-  const [input, setInput] = useState("");
-  // =======================
+// -------- UI --------
+const [input, setInput] = useState("");
+const [isDraggingFile, setIsDraggingFile] = useState(false);
+const dragDepthRef = useRef(0);
+
+// =======================
 // 🔊 VOZ (Text-to-Speech) — premium: habla + escribe
 // =======================
 const [ttsEnabled, setTtsEnabled] = useState(false);
@@ -2168,6 +2171,85 @@ function toggleReadAloud() {
   });
 }
 
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleImageFile(file: File | null | undefined) {
+  if (!file) return;
+  if (!file.type.startsWith("image/")) return;
+
+  try {
+    const dataUrl = await fileToDataUrl(file);
+    setImagePreview(dataUrl);
+  } catch (err) {
+    console.error("No se pudo leer la imagen:", err);
+  }
+}
+
+async function handlePasteIntoChat(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+  const items = Array.from(e.clipboardData?.items || []);
+  const imageItem = items.find((item) => item.type.startsWith("image/"));
+  if (!imageItem) return;
+
+  const file = imageItem.getAsFile();
+  if (!file) return;
+
+  e.preventDefault();
+  await handleImageFile(file);
+}
+
+function handleGlobalDragEnter(e: React.DragEvent<HTMLDivElement>) {
+  const hasFiles = Array.from(e.dataTransfer?.types || []).includes("Files");
+  if (!hasFiles) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+  dragDepthRef.current += 1;
+  setIsDraggingFile(true);
+}
+
+function handleGlobalDragOver(e: React.DragEvent<HTMLDivElement>) {
+  const hasFiles = Array.from(e.dataTransfer?.types || []).includes("Files");
+  if (!hasFiles) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+  e.dataTransfer.dropEffect = "copy";
+  if (!isDraggingFile) setIsDraggingFile(true);
+}
+
+function handleGlobalDragLeave(e: React.DragEvent<HTMLDivElement>) {
+  const hasFiles = Array.from(e.dataTransfer?.types || []).includes("Files");
+  if (!hasFiles) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+  if (dragDepthRef.current === 0) {
+    setIsDraggingFile(false);
+  }
+}
+
+async function handleGlobalDrop(e: React.DragEvent<HTMLDivElement>) {
+  const hasFiles = Array.from(e.dataTransfer?.types || []).includes("Files");
+  if (!hasFiles) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  dragDepthRef.current = 0;
+  setIsDraggingFile(false);
+
+  const file = e.dataTransfer?.files?.[0];
+  await handleImageFile(file);
+}
 
 // =======================
 // 🔊 TTS helpers
@@ -5956,15 +6038,22 @@ return (
 
 {/* ✅ CHAT / TUTOR RENDER     */}
 
-<div ref={scrollRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto min-h-0 overscroll-contain">
-
-  <div
-  className="mx-auto max-w-3xl px-3 md:px-6"
-  style={{
-    paddingTop: hasUserMessage ? 0 : 118,
-    paddingBottom: hasUserMessage ? chatBottomPad : inputBarH + 20,
-  }}
+<div
+  ref={scrollRef}
+  onScroll={handleChatScroll}
+  onDragEnter={handleGlobalDragEnter}
+  onDragOver={handleGlobalDragOver}
+  onDragLeave={handleGlobalDragLeave}
+  onDrop={handleGlobalDrop}
+  className="flex-1 overflow-y-auto min-h-0 overscroll-contain"
 >
+  <div
+    className="mx-auto max-w-3xl px-3 md:px-6"
+    style={{
+      paddingTop: hasUserMessage ? 0 : 118,
+      paddingBottom: hasUserMessage ? chatBottomPad : inputBarH + 20,
+    }}
+  >
 
 {showSoftLimitWarning ? (
   <div className="flex justify-start">
@@ -6284,8 +6373,33 @@ return (
 ) : null}
       </div>
     </div>
-  </div>
 </div>
+</div>
+
+{isDraggingFile && !paywallOpen ? (
+  <div className="fixed inset-0 z-[120] pointer-events-none">
+    <div className="absolute inset-0 bg-white/42 backdrop-blur-[6px]" />
+
+    <div className="absolute inset-0 flex items-center justify-center px-6">
+      <div className="w-full max-w-[420px] rounded-[30px] border border-zinc-300 bg-white/90 backdrop-blur-xl px-8 py-10 text-center">
+        <div className="mx-auto h-14 w-14 rounded-[18px] border border-zinc-300 bg-white grid place-items-center text-zinc-900">
+          <svg viewBox="0 0 24 24" className="h-[24px] w-[24px]" fill="none" aria-hidden="true">
+            <path d="M12 5v14" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+            <path d="M5 12h14" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+          </svg>
+        </div>
+
+        <div className="mt-4 text-[18px] font-semibold tracking-[-0.02em] text-zinc-900">
+          Suelta la imagen para analizarla
+        </div>
+
+        <div className="mt-1.5 text-[13px] text-zinc-500">
+          La añadiremos directamente al chat
+        </div>
+      </div>
+    </div>
+  </div>
+) : null}
 
 {showScrollToBottom && hasUserMessage && !paywallOpen && (
   <button
@@ -6316,28 +6430,29 @@ return (
   </button>
 )}
 
-            {!paywallOpen && (
+{!paywallOpen && (
   <ChatInputBar
-  inputBarRef={inputBarRef}
-  imagePreview={imagePreview}
-  micMsg={micMsg}
-  input={input}
-  setInput={setInput}
-  isTyping={isTyping}
-  textareaRef={textareaRef}
-  handleKeyDown={handleKeyDown}
-  canSend={canSend}
-  sendMessage={sendMessage}
-  voiceMode={voiceMode}
-  realtimeStatus={realtimeStatus}
-  isLoggedIn={isLoggedIn}
-  toggleConversation={toggleConversation}
-  openBoard={openBoard}
-  openFilePicker={() => setFilePickerOpen(true)}
-  fileInputRef={fileInputRef}
-  onSelectImage={onSelectImage}
-  clearImagePreview={() => setImagePreview(null)}
-/>
+    inputBarRef={inputBarRef}
+    imagePreview={imagePreview}
+    micMsg={micMsg}
+    input={input}
+    setInput={setInput}
+    isTyping={isTyping}
+    textareaRef={textareaRef}
+    handleKeyDown={handleKeyDown}
+    handlePaste={handlePasteIntoChat}
+    canSend={canSend}
+    sendMessage={sendMessage}
+    voiceMode={voiceMode}
+    realtimeStatus={realtimeStatus}
+    isLoggedIn={isLoggedIn}
+    toggleConversation={toggleConversation}
+    openBoard={openBoard}
+    openFilePicker={() => setFilePickerOpen(true)}
+    fileInputRef={fileInputRef}
+    onSelectImage={onSelectImage}
+    clearImagePreview={() => setImagePreview(null)}
+  />
 )}
     </div>
   </div>
