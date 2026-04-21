@@ -585,9 +585,22 @@ function looksLikeTutorIntent(text: string) {
 }
 
 function shouldSuggestFileUploadFromText(text: string) {
-  const t = (text || "").toLowerCase();
+  const t = (text || "").toLowerCase().trim();
 
-  const triggers = [
+  const negativeSignals = [
+    "me has puesto eso para que te suba un archivo",
+    "me has pedido que suba",
+    "me estás pidiendo que suba",
+    "por qué sale el botón",
+    "para qué sirve ese botón",
+    "qué es ese botón",
+    "qué es ese bloque",
+    "por qué me sale subir archivo",
+  ];
+
+  if (negativeSignals.some((k) => t.includes(k))) return false;
+
+  const strongTriggers = [
     "captura",
     "screenshot",
     "pantallazo",
@@ -596,17 +609,6 @@ function shouldSuggestFileUploadFromText(text: string) {
     "pdf",
     "contrato",
     "documento",
-    "archivo",
-    "adjunto",
-    "adjuntar",
-    "subir",
-    "subo",
-    "te lo paso",
-    "te lo mando",
-    "te lo envío",
-    "te lo envio",
-    "te envío",
-    "te envio",
     "audio",
     "vídeo",
     "video",
@@ -618,9 +620,35 @@ function shouldSuggestFileUploadFromText(text: string) {
     "pagina",
     "correo",
     "email",
+    "número",
+    "numero",
+    "teléfono",
+    "telefono",
   ];
 
-  return triggers.some((k) => t.includes(k));
+  const intentTriggers = [
+    "te lo paso",
+    "te lo mando",
+    "te lo envío",
+    "te lo envio",
+    "te envío",
+    "te envio",
+    "te lo enseño",
+    "te lo adjunto",
+    "te adjunto",
+    "te lo subo",
+    "lo subo",
+    "te paso",
+    "te mando",
+    "mira esto",
+    "mira esta",
+    "mira este",
+  ];
+
+  return (
+    strongTriggers.some((k) => t.includes(k)) ||
+    intentTriggers.some((k) => t.includes(k))
+  );
 }
 
 function buildNaturalUploadPrompt(text: string) {
@@ -660,6 +688,32 @@ function buildNaturalUploadPrompt(text: string) {
   }
 
   return "Si quieres, súbemelo y lo reviso contigo.";
+}
+
+function assistantIsActuallyInvitingUpload(text: string) {
+  const t = (text || "").toLowerCase();
+
+  const invitePhrases = [
+    "si quieres, súbemelo",
+    "si quieres, subemelo",
+    "súbemelo y lo reviso contigo",
+    "subemelo y lo reviso contigo",
+    "pásamelo y lo miro contigo",
+    "pasamelo y lo miro contigo",
+    "si lo tienes a mano, súbelo",
+    "si lo tienes a mano, subelo",
+    "si quieres, súbemela",
+    "si quieres, subemela",
+    "si quieres, súbelo",
+    "si quieres, subelo",
+    "puedes subírmelo",
+    "puedes subirmelo",
+    "puedes subirlo",
+    "adjúntalo",
+    "adjuntalo",
+  ];
+
+  return invitePhrases.some((k) => t.includes(k));
 }
 
 function inferTutorLevel(text: string): TutorLevel {
@@ -3652,7 +3706,7 @@ useEffect(() => {
     return;
   }
 
-  if (imagePreview) {
+  if (imagePreview || filePickerOpen || urlInputOpen || phoneInputOpen) {
     setShowContextualFileCard(false);
     setContextualFilePrompt("");
     return;
@@ -3670,7 +3724,7 @@ useEffect(() => {
     return;
   }
 
-  const shouldSuggest = shouldSuggestFileUploadFromText(lastRealUserMessage.text);
+  const userOpenedARealFileNeed = shouldSuggestFileUploadFromText(lastRealUserMessage.text);
 
   const assistantHasJustAnswered =
     !!lastMessage &&
@@ -3678,19 +3732,33 @@ useEffect(() => {
     !lastMessage.streaming &&
     !!(lastMessage.text ?? "").trim();
 
+  const assistantInvitedUpload =
+    assistantHasJustAnswered &&
+    assistantIsActuallyInvitingUpload(lastMessage.text ?? "");
+
   const alreadyShownForThisUserMessage =
     shownFileCardForMessageRef.current.has(lastRealUserMessage.id);
 
-  if (shouldSuggest && assistantHasJustAnswered && !alreadyShownForThisUserMessage) {
+  if (
+    userOpenedARealFileNeed &&
+    assistantInvitedUpload &&
+    !alreadyShownForThisUserMessage
+  ) {
     setContextualFilePrompt(buildNaturalUploadPrompt(lastRealUserMessage.text));
     setShowContextualFileCard(true);
-
     shownFileCardForMessageRef.current.add(lastRealUserMessage.id);
   } else {
     setShowContextualFileCard(false);
     setContextualFilePrompt("");
   }
-}, [activeThread, messages, imagePreview]);
+}, [
+  activeThread,
+  messages,
+  imagePreview,
+  filePickerOpen,
+  urlInputOpen,
+  phoneInputOpen,
+]);
 
 useEffect(() => {
   if (!pendingScrollToBottomRef.current) return;
@@ -5682,24 +5750,21 @@ return (
 />
 
 {urlInputOpen && (
-  <div className="fixed inset-0 z-[115]">
+  <div className="fixed inset-0 z-[115] overflow-hidden">
     <div
       className="absolute inset-0 bg-black/25 backdrop-blur-[6px]"
       onClick={() => setUrlInputOpen(false)}
       aria-hidden="true"
     />
 
-    <div className="absolute inset-x-3 top-[10vh] md:inset-0 md:flex md:items-center md:justify-center md:p-6">
+    <div className="absolute inset-0 flex items-start justify-center px-3 pt-[12vh] md:items-center md:px-6 md:pt-0">
       <div
-        className="mx-auto w-full max-w-[560px] rounded-[30px] border border-zinc-200 bg-white/92 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.22)] overflow-hidden"
+        className="w-full max-w-[520px] rounded-[30px] border border-zinc-200 bg-white/94 backdrop-blur-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 pt-5 pb-3 border-b border-zinc-100">
           <div className="text-[18px] font-semibold tracking-[-0.02em] text-zinc-900">
-  Introduce el enlace
-</div>
-          <div className="mt-1 text-[13px] text-zinc-500">
-            Lo revisamos juntos dentro de la conversación.
+            Introduce el enlace
           </div>
         </div>
 
@@ -5708,8 +5773,9 @@ return (
             value={urlDraft}
             onChange={(e) => setUrlDraft(e.target.value)}
             placeholder="https://..."
-            className="w-full h-12 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-[14px] text-zinc-900 placeholder:text-zinc-500 outline-none focus:border-zinc-300"
+            className="w-full h-12 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-[16px] text-zinc-900 placeholder:text-zinc-500 outline-none focus:border-zinc-300"
             autoFocus
+            inputMode="url"
           />
         </div>
 
@@ -5726,20 +5792,23 @@ return (
           </button>
 
           <button
-  type="button"
-  onClick={() => {
-    const clean = urlDraft.trim();
-    if (!clean) return;
+            type="button"
+            onClick={() => {
+              const clean = urlDraft.trim();
+              if (!clean) return;
 
-    setUrlInputOpen(false);
-    setUrlDraft("");
+              setUrlInputOpen(false);
+              setUrlDraft("");
 
-    sendQuickMessage(`Quiero que analices este enlace y me digas si ves algo sospechoso o importante: ${clean}`, activeThread?.mode ?? "chat");
-  }}
-  className="flex-1 h-11 rounded-full bg-[#1a73e8] hover:bg-[#1669c1] text-white text-[14px] font-semibold transition-colors cursor-pointer"
->
-  Analizar
-</button>
+              sendQuickMessage(
+                `Quiero que analices este enlace y me digas si ves algo sospechoso o importante: ${clean}`,
+                activeThread?.mode ?? "chat"
+              );
+            }}
+            className="flex-1 h-11 rounded-full bg-[#1a73e8] hover:bg-[#1669c1] text-white text-[14px] font-semibold transition-colors cursor-pointer"
+          >
+            Analizar
+          </button>
         </div>
       </div>
     </div>
@@ -5747,16 +5816,16 @@ return (
 )}
 
 {phoneInputOpen && (
-  <div className="fixed inset-0 z-[116]">
+  <div className="fixed inset-0 z-[116] overflow-hidden">
     <div
       className="absolute inset-0 bg-black/25 backdrop-blur-[6px]"
       onClick={() => setPhoneInputOpen(false)}
       aria-hidden="true"
     />
 
-    <div className="absolute inset-x-3 top-[10vh] md:inset-0 md:flex md:items-center md:justify-center md:p-6">
+    <div className="absolute inset-0 flex items-start justify-center px-3 pt-[12vh] md:items-center md:px-6 md:pt-0">
       <div
-        className="mx-auto w-full max-w-[520px] rounded-[30px] border border-zinc-200 bg-white/92 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.22)] overflow-hidden"
+        className="w-full max-w-[520px] rounded-[30px] border border-zinc-200 bg-white/94 backdrop-blur-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 pt-5 pb-3 border-b border-zinc-100">
@@ -5770,7 +5839,7 @@ return (
             value={phoneDraft}
             onChange={(e) => setPhoneDraft(e.target.value)}
             placeholder="+34 600 000 000"
-            className="w-full h-12 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-[14px] text-zinc-900 placeholder:text-zinc-500 outline-none focus:border-zinc-300"
+            className="w-full h-12 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-[16px] text-zinc-900 placeholder:text-zinc-500 outline-none focus:border-zinc-300"
             autoFocus
             inputMode="tel"
           />
@@ -5789,20 +5858,23 @@ return (
           </button>
 
           <button
-  type="button"
-  onClick={() => {
-    const clean = phoneDraft.trim();
-    if (!clean) return;
+            type="button"
+            onClick={() => {
+              const clean = phoneDraft.trim();
+              if (!clean) return;
 
-    setPhoneInputOpen(false);
-    setPhoneDraft("");
+              setPhoneInputOpen(false);
+              setPhoneDraft("");
 
-    sendQuickMessage(`Quiero que analices este número de teléfono y me digas si ves señales de riesgo, fraude o algo importante: ${clean}`, activeThread?.mode ?? "chat");
-  }}
-  className="flex-1 h-11 rounded-full bg-[#1a73e8] hover:bg-[#1669c1] text-white text-[14px] font-semibold transition-colors cursor-pointer"
->
-  Analizar
-</button>
+              sendQuickMessage(
+                `Quiero que analices este número de teléfono y me digas si ves señales de riesgo, fraude o algo importante: ${clean}`,
+                activeThread?.mode ?? "chat"
+              );
+            }}
+            className="flex-1 h-11 rounded-full bg-[#1a73e8] hover:bg-[#1669c1] text-white text-[14px] font-semibold transition-colors cursor-pointer"
+          >
+            Analizar
+          </button>
         </div>
       </div>
     </div>

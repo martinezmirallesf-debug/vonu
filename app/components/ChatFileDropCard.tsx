@@ -40,7 +40,7 @@ export default function ChatFileDropCard({
       <div className="flex flex-col items-center justify-center">
         <div
           className={[
-            "grid place-items-center text-zinc-800 bg-white/82 backdrop-blur-md border border-zinc-200/90 shadow-[0_8px_18px_rgba(0,0,0,0.05)] transition-colors duration-200",
+            "grid place-items-center text-zinc-800 bg-white/88 backdrop-blur-md border border-zinc-200 transition-colors duration-200",
             "group-hover:bg-white",
             compact ? "h-11 w-11 rounded-[14px]" : "h-12 w-12 rounded-[15px] md:h-[52px] md:w-[52px] md:rounded-[16px]",
           ].join(" ")}
