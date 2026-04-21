@@ -5750,14 +5750,20 @@ return (
 />
 
 {urlInputOpen && (
-  <div className="fixed inset-0 z-[115] overflow-hidden">
+  <div
+  className="fixed inset-0 z-[115] overflow-hidden overscroll-none touch-none"
+  style={{ WebkitOverflowScrolling: "auto" }}
+>
     <div
       className="absolute inset-0 bg-black/25 backdrop-blur-[6px]"
       onClick={() => setUrlInputOpen(false)}
       aria-hidden="true"
     />
 
-    <div className="absolute inset-0 flex items-start justify-center px-3 pt-[12vh] md:items-center md:px-6 md:pt-0">
+    <div
+  className="absolute inset-0 flex items-start justify-center px-3 pt-[12vh] md:items-center md:px-6 md:pt-0 overflow-hidden overscroll-none touch-none"
+  style={{ WebkitOverflowScrolling: "auto" }}
+>
       <div
         className="w-full max-w-[520px] rounded-[30px] border border-zinc-200 bg-white/94 backdrop-blur-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -5816,14 +5822,20 @@ return (
 )}
 
 {phoneInputOpen && (
-  <div className="fixed inset-0 z-[116] overflow-hidden">
+  <div
+  className="fixed inset-0 z-[116] overflow-hidden overscroll-none touch-none"
+  style={{ WebkitOverflowScrolling: "auto" }}
+>
     <div
       className="absolute inset-0 bg-black/25 backdrop-blur-[6px]"
       onClick={() => setPhoneInputOpen(false)}
       aria-hidden="true"
     />
 
-    <div className="absolute inset-0 flex items-start justify-center px-3 pt-[12vh] md:items-center md:px-6 md:pt-0">
+    <div
+  className="absolute inset-0 flex items-start justify-center px-3 pt-[12vh] md:items-center md:px-6 md:pt-0 overflow-hidden overscroll-none touch-none"
+  style={{ WebkitOverflowScrolling: "auto" }}
+>
       <div
         className="w-full max-w-[520px] rounded-[30px] border border-zinc-200 bg-white/94 backdrop-blur-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
