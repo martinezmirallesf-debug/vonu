@@ -1216,7 +1216,20 @@ const [pendingCheckout, setPendingCheckout] = useState<{
     }
   }
 
- 
+ useEffect(() => {
+  const preventBrowserFileDrop = (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  window.addEventListener("dragover", preventBrowserFileDrop);
+  window.addEventListener("drop", preventBrowserFileDrop);
+
+  return () => {
+    window.removeEventListener("dragover", preventBrowserFileDrop);
+    window.removeEventListener("drop", preventBrowserFileDrop);
+  };
+}, []);
 
   // Cargar sesión + escuchar cambios
   useEffect(() => {
@@ -6389,13 +6402,9 @@ return (
           </svg>
         </div>
 
-        <div className="mt-4 text-[18px] font-semibold tracking-[-0.02em] text-zinc-900">
-          Suelta la imagen para analizarla
-        </div>
-
-        <div className="mt-1.5 text-[13px] text-zinc-500">
-          La añadiremos directamente al chat
-        </div>
+<div className="mt-4 mx-auto max-w-[260px] text-center text-[18px] leading-7 font-semibold tracking-[-0.02em] text-zinc-900">
+  Suelta la imagen para analizarla
+</div>
       </div>
     </div>
   </div>
