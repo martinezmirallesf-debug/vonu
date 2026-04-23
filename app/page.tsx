@@ -1821,6 +1821,11 @@ function handlePickFileType(type: "image" | "pdf" | "audio" | "video" | "url" | 
     return;
   }
 
+  if (type === "pdf") {
+    pdfInputRef.current?.click();
+    return;
+  }
+
   if (type === "url") {
     setUrlInputOpen(true);
     return;
@@ -1833,11 +1838,7 @@ function handlePickFileType(type: "image" | "pdf" | "audio" | "video" | "url" | 
 
   setMicMsg(
     `Pronto podrás subir ${
-      type === "pdf"
-        ? "PDFs"
-        : type === "audio"
-        ? "audios"
-        : "vídeos"
+      type === "audio" ? "audios" : "vídeos"
     } para analizarlos.`
   );
   setTimeout(() => setMicMsg(null), 2200);
@@ -2616,6 +2617,7 @@ const textareaRef = useRef<HTMLTextAreaElement>(null);
 const headerRef = useRef<HTMLDivElement>(null);
 const pendingScrollToBottomRef = useRef(false);
 const shownFileCardForMessageRef = useRef<Set<string>>(new Set());
+const pdfInputRef = useRef<HTMLInputElement | null>(null);
 
 
   function pinUserMessageNearTop(messageId: string) {
@@ -4058,6 +4060,54 @@ useEffect(() => {
   } catch (err: any) {
     setMicMsg(err?.message || "No se pudo adjuntar la imagen.");
     setTimeout(() => setMicMsg(null), 2400);
+  }
+}
+
+async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  try {
+    setMicMsg("Leyendo PDF…");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("/api/analyze-pdf", {
+      method: "POST",
+      body: formData,
+    });
+
+    const json = await res.json().catch(() => null);
+
+    if (!res.ok || !json?.ok || !json?.text) {
+      setMicMsg(
+        json?.error ||
+          "No he podido leer este PDF todavía. Si quieres, prueba con otro PDF o con una captura."
+      );
+      setTimeout(() => setMicMsg(null), 2600);
+      e.target.value = "";
+      return;
+    }
+
+    const pdfPrompt =
+      `He subido un PDF llamado "${json.filename}"` +
+      `${json.pageCount ? ` de ${json.pageCount} páginas` : ""}. ` +
+      `Quiero que lo analices como documento y me ayudes activamente, no solo con un resumen.\n\n` +
+      `Primero dime qué tipo de documento parece, qué es lo más importante y cómo me puedes ayudar con él.\n\n` +
+      `Si parece un contrato o documento delicado, dime qué revisarías y qué harías ahora.\n` +
+      `Si parece material de estudio, resume, explica y ofréceme ayuda para estudiar, test o preguntas.\n\n` +
+      `CONTENIDO DEL PDF:\n\n${json.text}`;
+
+    setMicMsg(null);
+
+    sendQuickMessage(pdfPrompt, activeThread?.mode ?? "chat");
+  } catch (err) {
+    console.error(err);
+    setMicMsg("Ha fallado la lectura del PDF.");
+    setTimeout(() => setMicMsg(null), 2600);
+  } finally {
+    e.target.value = "";
   }
 }
 
@@ -5987,6 +6037,14 @@ return (
     </div>
   </div>
 )}
+
+<input
+  ref={pdfInputRef}
+  type="file"
+  accept="application/pdf,.pdf"
+  onChange={onSelectPdf}
+  className="hidden"
+/>
 
 <TopBar
   topBarRef={headerRef}
