@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import pdfParse from "pdf-parse";
 
 export const runtime = "nodejs";
 
@@ -39,6 +38,7 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    const pdfParse = require("pdf-parse");
     const parsed = await pdfParse(buffer);
 
     const text = (parsed?.text || "").trim();
@@ -55,7 +55,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Limitamos para no disparar tokens en esta v1
     const clippedText = text.slice(0, 50000);
 
     return json({
