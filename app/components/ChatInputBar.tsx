@@ -150,7 +150,7 @@ useLayoutEffect(() => {
 
   <div className="relative z-20 w-full bg-transparent border-none shadow-none">
             <div
-  className="relative w-full overflow-hidden overscroll-none bg-white px-2.5 pt-1 pb-1.5 md:pb-1 rounded-t-[22px] rounded-b-none md:rounded-[20px] border border-zinc-300/90 border-b-0 md:border md:border-zinc-300 md:border-b transition-[box-shadow,border-color,background-color] duration-200"
+  className="relative w-full overflow-hidden overscroll-none bg-white px-2.5 pt-1 pb-1.5 md:pb-1 rounded-t-[22px] rounded-b-none md:rounded-[20px] border border-zinc-300/90 border-b-0 md:border md:border-zinc-300 md:border-b transition-[box-shadow,border-color,background-color] duration-200 min-h-[96px]"
   style={{
     boxShadow: "0 -6px 20px rgba(0,0,0,0.085), 0 2px 10px rgba(0,0,0,0.055)",
   }}
@@ -182,7 +182,7 @@ useLayoutEffect(() => {
   )}
 
   <div className="px-1">
-   <textarea
+<textarea
   ref={textareaRef}
   value={input}
   onChange={(e) => setInput(e.target.value)}
@@ -191,7 +191,7 @@ useLayoutEffect(() => {
   placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
   disabled={isTyping}
   rows={1}
-  className="block w-full resize-none bg-transparent outline-none text-[16px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-3 leading-6 min-h-[30px] max-h-[260px] [scrollbar-width:none]"
+  className="block w-full resize-none bg-transparent outline-none text-[16px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-5 leading-6 min-h-[30px] max-h-[260px] [scrollbar-width:none]"
   style={{
     boxSizing: "border-box",
     WebkitOverflowScrolling: "touch",
@@ -200,7 +200,7 @@ useLayoutEffect(() => {
 />
   </div>
 </div>
-              <div className="relative z-10 flex items-center justify-between bg-white px-1 pt-0 pb-1.5 md:pb-1">
+              <div className="relative z-10 flex items-center justify-between bg-white px-1 pt-0.5 pb-1.5 md:pb-1">
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={openBoard}
