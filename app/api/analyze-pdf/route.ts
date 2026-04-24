@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { extractText } from "unpdf";
 
 export const runtime = "nodejs";
 
@@ -36,12 +37,22 @@ export async function POST(req: NextRequest) {
     }
 
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const uint8 = new Uint8Array(arrayBuffer);
 
-    const pdfParse = require("pdf-parse");
-    const parsed = await pdfParse(buffer);
+    const result = await extractText(uint8, {
+      mergePages: true,
+    });
 
-    const text = (parsed?.text || "").trim();
+    const rawText =
+      typeof result === "string"
+        ? result
+        : Array.isArray(result?.text)
+        ? result.text.join("\n\n")
+        : typeof result?.text === "string"
+        ? result.text
+        : "";
+
+    const text = rawText.trim();
 
     if (!text) {
       return json(
@@ -49,7 +60,10 @@ export async function POST(req: NextRequest) {
           error:
             "He recibido el PDF, pero no he podido extraer texto útil. Puede que sea un escaneado o una imagen dentro del PDF.",
           filename,
-          pageCount: parsed?.numpages ?? null,
+          pageCount:
+            typeof result === "object" && result && "totalPages" in result
+              ? (result as any).totalPages ?? null
+              : null,
         },
         422
       );
@@ -60,7 +74,10 @@ export async function POST(req: NextRequest) {
     return json({
       ok: true,
       filename,
-      pageCount: parsed?.numpages ?? null,
+      pageCount:
+        typeof result === "object" && result && "totalPages" in result
+          ? (result as any).totalPages ?? null
+          : null,
       text: clippedText,
       wasClipped: text.length > clippedText.length,
     });
