@@ -96,25 +96,27 @@ export default function ChatInputBar({
   clearImagePreview,
 }: ChatInputBarProps) {
 
-  useLayoutEffect(() => {
+useLayoutEffect(() => {
   const el = textareaRef.current;
   if (!el) return;
 
   const maxHeight = 260;
-  const bottomSafeGap = 76;
+
+  const previousHeight = el.offsetHeight;
 
   el.style.height = "auto";
-  const next = Math.min(el.scrollHeight, maxHeight);
-  el.style.height = `${next}px`;
+  const nextHeight = Math.min(el.scrollHeight, maxHeight);
+
+  if (Math.abs(previousHeight - nextHeight) > 1) {
+    el.style.height = `${nextHeight}px`;
+  } else {
+    el.style.height = `${previousHeight}px`;
+  }
 
   const shouldScroll = el.scrollHeight > maxHeight;
   el.style.overflowY = shouldScroll ? "auto" : "hidden";
 
-  if (shouldScroll) {
-    requestAnimationFrame(() => {
-      el.scrollTop = el.scrollHeight + bottomSafeGap;
-    });
-  } else {
+  if (!shouldScroll) {
     el.scrollTop = 0;
   }
 }, [input, textareaRef]);
