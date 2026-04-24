@@ -102,16 +102,9 @@ useLayoutEffect(() => {
 
   const maxHeight = 260;
 
-  const previousHeight = el.offsetHeight;
-
-  el.style.height = "auto";
+  el.style.height = "0px";
   const nextHeight = Math.min(el.scrollHeight, maxHeight);
-
-  if (Math.abs(previousHeight - nextHeight) > 1) {
-    el.style.height = `${nextHeight}px`;
-  } else {
-    el.style.height = `${previousHeight}px`;
-  }
+  el.style.height = `${nextHeight}px`;
 
   const shouldScroll = el.scrollHeight > maxHeight;
   el.style.overflowY = shouldScroll ? "auto" : "hidden";
@@ -119,7 +112,7 @@ useLayoutEffect(() => {
   if (!shouldScroll) {
     el.scrollTop = 0;
   }
-}, [input, textareaRef]);
+}, [input]);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
     ? "idle"
@@ -162,8 +155,8 @@ useLayoutEffect(() => {
     boxShadow: "0 -6px 20px rgba(0,0,0,0.085), 0 2px 10px rgba(0,0,0,0.055)",
   }}
 >
-              <div
-  className="min-h-0 max-h-[min(52vh,420px)] overflow-y-auto overscroll-contain [scrollbar-width:none]"
+<div
+  className="min-h-0 overflow-visible"
   style={{ WebkitOverflowScrolling: "touch" }}
 >
   {imagePreview && (
@@ -189,23 +182,22 @@ useLayoutEffect(() => {
   )}
 
   <div className="px-1">
-    <textarea
+   <textarea
   ref={textareaRef}
   value={input}
   onChange={(e) => setInput(e.target.value)}
   onKeyDown={handleKeyDown}
   onPaste={handlePaste}
-      placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
-      disabled={isTyping}
-      rows={1}
-      className="block w-full resize-none overflow-y-auto bg-transparent outline-none touch-pan-y overscroll-contain text-[16px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-10 leading-6 min-h-[28px] max-h-[260px] [scrollbar-width:none]"
-      style={{
-        boxSizing: "border-box",
-        WebkitOverflowScrolling: "touch",
-        scrollPaddingBottom: "84px",
-        overscrollBehavior: "contain",
-      }}
-    />
+  placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
+  disabled={isTyping}
+  rows={1}
+  className="block w-full resize-none bg-transparent outline-none text-[16px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-3 leading-6 min-h-[30px] max-h-[260px] [scrollbar-width:none]"
+  style={{
+    boxSizing: "border-box",
+    WebkitOverflowScrolling: "touch",
+    overscrollBehavior: "contain",
+  }}
+/>
   </div>
 </div>
               <div className="relative z-10 flex items-center justify-between bg-white px-1 pt-0 pb-1.5 md:pb-1">
