@@ -17,8 +17,11 @@ function json(data: unknown, status = 200) {
 function looksLikeFootballIntent(text: string) {
   const t = (text || "").toLowerCase();
 
-  // patrones típicos de pedir partido
-  const hasVs = /\b(vs|v|contra|-\s*)\b/.test(t);
+  // Solo patrones realmente típicos de partido
+  const hasVs =
+    /\bvs\b/.test(t) ||
+    /\bcontra\b/.test(t) ||
+    /\sv\s/.test(t);
 
   // palabras de apuestas/mercados
   const hasMarkets =
@@ -26,7 +29,6 @@ function looksLikeFootballIntent(text: string) {
     /\b(over|under|m[aá]s de|menos de|btts|ambos marcan)\b/.test(t) ||
     /\b(c[oó]rners?|tarjetas?|disparos?|tiros?|remates?|a puerta|sot)\b/.test(t);
 
-  // si contiene vs o habla de mercados, lo tratamos como fútbol
   return hasVs || hasMarkets;
 }
 
@@ -118,24 +120,26 @@ const FOOTBALL_DISABLED = process.env.VONU_DISABLE_FOOTBALL === "1";
     const body = (await req.json().catch(() => ({}))) as any;
 
     // ✅ Normalizamos campos clave (tu versión original)
-    const normalized = {
-      messages: Array.isArray(body?.messages) ? body.messages : [],
-      userText: typeof body?.userText === "string" ? body.userText : "",
-      imageBase64: typeof body?.imageBase64 === "string" ? body.imageBase64 : null,
-      mode: body?.mode === "tutor" ? "tutor" : "chat",
-      tutorLevel:
-        body?.tutorLevel === "kid" || body?.tutorLevel === "teen" || body?.tutorLevel === "adult"
-          ? body.tutorLevel
-          : "adult",
+const normalized = {
+  messages: Array.isArray(body?.messages) ? body.messages : [],
+  userText: typeof body?.userText === "string" ? body.userText : "",
+  pdfText: typeof body?.pdfText === "string" ? body.pdfText : null,
+  imageBase64: typeof body?.imageBase64 === "string" ? body.imageBase64 : null,
+  mode: body?.mode === "tutor" ? "tutor" : "chat",
+  tutorLevel:
+    body?.tutorLevel === "kid" || body?.tutorLevel === "teen" || body?.tutorLevel === "adult"
+      ? body.tutorLevel
+      : "adult",
 
-      footballProfile: body?.footballProfile === "wide" || body?.footballProfile === "normal" ? body.footballProfile : "normal",
+  footballProfile: body?.footballProfile === "wide" || body?.footballProfile === "normal" ? body.footballProfile : "normal",
 
-      ...Object.fromEntries(
-        Object.entries(body || {}).filter(
-          ([k]) => !["messages", "userText", "imageBase64", "mode", "tutorLevel", "footballProfile"].includes(k)
-        )
-      ),
-    };
+  ...Object.fromEntries(
+    Object.entries(body || {}).filter(
+      ([k]) =>
+        !["messages", "userText", "pdfText", "imageBase64", "mode", "tutorLevel", "footballProfile"].includes(k)
+    )
+  ),
+};
 
     // ==========================================================
     // ✅ 1) INTERCEPTOR FÚTBOL (ANTES de Supabase Edge Function)

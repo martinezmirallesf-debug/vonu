@@ -4063,10 +4063,7 @@ useEffect(() => {
   }
 }
 
-async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
-  const file = e.target.files?.[0];
-  if (!file) return;
-
+async function processPdfFile(file: File) {
   try {
     setMicMsg("Leyendo PDF…");
 
@@ -4086,29 +4083,42 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
           "No he podido leer este PDF todavía. Si quieres, prueba con otro PDF o con una captura."
       );
       setTimeout(() => setMicMsg(null), 2600);
-      e.target.value = "";
       return;
     }
 
-    const pdfPrompt =
-      `He subido un PDF llamado "${json.filename}"` +
-      `${json.pageCount ? ` de ${json.pageCount} páginas` : ""}. ` +
-      `Quiero que lo analices como documento y me ayudes activamente, no solo con un resumen.\n\n` +
-      `Primero dime qué tipo de documento parece, qué es lo más importante y cómo me puedes ayudar con él.\n\n` +
-      `Si parece un contrato o documento delicado, dime qué revisarías y qué harías ahora.\n` +
-      `Si parece material de estudio, resume, explica y ofréceme ayuda para estudiar, test o preguntas.\n\n` +
-      `CONTENIDO DEL PDF:\n\n${json.text}`;
-
     setMicMsg(null);
 
-    sendQuickMessage(pdfPrompt, activeThread?.mode ?? "chat");
+    const visibleUserMessage =
+      `He subido un PDF: ${json.filename}` +
+      `${json.pageCount ? ` (${json.pageCount} páginas)` : ""}.`;
+
+    const hiddenPdfContext =
+      `PDF subido por el usuario: "${json.filename}"` +
+      `${json.pageCount ? ` (${json.pageCount} páginas)` : ""}.\n\n` +
+      `Analízalo como documento y ayuda activamente, no solo con un resumen.\n\n` +
+      `1. Di qué tipo de documento parece.\n` +
+      `2. Resume solo lo más importante.\n` +
+      `3. Si es documento delicado, di qué revisarías y qué harías ahora.\n` +
+      `4. Si es material de estudio, ofrece ayuda para estudiar, test, preguntas o explicación.\n` +
+      `5. No menciones que te han pasado texto interno ni pegues el contenido entero.\n\n` +
+      `CONTENIDO EXTRAÍDO DEL PDF:\n\n${json.text}`;
+
+    await sendQuickMessage(visibleUserMessage, activeThread?.mode ?? "chat", {
+      pdfText: hiddenPdfContext,
+    });
   } catch (err) {
     console.error(err);
     setMicMsg("Ha fallado la lectura del PDF.");
     setTimeout(() => setMicMsg(null), 2600);
-  } finally {
-    e.target.value = "";
   }
+}
+
+async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  await processPdfFile(file);
+  e.target.value = "";
 }
 
   function createThreadAndActivate() {
@@ -4227,7 +4237,11 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
   return false;
 }
 
-  async function sendQuickMessage(textPreset: string, modePreset: ThreadMode) {
+  async function sendQuickMessage(
+  textPreset: string,
+  modePreset: ThreadMode,
+  options?: { pdfText?: string | null }
+) {
 
   if (authLoading) return;
 
@@ -4248,11 +4262,13 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
     const targetThreadId = activeThread.id;
     activeThreadIdRef.current = targetThreadId;
 
-    const userText = (textPreset || "").trim();
-    if (!userText) {
-      sendGuardRef.current.busy = false;
-      return;
-    }
+  const userText = (textPreset || "").trim();
+const hiddenPdfText = (options?.pdfText || "").trim();
+
+if (!userText) {
+  sendGuardRef.current.busy = false;
+  return;
+}
 
     // ✅ ANTI-DUPLICADO por texto en el mismo thread
     if (shouldBlockDuplicateSend(targetThreadId, userText)) {
@@ -4395,13 +4411,14 @@ const res = await fetch("/api/chat", {
     ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
   },
   cache: "no-store",
-  body: JSON.stringify({
-    messages: convoForApi,
-    userText,
-    imageBase64: null,
-    mode: modePreset,
-    tutorLevel: threadNow?.tutorProfile?.level ?? "adult",
-  }),
+body: JSON.stringify({
+  messages: convoForApi,
+  userText,
+  pdfText: hiddenPdfText || null,
+  imageBase64: null,
+  mode: modePreset,
+  tutorLevel: threadNow?.tutorProfile?.level ?? "adult",
+}),
 });
 
       if (!res.ok) {
