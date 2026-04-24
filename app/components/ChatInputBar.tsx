@@ -157,7 +157,7 @@ useLayoutEffect(() => {
 
   <div className="relative z-20 w-full bg-transparent border-none shadow-none">
             <div
-  className="relative w-full overflow-hidden overscroll-none bg-white px-2.5 pt-1 pb-1.5 md:pb-1 transition-all duration-200 rounded-t-[22px] rounded-b-none md:rounded-[20px] border border-zinc-300/90 border-b-0 md:border md:border-zinc-300 md:border-b"
+  className="relative w-full overflow-hidden overscroll-none bg-white px-2.5 pt-1 pb-1.5 md:pb-1 rounded-t-[22px] rounded-b-none md:rounded-[20px] border border-zinc-300/90 border-b-0 md:border md:border-zinc-300 md:border-b transition-[box-shadow,border-color,background-color] duration-200"
   style={{
     boxShadow: "0 -6px 20px rgba(0,0,0,0.085), 0 2px 10px rgba(0,0,0,0.055)",
   }}
