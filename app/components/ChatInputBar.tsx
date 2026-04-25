@@ -181,8 +181,7 @@ useLayoutEffect(() => {
     </div>
   )}
 
-  <div className="px-1 max-h-[90px] overflow-hidden">
-<textarea
+  <textarea
   ref={textareaRef}
   value={input}
   onChange={(e) => setInput(e.target.value)}
@@ -191,13 +190,14 @@ useLayoutEffect(() => {
   placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
   disabled={isTyping}
   rows={1}
-  className="block w-full resize-none bg-transparent outline-none text-[16px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] py-2 leading-6 min-h-[42px] max-h-[90px] overflow-y-auto [scrollbar-width:none]"
+  className="block w-full resize-none bg-transparent outline-none text-[16px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] py-2 leading-6 min-h-[42px] max-h-[90px] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-400/45"
   style={{
     height: "42px",
     boxSizing: "border-box",
     WebkitOverflowScrolling: "touch",
     overscrollBehavior: "contain",
-    scrollbarWidth: "none",
+    scrollbarWidth: "thin",
+    scrollbarColor: "rgba(113,113,122,0.45) transparent",
   }}
 />
   </div>
