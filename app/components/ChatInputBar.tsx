@@ -100,9 +100,19 @@ useLayoutEffect(() => {
   const el = textareaRef.current;
   if (!el) return;
 
-  el.style.height = "42px";
-  el.style.overflowY = "auto";
-}, []);
+  const minHeight = 42;
+  const maxHeight = 90;
+
+  el.style.height = `${minHeight}px`;
+
+  const nextHeight = Math.min(
+    Math.max(el.scrollHeight, minHeight),
+    maxHeight
+  );
+
+  el.style.height = `${nextHeight}px`;
+  el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
+}, [input, textareaRef]);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
     ? "idle"
@@ -171,7 +181,7 @@ useLayoutEffect(() => {
     </div>
   )}
 
-  <div className="px-1 h-[42px] overflow-hidden">
+  <div className="px-1 max-h-[90px] overflow-hidden">
 <textarea
   ref={textareaRef}
   value={input}
@@ -181,8 +191,9 @@ useLayoutEffect(() => {
   placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
   disabled={isTyping}
   rows={1}
-  className="block w-full resize-none bg-transparent outline-none text-[16px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] py-2 leading-6 h-[42px] min-h-[42px] max-h-[42px] overflow-y-auto [scrollbar-width:none]"
+  className="block w-full resize-none bg-transparent outline-none text-[16px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] py-2 leading-6 min-h-[42px] max-h-[90px] overflow-y-auto [scrollbar-width:none]"
   style={{
+    height: "42px",
     boxSizing: "border-box",
     WebkitOverflowScrolling: "touch",
     overscrollBehavior: "contain",
