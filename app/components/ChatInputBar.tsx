@@ -100,19 +100,9 @@ useLayoutEffect(() => {
   const el = textareaRef.current;
   if (!el) return;
 
-  const maxHeight = 260;
-
-  el.style.height = "0px";
-  const nextHeight = Math.min(el.scrollHeight, maxHeight);
-  el.style.height = `${nextHeight}px`;
-
-  const shouldScroll = el.scrollHeight > maxHeight;
-  el.style.overflowY = shouldScroll ? "auto" : "hidden";
-
-  if (!shouldScroll) {
-    el.scrollTop = 0;
-  }
-}, [input]);
+  el.style.height = "42px";
+  el.style.overflowY = "auto";
+}, []);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
     ? "idle"
@@ -150,7 +140,7 @@ useLayoutEffect(() => {
 
   <div className="relative z-20 w-full bg-transparent border-none shadow-none">
             <div
-  className="relative w-full overflow-hidden overscroll-none bg-white px-2.5 pt-1 pb-1.5 md:pb-1 rounded-t-[22px] rounded-b-none md:rounded-[20px] border border-zinc-300/90 border-b-0 md:border md:border-zinc-300 md:border-b transition-[box-shadow,border-color,background-color] duration-200 min-h-[96px]"
+  className="relative w-full overflow-hidden overscroll-none bg-white px-2.5 pt-1 pb-1.5 md:pb-1 rounded-t-[22px] rounded-b-none md:rounded-[20px] border border-zinc-300/90 border-b-0 md:border md:border-zinc-300 md:border-b transition-[box-shadow,border-color,background-color] duration-200"
   style={{
     boxShadow: "0 -6px 20px rgba(0,0,0,0.085), 0 2px 10px rgba(0,0,0,0.055)",
   }}
@@ -181,7 +171,7 @@ useLayoutEffect(() => {
     </div>
   )}
 
-  <div className="px-1">
+  <div className="px-1 h-[42px] overflow-hidden">
 <textarea
   ref={textareaRef}
   value={input}
@@ -191,11 +181,12 @@ useLayoutEffect(() => {
   placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
   disabled={isTyping}
   rows={1}
-  className="block w-full resize-none bg-transparent outline-none text-[16px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] pt-3 pb-5 leading-6 min-h-[30px] max-h-[260px] [scrollbar-width:none]"
+  className="block w-full resize-none bg-transparent outline-none text-[16px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] py-2 leading-6 h-[42px] min-h-[42px] max-h-[42px] overflow-y-auto [scrollbar-width:none]"
   style={{
     boxSizing: "border-box",
     WebkitOverflowScrolling: "touch",
     overscrollBehavior: "contain",
+    scrollbarWidth: "none",
   }}
 />
   </div>
