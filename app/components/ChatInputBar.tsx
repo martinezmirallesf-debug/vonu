@@ -181,7 +181,8 @@ useLayoutEffect(() => {
     </div>
   )}
 
-  <textarea
+  <div className="px-1 max-h-[90px] overflow-hidden">
+<textarea
   ref={textareaRef}
   value={input}
   onChange={(e) => setInput(e.target.value)}
