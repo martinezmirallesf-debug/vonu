@@ -14,6 +14,11 @@ type RealtimeVoiceStatus =
 type ChatInputBarProps = {
   inputBarRef: React.RefObject<HTMLDivElement | null>;
   imagePreview: string | null;
+  pdfPreview: {
+    filename: string;
+    pageCount: number | null;
+    pdfText: string;
+  } | null;
   micMsg: string | null;
   input: string;
   setInput: React.Dispatch<React.SetStateAction<string>>;
@@ -32,6 +37,7 @@ type ChatInputBarProps = {
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   onSelectImage: (e: React.ChangeEvent<HTMLInputElement>) => void;
   clearImagePreview: () => void;
+  clearPdfPreview: () => void;
 };
 
 function MicIcon({ className }: { className?: string }) {
@@ -76,7 +82,8 @@ function PlusIcon({ className }: { className?: string }) {
 export default function ChatInputBar({
   inputBarRef,
   imagePreview,
-  micMsg,
+pdfPreview,
+micMsg,
   input,
   setInput,
   isTyping,
@@ -94,6 +101,7 @@ export default function ChatInputBar({
   fileInputRef,
   onSelectImage,
   clearImagePreview,
+clearPdfPreview,
 }: ChatInputBarProps) {
 
 useLayoutEffect(() => {
@@ -180,6 +188,36 @@ useLayoutEffect(() => {
       </div>
     </div>
   )}
+
+  {pdfPreview && (
+  <div className="mb-2 px-1">
+    <div className="relative flex max-w-full items-center gap-3 rounded-2xl bg-zinc-50/90 border border-zinc-200 px-3 py-2.5 shadow-sm">
+      <div className="h-10 w-10 shrink-0 rounded-xl bg-white border border-zinc-200 grid place-items-center text-[20px]">
+        📄
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[13.5px] font-semibold text-zinc-900">
+          {pdfPreview.filename}
+        </div>
+
+        <div className="mt-0.5 text-[12px] text-zinc-500">
+          PDF{pdfPreview.pageCount ? ` · ${pdfPreview.pageCount} páginas` : ""}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={clearPdfPreview}
+        className="h-7 w-7 shrink-0 rounded-full bg-white border border-zinc-200 shadow-sm text-zinc-700 flex items-center justify-center"
+        aria-label="Quitar PDF"
+        title="Quitar PDF"
+      >
+        <span className="text-[15px] leading-none">×</span>
+      </button>
+    </div>
+  </div>
+)}
 
   <div className="px-1 max-h-[90px] overflow-hidden">
 <textarea

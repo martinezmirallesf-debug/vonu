@@ -2554,8 +2554,15 @@ async function speakTTS(text: string) {
   setTtsSpeaking(false);
 }
 
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isTyping, setIsTyping] = useState(false);
+const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+const [pdfPreview, setPdfPreview] = useState<{
+  filename: string;
+  pageCount: number | null;
+  pdfText: string;
+} | null>(null);
+
+const [isTyping, setIsTyping] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
 
@@ -3907,10 +3914,10 @@ const showHardLimitWarning =
   const userMsgCountInThread = useMemo(() => messages.filter((m) => m.role === "user").length, [messages]);
 
   const canSend = useMemo(() => {
-  const basicReady = !isTyping && (!!input.trim() || !!imagePreview);
+  const basicReady = !isTyping && (!!input.trim() || !!imagePreview || !!pdfPreview);
   if (isBlockedByPaywall) return false;
   return basicReady;
-}, [isTyping, input, imagePreview, isBlockedByPaywall]);
+}, [isTyping, input, imagePreview, pdfPreview, isBlockedByPaywall]);
 
 const voiceUiState = useMemo<"idle" | "listening" | "speaking">(() => {
   if (!voiceMode) return "idle";
@@ -4056,7 +4063,7 @@ async function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
 
 async function processPdfFile(file: File) {
   try {
-    setMicMsg("Leyendo PDF…");
+    setMicMsg("Vonu está leyendo el documento…");
 
     const formData = new FormData();
     formData.append("file", file);
@@ -4077,12 +4084,6 @@ async function processPdfFile(file: File) {
       return;
     }
 
-    setMicMsg(null);
-
-    const visibleUserMessage =
-      `He subido un PDF: ${json.filename}` +
-      `${json.pageCount ? ` (${json.pageCount} páginas)` : ""}.`;
-
     const hiddenPdfContext =
       `PDF subido por el usuario: "${json.filename}"` +
       `${json.pageCount ? ` (${json.pageCount} páginas)` : ""}.\n\n` +
@@ -4094,9 +4095,13 @@ async function processPdfFile(file: File) {
       `5. No menciones que te han pasado texto interno ni pegues el contenido entero.\n\n` +
       `CONTENIDO EXTRAÍDO DEL PDF:\n\n${json.text}`;
 
-    await sendQuickMessage(visibleUserMessage, activeThread?.mode ?? "chat", {
+    setPdfPreview({
+      filename: json.filename || file.name || "documento.pdf",
+      pageCount: json.pageCount ?? null,
       pdfText: hiddenPdfContext,
     });
+
+    setMicMsg(null);
   } catch (err) {
     console.error(err);
     setMicMsg("Ha fallado la lectura del PDF.");
@@ -4612,6 +4617,7 @@ if (previewText && shouldBlockDuplicateSend(targetThreadId, previewText)) {
 
 const userText = input.trim();
 const imageBase64 = imagePreview;
+const pdfAttachment = pdfPreview;
 
 setUiError(null);
 
@@ -4650,7 +4656,13 @@ if (imageBase64) {
 const userMsg: Message = {
   id: crypto.randomUUID(),
   role: "user",
-  text: userText || (imageBase64 ? "He adjuntado una imagen." : undefined),
+  text:
+    userText ||
+    (imageBase64
+      ? "He adjuntado una imagen."
+      : pdfAttachment
+      ? `He adjuntado un PDF: ${pdfAttachment.filename}`
+      : undefined),
   image: imageBase64 || undefined,
 };
 
@@ -4683,8 +4695,9 @@ const assistantMsg: Message = {
 
 pinUserMessageNearTop(userMsg.id);
 
-    setInput("");
+setInput("");
 setImagePreview(null);
+setPdfPreview(null);
 setIsTyping(true);
 
 if (!isDesktopPointer()) {
@@ -4716,12 +4729,13 @@ if (voiceModeRef.current && imageBase64) {
       },
       cache: "no-store",
       body: JSON.stringify({
-        messages: convoForApi,
-        userText,
-        imageBase64,
-        mode: nextMode,
-        tutorLevel: nextTutorLevel,
-      }),
+  messages: convoForApi,
+  userText,
+  imageBase64,
+  pdfText: pdfAttachment?.pdfText ?? null,
+  mode: nextMode,
+  tutorLevel: nextTutorLevel,
+}),
     });
 
     if (!res.ok) {
@@ -6505,9 +6519,10 @@ return (
 
 {!paywallOpen && (
   <ChatInputBar
-    inputBarRef={inputBarRef}
-    imagePreview={imagePreview}
-    micMsg={micMsg}
+  inputBarRef={inputBarRef}
+  imagePreview={imagePreview}
+  pdfPreview={pdfPreview}
+  micMsg={micMsg}
     input={input}
     setInput={setInput}
     isTyping={isTyping}
@@ -6525,6 +6540,7 @@ return (
     fileInputRef={fileInputRef}
     onSelectImage={onSelectImage}
     clearImagePreview={() => setImagePreview(null)}
+clearPdfPreview={() => setPdfPreview(null)}
   />
 )}
     </div>
