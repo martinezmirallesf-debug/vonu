@@ -2206,64 +2206,78 @@ async function handleImageFile(file: File | null | undefined) {
   }
 }
 
-async function handlePasteIntoChat(e: React.ClipboardEvent<HTMLTextAreaElement>) {
-  const items = Array.from(e.clipboardData?.items || []);
-  const imageItem = items.find((item) => item.type.startsWith("image/"));
-  if (!imageItem) return;
-
-  const file = imageItem.getAsFile();
-  if (!file) return;
-
-  e.preventDefault();
-  await handleImageFile(file);
-}
-
-function handleGlobalDragEnter(e: React.DragEvent<HTMLDivElement>) {
-  const hasFiles = Array.from(e.dataTransfer?.types || []).includes("Files");
-  if (!hasFiles) return;
-
-  e.preventDefault();
-  e.stopPropagation();
-  dragDepthRef.current += 1;
-  setIsDraggingFile(true);
-}
-
-function handleGlobalDragOver(e: React.DragEvent<HTMLDivElement>) {
-  const hasFiles = Array.from(e.dataTransfer?.types || []).includes("Files");
-  if (!hasFiles) return;
-
-  e.preventDefault();
-  e.stopPropagation();
-  e.dataTransfer.dropEffect = "copy";
-  if (!isDraggingFile) setIsDraggingFile(true);
-}
-
-function handleGlobalDragLeave(e: React.DragEvent<HTMLDivElement>) {
-  const hasFiles = Array.from(e.dataTransfer?.types || []).includes("Files");
-  if (!hasFiles) return;
-
-  e.preventDefault();
-  e.stopPropagation();
-
-  dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
-  if (dragDepthRef.current === 0) {
-    setIsDraggingFile(false);
-  }
-}
-
 async function handleGlobalDrop(e: React.DragEvent<HTMLDivElement>) {
-  const hasFiles = Array.from(e.dataTransfer?.types || []).includes("Files");
-  if (!hasFiles) return;
-
   e.preventDefault();
   e.stopPropagation();
 
   dragDepthRef.current = 0;
   setIsDraggingFile(false);
 
-  const file = e.dataTransfer?.files?.[0];
-  await handleImageFile(file);
+  const files = Array.from(e.dataTransfer?.files || []);
+  const file = files[0];
+
+  if (!file) {
+    setMicMsg("No he podido recoger ese archivo.");
+    setTimeout(() => setMicMsg(null), 2200);
+    return;
+  }
+
+  await handleIncomingFile(file);
 }
+
+function handleGlobalDragEnter(e: React.DragEvent<HTMLDivElement>) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  dragDepthRef.current += 1;
+  setIsDraggingFile(true);
+
+  if (e.dataTransfer) {
+    e.dataTransfer.dropEffect = "copy";
+  }
+}
+
+async function handlePasteIntoChat(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+  const items = Array.from(e.clipboardData?.items || []);
+
+  const fileItem = items.find((item) => {
+    const type = item.type || "";
+    return type.startsWith("image/") || type === "application/pdf";
+  });
+
+  if (!fileItem) return;
+
+  const file = fileItem.getAsFile();
+  if (!file) return;
+
+  e.preventDefault();
+  await handleIncomingFile(file);
+}
+
+function handleGlobalDragOver(e: React.DragEvent<HTMLDivElement>) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (e.dataTransfer) {
+    e.dataTransfer.dropEffect = "copy";
+  }
+
+  if (!isDraggingFile) {
+    setIsDraggingFile(true);
+  }
+}
+
+function handleGlobalDragLeave(e: React.DragEvent<HTMLDivElement>) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+
+  if (dragDepthRef.current === 0) {
+    setIsDraggingFile(false);
+  }
+}
+
 
 // =======================
 // 🔊 TTS helpers
@@ -6457,7 +6471,7 @@ return (
         </div>
 
 <div className="mt-4 mx-auto max-w-[260px] text-center text-[18px] leading-7 font-semibold tracking-[-0.02em] text-zinc-900">
-  Suelta la imagen para analizarla
+  Suelta el archivo para analizarlo
 </div>
       </div>
     </div>
