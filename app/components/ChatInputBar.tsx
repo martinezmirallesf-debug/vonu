@@ -226,12 +226,12 @@ useLayoutEffect(() => {
                   </button>
 
                   <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={onSelectImage}
-                    className="hidden"
-                  />
+  ref={fileInputRef}
+  type="file"
+  accept="image/*,application/pdf"
+  onChange={onSelectImage}
+  className="hidden"
+/>
                 </div>
 
                 <div className="flex items-center gap-1.5">

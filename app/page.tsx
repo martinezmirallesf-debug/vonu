@@ -4005,62 +4005,39 @@ useEffect(() => {
     return () => clearTimeout(t);
   }, [mounted, renameOpen, menuOpen, isTyping, activeThreadId, loginOpen, paywallOpen, boardOpen]);
 
-  async function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
-  const file = e.target.files?.[0];
+async function handleIncomingFile(file?: File | null) {
   if (!file) return;
 
-  try {
-    // Limpiar input file para poder volver a elegir el mismo archivo
-    e.target.value = "";
+  const filename = file.name || "";
+  const mime = file.type || "";
 
-    // Solo imágenes
-    if (!file.type.startsWith("image/")) {
-      setMicMsg("Ese archivo no es una imagen.");
-      setTimeout(() => setMicMsg(null), 2200);
-      return;
-    }
+  const isImage = mime.startsWith("image/");
+  const isPdf =
+    mime === "application/pdf" || filename.toLowerCase().endsWith(".pdf");
 
-    // ✅ Comprimir: máx 1400px lado largo, JPEG calidad 0.82
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ""));
-      reader.onerror = () => reject(new Error("No se pudo leer la imagen."));
-      reader.readAsDataURL(file);
-    });
-
-    const img = document.createElement("img");
-    img.src = dataUrl;
-
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = () => reject(new Error("No se pudo cargar la imagen."));
-    });
-
-    const MAX = 1400;
-    const w = img.naturalWidth || img.width;
-    const h = img.naturalHeight || img.height;
-
-    const scale = Math.min(1, MAX / Math.max(w, h));
-    const nw = Math.max(1, Math.round(w * scale));
-    const nh = Math.max(1, Math.round(h * scale));
-
-    const canvas = document.createElement("canvas");
-    canvas.width = nw;
-    canvas.height = nh;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Canvas no disponible.");
-
-    ctx.drawImage(img, 0, 0, nw, nh);
-
-    // JPEG reduce muchísimo tamaño (sobre todo fotos de móvil)
-    const compressed = canvas.toDataURL("image/jpeg", 0.82);
-
-    setImagePreview(compressed);
-  } catch (err: any) {
-    setMicMsg(err?.message || "No se pudo adjuntar la imagen.");
-    setTimeout(() => setMicMsg(null), 2400);
+  if (isImage) {
+    await handleImageFile(file);
+    return;
   }
+
+  if (isPdf) {
+    await processPdfFile(file);
+    return;
+  }
+
+  setMicMsg("De momento puedo analizar imágenes y PDF.");
+  setTimeout(() => setMicMsg(null), 2400);
+}
+
+async function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
+  const file = e.target.files?.[0];
+
+  // Limpiar input file para poder volver a elegir el mismo archivo
+  e.target.value = "";
+
+  if (!file) return;
+
+  await handleIncomingFile(file);
 }
 
 async function processPdfFile(file: File) {
@@ -4115,10 +4092,12 @@ async function processPdfFile(file: File) {
 
 async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
   const file = e.target.files?.[0];
+
+  e.target.value = "";
+
   if (!file) return;
 
-  await processPdfFile(file);
-  e.target.value = "";
+  await handleIncomingFile(file);
 }
 
   function createThreadAndActivate() {
