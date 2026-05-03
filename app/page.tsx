@@ -6384,30 +6384,26 @@ return (
                   )}
 
                   {(m.text || m.streaming) && (
-                    <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[18px] md:text-[19px] leading-8 md:leading-8">
-                      {isStreaming ? (
-                        <span className="whitespace-pre-wrap">
-                          {mdText.includes('"elements"') ||
-                          mdText.includes("```excalidraw")
-                            ? ""
-                            : mdText}
-                          {!hasText ? null : <TypingCaret />}
-                        </span>
-                      ) : (
-                        <ReactMarkdown
-                          remarkPlugins={[remarkMath]}
-                          rehypePlugins={[rehypeKatex]}
-                          components={makeMdComponents(
-                            m.boardImageB64,
-                            m.boardImagePlacement,
-                            m.pizarra
-                          )}
-                        >
-                          {mdText}
-                        </ReactMarkdown>
-                      )}
-                    </div>
-                  )}
+  <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[18px] md:text-[19px] leading-8 md:leading-8">
+    {mdText.includes('"elements"') || mdText.includes("```excalidraw") ? null : (
+      <>
+        <ReactMarkdown
+          remarkPlugins={[remarkMath]}
+          rehypePlugins={[rehypeKatex]}
+          components={makeMdComponents(
+            m.boardImageB64,
+            m.boardImagePlacement,
+            m.pizarra
+          )}
+        >
+          {mdText}
+        </ReactMarkdown>
+
+        {isStreaming && hasText ? <TypingCaret /> : null}
+      </>
+    )}
+  </div>
+)}
 
                   {activeThread?.mode === "tutor" && m.boardImageB64 ? (
                     <div className="mt-3">
