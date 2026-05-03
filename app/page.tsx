@@ -6519,10 +6519,10 @@ return (
 
 {!paywallOpen && (
   <ChatInputBar
-  inputBarRef={inputBarRef}
-  imagePreview={imagePreview}
-  pdfPreview={pdfPreview}
-  micMsg={micMsg}
+    inputBarRef={inputBarRef}
+    imagePreview={imagePreview}
+    pdfPreview={pdfPreview}
+    micMsg={micMsg}
     input={input}
     setInput={setInput}
     isTyping={isTyping}
@@ -6540,7 +6540,7 @@ return (
     fileInputRef={fileInputRef}
     onSelectImage={onSelectImage}
     clearImagePreview={() => setImagePreview(null)}
-clearPdfPreview={() => setPdfPreview(null)}
+    clearPdfPreview={() => setPdfPreview(null)}
   />
 )}
     </div>

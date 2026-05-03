@@ -82,8 +82,8 @@ function PlusIcon({ className }: { className?: string }) {
 export default function ChatInputBar({
   inputBarRef,
   imagePreview,
-pdfPreview,
-micMsg,
+  pdfPreview,
+  micMsg,
   input,
   setInput,
   isTyping,
@@ -101,7 +101,7 @@ micMsg,
   fileInputRef,
   onSelectImage,
   clearImagePreview,
-clearPdfPreview,
+  clearPdfPreview,
 }: ChatInputBarProps) {
 
 useLayoutEffect(() => {
@@ -167,22 +167,53 @@ useLayoutEffect(() => {
   className="min-h-0 overflow-visible"
   style={{ WebkitOverflowScrolling: "touch" }}
 >
-  {imagePreview && (
+  {(imagePreview || pdfPreview) && (
     <div className="mb-2 px-1">
       <div className="relative inline-flex rounded-2xl bg-zinc-50/80 p-1.5 shadow-sm">
-        <img
-          src={imagePreview}
-          alt="Preview"
-          className="h-16 w-16 rounded-xl object-cover"
-        />
+        {imagePreview ? (
+          <img
+            src={imagePreview}
+            alt="Preview"
+            className="h-16 w-16 rounded-xl object-cover"
+          />
+        ) : (
+          <div className="h-16 w-16 rounded-xl bg-white border border-zinc-200 flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center leading-none">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-6 w-6 text-zinc-700 mb-1"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M14 3v5h5"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className="text-[10px] font-semibold tracking-[0.08em] text-zinc-700">
+                PDF
+              </span>
+            </div>
+          </div>
+        )}
 
         <button
-  type="button"
-  onClick={clearImagePreview}
-  className="absolute top-1 right-1 h-6 w-6 rounded-full bg-white shadow-sm text-zinc-700 flex items-center justify-center"
-  aria-label="Quitar imagen"
-  title="Quitar imagen"
->
+          type="button"
+          onClick={imagePreview ? clearImagePreview : clearPdfPreview}
+          className="absolute top-1 right-1 h-6 w-6 rounded-full bg-white shadow-sm text-zinc-700 flex items-center justify-center"
+          aria-label={imagePreview ? "Quitar imagen" : "Quitar PDF"}
+          title={imagePreview ? "Quitar imagen" : "Quitar PDF"}
+        >
           <span className="text-[14px] leading-none">×</span>
         </button>
       </div>
