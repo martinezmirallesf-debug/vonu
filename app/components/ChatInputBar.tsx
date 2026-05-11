@@ -121,7 +121,9 @@ function PdfIcon() {
           />
         </svg>
 
-        <span className="text-[10px] font-semibold tracking-[0.08em] text-zinc-700">PDF</span>
+        <span className="text-[10px] font-semibold tracking-[0.08em] text-zinc-700">
+          PDF
+        </span>
       </div>
     </div>
   );
@@ -153,7 +155,10 @@ export default function ChatInputBar({
 }: ChatInputBarProps) {
   const hasText = input.trim().length > 0;
   const hasAttachment = !!imagePreview || !!pdfPreview;
-  const hasContent = hasText || hasAttachment;
+  const hasSomething = hasText || hasAttachment;
+
+  const shouldExpand =
+    hasAttachment || input.includes("\n") || input.length > 64;
 
   const canUseVoice = !isTyping && isLoggedIn;
   const mainButtonIsSend = hasText || hasAttachment;
@@ -162,7 +167,7 @@ export default function ChatInputBar({
     const el = textareaRef.current;
     if (!el) return;
 
-    const MIN_HEIGHT = 30;
+    const MIN_HEIGHT = shouldExpand ? 42 : 30;
     const MAX_HEIGHT = 116;
 
     el.style.height = "auto";
@@ -174,7 +179,7 @@ export default function ChatInputBar({
 
     el.style.height = `${nextHeight}px`;
     el.style.overflowY = el.scrollHeight > MAX_HEIGHT ? "auto" : "hidden";
-  }, [input, textareaRef]);
+  }, [input, textareaRef, shouldExpand]);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
     ? "idle"
@@ -182,7 +187,6 @@ export default function ChatInputBar({
     ? "listening"
     : "speaking";
 
-  // Lo mantenemos calculado para el borde/sombra, pero NO lo pintamos a la derecha.
   const hasActiveStatus =
     !!micMsg ||
     isTyping ||
@@ -226,7 +230,7 @@ export default function ChatInputBar({
               className={[
                 "relative w-full overflow-hidden overscroll-none bg-white border",
                 "transition-[box-shadow,border-color,background-color,border-radius,padding] duration-200",
-                hasContent
+                shouldExpand
                   ? "rounded-[24px] px-3 pt-3 pb-2 md:rounded-[26px]"
                   : "rounded-full px-2 py-1.5 md:px-2.5 md:py-1.5",
               ].join(" ")}
@@ -277,115 +281,49 @@ export default function ChatInputBar({
                 </div>
               )}
 
-              {hasContent ? (
-                <div className="flex flex-col">
-                  <div className="w-full px-1">
-                    <textarea
-                      ref={textareaRef}
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      onPaste={handlePaste}
-                      placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
-                      disabled={isTyping}
-                      rows={1}
-                      className={[
-                        "block w-full resize-none bg-transparent outline-none",
-                        "text-[18px] md:text-[17px] leading-7",
-                        "text-zinc-900 placeholder:text-zinc-500",
-                        "overflow-y-auto touch-pan-y overscroll-contain",
-                        "px-0 py-1.5",
-                        "[&::-webkit-scrollbar]:w-1.5",
-                        "[&::-webkit-scrollbar-track]:bg-transparent",
-                        "[&::-webkit-scrollbar-thumb]:rounded-full",
-                        "[&::-webkit-scrollbar-thumb]:bg-zinc-400/45",
-                      ].join(" ")}
-                      style={{
-                        boxSizing: "border-box",
-                        WebkitOverflowScrolling: "touch",
-                        scrollbarWidth: "thin",
-                        scrollbarColor: "rgba(113,113,122,0.45) transparent",
-                      }}
-                    />
-                  </div>
+              <div className={shouldExpand ? "flex flex-col" : "relative min-h-[38px]"}>
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onPaste={handlePaste}
+                  placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta lo que quieras"}
+                  disabled={isTyping}
+                  rows={1}
+                  className={[
+                    "block w-full resize-none bg-transparent outline-none",
+                    "text-zinc-900 placeholder:text-zinc-500",
+                    "overflow-y-auto touch-pan-y overscroll-contain",
+                    "[&::-webkit-scrollbar]:w-1.5",
+                    "[&::-webkit-scrollbar-track]:bg-transparent",
+                    "[&::-webkit-scrollbar-thumb]:rounded-full",
+                    "[&::-webkit-scrollbar-thumb]:bg-zinc-400/45",
+                    shouldExpand
+                      ? "text-[18px] md:text-[17px] leading-7 px-0 py-1.5"
+                      : "text-[17px] md:text-[16px] leading-7 py-0.5 pl-[74px] pr-[48px]",
+                  ].join(" ")}
+                  style={{
+                    boxSizing: "border-box",
+                    WebkitOverflowScrolling: "touch",
+                    scrollbarWidth: "thin",
+                    scrollbarColor: "rgba(113,113,122,0.45) transparent",
+                  }}
+                />
 
-                  <div className="mt-1 flex h-9 items-center justify-between">
-                    <div className="flex shrink-0 items-center gap-0 -ml-1">
-                      <button
-                        onClick={openFilePicker}
-                        disabled={!!isTyping}
-                        className="h-8 w-8 rounded-full text-zinc-800 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
-                        aria-label="Adjuntar"
-                        title="Subir archivo para analizar"
-                      >
-                        <PlusIcon className="h-[18px] w-[18px]" />
-                      </button>
-
-                      <button
-                        onClick={openBoard}
-                        disabled={!!isTyping}
-                        className="h-8 w-8 rounded-full text-zinc-800 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
-                        aria-label="Pizarra"
-                        title="Pizarra"
-                      >
-                        <PencilIcon className="h-[17px] w-[17px]" />
-                      </button>
-
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*,application/pdf"
-                        onChange={onSelectImage}
-                        className="hidden"
-                      />
-                    </div>
-
-                    <button
-                      onClick={mainButtonIsSend ? sendMessage : toggleConversation}
-                      disabled={mainButtonIsSend ? !canSend : !canUseVoice}
-                      className={[
-                        "relative h-9 w-9 shrink-0 rounded-full flex items-center justify-center",
-                        "transition-all duration-300",
-                        mainButtonIsSend
-                          ? "bg-[#1a73e8] text-white"
-                          : voiceUiState === "idle"
-                          ? "bg-black text-white"
-                          : "text-white shadow-[0_8px_24px_rgba(26,115,232,0.30)]",
-                        (mainButtonIsSend ? canSend : canUseVoice)
-                          ? "cursor-pointer hover:scale-105 active:scale-[0.98]"
-                          : "opacity-45 cursor-not-allowed",
-                      ].join(" ")}
-                      style={
-                        !mainButtonIsSend && voiceUiState !== "idle"
-                          ? {
-                              background:
-                                "linear-gradient(135deg, #1a73e8 0%, #3b82f6 45%, #60a5fa 100%)",
-                            }
-                          : undefined
-                      }
-                      aria-label={mainButtonIsSend ? "Enviar" : voiceMode ? "Desactivar conversación" : "Hablar con Vonu"}
-                      title={mainButtonIsSend ? "Enviar" : voiceMode ? "Modo conversación activo" : "Hablar con Vonu"}
-                    >
-                      {!mainButtonIsSend && voiceUiState !== "idle" ? (
-                        <span
-                          className="absolute inset-[-2px] rounded-full bg-blue-400/20 animate-pulse pointer-events-none"
-                          aria-hidden="true"
-                        />
-                      ) : null}
-
-                      <span className="relative z-10 flex h-full w-full items-center justify-center">
-                        {mainButtonIsSend ? (
-                          <ArrowUpIcon className="h-[19px] w-[19px]" />
-                        ) : (
-                          <VoiceBarsIcon animated={voiceMode} />
-                        )}
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex min-h-[38px] items-center">
-                  <div className="flex shrink-0 items-center gap-0 -ml-1 mr-3">
+                <div
+                  className={[
+                    shouldExpand
+                      ? "mt-1 flex h-9 items-center justify-between"
+                      : "pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-between",
+                  ].join(" ")}
+                >
+                  <div
+                    className={[
+                      "flex shrink-0 items-center gap-0 -ml-1",
+                      shouldExpand ? "" : "pointer-events-auto",
+                    ].join(" ")}
+                  >
                     <button
                       onClick={openFilePicker}
                       disabled={!!isTyping}
@@ -415,31 +353,11 @@ export default function ChatInputBar({
                     />
                   </div>
 
-                  <textarea
-                    ref={textareaRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    onPaste={handlePaste}
-                    placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta lo que quieras"}
-                    disabled={isTyping}
-                    rows={1}
-                    className={[
-                      "min-w-0 flex-1 resize-none bg-transparent outline-none",
-                      "text-[17px] md:text-[16px] leading-7",
-                      "text-zinc-900 placeholder:text-zinc-500",
-                      "overflow-hidden px-0 py-0.5",
-                    ].join(" ")}
-                    style={{
-                      boxSizing: "border-box",
-                    }}
-                  />
-
                   <button
                     onClick={mainButtonIsSend ? sendMessage : toggleConversation}
                     disabled={mainButtonIsSend ? !canSend : !canUseVoice}
                     className={[
-                      "ml-2 relative h-9 w-9 shrink-0 rounded-full flex items-center justify-center",
+                      "pointer-events-auto relative h-9 w-9 shrink-0 rounded-full flex items-center justify-center",
                       "transition-all duration-300",
                       mainButtonIsSend
                         ? "bg-[#1a73e8] text-white"
@@ -477,7 +395,7 @@ export default function ChatInputBar({
                     </span>
                   </button>
                 </div>
-              )}
+              </div>
             </div>
 
             <div className="hidden md:block relative z-10 mt-2 px-3 pb-4 md:mx-0 md:px-3">
