@@ -178,7 +178,7 @@ export default function ChatInputBar({
     const el = textareaRef.current;
     if (!el) return;
 
-    const COMPACT_HEIGHT = 36;
+    const COMPACT_HEIGHT = 35;
     const EXPANDED_MIN_HEIGHT = 42;
     const MAX_HEIGHT = 116;
 
@@ -264,7 +264,7 @@ const shellShadow = voiceMode
     : "",
   shouldExpand
   ? "rounded-[28px] px-3 pt-3 pb-2"
-  : "rounded-full px-2 py-2",
+  : "rounded-full px-2 py-1.5",
 ].join(" ")}
               style={{
                 borderColor: shellBorder,
@@ -334,7 +334,7 @@ const shellShadow = voiceMode
       "[&::-webkit-scrollbar-thumb]:bg-zinc-400/45",
       shouldExpand
   ? "text-[18px] md:text-[17px] leading-7 px-1 pt-1.5 pb-11"
-  : "text-[17px] md:text-[16px] leading-[36px] py-0 pl-[74px] pr-[48px] overflow-hidden",
+  : "text-[17px] md:text-[16px] leading-[35px] py-0 pl-[74px] pr-[48px] overflow-hidden",
     ].join(" ")}
     style={{
       boxSizing: "border-box",
