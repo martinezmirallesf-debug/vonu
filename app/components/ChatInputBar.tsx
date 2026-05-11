@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useLayoutEffect, useState } from "react";
+import React, { useLayoutEffect } from "react";
 
 type RealtimeVoiceStatus =
   | "idle"
@@ -157,10 +157,9 @@ const hasText = input.trim().length > 0;
 const hasAttachment = !!imagePreview || !!pdfPreview;
 const hasSomething = hasText || hasAttachment;
 
-const [textHasWrapped, setTextHasWrapped] = useState(false);
-
-// Solo expandimos cuando hay adjunto o cuando el texto realmente ocupa más de una línea.
-const shouldExpand = hasAttachment || textHasWrapped;
+// Seguro y estable: no usamos estado interno para medir altura.
+// Expandimos cuando hay adjunto, salto de línea o texto suficientemente largo.
+const shouldExpand = hasAttachment || input.includes("\n") || input.length > 54;
 
   const canUseVoice = !isTyping && isLoggedIn;
   const mainButtonIsSend = hasText || hasAttachment;
@@ -169,30 +168,19 @@ useLayoutEffect(() => {
   const el = textareaRef.current;
   if (!el) return;
 
-  const ONE_LINE_HEIGHT = 34;
-  const EXPANDED_MIN_HEIGHT = 42;
+  const MIN_HEIGHT = shouldExpand ? 42 : 34;
   const MAX_HEIGHT = 116;
 
   el.style.height = "auto";
 
-  const measuredHeight = el.scrollHeight;
-  const wrappedNow = input.length > 0 && measuredHeight > ONE_LINE_HEIGHT + 8;
-
-  if (wrappedNow !== textHasWrapped) {
-    setTextHasWrapped(wrappedNow);
-  }
-
-  const expandedNow = hasAttachment || wrappedNow;
-  const minHeight = expandedNow ? EXPANDED_MIN_HEIGHT : ONE_LINE_HEIGHT;
-
   const nextHeight = Math.min(
-    Math.max(measuredHeight, minHeight),
+    Math.max(el.scrollHeight, MIN_HEIGHT),
     MAX_HEIGHT
   );
 
   el.style.height = `${nextHeight}px`;
-  el.style.overflowY = measuredHeight > MAX_HEIGHT ? "auto" : "hidden";
-}, [input, textareaRef, hasAttachment, textHasWrapped]);
+  el.style.overflowY = el.scrollHeight > MAX_HEIGHT ? "auto" : "hidden";
+}, [input, textareaRef, shouldExpand]);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
     ? "idle"
