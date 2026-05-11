@@ -40,29 +40,48 @@ type ChatInputBarProps = {
   clearPdfPreview: () => void;
 };
 
-function MicIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="9" y="3.6" width="6" height="10.5" rx="3" stroke="currentColor" strokeWidth="2.2" />
-      <path
-        d="M5.5 11.8c0 4.1 3 7 6.5 7s6.5-2.9 6.5-7"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
-      <path d="M12 19.3v2.3" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M9 21.6h6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-    </svg>
-  );
-}
+function VoiceBarsIcon({
+  className,
+  animated = false,
+}: {
+  className?: string;
+  animated?: boolean;
+}) {
+  const base = "w-[2px] rounded-full bg-current";
 
-function VoiceBarsIcon({ className }: { className?: string }) {
   return (
-    <span className={["flex h-5 w-5 items-center justify-center gap-[2px]", className ?? ""].join(" ")} aria-hidden="true">
-      <span className="h-[8px] w-[2px] rounded-full bg-current animate-[voiceBar_850ms_ease-in-out_infinite]" />
-      <span className="h-[14px] w-[2px] rounded-full bg-current animate-[voiceBar_850ms_ease-in-out_120ms_infinite]" />
-      <span className="h-[18px] w-[2px] rounded-full bg-current animate-[voiceBar_850ms_ease-in-out_240ms_infinite]" />
-      <span className="h-[12px] w-[2px] rounded-full bg-current animate-[voiceBar_850ms_ease-in-out_360ms_infinite]" />
+    <span
+      className={["flex h-5 w-5 items-center justify-center gap-[2px]", className ?? ""].join(" ")}
+      aria-hidden="true"
+    >
+      <span
+        className={[
+          base,
+          "h-[8px]",
+          animated ? "animate-[voiceBar_850ms_ease-in-out_infinite]" : "",
+        ].join(" ")}
+      />
+      <span
+        className={[
+          base,
+          "h-[14px]",
+          animated ? "animate-[voiceBar_850ms_ease-in-out_120ms_infinite]" : "",
+        ].join(" ")}
+      />
+      <span
+        className={[
+          base,
+          "h-[18px]",
+          animated ? "animate-[voiceBar_850ms_ease-in-out_240ms_infinite]" : "",
+        ].join(" ")}
+      />
+      <span
+        className={[
+          base,
+          "h-[12px]",
+          animated ? "animate-[voiceBar_850ms_ease-in-out_360ms_infinite]" : "",
+        ].join(" ")}
+      />
     </span>
   );
 }
@@ -84,8 +103,8 @@ function PencilIcon({ className }: { className?: string }) {
 function PlusIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 5v14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M12 5v14" stroke="currentColor" strokeWidth="2.45" strokeLinecap="round" />
+      <path d="M5 12h14" stroke="currentColor" strokeWidth="2.45" strokeLinecap="round" />
     </svg>
   );
 }
@@ -93,8 +112,8 @@ function PlusIcon({ className }: { className?: string }) {
 function ArrowUpIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className ?? "h-5 w-5"} fill="none" aria-hidden="true">
-      <path d="M12 18V7" stroke="currentColor" strokeWidth="3.1" strokeLinecap="round" />
-      <path d="M7 10.7 12 5.7l5 5" stroke="currentColor" strokeWidth="3.1" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 18V7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M7 10.7 12 5.7l5 5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -146,7 +165,13 @@ export default function ChatInputBar({
 }: ChatInputBarProps) {
   const hasText = input.trim().length > 0;
   const hasAttachment = !!imagePreview || !!pdfPreview;
-  const isExpanded = hasText || hasAttachment;
+
+  // Importante:
+  // No expandimos con la primera letra para evitar el salto visual.
+  // Solo expandimos si hay adjunto, salto de línea o texto ya largo.
+  const shouldExpandForText = input.includes("\n") || input.length > 58;
+  const isExpanded = hasAttachment || shouldExpandForText;
+
   const canUseVoice = !isTyping && isLoggedIn;
   const mainButtonIsSend = hasText || hasAttachment;
 
@@ -154,7 +179,7 @@ export default function ChatInputBar({
     const el = textareaRef.current;
     if (!el) return;
 
-    const minHeight = isExpanded ? 42 : 32;
+    const minHeight = isExpanded ? 42 : 30;
     const maxHeight = 112;
 
     el.style.height = `${minHeight}px`;
@@ -186,10 +211,10 @@ export default function ChatInputBar({
       : null);
 
   const shellShadow = voiceMode
-    ? "0 -8px 26px rgba(26,115,232,0.16), 0 2px 12px rgba(0,0,0,0.06)"
+    ? "0 -7px 24px rgba(26,115,232,0.15), 0 2px 11px rgba(0,0,0,0.055)"
     : isTyping || micMsg
-    ? "0 -8px 26px rgba(26,115,232,0.12), 0 2px 12px rgba(0,0,0,0.06)"
-    : "0 -6px 20px rgba(0,0,0,0.085), 0 2px 10px rgba(0,0,0,0.055)";
+    ? "0 -7px 24px rgba(26,115,232,0.11), 0 2px 11px rgba(0,0,0,0.055)"
+    : "0 -5px 18px rgba(0,0,0,0.075), 0 2px 9px rgba(0,0,0,0.05)";
 
   const shellBorder = voiceMode || isTyping || micMsg ? "rgba(26,115,232,0.34)" : "rgba(212,212,216,0.95)";
 
@@ -198,11 +223,11 @@ export default function ChatInputBar({
       ref={inputBarRef}
       className="fixed left-0 right-0 z-[70] bg-transparent"
       style={{
-        bottom: "max(var(--vvb, 0px), 0px)",
-        paddingBottom: "calc(env(safe-area-inset-bottom, 0px) - 1px)",
+        bottom: "calc(max(var(--vvb, 0px), 0px) + 8px)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
-      <div className="mx-auto max-w-3xl px-3 md:px-6 pt-0 md:pt-2 pb-0 md:pb-2">
+      <div className="mx-auto max-w-3xl px-3 md:px-6 pt-0 md:pt-2 pb-1 md:pb-2">
         <div className="relative w-full">
           <div
             className="absolute inset-x-0 top-0 hidden md:block bg-[#f8f9fa] pointer-events-none z-0"
@@ -222,7 +247,7 @@ export default function ChatInputBar({
                 "border transition-[box-shadow,border-color,background-color] duration-200",
                 isExpanded
                   ? "rounded-[24px] px-3 pt-3 pb-2 md:rounded-[26px]"
-                  : "rounded-full px-3 py-2.5 md:px-4 md:py-2.5",
+                  : "rounded-full px-2.5 py-1.5 md:px-3 md:py-1.5",
               ].join(" ")}
               style={{
                 borderColor: shellBorder,
@@ -291,26 +316,26 @@ export default function ChatInputBar({
                     />
                   </div>
 
-                  <div className="relative z-10 flex items-center justify-between bg-white px-0.5 pt-1.5 pb-0.5">
-                    <div className="flex items-center gap-1.5">
+                  <div className="relative z-10 flex items-center justify-between bg-white px-0 pt-1.5 pb-0.5">
+                    <div className="flex items-center gap-0.5 -ml-1">
                       <button
                         onClick={openFilePicker}
                         disabled={!!isTyping}
-                        className="h-9 w-9 rounded-full text-zinc-800 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
+                        className="h-8 w-8 rounded-full text-zinc-800 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
                         aria-label="Adjuntar"
                         title="Subir archivo para analizar"
                       >
-                        <PlusIcon className="h-[19px] w-[19px]" />
+                        <PlusIcon className="h-[18px] w-[18px]" />
                       </button>
 
                       <button
                         onClick={openBoard}
                         disabled={!!isTyping}
-                        className="h-9 w-9 rounded-full text-zinc-800 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
+                        className="h-8 w-8 rounded-full text-zinc-800 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
                         aria-label="Pizarra"
                         title="Pizarra"
                       >
-                        <PencilIcon className="h-[18px] w-[18px]" />
+                        <PencilIcon className="h-[17px] w-[17px]" />
                       </button>
 
                       <input
@@ -322,9 +347,9 @@ export default function ChatInputBar({
                       />
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       {statusLabel ? (
-                        <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] text-zinc-500">
+                        <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[12.5px] text-zinc-500">
                           <span>{statusLabel}</span>
                           <span className="text-zinc-400">⌄</span>
                         </div>
@@ -334,7 +359,7 @@ export default function ChatInputBar({
                         onClick={mainButtonIsSend ? sendMessage : toggleConversation}
                         disabled={mainButtonIsSend ? !canSend : !canUseVoice}
                         className={[
-                          "relative h-10 w-10 rounded-full flex items-center justify-center transition-all duration-300",
+                          "relative h-9 w-9 rounded-full flex items-center justify-center transition-all duration-300",
                           mainButtonIsSend
                             ? "bg-[#1a73e8] text-white"
                             : voiceUiState === "idle"
@@ -360,11 +385,9 @@ export default function ChatInputBar({
 
                         <span className="relative z-10 flex h-full w-full items-center justify-center">
                           {mainButtonIsSend ? (
-                            <ArrowUpIcon className="h-[20px] w-[20px]" />
-                          ) : voiceMode ? (
-                            <VoiceBarsIcon />
+                            <ArrowUpIcon className="h-[19px] w-[19px]" />
                           ) : (
-                            <MicIcon className="h-[19px] w-[19px]" />
+                            <VoiceBarsIcon animated={voiceMode} />
                           )}
                         </span>
                       </button>
@@ -372,26 +395,28 @@ export default function ChatInputBar({
                   </div>
                 </div>
               ) : (
-                <div className="flex min-h-[42px] items-center gap-2">
-                  <button
-                    onClick={openFilePicker}
-                    disabled={!!isTyping}
-                    className="h-9 w-9 shrink-0 rounded-full text-zinc-800 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
-                    aria-label="Adjuntar"
-                    title="Subir archivo para analizar"
-                  >
-                    <PlusIcon className="h-[20px] w-[20px]" />
-                  </button>
+                <div className="flex min-h-[38px] items-center gap-1.5">
+                  <div className="flex shrink-0 items-center gap-0.5 -ml-1">
+                    <button
+                      onClick={openFilePicker}
+                      disabled={!!isTyping}
+                      className="h-8 w-8 rounded-full text-zinc-800 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
+                      aria-label="Adjuntar"
+                      title="Subir archivo para analizar"
+                    >
+                      <PlusIcon className="h-[18px] w-[18px]" />
+                    </button>
 
-                  <button
-                    onClick={openBoard}
-                    disabled={!!isTyping}
-                    className="h-9 w-9 shrink-0 rounded-full text-zinc-800 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
-                    aria-label="Pizarra"
-                    title="Pizarra"
-                  >
-                    <PencilIcon className="h-[18px] w-[18px]" />
-                  </button>
+                    <button
+                      onClick={openBoard}
+                      disabled={!!isTyping}
+                      className="h-8 w-8 rounded-full text-zinc-800 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
+                      aria-label="Pizarra"
+                      title="Pizarra"
+                    >
+                      <PencilIcon className="h-[17px] w-[17px]" />
+                    </button>
+                  </div>
 
                   <input
                     ref={fileInputRef}
@@ -410,15 +435,15 @@ export default function ChatInputBar({
                     placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta lo que quieras"}
                     disabled={isTyping}
                     rows={1}
-                    className="min-w-0 flex-1 resize-none bg-transparent outline-none text-[17px] md:text-[16px] text-zinc-900 placeholder:text-zinc-500 px-0 py-1 leading-7 h-[32px] max-h-[32px] overflow-hidden"
+                    className="min-w-0 flex-1 resize-none bg-transparent outline-none text-[17px] md:text-[16px] text-zinc-900 placeholder:text-zinc-500 px-0 py-0.5 leading-7 h-[30px] max-h-[30px] overflow-hidden"
                     style={{
-                      height: "32px",
+                      height: "30px",
                       boxSizing: "border-box",
                     }}
                   />
 
                   {statusLabel ? (
-                    <div className="hidden sm:inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1 text-[13px] text-zinc-500">
+                    <div className="hidden sm:inline-flex shrink-0 items-center gap-1.5 rounded-full px-1.5 py-1 text-[12.5px] text-zinc-500">
                       <span>{statusLabel}</span>
                       <span className="text-zinc-400">⌄</span>
                     </div>
@@ -428,7 +453,7 @@ export default function ChatInputBar({
                     onClick={mainButtonIsSend ? sendMessage : toggleConversation}
                     disabled={mainButtonIsSend ? !canSend : !canUseVoice}
                     className={[
-                      "relative h-10 w-10 shrink-0 rounded-full flex items-center justify-center transition-all duration-300",
+                      "relative h-9 w-9 shrink-0 rounded-full flex items-center justify-center transition-all duration-300",
                       mainButtonIsSend
                         ? "bg-[#1a73e8] text-white"
                         : voiceUiState === "idle"
@@ -454,11 +479,9 @@ export default function ChatInputBar({
 
                     <span className="relative z-10 flex h-full w-full items-center justify-center">
                       {mainButtonIsSend ? (
-                        <ArrowUpIcon className="h-[20px] w-[20px]" />
-                      ) : voiceMode ? (
-                        <VoiceBarsIcon />
+                        <ArrowUpIcon className="h-[19px] w-[19px]" />
                       ) : (
-                        <MicIcon className="h-[19px] w-[19px]" />
+                        <VoiceBarsIcon animated={voiceMode} />
                       )}
                     </span>
                   </button>
@@ -466,7 +489,7 @@ export default function ChatInputBar({
               )}
             </div>
 
-            <div className="hidden md:block relative z-10 mt-2 px-3 pb-6 md:mx-0 md:px-3">
+            <div className="hidden md:block relative z-10 mt-2 px-3 pb-4 md:mx-0 md:px-3">
               <div className="text-center text-[11.5px] text-zinc-500">
                 Orientación preventiva · No sustituye profesionales.
               </div>
