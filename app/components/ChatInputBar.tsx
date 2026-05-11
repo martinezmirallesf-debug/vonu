@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useLayoutEffect } from "react";
+import React, { useLayoutEffect } from "react";
 
 type RealtimeVoiceStatus =
   | "idle"
@@ -56,6 +56,17 @@ function MicIcon({ className }: { className?: string }) {
   );
 }
 
+function VoiceBarsIcon({ className }: { className?: string }) {
+  return (
+    <span className={["flex h-5 w-5 items-center justify-center gap-[2px]", className ?? ""].join(" ")} aria-hidden="true">
+      <span className="h-[8px] w-[2px] rounded-full bg-current animate-[voiceBar_850ms_ease-in-out_infinite]" />
+      <span className="h-[14px] w-[2px] rounded-full bg-current animate-[voiceBar_850ms_ease-in-out_120ms_infinite]" />
+      <span className="h-[18px] w-[2px] rounded-full bg-current animate-[voiceBar_850ms_ease-in-out_240ms_infinite]" />
+      <span className="h-[12px] w-[2px] rounded-full bg-current animate-[voiceBar_850ms_ease-in-out_360ms_infinite]" />
+    </span>
+  );
+}
+
 function PencilIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -73,9 +84,39 @@ function PencilIcon({ className }: { className?: string }) {
 function PlusIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 5v14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-      <path d="M5 12h14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+      <path d="M12 5v14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
+  );
+}
+
+function ArrowUpIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className ?? "h-5 w-5"} fill="none" aria-hidden="true">
+      <path d="M12 18V7" stroke="currentColor" strokeWidth="3.1" strokeLinecap="round" />
+      <path d="M7 10.7 12 5.7l5 5" stroke="currentColor" strokeWidth="3.1" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function PdfIcon() {
+  return (
+    <div className="h-16 w-16 rounded-xl bg-white border border-zinc-200 flex items-center justify-center">
+      <div className="flex flex-col items-center justify-center leading-none">
+        <svg viewBox="0 0 24 24" className="h-6 w-6 text-zinc-700 mb-1" fill="none" aria-hidden="true">
+          <path
+            d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path d="M14 3v5h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+
+        <span className="text-[10px] font-semibold tracking-[0.08em] text-zinc-700">PDF</span>
+      </div>
+    </div>
   );
 }
 
@@ -103,24 +144,26 @@ export default function ChatInputBar({
   clearImagePreview,
   clearPdfPreview,
 }: ChatInputBarProps) {
+  const hasText = input.trim().length > 0;
+  const hasAttachment = !!imagePreview || !!pdfPreview;
+  const isExpanded = hasText || hasAttachment;
+  const canUseVoice = !isTyping && isLoggedIn;
+  const mainButtonIsSend = hasText || hasAttachment;
 
-useLayoutEffect(() => {
-  const el = textareaRef.current;
-  if (!el) return;
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
 
-  const minHeight = 42;
-  const maxHeight = 90;
+    const minHeight = isExpanded ? 42 : 32;
+    const maxHeight = 112;
 
-  el.style.height = `${minHeight}px`;
+    el.style.height = `${minHeight}px`;
 
-  const nextHeight = Math.min(
-    Math.max(el.scrollHeight, minHeight),
-    maxHeight
-  );
+    const nextHeight = Math.min(Math.max(el.scrollHeight, minHeight), maxHeight);
 
-  el.style.height = `${nextHeight}px`;
-  el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
-}, [input, textareaRef]);
+    el.style.height = `${nextHeight}px`;
+    el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
+  }, [input, textareaRef, isExpanded]);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
     ? "idle"
@@ -128,231 +171,323 @@ useLayoutEffect(() => {
     ? "listening"
     : "speaking";
 
+  const statusLabel =
+    micMsg ||
+    (isTyping
+      ? "Pensando"
+      : realtimeStatus === "connecting"
+      ? "Conectando"
+      : voiceMode && realtimeStatus === "listening"
+      ? "Escuchando"
+      : voiceMode && realtimeStatus === "speaking"
+      ? "Hablando"
+      : voiceMode
+      ? "Conversación"
+      : null);
+
+  const shellShadow = voiceMode
+    ? "0 -8px 26px rgba(26,115,232,0.16), 0 2px 12px rgba(0,0,0,0.06)"
+    : isTyping || micMsg
+    ? "0 -8px 26px rgba(26,115,232,0.12), 0 2px 12px rgba(0,0,0,0.06)"
+    : "0 -6px 20px rgba(0,0,0,0.085), 0 2px 10px rgba(0,0,0,0.055)";
+
+  const shellBorder = voiceMode || isTyping || micMsg ? "rgba(26,115,232,0.34)" : "rgba(212,212,216,0.95)";
+
   return (
     <div
-  ref={inputBarRef}
-  className="fixed left-0 right-0 z-[70] bg-transparent"
-  style={{
-    bottom: "max(var(--vvb, 0px), 0px)",
-    paddingBottom: "calc(env(safe-area-inset-bottom, 0px) - 1px)",
-  }}
->
-      <div className="mx-auto max-w-3xl px-0 md:px-6 pt-0 md:pt-2 pb-0 md:pb-2 -mx-[4px] md:mx-auto">
-        {micMsg && (
-          <div className="mb-2 text-[12px] text-zinc-600 bg-white/95 border border-zinc-200 rounded-2xl px-3 py-2 shadow-sm">
-            {micMsg}
-          </div>
-        )}
-
+      ref={inputBarRef}
+      className="fixed left-0 right-0 z-[70] bg-transparent"
+      style={{
+        bottom: "max(var(--vvb, 0px), 0px)",
+        paddingBottom: "calc(env(safe-area-inset-bottom, 0px) - 1px)",
+      }}
+    >
+      <div className="mx-auto max-w-3xl px-3 md:px-6 pt-0 md:pt-2 pb-0 md:pb-2">
         <div className="relative w-full">
-  <div
-  className="absolute inset-x-0 top-0 hidden md:block bg-[#f8f9fa] pointer-events-none z-0"
-  style={{
-    bottom: "-80px",
-    borderTopLeftRadius: "22px",
-    borderTopRightRadius: "22px",
-    borderBottomLeftRadius: "0px",
-    borderBottomRightRadius: "0px",
-  }}
-/>
-
-  <div className="relative z-20 w-full bg-transparent border-none shadow-none">
-            <div
-  className="relative w-full overflow-hidden overscroll-none bg-white px-2.5 pt-1 pb-1.5 md:pb-1 rounded-t-[22px] rounded-b-none md:rounded-[20px] border border-zinc-300/90 border-b-0 md:border md:border-zinc-300 md:border-b transition-[box-shadow,border-color,background-color] duration-200"
-  style={{
-    boxShadow: "0 -6px 20px rgba(0,0,0,0.085), 0 2px 10px rgba(0,0,0,0.055)",
-  }}
->
-<div
-  className="min-h-0 overflow-visible"
-  style={{ WebkitOverflowScrolling: "touch" }}
->
-  {(imagePreview || pdfPreview) && (
-    <div className="mb-2 px-1">
-      <div className="relative inline-flex rounded-2xl bg-zinc-50/80 p-1.5 shadow-sm">
-        {imagePreview ? (
-          <img
-            src={imagePreview}
-            alt="Preview"
-            className="h-16 w-16 rounded-xl object-cover"
+          <div
+            className="absolute inset-x-0 top-0 hidden md:block bg-[#f8f9fa] pointer-events-none z-0"
+            style={{
+              bottom: "-80px",
+              borderTopLeftRadius: "28px",
+              borderTopRightRadius: "28px",
+              borderBottomLeftRadius: "0px",
+              borderBottomRightRadius: "0px",
+            }}
           />
-        ) : (
-          <div className="h-16 w-16 rounded-xl bg-white border border-zinc-200 flex items-center justify-center">
-            <div className="flex flex-col items-center justify-center leading-none">
-              <svg
-                viewBox="0 0 24 24"
-                className="h-6 w-6 text-zinc-700 mb-1"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M14 3v5h5"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span className="text-[10px] font-semibold tracking-[0.08em] text-zinc-700">
-                PDF
-              </span>
-            </div>
-          </div>
-        )}
 
-        <button
-          type="button"
-          onClick={imagePreview ? clearImagePreview : clearPdfPreview}
-          className="absolute top-1 right-1 h-6 w-6 rounded-full bg-white shadow-sm text-zinc-700 flex items-center justify-center"
-          aria-label={imagePreview ? "Quitar imagen" : "Quitar PDF"}
-          title={imagePreview ? "Quitar imagen" : "Quitar PDF"}
-        >
-          <span className="text-[14px] leading-none">×</span>
-        </button>
-      </div>
-    </div>
-  )}
+          <div className="relative z-20 w-full bg-transparent border-none shadow-none">
+            <div
+              className={[
+                "relative w-full overflow-hidden overscroll-none bg-white",
+                "border transition-[box-shadow,border-color,background-color] duration-200",
+                isExpanded
+                  ? "rounded-[24px] px-3 pt-3 pb-2 md:rounded-[26px]"
+                  : "rounded-full px-3 py-2.5 md:px-4 md:py-2.5",
+              ].join(" ")}
+              style={{
+                borderColor: shellBorder,
+                boxShadow: shellShadow,
+              }}
+            >
+              {isExpanded ? (
+                <div className="min-h-0 overflow-visible" style={{ WebkitOverflowScrolling: "touch" }}>
+                  {(imagePreview || pdfPreview) && (
+                    <div className="mb-2 px-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {imagePreview && (
+                          <div className="relative inline-flex rounded-2xl bg-zinc-50/80 p-1.5 shadow-sm">
+                            <img src={imagePreview} alt="Preview" className="h-16 w-16 rounded-xl object-cover" />
 
-  <div className="px-1 max-h-[90px] overflow-hidden">
-<textarea
-  ref={textareaRef}
-  value={input}
-  onChange={(e) => setInput(e.target.value)}
-  onKeyDown={handleKeyDown}
-  onPaste={handlePaste}
-  placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
-  disabled={isTyping}
-  rows={1}
-  className="block w-full resize-none bg-transparent outline-none text-[16px] md:text-[15px] text-zinc-900 placeholder:text-zinc-500 px-[12px] py-2 leading-6 min-h-[42px] max-h-[90px] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-400/45"
-  style={{
-    height: "42px",
-    boxSizing: "border-box",
-    WebkitOverflowScrolling: "touch",
-    overscrollBehavior: "contain",
-    scrollbarWidth: "thin",
-    scrollbarColor: "rgba(113,113,122,0.45) transparent",
-  }}
-/>
-  </div>
-</div>
-              <div className="relative z-10 flex items-center justify-between bg-white px-1 pt-0.5 pb-1.5 md:pb-1">
-                <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={clearImagePreview}
+                              className="absolute top-1 right-1 h-6 w-6 rounded-full bg-white shadow-sm text-zinc-700 flex items-center justify-center"
+                              aria-label="Quitar imagen"
+                              title="Quitar imagen"
+                            >
+                              <span className="text-[14px] leading-none">×</span>
+                            </button>
+                          </div>
+                        )}
+
+                        {pdfPreview && (
+                          <div className="relative inline-flex rounded-2xl bg-zinc-50/80 p-1.5 shadow-sm">
+                            <PdfIcon />
+
+                            <button
+                              type="button"
+                              onClick={clearPdfPreview}
+                              className="absolute top-1 right-1 h-6 w-6 rounded-full bg-white shadow-sm text-zinc-700 flex items-center justify-center"
+                              aria-label="Quitar PDF"
+                              title="Quitar PDF"
+                            >
+                              <span className="text-[14px] leading-none">×</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="px-1 max-h-[112px] overflow-hidden">
+                    <textarea
+                      ref={textareaRef}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      onPaste={handlePaste}
+                      placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta a Vonu..."}
+                      disabled={isTyping}
+                      rows={1}
+                      className="block w-full resize-none bg-transparent outline-none text-[18px] md:text-[17px] text-zinc-900 placeholder:text-zinc-500 px-[2px] py-2 leading-7 min-h-[42px] max-h-[112px] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-400/45"
+                      style={{
+                        height: "42px",
+                        boxSizing: "border-box",
+                        WebkitOverflowScrolling: "touch",
+                        overscrollBehavior: "contain",
+                        scrollbarWidth: "thin",
+                        scrollbarColor: "rgba(113,113,122,0.45) transparent",
+                      }}
+                    />
+                  </div>
+
+                  <div className="relative z-10 flex items-center justify-between bg-white px-0.5 pt-1.5 pb-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={openFilePicker}
+                        disabled={!!isTyping}
+                        className="h-9 w-9 rounded-full text-zinc-800 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
+                        aria-label="Adjuntar"
+                        title="Subir archivo para analizar"
+                      >
+                        <PlusIcon className="h-[19px] w-[19px]" />
+                      </button>
+
+                      <button
+                        onClick={openBoard}
+                        disabled={!!isTyping}
+                        className="h-9 w-9 rounded-full text-zinc-800 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
+                        aria-label="Pizarra"
+                        title="Pizarra"
+                      >
+                        <PencilIcon className="h-[18px] w-[18px]" />
+                      </button>
+
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={onSelectImage}
+                        className="hidden"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {statusLabel ? (
+                        <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] text-zinc-500">
+                          <span>{statusLabel}</span>
+                          <span className="text-zinc-400">⌄</span>
+                        </div>
+                      ) : null}
+
+                      <button
+                        onClick={mainButtonIsSend ? sendMessage : toggleConversation}
+                        disabled={mainButtonIsSend ? !canSend : !canUseVoice}
+                        className={[
+                          "relative h-10 w-10 rounded-full flex items-center justify-center transition-all duration-300",
+                          mainButtonIsSend
+                            ? "bg-[#1a73e8] text-white"
+                            : voiceUiState === "idle"
+                            ? "bg-black text-white"
+                            : "text-white shadow-[0_8px_24px_rgba(26,115,232,0.30)]",
+                          (mainButtonIsSend ? canSend : canUseVoice)
+                            ? "cursor-pointer hover:scale-105 active:scale-[0.98]"
+                            : "opacity-45 cursor-not-allowed",
+                        ].join(" ")}
+                        style={
+                          !mainButtonIsSend && voiceUiState !== "idle"
+                            ? {
+                                background: "linear-gradient(135deg, #1a73e8 0%, #3b82f6 45%, #60a5fa 100%)",
+                              }
+                            : undefined
+                        }
+                        aria-label={mainButtonIsSend ? "Enviar" : voiceMode ? "Desactivar conversación" : "Hablar con Vonu"}
+                        title={mainButtonIsSend ? "Enviar" : voiceMode ? "Modo conversación activo" : "Hablar con Vonu"}
+                      >
+                        {!mainButtonIsSend && voiceUiState !== "idle" ? (
+                          <span className="absolute inset-[-2px] rounded-full bg-blue-400/20 animate-pulse pointer-events-none" aria-hidden="true" />
+                        ) : null}
+
+                        <span className="relative z-10 flex h-full w-full items-center justify-center">
+                          {mainButtonIsSend ? (
+                            <ArrowUpIcon className="h-[20px] w-[20px]" />
+                          ) : voiceMode ? (
+                            <VoiceBarsIcon />
+                          ) : (
+                            <MicIcon className="h-[19px] w-[19px]" />
+                          )}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex min-h-[42px] items-center gap-2">
+                  <button
+                    onClick={openFilePicker}
+                    disabled={!!isTyping}
+                    className="h-9 w-9 shrink-0 rounded-full text-zinc-800 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
+                    aria-label="Adjuntar"
+                    title="Subir archivo para analizar"
+                  >
+                    <PlusIcon className="h-[20px] w-[20px]" />
+                  </button>
+
                   <button
                     onClick={openBoard}
                     disabled={!!isTyping}
-                    className="h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
+                    className="h-9 w-9 shrink-0 rounded-full text-zinc-800 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
                     aria-label="Pizarra"
                     title="Pizarra"
                   >
-                    <PencilIcon className="h-[17px] w-[17px]" />
-                  </button>
-
-                  <button
-  onClick={openFilePicker}
-  disabled={!!isTyping}
-  className="h-8 w-8 rounded-full text-zinc-700 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
-  aria-label="Adjuntar"
-  title="Subir archivo para analizar"
->
-                    <PlusIcon className="h-[17px] w-[17px]" />
+                    <PencilIcon className="h-[18px] w-[18px]" />
                   </button>
 
                   <input
-  ref={fileInputRef}
-  type="file"
-  accept="image/*,application/pdf"
-  onChange={onSelectImage}
-  className="hidden"
-/>
-                </div>
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={onSelectImage}
+                    className="hidden"
+                  />
 
-                <div className="flex items-center gap-1.5">
+                  <textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onPaste={handlePaste}
+                    placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta lo que quieras"}
+                    disabled={isTyping}
+                    rows={1}
+                    className="min-w-0 flex-1 resize-none bg-transparent outline-none text-[17px] md:text-[16px] text-zinc-900 placeholder:text-zinc-500 px-0 py-1 leading-7 h-[32px] max-h-[32px] overflow-hidden"
+                    style={{
+                      height: "32px",
+                      boxSizing: "border-box",
+                    }}
+                  />
+
+                  {statusLabel ? (
+                    <div className="hidden sm:inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1 text-[13px] text-zinc-500">
+                      <span>{statusLabel}</span>
+                      <span className="text-zinc-400">⌄</span>
+                    </div>
+                  ) : null}
+
                   <button
-                    onClick={toggleConversation}
-                    disabled={!!isTyping || !isLoggedIn}
+                    onClick={mainButtonIsSend ? sendMessage : toggleConversation}
+                    disabled={mainButtonIsSend ? !canSend : !canUseVoice}
                     className={[
-                      "relative h-8 w-8 rounded-full",
-                      "transition-all duration-300",
-                      voiceUiState === "idle"
-                        ? "text-zinc-700 hover:bg-zinc-100"
+                      "relative h-10 w-10 shrink-0 rounded-full flex items-center justify-center transition-all duration-300",
+                      mainButtonIsSend
+                        ? "bg-[#1a73e8] text-white"
+                        : voiceUiState === "idle"
+                        ? "bg-black text-white"
                         : "text-white shadow-[0_8px_24px_rgba(26,115,232,0.30)]",
-                      !!isTyping || !isLoggedIn
-                        ? "opacity-50 cursor-not-allowed"
-                        : "cursor-pointer",
+                      (mainButtonIsSend ? canSend : canUseVoice)
+                        ? "cursor-pointer hover:scale-105 active:scale-[0.98]"
+                        : "opacity-45 cursor-not-allowed",
                     ].join(" ")}
                     style={
-                      voiceUiState === "idle"
-                        ? undefined
-                        : {
-                            background:
-                              "linear-gradient(135deg, #1a73e8 0%, #3b82f6 45%, #60a5fa 100%)",
+                      !mainButtonIsSend && voiceUiState !== "idle"
+                        ? {
+                            background: "linear-gradient(135deg, #1a73e8 0%, #3b82f6 45%, #60a5fa 100%)",
                           }
+                        : undefined
                     }
-                    aria-label={voiceMode ? "Desactivar conversación" : "Hablar con Vonu"}
-                    title={voiceMode ? "Modo conversación activo" : "Hablar con Vonu"}
+                    aria-label={mainButtonIsSend ? "Enviar" : voiceMode ? "Desactivar conversación" : "Hablar con Vonu"}
+                    title={mainButtonIsSend ? "Enviar" : voiceMode ? "Modo conversación activo" : "Hablar con Vonu"}
                   >
-                    {voiceUiState !== "idle" ? (
-                      <span
-                        className="absolute inset-[-2px] rounded-full bg-blue-400/20 animate-pulse pointer-events-none"
-                        aria-hidden="true"
-                      />
+                    {!mainButtonIsSend && voiceUiState !== "idle" ? (
+                      <span className="absolute inset-[-2px] rounded-full bg-blue-400/20 animate-pulse pointer-events-none" aria-hidden="true" />
                     ) : null}
 
                     <span className="relative z-10 flex h-full w-full items-center justify-center">
-                      <MicIcon className="h-[19px] w-[19px]" />
+                      {mainButtonIsSend ? (
+                        <ArrowUpIcon className="h-[20px] w-[20px]" />
+                      ) : voiceMode ? (
+                        <VoiceBarsIcon />
+                      ) : (
+                        <MicIcon className="h-[19px] w-[19px]" />
+                      )}
                     </span>
                   </button>
-
-                  <button
-                    onClick={sendMessage}
-                    disabled={!canSend}
-                    className={[
-                      "h-8 w-8 rounded-full",
-                      "bg-[#1a73e8] text-white",
-                      "flex items-center justify-center",
-                      "transition-all",
-                      canSend
-                        ? "opacity-100 hover:bg-[#1669c1] hover:scale-105 active:scale-[0.98]"
-                        : "opacity-40 cursor-not-allowed",
-                    ].join(" ")}
-                    aria-label="Enviar"
-                    title="Enviar"
-                  >
-                    <svg viewBox="0 0 24 24" className="h-[19px] w-[19px]" fill="none" aria-hidden="true">
-                      <path
-                        d="M12 18V7"
-                        stroke="currentColor"
-                        strokeWidth="3.1"
-                        strokeLinecap="round"
-                      />
-                      <path
-                        d="M7 10.7 12 5.7l5 5"
-                        stroke="currentColor"
-                        strokeWidth="3.1"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </button>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="hidden md:block relative z-10 mt-2 px-3 pb-6 md:mx-0 md:px-3">
-  <div className="text-center text-[11.5px] text-zinc-500">
-    Orientación preventiva · No sustituye profesionales.
-  </div>
-</div>
+              <div className="text-center text-[11.5px] text-zinc-500">
+                Orientación preventiva · No sustituye profesionales.
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes voiceBar {
+          0%,
+          100% {
+            transform: scaleY(0.55);
+            opacity: 0.72;
+          }
+          50% {
+            transform: scaleY(1);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }
