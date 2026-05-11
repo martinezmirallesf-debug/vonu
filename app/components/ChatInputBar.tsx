@@ -212,10 +212,10 @@ export default function ChatInputBar({
     voiceMode;
 
   const shellShadow = voiceMode
-    ? "0 -7px 24px rgba(26,115,232,0.15), 0 2px 11px rgba(0,0,0,0.055)"
-    : isTyping || micMsg
-    ? "0 -7px 24px rgba(26,115,232,0.11), 0 2px 11px rgba(0,0,0,0.055)"
-    : "0 -5px 18px rgba(0,0,0,0.075), 0 2px 9px rgba(0,0,0,0.05)";
+  ? "0 -5px 16px rgba(26,115,232,0.18), 0 2px 8px rgba(0,0,0,0.075)"
+  : isTyping || micMsg
+  ? "0 -5px 16px rgba(26,115,232,0.14), 0 2px 8px rgba(0,0,0,0.075)"
+  : "0 -4px 12px rgba(0,0,0,0.105), 0 1px 5px rgba(0,0,0,0.075)";
 
   const shellBorder = hasActiveStatus
     ? "rgba(26,115,232,0.34)"
@@ -232,6 +232,15 @@ export default function ChatInputBar({
     >
       <div className="mx-auto max-w-3xl px-3 md:px-6 pt-0 md:pt-2 pb-0 md:pb-1">
         <div className="relative w-full">
+          <div
+  className="pointer-events-none absolute inset-x-0 z-0"
+  style={{
+    height: "90px",
+    bottom: "-12px",
+    background:
+      "linear-gradient(to top, #f8f9fa 0%, rgba(248,249,250,0.96) 38%, rgba(248,249,250,0.72) 68%, rgba(248,249,250,0) 100%)",
+  }}
+/>
           <div
             className="absolute inset-x-0 top-0 hidden md:block bg-[#f8f9fa] pointer-events-none z-0"
             style={{
