@@ -178,7 +178,7 @@ export default function ChatInputBar({
     const el = textareaRef.current;
     if (!el) return;
 
-    const COMPACT_HEIGHT = 34;
+    const COMPACT_HEIGHT = 36;
     const EXPANDED_MIN_HEIGHT = 42;
     const MAX_HEIGHT = 116;
 
@@ -212,10 +212,10 @@ export default function ChatInputBar({
     voiceMode;
 
 const shellShadow = voiceMode
-  ? "0 0 0 1px rgba(26,115,232,0.14), 0 0 14px rgba(26,115,232,0.24), 0 4px 12px rgba(26,115,232,0.16), 0 2px 6px rgba(0,0,0,0.08)"
+  ? "0 0 0 1px rgba(26,115,232,0.18), 0 0 16px rgba(26,115,232,0.30), 0 4px 13px rgba(26,115,232,0.20), 0 2px 7px rgba(0,0,0,0.09)"
   : isTyping || micMsg
-  ? "0 0 0 1px rgba(26,115,232,0.12), 0 0 12px rgba(26,115,232,0.20), 0 4px 11px rgba(26,115,232,0.13), 0 2px 6px rgba(0,0,0,0.075)"
-  : "0 0 0 1px rgba(0,0,0,0.05), 0 0 12px rgba(0,0,0,0.12), 0 3px 7px rgba(0,0,0,0.075)";
+  ? "0 0 0 1px rgba(26,115,232,0.15), 0 0 14px rgba(26,115,232,0.25), 0 4px 12px rgba(26,115,232,0.16), 0 2px 7px rgba(0,0,0,0.085)"
+  : "0 0 0 1px rgba(0,0,0,0.06), 0 0 13px rgba(0,0,0,0.135), 0 3px 8px rgba(0,0,0,0.085)";
 
   const shellBorder = hasActiveStatus
     ? "rgba(26,115,232,0.34)"
