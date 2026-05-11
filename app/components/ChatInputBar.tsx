@@ -157,17 +157,17 @@ export default function ChatInputBar({
   const canUseVoice = !isTyping && isLoggedIn;
 
   const estimatedOneLineLimit =
-    typeof window === "undefined"
-      ? 54
-      : window.innerWidth < 380
-      ? 24
-      : window.innerWidth < 480
-      ? 30
-      : window.innerWidth < 768
-      ? 38
-      : window.innerWidth < 1100
-      ? 58
-      : 72;
+  typeof window === "undefined"
+    ? 50
+    : window.innerWidth < 380
+    ? 20
+    : window.innerWidth < 480
+    ? 26
+    : window.innerWidth < 768
+    ? 34
+    : window.innerWidth < 1100
+    ? 52
+    : 66;
 
   const shouldExpand =
     hasAttachment ||
@@ -300,34 +300,35 @@ export default function ChatInputBar({
               )}
 
               <div className="relative">
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onPaste={handlePaste}
-                  placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta lo que quieras"}
-                  disabled={isTyping}
-                  rows={1}
-                  className={[
-                    "block w-full resize-none bg-transparent outline-none",
-                    "text-zinc-900 placeholder:text-zinc-400",
-                    "overflow-y-auto touch-pan-y overscroll-contain",
-                    "[&::-webkit-scrollbar]:w-1.5",
-                    "[&::-webkit-scrollbar-track]:bg-transparent",
-                    "[&::-webkit-scrollbar-thumb]:rounded-full",
-                    "[&::-webkit-scrollbar-thumb]:bg-zinc-400/45",
-                    shouldExpand
-  ? "text-[18px] md:text-[17px] leading-7 px-1 pt-1.5 pb-11"
-  : "text-[17px] md:text-[16px] leading-[34px] py-0 pl-[74px] pr-[48px]",
-                  ].join(" ")}
-                  style={{
-                    boxSizing: "border-box",
-                    WebkitOverflowScrolling: "touch",
-                    scrollbarWidth: "thin",
-                    scrollbarColor: "rgba(113,113,122,0.45) transparent",
-                  }}
-                />
+  <textarea
+    ref={textareaRef}
+    value={input}
+    onChange={(e) => setInput(e.target.value)}
+    onKeyDown={handleKeyDown}
+    onPaste={handlePaste}
+    placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta lo que quieras"}
+    disabled={isTyping}
+    rows={1}
+    wrap={shouldExpand ? "soft" : "off"}
+    className={[
+      "block w-full resize-none bg-transparent outline-none",
+      "text-zinc-900 placeholder:text-zinc-400",
+      "overflow-y-auto touch-pan-y overscroll-contain",
+      "[&::-webkit-scrollbar]:w-1.5",
+      "[&::-webkit-scrollbar-track]:bg-transparent",
+      "[&::-webkit-scrollbar-thumb]:rounded-full",
+      "[&::-webkit-scrollbar-thumb]:bg-zinc-400/45",
+      shouldExpand
+        ? "text-[18px] md:text-[17px] leading-7 px-1 pt-1.5 pb-11"
+        : "text-[17px] md:text-[16px] leading-[34px] py-0 pl-[74px] pr-[48px] overflow-hidden",
+    ].join(" ")}
+    style={{
+      boxSizing: "border-box",
+      WebkitOverflowScrolling: "touch",
+      scrollbarWidth: "thin",
+      scrollbarColor: "rgba(113,113,122,0.45) transparent",
+    }}
+  />
 
                 <div
   className={[
