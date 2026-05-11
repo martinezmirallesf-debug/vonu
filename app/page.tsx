@@ -4657,12 +4657,14 @@ const userMsg: Message = {
   id: crypto.randomUUID(),
   role: "user",
   text:
-    userText ||
-    (imageBase64
-      ? "He adjuntado una imagen."
-      : pdfAttachment
-      ? `He adjuntado un PDF: ${pdfAttachment.filename}`
-      : undefined),
+    userText && pdfAttachment
+      ? `${userText}\n\nPDF adjunto: ${pdfAttachment.filename}`
+      : userText ||
+        (imageBase64
+          ? "He adjuntado una imagen."
+          : pdfAttachment
+          ? `He adjuntado un PDF: ${pdfAttachment.filename}`
+          : undefined),
   image: imageBase64 || undefined,
 };
 
@@ -4728,7 +4730,7 @@ if (voiceModeRef.current && imageBase64) {
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       },
       cache: "no-store",
-      body: JSON.stringify({
+body: JSON.stringify({
   messages: convoForApi,
   userText,
   imageBase64,
@@ -4853,13 +4855,14 @@ const res = await fetch("/api/chat", {
     ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
   },
   cache: "no-store",
-  body: JSON.stringify({
-    messages: convoForApi,
-    userText,
-    imageBase64,
-    mode: nextMode,
-    tutorLevel: nextTutorLevel,
-  }),
+body: JSON.stringify({
+  messages: convoForApi,
+  userText,
+  imageBase64,
+  pdfText: pdfAttachment?.pdfText ?? null,
+  mode: nextMode,
+  tutorLevel: nextTutorLevel,
+}),
 });
 
       if (!res.ok) {
