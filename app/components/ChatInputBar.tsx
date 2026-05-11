@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useLayoutEffect } from "react";
+import React, { useLayoutEffect, useState } from "react";
 
 type RealtimeVoiceStatus =
   | "idle"
@@ -153,33 +153,46 @@ export default function ChatInputBar({
   clearImagePreview,
   clearPdfPreview,
 }: ChatInputBarProps) {
-  const hasText = input.trim().length > 0;
-  const hasAttachment = !!imagePreview || !!pdfPreview;
-  const hasSomething = hasText || hasAttachment;
+const hasText = input.trim().length > 0;
+const hasAttachment = !!imagePreview || !!pdfPreview;
+const hasSomething = hasText || hasAttachment;
 
-  const shouldExpand =
-    hasAttachment || input.includes("\n") || input.length > 64;
+const [textHasWrapped, setTextHasWrapped] = useState(false);
+
+// Solo expandimos cuando hay adjunto o cuando el texto realmente ocupa más de una línea.
+const shouldExpand = hasAttachment || textHasWrapped;
 
   const canUseVoice = !isTyping && isLoggedIn;
   const mainButtonIsSend = hasText || hasAttachment;
 
-  useLayoutEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
+useLayoutEffect(() => {
+  const el = textareaRef.current;
+  if (!el) return;
 
-    const MIN_HEIGHT = shouldExpand ? 42 : 30;
-    const MAX_HEIGHT = 116;
+  const ONE_LINE_HEIGHT = 34;
+  const EXPANDED_MIN_HEIGHT = 42;
+  const MAX_HEIGHT = 116;
 
-    el.style.height = "auto";
+  el.style.height = "auto";
 
-    const nextHeight = Math.min(
-      Math.max(el.scrollHeight, MIN_HEIGHT),
-      MAX_HEIGHT
-    );
+  const measuredHeight = el.scrollHeight;
+  const wrappedNow = input.length > 0 && measuredHeight > ONE_LINE_HEIGHT + 8;
 
-    el.style.height = `${nextHeight}px`;
-    el.style.overflowY = el.scrollHeight > MAX_HEIGHT ? "auto" : "hidden";
-  }, [input, textareaRef, shouldExpand]);
+  if (wrappedNow !== textHasWrapped) {
+    setTextHasWrapped(wrappedNow);
+  }
+
+  const expandedNow = hasAttachment || wrappedNow;
+  const minHeight = expandedNow ? EXPANDED_MIN_HEIGHT : ONE_LINE_HEIGHT;
+
+  const nextHeight = Math.min(
+    Math.max(measuredHeight, minHeight),
+    MAX_HEIGHT
+  );
+
+  el.style.height = `${nextHeight}px`;
+  el.style.overflowY = measuredHeight > MAX_HEIGHT ? "auto" : "hidden";
+}, [input, textareaRef, hasAttachment, textHasWrapped]);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
     ? "idle"
@@ -230,9 +243,9 @@ export default function ChatInputBar({
               className={[
                 "relative w-full overflow-hidden overscroll-none bg-white border",
                 "transition-[box-shadow,border-color,background-color,border-radius,padding] duration-200",
-                shouldExpand
-                  ? "rounded-[24px] px-3 pt-3 pb-2 md:rounded-[26px]"
-                  : "rounded-full px-2 py-1.5 md:px-2.5 md:py-1.5",
+shouldExpand
+  ? "rounded-[28px] px-3 pt-3 pb-2 md:rounded-[28px]"
+  : "rounded-full px-2 py-1.5 md:px-2.5 md:py-1.5",
               ].join(" ")}
               style={{
                 borderColor: shellBorder,
@@ -281,7 +294,7 @@ export default function ChatInputBar({
                 </div>
               )}
 
-              <div className={shouldExpand ? "flex flex-col" : "relative min-h-[38px]"}>
+              <div className={shouldExpand ? "flex flex-col" : "relative min-h-[40px]"}>
                 <textarea
                   ref={textareaRef}
                   value={input}
@@ -299,9 +312,9 @@ export default function ChatInputBar({
                     "[&::-webkit-scrollbar-track]:bg-transparent",
                     "[&::-webkit-scrollbar-thumb]:rounded-full",
                     "[&::-webkit-scrollbar-thumb]:bg-zinc-400/45",
-                    shouldExpand
-                      ? "text-[18px] md:text-[17px] leading-7 px-0 py-1.5"
-                      : "text-[17px] md:text-[16px] leading-7 py-0.5 pl-[74px] pr-[48px]",
+shouldExpand
+  ? "text-[18px] md:text-[17px] leading-7 px-0 py-1.5"
+  : "text-[17px] md:text-[16px] leading-[34px] py-0 pl-[74px] pr-[48px]",
                   ].join(" ")}
                   style={{
                     boxSizing: "border-box",
