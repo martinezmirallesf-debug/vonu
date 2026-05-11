@@ -159,7 +159,23 @@ const hasSomething = hasText || hasAttachment;
 
 // Seguro y estable: no usamos estado interno para medir altura.
 // Expandimos cuando hay adjunto, salto de línea o texto suficientemente largo.
-const shouldExpand = hasAttachment || input.includes("\n") || input.length > 54;
+const estimatedOneLineLimit =
+  typeof window === "undefined"
+    ? 54
+    : window.innerWidth < 380
+    ? 28
+    : window.innerWidth < 480
+    ? 34
+    : window.innerWidth < 768
+    ? 42
+    : window.innerWidth < 1100
+    ? 62
+    : 76;
+
+const shouldExpand =
+  hasAttachment ||
+  input.includes("\n") ||
+  input.length > estimatedOneLineLimit;
 
   const canUseVoice = !isTyping && isLoggedIn;
   const mainButtonIsSend = hasText || hasAttachment;
