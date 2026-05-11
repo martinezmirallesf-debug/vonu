@@ -178,7 +178,7 @@ export default function ChatInputBar({
     const el = textareaRef.current;
     if (!el) return;
 
-    const COMPACT_HEIGHT = 30;
+    const COMPACT_HEIGHT = 34;
     const EXPANDED_MIN_HEIGHT = 42;
     const MAX_HEIGHT = 116;
 
@@ -249,8 +249,8 @@ export default function ChatInputBar({
                 "relative w-full overflow-hidden overscroll-none bg-white border",
                 "transition-[box-shadow,border-color,background-color,border-radius,padding] duration-200",
                 shouldExpand
-                  ? "rounded-[28px] px-3 pt-3 pb-2"
-                  : "rounded-full px-2 py-1",
+  ? "rounded-[28px] px-3 pt-3 pb-2"
+  : "rounded-full px-2 py-1.5",
               ].join(" ")}
               style={{
                 borderColor: shellBorder,
@@ -318,8 +318,8 @@ export default function ChatInputBar({
                     "[&::-webkit-scrollbar-thumb]:rounded-full",
                     "[&::-webkit-scrollbar-thumb]:bg-zinc-400/45",
                     shouldExpand
-                      ? "text-[18px] md:text-[17px] leading-7 px-1 pt-1.5 pb-11"
-                      : "text-[17px] md:text-[16px] leading-[30px] py-0 pl-[74px] pr-[48px]",
+  ? "text-[18px] md:text-[17px] leading-7 px-1 pt-1.5 pb-11"
+  : "text-[17px] md:text-[16px] leading-[34px] py-0 pl-[74px] pr-[48px]",
                   ].join(" ")}
                   style={{
                     boxSizing: "border-box",
@@ -330,14 +330,14 @@ export default function ChatInputBar({
                 />
 
                 <div
-                  className={[
-                    "absolute inset-x-0 flex items-center justify-between",
-                    shouldExpand
-                      ? "bottom-0 h-9"
-                      : "top-1/2 -translate-y-1/2 h-8",
-                  ].join(" ")}
-                >
-                  <div className="flex shrink-0 items-center gap-0 -ml-1">
+  className={[
+    "pointer-events-none absolute inset-x-0 flex items-center justify-between",
+    shouldExpand
+      ? "bottom-0 h-9"
+      : "top-1/2 -translate-y-1/2 h-8",
+  ].join(" ")}
+>
+                  <div className="pointer-events-auto flex shrink-0 items-center gap-0 -ml-1">
                     <button
                       onClick={openFilePicker}
                       disabled={!!isTyping}
@@ -371,7 +371,7 @@ export default function ChatInputBar({
                     onClick={mainButtonIsSend ? sendMessage : toggleConversation}
                     disabled={mainButtonIsSend ? !canSend : !canUseVoice}
                     className={[
-                      "relative h-8 w-8 shrink-0 rounded-full flex items-center justify-center",
+                      "pointer-events-auto relative h-8 w-8 shrink-0 rounded-full flex items-center justify-center",
                       "transition-all duration-300",
                       mainButtonIsSend
                         ? "bg-[#1a73e8] text-white"
