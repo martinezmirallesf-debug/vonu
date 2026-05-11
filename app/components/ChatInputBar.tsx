@@ -121,9 +121,7 @@ function PdfIcon() {
           />
         </svg>
 
-        <span className="text-[10px] font-semibold tracking-[0.08em] text-zinc-700">
-          PDF
-        </span>
+        <span className="text-[10px] font-semibold tracking-[0.08em] text-zinc-700">PDF</span>
       </div>
     </div>
   );
@@ -153,60 +151,53 @@ export default function ChatInputBar({
   clearImagePreview,
   clearPdfPreview,
 }: ChatInputBarProps) {
-const hasText = input.trim().length > 0;
-const hasAttachment = !!imagePreview || !!pdfPreview;
-const hasSomething = hasText || hasAttachment;
-
-// Seguro y estable: no usamos estado interno para medir altura.
-// Expandimos cuando hay adjunto, salto de línea o texto suficientemente largo.
-const estimatedOneLineLimit =
-  typeof window === "undefined"
-    ? 54
-    : window.innerWidth < 380
-    ? 24
-    : window.innerWidth < 480
-    ? 30
-    : window.innerWidth < 768
-    ? 38
-    : window.innerWidth < 1100
-    ? 58
-    : 72;
-
-const shouldExpand =
-  hasAttachment ||
-  input.includes("\n") ||
-  input.length > estimatedOneLineLimit;
-
-  const canUseVoice = !isTyping && isLoggedIn;
+  const hasText = input.trim().length > 0;
+  const hasAttachment = !!imagePreview || !!pdfPreview;
   const mainButtonIsSend = hasText || hasAttachment;
+  const canUseVoice = !isTyping && isLoggedIn;
 
-useLayoutEffect(() => {
-  const el = textareaRef.current;
-  if (!el) return;
+  const estimatedOneLineLimit =
+    typeof window === "undefined"
+      ? 54
+      : window.innerWidth < 380
+      ? 24
+      : window.innerWidth < 480
+      ? 30
+      : window.innerWidth < 768
+      ? 38
+      : window.innerWidth < 1100
+      ? 58
+      : 72;
 
-  const COMPACT_HEIGHT = 28;
-  const EXPANDED_MIN_HEIGHT = 42;
-  const MAX_HEIGHT = 116;
+  const shouldExpand =
+    hasAttachment ||
+    input.includes("\n") ||
+    input.length > estimatedOneLineLimit;
 
-  // En modo barrita NO crece nada.
-  // Así evitamos el paso intermedio raro y la sacudida visual.
-  if (!shouldExpand) {
-    el.style.height = `${COMPACT_HEIGHT}px`;
-    el.style.overflowY = "hidden";
-    return;
-  }
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
 
-  // En modo expandido sí crece hacia arriba.
-  el.style.height = "auto";
+    const COMPACT_HEIGHT = 30;
+    const EXPANDED_MIN_HEIGHT = 42;
+    const MAX_HEIGHT = 116;
 
-  const nextHeight = Math.min(
-    Math.max(el.scrollHeight, EXPANDED_MIN_HEIGHT),
-    MAX_HEIGHT
-  );
+    if (!shouldExpand) {
+      el.style.height = `${COMPACT_HEIGHT}px`;
+      el.style.overflowY = "hidden";
+      return;
+    }
 
-  el.style.height = `${nextHeight}px`;
-  el.style.overflowY = el.scrollHeight > MAX_HEIGHT ? "auto" : "hidden";
-}, [input, textareaRef, shouldExpand]);
+    el.style.height = "auto";
+
+    const nextHeight = Math.min(
+      Math.max(el.scrollHeight, EXPANDED_MIN_HEIGHT),
+      MAX_HEIGHT
+    );
+
+    el.style.height = `${nextHeight}px`;
+    el.style.overflowY = el.scrollHeight > MAX_HEIGHT ? "auto" : "hidden";
+  }, [input, textareaRef, shouldExpand]);
 
   const voiceUiState: "idle" | "listening" | "speaking" = !voiceMode
     ? "idle"
@@ -235,16 +226,16 @@ useLayoutEffect(() => {
       ref={inputBarRef}
       className="fixed left-0 right-0 z-[70] bg-transparent"
       style={{
-        bottom: "calc(max(var(--vvb, 0px), 0px) + 8px)",
+        bottom: "calc(max(var(--vvb, 0px), 0px) + 2px)",
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
-      <div className="mx-auto max-w-3xl px-3 md:px-6 pt-0 md:pt-2 pb-1 md:pb-2">
+      <div className="mx-auto max-w-3xl px-3 md:px-6 pt-0 md:pt-2 pb-0 md:pb-1">
         <div className="relative w-full">
           <div
             className="absolute inset-x-0 top-0 hidden md:block bg-[#f8f9fa] pointer-events-none z-0"
             style={{
-              bottom: "-80px",
+              bottom: "-62px",
               borderTopLeftRadius: "28px",
               borderTopRightRadius: "28px",
               borderBottomLeftRadius: "0px",
@@ -257,9 +248,9 @@ useLayoutEffect(() => {
               className={[
                 "relative w-full overflow-hidden overscroll-none bg-white border",
                 "transition-[box-shadow,border-color,background-color,border-radius,padding] duration-200",
-shouldExpand
-  ? "rounded-[28px] px-3 pt-3 pb-2 md:rounded-[28px]"
-  : "rounded-full px-2 py-1 md:px-2.5 md:py-1",
+                shouldExpand
+                  ? "rounded-[28px] px-3 pt-3 pb-2"
+                  : "rounded-full px-2 py-1",
               ].join(" ")}
               style={{
                 borderColor: shellBorder,
@@ -308,7 +299,7 @@ shouldExpand
                 </div>
               )}
 
-              <div className={shouldExpand ? "flex flex-col" : "relative min-h-[36px]"}>
+              <div className="relative">
                 <textarea
                   ref={textareaRef}
                   value={input}
@@ -326,9 +317,9 @@ shouldExpand
                     "[&::-webkit-scrollbar-track]:bg-transparent",
                     "[&::-webkit-scrollbar-thumb]:rounded-full",
                     "[&::-webkit-scrollbar-thumb]:bg-zinc-400/45",
-shouldExpand
-  ? "text-[18px] md:text-[17px] leading-7 px-0 py-1.5"
-  : "text-[17px] md:text-[16px] leading-[28px] py-0 pl-[74px] pr-[48px]",
+                    shouldExpand
+                      ? "text-[18px] md:text-[17px] leading-7 px-1 pt-1.5 pb-11"
+                      : "text-[17px] md:text-[16px] leading-[30px] py-0 pl-[74px] pr-[48px]",
                   ].join(" ")}
                   style={{
                     boxSizing: "border-box",
@@ -340,17 +331,13 @@ shouldExpand
 
                 <div
                   className={[
+                    "absolute inset-x-0 flex items-center justify-between",
                     shouldExpand
-                      ? "mt-1 flex h-9 items-center justify-between"
-                      : "pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-between",
+                      ? "bottom-0 h-9"
+                      : "top-1/2 -translate-y-1/2 h-8",
                   ].join(" ")}
                 >
-                  <div
-                    className={[
-                      "flex shrink-0 items-center gap-0 -ml-1",
-                      shouldExpand ? "" : "pointer-events-auto",
-                    ].join(" ")}
-                  >
+                  <div className="flex shrink-0 items-center gap-0 -ml-1">
                     <button
                       onClick={openFilePicker}
                       disabled={!!isTyping}
@@ -384,7 +371,7 @@ shouldExpand
                     onClick={mainButtonIsSend ? sendMessage : toggleConversation}
                     disabled={mainButtonIsSend ? !canSend : !canUseVoice}
                     className={[
-                      "pointer-events-auto relative h-8 w-8 shrink-0 rounded-full flex items-center justify-center",
+                      "relative h-8 w-8 shrink-0 rounded-full flex items-center justify-center",
                       "transition-all duration-300",
                       mainButtonIsSend
                         ? "bg-[#1a73e8] text-white"
@@ -425,7 +412,7 @@ shouldExpand
               </div>
             </div>
 
-            <div className="hidden md:block relative z-10 mt-2 px-3 pb-4 md:mx-0 md:px-3">
+            <div className="hidden md:block relative z-10 mt-1.5 px-3 pb-2 md:mx-0 md:px-3">
               <div className="text-center text-[11.5px] text-zinc-500">
                 Orientación preventiva · No sustituye profesionales.
               </div>
