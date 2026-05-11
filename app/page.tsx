@@ -4084,16 +4084,19 @@ async function processPdfFile(file: File) {
       return;
     }
 
-    const hiddenPdfContext =
-      `PDF subido por el usuario: "${json.filename}"` +
-      `${json.pageCount ? ` (${json.pageCount} páginas)` : ""}.\n\n` +
-      `Analízalo como documento y ayuda activamente, no solo con un resumen.\n\n` +
-      `1. Di qué tipo de documento parece.\n` +
-      `2. Resume solo lo más importante.\n` +
-      `3. Si es documento delicado, di qué revisarías y qué harías ahora.\n` +
-      `4. Si es material de estudio, ofrece ayuda para estudiar, test, preguntas o explicación.\n` +
-      `5. No menciones que te han pasado texto interno ni pegues el contenido entero.\n\n` +
-      `CONTENIDO EXTRAÍDO DEL PDF:\n\n${json.text}`;
+const hiddenPdfContext =
+  `PDF adjunto por el usuario: "${json.filename}"` +
+  `${json.pageCount ? ` (${json.pageCount} páginas)` : ""}.\n\n` +
+  `INSTRUCCIONES PARA VONU:\n` +
+  `- El usuario ha adjuntado este PDF como contexto de su mensaje.\n` +
+  `- No pegues ni transcribas el contenido completo del PDF.\n` +
+  `- No respondas como una plantilla fija.\n` +
+  `- Adapta la respuesta a la pregunta concreta del usuario.\n` +
+  `- Si el usuario pregunta si el documento está correcto, revisa lo visible y responde de forma práctica: qué parece correcto, qué habría que comprobar y qué harías ahora.\n` +
+  `- Si detectas que es una factura, contrato, declaración, recibo, justificante o documento fiscal/legal, sé prudente: explica el riesgo o punto importante en lenguaje común y recomienda verificarlo con asesor/profesional solo cuando tenga sentido.\n` +
+  `- No añadas apartados que no aplican. Por ejemplo, si es una factura, no hables de material de estudio.\n` +
+  `- La respuesta debe sonar natural, concreta, cercana y útil, como si estuvieras ayudando a revisar el documento de verdad.\n\n` +
+  `CONTENIDO EXTRAÍDO DEL PDF:\n\n${json.text}`;
 
     setPdfPreview({
       filename: json.filename || file.name || "documento.pdf",
