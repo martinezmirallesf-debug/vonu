@@ -163,14 +163,14 @@ const estimatedOneLineLimit =
   typeof window === "undefined"
     ? 54
     : window.innerWidth < 380
-    ? 28
+    ? 24
     : window.innerWidth < 480
-    ? 34
+    ? 30
     : window.innerWidth < 768
-    ? 42
+    ? 38
     : window.innerWidth < 1100
-    ? 62
-    : 76;
+    ? 58
+    : 72;
 
 const shouldExpand =
   hasAttachment ||
@@ -184,13 +184,23 @@ useLayoutEffect(() => {
   const el = textareaRef.current;
   if (!el) return;
 
-  const MIN_HEIGHT = shouldExpand ? 42 : 34;
+  const COMPACT_HEIGHT = 28;
+  const EXPANDED_MIN_HEIGHT = 42;
   const MAX_HEIGHT = 116;
 
+  // En modo barrita NO crece nada.
+  // Así evitamos el paso intermedio raro y la sacudida visual.
+  if (!shouldExpand) {
+    el.style.height = `${COMPACT_HEIGHT}px`;
+    el.style.overflowY = "hidden";
+    return;
+  }
+
+  // En modo expandido sí crece hacia arriba.
   el.style.height = "auto";
 
   const nextHeight = Math.min(
-    Math.max(el.scrollHeight, MIN_HEIGHT),
+    Math.max(el.scrollHeight, EXPANDED_MIN_HEIGHT),
     MAX_HEIGHT
   );
 
@@ -249,7 +259,7 @@ useLayoutEffect(() => {
                 "transition-[box-shadow,border-color,background-color,border-radius,padding] duration-200",
 shouldExpand
   ? "rounded-[28px] px-3 pt-3 pb-2 md:rounded-[28px]"
-  : "rounded-full px-2 py-1.5 md:px-2.5 md:py-1.5",
+  : "rounded-full px-2 py-1 md:px-2.5 md:py-1",
               ].join(" ")}
               style={{
                 borderColor: shellBorder,
@@ -298,7 +308,7 @@ shouldExpand
                 </div>
               )}
 
-              <div className={shouldExpand ? "flex flex-col" : "relative min-h-[40px]"}>
+              <div className={shouldExpand ? "flex flex-col" : "relative min-h-[36px]"}>
                 <textarea
                   ref={textareaRef}
                   value={input}
@@ -310,7 +320,7 @@ shouldExpand
                   rows={1}
                   className={[
                     "block w-full resize-none bg-transparent outline-none",
-                    "text-zinc-900 placeholder:text-zinc-500",
+                    "text-zinc-900 placeholder:text-zinc-400",
                     "overflow-y-auto touch-pan-y overscroll-contain",
                     "[&::-webkit-scrollbar]:w-1.5",
                     "[&::-webkit-scrollbar-track]:bg-transparent",
@@ -318,7 +328,7 @@ shouldExpand
                     "[&::-webkit-scrollbar-thumb]:bg-zinc-400/45",
 shouldExpand
   ? "text-[18px] md:text-[17px] leading-7 px-0 py-1.5"
-  : "text-[17px] md:text-[16px] leading-[34px] py-0 pl-[74px] pr-[48px]",
+  : "text-[17px] md:text-[16px] leading-[28px] py-0 pl-[74px] pr-[48px]",
                   ].join(" ")}
                   style={{
                     boxSizing: "border-box",
@@ -374,7 +384,7 @@ shouldExpand
                     onClick={mainButtonIsSend ? sendMessage : toggleConversation}
                     disabled={mainButtonIsSend ? !canSend : !canUseVoice}
                     className={[
-                      "pointer-events-auto relative h-9 w-9 shrink-0 rounded-full flex items-center justify-center",
+                      "pointer-events-auto relative h-8 w-8 shrink-0 rounded-full flex items-center justify-center",
                       "transition-all duration-300",
                       mainButtonIsSend
                         ? "bg-[#1a73e8] text-white"
@@ -405,7 +415,7 @@ shouldExpand
 
                     <span className="relative z-10 flex h-full w-full items-center justify-center">
                       {mainButtonIsSend ? (
-                        <ArrowUpIcon className="h-[19px] w-[19px]" />
+                        <ArrowUpIcon className="h-[18px] w-[18px]" />
                       ) : (
                         <VoiceBarsIcon animated={voiceMode} />
                       )}
