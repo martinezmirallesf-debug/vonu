@@ -6316,10 +6316,9 @@ return (
                 <div
                   className={[
                     "relative min-w-0 max-w-[88%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
-                    "md:shadow-sm bg-[#e9edf1] text-zinc-900 rounded-l-2xl rounded-br-2xl rounded-tr-none mr-1 md:mr-2",
+                    "md:shadow-sm bg-[#e9edf1] text-zinc-900 rounded-[22px] mr-1 md:mr-2",
                   ].join(" ")}
                 >
-                  <BubbleTail side="right" color="#e9edf1" />
 
                   <div className="relative z-10">
                     {m.image && (

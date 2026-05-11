@@ -226,9 +226,9 @@ export default function ChatInputBar({
       ref={inputBarRef}
       className="fixed left-0 right-0 z-[70] bg-transparent"
       style={{
-        bottom: "calc(max(var(--vvb, 0px), 0px) + 2px)",
-        paddingBottom: "env(safe-area-inset-bottom, 0px)",
-      }}
+  bottom: "calc(max(var(--vvb, 0px), 0px) + 10px)",
+  paddingBottom: "env(safe-area-inset-bottom, 0px)",
+}}
     >
       <div className="mx-auto max-w-3xl px-3 md:px-6 pt-0 md:pt-2 pb-0 md:pb-1">
         <div className="relative w-full">
@@ -413,7 +413,7 @@ export default function ChatInputBar({
               </div>
             </div>
 
-            <div className="hidden md:block relative z-10 mt-1.5 px-3 pb-2 md:mx-0 md:px-3">
+            <div className="hidden md:block relative z-10 mt-1 px-3 pb-1 md:mx-0 md:px-3">
               <div className="text-center text-[11.5px] text-zinc-500">
                 Orientación preventiva · No sustituye profesionales.
               </div>
