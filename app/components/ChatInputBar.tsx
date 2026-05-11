@@ -211,11 +211,11 @@ export default function ChatInputBar({
     realtimeStatus === "connecting" ||
     voiceMode;
 
-  const shellShadow = voiceMode
-  ? "0 -5px 16px rgba(26,115,232,0.18), 0 2px 8px rgba(0,0,0,0.075)"
+const shellShadow = voiceMode
+  ? "0 0 0 1px rgba(26,115,232,0.10), 0 0 12px rgba(26,115,232,0.22), 0 4px 12px rgba(26,115,232,0.16), 0 2px 6px rgba(0,0,0,0.08)"
   : isTyping || micMsg
-  ? "0 -5px 16px rgba(26,115,232,0.14), 0 2px 8px rgba(0,0,0,0.075)"
-  : "0 -4px 12px rgba(0,0,0,0.105), 0 1px 5px rgba(0,0,0,0.075)";
+  ? "0 0 0 1px rgba(26,115,232,0.08), 0 0 10px rgba(26,115,232,0.16), 0 4px 10px rgba(26,115,232,0.10), 0 2px 6px rgba(0,0,0,0.075)"
+  : "0 0 0 1px rgba(0,0,0,0.025), 0 3px 10px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06)";
 
   const shellBorder = hasActiveStatus
     ? "rgba(26,115,232,0.34)"
