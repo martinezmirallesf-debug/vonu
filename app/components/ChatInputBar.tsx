@@ -263,8 +263,8 @@ const shellShadow = voiceMode
     ? "animate-[vonuInputGlowBlueSoft_2400ms_ease-in-out_infinite]"
     : "",
   shouldExpand
-    ? "rounded-[28px] px-3 pt-3 pb-2"
-    : "rounded-full px-2 py-1",
+  ? "rounded-[28px] px-3 pt-3 pb-2"
+  : "rounded-full px-2 py-2",
 ].join(" ")}
               style={{
                 borderColor: shellBorder,
@@ -333,8 +333,8 @@ const shellShadow = voiceMode
       "[&::-webkit-scrollbar-thumb]:rounded-full",
       "[&::-webkit-scrollbar-thumb]:bg-zinc-400/45",
       shouldExpand
-        ? "text-[18px] md:text-[17px] leading-7 px-1 pt-1.5 pb-11"
-        : "text-[17px] md:text-[16px] leading-[34px] py-0 pl-[74px] pr-[48px] overflow-hidden",
+  ? "text-[18px] md:text-[17px] leading-7 px-1 pt-1.5 pb-11"
+  : "text-[17px] md:text-[16px] leading-[36px] py-0 pl-[74px] pr-[48px] overflow-hidden",
     ].join(" ")}
     style={{
       boxSizing: "border-box",
