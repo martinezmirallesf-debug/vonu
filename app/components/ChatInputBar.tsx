@@ -215,7 +215,7 @@ const shellShadow = voiceMode
   ? "0 0 0 1px rgba(26,115,232,0.14), 0 0 14px rgba(26,115,232,0.24), 0 4px 12px rgba(26,115,232,0.16), 0 2px 6px rgba(0,0,0,0.08)"
   : isTyping || micMsg
   ? "0 0 0 1px rgba(26,115,232,0.12), 0 0 12px rgba(26,115,232,0.20), 0 4px 11px rgba(26,115,232,0.13), 0 2px 6px rgba(0,0,0,0.075)"
-  : "0 0 0 1px rgba(0,0,0,0.035), 0 0 8px rgba(0,0,0,0.075), 0 3px 9px rgba(0,0,0,0.095), 0 1px 4px rgba(0,0,0,0.055)";
+  : "0 0 0 1px rgba(0,0,0,0.045), 0 0 10px rgba(0,0,0,0.105), 0 3px 8px rgba(0,0,0,0.085)";
 
   const shellBorder = hasActiveStatus
     ? "rgba(26,115,232,0.34)"
