@@ -212,9 +212,9 @@ export default function ChatInputBar({
     voiceMode;
 
 const shellShadow = voiceMode
-  ? "0 0 0 1px rgba(26,115,232,0.10), 0 0 12px rgba(26,115,232,0.22), 0 4px 12px rgba(26,115,232,0.16), 0 2px 6px rgba(0,0,0,0.08)"
+  ? "0 0 0 1px rgba(26,115,232,0.14), 0 0 14px rgba(26,115,232,0.24), 0 4px 12px rgba(26,115,232,0.16), 0 2px 6px rgba(0,0,0,0.08)"
   : isTyping || micMsg
-  ? "0 0 0 1px rgba(26,115,232,0.08), 0 0 10px rgba(26,115,232,0.16), 0 4px 10px rgba(26,115,232,0.10), 0 2px 6px rgba(0,0,0,0.075)"
+  ? "0 0 0 1px rgba(26,115,232,0.12), 0 0 12px rgba(26,115,232,0.20), 0 4px 11px rgba(26,115,232,0.13), 0 2px 6px rgba(0,0,0,0.075)"
   : "0 0 0 1px rgba(0,0,0,0.025), 0 3px 10px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06)";
 
   const shellBorder = hasActiveStatus
@@ -255,12 +255,17 @@ const shellShadow = voiceMode
           <div className="relative z-20 w-full bg-transparent border-none shadow-none">
             <div
               className={[
-                "relative w-full overflow-hidden overscroll-none bg-white border",
-                "transition-[box-shadow,border-color,background-color,border-radius,padding] duration-200",
-                shouldExpand
-  ? "rounded-[28px] px-3 pt-3 pb-2"
-  : "rounded-full px-2 py-1.5",
-              ].join(" ")}
+  "relative w-full overflow-hidden overscroll-none bg-white border",
+  "transition-[box-shadow,border-color,background-color,border-radius,padding] duration-200",
+  voiceMode
+    ? "animate-[vonuInputGlowBlue_2600ms_ease-in-out_infinite]"
+    : isTyping || micMsg
+    ? "animate-[vonuInputGlowBlueSoft_2400ms_ease-in-out_infinite]"
+    : "",
+  shouldExpand
+    ? "rounded-[28px] px-3 pt-3 pb-2"
+    : "rounded-full px-2 py-1",
+].join(" ")}
               style={{
                 borderColor: shellBorder,
                 boxShadow: shellShadow,
@@ -432,18 +437,56 @@ const shellShadow = voiceMode
       </div>
 
       <style jsx>{`
-        @keyframes voiceBar {
-          0%,
-          100% {
-            transform: scaleY(0.55);
-            opacity: 0.72;
-          }
-          50% {
-            transform: scaleY(1);
-            opacity: 1;
-          }
-        }
-      `}</style>
+  @keyframes voiceBar {
+    0%,
+    100% {
+      transform: scaleY(0.55);
+      opacity: 0.72;
+    }
+    50% {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes vonuInputGlowBlueSoft {
+    0%,
+    100% {
+      box-shadow:
+        0 0 0 1px rgba(26, 115, 232, 0.10),
+        0 0 10px rgba(26, 115, 232, 0.16),
+        0 4px 10px rgba(26, 115, 232, 0.10),
+        0 2px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    50% {
+      box-shadow:
+        0 0 0 1px rgba(26, 115, 232, 0.16),
+        0 0 15px rgba(26, 115, 232, 0.25),
+        0 5px 14px rgba(26, 115, 232, 0.16),
+        0 2px 7px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  @keyframes vonuInputGlowBlue {
+    0%,
+    100% {
+      box-shadow:
+        0 0 0 1px rgba(26, 115, 232, 0.12),
+        0 0 12px rgba(26, 115, 232, 0.20),
+        0 4px 12px rgba(26, 115, 232, 0.14),
+        0 2px 7px rgba(0, 0, 0, 0.08);
+    }
+
+    50% {
+      box-shadow:
+        0 0 0 1px rgba(26, 115, 232, 0.20),
+        0 0 18px rgba(26, 115, 232, 0.30),
+        0 6px 16px rgba(26, 115, 232, 0.20),
+        0 2px 8px rgba(0, 0, 0, 0.085);
+    }
+  }
+`}</style>
     </div>
   );
 }
