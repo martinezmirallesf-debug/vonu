@@ -13,16 +13,36 @@ export async function POST() {
       );
     }
 
+    const realtimeModel =
+      process.env.OPENAI_REALTIME_MODEL || "gpt-realtime-mini";
+
+    const realtimeVoice =
+      process.env.OPENAI_REALTIME_VOICE || "marin";
+
+    const realtimeTranscriptionModel =
+      process.env.OPENAI_REALTIME_TRANSCRIPTION_MODEL || "gpt-4o-mini-transcribe";
+
+    const realtimeReasoningEffort =
+      process.env.OPENAI_REALTIME_REASONING_EFFORT || "low";
+
     const payload = {
       session: {
         type: "realtime",
-        model: process.env.OPENAI_REALTIME_MODEL || "gpt-realtime-mini",
+        model: realtimeModel,
+
+        // gpt-realtime-2 soporta reasoning.effort.
+        // En otros modelos normalmente se ignora o puede no aplicar.
+        reasoning: {
+          effort: realtimeReasoningEffort,
+        },
+
         instructions:
-  "Eres Vonu. Habla con una voz muy cálida, simpática, dulce, cercana y encantadora. Usa un español natural, agradable y simpático. Tu energía debe sentirse viva, luminosa y muy humana. Puedes empezar de forma espontánea y cálida, por ejemplo con un 'hola, hola' simpático cuando encaje natural. Evita sonar seca, fría, cortante o demasiado seria. Sonríe en el tono, transmite cercanía y buen rollo, pero sin perder claridad. Responde de forma útil, clara y conversacional. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico y cercano.",
+          "Eres Vonu. Habla con una voz muy cálida, simpática, dulce, cercana y encantadora. Usa un español natural, agradable y simpático. Tu energía debe sentirse viva, luminosa y muy humana. Puedes empezar de forma espontánea y cálida, por ejemplo con un 'hola, hola' simpático cuando encaje natural. Evita sonar seca, fría, cortante o demasiado seria. Sonríe en el tono, transmite cercanía y buen rollo, pero sin perder claridad. Responde de forma útil, clara y conversacional. Si el usuario pide ayuda para estudiar o explicar algo, enséñalo paso a paso con tono didáctico y cercano.",
+
         audio: {
           input: {
             transcription: {
-              model: "gpt-4o-mini-transcribe",
+              model: realtimeTranscriptionModel,
               language: "es",
             },
             turn_detection: {
@@ -34,13 +54,13 @@ export async function POST() {
             },
           },
           output: {
-            voice: "marin",
+            voice: realtimeVoice,
           },
         },
       },
     };
 
-console.log("REALTIME PAYLOAD", JSON.stringify(payload, null, 2));
+    console.log("REALTIME PAYLOAD", JSON.stringify(payload, null, 2));
 
     const response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
       method: "POST",
