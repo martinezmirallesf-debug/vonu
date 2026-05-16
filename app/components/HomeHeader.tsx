@@ -70,22 +70,13 @@ export default function HomeHeader() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2">
-            <Link
-              href="/chat"
-              className="rounded-full px-4 py-2 text-[14px] font-medium text-zinc-700 hover:bg-zinc-50"
-            >
-              Entrar
-            </Link>
-
-            <Link
-              href="/chat"
-              className="inline-flex items-center gap-2 rounded-full bg-zinc-950 px-4 py-2 text-[14px] font-semibold text-white shadow-[0_8px_20px_rgba(0,0,0,0.16)] transition hover:scale-[1.02] active:scale-[0.99]"
-            >
-              Probar Vonu
-              <ArrowIcon />
-            </Link>
-          </div>
+          <Link
+            href="/chat"
+            className="inline-flex items-center gap-2 rounded-full bg-zinc-950 px-4 py-2 text-[14px] font-semibold text-white shadow-[0_8px_20px_rgba(0,0,0,0.16)] transition hover:scale-[1.02] active:scale-[0.99]"
+          >
+            Probar Vonu
+            <ArrowIcon />
+          </Link>
         </div>
 
         {/* Mobile */}
@@ -123,7 +114,7 @@ export default function HomeHeader() {
       <div
         className={[
           "md:hidden overflow-hidden bg-white transition-[max-height,opacity] duration-300",
-          mobileMenuOpen ? "max-h-[420px] opacity-100" : "max-h-0 opacity-0",
+          mobileMenuOpen ? "max-h-[380px] opacity-100" : "max-h-0 opacity-0",
         ].join(" ")}
       >
         <div className="mx-auto max-w-[1500px] px-4 pb-5">
@@ -133,14 +124,14 @@ export default function HomeHeader() {
                 key={item.href}
                 href={item.href}
                 onClick={closeMenu}
-                className="flex items-center justify-between rounded-[20px] px-4 py-3 text-[16px] font-medium text-zinc-850 transition hover:bg-white"
+                className="flex items-center justify-between rounded-[20px] px-4 py-3 text-[16px] font-medium text-zinc-800 transition hover:bg-white"
               >
                 {item.label}
                 <span className="text-zinc-400">→</span>
               </a>
             ))}
 
-            <div className="mt-2 grid gap-2 border-t border-zinc-200 pt-2">
+            <div className="mt-2 border-t border-zinc-200 pt-2">
               <Link
                 href="/chat"
                 onClick={closeMenu}
@@ -148,15 +139,6 @@ export default function HomeHeader() {
               >
                 Probar Vonu
                 <ArrowIcon />
-              </Link>
-
-              <Link
-                href="/chat"
-                onClick={closeMenu}
-                className="flex items-center justify-between rounded-[20px] bg-white px-4 py-3 text-[16px] font-medium text-zinc-800"
-              >
-                Entrar
-                <span className="text-zinc-400">→</span>
               </Link>
             </div>
           </nav>

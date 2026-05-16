@@ -2,10 +2,35 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import HomeHeader from "./components/HomeHeader";
 
+const siteUrl = "https://app.vonuai.com";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "VonuAI — Antes de firmar, pagar, contestar o decidir… consúltalo con Vonu",
   description:
     "VonuAI te ayuda a revisar mensajes, webs, documentos, facturas, contratos y situaciones delicadas antes de tomar una decisión importante.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "VonuAI — Antes de firmar, pagar, contestar o decidir…",
+    description:
+      "Revisa mensajes, webs, documentos, facturas, contratos y situaciones delicadas antes de cometer un error importante.",
+    url: siteUrl,
+    siteName: "VonuAI",
+    locale: "es_ES",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "VonuAI — Antes de firmar, pagar, contestar o decidir…",
+    description:
+      "Tu asistente para revisar decisiones importantes antes de actuar.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 const quickPrompts = [
@@ -105,6 +130,50 @@ const faqs = [
   },
 ];
 
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${siteUrl}/#organization`,
+      name: "VonuAI",
+      url: siteUrl,
+      email: "hello@vonuai.com",
+      logo: `${siteUrl}/logo/vonu-cube-black.png`,
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${siteUrl}/#website`,
+      url: siteUrl,
+      name: "VonuAI",
+      publisher: {
+        "@id": `${siteUrl}/#organization`,
+      },
+      inLanguage: "es-ES",
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${siteUrl}/#softwareapplication`,
+      name: "VonuAI",
+      applicationCategory: "AIApplication",
+      operatingSystem: "Web",
+      url: siteUrl,
+      description:
+        "VonuAI ayuda a revisar mensajes, webs, documentos, facturas, contratos y situaciones delicadas antes de tomar una decisión importante.",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "EUR",
+      },
+      publisher: {
+        "@id": `${siteUrl}/#organization`,
+      },
+    },
+  ],
+};
+
+
 function LogoMark() {
   return (
     <div className="flex items-center gap-1">
@@ -163,8 +232,13 @@ function VoiceBarsIcon() {
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-[#f8f9fa] text-zinc-950">
-      <HomeHeader />
+  <main className="min-h-screen bg-[#f8f9fa] text-zinc-950">
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+
+    <HomeHeader />
 
       <section className="relative overflow-hidden bg-white">
   <div
