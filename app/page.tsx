@@ -253,12 +253,8 @@ export default function HomePage() {
         <div className="absolute right-[-160px] top-[340px] h-[340px] w-[340px] rounded-full bg-emerald-400/12 blur-3xl" />
 <div className="absolute left-[-160px] top-[500px] h-[340px] w-[340px] rounded-full bg-amber-300/18 blur-3xl" />
 
-        <div className="relative mx-auto max-w-[1500px] px-4 pb-14 pt-14 sm:px-6 sm:pb-20 sm:pt-18 lg:px-8">
+        <div className="relative mx-auto max-w-[1500px] px-4 pb-10 pt-8 sm:px-6 sm:pb-16 sm:pt-12 lg:px-8">
           <div className="mx-auto max-w-[1180px] text-center">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 px-3 py-1.5 text-[13px] font-medium text-zinc-600 shadow-sm">
-              <span className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_12px_rgba(26,115,232,0.7)]" />
-              Asistente para decisiones seguras
-            </div>
 
             <h1 className="mx-auto max-w-[1120px] text-[52px] font-semibold leading-[1.0] tracking-[-0.056em] text-zinc-950 sm:text-[78px] lg:text-[112px]">
   Antes de actuar, pregúntale a Vonu.
@@ -269,7 +265,7 @@ export default function HomePage() {
               antes de firmar, pagar, contestar o decidir.
             </p>
 
-            <div className="mt-8 flex flex-row justify-center gap-2 sm:gap-3">
+            <div className="mt-6 flex flex-row justify-center gap-2 sm:mt-8 sm:gap-3">
   <Link
     href="/chat"
     className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] transition hover:scale-[1.02] active:scale-[0.99] sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-[15px]"
@@ -287,7 +283,7 @@ export default function HomePage() {
   </a>
 </div>
 
-            <div className="mx-auto mt-7 flex max-w-3xl flex-wrap justify-center gap-2">
+            <div className="mx-auto mt-5 flex max-w-3xl flex-wrap justify-center gap-2 sm:mt-7">
               {quickPrompts.map((prompt) => (
                 <Link
                   key={prompt}
@@ -300,7 +296,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="mx-auto mt-14 max-w-5xl">
+          <div className="mx-auto mt-10 max-w-5xl sm:mt-14">
             <div className="rounded-[38px] border border-zinc-200 bg-white p-3 shadow-[0_0_0_1px_rgba(0,0,0,0.03),0_28px_80px_rgba(0,0,0,0.12)]">
               <div className="rounded-[30px] bg-[#f8f9fa] p-4 sm:p-6">
                 <div className="mb-5 flex items-center justify-between">
