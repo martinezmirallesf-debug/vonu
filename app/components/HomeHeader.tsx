@@ -46,6 +46,12 @@ const homeLinks = [
   { label: "Ayuda", href: "#faq" },
 ];
 
+const secondaryLinks = [
+  { label: "Privacidad", href: "/legal/privacidad" },
+  { label: "Términos", href: "/legal/terminos" },
+  { label: "Uso responsable", href: "/legal/uso-responsable" },
+];
+
 export default function HomeHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -79,7 +85,7 @@ export default function HomeHeader() {
           </Link>
         </div>
 
-        {/* Mobile */}
+        {/* Mobile top bar */}
         <div className="flex h-16 items-center justify-between md:hidden">
           <button
             type="button"
@@ -88,17 +94,21 @@ export default function HomeHeader() {
             aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={mobileMenuOpen}
           >
-            <span className="relative block h-4 w-5">
+            <span className="relative block h-5 w-6">
               <span
                 className={[
-                  "absolute left-0 top-[4px] h-[2px] w-5 rounded-full bg-current transition-transform duration-200",
-                  mobileMenuOpen ? "translate-y-[4px] rotate-45" : "",
+                  "absolute left-0 top-[6px] h-[2.4px] rounded-full bg-current transition-all duration-200",
+                  mobileMenuOpen
+                    ? "w-6 translate-y-[4px] rotate-45"
+                    : "w-6",
                 ].join(" ")}
               />
               <span
                 className={[
-                  "absolute left-0 top-[12px] h-[2px] w-5 rounded-full bg-current transition-transform duration-200",
-                  mobileMenuOpen ? "-translate-y-[4px] -rotate-45" : "",
+                  "absolute left-0 top-[14px] h-[2.4px] rounded-full bg-current transition-all duration-200",
+                  mobileMenuOpen
+                    ? "w-6 -translate-y-[4px] -rotate-45"
+                    : "w-[17px]",
                 ].join(" ")}
               />
             </span>
@@ -110,38 +120,60 @@ export default function HomeHeader() {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu estilo OpenAI */}
       <div
         className={[
-          "md:hidden overflow-hidden bg-white transition-[max-height,opacity] duration-300",
-          mobileMenuOpen ? "max-h-[380px] opacity-100" : "max-h-0 opacity-0",
+          "fixed inset-x-0 top-16 z-40 md:hidden",
+          "bg-white transition-all duration-300",
+          mobileMenuOpen
+            ? "pointer-events-auto h-[calc(100dvh-64px)] opacity-100"
+            : "pointer-events-none h-0 opacity-0",
         ].join(" ")}
       >
-        <div className="mx-auto max-w-[1500px] px-4 pb-5">
-          <nav className="rounded-[28px] border border-zinc-200 bg-[#f8f9fa] p-2 shadow-[0_16px_40px_rgba(0,0,0,0.08)]">
+        <div
+          className={[
+            "flex h-full flex-col justify-between overflow-y-auto px-5 pb-7 pt-3",
+            "transition-transform duration-300",
+            mobileMenuOpen ? "translate-y-0" : "-translate-y-3",
+          ].join(" ")}
+        >
+          <nav className="grid gap-1">
             {homeLinks.map((item) => (
               <a
                 key={item.href}
                 href={item.href}
                 onClick={closeMenu}
-                className="flex items-center justify-between rounded-[20px] px-4 py-3 text-[16px] font-medium text-zinc-800 transition hover:bg-white"
+                className="flex items-center justify-between rounded-2xl px-1 py-4 text-[28px] font-semibold leading-none tracking-[-0.055em] text-zinc-950"
               >
                 {item.label}
-                <span className="text-zinc-400">→</span>
+                <span className="text-[22px] font-normal text-zinc-400">→</span>
               </a>
             ))}
-
-            <div className="mt-2 border-t border-zinc-200 pt-2">
-              <Link
-                href="/chat"
-                onClick={closeMenu}
-                className="flex items-center justify-between rounded-[20px] bg-zinc-950 px-4 py-3 text-[16px] font-semibold text-white"
-              >
-                Probar Vonu
-                <ArrowIcon />
-              </Link>
-            </div>
           </nav>
+
+          <div className="mt-8">
+            <div className="mb-5 grid gap-3 border-t border-zinc-200 pt-5">
+              {secondaryLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMenu}
+                  className="text-[15px] font-medium text-zinc-500"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+
+            <Link
+              href="/chat"
+              onClick={closeMenu}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-zinc-950 px-5 py-3.5 text-[15px] font-semibold text-white shadow-[0_10px_28px_rgba(0,0,0,0.16)] active:scale-[0.99]"
+            >
+              Probar Vonu
+              <ArrowIcon />
+            </Link>
+          </div>
         </div>
       </div>
     </header>
