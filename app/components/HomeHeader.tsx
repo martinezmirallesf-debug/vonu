@@ -32,16 +32,17 @@ function ArrowIcon() {
 }
 
 const homeLinks = [
-  { label: "Producto", href: "#producto" },
-  { label: "Casos de uso", href: "#casos" },
-  { label: "Precios", href: "#precios" },
-  { label: "Ayuda", href: "#faq" },
+  { label: "Producto", href: "/#producto" },
+  { label: "Casos de uso", href: "/#casos" },
+  { label: "Precios", href: "/precios" },
+  { label: "Ayuda", href: "/ayuda" },
 ];
 
 const secondaryLinks = [
   { label: "Privacidad", href: "/legal/privacidad" },
   { label: "Términos", href: "/legal/terminos" },
   { label: "Uso responsable", href: "/legal/uso-responsable" },
+  { label: "Contacto", href: "/contacto" },
 ];
 
 export default function HomeHeader() {
@@ -131,15 +132,15 @@ export default function HomeHeader() {
         >
           <nav className="grid gap-1">
             {homeLinks.map((item) => (
-              <a
-  key={item.href}
-  href={item.href}
-  onClick={closeMenu}
-  className="block rounded-2xl px-1 py-4 text-[28px] font-semibold leading-none tracking-[-0.055em] text-zinc-950"
->
-  {item.label}
-</a>
-            ))}
+  <Link
+    key={item.href}
+    href={item.href}
+    onClick={closeMenu}
+    className="block rounded-2xl px-1 py-4 text-[28px] font-semibold leading-none tracking-[-0.055em] text-zinc-950"
+  >
+    {item.label}
+  </Link>
+))}
           </nav>
 
           <div className="mt-8">
