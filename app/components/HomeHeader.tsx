@@ -63,10 +63,10 @@ export default function HomeHeader() {
 
           <nav className="flex items-center gap-8 text-[14px] font-medium text-zinc-600">
             {homeLinks.map((item) => (
-              <a key={item.href} href={item.href} className="hover:text-zinc-950">
-                {item.label}
-              </a>
-            ))}
+  <Link key={item.href} href={item.href} className="hover:text-zinc-950">
+    {item.label}
+  </Link>
+))}
           </nav>
 
           <Link
