@@ -269,29 +269,30 @@ export default function HomePage() {
               antes de firmar, pagar, contestar o decidir.
             </p>
 
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Link
-                href="/chat"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1a73e8] px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_16px_34px_rgba(26,115,232,0.26)] transition hover:scale-[1.02] active:scale-[0.99]"
-              >
-                Analizar ahora
-                <ArrowIcon />
-              </Link>
+            <div className="mt-8 flex flex-row justify-center gap-2 sm:gap-3">
+  <Link
+    href="/chat"
+    className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] transition hover:scale-[1.02] active:scale-[0.99] sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-[15px]"
+  >
+    <span className="truncate">Analizar ahora</span>
+    <ArrowIcon />
+  </Link>
 
-              <a
-                href="#casos"
-                className="inline-flex items-center justify-center rounded-full border border-zinc-200 bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50"
-              >
-                Ver casos de uso
-              </a>
-            </div>
+  <a
+    href="#casos"
+    className="inline-flex min-w-0 flex-1 items-center justify-center rounded-full border border-zinc-200 bg-white px-4 py-3 text-[14px] font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50 sm:flex-none sm:px-7 sm:py-3.5 sm:text-[15px]"
+  >
+    <span className="truncate">Ver casos</span>
+    <span className="hidden sm:inline"> de uso</span>
+  </a>
+</div>
 
             <div className="mx-auto mt-7 flex max-w-3xl flex-wrap justify-center gap-2">
               {quickPrompts.map((prompt) => (
                 <Link
                   key={prompt}
                   href={`/chat?example=${encodeURIComponent(prompt)}`}
-                  className="rounded-full border border-zinc-200 bg-white/80 px-3.5 py-2 text-[13.5px] font-medium text-zinc-600 shadow-sm transition hover:border-blue-200 hover:text-blue-700"
+                  className="rounded-full border border-zinc-200 bg-white/80 px-3 py-1.5 text-[13px] font-medium text-zinc-600 shadow-sm transition hover:border-blue-200 hover:text-blue-700 sm:px-3.5 sm:py-2 sm:text-[13.5px]"
                 >
                   {prompt}
                 </Link>
@@ -442,13 +443,15 @@ export default function HomePage() {
               a revisar una situación, entender el riesgo y decidir el siguiente paso.
             </p>
 
-            <Link
-              href="/chat"
-              className="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-[15px] font-semibold text-zinc-950 transition hover:scale-[1.02] active:scale-[0.99]"
-            >
-              Probar Vonu
-              <ArrowIcon />
-            </Link>
+            <div className="mt-8 flex justify-center sm:justify-start">
+  <Link
+    href="/chat"
+    className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-[15px] font-semibold text-zinc-950 transition hover:scale-[1.02] active:scale-[0.99]"
+  >
+    Probar Vonu
+    <ArrowIcon />
+  </Link>
+</div>
           </div>
 
           <div className="grid content-center gap-3">
