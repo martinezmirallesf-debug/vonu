@@ -205,16 +205,16 @@ export default function HomePage() {
 
       <section className="relative overflow-hidden bg-white">
   <div
-    className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[260px]"
-    style={{
-      background:
-        "linear-gradient(to bottom, #ffffff 0%, #ffffff 28%, rgba(248,249,250,0.92) 58%, rgba(248,249,250,0) 100%)",
-    }}
-  />
+  className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[320px]"
+  style={{
+    background:
+      "linear-gradient(to bottom, #ffffff 0%, #ffffff 22%, rgba(248,249,250,0.98) 45%, rgba(239,246,255,0.82) 70%, rgba(248,249,250,0) 100%)",
+  }}
+/>
 
-  <div className="absolute left-1/2 top-[90px] h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-blue-500/10 blur-3xl" />
-        <div className="absolute right-[-160px] top-[360px] h-[320px] w-[320px] rounded-full bg-emerald-400/10 blur-3xl" />
-        <div className="absolute left-[-160px] top-[520px] h-[320px] w-[320px] rounded-full bg-amber-300/15 blur-3xl" />
+<div className="absolute left-1/2 top-[74px] h-[620px] w-[620px] -translate-x-1/2 rounded-full bg-blue-500/16 blur-3xl" />
+        <div className="absolute right-[-160px] top-[340px] h-[340px] w-[340px] rounded-full bg-emerald-400/12 blur-3xl" />
+<div className="absolute left-[-160px] top-[500px] h-[340px] w-[340px] rounded-full bg-amber-300/18 blur-3xl" />
 
         <div className="relative mx-auto max-w-[1500px] px-4 pb-14 pt-14 sm:px-6 sm:pb-20 sm:pt-18 lg:px-8">
           <div className="mx-auto max-w-[1180px] text-center">
