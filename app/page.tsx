@@ -107,8 +107,12 @@ const faqs = [
 function LogoMark() {
   return (
     <div className="flex items-center gap-2">
-      <div className="grid h-9 w-9 place-items-center rounded-2xl bg-zinc-950 text-white shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_10px_28px_rgba(26,115,232,0.18)]">
-        <span className="text-[17px] font-semibold tracking-[-0.05em]">V</span>
+      <div className="grid h-9 w-9 place-items-center rounded-2xl bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_10px_28px_rgba(26,115,232,0.16)]">
+        <img
+          src="/logo/vonu-cube-black.png"
+          alt="VonuAI"
+          className="h-6 w-6 object-contain"
+        />
       </div>
 
       <span className="text-[20px] font-semibold tracking-[-0.045em] text-zinc-950">
@@ -151,9 +155,9 @@ function VoiceBarsIcon() {
   return (
     <span className="flex h-5 w-5 items-center justify-center gap-[2px]" aria-hidden="true">
       <span className="h-[8px] w-[2px] rounded-full bg-current" />
-      <span className="h-[14px] w-[2px] rounded-full bg-current" />
-      <span className="h-[18px] w-[2px] rounded-full bg-current" />
-      <span className="h-[12px] w-[2px] rounded-full bg-current" />
+<span className="h-[14px] w-[2px] rounded-full bg-current" />
+<span className="h-[8px] w-[2px] rounded-full bg-current" />
+<span className="h-[12px] w-[2px] rounded-full bg-current" />
     </span>
   );
 }
@@ -484,14 +488,14 @@ export default function HomePage() {
           <div className="mt-11 grid gap-4 lg:grid-cols-3">
             {plans.map((plan) => (
               <article
-                key={plan.name}
-                className={[
-                  "rounded-[34px] border p-6 shadow-sm",
-                  plan.featured
-                    ? "border-blue-200 bg-blue-50 shadow-[0_20px_52px_rgba(26,115,232,0.14)]"
-                    : "border-zinc-200 bg-white",
-                ].join(" ")}
-              >
+  key={plan.name}
+  className={[
+    "flex h-full flex-col rounded-[34px] border p-6 shadow-sm",
+    plan.featured
+      ? "border-blue-200 bg-blue-50 shadow-[0_20px_52px_rgba(26,115,232,0.14)]"
+      : "border-zinc-200 bg-white",
+  ].join(" ")}
+>
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-[28px] font-semibold tracking-[-0.05em] text-zinc-950">
@@ -516,7 +520,7 @@ export default function HomePage() {
                   <span className="pb-2 text-[14px] text-zinc-500">/ mes</span>
                 </div>
 
-                <div className="mt-7 space-y-3">
+                <div className="mt-7 flex-1 space-y-3">
                   {plan.features.map((feature) => (
                     <div key={feature} className="flex items-center gap-2 text-[15px] text-zinc-700">
                       <span className="grid h-5 w-5 place-items-center rounded-full bg-white text-blue-600 shadow-sm">
@@ -528,9 +532,9 @@ export default function HomePage() {
                 </div>
 
                 <Link
-                  href="/chat"
-                  className={[
-                    "mt-8 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-[15px] font-semibold transition",
+  href="/chat"
+  className={[
+    "mt-8 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-[15px] font-semibold transition",
                     plan.featured
                       ? "bg-[#1a73e8] text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] hover:scale-[1.01]"
                       : "bg-zinc-950 text-white shadow-sm hover:scale-[1.01]",
