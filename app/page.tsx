@@ -107,11 +107,11 @@ const faqs = [
 function LogoMark() {
   return (
     <div className="flex items-center gap-1">
-  <img
-    src="/logo/vonu-cube-black.png"
-    alt="VonuAI"
-    className="h-[26px] w-[26px] object-contain"
-  />
+      <img
+        src="/logo/vonu-cube-black.png"
+        alt="VonuAI"
+        className="h-[23px] w-[23px] object-contain"
+      />
 
       <span className="text-[20px] font-semibold tracking-[-0.045em] text-zinc-950">
         VonuAI
@@ -163,7 +163,7 @@ function VoiceBarsIcon() {
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#f8f9fa] text-zinc-950">
-      <header className="sticky top-0 z-50 border-b border-zinc-200/70 bg-[#f8f9fa]/82 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 bg-white">
         <div className="mx-auto flex h-16 max-w-[1500px] items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" aria-label="VonuAI inicio">
             <LogoMark />
