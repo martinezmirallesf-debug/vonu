@@ -85,43 +85,63 @@ const topups = [
   {
     name: "Recarga básica",
     price: "2,99€",
-    description: "Para seguir usando Vonu cuando necesitas un pequeño extra.",
-    details: "Mensajes extra + minutos de voz adicionales.",
+    description: "Para resolver unas cuantas dudas más sin cambiar de plan.",
+    cta: "Añadir recarga",
+    features: [
+      "Ideal para consultas puntuales",
+      "Más margen para mensajes importantes",
+      "Útil si solo necesitas un pequeño extra",
+    ],
   },
   {
     name: "Recarga media",
     price: "6,99€",
-    description: "Para varios análisis más durante el mes.",
-    details: "Más margen para documentos, dudas y voz.",
+    description: "Para seguir usando Vonu durante el mes con más tranquilidad.",
+    cta: "Añadir recarga",
+    features: [
+      "Más margen para documentos y mensajes",
+      "Pensada para varios análisis adicionales",
+      "Buena opción si estás revisando varios temas",
+    ],
+    highlighted: true,
   },
   {
     name: "Recarga grande",
     price: "14,99€",
-    description: "Para momentos donde necesitas usar Vonu bastante más.",
-    details: "Pensada para uso intensivo puntual.",
+    description: "Para momentos en los que necesitas apoyarte más en Vonu.",
+    cta: "Añadir recarga",
+    features: [
+      "Más margen para uso intensivo puntual",
+      "Útil en semanas con muchas decisiones",
+      "Más espacio para voz, archivos y análisis",
+    ],
   },
 ];
 
 const faqs = [
   {
     q: "¿Puedo usar Vonu gratis?",
-    a: "Sí. El plan Free permite probar Vonu con mensajes limitados. Es suficiente para entender cómo funciona antes de mejorar a un plan superior.",
+    a: "Sí. Puedes empezar gratis para probar cómo analiza una duda real, un mensaje sospechoso o una situación que quieras entender mejor antes de actuar.",
+  },
+  {
+    q: "¿Qué gano al mejorar a Plus o Max?",
+    a: "Los planes de pago están pensados para usar Vonu con más calma: más mensajes, acceso a voz y más margen para revisar documentos, imágenes o situaciones importantes durante el mes.",
   },
   {
     q: "¿Qué pasa si agoto mis mensajes?",
-    a: "Cuando agotes tus mensajes mensuales, podrás esperar a la renovación del ciclo o añadir una recarga si necesitas seguir usando Vonu antes.",
+    a: "Si necesitas seguir usando Vonu antes de que se renueve tu plan, podrás añadir una recarga. Así no tienes que cambiar de plan si solo necesitas un extra puntual.",
   },
   {
-    q: "¿La voz está incluida en todos los planes?",
-    a: "La voz está pensada para planes de pago, porque el modo conversación tiene un coste más alto. Los minutos disponibles dependen del plan contratado.",
+    q: "¿Cómo funciona la voz?",
+    a: "La voz te permite explicar una situación de forma más natural, como si estuvieras hablando con alguien que te ayuda a ordenar lo que pasa. Es especialmente útil cuando hay muchos detalles o necesitas estudiar paso a paso.",
   },
   {
     q: "¿Puedo cancelar cuando quiera?",
-    a: "Sí. La idea es que puedas gestionar o cancelar tu suscripción sin complicaciones desde la zona de usuario o el portal de pagos.",
+    a: "Sí. Podrás gestionar tu suscripción desde la zona de usuario o el portal de pagos. La idea es que tengas control claro sobre tu plan, sin complicaciones.",
   },
   {
     q: "¿Vonu sustituye a profesionales?",
-    a: "No. Vonu ofrece orientación preventiva y ayuda a detectar riesgos, pero no sustituye a abogados, médicos, psicólogos, asesores fiscales ni otros profesionales cualificados.",
+    a: "No. Vonu no sustituye a abogados, médicos, psicólogos, asesores fiscales ni otros profesionales. Lo que sí hace es ayudarte a identificar riesgos, ordenar la información, preparar mejores preguntas y acompañarte en los siguientes pasos.",
   },
 ];
 
@@ -288,29 +308,67 @@ export default function PricingPage() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-3">
-            {topups.map((topup) => (
-              <article
-                key={topup.name}
-                className="rounded-[34px] border border-zinc-200 bg-[#f8f9fa] p-6 shadow-sm"
-              >
-                <h3 className="text-[25px] font-semibold tracking-[-0.045em] text-zinc-950">
-                  {topup.name}
-                </h3>
+  {topups.map((topup) => (
+    <article
+      key={topup.name}
+      className={[
+        "flex h-full flex-col rounded-[34px] border p-6 shadow-sm",
+        topup.highlighted
+          ? "border-blue-200 bg-blue-50 shadow-[0_20px_52px_rgba(26,115,232,0.12)]"
+          : "border-zinc-200 bg-[#f8f9fa]",
+      ].join(" ")}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="text-[25px] font-semibold tracking-[-0.045em] text-zinc-950">
+            {topup.name}
+          </h3>
 
-                <div className="mt-5 text-[42px] font-semibold tracking-[-0.06em] text-zinc-950">
-                  {topup.price}
-                </div>
+          <p className="mt-3 text-[15.5px] leading-7 text-zinc-600">
+            {topup.description}
+          </p>
+        </div>
 
-                <p className="mt-4 text-[15.5px] leading-7 text-zinc-600">
-                  {topup.description}
-                </p>
+        {topup.highlighted && (
+          <span className="rounded-full bg-[#1a73e8] px-3 py-1 text-[12px] font-semibold text-white">
+            Equilibrada
+          </span>
+        )}
+      </div>
 
-                <p className="mt-4 rounded-[22px] bg-white px-4 py-3 text-[14px] leading-6 text-zinc-600 shadow-sm">
-                  {topup.details}
-                </p>
-              </article>
-            ))}
+      <div className="mt-6 text-[44px] font-semibold tracking-[-0.065em] text-zinc-950">
+        {topup.price}
+      </div>
+
+      <div className="mt-6 flex-1 space-y-3">
+        {topup.features.map((feature) => (
+          <div
+            key={feature}
+            className="flex items-center gap-2 text-[15px] text-zinc-700"
+          >
+            <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white text-blue-600 shadow-sm">
+              <CheckIcon />
+            </span>
+            {feature}
           </div>
+        ))}
+      </div>
+
+      <Link
+        href="/chat"
+        className={[
+          "mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-[15px] font-semibold transition",
+          topup.highlighted
+            ? "bg-[#1a73e8] text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] hover:scale-[1.01]"
+            : "bg-zinc-950 text-white shadow-sm hover:scale-[1.01]",
+        ].join(" ")}
+      >
+        {topup.cta}
+        <ArrowIcon />
+      </Link>
+    </article>
+  ))}
+</div>
         </div>
       </section>
 
@@ -321,17 +379,17 @@ export default function PricingPage() {
               Uso responsable
             </p>
             <h2 className="mt-3 text-[42px] font-semibold leading-[0.96] tracking-[-0.065em] sm:text-[64px]">
-              Una herramienta potente, con límites claros.
+              Claridad cuando más cuesta decidir.
             </h2>
           </div>
 
           <div className="grid gap-3">
             {[
-              "Vonu no sustituye a profesionales cualificados.",
-              "No compartas contraseñas, códigos ni datos bancarios completos.",
-              "La voz y los análisis avanzados tienen límites para mantener el servicio sostenible.",
-              "Los planes pueden ajustarse con el tiempo para mejorar calidad, coste y disponibilidad.",
-            ].map((item) => (
+  "Te ayuda a detectar señales de riesgo antes de tomar una decisión importante.",
+  "Te acompaña con próximos pasos claros cuando no sabes si frenar, revisar o actuar.",
+  "Puede ayudarte a preparar preguntas, ordenar información y entender mejor una situación.",
+  "Está pensado para darte claridad sin sustituir a profesionales cuando el caso lo requiera.",
+].map((item) => (
               <div
                 key={item}
                 className="flex gap-3 rounded-[24px] border border-white/10 bg-white/[0.06] p-5 text-[15.5px] leading-7 text-zinc-200"
@@ -384,13 +442,13 @@ export default function PricingPage() {
       <section className="bg-white">
         <div className="mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 lg:px-8">
           <h2 className="mx-auto max-w-4xl text-[46px] font-semibold leading-[0.96] tracking-[-0.07em] text-zinc-950 sm:text-[74px]">
-            Empieza gratis. Mejora solo si Vonu te ayuda.
-          </h2>
+  Empieza gratis. Desbloquea más cuando lo necesites.
+</h2>
 
-          <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-600">
-            Prueba Vonu con una duda real, un mensaje sospechoso, un documento
-            o una situación que quieras revisar antes de actuar.
-          </p>
+<p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-600">
+  Prueba Vonu con una duda real. Si te ayuda a ganar claridad, puedes ampliar
+  mensajes, voz y análisis para seguir revisando lo importante con más calma.
+</p>
 
           <Link
             href="/chat"
