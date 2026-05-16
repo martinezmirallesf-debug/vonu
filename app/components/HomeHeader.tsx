@@ -5,17 +5,9 @@ import { useState } from "react";
 
 function LogoMark() {
   return (
-    <div className="flex items-center gap-1">
-      <img
-        src="/logo/vonu-cube-black.png"
-        alt="VonuAI"
-        className="h-[23px] w-[23px] object-contain"
-      />
-
-      <span className="text-[20px] font-semibold tracking-[-0.045em] text-zinc-950">
-        VonuAI
-      </span>
-    </div>
+    <span className="text-[20px] font-semibold tracking-[-0.045em] text-zinc-950">
+      VonuAI
+    </span>
   );
 }
 
@@ -115,8 +107,8 @@ export default function HomeHeader() {
           </button>
 
           <Link href="/" aria-label="VonuAI inicio" onClick={closeMenu}>
-            <LogoMark />
-          </Link>
+  <LogoMark />
+</Link>
         </div>
       </div>
 
@@ -140,14 +132,13 @@ export default function HomeHeader() {
           <nav className="grid gap-1">
             {homeLinks.map((item) => (
               <a
-                key={item.href}
-                href={item.href}
-                onClick={closeMenu}
-                className="flex items-center justify-between rounded-2xl px-1 py-4 text-[28px] font-semibold leading-none tracking-[-0.055em] text-zinc-950"
-              >
-                {item.label}
-                <span className="text-[22px] font-normal text-zinc-400">→</span>
-              </a>
+  key={item.href}
+  href={item.href}
+  onClick={closeMenu}
+  className="block rounded-2xl px-1 py-4 text-[28px] font-semibold leading-none tracking-[-0.055em] text-zinc-950"
+>
+  {item.label}
+</a>
             ))}
           </nav>
 
