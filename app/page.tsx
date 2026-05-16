@@ -203,8 +203,16 @@ export default function HomePage() {
         </div>
       </header>
 
-      <section className="relative overflow-hidden">
-        <div className="absolute left-1/2 top-0 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-blue-500/10 blur-3xl" />
+      <section className="relative overflow-hidden bg-white">
+  <div
+    className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[260px]"
+    style={{
+      background:
+        "linear-gradient(to bottom, #ffffff 0%, #ffffff 28%, rgba(248,249,250,0.92) 58%, rgba(248,249,250,0) 100%)",
+    }}
+  />
+
+  <div className="absolute left-1/2 top-[90px] h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-blue-500/10 blur-3xl" />
         <div className="absolute right-[-160px] top-[360px] h-[320px] w-[320px] rounded-full bg-emerald-400/10 blur-3xl" />
         <div className="absolute left-[-160px] top-[520px] h-[320px] w-[320px] rounded-full bg-amber-300/15 blur-3xl" />
 
@@ -215,9 +223,9 @@ export default function HomePage() {
               Asistente para decisiones seguras
             </div>
 
-            <h1 className="mx-auto max-w-[1120px] text-[52px] font-semibold leading-[0.92] tracking-[-0.075em] text-zinc-950 sm:text-[78px] lg:text-[112px]">
-              Antes de actuar, pregúntale a Vonu.
-            </h1>
+            <h1 className="mx-auto max-w-[1120px] text-[52px] font-semibold leading-[1.0] tracking-[-0.056em] text-zinc-950 sm:text-[78px] lg:text-[112px]">
+  Antes de actuar, pregúntale a Vonu.
+</h1>
 
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
               Revisa mensajes, webs, documentos, facturas, contratos y situaciones delicadas
@@ -332,7 +340,7 @@ export default function HomePage() {
           {principles.map((item) => (
             <div
               key={item}
-              className="rounded-[28px] border border-white/10 bg-white/[0.06] px-5 py-6 text-[28px] font-semibold leading-[1.02] tracking-[-0.055em] text-white sm:text-[34px]"
+              className="rounded-[28px] border border-white/10 bg-white/[0.06] px-5 py-6 text-[28px] font-semibold leading-[1.05] tracking-[-0.048em] text-white sm:text-[34px]"
             >
               {item}
             </div>
@@ -347,7 +355,7 @@ export default function HomePage() {
               <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-600">
                 Casos de uso
               </p>
-              <h2 className="mt-3 max-w-3xl text-[42px] font-semibold leading-[0.98] tracking-[-0.06em] text-zinc-950 sm:text-[64px]">
+              <h2 className="mt-3 max-w-3xl text-[42px] font-semibold leading-[1.02] tracking-[-0.052em] text-zinc-950 sm:text-[64px]">
                 Para los momentos donde un error sale caro.
               </h2>
             </div>
@@ -388,7 +396,7 @@ export default function HomePage() {
               Producto
             </p>
 
-            <h2 className="mt-5 text-[42px] font-semibold leading-[0.96] tracking-[-0.065em] sm:text-[68px]">
+            <h2 className="mt-5 text-[42px] font-semibold leading-[1.0] tracking-[-0.056em] sm:text-[68px]">
               Un chat, sí. Pero diseñado para ayudarte a no equivocarte.
             </h2>
 
@@ -433,7 +441,7 @@ export default function HomePage() {
                   Confianza
                 </p>
 
-                <h2 className="mt-4 text-[42px] font-semibold leading-[0.96] tracking-[-0.065em] text-zinc-950 sm:text-[64px]">
+                <h2 className="mt-4 text-[42px] font-semibold leading-[1.0] tracking-[-0.056em] text-zinc-950 sm:text-[64px]">
                   Claridad antes de la acción.
                 </h2>
 
@@ -473,7 +481,7 @@ export default function HomePage() {
               Planes
             </p>
 
-            <h2 className="mt-3 text-[42px] font-semibold leading-[0.98] tracking-[-0.06em] text-zinc-950 sm:text-[64px]">
+            <h2 className="mt-3 text-[42px] font-semibold leading-[1.02] tracking-[-0.052em] text-zinc-950 sm:text-[64px]">
               Empieza gratis. Mejora cuando Vonu te aporte valor.
             </h2>
 
@@ -583,7 +591,7 @@ export default function HomePage() {
 
       <section className="bg-zinc-950 text-white">
         <div className="mx-auto max-w-[1500px] px-4 py-16 text-center sm:px-6 lg:px-8">
-          <h2 className="mx-auto max-w-5xl text-[48px] font-semibold leading-[0.94] tracking-[-0.075em] sm:text-[82px]">
+          <h2 className="mx-auto max-w-5xl text-[48px] font-semibold leading-[0.98] tracking-[-0.064em] sm:text-[82px]">
             Para cuando no estás seguro y no quieres equivocarte.
           </h2>
 
