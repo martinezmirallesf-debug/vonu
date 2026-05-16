@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import HomeHeader from "./components/HomeHeader";
 
 export const metadata: Metadata = {
   title: "VonuAI — Antes de firmar, pagar, contestar o decidir… consúltalo con Vonu",
@@ -163,45 +164,7 @@ function VoiceBarsIcon() {
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#f8f9fa] text-zinc-950">
-      <header className="sticky top-0 z-50 bg-white">
-        <div className="mx-auto flex h-16 max-w-[1500px] items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" aria-label="VonuAI inicio">
-            <LogoMark />
-          </Link>
-
-          <nav className="hidden items-center gap-8 text-[14px] font-medium text-zinc-600 md:flex">
-            <a href="#producto" className="hover:text-zinc-950">
-              Producto
-            </a>
-            <a href="#casos" className="hover:text-zinc-950">
-              Casos de uso
-            </a>
-            <a href="#precios" className="hover:text-zinc-950">
-              Precios
-            </a>
-            <a href="#faq" className="hover:text-zinc-950">
-              Ayuda
-            </a>
-          </nav>
-
-          <div className="flex items-center gap-2">
-            <Link
-              href="/chat"
-              className="hidden rounded-full px-4 py-2 text-[14px] font-medium text-zinc-700 hover:bg-white md:inline-flex"
-            >
-              Entrar
-            </Link>
-
-            <Link
-              href="/chat"
-              className="inline-flex items-center gap-2 rounded-full bg-zinc-950 px-4 py-2 text-[14px] font-semibold text-white shadow-[0_8px_20px_rgba(0,0,0,0.16)] transition hover:scale-[1.02] active:scale-[0.99]"
-            >
-              Probar Vonu
-              <ArrowIcon />
-            </Link>
-          </div>
-        </div>
-      </header>
+      <HomeHeader />
 
       <section className="relative overflow-hidden bg-white">
   <div
