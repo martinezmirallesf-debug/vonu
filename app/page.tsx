@@ -106,14 +106,12 @@ const faqs = [
 
 function LogoMark() {
   return (
-    <div className="flex items-center gap-2">
-      <div className="grid h-9 w-9 place-items-center rounded-2xl bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_10px_28px_rgba(26,115,232,0.16)]">
-        <img
-          src="/logo/vonu-cube-black.png"
-          alt="VonuAI"
-          className="h-6 w-6 object-contain"
-        />
-      </div>
+    <div className="flex items-center gap-1.5">
+      <img
+        src="/logo/vonu-cube-black.png"
+        alt="VonuAI"
+        className="h-8 w-8 object-contain"
+      />
 
       <span className="text-[20px] font-semibold tracking-[-0.045em] text-zinc-950">
         VonuAI

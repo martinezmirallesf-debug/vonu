@@ -55,9 +55,9 @@ function VoiceBarsIcon({
       aria-hidden="true"
     >
       <span className={[base, "h-[8px]", animated ? "animate-[voiceBar_850ms_ease-in-out_infinite]" : ""].join(" ")} />
-      <span className={[base, "h-[14px]", animated ? "animate-[voiceBar_850ms_ease-in-out_120ms_infinite]" : ""].join(" ")} />
-      <span className={[base, "h-[18px]", animated ? "animate-[voiceBar_850ms_ease-in-out_240ms_infinite]" : ""].join(" ")} />
-      <span className={[base, "h-[12px]", animated ? "animate-[voiceBar_850ms_ease-in-out_360ms_infinite]" : ""].join(" ")} />
+<span className={[base, "h-[14px]", animated ? "animate-[voiceBar_850ms_ease-in-out_120ms_infinite]" : ""].join(" ")} />
+<span className={[base, "h-[8px]", animated ? "animate-[voiceBar_850ms_ease-in-out_240ms_infinite]" : ""].join(" ")} />
+<span className={[base, "h-[12px]", animated ? "animate-[voiceBar_850ms_ease-in-out_360ms_infinite]" : ""].join(" ")} />
     </span>
   );
 }
