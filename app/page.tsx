@@ -283,7 +283,7 @@ export default function HomePage() {
   </a>
 </div>
 
-            <div className="mx-auto mt-6 flex max-w-3xl flex-wrap justify-center gap-2.5 sm:mt-8">
+            <div className="mx-auto mt-6 flex max-w-3xl flex-wrap justify-center gap-3 sm:mt-8 sm:gap-3.5">
               {quickPrompts.map((prompt) => (
                 <Link
                   key={prompt}
