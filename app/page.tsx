@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import HomeHeader from "./components/HomeHeader";
 import HomeFooter from "./components/HomeFooter";
-import ContactForm from "../components/ContactForm";
 
 const siteUrl = "https://app.vonuai.com";
 
