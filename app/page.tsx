@@ -35,11 +35,13 @@ export const metadata: Metadata = {
 };
 
 const quickPrompts = [
-  "¿Este SMS es una estafa?",
-  "¿Esta web es fiable?",
-  "Revisa esta factura",
-  "¿Puedo firmar este contrato?",
-  "¿Me están manipulando?",
+  "¿SMS sospechoso?",
+  "¿Web fiable?",
+  "Revisa factura",
+  "Revisar contrato",
+  "¿Me manipulan?",
+  "Analizar PDF",
+  "Estudiar algo",
 ];
 
 const useCases = [
@@ -276,25 +278,20 @@ export default function HomePage() {
   </Link>
 
   <a
-    href="#casos"
-    className="inline-flex min-w-0 flex-1 items-center justify-center rounded-full border border-zinc-200 bg-white px-4 py-3 text-[14px] font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50 sm:flex-none sm:px-7 sm:py-3.5 sm:text-[15px]"
-  >
-    <span className="truncate">Ver casos </span>
-    <span className="hidden sm:inline"> de uso</span>
-  </a>
+  href="#casos"
+  className="inline-flex min-w-0 flex-1 items-center justify-center rounded-full border border-zinc-200 bg-white px-4 py-3 text-[14px] font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50 sm:flex-none sm:px-7 sm:py-3.5 sm:text-[15px]"
+>
+  <span className="sm:hidden">Ver casos</span>
+  <span className="hidden sm:inline">Ver casos de uso</span>
+</a>
 </div>
 
-            <div className="mx-auto mt-6 grid w-full max-w-[620px] grid-cols-2 gap-2.5 sm:mt-8 sm:flex sm:max-w-3xl sm:flex-wrap sm:justify-center sm:gap-3.5">
-  {quickPrompts.map((prompt, index) => (
+            <div className="mx-auto mt-6 flex max-w-3xl flex-wrap justify-center gap-2.5 sm:mt-8 sm:gap-3.5">
+  {quickPrompts.map((prompt) => (
     <Link
       key={prompt}
       href={`/chat?example=${encodeURIComponent(prompt)}`}
-      className={[
-        "inline-flex min-w-0 items-center justify-center rounded-full border border-zinc-200 bg-white/80 px-2.5 py-1.5 text-center text-[13px] font-medium text-zinc-600 shadow-sm transition hover:border-blue-200 hover:text-blue-700 sm:w-auto sm:px-3.5 sm:py-2 sm:text-[13.5px]",
-        index === quickPrompts.length - 1
-          ? "col-span-2 mx-auto w-fit max-w-full px-4 sm:col-span-1 sm:mx-0"
-          : "w-full",
-      ].join(" ")}
+      className="rounded-full border border-zinc-200 bg-white/80 px-3 py-1.5 text-[13px] font-medium text-zinc-600 shadow-sm transition hover:border-blue-200 hover:text-blue-700 sm:px-3.5 sm:py-2 sm:text-[13.5px]"
     >
       {prompt}
     </Link>
