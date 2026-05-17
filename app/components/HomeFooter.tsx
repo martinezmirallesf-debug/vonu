@@ -15,20 +15,13 @@ export default function HomeFooter() {
           </p>
 
           <div className="mt-5 flex flex-wrap gap-2">
-            <Link
-              href="/chat"
-              className="inline-flex rounded-full bg-zinc-950 px-4 py-2 text-[14px] font-semibold text-white shadow-sm transition hover:scale-[1.02] active:scale-[0.99]"
-            >
-              Probar Vonu
-            </Link>
-
-            <Link
-              href="/contacto"
-              className="inline-flex rounded-full border border-zinc-200 bg-white px-4 py-2 text-[14px] font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50"
-            >
-              Contacto
-            </Link>
-          </div>
+  <Link
+    href="/chat"
+    className="inline-flex rounded-full bg-zinc-950 px-4 py-2 text-[14px] font-semibold text-white shadow-sm transition hover:scale-[1.02] active:scale-[0.99]"
+  >
+    Probar Vonu
+  </Link>
+</div>
         </div>
 
         <div>
@@ -49,6 +42,9 @@ export default function HomeFooter() {
             <Link href="/ayuda" className="hover:text-zinc-950">
               Ayuda
             </Link>
+            <Link href="/contacto" className="hover:text-zinc-950">
+  Contacto
+</Link>
           </div>
         </div>
 

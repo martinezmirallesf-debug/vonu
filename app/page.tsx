@@ -284,17 +284,22 @@ export default function HomePage() {
   </a>
 </div>
 
-            <div className="mx-auto mt-6 flex max-w-3xl flex-wrap justify-center gap-3 sm:mt-8 sm:gap-3.5">
-              {quickPrompts.map((prompt) => (
-                <Link
-                  key={prompt}
-                  href={`/chat?example=${encodeURIComponent(prompt)}`}
-                  className="rounded-full border border-zinc-200 bg-white/80 px-3 py-1.5 text-[13px] font-medium text-zinc-600 shadow-sm transition hover:border-blue-200 hover:text-blue-700 sm:px-3.5 sm:py-2 sm:text-[13.5px]"
-                >
-                  {prompt}
-                </Link>
-              ))}
-            </div>
+            <div className="mx-auto mt-6 grid w-full max-w-[620px] grid-cols-2 gap-2.5 sm:mt-8 sm:flex sm:max-w-3xl sm:flex-wrap sm:justify-center sm:gap-3.5">
+  {quickPrompts.map((prompt, index) => (
+    <Link
+      key={prompt}
+      href={`/chat?example=${encodeURIComponent(prompt)}`}
+      className={[
+        "inline-flex min-w-0 items-center justify-center rounded-full border border-zinc-200 bg-white/80 px-2.5 py-1.5 text-center text-[13px] font-medium text-zinc-600 shadow-sm transition hover:border-blue-200 hover:text-blue-700 sm:w-auto sm:px-3.5 sm:py-2 sm:text-[13.5px]",
+        index === quickPrompts.length - 1
+          ? "col-span-2 mx-auto w-fit max-w-full px-4 sm:col-span-1 sm:mx-0"
+          : "w-full",
+      ].join(" ")}
+    >
+      {prompt}
+    </Link>
+  ))}
+</div>
           </div>
 
           <div className="mx-auto mt-10 max-w-5xl sm:mt-14">
@@ -328,28 +333,41 @@ export default function HomePage() {
                     </p>
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="ml-auto max-w-[86%] rounded-[24px] bg-[#e9edf1] px-4 py-3 text-[15px] leading-6 text-zinc-900">
-                      Me ha llegado una web con un descuento enorme y me piden pagar por transferencia. ¿Lo ves fiable?
-                    </div>
+                  <div className="space-y-5">
+  <div className="ml-auto max-w-[86%] rounded-[24px] bg-[#e9edf1] px-4 py-3 text-[15px] leading-6 text-zinc-900">
+    Me ha llegado una web con un descuento enorme y me piden pagar por transferencia. ¿Lo ves fiable?
+  </div>
 
-                    <div className="max-w-[92%] rounded-[24px] bg-white px-4 py-3 text-[15px] leading-6 text-zinc-800 shadow-sm">
-                      <p className="font-semibold text-zinc-950">⚠️ Riesgo alto</p>
-                      <p className="mt-1 text-zinc-600">
-                        Hay varias señales que conviene revisar antes de pagar: urgencia,
-                        descuento agresivo y método de pago con poca protección.
-                      </p>
-                    </div>
+  <div className="flex items-start gap-3">
+    <img
+      src="/logo/vonu-cube-black.png"
+      alt=""
+      className="mt-1 h-5 w-5 shrink-0 object-contain"
+      aria-hidden="true"
+    />
 
-                    <div className="max-w-[94%] rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-3 text-[14px] leading-6 text-amber-950">
-                      <p className="font-semibold">Qué haría ahora</p>
-                      <p className="mt-1">
-                        No pagaría todavía. Buscaría datos fiscales, opiniones externas,
-                        antigüedad del dominio y formas de pago con protección.
-                      </p>
-                    </div>
+    <div className="min-w-0 text-[15px] leading-7 text-zinc-800">
+      <p className="font-semibold text-zinc-950">
+        ⚠️ Riesgo alto
+      </p>
 
-                    <div className="rounded-full border border-zinc-200 bg-white px-3 py-2 shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_0_13px_rgba(0,0,0,0.135),0_3px_8px_rgba(0,0,0,0.085)]">
+      <p className="mt-1 text-zinc-700">
+        Yo no pagaría todavía. Hay varias señales que conviene revisar:
+        urgencia, descuento muy agresivo y un método de pago con poca protección.
+      </p>
+
+      <p className="mt-3 font-semibold text-zinc-950">
+        Qué haría ahora
+      </p>
+
+      <p className="mt-1 text-zinc-700">
+        Buscaría datos fiscales, opiniones externas, antigüedad del dominio y
+        una forma de pago que te permita reclamar si algo sale mal.
+      </p>
+    </div>
+  </div>
+
+  <div className="rounded-full border border-zinc-200 bg-white px-3 py-2 shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_0_13px_rgba(0,0,0,0.135),0_3px_8px_rgba(0,0,0,0.085)]">
                       <div className="flex items-center gap-2">
                         <div className="grid h-8 w-8 place-items-center rounded-full text-zinc-800">
                           +
