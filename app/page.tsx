@@ -279,7 +279,7 @@ export default function HomePage() {
     href="#casos"
     className="inline-flex min-w-0 flex-1 items-center justify-center rounded-full border border-zinc-200 bg-white px-4 py-3 text-[14px] font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50 sm:flex-none sm:px-7 sm:py-3.5 sm:text-[15px]"
   >
-    <span className="truncate">Ver casos</span>
+    <span className="truncate">Ver casos </span>
     <span className="hidden sm:inline"> de uso</span>
   </a>
 </div>
