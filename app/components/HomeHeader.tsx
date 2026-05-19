@@ -35,7 +35,7 @@ const homeLinks = [
   { label: "Producto", href: "/#producto" },
   { label: "Casos de uso", href: "/#casos" },
   { label: "Precios", href: "/precios" },
-  { label: "Ayuda", href: "/ayuda" },
+  { label: "Cómo funciona", href: "/como-funciona" },
 ];
 
 const secondaryLinks = [

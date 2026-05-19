@@ -39,9 +39,9 @@ export default function HomeFooter() {
             <Link href="/precios" className="hover:text-zinc-950">
               Precios
             </Link>
-            <Link href="/ayuda" className="hover:text-zinc-950">
-              Ayuda
-            </Link>
+            <Link href="/como-funciona" className="hover:text-zinc-950">
+  Cómo funciona
+</Link>
             <Link href="/contacto" className="hover:text-zinc-950">
   Contacto
 </Link>
