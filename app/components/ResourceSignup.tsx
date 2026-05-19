@@ -68,7 +68,7 @@ export default function ResourceSignup({ page = "unknown" }: { page?: string }) 
       form.reset();
       setState("success");
       setMessage(
-        "Perfecto. Te avisaremos cuando publiquemos nuevos recursos útiles."
+        "Perfecto. Recibirás nuevos recursos útiles próximamente."
       );
     } catch (error: any) {
       setState("error");
@@ -126,20 +126,20 @@ export default function ResourceSignup({ page = "unknown" }: { page?: string }) 
 
           <form
   onSubmit={handleSubmit}
-  className="mt-7 grid gap-3 sm:grid-cols-[minmax(0,1fr)_190px]"
+  className="mt-7 grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]"
 >
   <input
     type="email"
     name="email"
     placeholder="tu@email.com"
-    className="h-[56px] w-full min-w-0 rounded-full border border-white/10 bg-white px-5 text-[16px] text-zinc-950 outline-none placeholder:text-zinc-400 focus:ring-4 focus:ring-blue-400/20"
+    className="h-[48px] w-full min-w-0 rounded-full border border-white/10 bg-white px-5 text-[15px] text-zinc-950 outline-none placeholder:text-zinc-400 focus:ring-4 focus:ring-blue-400/20"
   />
 
   <button
     type="submit"
     disabled={isSending}
     className={[
-      "h-[56px] w-full rounded-full px-6 text-[15px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.25)] transition active:scale-[0.99]",
+      "h-[48px] w-full rounded-full px-5 text-[15px] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.22)] transition active:scale-[0.99]",
       isSending
         ? "cursor-wait bg-blue-500"
         : "bg-[#1a73e8] hover:scale-[1.01]",
