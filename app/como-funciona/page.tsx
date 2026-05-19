@@ -281,6 +281,7 @@ export default function HelpPage() {
           </Link>
         </div>
       </section>
+      <ResourceSignup page="como-funciona" />
       <HomeFooter />
     </main>
   );

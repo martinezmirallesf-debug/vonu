@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
+import ResourceSignup from "../components/ResourceSignup";
 
 const siteUrl = "https://app.vonuai.com";
 
@@ -460,7 +461,7 @@ export default function PricingPage() {
           </Link>
         </div>
       </section>
-
+      <ResourceSignup page="precios" />
       <HomeFooter />
     </main>
   );

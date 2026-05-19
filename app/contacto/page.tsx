@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
 import ContactForm from "../components/ContactForm";
+import ResourceSignup from "../components/ResourceSignup";
 
 const siteUrl = "https://app.vonuai.com";
 
@@ -164,70 +165,7 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <section className="bg-white">
-        <div className="mx-auto grid max-w-[1500px] gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
-          <div>
-            <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-600">
-              Recursos Vonu
-            </p>
-
-            <h2 className="mt-3 max-w-2xl text-[42px] font-semibold leading-[0.98] tracking-[-0.06em] text-zinc-950 sm:text-[64px]">
-              Guías y avances para decidir mejor.
-            </h2>
-
-            <p className="mt-5 max-w-xl text-[17px] leading-8 text-zinc-600">
-              Más adelante podrás recibir contenido útil sobre estafas, documentos,
-              voz, estudio, decisiones digitales, uso responsable de IA y novedades
-              de Vonu.
-            </p>
-          </div>
-
-          <div className="rounded-[36px] bg-zinc-950 p-6 text-white sm:p-8">
-            <h3 className="text-[28px] font-semibold tracking-[-0.05em]">
-              Recibe recursos útiles, no ruido.
-            </h3>
-
-            <p className="mt-3 text-[16px] leading-7 text-zinc-300">
-              Guías breves, señales prácticas y avances de producto para usar Vonu
-              mejor y revisar decisiones importantes con más claridad.
-            </p>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {resourceTopics.map((topic) => (
-                <div
-                  key={topic}
-                  className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-[14px] text-zinc-200"
-                >
-                  <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-blue-400 text-zinc-950">
-                    <CheckIcon />
-                  </span>
-                  {topic}
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <input
-                type="email"
-                placeholder="tu@email.com"
-                className="h-12 min-w-0 flex-1 rounded-full border border-white/10 bg-white px-5 text-[15px] text-zinc-950 outline-none placeholder:text-zinc-400 focus:ring-4 focus:ring-blue-400/20"
-              />
-
-              <button
-                type="button"
-                className="h-12 rounded-full bg-[#1a73e8] px-6 text-[15px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.25)] transition hover:scale-[1.01] active:scale-[0.99]"
-              >
-                Recibir recursos
-              </button>
-            </div>
-
-            <p className="mt-4 text-[12.5px] leading-5 text-zinc-400">
-              Sin spam. Solo contenido útil sobre decisiones seguras, producto y
-              nuevas funciones.
-            </p>
-          </div>
-        </div>
-      </section>
+      <ResourceSignup page="contacto" />
 
       <section className="bg-zinc-950 text-white">
         <div className="mx-auto max-w-[1500px] px-4 py-16 text-center sm:px-6 lg:px-8">
