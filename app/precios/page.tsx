@@ -443,26 +443,32 @@ export default function PricingPage() {
 
 
       <ResourceSignup page="precios" />
-            <section className="bg-white">
-        <div className="mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 lg:px-8">
-          <h2 className="mx-auto max-w-4xl text-[46px] font-semibold leading-[0.96] tracking-[-0.07em] text-zinc-950 sm:text-[74px]">
-  Empieza gratis. Desbloquea más cuando lo necesites.
-</h2>
 
-<p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-600">
-  Prueba Vonu con una duda real. Si te ayuda a ganar claridad, puedes ampliar
-  mensajes, voz y análisis para seguir revisando lo importante con más calma.
-</p>
+<section className="bg-zinc-950 text-white">
+  <div className="mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32">
+    <div className="mx-auto max-w-4xl text-center">
+      <h2 className="text-balance text-5xl font-semibold tracking-[-0.04em] text-white md:text-7xl">
+        Empieza gratis. Desbloquea más cuando lo necesites.
+      </h2>
 
-          <Link
-            href="/chat"
-            className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-zinc-950 px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_14px_32px_rgba(0,0,0,0.18)] transition hover:scale-[1.02] active:scale-[0.99]"
-          >
-            Probar Vonu
-            <ArrowIcon />
-          </Link>
-        </div>
-      </section>
+      <p className="mx-auto mt-8 max-w-3xl text-lg leading-8 text-zinc-300 md:text-xl">
+        Prueba Vonu con una duda real. Si te ayuda a ganar claridad, puedes
+        ampliar mensajes, voz y análisis para seguir revisando lo importante
+        con más calma.
+      </p>
+
+      <div className="mt-10 flex justify-center">
+        <Link
+          href="/chat"
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-4 text-base font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] hover:bg-zinc-100 active:scale-[0.99]"
+        >
+          Probar Vonu
+          <ArrowIcon />
+        </Link>
+      </div>
+    </div>
+  </div>
+</section>
       <HomeFooter />
     </main>
   );
