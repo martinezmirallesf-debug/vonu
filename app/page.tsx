@@ -93,27 +93,6 @@ const principles = [
   "No contestes si algo no encaja.",
 ];
 
-const plans = [
-  {
-    name: "Free",
-    price: "0€",
-    description: "Para probar Vonu y resolver dudas puntuales.",
-    features: ["Mensajes limitados", "Chat preventivo", "Análisis básico"],
-  },
-  {
-    name: "Plus",
-    price: "9,99€",
-    description: "Para usar Vonu con más frecuencia y acceso a voz.",
-    features: ["Más mensajes al mes", "Modo conversación", "Análisis de archivos"],
-    featured: true,
-  },
-  {
-    name: "Max",
-    price: "19,99€",
-    description: "Para uso intensivo, más voz y más margen mensual.",
-    features: ["Más mensajes", "Más minutos de voz", "Funciones avanzadas"],
-  },
-];
 
 const faqs = [
   {
@@ -292,7 +271,7 @@ export default function HomePage() {
     <Link
       key={prompt}
       href={`/chat?example=${encodeURIComponent(prompt)}`}
-      className="rounded-full border border-zinc-200 bg-white/80 px-3 py-1.5 text-[13px] font-medium text-zinc-600 shadow-sm transition hover:border-blue-200 hover:text-blue-700 sm:px-3.5 sm:py-2 sm:text-[13.5px]"
+      className="rounded-full border border-zinc-200 bg-white/85 px-3.5 py-2 text-[13.5px] font-medium text-zinc-600 shadow-sm transition hover:border-blue-200 hover:text-blue-700 sm:px-4 sm:py-2.5 sm:text-[14px]"
     >
       {prompt}
     </Link>
@@ -523,86 +502,6 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="precios" className="bg-[#f8f9fa]">
-        <div className="mx-auto max-w-[1500px] px-4 py-16 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-600">
-              Planes
-            </p>
-
-            <h2 className="mt-3 text-[42px] font-semibold leading-[1.02] tracking-[-0.052em] text-zinc-950 sm:text-[64px]">
-              Empieza gratis. Mejora cuando Vonu te aporte valor.
-            </h2>
-
-            <p className="mt-5 text-[17px] leading-8 text-zinc-600">
-              Los planes ayudan a mantener una herramienta potente, sostenible y preparada
-              para análisis reales, voz y documentos.
-            </p>
-          </div>
-
-          <div className="mt-11 grid gap-4 lg:grid-cols-3">
-            {plans.map((plan) => (
-              <article
-  key={plan.name}
-  className={[
-    "flex h-full flex-col rounded-[34px] border p-6 shadow-sm",
-    plan.featured
-      ? "border-blue-200 bg-blue-50 shadow-[0_20px_52px_rgba(26,115,232,0.14)]"
-      : "border-zinc-200 bg-white",
-  ].join(" ")}
->
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="text-[28px] font-semibold tracking-[-0.05em] text-zinc-950">
-                      {plan.name}
-                    </h3>
-                    <p className="mt-2 text-[15px] leading-7 text-zinc-600">
-                      {plan.description}
-                    </p>
-                  </div>
-
-                  {plan.featured && (
-                    <span className="rounded-full bg-[#1a73e8] px-3 py-1 text-[12px] font-semibold text-white">
-                      Popular
-                    </span>
-                  )}
-                </div>
-
-                <div className="mt-7 flex items-end gap-1">
-                  <span className="text-[48px] font-semibold tracking-[-0.065em] text-zinc-950">
-                    {plan.price}
-                  </span>
-                  <span className="pb-2 text-[14px] text-zinc-500">/ mes</span>
-                </div>
-
-                <div className="mt-7 flex-1 space-y-3">
-                  {plan.features.map((feature) => (
-                    <div key={feature} className="flex items-center gap-2 text-[15px] text-zinc-700">
-                      <span className="grid h-5 w-5 place-items-center rounded-full bg-white text-blue-600 shadow-sm">
-                        <CheckIcon />
-                      </span>
-                      {feature}
-                    </div>
-                  ))}
-                </div>
-
-                <Link
-  href="/chat"
-  className={[
-    "mt-8 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-[15px] font-semibold transition",
-                    plan.featured
-                      ? "bg-[#1a73e8] text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] hover:scale-[1.01]"
-                      : "bg-zinc-950 text-white shadow-sm hover:scale-[1.01]",
-                  ].join(" ")}
-                >
-                  Probar Vonu
-                </Link>
-              </article>
-            ))}
           </div>
         </div>
       </section>
