@@ -541,28 +541,30 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-zinc-950 text-white">
-        <div className="mx-auto max-w-[1500px] px-4 py-16 text-center sm:px-6 lg:px-8">
-          <h2 className="mx-auto max-w-5xl text-[48px] font-semibold leading-[0.98] tracking-[-0.064em] sm:text-[82px]">
-            Para cuando no estás seguro y no quieres equivocarte.
-          </h2>
-
-          <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
-            Pega tu duda, sube un documento o explica la situación. Vonu te ayuda
-            a verla con más claridad antes de actuar.
-          </p>
-
-          <Link
-            href="/chat"
-            className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
-          >
-            Empezar ahora
-            <ArrowIcon />
-          </Link>
-        </div>
-      </section>
       <ResourceSignup page="home" />
-      <HomeFooter />
+
+<section className="bg-zinc-950 text-white">
+  <div className="mx-auto max-w-[1500px] px-4 py-16 text-center sm:px-6 lg:px-8">
+    <h2 className="mx-auto max-w-5xl text-[48px] font-semibold leading-[0.98] tracking-[-0.064em] sm:text-[82px]">
+      Para cuando no estás seguro y no quieres equivocarte.
+    </h2>
+
+    <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
+      Pega tu duda, sube un documento o explica la situación. Vonu te ayuda
+      a verla con más claridad antes de actuar.
+    </p>
+
+    <Link
+      href="/chat"
+      className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
+    >
+      Empezar ahora
+      <ArrowIcon />
+    </Link>
+  </div>
+</section>
+
+<HomeFooter />
     </main>
   );
 }

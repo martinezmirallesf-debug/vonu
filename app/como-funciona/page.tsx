@@ -261,7 +261,8 @@ export default function HelpPage() {
         </div>
       </section>
 
-      <section className="bg-zinc-950 text-white">
+      <ResourceSignup page="como-funciona" />
+            <section className="bg-zinc-950 text-white">
         <div className="mx-auto max-w-[1500px] px-4 py-16 text-center sm:px-6 lg:px-8">
           <h2 className="mx-auto max-w-5xl text-[46px] font-semibold leading-[0.96] tracking-[-0.07em] sm:text-[74px]">
             ¿Tienes una situación concreta?
@@ -282,7 +283,6 @@ export default function HelpPage() {
           </Link>
         </div>
       </section>
-      <ResourceSignup page="como-funciona" />
       <HomeFooter />
     </main>
   );

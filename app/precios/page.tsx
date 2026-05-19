@@ -441,7 +441,9 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <section className="bg-white">
+
+      <ResourceSignup page="precios" />
+            <section className="bg-white">
         <div className="mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 lg:px-8">
           <h2 className="mx-auto max-w-4xl text-[46px] font-semibold leading-[0.96] tracking-[-0.07em] text-zinc-950 sm:text-[74px]">
   Empieza gratis. Desbloquea más cuando lo necesites.
@@ -461,7 +463,6 @@ export default function PricingPage() {
           </Link>
         </div>
       </section>
-      <ResourceSignup page="precios" />
       <HomeFooter />
     </main>
   );
