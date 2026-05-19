@@ -125,42 +125,42 @@ export default function ResourceSignup({ page = "unknown" }: { page?: string }) 
           </div>
 
           <form
-            onSubmit={handleSubmit}
-            className="mt-7 grid gap-3 sm:grid-cols-[1fr_auto]"
-          >
-            <input
-              type="email"
-              name="email"
-              placeholder="tu@email.com"
-              className="h-12 min-w-0 rounded-full border border-white/10 bg-white px-5 text-[15px] text-zinc-950 outline-none placeholder:text-zinc-400 focus:ring-4 focus:ring-blue-400/20"
-            />
+  onSubmit={handleSubmit}
+  className="mt-7 grid gap-3 sm:grid-cols-[minmax(0,1fr)_190px]"
+>
+  <input
+    type="email"
+    name="email"
+    placeholder="tu@email.com"
+    className="h-[56px] w-full min-w-0 rounded-full border border-white/10 bg-white px-5 text-[16px] text-zinc-950 outline-none placeholder:text-zinc-400 focus:ring-4 focus:ring-blue-400/20"
+  />
 
-            <button
-              type="submit"
-              disabled={isSending}
-              className={[
-                "h-12 rounded-full px-6 text-[15px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.25)] transition active:scale-[0.99]",
-                isSending
-                  ? "cursor-wait bg-blue-400"
-                  : "bg-[#1a73e8] hover:scale-[1.01]",
-              ].join(" ")}
-            >
-              {isSending ? "Guardando..." : "Recibir recursos"}
-            </button>
-          </form>
+  <button
+    type="submit"
+    disabled={isSending}
+    className={[
+      "h-[56px] w-full rounded-full px-6 text-[15px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.25)] transition active:scale-[0.99]",
+      isSending
+        ? "cursor-wait bg-blue-500"
+        : "bg-[#1a73e8] hover:scale-[1.01]",
+    ].join(" ")}
+  >
+    {isSending ? "Guardando..." : "Recibir recursos"}
+  </button>
+</form>
 
-          {message && (
-            <div
-              className={[
-                "mt-4 rounded-2xl px-4 py-3 text-[13.5px] leading-6",
-                state === "success"
-                  ? "border border-emerald-400/20 bg-emerald-400/10 text-emerald-100"
-                  : "border border-red-400/20 bg-red-400/10 text-red-100",
-              ].join(" ")}
-            >
-              {message}
-            </div>
-          )}
+{message && (
+  <div
+    className={[
+      "mt-4 rounded-2xl px-4 py-3 text-[13.5px] leading-6",
+      state === "success"
+        ? "border border-emerald-400/20 bg-emerald-400/10 text-emerald-100"
+        : "border border-red-400/20 bg-red-400/10 text-red-100",
+    ].join(" ")}
+  >
+    {message}
+  </div>
+)}
 
           <p className="mt-4 text-[12.5px] leading-5 text-zinc-400">
             Sin spam. Solo contenido útil sobre decisiones seguras, producto y
