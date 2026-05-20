@@ -7,7 +7,7 @@ import ResourceSignup from "../components/ResourceSignup";
 const siteUrl = "https://app.vonuai.com";
 
 const smsExample =
-  "¿Este SMS, web o enlace es fiable? Te lo paso en el siguiente mensaje:";
+  "Voy a pasarte ahora un SMS, web o enlace sospechoso para que lo revises conmigo. Te lo envío en el siguiente mensaje.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
