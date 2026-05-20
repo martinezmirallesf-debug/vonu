@@ -1687,39 +1687,9 @@ useEffect(() => {
     } catch {}
   }, [threads, mounted]);
 
-  useEffect(() => {
-  if (!mounted) return;
-  if (examplePrefilledRef.current) return;
-  if (typeof window === "undefined") return;
-
-  try {
-    const url = new URL(window.location.href);
-    const example = url.searchParams.get("example");
-
-    if (!example || !example.trim()) return;
-
-    examplePrefilledRef.current = true;
-
-    const cleanExample = example.trim();
-
-    setInput(cleanExample);
-
-    url.searchParams.delete("example");
-    window.history.replaceState(
-      {},
-      "",
-      `${url.pathname}${url.searchParams.toString() ? `?${url.searchParams.toString()}` : ""}`
-    );
-
-    setTimeout(() => {
-      textareaRef.current?.focus();
-    }, 120);
-  } catch {}
-}, [mounted]);
-
 // -------- UI --------
 const [input, setInput] = useState("");
-const examplePrefilledRef = useRef(false);
+const exampleAutoSentRef = useRef(false);
 const [isDraggingFile, setIsDraggingFile] = useState(false);
 const dragDepthRef = useRef(0);
 
@@ -4621,6 +4591,39 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
     }
   }
+
+  useEffect(() => {
+  if (!mounted) return;
+  if (authLoading) return;
+  if (!activeThread) return;
+  if (exampleAutoSentRef.current) return;
+  if (typeof window === "undefined") return;
+
+  try {
+    const url = new URL(window.location.href);
+    const example = url.searchParams.get("example");
+
+    if (!example || !example.trim()) return;
+
+    const cleanExample = example.trim();
+
+    exampleAutoSentRef.current = true;
+
+    url.searchParams.delete("example");
+    window.history.replaceState(
+      {},
+      "",
+      `${url.pathname}${
+        url.searchParams.toString() ? `?${url.searchParams.toString()}` : ""
+      }`
+    );
+
+    setTimeout(() => {
+      sendQuickMessage(cleanExample, "chat");
+    }, 120);
+  } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted, authLoading, activeThread?.id]);
 
   async function sendMessage() {
   if (authLoading) return;
