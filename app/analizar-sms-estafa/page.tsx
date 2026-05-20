@@ -7,7 +7,7 @@ import ResourceSignup from "../components/ResourceSignup";
 const siteUrl = "https://app.vonuai.com";
 
 const smsExample =
-  "Me ha llegado este SMS: 'Su paquete está retenido. Pague 1,99€ para liberarlo: https://...' ¿Es una estafa?";
+  "¿Este SMS, web o enlace es fiable? Te lo paso en el siguiente mensaje:";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
