@@ -69,6 +69,13 @@ export default function HomeFooter() {
             <Link href="/comprobar-factura" className="hover:text-zinc-950">
               Comprobar factura
             </Link>
+            <Link href="/detectar-manipulacion" className="hover:text-zinc-950">
+  Detectar manipulación
+</Link>
+
+<Link href="/comprobar-tienda-online" className="hover:text-zinc-950">
+  Comprobar tienda online
+</Link>
           </div>
         </div>
 
