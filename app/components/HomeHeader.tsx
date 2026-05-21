@@ -81,12 +81,12 @@ export default function HomeHeader() {
         {/* Mobile top bar */}
         <div className="flex h-16 items-center justify-between md:hidden">
           <button
-            type="button"
-            onClick={() => setMobileMenuOpen((v) => !v)}
-            className="grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition active:scale-95"
-            aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
-            aria-expanded={mobileMenuOpen}
-          >
+  type="button"
+  onClick={() => setMobileMenuOpen((v) => !v)}
+  className="-ml-2 grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition active:scale-95"
+  aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+  aria-expanded={mobileMenuOpen}
+>
             <span className="relative block h-5 w-6">
               <span
                 className={[
