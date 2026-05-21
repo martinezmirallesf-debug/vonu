@@ -60,6 +60,12 @@ const featuredResources = [
   text: "Revisa importes, conceptos, cargos duplicados, servicios no contratados y qué hacer si crees que te han cobrado de más.",
   href: "/comprobar-factura",
 },
+{
+  title: "Cómo detectar manipulación emocional",
+  category: "Psicología aplicada",
+  text: "Revisa mensajes o situaciones donde sientes culpa, presión, urgencia o confusión antes de contestar o decidir.",
+  href: "/detectar-manipulacion",
+},
 ];
 
 const categories = [
@@ -189,7 +195,7 @@ export default function RecursosPage() {
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {featuredResources.map((item) => (
               <Link
                 key={item.title}
