@@ -54,7 +54,7 @@ export default function HomeHeader() {
 
   return (
     <header className="sticky top-0 z-50 bg-white">
-      <div className="mx-auto max-w-[1500px] px-4 sm:px-6 lg:px-8">
+  <div className="mx-auto max-w-[1500px] px-6 sm:px-6 lg:px-8">
         {/* Desktop */}
         <div className="hidden h-16 items-center justify-between md:flex">
           <Link href="/" aria-label="VonuAI inicio">
