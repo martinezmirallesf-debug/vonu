@@ -54,6 +54,12 @@ const featuredResources = [
     text: "Puntos básicos para detectar cláusulas confusas, obligaciones, permanencias, penalizaciones y riesgos.",
     href: "/revisar-contrato",
   },
+  {
+  title: "Cómo comprobar si una factura está bien",
+  category: "Facturas",
+  text: "Revisa importes, conceptos, cargos duplicados, servicios no contratados y qué hacer si crees que te han cobrado de más.",
+  href: "/comprobar-factura",
+},
 ];
 
 const categories = [
@@ -183,7 +189,7 @@ export default function RecursosPage() {
             </p>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {featuredResources.map((item) => (
               <Link
                 key={item.title}
