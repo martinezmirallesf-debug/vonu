@@ -220,22 +220,15 @@ export default function DetectarManipulacionPage() {
               decidir.
             </p>
 
-            <div className="mx-auto mt-8 flex w-full max-w-[650px] flex-row justify-center gap-3">
-              <Link
-                href={chatHref}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#1a73e8] px-4 py-3.5 text-[15px] font-semibold text-white shadow-[0_14px_30px_rgba(26,115,232,0.25)] transition hover:scale-[1.02] active:scale-[0.99]"
-              >
-                Analizar un mensaje
-                <ArrowIcon />
-              </Link>
-
-              <a
-                href="#senales"
-                className="inline-flex w-full items-center justify-center rounded-full border border-zinc-200 bg-white px-6 py-4 text-[17px] font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50 sm:min-w-[260px] sm:flex-1 sm:py-3.5 sm:text-[15px]"
-              >
-                Ver señales de alerta
-              </a>
-            </div>
+            <div className="mt-8 flex justify-center">
+  <Link
+    href={chatHref}
+    className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1a73e8] px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_14px_30px_rgba(26,115,232,0.25)] transition hover:scale-[1.02] active:scale-[0.99]"
+  >
+    Probar Vonu
+    <ArrowIcon />
+  </Link>
+</div>
           </div>
         </div>
       </section>
