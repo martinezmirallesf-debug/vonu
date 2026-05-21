@@ -209,9 +209,6 @@ export default function AnalizarSmsEstafaPage() {
 
         <div className="relative mx-auto max-w-[1500px] px-4 pb-14 pt-12 sm:px-6 sm:pb-20 sm:pt-16 lg:px-8">
           <div className="mx-auto max-w-5xl text-center">
-            <p className="mb-5 inline-flex rounded-full border border-zinc-200 bg-white/80 px-4 py-2 text-[13.5px] font-semibold text-zinc-600 shadow-sm">
-              SMS sospechoso · Phishing · Enlaces falsos
-            </p>
 
             <h1 className="mx-auto max-w-5xl text-[50px] font-semibold leading-[0.94] tracking-[-0.075em] text-zinc-950 sm:text-[76px] lg:text-[104px]">
               Cómo saber si un SMS es una estafa.
@@ -223,10 +220,10 @@ export default function AnalizarSmsEstafaPage() {
               señales antes de pagar o compartir datos.
             </p>
 
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <div className="mx-auto mt-8 flex w-full max-w-[650px] flex-col justify-center gap-3 sm:flex-row">
               <Link
                 href={chatHref}
-                className="inline-flex min-w-[260px] items-center justify-center gap-2 rounded-full bg-[#1a73e8] px-6 py-3.5 text-[15px] font-semibold text-white shadow-[0_14px_30px_rgba(26,115,232,0.25)] transition hover:scale-[1.02] active:scale-[0.99]"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#1a73e8] px-6 py-4 text-[17px] font-semibold text-white shadow-[0_14px_30px_rgba(26,115,232,0.25)] transition hover:scale-[1.02] active:scale-[0.99] sm:min-w-[260px] sm:flex-1 sm:py-3.5 sm:text-[15px]"
               >
                 Analizar mi SMS
                 <ArrowIcon />
@@ -234,7 +231,7 @@ export default function AnalizarSmsEstafaPage() {
 
               <a
                 href="#senales"
-                className="inline-flex min-w-[260px] items-center justify-center rounded-full border border-zinc-200 bg-white px-6 py-3.5 text-[15px] font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50"
+                className="inline-flex w-full items-center justify-center rounded-full border border-zinc-200 bg-white px-6 py-4 text-[17px] font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50 sm:min-w-[260px] sm:flex-1 sm:py-3.5 sm:text-[15px]"
               >
                 Ver señales de alerta
               </a>
