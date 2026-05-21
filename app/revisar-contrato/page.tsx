@@ -6,31 +6,31 @@ import ResourceSignup from "../components/ResourceSignup";
 
 const siteUrl = "https://app.vonuai.com";
 
-const webExample =
-  "Ahora te voy a pasar una web o enlace para comprobar si parece fiable antes de comprar o meter mis datos.";
+const contractExample =
+  "Ahora te voy a pasar un contrato o una cláusula para revisarlo conmigo antes de firmar.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Cómo saber si una web es fiable — Compruébala con VonuAI",
+  title: "Qué revisar antes de firmar un contrato — Revísalo con VonuAI",
   description:
-    "Aprende a comprobar si una web o tienda online es fiable antes de comprar, pagar por transferencia o introducir tus datos. Analiza enlaces sospechosos con VonuAI.",
+    "Aprende qué mirar antes de firmar un contrato: cláusulas, permanencias, penalizaciones, pagos, obligaciones y señales de alerta. Revisa contratos con VonuAI.",
   alternates: {
-    canonical: "/comprobar-web-fiable",
+    canonical: "/revisar-contrato",
   },
   openGraph: {
-    title: "Cómo saber si una web es fiable — VonuAI",
+    title: "Qué revisar antes de firmar un contrato — VonuAI",
     description:
-      "Revisa señales de riesgo en webs, tiendas online, ofertas demasiado buenas y páginas sospechosas antes de pagar.",
-    url: `${siteUrl}/comprobar-web-fiable`,
+      "Revisa un contrato, cláusula o documento antes de firmar para detectar puntos delicados y entender mejor tus obligaciones.",
+    url: `${siteUrl}/revisar-contrato`,
     siteName: "VonuAI",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cómo saber si una web es fiable — VonuAI",
+    title: "Qué revisar antes de firmar un contrato — VonuAI",
     description:
-      "Comprueba una web sospechosa antes de comprar, pagar o compartir datos.",
+      "Detecta cláusulas delicadas, obligaciones, pagos y riesgos antes de firmar un contrato.",
   },
   robots: {
     index: true,
@@ -40,87 +40,87 @@ export const metadata: Metadata = {
 
 const warningSigns = [
   {
-    title: "Descuento demasiado agresivo",
-    text: "Ofertas con rebajas enormes, precios muy por debajo de lo normal o urgencia para comprar pueden ser una señal de riesgo.",
+    title: "Permanencias o penalizaciones",
+    text: "Revisa si el contrato te obliga a permanecer un tiempo mínimo o pagar una penalización si cancelas antes.",
   },
   {
-    title: "Pago con poca protección",
-    text: "Si solo aceptan transferencia, Bizum a particulares, criptomonedas o métodos difíciles de reclamar, conviene frenar.",
+    title: "Pagos poco claros",
+    text: "Importes, cuotas, subidas, gastos extra, renovaciones automáticas o cargos futuros deberían quedar explicados sin ambigüedad.",
   },
   {
-    title: "Datos legales confusos",
-    text: "Una tienda fiable debería mostrar información clara sobre empresa, contacto, política de devoluciones, privacidad y condiciones.",
+    title: "Obligaciones desequilibradas",
+    text: "Cuidado si tú asumes muchas obligaciones y la otra parte apenas asume compromisos concretos.",
   },
   {
-    title: "Dominio extraño o reciente",
-    text: "Dominios con nombres raros, errores, imitaciones de marcas o webs recién creadas pueden usarse para campañas de fraude.",
+    title: "Renovación automática",
+    text: "Algunos contratos se renuevan solos si no avisas con antelación. Mira fechas, plazos y forma de cancelación.",
   },
   {
-    title: "Opiniones poco naturales",
-    text: "Muchas reseñas perfectas, repetidas, genéricas o sin rastro fuera de la propia web pueden estar fabricadas.",
+    title: "Cláusulas difíciles de entender",
+    text: "Si una parte suena confusa, demasiado técnica o contradictoria, conviene pedir aclaración antes de firmar.",
   },
   {
-    title: "Presión para decidir rápido",
-    text: "Contadores, “últimas unidades”, mensajes de urgencia o amenazas de perder la oferta buscan que no compruebes con calma.",
+    title: "Renuncias o límites de responsabilidad",
+    text: "Revisa si te hacen renunciar a derechos, aceptar limitaciones fuertes o asumir riesgos que no esperabas.",
   },
 ];
 
 const checklist = [
-  "Busca el nombre de la tienda fuera de su propia web.",
-  "Comprueba si tiene datos fiscales, contacto real y política de devoluciones.",
-  "Mira si el método de pago permite reclamar si algo sale mal.",
-  "Revisa si el dominio parece imitar a otra marca conocida.",
-  "Desconfía de precios demasiado buenos para ser verdad.",
-  "Pega la web en Vonu para revisar señales antes de pagar.",
+  "Comprueba quién firma y con qué datos.",
+  "Revisa precio, pagos, gastos, comisiones y posibles subidas.",
+  "Mira duración, renovación, permanencia y cancelación.",
+  "Lee penalizaciones, obligaciones y límites de responsabilidad.",
+  "Detecta cláusulas ambiguas o difíciles de entender.",
+  "Sube el contrato a Vonu para resumirlo y revisar puntos delicados.",
 ];
 
 const commonCases = [
   {
-    title: "Tienda con descuentos enormes",
-    text: "Webs que venden ropa, zapatillas, tecnología o productos populares a precios imposibles durante poco tiempo.",
+    title: "Contrato de alquiler",
+    text: "Duración, fianza, gastos, reparaciones, actualización de renta, penalizaciones y condiciones de salida.",
   },
   {
-    title: "Pago solo por transferencia",
-    text: "Tiendas o vendedores que evitan tarjeta, PayPal u otros métodos con protección para el comprador.",
+    title: "Contrato de trabajo",
+    text: "Jornada, salario, funciones, periodo de prueba, exclusividad, confidencialidad y condiciones especiales.",
   },
   {
-    title: "Web parecida a una marca conocida",
-    text: "Dominios que imitan nombres, logos o estética de marcas reales para parecer oficiales.",
+    title: "Contrato de servicios",
+    text: "Qué incluye, qué no incluye, plazos, pagos, cancelación, soporte y responsabilidad de cada parte.",
   },
   {
-  title: "Tienda de redes sociales o anuncio",
-  text: "Páginas que llegan desde redes sociales, anuncios o mensajes directos y no tienen historial claro.",
-},
+    title: "Condiciones online",
+    text: "Suscripciones, renovaciones, uso de datos, cancelación, pagos recurrentes y cambios futuros del servicio.",
+  },
 ];
 
 const mistakes = [
-  "Comprar solo porque la web tiene candado HTTPS.",
-  "Confiar en una página porque aparece en un anuncio.",
-  "Pagar por transferencia sin comprobar datos de la empresa.",
-  "Fiarse solo de reseñas dentro de la propia tienda.",
-  "Meter tarjeta o DNI antes de revisar quién está detrás.",
+  "Firmar porque “parece estándar” sin leer las condiciones importantes.",
+  "Mirar solo el precio y no los gastos, permanencias o penalizaciones.",
+  "No comprobar cómo se cancela o cuándo se renueva.",
+  "Aceptar cláusulas que no entiendes sin pedir explicación.",
+  "No guardar copia del contrato firmado y comunicaciones relacionadas.",
 ];
 
 const faqs = [
   {
-    q: "¿Cómo saber si una web es fiable?",
-    a: "Revisa si tiene datos legales claros, contacto real, métodos de pago seguros, opiniones externas, política de devoluciones coherente y un dominio que no imite a otra marca. Si hay urgencia, descuentos exagerados o solo aceptan transferencia, conviene desconfiar.",
+    q: "¿Qué hay que revisar antes de firmar un contrato?",
+    a: "Conviene revisar quién firma, objeto del contrato, precio, pagos, duración, renovación, cancelación, penalizaciones, obligaciones de cada parte, límites de responsabilidad y cualquier cláusula que no entiendas.",
   },
   {
-    q: "¿El candado HTTPS significa que una web es segura?",
-    a: "No necesariamente. El candado indica que la conexión está cifrada, pero no garantiza que la tienda sea legítima ni que vaya a enviar el producto.",
+    q: "¿VonuAI puede revisar un contrato?",
+    a: "Sí. Puedes subir un contrato, pegar una cláusula o explicar la situación para que Vonu te ayude a resumirlo, detectar puntos delicados y preparar preguntas antes de firmar. No sustituye a un abogado.",
   },
   {
-    q: "¿Qué hago si una web solo acepta transferencia?",
-    a: "Frena y revisa bien. La transferencia suele ofrecer menos protección que otros métodos de pago. Comprueba datos fiscales, opiniones externas, antigüedad del dominio y si hay formas reales de reclamar.",
+    q: "¿Qué hago si no entiendo una cláusula?",
+    a: "No firmes con dudas importantes. Pide explicación por escrito, compárala con el resto del contrato y, si puede tener consecuencias relevantes, consulta con un profesional.",
   },
   {
-    q: "¿Puedo analizar una web con VonuAI?",
-    a: "Sí. Puedes pegar el enlace o explicar lo que ves en la web para que Vonu revise señales de riesgo, métodos de pago, urgencia, datos legales y qué comprobar antes de comprar.",
+    q: "¿Una cláusula abusiva invalida todo el contrato?",
+    a: "Depende del tipo de contrato, la cláusula y la normativa aplicable. Vonu puede ayudarte a detectar posibles señales de alerta, pero una valoración jurídica definitiva debe hacerla un profesional.",
   },
   {
-    q: "¿Qué hago si ya he comprado en una web sospechosa?",
-    a: "Guarda capturas, justificantes y correos. Contacta con tu banco si has metido tarjeta o pagado, cambia contraseñas si reutilizaste alguna y revisa si puedes reclamar el cargo.",
+    q: "¿Puedo subir un PDF de contrato a Vonu?",
+    a: "Sí, cuando la función esté disponible, podrás subir documentos o copiar el texto para que Vonu lo analice, resuma y te señale qué revisar antes de decidir.",
   },
 ];
 
@@ -158,24 +158,24 @@ function CheckIcon() {
   );
 }
 
-export default function ComprobarWebFiablePage() {
-  const chatHref = `/chat?example=${encodeURIComponent(webExample)}`;
+export default function RevisarContratoPage() {
+  const chatHref = `/chat?example=${encodeURIComponent(contractExample)}`;
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "WebPage",
-        "@id": `${siteUrl}/comprobar-web-fiable#webpage`,
-        url: `${siteUrl}/comprobar-web-fiable`,
-        name: "Cómo saber si una web es fiable",
+        "@id": `${siteUrl}/revisar-contrato#webpage`,
+        url: `${siteUrl}/revisar-contrato`,
+        name: "Qué revisar antes de firmar un contrato",
         description:
-          "Guía para comprobar si una web o tienda online parece fiable antes de comprar, pagar o introducir datos.",
+          "Guía para revisar contratos, cláusulas, pagos, permanencias, penalizaciones y obligaciones antes de firmar.",
         inLanguage: "es-ES",
       },
       {
         "@type": "FAQPage",
-        "@id": `${siteUrl}/comprobar-web-fiable#faq`,
+        "@id": `${siteUrl}/revisar-contrato#faq`,
         mainEntity: faqs.map((item) => ({
           "@type": "Question",
           name: item.q,
@@ -210,17 +210,17 @@ export default function ComprobarWebFiablePage() {
         <div className="relative mx-auto max-w-[1500px] px-4 pb-14 pt-12 sm:px-6 sm:pb-20 sm:pt-16 lg:px-8">
           <div className="mx-auto max-w-5xl text-center">
             <p className="mb-5 inline-flex rounded-full border border-zinc-200 bg-white/80 px-4 py-2 text-[13.5px] font-semibold text-zinc-600 shadow-sm">
-              Web fiable · Tienda online · Compra segura
+              Contratos · Cláusulas · Antes de firmar
             </p>
 
             <h1 className="mx-auto max-w-5xl text-[50px] font-semibold leading-[0.94] tracking-[-0.075em] text-zinc-950 sm:text-[76px] lg:text-[104px]">
-              Cómo saber si una web es fiable.
+              Qué revisar antes de firmar un contrato.
             </h1>
 
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
-              Si una tienda online tiene un descuento enorme, te pide pagar por
-              transferencia o algo no termina de encajar, revisa la web antes de
-              meter tus datos o comprar.
+              Antes de aceptar condiciones, pagar una señal o firmar un documento,
+              revisa cláusulas, pagos, permanencias, penalizaciones y obligaciones
+              que pueden darte problemas después.
             </p>
 
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
@@ -228,7 +228,7 @@ export default function ComprobarWebFiablePage() {
                 href={chatHref}
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1a73e8] px-6 py-3 text-[15px] font-semibold text-white shadow-[0_14px_30px_rgba(26,115,232,0.25)] transition hover:scale-[1.02] active:scale-[0.99]"
               >
-                Comprobar una web
+                Revisar un contrato
                 <ArrowIcon />
               </Link>
 
@@ -253,13 +253,13 @@ export default function ComprobarWebFiablePage() {
                 </p>
 
                 <h2 className="mt-3 text-[42px] font-semibold leading-[0.98] tracking-[-0.06em] text-zinc-950 sm:text-[64px]">
-                  Si parece demasiado bueno, revísalo.
+                  No firmes algo que no entiendes.
                 </h2>
 
                 <p className="mt-5 text-[17px] leading-8 text-zinc-600">
-                  Una web puede tener buen diseño, candado HTTPS y fotos
-                  profesionales, pero seguir siendo poco fiable. Lo importante
-                  es comprobar quién está detrás, cómo cobra y qué garantías da.
+                  Un contrato no solo importa por lo que dice en grande. Muchas
+                  veces el riesgo está en condiciones pequeñas: plazos,
+                  renovaciones, gastos, penalizaciones o renuncias.
                 </p>
               </div>
 
@@ -290,13 +290,13 @@ export default function ComprobarWebFiablePage() {
               </p>
 
               <h2 className="mt-3 max-w-3xl text-[42px] font-semibold leading-[0.98] tracking-[-0.06em] text-zinc-950 sm:text-[64px]">
-                Pistas de una web o tienda poco fiable.
+                Puntos delicados que conviene mirar.
               </h2>
             </div>
 
             <p className="max-w-md text-[17px] leading-8 text-zinc-600">
-              No hay una sola prueba mágica. Lo útil es mirar varias señales
-              juntas antes de pagar o introducir datos.
+              Una cláusula aislada puede parecer normal, pero el conjunto del
+              contrato puede dejarte en una posición poco clara o desequilibrada.
             </p>
           </div>
 
@@ -327,12 +327,12 @@ export default function ComprobarWebFiablePage() {
             </p>
 
             <h2 className="mt-3 max-w-3xl text-[42px] font-semibold leading-[0.96] tracking-[-0.065em] sm:text-[64px]">
-              Muchas webs dudosas siguen patrones parecidos.
+              No todos los contratos se revisan igual.
             </h2>
 
             <p className="mt-5 max-w-xl text-[17px] leading-8 text-zinc-300">
-              Cambian los productos y el diseño, pero se repiten las prisas, los
-              precios imposibles y los pagos con poca protección.
+              Un alquiler, un trabajo, un servicio o una suscripción tienen
+              riesgos distintos. Lo importante es saber qué mirar en cada caso.
             </p>
           </div>
 
@@ -364,12 +364,12 @@ export default function ComprobarWebFiablePage() {
               </p>
 
               <h2 className="mt-3 max-w-3xl text-[42px] font-semibold leading-[0.98] tracking-[-0.06em] text-zinc-950 sm:text-[64px]">
-                El diseño bonito no garantiza que sea segura.
+                Firmar rápido puede salir caro.
               </h2>
 
               <p className="mt-5 max-w-xl text-[17px] leading-8 text-zinc-600">
-                Una web falsa puede parecer profesional. Por eso conviene mirar
-                señales externas, métodos de pago y datos reales antes de actuar.
+                Muchas dudas aparecen después de firmar. Por eso conviene revisar
+                antes, pedir aclaraciones y guardar todo por escrito.
               </p>
             </div>
 
@@ -396,7 +396,7 @@ export default function ComprobarWebFiablePage() {
             </p>
 
             <h2 className="mt-3 text-[42px] font-semibold tracking-[-0.06em] text-zinc-950 sm:text-[58px]">
-              Dudas habituales sobre webs fiables
+              Dudas habituales antes de firmar
             </h2>
           </div>
 
@@ -424,25 +424,25 @@ export default function ComprobarWebFiablePage() {
         </div>
       </section>
 
-      <ResourceSignup page="comprobar-web-fiable" />
+      <ResourceSignup page="revisar-contrato" />
 
       <section className="bg-zinc-950 text-white">
         <div className="mx-auto max-w-[1500px] px-4 py-16 text-center sm:px-6 lg:px-8">
           <h2 className="mx-auto max-w-5xl text-[46px] font-semibold leading-[0.96] tracking-[-0.07em] sm:text-[74px]">
-            Antes de comprar, comprueba la web.
+            Antes de firmar, revísalo con calma.
           </h2>
 
           <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
-            Pega el enlace, explica qué te pide la página o sube una captura.
-            Vonu te ayuda a revisar señales de riesgo antes de pagar o compartir
-            datos.
+            Pega una cláusula, sube el contrato o explica la situación. Vonu te
+            ayuda a entender qué dice, qué revisar y qué preguntar antes de
+            decidir.
           </p>
 
           <Link
             href={chatHref}
             className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
           >
-            Comprobar web con Vonu
+            Revisar contrato con Vonu
             <ArrowIcon />
           </Link>
         </div>
