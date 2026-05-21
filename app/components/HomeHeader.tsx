@@ -32,7 +32,7 @@ function ArrowIcon() {
 }
 
 const homeLinks = [
-  { label: "Producto", href: "/#producto" },
+  { label: "Producto", href: "/producto" },
   { label: "Casos de uso", href: "/#casos" },
   { label: "Precios", href: "/precios" },
   { label: "Cómo funciona", href: "/como-funciona" },
