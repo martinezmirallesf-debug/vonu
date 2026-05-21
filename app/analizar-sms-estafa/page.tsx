@@ -226,7 +226,7 @@ export default function AnalizarSmsEstafaPage() {
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 href={chatHref}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1a73e8] px-6 py-3 text-[15px] font-semibold text-white shadow-[0_14px_30px_rgba(26,115,232,0.25)] transition hover:scale-[1.02] active:scale-[0.99]"
+                className="inline-flex min-w-[260px] items-center justify-center gap-2 rounded-full bg-[#1a73e8] px-6 py-3.5 text-[15px] font-semibold text-white shadow-[0_14px_30px_rgba(26,115,232,0.25)] transition hover:scale-[1.02] active:scale-[0.99]"
               >
                 Analizar mi SMS
                 <ArrowIcon />
@@ -234,7 +234,7 @@ export default function AnalizarSmsEstafaPage() {
 
               <a
                 href="#senales"
-                className="inline-flex items-center justify-center rounded-full border border-zinc-200 bg-white px-6 py-3 text-[15px] font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50"
+                className="inline-flex min-w-[260px] items-center justify-center rounded-full border border-zinc-200 bg-white px-6 py-3.5 text-[15px] font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50"
               >
                 Ver señales de alerta
               </a>
