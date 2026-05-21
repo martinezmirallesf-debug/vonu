@@ -66,6 +66,12 @@ const featuredResources = [
   text: "Revisa mensajes o situaciones donde sientes culpa, presión, urgencia o confusión antes de contestar o decidir.",
   href: "/detectar-manipulacion",
 },
+{
+  title: "Cómo comprobar si una tienda online es fiable",
+  category: "Compras online",
+  text: "Antes de pagar, revisa si la tienda muestra señales reales de confianza o posibles indicios de estafa.",
+  href: "/comprobar-tienda-online",
+},
 ];
 
 const categories = [
