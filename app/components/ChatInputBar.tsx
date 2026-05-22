@@ -337,21 +337,21 @@ const shellShadow = voiceMode
       : "top-1/2 -translate-y-1/2 h-8",
   ].join(" ")}
 >
-                  <div className="pointer-events-auto flex shrink-0 items-center -ml-0.5">
+            <div className="pointer-events-auto flex shrink-0 items-center -ml-1">
   <button
-    onClick={openFilePicker}
-    disabled={!!isTyping}
-    className={[
-      "h-9 w-9 rounded-full text-zinc-900",
-      "hover:bg-zinc-100 active:bg-zinc-100",
-      "transition-colors grid place-items-center cursor-pointer",
-      "disabled:opacity-50 p-0 border-none bg-transparent",
-    ].join(" ")}
-    aria-label="Abrir menú de herramientas"
-    title="Abrir menú de herramientas"
-  >
-    <PlusIcon className="h-[20px] w-[20px]" />
-  </button>
+  onClick={openFilePicker}
+  disabled={!!isTyping}
+  className={[
+    "h-10 w-10 rounded-full text-zinc-900",
+    "hover:bg-zinc-100 active:bg-zinc-100",
+    "transition-colors grid place-items-center cursor-pointer",
+    "disabled:opacity-50 p-0 border-none bg-transparent",
+  ].join(" ")}
+  aria-label="Abrir menú de herramientas"
+  title="Abrir menú de herramientas"
+>
+  <PlusIcon className="h-[22px] w-[22px]" />
+</button>
 
   <input
     ref={fileInputRef}
