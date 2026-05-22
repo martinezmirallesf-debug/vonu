@@ -25,128 +25,66 @@ export default function TopBar({
   menuOpen,
   setMenuOpen,
   HOME_URL,
-  handleOpenPlansCTA,
-  authLoading,
-  isPro,
-  isLoggedIn,
-  topPlanLabel,
-  openLoginModal,
-  authUserEmail,
-  proLoading,
-  planLabelText,
-  userInitial,
-  UserIcon,
 }: TopBarProps) {
   return (
     <div
       ref={topBarRef}
-      className={`fixed ${menuOpen ? "z-[95]" : "z-50"} flex items-center justify-between pointer-events-none`}
+      className={`fixed ${
+        menuOpen ? "z-[95]" : "z-50"
+      } flex items-center justify-between pointer-events-none`}
       style={{
         top: "calc(env(safe-area-inset-top, 0px) + 12px)",
-        left: "max(16px, env(safe-area-inset-left, 0px))",
-        right: "max(16px, env(safe-area-inset-right, 0px))",
+        left: "max(24px, env(safe-area-inset-left, 0px))",
+        right: "max(24px, env(safe-area-inset-right, 0px))",
       }}
     >
+      {/* Burger bubble */}
       <div className="pointer-events-auto">
-        <div className="h-11 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm flex items-center overflow-hidden pl-1 pr-4">
-          <button
-            type="button"
-            onClick={() => setMenuOpen((v) => !v)}
-            className="h-11 w-11 flex items-center justify-center rounded-full bg-white/95 hover:bg-white/95 transition-colors cursor-pointer p-0 shrink-0"
-            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-            title={menuOpen ? "Cerrar menú" : "Menú"}
-          >
-            <span className="relative block h-5 w-[18px]">
-              <span
-                className={[
-                  "absolute left-0 block h-[2.8px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
-                  menuOpen ? "top-[8px] w-[16px] rotate-45" : "top-[5px] w-[16px]",
-                ].join(" ")}
-              />
-              <span
-                className={[
-                  "absolute left-0 block h-[2.8px] rounded-full bg-zinc-900 transition-all duration-300 ease-out origin-center",
-                  menuOpen ? "top-[8px] w-[16px] -rotate-45" : "top-[11px] w-[11px]",
-                ].join(" ")}
-              />
-            </span>
-          </button>
-
-          <a
-            href={HOME_URL}
-            className="h-11 flex items-center rounded-full bg-white/95 hover:bg-white/95 transition-colors cursor-pointer pl-1"
-            aria-label="Ir a la home"
-            title="Ir a la home"
-          >
-            <span className="font-sans text-[19px] leading-none tracking-[-0.03em] text-zinc-900 font-semibold">
-              VonuAI
-            </span>
-          </a>
-        </div>
+        <button
+          type="button"
+          onClick={() => setMenuOpen((v) => !v)}
+          className={[
+            "grid h-11 w-11 place-items-center rounded-full",
+            "border border-zinc-200/80 bg-white/92 text-zinc-950 shadow-sm",
+            "backdrop-blur-xl transition active:scale-95",
+          ].join(" ")}
+          aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+          aria-expanded={menuOpen}
+          title={menuOpen ? "Cerrar menú" : "Menú"}
+        >
+          <span className="relative block h-5 w-6">
+            <span
+              className={[
+                "absolute left-0 top-[6px] h-[2.4px] rounded-full bg-current transition-all duration-200",
+                menuOpen ? "w-6 translate-y-[4px] rotate-45" : "w-6",
+              ].join(" ")}
+            />
+            <span
+              className={[
+                "absolute left-0 top-[14px] h-[2.4px] rounded-full bg-current transition-all duration-200",
+                menuOpen ? "w-6 -translate-y-[4px] -rotate-45" : "w-[17px]",
+              ].join(" ")}
+            />
+          </span>
+        </button>
       </div>
 
-      <div className="pointer-events-auto flex items-center gap-2">
-        <button
-          onClick={handleOpenPlansCTA}
-          disabled={authLoading}
+      {/* Logo bubble */}
+      <div className="pointer-events-auto">
+        <a
+          href={HOME_URL}
           className={[
-            "h-11 px-4 rounded-full transition-colors cursor-pointer shadow-sm border",
-            authLoading
-              ? "bg-zinc-200 text-zinc-500 border-zinc-200 cursor-not-allowed"
-              : "bg-blue-600 text-white hover:bg-blue-700 border-blue-700/10",
+            "flex h-11 items-center rounded-full px-4",
+            "border border-zinc-200/80 bg-white/92 shadow-sm",
+            "backdrop-blur-xl transition active:scale-[0.99]",
           ].join(" ")}
-          title={
-            authLoading
-              ? "Cargando…"
-              : isPro
-              ? "Tienes Plus+"
-              : isLoggedIn
-              ? "Plan Gratis"
-              : "Ver planes"
-          }
+          aria-label="Ir a la home"
+          title="Ir a la home"
         >
-          {topPlanLabel}
-        </button>
-
-        <button
-          onClick={() => openLoginModal("signin")}
-          disabled={authLoading}
-          className={[
-            "relative h-11 w-11",
-            "bg-white/95 backdrop-blur-xl border border-zinc-200 shadow-sm",
-            "grid place-items-center text-zinc-900 hover:bg-white transition-colors cursor-pointer",
-            "rounded-full p-0",
-            authLoading ? "opacity-60 cursor-not-allowed" : "",
-          ].join(" ")}
-          aria-label={isLoggedIn ? "Ver cuenta" : "Iniciar sesión"}
-          title={
-            authLoading
-              ? "Cargando…"
-              : isLoggedIn
-              ? `Sesión: ${authUserEmail ?? "activa"} · Plan: ${
-                  proLoading ? "..." : planLabelText
-                }`
-              : "Iniciar sesión"
-          }
-        >
-          <span
-            className={[
-              "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white",
-              authLoading
-                ? "bg-zinc-300"
-                : isLoggedIn
-                ? "bg-emerald-500"
-                : "bg-zinc-300",
-            ].join(" ")}
-            aria-hidden="true"
-          />
-
-          {isLoggedIn ? (
-            <span className="text-[13px] font-semibold">{userInitial}</span>
-          ) : (
-            <UserIcon className="h-5 w-5" />
-          )}
-        </button>
+          <span className="font-sans text-[19px] font-semibold leading-none tracking-[-0.03em] text-zinc-900">
+            VonuAI
+          </span>
+        </a>
       </div>
     </div>
   );
