@@ -2,7 +2,14 @@
 
 import React from "react";
 
-type FilePickerType = "image" | "pdf" | "audio" | "video" | "url" | "phone";
+type FilePickerType =
+  | "image"
+  | "pdf"
+  | "audio"
+  | "video"
+  | "url"
+  | "phone"
+  | "board";
 
 type FilePickerModalProps = {
   open: boolean;
@@ -21,23 +28,17 @@ function CloseIcon({ className }: { className?: string }) {
 
 function ImageIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-9 w-9"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg className={className ?? "h-6 w-6"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <rect x="3.5" y="4.5" width="17" height="15" rx="3.2" stroke="currentColor" strokeWidth="1.9" />
       <circle cx="9" cy="9" r="1.5" fill="currentColor" />
-      <path
-        d="M6.5 16.2 10.2 12.6l2.5 2.5 2.5-2.5 2.3 3.6"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M6.5 16.2 10.2 12.6l2.5 2.5 2.5-2.5 2.3 3.6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
 function PdfIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-9 w-9"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg className={className ?? "h-6 w-6"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M8 3.5h6l4 4V19a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5.5a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
       <path d="M14 3.5v4h4" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
       <path d="M8.5 15.8h7" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
@@ -48,7 +49,7 @@ function PdfIcon({ className }: { className?: string }) {
 
 function AudioIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-9 w-9"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg className={className ?? "h-6 w-6"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M6 13v-2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       <path d="M9 16v-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       <path d="M12 18v-12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -60,7 +61,7 @@ function AudioIcon({ className }: { className?: string }) {
 
 function VideoIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-9 w-9"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg className={className ?? "h-6 w-6"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <rect x="3.5" y="6" width="12" height="12" rx="2.8" stroke="currentColor" strokeWidth="1.9" />
       <path d="m15.5 10 5-3v10l-5-3" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
       <path d="M8.1 9.25 11.9 12l-3.8 2.75V9.25Z" fill="currentColor" />
@@ -70,73 +71,88 @@ function VideoIcon({ className }: { className?: string }) {
 
 function LinkIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-9 w-9"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M9.9 13.9 8.2 15.6a3.35 3.35 0 1 1-4.74-4.74l2.7-2.7a3.35 3.35 0 0 1 4.74 0"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M14.1 10.1 15.8 8.4a3.35 3.35 0 1 1 4.74 4.74l-2.7 2.7a3.35 3.35 0 0 1-4.74 0"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M8.0 15.7 16.0 8.3"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-      />
+    <svg className={className ?? "h-6 w-6"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M9.9 13.9 8.2 15.6a3.35 3.35 0 1 1-4.74-4.74l2.7-2.7a3.35 3.35 0 0 1 4.74 0" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14.1 10.1 15.8 8.4a3.35 3.35 0 1 1 4.74 4.74l-2.7 2.7a3.35 3.35 0 0 1-4.74 0" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8.0 15.7 16.0 8.3" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
     </svg>
   );
 }
 
 function PhoneIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-9 w-9"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M6.8 4.5h2.1c.5 0 .9.34 1.02.83l.56 2.24c.09.36 0 .73-.26 1.01l-1.1 1.2a14.3 14.3 0 0 0 5.61 5.61l1.2-1.1c.28-.26.65-.35 1.01-.26l2.24.56c.49.12.83.52.83 1.02v2.1c0 .6-.49 1.09-1.09 1.09C10.91 19 5 13.09 5 5.59c0-.6.49-1.09 1.09-1.09Z"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinejoin="round"
-      />
+    <svg className={className ?? "h-6 w-6"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M6.8 4.5h2.1c.5 0 .9.34 1.02.83l.56 2.24c.09.36 0 .73-.26 1.01l-1.1 1.2a14.3 14.3 0 0 0 5.61 5.61l1.2-1.1c.28-.26.65-.35 1.01-.26l2.24.56c.49.12.83.52.83 1.02v2.1c0 .6-.49 1.09-1.09 1.09C10.91 19 5 13.09 5 5.59c0-.6.49-1.09 1.09-1.09Z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
     </svg>
   );
 }
 
-function OptionButton({
+function BoardIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-6 w-6"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M5 5.5h14a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7.5a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="1.9" />
+      <path d="M7 15.5c2.2-4 4.2-4 6 0 1.2-2.2 2.5-2.2 4 0" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 9h5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function SparkIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-6 w-6"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 3.5 13.8 9l5.7 1.8-5.7 1.8L12 18.5l-1.8-5.9-5.7-1.8L10.2 9 12 3.5Z" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function GlobeIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-6 w-6"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.9" />
+      <path d="M3.8 12h16.4" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <path d="M12 3.5c2.2 2.4 3.2 5.1 3.2 8.5s-1 6.1-3.2 8.5c-2.2-2.4-3.2-5.1-3.2-8.5s1-6.1 3.2-8.5Z" stroke="currentColor" strokeWidth="1.9" />
+    </svg>
+  );
+}
+
+function OptionRow({
   icon,
   label,
+  description,
   onClick,
+  disabled = false,
 }: {
   icon: React.ReactNode;
   label: string;
+  description: string;
   onClick: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       className={[
-        "aspect-square w-full rounded-[24px]",
-        "border border-zinc-200 bg-white",
-        "hover:bg-zinc-50 active:bg-zinc-100",
-        "transition-colors duration-150 cursor-pointer",
+        "group flex w-full items-center gap-4 rounded-[24px] px-3 py-3 text-left",
+        "transition-colors duration-150",
+        disabled
+          ? "cursor-not-allowed opacity-45"
+          : "cursor-pointer hover:bg-zinc-100 active:bg-zinc-100",
       ].join(" ")}
     >
-      <div className="flex h-full flex-col items-center justify-center px-3">
-        <div className="text-zinc-900">
-          {icon}
-        </div>
+      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-950 transition-colors group-hover:bg-white">
+        {icon}
+      </span>
 
-        <div className="mt-4 text-[13px] md:text-[14px] font-medium tracking-[-0.01em] text-zinc-900 text-center">
+      <span className="min-w-0 flex-1">
+        <span className="block text-[17px] font-semibold tracking-[-0.025em] text-zinc-950">
           {label}
-        </div>
-      </div>
+        </span>
+        <span className="mt-0.5 block text-[13px] leading-5 text-zinc-500">
+          {description}
+        </span>
+      </span>
     </button>
   );
 }
@@ -151,67 +167,104 @@ export default function FilePickerModal({
   return (
     <div className="fixed inset-0 z-[110]">
       <div
-        className="absolute inset-0 bg-black/20 backdrop-blur-[6px]"
+        className="absolute inset-0 bg-black/20 backdrop-blur-[7px]"
         onClick={onClose}
         aria-hidden="true"
       />
 
       <div className="absolute inset-0 flex items-center justify-center p-3 md:p-6">
         <div
-          className="mx-auto w-full max-w-[420px] rounded-[30px] border border-zinc-200 bg-white/92 backdrop-blur-xl overflow-hidden"
+          className="mx-auto w-full max-w-[520px] overflow-hidden rounded-[34px] border border-zinc-200 bg-white/94 shadow-[0_24px_90px_rgba(0,0,0,0.20)] backdrop-blur-xl"
           onClick={(e) => e.stopPropagation()}
         >
+          <div className="relative px-5 pb-3 pt-5">
+            <div className="text-[25px] font-semibold tracking-[-0.055em] text-zinc-950">
+              ¿Qué quieres añadir?
+            </div>
 
-          <div className="relative px-4 pt-5 pb-2">
-  <div className="text-[17px] md:text-[18px] font-semibold tracking-[-0.02em] text-zinc-900">
-    Subir para analizar
-  </div>
+            <div className="mt-1 max-w-[320px] text-[13.5px] leading-5 text-zinc-500">
+              Sube, pega o crea una ayuda para que Vonu pueda analizar mejor.
+            </div>
 
-  <button
-    type="button"
-    onClick={onClose}
-    className="absolute top-4 right-4 h-9 w-9 rounded-full border border-zinc-200 bg-white hover:bg-zinc-100 transition-colors grid place-items-center text-zinc-700 cursor-pointer shrink-0"
-    aria-label="Cerrar"
-    title="Cerrar"
-  >
-    <CloseIcon className="h-[18px] w-[18px]" />
-  </button>
-</div>
-
-          <div className="p-3 pt-2 grid grid-cols-2 gap-3">
-            <OptionButton
-              icon={<ImageIcon className="h-[42px] w-[42px]" />}
-              label="Imagen"
-              onClick={() => onPickType("image")}
-            />
-            <OptionButton
-              icon={<PdfIcon className="h-[42px] w-[42px]" />}
-              label="PDF"
-              onClick={() => onPickType("pdf")}
-            />
-            <OptionButton
-              icon={<AudioIcon className="h-[42px] w-[42px]" />}
-              label="Audio"
-              onClick={() => onPickType("audio")}
-            />
-            <OptionButton
-              icon={<VideoIcon className="h-[42px] w-[42px]" />}
-              label="Vídeo"
-              onClick={() => onPickType("video")}
-            />
-            <OptionButton
-              icon={<LinkIcon className="h-[42px] w-[42px]" />}
-              label="Enlace"
-              onClick={() => onPickType("url")}
-            />
-            <OptionButton
-              icon={<PhoneIcon className="h-[42px] w-[42px]" />}
-              label="Nº teléfono"
-              onClick={() => onPickType("phone")}
-            />
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute right-4 top-4 grid h-11 w-11 place-items-center rounded-full border border-zinc-200 bg-white text-zinc-700 shadow-sm transition-colors hover:bg-zinc-100"
+              aria-label="Cerrar"
+              title="Cerrar"
+            >
+              <CloseIcon className="h-[19px] w-[19px]" />
+            </button>
           </div>
 
-          <div className="pb-3" />
+          <div className="max-h-[min(68dvh,620px)] overflow-y-auto px-2 pb-3 [scrollbar-width:thin]">
+            <OptionRow
+              icon={<ImageIcon />}
+              label="Imagen"
+              description="Analiza capturas, fotos o documentos visuales."
+              onClick={() => onPickType("image")}
+            />
+
+            <OptionRow
+              icon={<PdfIcon />}
+              label="PDF o documento"
+              description="Revisa contratos, facturas o documentos largos."
+              onClick={() => onPickType("pdf")}
+            />
+
+            <OptionRow
+              icon={<AudioIcon />}
+              label="Audio"
+              description="Transcribe y analiza notas de voz o grabaciones."
+              onClick={() => onPickType("audio")}
+            />
+
+            <OptionRow
+              icon={<VideoIcon />}
+              label="Vídeo"
+              description="Analiza vídeos o posibles señales de manipulación."
+              onClick={() => onPickType("video")}
+            />
+
+            <OptionRow
+              icon={<LinkIcon />}
+              label="Enlace"
+              description="Comprueba webs, tiendas o páginas sospechosas."
+              onClick={() => onPickType("url")}
+            />
+
+            <OptionRow
+              icon={<PhoneIcon />}
+              label="Nº teléfono"
+              description="Revisa llamadas, SMS o números sospechosos."
+              onClick={() => onPickType("phone")}
+            />
+
+            <OptionRow
+              icon={<BoardIcon />}
+              label="Pizarra / ayuda visual"
+              description="Crea un esquema, dibujo o explicación visual."
+              onClick={() => onPickType("board")}
+            />
+
+            <div className="my-2 border-t border-zinc-100" />
+
+            <OptionRow
+              icon={<SparkIcon />}
+              label="Crear imagen"
+              description="Próximamente: generar una imagen o apoyo visual."
+              onClick={() => {}}
+              disabled
+            />
+
+            <OptionRow
+              icon={<GlobeIcon />}
+              label="Búsqueda en Internet"
+              description="Próximamente: comprobar información actualizada."
+              onClick={() => {}}
+              disabled
+            />
+          </div>
         </div>
       </div>
     </div>

@@ -1812,9 +1812,17 @@ function scrollToBottomNow(behavior: ScrollBehavior = "smooth") {
   shouldStickToBottomRef.current = true;
 }
 
-function handlePickFileType(type: "image" | "pdf" | "audio" | "video" | "url" | "phone") {
+function handlePickFileType(
+  type: "image" | "pdf" | "audio" | "video" | "url" | "phone" | "board"
+) {
   setShowContextualFileCard(false);
   setFilePickerOpen(false);
+
+  if (type === "board") {
+    openBoard();
+    return;
+  }
+
   setPendingFileType(type);
 
   if (type === "image") {

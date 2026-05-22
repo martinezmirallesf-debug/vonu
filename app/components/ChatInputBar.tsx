@@ -62,20 +62,6 @@ function VoiceBarsIcon({
   );
 }
 
-function PencilIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 20h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path
-        d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function PlusIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -144,7 +130,6 @@ export default function ChatInputBar({
   realtimeStatus,
   isLoggedIn,
   toggleConversation,
-  openBoard,
   openFilePicker,
   fileInputRef,
   onSelectImage,
@@ -334,7 +319,7 @@ const shellShadow = voiceMode
       "[&::-webkit-scrollbar-thumb]:bg-zinc-400/45",
       shouldExpand
   ? "text-[18px] md:text-[17px] leading-7 pl-1 pr-3 pt-1.5 pb-2"
-  : "text-[17px] md:text-[16px] leading-[35px] py-0 pl-[74px] pr-[48px] overflow-hidden",
+  : "text-[17px] md:text-[16px] leading-[35px] py-0 pl-[48px] pr-[48px] overflow-hidden",
     ].join(" ")}
     style={{
       boxSizing: "border-box",
@@ -352,35 +337,30 @@ const shellShadow = voiceMode
       : "top-1/2 -translate-y-1/2 h-8",
   ].join(" ")}
 >
-                  <div className="pointer-events-auto flex shrink-0 items-center gap-0 -ml-1">
-                    <button
-                      onClick={openFilePicker}
-                      disabled={!!isTyping}
-                      className="h-8 w-8 rounded-full text-zinc-800 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
-                      aria-label="Adjuntar"
-                      title="Subir archivo para analizar"
-                    >
-                      <PlusIcon className="h-[18px] w-[18px]" />
-                    </button>
+                  <div className="pointer-events-auto flex shrink-0 items-center -ml-0.5">
+  <button
+    onClick={openFilePicker}
+    disabled={!!isTyping}
+    className={[
+      "h-9 w-9 rounded-full text-zinc-900",
+      "hover:bg-zinc-100 active:bg-zinc-100",
+      "transition-colors grid place-items-center cursor-pointer",
+      "disabled:opacity-50 p-0 border-none bg-transparent",
+    ].join(" ")}
+    aria-label="Abrir menú de herramientas"
+    title="Abrir menú de herramientas"
+  >
+    <PlusIcon className="h-[20px] w-[20px]" />
+  </button>
 
-                    <button
-                      onClick={openBoard}
-                      disabled={!!isTyping}
-                      className="h-8 w-8 rounded-full text-zinc-800 hover:bg-zinc-100 transition-colors grid place-items-center cursor-pointer disabled:opacity-50 p-0 border-none bg-transparent"
-                      aria-label="Pizarra"
-                      title="Pizarra"
-                    >
-                      <PencilIcon className="h-[17px] w-[17px]" />
-                    </button>
-
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*,application/pdf"
-                      onChange={onSelectImage}
-                      className="hidden"
-                    />
-                  </div>
+  <input
+    ref={fileInputRef}
+    type="file"
+    accept="image/*,application/pdf"
+    onChange={onSelectImage}
+    className="hidden"
+  />
+</div>
 
                   <button
                     onClick={mainButtonIsSend ? sendMessage : toggleConversation}
