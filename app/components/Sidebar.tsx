@@ -534,169 +534,164 @@ export default function Sidebar({
             </div>
 
             <div className="shrink-0 border-t border-zinc-200 pt-4">
-              <div className="mb-4 grid gap-2.5 md:gap-1.5">
-                {secondaryLinks.map((item) => (
-                  <a
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMenuOpen(false)}
-                    className="text-[16px] font-medium text-zinc-500 transition hover:text-zinc-950 md:text-[13px]"
-                  >
-                    {item.label}
-                  </a>
-                ))}
-              </div>
+  <div className="mb-4 grid gap-2.5 md:gap-1.5">
+    {secondaryLinks.map((item) => (
+      <a
+        key={item.href}
+        href={item.href}
+        onClick={() => setMenuOpen(false)}
+        className="text-[16px] font-medium text-zinc-500 transition hover:text-zinc-950 md:text-[13px]"
+      >
+        {item.label}
+      </a>
+    ))}
+  </div>
 
-              {accountOpen ? (
-                <div className="mb-3 max-h-[38dvh] overflow-y-auto rounded-[24px] border border-zinc-200 bg-white p-3 shadow-sm [scrollbar-width:thin] md:max-h-[44vh]">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <div className="min-w-0 flex items-center gap-3">
-                      {isLoggedIn ? (
-                        <div
-                          className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[13px] font-semibold text-white"
-                          style={{ backgroundColor: BRAND_BLUE }}
-                        >
-                          {userInitial}
-                        </div>
-                      ) : (
-                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-700">
-                          <UserIcon className="h-[17px] w-[17px]" />
-                        </div>
-                      )}
-
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-[14px] font-semibold text-zinc-900">
-                          {isLoggedIn ? authUserName ?? "Usuario" : "Sin iniciar sesión"}
-                        </div>
-                        <div className="truncate text-[11px] text-zinc-500">
-                          {isLoggedIn
-                            ? authUserEmail ?? "Email no disponible"
-                            : "Guarda y sincroniza tus consultas"}
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setAccountOpen(false)}
-                      className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
-                      aria-label="Cerrar menú de cuenta"
-                    >
-                      <CloseIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  <div className="grid gap-1">
-                    <div className="flex items-center justify-between rounded-[18px] px-3 py-2 text-[14px] text-zinc-700 md:text-[13px]">
-                      <span>Plan actual</span>
-                      <span className="font-semibold text-zinc-950">
-                        {currentPlanLabel === "Max"
-                          ? "Max"
-                          : currentPlanLabel === "Plus"
-                          ? PLUS_NODE
-                          : currentPlanLabel}
-                      </span>
-                    </div>
-
-                    <button
-                      onClick={openPlansFromMenu}
-                      className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50 md:text-[13px]"
-                    >
-                      <span>Planes</span>
-                      <ArrowIcon className="h-4 w-4 text-zinc-400" />
-                    </button>
-
-                    <button
-                      onClick={openPlansFromMenu}
-                      className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50 md:text-[13px]"
-                    >
-                      <span>Recargas</span>
-                      <ArrowIcon className="h-4 w-4 text-zinc-400" />
-                    </button>
-
-                    <a
-                      href="/recursos"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50 md:text-[13px]"
-                    >
-                      <span>Recursos</span>
-                      <ArrowIcon className="h-4 w-4 text-zinc-400" />
-                    </a>
-
-                    <button
-                      onClick={openPlansFromMenu}
-                      className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50 md:text-[13px]"
-                    >
-                      <span>Gestionar suscripción</span>
-                      <ArrowIcon className="h-4 w-4 text-zinc-400" />
-                    </button>
-
-                    {isLoggedIn ? (
-                      <button
-                        onClick={() => {
-                          logout();
-                          setMenuOpen(false);
-                        }}
-                        className="mt-1 flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-red-600 hover:bg-red-50 md:text-[13px]"
-                      >
-                        <span>Cerrar sesión</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          openLoginModal("signin");
-                          setMenuOpen(false);
-                        }}
-                        className="mt-1 flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-semibold md:text-[13px]"
-                        style={{ color: BRAND_BLUE }}
-                      >
-                        <span>Iniciar sesión</span>
-                        <ArrowIcon className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ) : null}
-
-              <button
-                onClick={() => setAccountOpen((v) => !v)}
-                disabled={authLoading}
-                className={[
-                  "flex w-full items-center justify-between rounded-full border border-zinc-200 bg-white px-4 py-3 shadow-sm transition active:scale-[0.99]",
-                  authLoading ? "opacity-60" : "hover:bg-zinc-50",
-                ].join(" ")}
-              >
-                <span className="flex min-w-0 items-center gap-3">
-                  <span
-                    className={[
-                      "grid h-8 w-8 shrink-0 place-items-center rounded-full text-[12px] font-semibold",
-                      isLoggedIn ? "text-white" : "bg-zinc-100 text-zinc-700",
-                    ].join(" ")}
-                    style={isLoggedIn ? { backgroundColor: BRAND_BLUE } : undefined}
-                  >
-                    {isLoggedIn ? userInitial : <UserIcon className="h-[17px] w-[17px]" />}
-                  </span>
-
-                  <span className="min-w-0 text-left">
-                    <span className="block truncate text-[14px] font-semibold text-zinc-950 md:text-[13px]">
-                      {isLoggedIn ? userLabel : "Cuenta"}
-                    </span>
-                    <span className="block truncate text-[12px] text-zinc-500 md:text-[11px]">
-                      Plan {currentPlanLabel === "Plus" ? "Plus" : currentPlanLabel}
-                    </span>
-                  </span>
-                </span>
-
-                <span
-                  className={[
-                    "text-[21px] leading-none text-zinc-400 transition",
-                    accountOpen ? "rotate-45" : "",
-                  ].join(" ")}
-                >
-                  +
-                </span>
-              </button>
+  {accountOpen ? (
+    <div className="mb-3 max-h-[46dvh] overflow-y-auto rounded-[24px] border border-zinc-200 bg-white p-3 shadow-sm [scrollbar-width:thin] md:max-h-[44vh]">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="min-w-0 flex items-center gap-3">
+          {isLoggedIn ? (
+            <div
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[13px] font-semibold text-white"
+              style={{ backgroundColor: BRAND_BLUE }}
+            >
+              {userInitial}
             </div>
+          ) : (
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-700">
+              <UserIcon className="h-[17px] w-[17px]" />
+            </div>
+          )}
+
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[14px] font-semibold text-zinc-900">
+              {isLoggedIn ? authUserName ?? "Usuario" : "Sin iniciar sesión"}
+            </div>
+            <div className="truncate text-[11px] text-zinc-500">
+              {isLoggedIn
+                ? authUserEmail ?? "Email no disponible"
+                : "Guarda y sincroniza tus consultas"}
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setAccountOpen(false)}
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+          aria-label="Cerrar menú de cuenta"
+        >
+          <CloseIcon className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="grid gap-1">
+        <div className="flex items-center justify-between rounded-[18px] px-3 py-2 text-[14px] text-zinc-700 md:text-[13px]">
+          <span>Plan actual</span>
+          <span className="font-semibold text-zinc-950">
+            {currentPlanLabel === "Max"
+              ? "Max"
+              : currentPlanLabel === "Plus"
+              ? PLUS_NODE
+              : currentPlanLabel}
+          </span>
+        </div>
+
+        <button
+          onClick={openPlansFromMenu}
+          className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50 md:text-[13px]"
+        >
+          <span>Planes</span>
+          <ArrowIcon className="h-4 w-4 text-zinc-400" />
+        </button>
+
+        <button
+          onClick={openPlansFromMenu}
+          className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50 md:text-[13px]"
+        >
+          <span>Recargas</span>
+          <ArrowIcon className="h-4 w-4 text-zinc-400" />
+        </button>
+
+        <a
+          href="/recursos"
+          onClick={() => setMenuOpen(false)}
+          className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50 md:text-[13px]"
+        >
+          <span>Recursos</span>
+          <ArrowIcon className="h-4 w-4 text-zinc-400" />
+        </a>
+
+        <button
+          onClick={openPlansFromMenu}
+          className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50 md:text-[13px]"
+        >
+          <span>Gestionar suscripción</span>
+          <ArrowIcon className="h-4 w-4 text-zinc-400" />
+        </button>
+
+        {isLoggedIn ? (
+          <button
+            onClick={() => {
+              logout();
+              setMenuOpen(false);
+            }}
+            className="mt-1 flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-red-600 hover:bg-red-50 md:text-[13px]"
+          >
+            <span>Cerrar sesión</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => {
+              openLoginModal("signin");
+              setMenuOpen(false);
+            }}
+            className="mt-1 flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-semibold md:text-[13px]"
+            style={{ color: BRAND_BLUE }}
+          >
+            <span>Iniciar sesión</span>
+            <ArrowIcon className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  ) : (
+    <button
+      onClick={() => setAccountOpen(true)}
+      disabled={authLoading}
+      className={[
+        "flex w-full items-center justify-between rounded-full border border-zinc-200 bg-white px-4 py-3 shadow-sm transition active:scale-[0.99]",
+        authLoading ? "opacity-60" : "hover:bg-zinc-50",
+      ].join(" ")}
+    >
+      <span className="flex min-w-0 items-center gap-3">
+        <span
+          className={[
+            "grid h-8 w-8 shrink-0 place-items-center rounded-full text-[12px] font-semibold",
+            isLoggedIn ? "text-white" : "bg-zinc-100 text-zinc-700",
+          ].join(" ")}
+          style={isLoggedIn ? { backgroundColor: BRAND_BLUE } : undefined}
+        >
+          {isLoggedIn ? userInitial : <UserIcon className="h-[17px] w-[17px]" />}
+        </span>
+
+        <span className="min-w-0 text-left">
+          <span className="block truncate text-[14px] font-semibold text-zinc-950 md:text-[13px]">
+            {isLoggedIn ? userLabel : "Cuenta"}
+          </span>
+          <span className="block truncate text-[12px] text-zinc-500 md:text-[11px]">
+            Plan {currentPlanLabel === "Plus" ? "Plus" : currentPlanLabel}
+          </span>
+        </span>
+      </span>
+
+      <span className="text-[21px] leading-none text-zinc-400 transition">
+        +
+      </span>
+    </button>
+  )}
+</div>
           </div>
         </aside>
       </div>
