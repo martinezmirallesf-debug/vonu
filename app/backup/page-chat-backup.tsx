@@ -6374,7 +6374,7 @@ return (
                     )}
 
                     {(m.text || m.streaming) && (
-                      <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[18px] md:text-[19px] leading-8 md:leading-8 text-zinc-900">
+                      <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[20px] md:text-[21px] leading-9 md:leading-9 text-zinc-900">
                         <span className="whitespace-pre-wrap">{mdText}</span>
                       </div>
                     )}
@@ -6445,7 +6445,7 @@ return (
                   )}
 
                   {(m.text || m.streaming) && (
-  <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[18px] md:text-[19px] leading-8 md:leading-8">
+  <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[20px] md:text-[21px] leading-9 md:leading-9">
     {mdText.includes('"elements"') || mdText.includes("```excalidraw") ? null : (
       <>
         <ReactMarkdown

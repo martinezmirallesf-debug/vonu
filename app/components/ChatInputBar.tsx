@@ -163,9 +163,9 @@ export default function ChatInputBar({
     const el = textareaRef.current;
     if (!el) return;
 
-    const COMPACT_HEIGHT = 35;
-    const EXPANDED_MIN_HEIGHT = 42;
-    const MAX_HEIGHT = 124;
+const COMPACT_HEIGHT = 44;
+const EXPANDED_MIN_HEIGHT = 54;
+const MAX_HEIGHT = 140;
 
     if (!shouldExpand) {
       el.style.height = `${COMPACT_HEIGHT}px`;
@@ -247,9 +247,9 @@ const shellShadow = voiceMode
     : isTyping || micMsg
     ? "animate-[vonuInputGlowBlueSoft_2400ms_ease-in-out_infinite]"
     : "",
-  shouldExpand
-  ? "rounded-[28px] px-3 pt-3 pb-2"
-  : "rounded-full px-2 py-1.5",
+shouldExpand
+  ? "rounded-[30px] px-4 pt-4 pb-3"
+  : "rounded-full px-3 py-2",
 ].join(" ")}
               style={{
                 borderColor: shellBorder,
@@ -318,8 +318,8 @@ const shellShadow = voiceMode
       "[&::-webkit-scrollbar-thumb]:rounded-full",
       "[&::-webkit-scrollbar-thumb]:bg-zinc-400/45",
       shouldExpand
-  ? "text-[18px] md:text-[17px] leading-7 pl-1 pr-3 pt-1.5 pb-2"
-  : "text-[17px] md:text-[16px] leading-[35px] py-0 pl-[48px] pr-[48px] overflow-hidden",
+  ? "text-[19px] md:text-[18px] leading-8 pl-1 pr-3 pt-1.5 pb-3"
+  : "text-[18px] md:text-[17px] leading-[44px] py-0 pl-[54px] pr-[54px] overflow-hidden",
     ].join(" ")}
     style={{
       boxSizing: "border-box",
@@ -333,8 +333,8 @@ const shellShadow = voiceMode
   className={[
     "pointer-events-none absolute inset-x-0 flex items-center justify-between",
     shouldExpand
-      ? "bottom-0 h-9"
-      : "top-1/2 -translate-y-1/2 h-8",
+  ? "bottom-0 h-10"
+  : "top-1/2 -translate-y-1/2 h-10",
   ].join(" ")}
 >
             <div className="pointer-events-auto flex shrink-0 items-center -ml-1">
@@ -342,7 +342,7 @@ const shellShadow = voiceMode
   onClick={openFilePicker}
   disabled={!!isTyping}
   className={[
-    "h-10 w-10 rounded-full text-zinc-900",
+    "h-11 w-11 rounded-full text-zinc-900",
     "hover:bg-zinc-100 active:bg-zinc-100",
     "transition-colors grid place-items-center cursor-pointer",
     "disabled:opacity-50 p-0 border-none bg-transparent",
@@ -350,7 +350,7 @@ const shellShadow = voiceMode
   aria-label="Abrir menú de herramientas"
   title="Abrir menú de herramientas"
 >
-  <PlusIcon className="h-[22px] w-[22px]" />
+  <PlusIcon className="h-[23px] w-[23px]" />
 </button>
 
   <input
@@ -366,7 +366,7 @@ const shellShadow = voiceMode
                     onClick={mainButtonIsSend ? sendMessage : toggleConversation}
                     disabled={mainButtonIsSend ? !canSend : !canUseVoice}
                     className={[
-                      "pointer-events-auto relative h-8 w-8 shrink-0 rounded-full flex items-center justify-center",
+                      "pointer-events-auto relative h-10 w-10 shrink-0 rounded-full flex items-center justify-center",
                       "transition-all duration-300",
                       mainButtonIsSend
                         ? "bg-[#1a73e8] text-white"
@@ -397,7 +397,7 @@ const shellShadow = voiceMode
 
                     <span className="relative z-10 flex h-full w-full items-center justify-center">
                       {mainButtonIsSend ? (
-                        <ArrowUpIcon className="h-[18px] w-[18px]" />
+                        <ArrowUpIcon className="h-[20px] w-[20px]" />
                       ) : (
                         <VoiceBarsIcon animated={voiceMode} />
                       )}
