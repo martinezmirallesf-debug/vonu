@@ -73,12 +73,7 @@ function TrashIcon({ className }: { className?: string }) {
 
 function PinIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-5 w-5"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M14 3l7 7-2.8.8-3.4 3.4.8 2.8-1.4 1.4-4.2-4.2-4.9 4.9a1 1 0 0 1-1.4-1.4l4.9-4.9-4.2-4.2 1.4-1.4 2.8.8 3.4-3.4L14 3Z"
         stroke="currentColor"
@@ -112,13 +107,17 @@ function DotsIcon({ className }: { className?: string }) {
 function UserIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M12 12c2.761 0 5-2.239 5-5S14.761 2 12 2 7 4.239 7 7s2.239 5 5 5Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <path d="M12 12c2.761 0 5-2.239 5-5S14.761 2 12 2 7 4.239 7 7s2.239 5 5 5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       <path d="M4 22c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ArrowUpRightIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-4 w-4"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M7 17 17 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M9 7h8v8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -277,37 +276,46 @@ export default function Sidebar({
   return (
     <>
       <div
-        className={`fixed inset-0 z-[80] transition-all duration-300 ${
-          menuOpen ? "bg-black/20 backdrop-blur-sm pointer-events-auto" : "pointer-events-none bg-transparent"
-        }`}
+        className={[
+          "fixed inset-0 z-[80] transition-all duration-300",
+          menuOpen ? "pointer-events-auto" : "pointer-events-none",
+          desktop ? (menuOpen ? "bg-black/8" : "bg-transparent") : "bg-white",
+          desktop && menuOpen ? "backdrop-blur-[2px]" : "",
+        ].join(" ")}
         onClick={() => setMenuOpen(false)}
       >
         <aside
           className={[
-            "absolute left-3 right-3 md:right-auto z-[81]",
-            "bg-white/94 backdrop-blur-xl",
-            "rounded-[30px] shadow-[0_18px_60px_rgba(0,0,0,0.18)] border border-zinc-200/80",
-            "overflow-hidden",
-            "transform transition-all duration-300 ease-out",
+            "absolute z-[81] bg-white transition-all duration-300 ease-out",
+            desktop
+              ? "left-0 top-0 bottom-0 w-[360px] border-r border-zinc-200/80 shadow-none"
+              : "inset-x-0 top-16 bottom-0 border-t border-zinc-100",
             menuOpen ? "translate-x-0 opacity-100" : "-translate-x-[110%] opacity-0",
           ].join(" ")}
           style={{
-            top: SIDEBAR_TOP,
-            bottom: 12,
-            width: desktop ? 370 : undefined,
-            maxWidth: "calc(100vw - 24px)",
+            width: desktop ? 360 : undefined,
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="h-full flex flex-col">
-            <div className="px-4 pt-4 pb-3 border-b border-zinc-100">
+          <div className="flex h-full flex-col">
+            <div className="border-b border-zinc-100 px-5 pb-4 pt-5 md:px-4 md:pt-5">
+              <div className="mb-4 hidden items-center justify-between md:flex">
+                <a
+                  href="/"
+                  className="text-[22px] font-semibold tracking-[-0.055em] text-zinc-950"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  VonuAI
+                </a>
+              </div>
+
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
                     createThreadAndActivate();
                     setMenuOpen(false);
                   }}
-                  className="flex-1 h-12 rounded-full text-white transition-colors px-4 flex items-center justify-center gap-2 cursor-pointer"
+                  className="flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full px-4 text-white transition-colors"
                   style={{ backgroundColor: BRAND_BLUE }}
                 >
                   <PlusIcon className="h-[18px] w-[18px]" />
@@ -315,27 +323,27 @@ export default function Sidebar({
                 </button>
 
                 <button
-  onClick={() => setAccountOpen((v) => !v)}
-  className="h-12 min-w-12 px-0 rounded-full bg-transparent hover:bg-zinc-100 active:bg-zinc-100 transition-colors flex items-center justify-center cursor-pointer shrink-0"
-  aria-label="Cuenta"
-  title="Cuenta"
->
+                  onClick={() => setAccountOpen((v) => !v)}
+                  className="flex h-12 min-w-12 shrink-0 cursor-pointer items-center justify-center rounded-full bg-transparent px-0 transition-colors hover:bg-zinc-100 active:bg-zinc-100"
+                  aria-label="Cuenta"
+                  title="Cuenta"
+                >
                   <div
-  className="h-12 w-12 rounded-full text-white text-[15px] font-semibold grid place-items-center"
-  style={{ backgroundColor: BRAND_BLUE }}
->
-  {userInitial}
-</div>
+                    className="grid h-12 w-12 place-items-center rounded-full text-[15px] font-semibold text-white"
+                    style={{ backgroundColor: BRAND_BLUE }}
+                  >
+                    {userInitial}
+                  </div>
                 </button>
               </div>
 
-              <div className="mt-3 relative">
-                <SearchIcon className="h-[18px] w-[18px] text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <div className="relative mt-3">
+                <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" />
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Buscar conversaciones"
-                  className="w-full h-12 rounded-full border border-zinc-200 bg-zinc-50/80 pl-11 pr-4 text-[14px] text-zinc-900 placeholder:text-zinc-500 outline-none focus:border-zinc-300"
+                  className="h-12 w-full rounded-full border border-zinc-200 bg-zinc-50/80 pl-11 pr-4 text-[14px] text-zinc-900 outline-none placeholder:text-zinc-500 focus:border-zinc-300"
                 />
               </div>
 
@@ -345,15 +353,19 @@ export default function Sidebar({
                     <>
                       <div className="flex items-center gap-3">
                         <div
-                          className="h-10 w-10 rounded-full text-white text-[14px] font-semibold grid place-items-center shrink-0"
+                          className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-[14px] font-semibold text-white"
                           style={{ backgroundColor: BRAND_BLUE }}
                         >
                           {userInitial}
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <div className="text-[14px] font-semibold text-zinc-900 truncate">{authUserName ?? "Usuario"}</div>
-                          <div className="text-[11px] text-zinc-500 truncate">{authUserEmail ?? "Email no disponible"}</div>
+                          <div className="truncate text-[14px] font-semibold text-zinc-900">
+                            {authUserName ?? "Usuario"}
+                          </div>
+                          <div className="truncate text-[11px] text-zinc-500">
+                            {authUserEmail ?? "Email no disponible"}
+                          </div>
                         </div>
                       </div>
 
@@ -370,37 +382,41 @@ export default function Sidebar({
                         </div>
 
                         <button
-  onClick={() => {
-    handleOpenPlansCTA();
-    setMenuOpen(false);
-  }}
-  className="h-8 px-3 rounded-full bg-transparent hover:bg-zinc-100 active:bg-zinc-100 text-[12px] font-semibold transition-colors cursor-pointer"
-  style={{ color: BRAND_BLUE }}
->
+                          onClick={() => {
+                            handleOpenPlansCTA();
+                            setMenuOpen(false);
+                          }}
+                          className="h-8 cursor-pointer rounded-full bg-transparent px-3 text-[12px] font-semibold transition-colors hover:bg-zinc-100 active:bg-zinc-100"
+                          style={{ color: BRAND_BLUE }}
+                        >
                           {currentPlanLabel === "Gratis" ? "Mejorar" : "Ver"}
                         </button>
                       </div>
 
                       <button
-  onClick={() => {
-    logout();
-    setMenuOpen(false);
-  }}
-  className="mt-3 w-full h-10 rounded-full bg-transparent hover:bg-zinc-100 active:bg-zinc-100 text-[13px] font-semibold text-zinc-800 transition-colors cursor-pointer"
->
+                        onClick={() => {
+                          logout();
+                          setMenuOpen(false);
+                        }}
+                        className="mt-3 h-10 w-full cursor-pointer rounded-full bg-transparent text-[13px] font-semibold text-zinc-800 transition-colors hover:bg-zinc-100 active:bg-zinc-100"
+                      >
                         Cerrar sesión
                       </button>
                     </>
                   ) : (
                     <>
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-zinc-100 text-zinc-700 grid place-items-center shrink-0">
+                        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-700">
                           <UserIcon className="h-[18px] w-[18px]" />
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <div className="text-[14px] font-semibold text-zinc-900">Sin iniciar sesión</div>
-                          <div className="text-[11px] text-zinc-500">Guarda y sincroniza tus consultas</div>
+                          <div className="text-[14px] font-semibold text-zinc-900">
+                            Sin iniciar sesión
+                          </div>
+                          <div className="text-[11px] text-zinc-500">
+                            Guarda y sincroniza tus consultas
+                          </div>
                         </div>
                       </div>
 
@@ -409,7 +425,7 @@ export default function Sidebar({
                           openLoginModal("signin");
                           setMenuOpen(false);
                         }}
-                        className="mt-3 w-full h-10 rounded-full text-white text-[13px] font-semibold transition-colors cursor-pointer"
+                        className="mt-3 h-10 w-full cursor-pointer rounded-full text-[13px] font-semibold text-white transition-colors"
                         style={{ backgroundColor: BRAND_BLUE }}
                       >
                         Iniciar sesión
@@ -420,7 +436,7 @@ export default function Sidebar({
               ) : null}
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2 [scrollbar-width:thin]">
+            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 [scrollbar-width:thin] md:px-2">
               <div className="px-2 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
                 Recientes
               </div>
@@ -451,9 +467,9 @@ export default function Sidebar({
                           activateThread(t.id);
                           setMenuOpen(false);
                         }}
-                        className="w-full text-left px-4 py-3 cursor-pointer"
+                        className="w-full cursor-pointer px-4 py-3 text-left"
                       >
-                        <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex min-w-0 items-center gap-3">
                           <div className="min-w-0 flex-1">
                             <div
                               className={[
@@ -464,14 +480,14 @@ export default function Sidebar({
                               {t.title}
                             </div>
 
-                            <div className="mt-1 flex items-center gap-2 text-[11px] text-zinc-400 truncate">
+                            <div className="mt-1 flex items-center gap-2 truncate text-[11px] text-zinc-400">
                               <span>{when}</span>
                               {pinned ? <span style={{ color: BRAND_BLUE }}>• Fijada</span> : null}
                             </div>
                           </div>
 
                           {active ? (
-                            <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: BRAND_BLUE }} />
+                            <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: BRAND_BLUE }} />
                           ) : null}
                         </div>
                       </button>
@@ -479,7 +495,7 @@ export default function Sidebar({
                       {desktop ? (
                         <button
                           onClick={() => openThreadActions(t.id)}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full opacity-0 group-hover:opacity-100 hover:bg-white border border-transparent hover:border-zinc-200 text-zinc-500 transition-all cursor-pointer grid place-items-center"
+                          className="absolute right-2 top-1/2 grid h-9 w-9 -translate-y-1/2 cursor-pointer place-items-center rounded-full border border-transparent text-zinc-500 opacity-0 transition-all hover:border-zinc-200 hover:bg-white group-hover:opacity-100"
                           aria-label="Acciones"
                           title="Acciones"
                         >
@@ -497,6 +513,61 @@ export default function Sidebar({
                 ) : null}
               </div>
             </div>
+
+            <div className="border-t border-zinc-100 px-5 py-4 md:px-4">
+              <div className="grid gap-1">
+                <a
+                  href="/recursos"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
+                >
+                  Recursos
+                  <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
+                </a>
+
+                <a
+                  href="/producto"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
+                >
+                  Producto
+                  <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
+                </a>
+
+                <a
+                  href="/casos-de-uso"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
+                >
+                  Casos de uso
+                  <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
+                </a>
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-2 border-t border-zinc-100 pt-3 text-center">
+                <a
+                  href="/legal/privacidad"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-[11.5px] font-medium text-zinc-400 hover:text-zinc-700"
+                >
+                  Privacidad
+                </a>
+                <a
+                  href="/legal/terminos"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-[11.5px] font-medium text-zinc-400 hover:text-zinc-700"
+                >
+                  Términos
+                </a>
+                <a
+                  href="/contacto"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-[11.5px] font-medium text-zinc-400 hover:text-zinc-700"
+                >
+                  Contacto
+                </a>
+              </div>
+            </div>
           </div>
         </aside>
       </div>
@@ -507,43 +578,51 @@ export default function Sidebar({
           onClick={closeThreadActions}
         >
           <div
-            className="absolute inset-x-3 bottom-3 md:left-6 md:bottom-6 md:inset-x-auto md:w-[360px] rounded-[30px] bg-white border border-zinc-200 shadow-[0_24px_70px_rgba(0,0,0,0.20)] overflow-hidden"
+            className="absolute inset-x-3 bottom-3 overflow-hidden rounded-[30px] border border-zinc-200 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.20)] md:bottom-6 md:left-6 md:inset-x-auto md:w-[360px]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-center pt-3 md:hidden">
               <div className="h-1.5 w-12 rounded-full bg-zinc-300" />
             </div>
 
-            <div className="px-5 pt-4 pb-3 border-b border-zinc-100">
-              <div className="text-[15px] font-semibold text-zinc-900 truncate">{currentThread.title}</div>
-              <div className="mt-1 text-[12px] text-zinc-500">Acciones para esta conversación</div>
+            <div className="border-b border-zinc-100 px-5 pb-3 pt-4">
+              <div className="truncate text-[15px] font-semibold text-zinc-900">
+                {currentThread.title}
+              </div>
+              <div className="mt-1 text-[12px] text-zinc-500">
+                Acciones para esta conversación
+              </div>
             </div>
 
             <div className="p-2">
               <button
                 onClick={togglePinFromMenu}
-                className="w-full flex items-center gap-3 rounded-[20px] px-4 py-3 hover:bg-zinc-50 transition-colors cursor-pointer"
+                className="flex w-full cursor-pointer items-center gap-3 rounded-[20px] px-4 py-3 transition-colors hover:bg-zinc-50"
               >
                 <PinIcon className="h-[18px] w-[18px] text-zinc-900" />
                 <span className="text-[15px] font-medium text-zinc-900">
-  {selectedIsPinned ? "Quitar de fijadas" : "Fijar"}
-</span>
+                  {selectedIsPinned ? "Quitar de fijadas" : "Fijar"}
+                </span>
               </button>
 
               <button
                 onClick={handleRenameFromMenu}
-                className="w-full flex items-center gap-3 rounded-[20px] px-4 py-3 hover:bg-zinc-50 transition-colors cursor-pointer"
+                className="flex w-full cursor-pointer items-center gap-3 rounded-[20px] px-4 py-3 transition-colors hover:bg-zinc-50"
               >
                 <EditIcon className="h-[18px] w-[18px] text-zinc-700" />
-                <span className="text-[15px] font-medium text-zinc-900">Cambiar nombre</span>
+                <span className="text-[15px] font-medium text-zinc-900">
+                  Cambiar nombre
+                </span>
               </button>
 
               <button
                 onClick={handleDeleteFromMenu}
-                className="w-full flex items-center gap-3 rounded-[20px] px-4 py-3 hover:bg-red-50 transition-colors cursor-pointer"
+                className="flex w-full cursor-pointer items-center gap-3 rounded-[20px] px-4 py-3 transition-colors hover:bg-red-50"
               >
                 <TrashIcon className="h-[18px] w-[18px] text-red-600" />
-                <span className="text-[15px] font-medium text-red-600">Eliminar</span>
+                <span className="text-[15px] font-medium text-red-600">
+                  Eliminar
+                </span>
               </button>
             </div>
           </div>
