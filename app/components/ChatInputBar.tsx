@@ -163,9 +163,9 @@ export default function ChatInputBar({
     const el = textareaRef.current;
     if (!el) return;
 
-const COMPACT_HEIGHT = 42;
-const EXPANDED_MIN_HEIGHT = 52;
-const MAX_HEIGHT = 136;
+const COMPACT_HEIGHT = 52;
+const EXPANDED_MIN_HEIGHT = 62;
+const MAX_HEIGHT = 152;
 
     if (!shouldExpand) {
       el.style.height = `${COMPACT_HEIGHT}px`;
@@ -248,8 +248,8 @@ const shellShadow = voiceMode
     ? "animate-[vonuInputGlowBlueSoft_2400ms_ease-in-out_infinite]"
     : "",
 shouldExpand
-  ? "rounded-[30px] px-4 pt-4 pb-3"
-  : "rounded-full px-3 py-2",
+  ? "rounded-[34px] px-4 pt-5 pb-4"
+  : "rounded-full px-4 py-3",
 ].join(" ")}
               style={{
                 borderColor: shellBorder,
@@ -333,8 +333,8 @@ shouldExpand
   className={[
     "pointer-events-none absolute inset-x-0 flex items-center justify-between",
     shouldExpand
-  ? "bottom-0 h-10"
-  : "top-1/2 -translate-y-1/2 h-10",
+  ? "bottom-1 h-11"
+  : "top-1/2 -translate-y-1/2 h-11",
   ].join(" ")}
 >
             <div className="pointer-events-auto flex shrink-0 items-center -ml-1">
