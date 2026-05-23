@@ -163,9 +163,9 @@ export default function ChatInputBar({
     const el = textareaRef.current;
     if (!el) return;
 
-const COMPACT_HEIGHT = 44;
-const EXPANDED_MIN_HEIGHT = 54;
-const MAX_HEIGHT = 140;
+const COMPACT_HEIGHT = 42;
+const EXPANDED_MIN_HEIGHT = 52;
+const MAX_HEIGHT = 136;
 
     if (!shouldExpand) {
       el.style.height = `${COMPACT_HEIGHT}px`;
@@ -211,11 +211,11 @@ const shellShadow = voiceMode
       ref={inputBarRef}
       className="fixed left-0 right-0 z-[70] bg-transparent"
       style={{
-  bottom: "calc(max(var(--vvb, 0px), 0px) + 10px)",
+  bottom: "calc(max(var(--vvb, 0px), 0px) + 6px)",
   paddingBottom: "env(safe-area-inset-bottom, 0px)",
 }}
     >
-      <div className="mx-auto max-w-3xl px-3 md:px-6 pt-0 md:pt-2 pb-0 md:pb-1">
+      <div className="mx-auto max-w-3xl px-3 md:px-6 pt-0 md:pt-2 pb-0 md:pb-0">
         <div className="relative w-full">
           <div
   className="pointer-events-none absolute inset-x-0 z-0"
@@ -318,8 +318,8 @@ shouldExpand
       "[&::-webkit-scrollbar-thumb]:rounded-full",
       "[&::-webkit-scrollbar-thumb]:bg-zinc-400/45",
       shouldExpand
-  ? "text-[19px] md:text-[18px] leading-8 pl-1 pr-3 pt-1.5 pb-3"
-  : "text-[18px] md:text-[17px] leading-[44px] py-0 pl-[54px] pr-[54px] overflow-hidden",
+  ? "text-[18px] md:text-[17px] leading-7 pl-1 pr-3 pt-1.5 pb-2"
+  : "text-[17px] md:text-[16px] leading-[42px] py-0 pl-[54px] pr-[54px] overflow-hidden",
     ].join(" ")}
     style={{
       boxSizing: "border-box",

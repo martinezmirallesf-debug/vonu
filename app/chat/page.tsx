@@ -6171,7 +6171,12 @@ return (
 />
 
       {/* MAIN */}
-      <div className="flex-1 flex flex-col min-h-0">
+<div
+  className={[
+    "flex-1 flex flex-col min-h-0 transition-[margin] duration-300",
+    menuOpen ? "md:ml-[304px]" : "md:ml-0",
+  ].join(" ")}
+>
         {uiError && (
           <div className="mx-auto max-w-6xl px-2 md:px-6" style={{ paddingTop: 78, paddingBottom: chatBottomPad }}>
             <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">Ha fallado la llamada a la IA. (Error: {uiError})</div>
@@ -6374,7 +6379,7 @@ return (
                     )}
 
                     {(m.text || m.streaming) && (
-                      <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[20px] md:text-[21px] leading-9 md:leading-9 text-zinc-900">
+                      <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[19px] md:text-[20px] leading-8 md:leading-9 text-zinc-900">
                         <span className="whitespace-pre-wrap">{mdText}</span>
                       </div>
                     )}
@@ -6445,7 +6450,7 @@ return (
                   )}
 
                   {(m.text || m.streaming) && (
-  <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[20px] md:text-[21px] leading-9 md:leading-9">
+  <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[19px] md:text-[20px] leading-8 md:leading-9">
     {mdText.includes('"elements"') || mdText.includes("```excalidraw") ? null : (
       <>
         <ReactMarkdown
