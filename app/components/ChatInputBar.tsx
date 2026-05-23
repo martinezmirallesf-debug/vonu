@@ -163,9 +163,9 @@ export default function ChatInputBar({
     const el = textareaRef.current;
     if (!el) return;
 
-const COMPACT_HEIGHT = 44;
-const EXPANDED_MIN_HEIGHT = 54;
-const MAX_HEIGHT = 140;
+const COMPACT_HEIGHT = 42;
+const EXPANDED_MIN_HEIGHT = 52;
+const MAX_HEIGHT = 136;
 
     if (!shouldExpand) {
       el.style.height = `${COMPACT_HEIGHT}px`;
@@ -318,8 +318,8 @@ shouldExpand
       "[&::-webkit-scrollbar-thumb]:rounded-full",
       "[&::-webkit-scrollbar-thumb]:bg-zinc-400/45",
       shouldExpand
-  ? "text-[19px] md:text-[18px] leading-8 pl-1 pr-3 pt-1.5 pb-3"
-  : "text-[18px] md:text-[17px] leading-[44px] py-0 pl-[54px] pr-[54px] overflow-hidden",
+  ? "text-[18px] md:text-[17px] leading-7 pl-1 pr-3 pt-1.5 pb-2.5"
+  : "text-[17px] md:text-[16px] leading-[42px] py-0 pl-[54px] pr-[54px] overflow-hidden",
     ].join(" ")}
     style={{
       boxSizing: "border-box",
