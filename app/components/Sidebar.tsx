@@ -293,7 +293,13 @@ export default function Sidebar({
             desktop
               ? "left-0 top-0 bottom-0 w-[360px] border-r border-zinc-200/80 shadow-none"
               : "inset-x-0 top-16 bottom-0 border-t border-zinc-100",
-            menuOpen ? "translate-x-0 opacity-100" : "-translate-x-[110%] opacity-0",
+            desktop
+  ? menuOpen
+    ? "translate-x-0 opacity-100"
+    : "-translate-x-[110%] opacity-0"
+  : menuOpen
+  ? "translate-y-0 opacity-100"
+  : "-translate-y-3 opacity-0",
           ].join(" ")}
           style={{
             width: desktop ? 360 : undefined,
@@ -302,28 +308,17 @@ export default function Sidebar({
         >
           <div className="flex h-full flex-col">
             <div className="border-b border-zinc-100 px-5 pb-4 pt-5 md:px-4 md:pt-5">
-              <div className="mb-4 hidden items-center justify-between md:flex">
-                <a
-                  href="/"
-                  className="text-[22px] font-semibold tracking-[-0.055em] text-zinc-950"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  VonuAI
-                </a>
-              </div>
-
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => {
-                    createThreadAndActivate();
-                    setMenuOpen(false);
-                  }}
-                  className="flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full px-4 text-white transition-colors"
-                  style={{ backgroundColor: BRAND_BLUE }}
-                >
-                  <PlusIcon className="h-[18px] w-[18px]" />
-                  <span className="text-[14px] font-semibold">Nueva consulta</span>
-                </button>
+  onClick={() => {
+    createThreadAndActivate();
+    setMenuOpen(false);
+  }}
+  className="flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-4 text-zinc-950 shadow-sm transition-colors hover:bg-zinc-50 active:bg-zinc-100"
+>
+  <PlusIcon className="h-[18px] w-[18px]" />
+  <span className="text-[14px] font-semibold">Nueva consulta</span>
+</button>
 
                 <button
                   onClick={() => setAccountOpen((v) => !v)}
@@ -331,12 +326,16 @@ export default function Sidebar({
                   aria-label="Cuenta"
                   title="Cuenta"
                 >
-                  <div
-                    className="grid h-12 w-12 place-items-center rounded-full text-[15px] font-semibold text-white"
-                    style={{ backgroundColor: BRAND_BLUE }}
-                  >
-                    {userInitial}
-                  </div>
+                  <div className="relative grid h-12 w-12 place-items-center rounded-full border border-zinc-200 bg-zinc-50 text-[15px] font-semibold text-zinc-950 shadow-sm">
+  <span>{userInitial}</span>
+  <span
+    className={[
+      "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white",
+      isLoggedIn ? "bg-emerald-500" : "bg-zinc-300",
+    ].join(" ")}
+    aria-hidden="true"
+  />
+</div>
                 </button>
               </div>
 
@@ -355,12 +354,9 @@ export default function Sidebar({
                   {isLoggedIn ? (
                     <>
                       <div className="flex items-center gap-3">
-                        <div
-                          className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-[14px] font-semibold text-white"
-                          style={{ backgroundColor: BRAND_BLUE }}
-                        >
-                          {userInitial}
-                        </div>
+                        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-zinc-200 bg-zinc-50 text-[14px] font-semibold text-zinc-950">
+  {userInitial}
+</div>
 
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[14px] font-semibold text-zinc-900">

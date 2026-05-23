@@ -41,17 +41,19 @@ export default function TopBar({
       {/* Burger bubble */}
       <div className="pointer-events-auto">
         <button
-          type="button"
-          onClick={() => setMenuOpen((v) => !v)}
-          className={[
-            "grid h-11 w-11 place-items-center rounded-full",
-            "border border-zinc-200/80 bg-white/92 text-zinc-950 shadow-sm",
-            "backdrop-blur-xl transition active:scale-95",
-          ].join(" ")}
-          aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-          aria-expanded={menuOpen}
-          title={menuOpen ? "Cerrar menú" : "Menú"}
-        >
+  type="button"
+  onClick={() => setMenuOpen((v) => !v)}
+  className={[
+    "grid h-11 w-11 place-items-center rounded-full text-zinc-950",
+    "transition active:scale-95",
+    menuOpen
+      ? "border border-transparent bg-transparent shadow-none backdrop-blur-0"
+      : "border border-zinc-200/80 bg-white/92 shadow-sm backdrop-blur-xl",
+  ].join(" ")}
+  aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+  aria-expanded={menuOpen}
+  title={menuOpen ? "Cerrar menú" : "Menú"}
+>
           <span className="relative block h-5 w-6">
             <span
               className={[
@@ -72,15 +74,17 @@ export default function TopBar({
       {/* Logo bubble */}
       <div className="pointer-events-auto">
         <a
-          href={HOME_URL}
-          className={[
-            "flex h-11 items-center rounded-full px-4",
-            "border border-zinc-200/80 bg-white/92 shadow-sm",
-            "backdrop-blur-xl transition active:scale-[0.99]",
-          ].join(" ")}
-          aria-label="Ir a la home"
-          title="Ir a la home"
-        >
+  href={HOME_URL}
+  className={[
+    "flex h-11 items-center rounded-full px-4",
+    "transition active:scale-[0.99]",
+    menuOpen
+      ? "border border-transparent bg-transparent shadow-none backdrop-blur-0"
+      : "border border-zinc-200/80 bg-white/92 shadow-sm backdrop-blur-xl",
+  ].join(" ")}
+  aria-label="Ir a la home"
+  title="Ir a la home"
+>
           <span className="font-sans text-[19px] font-semibold leading-none tracking-[-0.03em] text-zinc-900">
             VonuAI
           </span>
