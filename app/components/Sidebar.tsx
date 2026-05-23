@@ -276,14 +276,17 @@ export default function Sidebar({
   return (
     <>
       <div
-        className={[
-          "fixed inset-0 z-[80] transition-all duration-300",
-          menuOpen ? "pointer-events-auto" : "pointer-events-none",
-          desktop ? (menuOpen ? "bg-black/8" : "bg-transparent") : "bg-white",
-          desktop && menuOpen ? "backdrop-blur-[2px]" : "",
-        ].join(" ")}
-        onClick={() => setMenuOpen(false)}
-      >
+  className={[
+    "fixed inset-0 z-[80] transition-all duration-300",
+    menuOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
+    menuOpen
+      ? desktop
+        ? "bg-black/8 backdrop-blur-[2px]"
+        : "bg-white"
+      : "bg-transparent",
+  ].join(" ")}
+  onClick={() => setMenuOpen(false)}
+>
         <aside
           className={[
             "absolute z-[81] bg-white transition-all duration-300 ease-out",
