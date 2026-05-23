@@ -314,9 +314,9 @@ export default function Sidebar({
       createThreadAndActivate();
       setMenuOpen(false);
     }}
-    className="flex h-11 w-full cursor-pointer items-center gap-3 rounded-2xl px-3 text-left text-zinc-950 transition-colors hover:bg-zinc-100 active:bg-zinc-100"
+    className="group flex h-11 w-full cursor-pointer items-center gap-3 rounded-full px-3 text-left text-zinc-950 transition-colors hover:bg-zinc-100 active:bg-zinc-100"
   >
-    <span className="grid h-8 w-8 place-items-center rounded-xl bg-zinc-50 text-zinc-900">
+    <span className="grid h-8 w-8 place-items-center rounded-full bg-transparent text-zinc-900 transition-colors group-active:bg-zinc-200/70">
       <PlusIcon className="h-[17px] w-[17px]" />
     </span>
     <span className="text-[15px] font-semibold tracking-[-0.015em]">
@@ -372,18 +372,23 @@ export default function Sidebar({
                         <div className="flex min-w-0 items-center gap-3">
                           <div className="min-w-0 flex-1">
                             <div
-                              className={[
-                                "truncate text-[14.5px]",
-                                active ? "font-semibold text-zinc-900" : "font-medium text-zinc-800",
-                              ].join(" ")}
-                            >
-                              {t.title}
-                            </div>
+  className={[
+    "flex items-center truncate text-[14.5px]",
+    active ? "font-semibold text-zinc-900" : "font-medium text-zinc-800",
+  ].join(" ")}
+>
+  <span className="truncate">{t.title}</span>
+  {pinned ? (
+    <span className="ml-2 shrink-0 text-[11px] font-medium" style={{ color: BRAND_BLUE }}>
+      Fijada
+    </span>
+  ) : null}
+</div>
 
                             {pinned ? (
-  <div className="mt-1 truncate text-[11px] font-medium" style={{ color: BRAND_BLUE }}>
+  <span className="ml-2 text-[11px] font-medium" style={{ color: BRAND_BLUE }}>
     Fijada
-  </div>
+  </span>
 ) : null}
                           </div>
 
@@ -415,8 +420,19 @@ export default function Sidebar({
               </div>
             </div>
 
-            <div className="border-t border-zinc-100 px-5 py-4 md:px-4">
-  <div className="mb-3 rounded-[22px] border border-zinc-200 bg-white p-3 shadow-sm">
+<div className="border-t border-zinc-100 px-5 py-3 md:px-4">
+  <div className="mb-2 grid gap-1">
+    <a
+      href="/recursos"
+      onClick={() => setMenuOpen(false)}
+      className="flex items-center justify-between rounded-2xl px-3 py-2 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
+    >
+      Recursos
+      <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
+    </a>
+  </div>
+
+  <div className="rounded-[22px] border border-zinc-200 bg-white p-2 shadow-sm">
     <button
       onClick={() => {
         if (isLoggedIn) {
@@ -427,7 +443,7 @@ export default function Sidebar({
         openLoginModal("signin");
         setMenuOpen(false);
       }}
-      className="flex w-full cursor-pointer items-center gap-3 text-left"
+      className="flex w-full cursor-pointer items-center gap-3 rounded-[18px] px-1 py-1 text-left transition-colors hover:bg-zinc-50"
     >
       <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full border border-zinc-200 bg-zinc-50 text-[14px] font-semibold text-zinc-950">
         <span>{userInitial}</span>
@@ -457,97 +473,64 @@ export default function Sidebar({
     </button>
 
     {accountOpen && isLoggedIn ? (
-      <div className="mt-3 border-t border-zinc-100 pt-3">
-        <div className="truncate text-[12px] text-zinc-500">
-          {authUserEmail ?? "Email no disponible"}
+      <div className="mt-2 border-t border-zinc-100 pt-2">
+        <div className="px-2 pb-2">
+          <div className="truncate text-[12px] text-zinc-500">
+            {authUserEmail ?? "Email no disponible"}
+          </div>
         </div>
 
-        <button
-          onClick={() => {
-            logout();
-            setMenuOpen(false);
-          }}
-          className="mt-3 h-9 w-full cursor-pointer rounded-full bg-zinc-50 text-[13px] font-semibold text-zinc-800 transition-colors hover:bg-zinc-100"
-        >
-          Cerrar sesión
-        </button>
+        <div className="grid gap-1">
+          <button
+            onClick={() => {
+              handleOpenPlansCTA();
+              setMenuOpen(false);
+            }}
+            className="flex w-full items-center justify-between rounded-2xl px-3 py-2 text-[13.5px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
+          >
+            Planes y recargas
+            <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
+          </button>
+
+          <a
+            href="/legal/privacidad"
+            onClick={() => setMenuOpen(false)}
+            className="flex w-full items-center justify-between rounded-2xl px-3 py-2 text-[13.5px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
+          >
+            Privacidad
+            <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
+          </a>
+
+          <a
+            href="/legal/terminos"
+            onClick={() => setMenuOpen(false)}
+            className="flex w-full items-center justify-between rounded-2xl px-3 py-2 text-[13.5px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
+          >
+            Términos
+            <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
+          </a>
+
+          <a
+            href="/contacto"
+            onClick={() => setMenuOpen(false)}
+            className="flex w-full items-center justify-between rounded-2xl px-3 py-2 text-[13.5px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
+          >
+            Contacto
+            <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
+          </a>
+
+          <button
+            onClick={() => {
+              logout();
+              setMenuOpen(false);
+            }}
+            className="mt-1 h-9 w-full cursor-pointer rounded-full bg-zinc-50 text-[13px] font-semibold text-zinc-800 transition-colors hover:bg-zinc-100"
+          >
+            Cerrar sesión
+          </button>
+        </div>
       </div>
     ) : null}
-  </div>
-
-  <div className="grid gap-1">
-    <button
-      onClick={() => {
-        handleOpenPlansCTA();
-        setMenuOpen(false);
-      }}
-      className="flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
-    >
-      Planes y mejoras
-      <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
-    </button>
-
-    <button
-      onClick={() => {
-        handleOpenPlansCTA();
-        setMenuOpen(false);
-      }}
-      className="flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
-    >
-      Recargas
-      <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
-    </button>
-
-    <a
-      href="/recursos"
-      onClick={() => setMenuOpen(false)}
-      className="flex items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
-    >
-      Recursos
-      <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
-    </a>
-
-    <a
-      href="/producto"
-      onClick={() => setMenuOpen(false)}
-      className="flex items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
-    >
-      Producto
-      <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
-    </a>
-
-    <a
-      href="/casos-de-uso"
-      onClick={() => setMenuOpen(false)}
-      className="flex items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
-    >
-      Casos de uso
-      <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
-    </a>
-  </div>
-
-  <div className="mt-3 grid grid-cols-3 gap-2 border-t border-zinc-100 pt-3 text-center">
-    <a
-      href="/legal/privacidad"
-      onClick={() => setMenuOpen(false)}
-      className="text-[11.5px] font-medium text-zinc-400 hover:text-zinc-700"
-    >
-      Privacidad
-    </a>
-    <a
-      href="/legal/terminos"
-      onClick={() => setMenuOpen(false)}
-      className="text-[11.5px] font-medium text-zinc-400 hover:text-zinc-700"
-    >
-      Términos
-    </a>
-    <a
-      href="/contacto"
-      onClick={() => setMenuOpen(false)}
-      className="text-[11.5px] font-medium text-zinc-400 hover:text-zinc-700"
-    >
-      Contacto
-    </a>
   </div>
 </div>
           </div>
