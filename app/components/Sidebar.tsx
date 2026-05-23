@@ -36,10 +36,27 @@ type SidebarProps = {
 const BRAND_BLUE = "#1a73e8";
 const PINNED_STORAGE_KEY = "vonu_pinned_threads_v1";
 
+const secondaryLinks = [
+  { label: "Privacidad", href: "/legal/privacidad" },
+  { label: "Términos", href: "/legal/terminos" },
+  { label: "Uso responsable", href: "/legal/uso-responsable" },
+  { label: "Contacto", href: "/contacto" },
+];
+
 function SearchIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="m21 21-4.35-4.35" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+    <svg
+      className={className ?? "h-5 w-5"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="m21 21-4.35-4.35"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
       <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="2.2" />
     </svg>
   );
@@ -47,7 +64,12 @@ function SearchIcon({ className }: { className?: string }) {
 
 function EditIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      className={className ?? "h-5 w-5"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <path d="M12 20h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       <path
         d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5Z"
@@ -61,19 +83,39 @@ function EditIcon({ className }: { className?: string }) {
 
 function TrashIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      className={className ?? "h-5 w-5"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <path d="M4 7h16" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
       <path d="M10 11v6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
       <path d="M14 11v6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M6.5 7 7.2 19a2 2 0 0 0 2 1.9h5.6a2 2 0 0 0 2-1.9L17.5 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M9.5 4.5h5a1 1 0 0 1 1 1V7h-7V5.5a1 1 0 0 1 1-1Z" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" />
+      <path
+        d="M6.5 7 7.2 19a2 2 0 0 0 2 1.9h5.6a2 2 0 0 0 2-1.9L17.5 7"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M9.5 4.5h5a1 1 0 0 1 1 1V7h-7V5.5a1 1 0 0 1 1-1Z"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
 
 function PinIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      className={className ?? "h-5 w-5"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="M14 3l7 7-2.8.8-3.4 3.4.8 2.8-1.4 1.4-4.2-4.2-4.9 4.9a1 1 0 0 1-1.4-1.4l4.9-4.9-4.2-4.2 1.4-1.4 2.8.8 3.4-3.4L14 3Z"
         stroke="currentColor"
@@ -87,7 +129,12 @@ function PinIcon({ className }: { className?: string }) {
 
 function PlusIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      className={className ?? "h-5 w-5"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <path d="M12 5v14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
       <path d="M5 12h14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
     </svg>
@@ -96,7 +143,12 @@ function PlusIcon({ className }: { className?: string }) {
 
 function DotsIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <svg
+      className={className ?? "h-5 w-5"}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
       <circle cx="6" cy="12" r="1.8" />
       <circle cx="12" cy="12" r="1.8" />
       <circle cx="18" cy="12" r="1.8" />
@@ -106,18 +158,44 @@ function DotsIcon({ className }: { className?: string }) {
 
 function UserIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 12c2.761 0 5-2.239 5-5S14.761 2 12 2 7 4.239 7 7s2.239 5 5 5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M4 22c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <svg
+      className={className ?? "h-5 w-5"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M12 12c2.761 0 5-2.239 5-5S14.761 2 12 2 7 4.239 7 7s2.239 5 5 5Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M4 22c0-4.418 3.582-8 8-8s8 3.582 8 8"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
 
-function ArrowUpRightIcon({ className }: { className?: string }) {
+function ArrowIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-4 w-4"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M7 17 17 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M9 7h8v8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      className={className ?? "h-4 w-4"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path d="M5 12h13" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+      <path
+        d="m13 6 6 6-6 6"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -197,6 +275,24 @@ export default function Sidebar({
     [sortedThreads, selectedThreadId, activeThreadId]
   );
 
+  const userLabel = authUserName?.trim() || authUserEmail?.trim() || "Tu cuenta";
+  const userInitial = userLabel.charAt(0).toUpperCase() || "U";
+
+  const currentPlanLabel =
+    currentPlanId === "max"
+      ? "Max"
+      : currentPlanId === "plus"
+      ? "Plus"
+      : currentPlanId === "free"
+      ? "Gratis"
+      : proLoading
+      ? "comprobando…"
+      : isPro
+      ? "Plus"
+      : "Gratis";
+
+  const selectedIsPinned = !!selectedThreadId && pinnedIds.includes(selectedThreadId);
+
   function openThreadActions(threadId: string) {
     setSelectedThreadId(threadId);
     setThreadMenuOpen(true);
@@ -214,6 +310,7 @@ export default function Sidebar({
     } else {
       openRename();
     }
+
     closeThreadActions();
     setMenuOpen(false);
   }
@@ -225,6 +322,7 @@ export default function Sidebar({
     } else {
       deleteActiveThread();
     }
+
     closeThreadActions();
   }
 
@@ -255,103 +353,109 @@ export default function Sidebar({
     }
   }
 
-  const userLabel = authUserName?.trim() || authUserEmail?.trim() || "Tu cuenta";
-  const userInitial = userLabel.charAt(0).toUpperCase() || "U";
+  function handleCreateThread() {
+    createThreadAndActivate();
+    setMenuOpen(false);
+  }
 
-  const currentPlanLabel =
-    currentPlanId === "max"
-      ? "Max"
-      : currentPlanId === "plus"
-      ? "Plus"
-      : currentPlanId === "free"
-      ? "Gratis"
-      : proLoading
-      ? "comprobando…"
-      : isPro
-      ? "Plus"
-      : "Gratis";
-
-  const selectedIsPinned = !!selectedThreadId && pinnedIds.includes(selectedThreadId);
+  function openPlansFromMenu() {
+    handleOpenPlansCTA();
+    setMenuOpen(false);
+  }
 
   return (
     <>
       <div
-  className={[
-    "fixed inset-0 z-[80] transition-all duration-300",
-    menuOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
-    menuOpen
-      ? desktop
-        ? "bg-black/8 backdrop-blur-[2px]"
-        : "bg-white"
-      : "bg-transparent",
-  ].join(" ")}
-  onClick={() => setMenuOpen(false)}
->
+        className={[
+          "fixed inset-0 z-[80] transition-all duration-300",
+          menuOpen
+            ? "pointer-events-auto bg-white md:bg-black/20 md:backdrop-blur-sm"
+            : "pointer-events-none bg-transparent",
+        ].join(" ")}
+        onClick={() => setMenuOpen(false)}
+      >
         <aside
           className={[
-            "absolute z-[81] bg-white transition-all duration-300 ease-out",
-            desktop
-              ? "left-0 top-0 bottom-0 w-[360px] border-r border-zinc-200/80 shadow-none"
-              : "inset-x-0 top-16 bottom-0 border-t border-zinc-100",
-            desktop
-  ? menuOpen
-    ? "translate-x-0 opacity-100"
-    : "-translate-x-[110%] opacity-0"
-  : menuOpen
-  ? "translate-y-0 opacity-100"
-  : "-translate-y-3 opacity-0",
+            "absolute z-[81] overflow-hidden bg-white",
+            "transform transition-all duration-300 ease-out",
+            "inset-0 md:inset-y-auto md:left-3 md:right-auto md:rounded-[30px]",
+            "md:border md:border-zinc-200/80 md:bg-white/94 md:shadow-[0_18px_60px_rgba(0,0,0,0.18)] md:backdrop-blur-xl",
+            menuOpen ? "translate-x-0 opacity-100" : "-translate-x-[110%] opacity-0",
           ].join(" ")}
           style={{
-            width: desktop ? 360 : undefined,
+            top: desktop ? SIDEBAR_TOP : 0,
+            bottom: desktop ? 12 : 0,
+            width: desktop ? 370 : undefined,
+            maxWidth: desktop ? "calc(100vw - 24px)" : undefined,
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex h-full flex-col">
-            <div className="border-b border-zinc-100 px-5 pb-4 pt-5 md:px-4 md:pt-[76px]">
-              <div className="grid gap-1">
-  <button
-    onClick={() => {
-      createThreadAndActivate();
-      setMenuOpen(false);
-    }}
-    className="group flex h-11 w-full cursor-pointer items-center gap-3 rounded-full px-3 text-left text-zinc-950 transition-colors hover:bg-zinc-100 active:bg-zinc-100"
-  >
-    <span className="grid h-8 w-8 place-items-center rounded-full bg-transparent text-zinc-900 transition-colors group-active:bg-zinc-200/70">
-      <PlusIcon className="h-[17px] w-[17px]" />
-    </span>
-    <span className="text-[15px] font-semibold tracking-[-0.015em]">
-      Nueva consulta
-    </span>
-  </button>
-</div>
+          <div
+            className="flex h-full flex-col px-7 pb-7 md:px-4 md:pb-4"
+            style={{
+              paddingTop: desktop ? 18 : "calc(env(safe-area-inset-top, 0px) + 92px)",
+            }}
+          >
+            {desktop ? (
+              <div className="mb-4 flex items-center justify-between px-1">
+                <a
+                  href="/"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-[22px] font-semibold tracking-[-0.045em] text-zinc-950"
+                >
+                  VonuAI
+                </a>
 
-              <div className="relative mt-3">
-                <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" />
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen(false)}
+                  className="grid h-9 w-9 place-items-center rounded-full text-zinc-500 hover:bg-zinc-100"
+                  aria-label="Cerrar menú"
+                >
+                  ×
+                </button>
+              </div>
+            ) : null}
+
+            <div className="shrink-0">
+              <button
+                onClick={handleCreateThread}
+                className="flex w-full items-center gap-5 rounded-[28px] bg-transparent py-4 text-left transition active:scale-[0.99] md:gap-4 md:py-3"
+              >
+                <span className="grid h-[62px] w-[62px] shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-950 md:h-12 md:w-12">
+                  <PlusIcon className="h-7 w-7 md:h-5 md:w-5" />
+                </span>
+
+                <span className="text-[28px] font-semibold leading-none tracking-[-0.055em] text-zinc-950 md:text-[20px]">
+                  Nueva conversación
+                </span>
+              </button>
+
+              <div className="mt-3 flex items-center gap-4 rounded-full border border-zinc-200 bg-white px-5 py-4 shadow-sm md:px-4 md:py-3">
+                <SearchIcon className="h-5 w-5 shrink-0 text-zinc-400" />
+
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Buscar conversaciones"
-                  className="h-12 w-full rounded-full border border-zinc-200 bg-zinc-50/80 pl-11 pr-4 text-[14px] text-zinc-900 outline-none placeholder:text-zinc-500 focus:border-zinc-300"
+                  className="min-w-0 flex-1 bg-transparent text-[17px] font-medium text-zinc-900 outline-none placeholder:text-zinc-400 md:text-[14px]"
                 />
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 [scrollbar-width:thin] md:px-2">
-              <div className="px-2 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
-                Recientes
-              </div>
+            <div className="mt-6 border-t border-zinc-200 pt-5 md:mt-4 md:pt-4" />
 
+            <div className="min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-width:thin]">
               <div className="space-y-1">
                 {filteredThreads.map((t) => {
                   const active = t.id === activeThreadId;
-                  const when = mounted ? new Date(t.updatedAt).toLocaleDateString() : "";
                   const pinned = pinnedIds.includes(t.id);
 
                   return (
                     <div
                       key={t.id}
                       className={[
-                        "group relative w-full rounded-[20px] transition-colors",
+                        "group relative rounded-[20px] transition-colors",
                         active ? "bg-zinc-100" : "hover:bg-zinc-50",
                       ].join(" ")}
                     >
@@ -367,33 +471,33 @@ export default function Sidebar({
                           activateThread(t.id);
                           setMenuOpen(false);
                         }}
-                        className="w-full cursor-pointer px-4 py-2.5 text-left"
+                        className="w-full cursor-pointer px-1 py-3 text-left md:px-3"
                       >
                         <div className="flex min-w-0 items-center gap-3">
                           <div className="min-w-0 flex-1">
                             <div
-  className={[
-    "flex items-center truncate text-[14.5px]",
-    active ? "font-semibold text-zinc-900" : "font-medium text-zinc-800",
-  ].join(" ")}
->
-  <span className="truncate">{t.title}</span>
-  {pinned ? (
-    <span className="ml-2 shrink-0 text-[11px] font-medium" style={{ color: BRAND_BLUE }}>
-      Fijada
-    </span>
-  ) : null}
-</div>
+                              className={[
+                                "truncate text-[25px] leading-tight tracking-[-0.05em] md:text-[15px] md:tracking-normal",
+                                active
+                                  ? "font-semibold text-zinc-950"
+                                  : "font-semibold text-zinc-900 md:font-medium",
+                              ].join(" ")}
+                            >
+                              {t.title}
+                            </div>
 
                             {pinned ? (
-  <span className="ml-2 text-[11px] font-medium" style={{ color: BRAND_BLUE }}>
-    Fijada
-  </span>
-) : null}
+                              <div className="mt-1 text-[12px] font-medium text-blue-600">
+                                Fijada
+                              </div>
+                            ) : null}
                           </div>
 
                           {active ? (
-                            <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: BRAND_BLUE }} />
+                            <div
+                              className="h-2.5 w-2.5 shrink-0 rounded-full"
+                              style={{ backgroundColor: BRAND_BLUE }}
+                            />
                           ) : null}
                         </div>
                       </button>
@@ -401,7 +505,7 @@ export default function Sidebar({
                       {desktop ? (
                         <button
                           onClick={() => openThreadActions(t.id)}
-                          className="absolute right-2 top-1/2 grid h-9 w-9 -translate-y-1/2 cursor-pointer place-items-center rounded-full border border-transparent text-zinc-500 opacity-0 transition-all hover:border-zinc-200 hover:bg-white group-hover:opacity-100"
+                          className="absolute right-2 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-transparent text-zinc-500 opacity-0 transition-all hover:border-zinc-200 hover:bg-white group-hover:opacity-100"
                           aria-label="Acciones"
                           title="Acciones"
                         >
@@ -413,126 +517,175 @@ export default function Sidebar({
                 })}
 
                 {filteredThreads.length === 0 ? (
-                  <div className="px-4 py-10 text-center text-[13px] text-zinc-500">
+                  <div className="px-2 py-10 text-center text-[15px] text-zinc-500 md:text-[13px]">
                     No he encontrado conversaciones con ese texto.
                   </div>
                 ) : null}
               </div>
             </div>
 
-<div className="border-t border-zinc-100 px-5 py-3 md:px-4">
-  <div className="mb-2 grid gap-1">
-    <a
-      href="/recursos"
-      onClick={() => setMenuOpen(false)}
-      className="flex items-center justify-between rounded-2xl px-3 py-2 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
-    >
-      Recursos
-      <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
-    </a>
-  </div>
+            <div className="shrink-0 border-t border-zinc-200 pt-5 md:pt-4">
+              <div className="mb-5 grid gap-3 md:mb-4 md:gap-2">
+                {secondaryLinks.map((item) => (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMenuOpen(false)}
+                    className="text-[18px] font-medium text-zinc-500 transition hover:text-zinc-950 md:text-[14px]"
+                  >
+                    {item.label}
+                  </a>
+                ))}
+              </div>
 
-  <div className="rounded-[22px] border border-zinc-200 bg-white p-2 shadow-sm">
-    <button
-      onClick={() => {
-        if (isLoggedIn) {
-          setAccountOpen((v) => !v);
-          return;
-        }
+              {accountOpen ? (
+                <div className="mb-3 rounded-[26px] border border-zinc-200 bg-white p-3 shadow-sm">
+                  {isLoggedIn ? (
+                    <div className="mb-3 flex items-center gap-3">
+                      <div
+                        className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-[14px] font-semibold text-white"
+                        style={{ backgroundColor: BRAND_BLUE }}
+                      >
+                        {userInitial}
+                      </div>
 
-        openLoginModal("signin");
-        setMenuOpen(false);
-      }}
-      className="flex w-full cursor-pointer items-center gap-3 rounded-[18px] px-1 py-1 text-left transition-colors hover:bg-zinc-50"
-    >
-      <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full border border-zinc-200 bg-zinc-50 text-[14px] font-semibold text-zinc-950">
-        <span>{userInitial}</span>
-        <span
-          className={[
-            "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white",
-            isLoggedIn ? "bg-emerald-500" : "bg-zinc-300",
-          ].join(" ")}
-          aria-hidden="true"
-        />
-      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-[14px] font-semibold text-zinc-900">
+                          {authUserName ?? "Usuario"}
+                        </div>
+                        <div className="truncate text-[11px] text-zinc-500">
+                          {authUserEmail ?? "Email no disponible"}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mb-3 flex items-center gap-3">
+                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-700">
+                        <UserIcon className="h-[18px] w-[18px]" />
+                      </div>
 
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-[14px] font-semibold text-zinc-950">
-          {isLoggedIn ? authUserName ?? "Tu cuenta" : "Iniciar sesión"}
-        </div>
-        <div className="truncate text-[12px] text-zinc-500">
-          {isLoggedIn
-            ? currentPlanLabel === "Max"
-              ? "Plan Max"
-              : currentPlanLabel === "Plus"
-              ? "Plan Plus"
-              : "Plan Gratis"
-            : "Guarda tus consultas"}
-        </div>
-      </div>
-    </button>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[14px] font-semibold text-zinc-900">
+                          Sin iniciar sesión
+                        </div>
+                        <div className="text-[11px] text-zinc-500">
+                          Guarda y sincroniza tus consultas
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-    {accountOpen && isLoggedIn ? (
-      <div className="mt-2 border-t border-zinc-100 pt-2">
-        <div className="px-2 pb-2">
-          <div className="truncate text-[12px] text-zinc-500">
-            {authUserEmail ?? "Email no disponible"}
-          </div>
-        </div>
+                  <div className="grid gap-1">
+                    <div className="flex items-center justify-between rounded-[18px] px-3 py-2 text-[14px] text-zinc-700">
+                      <span>Plan actual</span>
+                      <span className="font-semibold text-zinc-950">
+                        {currentPlanLabel === "Max"
+                          ? "Max"
+                          : currentPlanLabel === "Plus"
+                          ? PLUS_NODE
+                          : currentPlanLabel}
+                      </span>
+                    </div>
 
-        <div className="grid gap-1">
-          <button
-            onClick={() => {
-              handleOpenPlansCTA();
-              setMenuOpen(false);
-            }}
-            className="flex w-full items-center justify-between rounded-2xl px-3 py-2 text-[13.5px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
-          >
-            Planes y recargas
-            <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
-          </button>
+                    <button
+                      onClick={openPlansFromMenu}
+                      className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50"
+                    >
+                      <span>Planes</span>
+                      <ArrowIcon className="h-4 w-4 text-zinc-400" />
+                    </button>
 
-          <a
-            href="/legal/privacidad"
-            onClick={() => setMenuOpen(false)}
-            className="flex w-full items-center justify-between rounded-2xl px-3 py-2 text-[13.5px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
-          >
-            Privacidad
-            <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
-          </a>
+                    <button
+                      onClick={openPlansFromMenu}
+                      className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50"
+                    >
+                      <span>Recargas</span>
+                      <ArrowIcon className="h-4 w-4 text-zinc-400" />
+                    </button>
 
-          <a
-            href="/legal/terminos"
-            onClick={() => setMenuOpen(false)}
-            className="flex w-full items-center justify-between rounded-2xl px-3 py-2 text-[13.5px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
-          >
-            Términos
-            <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
-          </a>
+                    <a
+                      href="/recursos"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50"
+                    >
+                      <span>Recursos</span>
+                      <ArrowIcon className="h-4 w-4 text-zinc-400" />
+                    </a>
 
-          <a
-            href="/contacto"
-            onClick={() => setMenuOpen(false)}
-            className="flex w-full items-center justify-between rounded-2xl px-3 py-2 text-[13.5px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
-          >
-            Contacto
-            <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
-          </a>
+                    <button
+                      onClick={openPlansFromMenu}
+                      className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50"
+                    >
+                      <span>Gestionar suscripción</span>
+                      <ArrowIcon className="h-4 w-4 text-zinc-400" />
+                    </button>
 
-          <button
-            onClick={() => {
-              logout();
-              setMenuOpen(false);
-            }}
-            className="mt-1 h-9 w-full cursor-pointer rounded-full bg-zinc-50 text-[13px] font-semibold text-zinc-800 transition-colors hover:bg-zinc-100"
-          >
-            Cerrar sesión
-          </button>
-        </div>
-      </div>
-    ) : null}
-  </div>
-</div>
+                    {isLoggedIn ? (
+                      <button
+                        onClick={() => {
+                          logout();
+                          setMenuOpen(false);
+                        }}
+                        className="mt-1 flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-red-600 hover:bg-red-50"
+                      >
+                        <span>Cerrar sesión</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          openLoginModal("signin");
+                          setMenuOpen(false);
+                        }}
+                        className="mt-1 flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-semibold"
+                        style={{ color: BRAND_BLUE }}
+                      >
+                        <span>Iniciar sesión</span>
+                        <ArrowIcon className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : null}
+
+              <button
+                onClick={() => setAccountOpen((v) => !v)}
+                disabled={authLoading}
+                className={[
+                  "flex w-full items-center justify-between rounded-full border border-zinc-200 bg-white px-5 py-4 shadow-sm transition active:scale-[0.99]",
+                  authLoading ? "opacity-60" : "hover:bg-zinc-50",
+                ].join(" ")}
+              >
+                <span className="flex min-w-0 items-center gap-3">
+                  <span
+                    className={[
+                      "grid h-9 w-9 shrink-0 place-items-center rounded-full text-[13px] font-semibold",
+                      isLoggedIn ? "text-white" : "bg-zinc-100 text-zinc-700",
+                    ].join(" ")}
+                    style={isLoggedIn ? { backgroundColor: BRAND_BLUE } : undefined}
+                  >
+                    {isLoggedIn ? userInitial : <UserIcon className="h-[18px] w-[18px]" />}
+                  </span>
+
+                  <span className="min-w-0 text-left">
+                    <span className="block truncate text-[15px] font-semibold text-zinc-950">
+                      {isLoggedIn ? userLabel : "Cuenta"}
+                    </span>
+                    <span className="block truncate text-[12px] text-zinc-500">
+                      Plan {currentPlanLabel === "Plus" ? "Plus" : currentPlanLabel}
+                    </span>
+                  </span>
+                </span>
+
+                <span
+                  className={[
+                    "text-[22px] leading-none text-zinc-400 transition",
+                    accountOpen ? "rotate-45" : "",
+                  ].join(" ")}
+                >
+                  +
+                </span>
+              </button>
+            </div>
           </div>
         </aside>
       </div>
@@ -543,7 +696,7 @@ export default function Sidebar({
           onClick={closeThreadActions}
         >
           <div
-            className="absolute inset-x-3 bottom-3 overflow-hidden rounded-[30px] border border-zinc-200 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.20)] md:bottom-6 md:left-6 md:inset-x-auto md:w-[360px]"
+            className="absolute inset-x-3 bottom-3 overflow-hidden rounded-[30px] border border-zinc-200 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.20)] md:bottom-6 md:left-6 md:w-[360px] md:inset-x-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-center pt-3 md:hidden">
