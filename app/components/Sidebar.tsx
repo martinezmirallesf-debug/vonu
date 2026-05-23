@@ -661,14 +661,14 @@ export default function Sidebar({
       onClick={() => setAccountOpen(true)}
       disabled={authLoading}
       className={[
-        "flex w-full items-center justify-between rounded-full border border-zinc-200 bg-white px-4 py-2.5 shadow-sm transition active:scale-[0.99]",
+        "flex w-full items-center justify-between rounded-full border border-zinc-200 bg-white px-4 py-3 shadow-sm transition active:scale-[0.99]",
         authLoading ? "opacity-60" : "hover:bg-zinc-50",
       ].join(" ")}
     >
       <span className="flex min-w-0 items-center gap-3">
         <span
           className={[
-            "grid h-7 w-7 shrink-0 place-items-center rounded-full text-[11px] font-semibold",
+            "grid h-8 w-8 shrink-0 place-items-center rounded-full text-[12px] font-semibold",
             isLoggedIn ? "text-white" : "bg-zinc-100 text-zinc-700",
           ].join(" ")}
           style={isLoggedIn ? { backgroundColor: BRAND_BLUE } : undefined}
