@@ -307,37 +307,23 @@ export default function Sidebar({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex h-full flex-col">
-            <div className="border-b border-zinc-100 px-5 pb-4 pt-5 md:px-4 md:pt-5">
-              <div className="flex items-center gap-2">
-                <button
-  onClick={() => {
-    createThreadAndActivate();
-    setMenuOpen(false);
-  }}
-  className="flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-4 text-zinc-950 shadow-sm transition-colors hover:bg-zinc-50 active:bg-zinc-100"
->
-  <PlusIcon className="h-[18px] w-[18px]" />
-  <span className="text-[14px] font-semibold">Nueva consulta</span>
-</button>
-
-                <button
-                  onClick={() => setAccountOpen((v) => !v)}
-                  className="flex h-12 min-w-12 shrink-0 cursor-pointer items-center justify-center rounded-full bg-transparent px-0 transition-colors hover:bg-zinc-100 active:bg-zinc-100"
-                  aria-label="Cuenta"
-                  title="Cuenta"
-                >
-                  <div className="relative grid h-12 w-12 place-items-center rounded-full border border-zinc-200 bg-zinc-50 text-[15px] font-semibold text-zinc-950 shadow-sm">
-  <span>{userInitial}</span>
-  <span
-    className={[
-      "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white",
-      isLoggedIn ? "bg-emerald-500" : "bg-zinc-300",
-    ].join(" ")}
-    aria-hidden="true"
-  />
+            <div className="border-b border-zinc-100 px-5 pb-4 pt-5 md:px-4 md:pt-[76px]">
+              <div className="grid gap-1">
+  <button
+    onClick={() => {
+      createThreadAndActivate();
+      setMenuOpen(false);
+    }}
+    className="flex h-11 w-full cursor-pointer items-center gap-3 rounded-2xl px-3 text-left text-zinc-950 transition-colors hover:bg-zinc-100 active:bg-zinc-100"
+  >
+    <span className="grid h-8 w-8 place-items-center rounded-xl bg-zinc-50 text-zinc-900">
+      <PlusIcon className="h-[17px] w-[17px]" />
+    </span>
+    <span className="text-[15px] font-semibold tracking-[-0.015em]">
+      Nueva consulta
+    </span>
+  </button>
 </div>
-                </button>
-              </div>
 
               <div className="relative mt-3">
                 <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" />
@@ -348,91 +334,6 @@ export default function Sidebar({
                   className="h-12 w-full rounded-full border border-zinc-200 bg-zinc-50/80 pl-11 pr-4 text-[14px] text-zinc-900 outline-none placeholder:text-zinc-500 focus:border-zinc-300"
                 />
               </div>
-
-              {accountOpen && !authLoading ? (
-                <div className="mt-3 rounded-[24px] border border-zinc-200 bg-white p-3 shadow-sm">
-                  {isLoggedIn ? (
-                    <>
-                      <div className="flex items-center gap-3">
-                        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-zinc-200 bg-zinc-50 text-[14px] font-semibold text-zinc-950">
-  {userInitial}
-</div>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-[14px] font-semibold text-zinc-900">
-                            {authUserName ?? "Usuario"}
-                          </div>
-                          <div className="truncate text-[11px] text-zinc-500">
-                            {authUserEmail ?? "Email no disponible"}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-3 flex items-center justify-between gap-2 rounded-[18px] bg-zinc-50 px-3 py-2">
-                        <div className="text-[12px] text-zinc-600">
-                          Plan{" "}
-                          <span className="font-semibold text-zinc-900">
-                            {currentPlanLabel === "Max"
-                              ? "Max"
-                              : currentPlanLabel === "Plus"
-                              ? PLUS_NODE
-                              : currentPlanLabel}
-                          </span>
-                        </div>
-
-                        <button
-                          onClick={() => {
-                            handleOpenPlansCTA();
-                            setMenuOpen(false);
-                          }}
-                          className="h-8 cursor-pointer rounded-full bg-transparent px-3 text-[12px] font-semibold transition-colors hover:bg-zinc-100 active:bg-zinc-100"
-                          style={{ color: BRAND_BLUE }}
-                        >
-                          {currentPlanLabel === "Gratis" ? "Mejorar" : "Ver"}
-                        </button>
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          logout();
-                          setMenuOpen(false);
-                        }}
-                        className="mt-3 h-10 w-full cursor-pointer rounded-full bg-transparent text-[13px] font-semibold text-zinc-800 transition-colors hover:bg-zinc-100 active:bg-zinc-100"
-                      >
-                        Cerrar sesión
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-3">
-                        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-700">
-                          <UserIcon className="h-[18px] w-[18px]" />
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="text-[14px] font-semibold text-zinc-900">
-                            Sin iniciar sesión
-                          </div>
-                          <div className="text-[11px] text-zinc-500">
-                            Guarda y sincroniza tus consultas
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          openLoginModal("signin");
-                          setMenuOpen(false);
-                        }}
-                        className="mt-3 h-10 w-full cursor-pointer rounded-full text-[13px] font-semibold text-white transition-colors"
-                        style={{ backgroundColor: BRAND_BLUE }}
-                      >
-                        Iniciar sesión
-                      </button>
-                    </>
-                  )}
-                </div>
-              ) : null}
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 [scrollbar-width:thin] md:px-2">
@@ -466,23 +367,24 @@ export default function Sidebar({
                           activateThread(t.id);
                           setMenuOpen(false);
                         }}
-                        className="w-full cursor-pointer px-4 py-3 text-left"
+                        className="w-full cursor-pointer px-4 py-2.5 text-left"
                       >
                         <div className="flex min-w-0 items-center gap-3">
                           <div className="min-w-0 flex-1">
                             <div
                               className={[
-                                "truncate text-[15px]",
+                                "truncate text-[14.5px]",
                                 active ? "font-semibold text-zinc-900" : "font-medium text-zinc-800",
                               ].join(" ")}
                             >
                               {t.title}
                             </div>
 
-                            <div className="mt-1 flex items-center gap-2 truncate text-[11px] text-zinc-400">
-                              <span>{when}</span>
-                              {pinned ? <span style={{ color: BRAND_BLUE }}>• Fijada</span> : null}
-                            </div>
+                            {pinned ? (
+  <div className="mt-1 truncate text-[11px] font-medium" style={{ color: BRAND_BLUE }}>
+    Fijada
+  </div>
+) : null}
                           </div>
 
                           {active ? (
@@ -514,59 +416,140 @@ export default function Sidebar({
             </div>
 
             <div className="border-t border-zinc-100 px-5 py-4 md:px-4">
-              <div className="grid gap-1">
-                <a
-                  href="/recursos"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
-                >
-                  Recursos
-                  <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
-                </a>
+  <div className="mb-3 rounded-[22px] border border-zinc-200 bg-white p-3 shadow-sm">
+    <button
+      onClick={() => {
+        if (isLoggedIn) {
+          setAccountOpen((v) => !v);
+          return;
+        }
 
-                <a
-                  href="/producto"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
-                >
-                  Producto
-                  <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
-                </a>
+        openLoginModal("signin");
+        setMenuOpen(false);
+      }}
+      className="flex w-full cursor-pointer items-center gap-3 text-left"
+    >
+      <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full border border-zinc-200 bg-zinc-50 text-[14px] font-semibold text-zinc-950">
+        <span>{userInitial}</span>
+        <span
+          className={[
+            "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white",
+            isLoggedIn ? "bg-emerald-500" : "bg-zinc-300",
+          ].join(" ")}
+          aria-hidden="true"
+        />
+      </div>
 
-                <a
-                  href="/casos-de-uso"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
-                >
-                  Casos de uso
-                  <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
-                </a>
-              </div>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[14px] font-semibold text-zinc-950">
+          {isLoggedIn ? authUserName ?? "Tu cuenta" : "Iniciar sesión"}
+        </div>
+        <div className="truncate text-[12px] text-zinc-500">
+          {isLoggedIn
+            ? currentPlanLabel === "Max"
+              ? "Plan Max"
+              : currentPlanLabel === "Plus"
+              ? "Plan Plus"
+              : "Plan Gratis"
+            : "Guarda tus consultas"}
+        </div>
+      </div>
+    </button>
 
-              <div className="mt-3 grid grid-cols-3 gap-2 border-t border-zinc-100 pt-3 text-center">
-                <a
-                  href="/legal/privacidad"
-                  onClick={() => setMenuOpen(false)}
-                  className="text-[11.5px] font-medium text-zinc-400 hover:text-zinc-700"
-                >
-                  Privacidad
-                </a>
-                <a
-                  href="/legal/terminos"
-                  onClick={() => setMenuOpen(false)}
-                  className="text-[11.5px] font-medium text-zinc-400 hover:text-zinc-700"
-                >
-                  Términos
-                </a>
-                <a
-                  href="/contacto"
-                  onClick={() => setMenuOpen(false)}
-                  className="text-[11.5px] font-medium text-zinc-400 hover:text-zinc-700"
-                >
-                  Contacto
-                </a>
-              </div>
-            </div>
+    {accountOpen && isLoggedIn ? (
+      <div className="mt-3 border-t border-zinc-100 pt-3">
+        <div className="truncate text-[12px] text-zinc-500">
+          {authUserEmail ?? "Email no disponible"}
+        </div>
+
+        <button
+          onClick={() => {
+            logout();
+            setMenuOpen(false);
+          }}
+          className="mt-3 h-9 w-full cursor-pointer rounded-full bg-zinc-50 text-[13px] font-semibold text-zinc-800 transition-colors hover:bg-zinc-100"
+        >
+          Cerrar sesión
+        </button>
+      </div>
+    ) : null}
+  </div>
+
+  <div className="grid gap-1">
+    <button
+      onClick={() => {
+        handleOpenPlansCTA();
+        setMenuOpen(false);
+      }}
+      className="flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
+    >
+      Planes y mejoras
+      <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
+    </button>
+
+    <button
+      onClick={() => {
+        handleOpenPlansCTA();
+        setMenuOpen(false);
+      }}
+      className="flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
+    >
+      Recargas
+      <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
+    </button>
+
+    <a
+      href="/recursos"
+      onClick={() => setMenuOpen(false)}
+      className="flex items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
+    >
+      Recursos
+      <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
+    </a>
+
+    <a
+      href="/producto"
+      onClick={() => setMenuOpen(false)}
+      className="flex items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
+    >
+      Producto
+      <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
+    </a>
+
+    <a
+      href="/casos-de-uso"
+      onClick={() => setMenuOpen(false)}
+      className="flex items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
+    >
+      Casos de uso
+      <ArrowUpRightIcon className="h-4 w-4 text-zinc-400" />
+    </a>
+  </div>
+
+  <div className="mt-3 grid grid-cols-3 gap-2 border-t border-zinc-100 pt-3 text-center">
+    <a
+      href="/legal/privacidad"
+      onClick={() => setMenuOpen(false)}
+      className="text-[11.5px] font-medium text-zinc-400 hover:text-zinc-700"
+    >
+      Privacidad
+    </a>
+    <a
+      href="/legal/terminos"
+      onClick={() => setMenuOpen(false)}
+      className="text-[11.5px] font-medium text-zinc-400 hover:text-zinc-700"
+    >
+      Términos
+    </a>
+    <a
+      href="/contacto"
+      onClick={() => setMenuOpen(false)}
+      className="text-[11.5px] font-medium text-zinc-400 hover:text-zinc-700"
+    >
+      Contacto
+    </a>
+  </div>
+</div>
           </div>
         </aside>
       </div>
