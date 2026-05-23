@@ -200,6 +200,20 @@ function ArrowIcon({ className }: { className?: string }) {
   );
 }
 
+function CloseIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className ?? "h-6 w-6"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path d="M6 6l12 12" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export default function Sidebar({
   menuOpen,
   setMenuOpen,
@@ -369,7 +383,7 @@ export default function Sidebar({
         className={[
           "fixed inset-0 z-[80] transition-all duration-300",
           menuOpen
-            ? "pointer-events-auto bg-white md:bg-black/20 md:backdrop-blur-sm"
+            ? "pointer-events-auto bg-white md:bg-transparent"
             : "pointer-events-none bg-transparent",
         ].join(" ")}
         onClick={() => setMenuOpen(false)}
@@ -378,26 +392,21 @@ export default function Sidebar({
           className={[
             "absolute z-[81] overflow-hidden bg-white",
             "transform transition-all duration-300 ease-out",
-            "inset-0 md:inset-y-auto md:left-3 md:right-auto md:rounded-[30px]",
-            "md:border md:border-zinc-200/80 md:bg-white/94 md:shadow-[0_18px_60px_rgba(0,0,0,0.18)] md:backdrop-blur-xl",
-            menuOpen ? "translate-x-0 opacity-100" : "-translate-x-[110%] opacity-0",
+            "inset-0",
+            "md:left-0 md:top-0 md:bottom-0 md:right-auto md:w-[304px]",
+            "md:border-r md:border-zinc-200 md:shadow-none",
+            menuOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0",
           ].join(" ")}
-          style={{
-            top: desktop ? SIDEBAR_TOP : 0,
-            bottom: desktop ? 12 : 0,
-            width: desktop ? 370 : undefined,
-            maxWidth: desktop ? "calc(100vw - 24px)" : undefined,
-          }}
           onClick={(e) => e.stopPropagation()}
         >
           <div
-            className="flex h-full flex-col px-7 pb-7 md:px-4 md:pb-4"
+            className="flex h-full flex-col px-6 pb-6 md:px-4 md:pb-4"
             style={{
-              paddingTop: desktop ? 18 : "calc(env(safe-area-inset-top, 0px) + 92px)",
+              paddingTop: desktop ? 18 : "calc(env(safe-area-inset-top, 0px) + 76px)",
             }}
           >
             {desktop ? (
-              <div className="mb-4 flex items-center justify-between px-1">
+              <div className="mb-5 flex items-center justify-between px-1">
                 <a
                   href="/"
                   onClick={() => setMenuOpen(false)}
@@ -412,7 +421,7 @@ export default function Sidebar({
                   className="grid h-9 w-9 place-items-center rounded-full text-zinc-500 hover:bg-zinc-100"
                   aria-label="Cerrar menú"
                 >
-                  ×
+                  <CloseIcon className="h-5 w-5" />
                 </button>
               </div>
             ) : null}
@@ -420,30 +429,30 @@ export default function Sidebar({
             <div className="shrink-0">
               <button
                 onClick={handleCreateThread}
-                className="flex w-full items-center gap-5 rounded-[28px] bg-transparent py-4 text-left transition active:scale-[0.99] md:gap-4 md:py-3"
+                className="flex w-full items-center gap-4 rounded-[24px] bg-transparent py-3 text-left transition active:scale-[0.99] md:gap-3 md:py-2.5"
               >
-                <span className="grid h-[62px] w-[62px] shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-950 md:h-12 md:w-12">
-                  <PlusIcon className="h-7 w-7 md:h-5 md:w-5" />
+                <span className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-950 md:h-10 md:w-10">
+                  <PlusIcon className="h-6 w-6 md:h-5 md:w-5" />
                 </span>
 
-                <span className="text-[28px] font-semibold leading-none tracking-[-0.055em] text-zinc-950 md:text-[20px]">
+                <span className="text-[24px] font-semibold leading-none tracking-[-0.05em] text-zinc-950 md:text-[16px] md:tracking-[-0.025em]">
                   Nueva conversación
                 </span>
               </button>
 
-              <div className="mt-3 flex items-center gap-4 rounded-full border border-zinc-200 bg-white px-5 py-4 shadow-sm md:px-4 md:py-3">
-                <SearchIcon className="h-5 w-5 shrink-0 text-zinc-400" />
+              <div className="mt-3 flex items-center gap-3 rounded-full border border-zinc-200 bg-white px-4 py-3 shadow-sm md:px-3 md:py-2.5">
+                <SearchIcon className="h-5 w-5 shrink-0 text-zinc-400 md:h-4 md:w-4" />
 
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Buscar conversaciones"
-                  className="min-w-0 flex-1 bg-transparent text-[17px] font-medium text-zinc-900 outline-none placeholder:text-zinc-400 md:text-[14px]"
+                  className="min-w-0 flex-1 bg-transparent text-[15px] font-medium text-zinc-900 outline-none placeholder:text-zinc-400 md:text-[13px]"
                 />
               </div>
             </div>
 
-            <div className="mt-6 border-t border-zinc-200 pt-5 md:mt-4 md:pt-4" />
+            <div className="mt-5 border-t border-zinc-200 pt-4 md:mt-4 md:pt-3" />
 
             <div className="min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-width:thin]">
               <div className="space-y-1">
@@ -455,7 +464,7 @@ export default function Sidebar({
                     <div
                       key={t.id}
                       className={[
-                        "group relative rounded-[20px] transition-colors",
+                        "group relative rounded-[18px] transition-colors",
                         active ? "bg-zinc-100" : "hover:bg-zinc-50",
                       ].join(" ")}
                     >
@@ -471,13 +480,13 @@ export default function Sidebar({
                           activateThread(t.id);
                           setMenuOpen(false);
                         }}
-                        className="w-full cursor-pointer px-1 py-3 text-left md:px-3"
+                        className="w-full cursor-pointer px-1 py-2.5 text-left md:px-3 md:py-2"
                       >
                         <div className="flex min-w-0 items-center gap-3">
                           <div className="min-w-0 flex-1">
                             <div
                               className={[
-                                "truncate text-[25px] leading-tight tracking-[-0.05em] md:text-[15px] md:tracking-normal",
+                                "truncate text-[21px] leading-tight tracking-[-0.045em] md:text-[14px] md:tracking-normal",
                                 active
                                   ? "font-semibold text-zinc-950"
                                   : "font-semibold text-zinc-900 md:font-medium",
@@ -487,7 +496,7 @@ export default function Sidebar({
                             </div>
 
                             {pinned ? (
-                              <div className="mt-1 text-[12px] font-medium text-blue-600">
+                              <div className="mt-1 text-[12px] font-medium text-blue-600 md:text-[11px]">
                                 Fijada
                               </div>
                             ) : null}
@@ -495,7 +504,7 @@ export default function Sidebar({
 
                           {active ? (
                             <div
-                              className="h-2.5 w-2.5 shrink-0 rounded-full"
+                              className="h-2.5 w-2.5 shrink-0 rounded-full md:h-2 md:w-2"
                               style={{ backgroundColor: BRAND_BLUE }}
                             />
                           ) : null}
@@ -505,11 +514,11 @@ export default function Sidebar({
                       {desktop ? (
                         <button
                           onClick={() => openThreadActions(t.id)}
-                          className="absolute right-2 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-transparent text-zinc-500 opacity-0 transition-all hover:border-zinc-200 hover:bg-white group-hover:opacity-100"
+                          className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-transparent text-zinc-500 opacity-0 transition-all hover:border-zinc-200 hover:bg-white group-hover:opacity-100"
                           aria-label="Acciones"
                           title="Acciones"
                         >
-                          <DotsIcon className="h-[18px] w-[18px]" />
+                          <DotsIcon className="h-[17px] w-[17px]" />
                         </button>
                       ) : null}
                     </div>
@@ -524,14 +533,14 @@ export default function Sidebar({
               </div>
             </div>
 
-            <div className="shrink-0 border-t border-zinc-200 pt-5 md:pt-4">
-              <div className="mb-5 grid gap-3 md:mb-4 md:gap-2">
+            <div className="shrink-0 border-t border-zinc-200 pt-4">
+              <div className="mb-4 grid gap-2.5 md:gap-1.5">
                 {secondaryLinks.map((item) => (
                   <a
                     key={item.href}
                     href={item.href}
                     onClick={() => setMenuOpen(false)}
-                    className="text-[18px] font-medium text-zinc-500 transition hover:text-zinc-950 md:text-[14px]"
+                    className="text-[16px] font-medium text-zinc-500 transition hover:text-zinc-950 md:text-[13px]"
                   >
                     {item.label}
                   </a>
@@ -539,44 +548,46 @@ export default function Sidebar({
               </div>
 
               {accountOpen ? (
-                <div className="mb-3 rounded-[26px] border border-zinc-200 bg-white p-3 shadow-sm">
-                  {isLoggedIn ? (
-                    <div className="mb-3 flex items-center gap-3">
-                      <div
-                        className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-[14px] font-semibold text-white"
-                        style={{ backgroundColor: BRAND_BLUE }}
-                      >
-                        {userInitial}
-                      </div>
+                <div className="mb-3 max-h-[38dvh] overflow-y-auto rounded-[24px] border border-zinc-200 bg-white p-3 shadow-sm [scrollbar-width:thin] md:max-h-[44vh]">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex items-center gap-3">
+                      {isLoggedIn ? (
+                        <div
+                          className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[13px] font-semibold text-white"
+                          style={{ backgroundColor: BRAND_BLUE }}
+                        >
+                          {userInitial}
+                        </div>
+                      ) : (
+                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-700">
+                          <UserIcon className="h-[17px] w-[17px]" />
+                        </div>
+                      )}
 
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-[14px] font-semibold text-zinc-900">
-                          {authUserName ?? "Usuario"}
+                          {isLoggedIn ? authUserName ?? "Usuario" : "Sin iniciar sesión"}
                         </div>
                         <div className="truncate text-[11px] text-zinc-500">
-                          {authUserEmail ?? "Email no disponible"}
+                          {isLoggedIn
+                            ? authUserEmail ?? "Email no disponible"
+                            : "Guarda y sincroniza tus consultas"}
                         </div>
                       </div>
                     </div>
-                  ) : (
-                    <div className="mb-3 flex items-center gap-3">
-                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-700">
-                        <UserIcon className="h-[18px] w-[18px]" />
-                      </div>
 
-                      <div className="min-w-0 flex-1">
-                        <div className="text-[14px] font-semibold text-zinc-900">
-                          Sin iniciar sesión
-                        </div>
-                        <div className="text-[11px] text-zinc-500">
-                          Guarda y sincroniza tus consultas
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                    <button
+                      type="button"
+                      onClick={() => setAccountOpen(false)}
+                      className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+                      aria-label="Cerrar menú de cuenta"
+                    >
+                      <CloseIcon className="h-4 w-4" />
+                    </button>
+                  </div>
 
                   <div className="grid gap-1">
-                    <div className="flex items-center justify-between rounded-[18px] px-3 py-2 text-[14px] text-zinc-700">
+                    <div className="flex items-center justify-between rounded-[18px] px-3 py-2 text-[14px] text-zinc-700 md:text-[13px]">
                       <span>Plan actual</span>
                       <span className="font-semibold text-zinc-950">
                         {currentPlanLabel === "Max"
@@ -589,7 +600,7 @@ export default function Sidebar({
 
                     <button
                       onClick={openPlansFromMenu}
-                      className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50"
+                      className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50 md:text-[13px]"
                     >
                       <span>Planes</span>
                       <ArrowIcon className="h-4 w-4 text-zinc-400" />
@@ -597,7 +608,7 @@ export default function Sidebar({
 
                     <button
                       onClick={openPlansFromMenu}
-                      className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50"
+                      className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50 md:text-[13px]"
                     >
                       <span>Recargas</span>
                       <ArrowIcon className="h-4 w-4 text-zinc-400" />
@@ -606,7 +617,7 @@ export default function Sidebar({
                     <a
                       href="/recursos"
                       onClick={() => setMenuOpen(false)}
-                      className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50"
+                      className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50 md:text-[13px]"
                     >
                       <span>Recursos</span>
                       <ArrowIcon className="h-4 w-4 text-zinc-400" />
@@ -614,7 +625,7 @@ export default function Sidebar({
 
                     <button
                       onClick={openPlansFromMenu}
-                      className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50"
+                      className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50 md:text-[13px]"
                     >
                       <span>Gestionar suscripción</span>
                       <ArrowIcon className="h-4 w-4 text-zinc-400" />
@@ -626,7 +637,7 @@ export default function Sidebar({
                           logout();
                           setMenuOpen(false);
                         }}
-                        className="mt-1 flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-red-600 hover:bg-red-50"
+                        className="mt-1 flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-red-600 hover:bg-red-50 md:text-[13px]"
                       >
                         <span>Cerrar sesión</span>
                       </button>
@@ -636,7 +647,7 @@ export default function Sidebar({
                           openLoginModal("signin");
                           setMenuOpen(false);
                         }}
-                        className="mt-1 flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-semibold"
+                        className="mt-1 flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-semibold md:text-[13px]"
                         style={{ color: BRAND_BLUE }}
                       >
                         <span>Iniciar sesión</span>
@@ -651,26 +662,26 @@ export default function Sidebar({
                 onClick={() => setAccountOpen((v) => !v)}
                 disabled={authLoading}
                 className={[
-                  "flex w-full items-center justify-between rounded-full border border-zinc-200 bg-white px-5 py-4 shadow-sm transition active:scale-[0.99]",
+                  "flex w-full items-center justify-between rounded-full border border-zinc-200 bg-white px-4 py-3 shadow-sm transition active:scale-[0.99]",
                   authLoading ? "opacity-60" : "hover:bg-zinc-50",
                 ].join(" ")}
               >
                 <span className="flex min-w-0 items-center gap-3">
                   <span
                     className={[
-                      "grid h-9 w-9 shrink-0 place-items-center rounded-full text-[13px] font-semibold",
+                      "grid h-8 w-8 shrink-0 place-items-center rounded-full text-[12px] font-semibold",
                       isLoggedIn ? "text-white" : "bg-zinc-100 text-zinc-700",
                     ].join(" ")}
                     style={isLoggedIn ? { backgroundColor: BRAND_BLUE } : undefined}
                   >
-                    {isLoggedIn ? userInitial : <UserIcon className="h-[18px] w-[18px]" />}
+                    {isLoggedIn ? userInitial : <UserIcon className="h-[17px] w-[17px]" />}
                   </span>
 
                   <span className="min-w-0 text-left">
-                    <span className="block truncate text-[15px] font-semibold text-zinc-950">
+                    <span className="block truncate text-[14px] font-semibold text-zinc-950 md:text-[13px]">
                       {isLoggedIn ? userLabel : "Cuenta"}
                     </span>
-                    <span className="block truncate text-[12px] text-zinc-500">
+                    <span className="block truncate text-[12px] text-zinc-500 md:text-[11px]">
                       Plan {currentPlanLabel === "Plus" ? "Plus" : currentPlanLabel}
                     </span>
                   </span>
@@ -678,7 +689,7 @@ export default function Sidebar({
 
                 <span
                   className={[
-                    "text-[22px] leading-none text-zinc-400 transition",
+                    "text-[21px] leading-none text-zinc-400 transition",
                     accountOpen ? "rotate-45" : "",
                   ].join(" ")}
                 >
