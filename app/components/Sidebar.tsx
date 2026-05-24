@@ -443,8 +443,10 @@ export default function Sidebar({
       </span>
 
       <span className="block truncate text-[12px] text-zinc-500 md:text-[11px]">
-        Plan {currentPlanLabel === "Plus" ? "Plus" : currentPlanLabel}
-      </span>
+  {isLoggedIn
+    ? authUserEmail ?? "Email no disponible"
+    : `Plan ${currentPlanLabel === "Plus" ? "Plus" : currentPlanLabel}`}
+</span>
     </span>
   </span>
 </div>
@@ -699,8 +701,10 @@ export default function Sidebar({
                           {isLoggedIn ? userLabel : "Cuenta"}
                         </span>
                         <span className="block truncate text-[12px] text-zinc-500 md:text-[11px]">
-                          Plan {currentPlanLabel === "Plus" ? "Plus" : currentPlanLabel}
-                        </span>
+  {isLoggedIn
+    ? authUserEmail ?? "Email no disponible"
+    : `Plan ${currentPlanLabel === "Plus" ? "Plus" : currentPlanLabel}`}
+</span>
                       </span>
                     </span>
 

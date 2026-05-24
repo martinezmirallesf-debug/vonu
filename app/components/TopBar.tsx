@@ -66,7 +66,7 @@ export default function TopBar({
         }}
       >
         <div className="mx-auto max-w-[1500px] px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
+          <div className="flex h-16 translate-x-[6px] items-center justify-between">
             <button
               type="button"
               onClick={() => setMenuOpen((v) => !v)}
