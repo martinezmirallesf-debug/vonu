@@ -57,9 +57,9 @@ export default function TopBar({
     <div
       ref={topBarRef}
       className={[
-        "fixed inset-x-0 top-0 z-[95]",
-        "pointer-events-none",
-      ].join(" ")}
+  "fixed inset-x-0 top-0 z-[95]",
+  "pointer-events-none md:hidden",
+].join(" ")}
       style={{
         paddingTop: "env(safe-area-inset-top, 0px)",
       }}

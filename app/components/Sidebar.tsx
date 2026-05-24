@@ -356,25 +356,27 @@ export default function Sidebar({
   return (
     <>
       <div
-        className={[
-          "fixed inset-0 z-[80] transition-all duration-300",
-          menuOpen
-            ? "pointer-events-auto bg-white md:bg-transparent"
-            : "pointer-events-none bg-transparent",
-        ].join(" ")}
-        onClick={() => setMenuOpen(false)}
-      >
+  className={[
+    "fixed inset-0 z-[80] transition-all duration-300",
+    menuOpen
+      ? "pointer-events-auto bg-white md:pointer-events-none md:bg-transparent"
+      : "pointer-events-none bg-transparent md:pointer-events-none",
+  ].join(" ")}
+  onClick={() => setMenuOpen(false)}
+>
         <aside
-          className={[
-            "absolute z-[81] overflow-hidden bg-white",
-            "transform transition-all duration-300 ease-out",
-            "inset-0",
-            "md:left-0 md:top-0 md:bottom-0 md:right-auto md:w-[304px]",
-            "md:border-r md:border-zinc-200 md:shadow-none",
-            menuOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0",
-          ].join(" ")}
-          onClick={(e) => e.stopPropagation()}
-        >
+  className={[
+    "absolute z-[81] overflow-hidden bg-white",
+    "transform transition-all duration-300 ease-out",
+    "inset-0",
+    "md:fixed md:left-0 md:top-0 md:bottom-0 md:right-auto md:w-[304px]",
+    "md:border-r md:border-zinc-200 md:shadow-none",
+    menuOpen
+      ? "translate-x-0 opacity-100"
+      : "-translate-x-full opacity-0 md:translate-x-0 md:opacity-100",
+  ].join(" ")}
+  onClick={(e) => e.stopPropagation()}
+>
           <div
             className="flex h-full flex-col px-6 pb-6 md:px-4 md:pb-4"
             style={{
@@ -382,25 +384,15 @@ export default function Sidebar({
             }}
           >
             {desktop ? (
-              <div className="mb-5 flex items-center justify-between px-1">
-                <a
-                  href="/"
-                  onClick={() => setMenuOpen(false)}
-                  className="text-[22px] font-semibold tracking-[-0.045em] text-zinc-950"
-                >
-                  VonuAI
-                </a>
-
-                <button
-                  type="button"
-                  onClick={() => setMenuOpen(false)}
-                  className="grid h-9 w-9 place-items-center rounded-full text-zinc-500 hover:bg-zinc-100"
-                  aria-label="Cerrar menú"
-                >
-                  <CloseIcon className="h-5 w-5" />
-                </button>
-              </div>
-            ) : null}
+  <div className="mb-5 flex items-center px-1">
+    <a
+      href="/"
+      className="text-[22px] font-semibold tracking-[-0.045em] text-zinc-950"
+    >
+      VonuAI
+    </a>
+  </div>
+) : null}
 
             {accountScreen === "account" ? (
               <div className="flex min-h-0 flex-1 flex-col">

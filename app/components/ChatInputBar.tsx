@@ -209,7 +209,7 @@ const shellShadow = voiceMode
   return (
     <div
       ref={inputBarRef}
-      className="fixed left-0 right-0 z-[70] bg-transparent"
+      className="fixed left-0 right-0 z-[70] bg-transparent md:left-[304px]"
       style={{
   bottom: "calc(max(var(--vvb, 0px), 0px) + 10px)",
   paddingBottom: "env(safe-area-inset-bottom, 0px)",
