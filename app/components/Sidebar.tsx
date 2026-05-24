@@ -31,6 +31,8 @@ type SidebarProps = {
   handleOpenPlansCTA: () => void;
   openLoginModal: (mode: "signin" | "signup") => void;
   currentPlanId: string | null;
+  messagesLeft?: number | null;
+  realtimeSecondsLeft?: number | null;
 };
 
 const BRAND_BLUE = "#1a73e8";
@@ -45,18 +47,8 @@ const secondaryLinks = [
 
 function SearchIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-5 w-5"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="m21 21-4.35-4.35"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="m21 21-4.35-4.35" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
       <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="2.2" />
     </svg>
   );
@@ -64,12 +56,7 @@ function SearchIcon({ className }: { className?: string }) {
 
 function EditIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-5 w-5"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M12 20h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       <path
         d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5Z"
@@ -83,12 +70,7 @@ function EditIcon({ className }: { className?: string }) {
 
 function TrashIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-5 w-5"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M4 7h16" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
       <path d="M10 11v6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
       <path d="M14 11v6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
@@ -110,12 +92,7 @@ function TrashIcon({ className }: { className?: string }) {
 
 function PinIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-5 w-5"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M14 3l7 7-2.8.8-3.4 3.4.8 2.8-1.4 1.4-4.2-4.2-4.9 4.9a1 1 0 0 1-1.4-1.4l4.9-4.9-4.2-4.2 1.4-1.4 2.8.8 3.4-3.4L14 3Z"
         stroke="currentColor"
@@ -129,12 +106,7 @@ function PinIcon({ className }: { className?: string }) {
 
 function PlusIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-5 w-5"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M12 5v14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
       <path d="M5 12h14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
     </svg>
@@ -143,12 +115,7 @@ function PlusIcon({ className }: { className?: string }) {
 
 function DotsIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-5 w-5"}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <circle cx="6" cy="12" r="1.8" />
       <circle cx="12" cy="12" r="1.8" />
       <circle cx="18" cy="12" r="1.8" />
@@ -158,12 +125,7 @@ function DotsIcon({ className }: { className?: string }) {
 
 function UserIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-5 w-5"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M12 12c2.761 0 5-2.239 5-5S14.761 2 12 2 7 4.239 7 7s2.239 5 5 5Z"
         stroke="currentColor"
@@ -182,12 +144,7 @@ function UserIcon({ className }: { className?: string }) {
 
 function ArrowIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-4 w-4"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg className={className ?? "h-4 w-4"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M5 12h13" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
       <path
         d="m13 6 6 6-6 6"
@@ -202,16 +159,29 @@ function ArrowIcon({ className }: { className?: string }) {
 
 function CloseIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className ?? "h-6 w-6"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg className={className ?? "h-6 w-6"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M6 6l12 12" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
       <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
     </svg>
   );
+}
+
+function BackIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-6 w-6"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M15 6 9 12l6 6" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function formatVoiceSeconds(seconds?: number | null) {
+  if (typeof seconds !== "number" || Number.isNaN(seconds)) return "—";
+  const minutes = Math.max(0, Math.floor(seconds / 60));
+  const rest = Math.max(0, seconds % 60);
+
+  if (minutes <= 0) return `${rest}s`;
+  if (rest <= 0) return `${minutes} min`;
+  return `${minutes} min ${rest}s`;
 }
 
 export default function Sidebar({
@@ -237,12 +207,14 @@ export default function Sidebar({
   handleOpenPlansCTA,
   openLoginModal,
   currentPlanId,
+  messagesLeft = null,
+  realtimeSecondsLeft = null,
 }: SidebarProps) {
   const desktop = isDesktopPointer();
   const [query, setQuery] = useState("");
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [threadMenuOpen, setThreadMenuOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
+  const [accountScreen, setAccountScreen] = useState<"main" | "account">("main");
   const [pinnedIds, setPinnedIds] = useState<string[]>([]);
   const longPressTimerRef = useRef<number | null>(null);
 
@@ -267,7 +239,7 @@ export default function Sidebar({
     if (!menuOpen) {
       setThreadMenuOpen(false);
       setSelectedThreadId(null);
-      setAccountOpen(false);
+      setAccountScreen("main");
       setQuery("");
     }
   }, [menuOpen]);
@@ -377,6 +349,10 @@ export default function Sidebar({
     setMenuOpen(false);
   }
 
+  function openResourcesFromMenu() {
+    setMenuOpen(false);
+  }
+
   return (
     <>
       <div
@@ -426,272 +402,307 @@ export default function Sidebar({
               </div>
             ) : null}
 
-            <div className="shrink-0">
-              <button
-                onClick={handleCreateThread}
-                className="flex w-full items-center gap-4 rounded-[24px] bg-transparent py-3 text-left transition active:scale-[0.99] md:gap-3 md:py-2.5"
-              >
-                <span className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-950 md:h-10 md:w-10">
-                  <PlusIcon className="h-6 w-6 md:h-5 md:w-5" />
-                </span>
+            {accountScreen === "account" ? (
+              <div className="flex min-h-0 flex-1 flex-col">
+                <div className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setAccountScreen("main")}
+                    className="-ml-2 mb-5 grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition hover:bg-zinc-100 active:scale-95"
+                    aria-label="Volver al menú"
+                    title="Volver"
+                  >
+                    <BackIcon className="h-6 w-6" />
+                  </button>
 
-                <span className="text-[24px] font-semibold leading-none tracking-[-0.05em] text-zinc-950 md:text-[16px] md:tracking-[-0.025em]">
-                  Nueva conversación
-                </span>
-              </button>
+                  <h2 className="text-[42px] font-semibold leading-[0.95] tracking-[-0.065em] text-zinc-950 md:text-[28px]">
+                    Usuario
+                  </h2>
 
-              <div className="mt-3 flex items-center gap-3 rounded-full border border-zinc-200 bg-white px-4 py-3 shadow-sm md:px-3 md:py-2.5">
-                <SearchIcon className="h-5 w-5 shrink-0 text-zinc-400 md:h-4 md:w-4" />
+                  <div className="mt-6 rounded-[28px] border border-zinc-200 bg-white p-4 shadow-sm md:rounded-[22px]">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span
+                        className={[
+                          "grid h-11 w-11 shrink-0 place-items-center rounded-full text-[15px] font-semibold",
+                          isLoggedIn ? "text-white" : "bg-zinc-100 text-zinc-700",
+                        ].join(" ")}
+                        style={isLoggedIn ? { backgroundColor: BRAND_BLUE } : undefined}
+                      >
+                        {isLoggedIn ? userInitial : <UserIcon className="h-[19px] w-[19px]" />}
+                      </span>
 
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Buscar conversaciones"
-                  className="min-w-0 flex-1 bg-transparent text-[15px] font-medium text-zinc-900 outline-none placeholder:text-zinc-400 md:text-[13px]"
-                />
-              </div>
-            </div>
+                      <span className="min-w-0">
+                        <span className="block truncate text-[17px] font-semibold text-zinc-950 md:text-[14px]">
+                          {isLoggedIn ? userLabel : "Sin iniciar sesión"}
+                        </span>
 
-            <div className="mt-5 border-t border-zinc-200 pt-4 md:mt-4 md:pt-3" />
+                        <span className="block truncate text-[13px] text-zinc-500 md:text-[11px]">
+                          Plan {currentPlanLabel === "Plus" ? "Plus" : currentPlanLabel}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-width:thin]">
-              <div className="space-y-1">
-                {filteredThreads.map((t) => {
-                  const active = t.id === activeThreadId;
-                  const pinned = pinnedIds.includes(t.id);
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div className="rounded-[22px] border border-zinc-200 bg-zinc-50 p-4 md:p-3">
+                      <div className="text-[12px] font-medium text-zinc-500">
+                        Mensajes
+                      </div>
+                      <div className="mt-1 text-[24px] font-semibold tracking-[-0.05em] text-zinc-950 md:text-[20px]">
+                        {typeof messagesLeft === "number" ? messagesLeft : "—"}
+                      </div>
+                      <div className="mt-1 text-[11px] text-zinc-500">
+                        restantes
+                      </div>
+                    </div>
 
-                  return (
-                    <div
-                      key={t.id}
-                      className={[
-                        "group relative rounded-[18px] transition-colors",
-                        active ? "bg-zinc-100" : "hover:bg-zinc-50",
-                      ].join(" ")}
+                    <div className="rounded-[22px] border border-zinc-200 bg-zinc-50 p-4 md:p-3">
+                      <div className="text-[12px] font-medium text-zinc-500">
+                        Voz
+                      </div>
+                      <div className="mt-1 text-[24px] font-semibold tracking-[-0.05em] text-zinc-950 md:text-[20px]">
+                        {formatVoiceSeconds(realtimeSecondsLeft)}
+                      </div>
+                      <div className="mt-1 text-[11px] text-zinc-500">
+                        restantes
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-width:thin]">
+                  <div className="grid gap-1">
+                    <button
+                      onClick={openPlansFromMenu}
+                      className="flex w-full items-center justify-between rounded-[22px] px-2 py-3 text-left text-[25px] font-semibold leading-none tracking-[-0.055em] text-zinc-950 transition hover:bg-zinc-50 md:text-[16px] md:tracking-[-0.025em]"
                     >
+                      <span>Planes</span>
+                      <ArrowIcon className="h-5 w-5 text-zinc-400 md:h-4 md:w-4" />
+                    </button>
+
+                    <button
+                      onClick={openPlansFromMenu}
+                      className="flex w-full items-center justify-between rounded-[22px] px-2 py-3 text-left text-[25px] font-semibold leading-none tracking-[-0.055em] text-zinc-950 transition hover:bg-zinc-50 md:text-[16px] md:tracking-[-0.025em]"
+                    >
+                      <span>Recargas</span>
+                      <ArrowIcon className="h-5 w-5 text-zinc-400 md:h-4 md:w-4" />
+                    </button>
+
+                    <button
+                      onClick={openPlansFromMenu}
+                      className="flex w-full items-center justify-between rounded-[22px] px-2 py-3 text-left text-[25px] font-semibold leading-none tracking-[-0.055em] text-zinc-950 transition hover:bg-zinc-50 md:text-[16px] md:tracking-[-0.025em]"
+                    >
+                      <span>Gestionar suscripción</span>
+                      <ArrowIcon className="h-5 w-5 text-zinc-400 md:h-4 md:w-4" />
+                    </button>
+
+                    <a
+                      href="/recursos"
+                      onClick={openResourcesFromMenu}
+                      className="flex w-full items-center justify-between rounded-[22px] px-2 py-3 text-left text-[25px] font-semibold leading-none tracking-[-0.055em] text-zinc-950 transition hover:bg-zinc-50 md:text-[16px] md:tracking-[-0.025em]"
+                    >
+                      <span>Recursos</span>
+                      <ArrowIcon className="h-5 w-5 text-zinc-400 md:h-4 md:w-4" />
+                    </a>
+
+                    {isLoggedIn ? (
                       <button
-                        onMouseDown={() => startLongPress(t.id)}
-                        onMouseUp={clearLongPress}
-                        onMouseLeave={clearLongPress}
-                        onTouchStart={() => startLongPress(t.id)}
-                        onTouchEnd={clearLongPress}
-                        onTouchCancel={clearLongPress}
                         onClick={() => {
-                          clearLongPress();
-                          activateThread(t.id);
+                          logout();
                           setMenuOpen(false);
                         }}
-                        className="w-full cursor-pointer px-1 py-2.5 text-left md:px-3 md:py-2"
+                        className="mt-2 flex w-full items-center justify-between rounded-[22px] px-2 py-3 text-left text-[20px] font-semibold leading-none tracking-[-0.045em] text-red-600 transition hover:bg-red-50 md:text-[14px] md:tracking-normal"
                       >
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div className="min-w-0 flex-1">
-                            <div
-                              className={[
-                                "truncate text-[21px] leading-tight tracking-[-0.045em] md:text-[14px] md:tracking-normal",
-                                active
-                                  ? "font-semibold text-zinc-950"
-                                  : "font-semibold text-zinc-900 md:font-medium",
-                              ].join(" ")}
-                            >
-                              {t.title}
-                            </div>
+                        <span>Cerrar sesión</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          openLoginModal("signin");
+                          setMenuOpen(false);
+                        }}
+                        className="mt-2 flex w-full items-center justify-between rounded-[22px] px-2 py-3 text-left text-[20px] font-semibold leading-none tracking-[-0.045em] md:text-[14px] md:tracking-normal"
+                        style={{ color: BRAND_BLUE }}
+                      >
+                        <span>Iniciar sesión</span>
+                        <ArrowIcon className="h-5 w-5 md:h-4 md:w-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
 
-                            {pinned ? (
-                              <div className="mt-1 text-[12px] font-medium text-blue-600 md:text-[11px]">
-                                Fijada
+                <div className="shrink-0 border-t border-zinc-200 pt-5">
+                  <div className="grid gap-3 md:gap-2">
+                    {secondaryLinks.map((item) => (
+                      <a
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMenuOpen(false)}
+                        className="text-[16px] font-medium text-zinc-500 transition hover:text-zinc-950 md:text-[13px]"
+                      >
+                        {item.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="shrink-0">
+                  <button
+                    onClick={handleCreateThread}
+                    className="flex w-full items-center gap-4 rounded-[24px] bg-transparent py-3 text-left transition active:scale-[0.99] md:gap-3 md:py-2.5"
+                  >
+                    <span className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-950 md:h-10 md:w-10">
+                      <PlusIcon className="h-6 w-6 md:h-5 md:w-5" />
+                    </span>
+
+                    <span className="text-[24px] font-semibold leading-none tracking-[-0.05em] text-zinc-950 md:text-[16px] md:tracking-[-0.025em]">
+                      Nueva conversación
+                    </span>
+                  </button>
+
+                  <div className="mt-3 flex items-center gap-3 rounded-full border border-zinc-200 bg-white px-4 py-3 shadow-sm md:px-3 md:py-2.5">
+                    <SearchIcon className="h-5 w-5 shrink-0 text-zinc-400 md:h-4 md:w-4" />
+
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Buscar conversaciones"
+                      className="min-w-0 flex-1 bg-transparent text-[15px] font-medium text-zinc-900 outline-none placeholder:text-zinc-400 md:text-[13px]"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-5 border-t border-zinc-200 pt-4 md:mt-4 md:pt-3" />
+
+                <div className="min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-width:thin]">
+                  <div className="space-y-1">
+                    {filteredThreads.map((t) => {
+                      const active = t.id === activeThreadId;
+                      const pinned = pinnedIds.includes(t.id);
+
+                      return (
+                        <div
+                          key={t.id}
+                          className={[
+                            "group relative rounded-[18px] transition-colors",
+                            active ? "bg-zinc-100" : "hover:bg-zinc-50",
+                          ].join(" ")}
+                        >
+                          <button
+                            onMouseDown={() => startLongPress(t.id)}
+                            onMouseUp={clearLongPress}
+                            onMouseLeave={clearLongPress}
+                            onTouchStart={() => startLongPress(t.id)}
+                            onTouchEnd={clearLongPress}
+                            onTouchCancel={clearLongPress}
+                            onClick={() => {
+                              clearLongPress();
+                              activateThread(t.id);
+                              setMenuOpen(false);
+                            }}
+                            className="w-full cursor-pointer px-1 py-2.5 text-left md:px-3 md:py-2"
+                          >
+                            <div className="flex min-w-0 items-center gap-3">
+                              <div className="min-w-0 flex-1">
+                                <div
+                                  className={[
+                                    "truncate text-[21px] leading-tight tracking-[-0.045em] md:text-[14px] md:tracking-normal",
+                                    active
+                                      ? "font-semibold text-zinc-950"
+                                      : "font-semibold text-zinc-900 md:font-medium",
+                                  ].join(" ")}
+                                >
+                                  {t.title}
+                                </div>
+
+                                {pinned ? (
+                                  <div className="mt-1 text-[12px] font-medium text-blue-600 md:text-[11px]">
+                                    Fijada
+                                  </div>
+                                ) : null}
                               </div>
-                            ) : null}
-                          </div>
 
-                          {active ? (
-                            <div
-                              className="h-2.5 w-2.5 shrink-0 rounded-full md:h-2 md:w-2"
-                              style={{ backgroundColor: BRAND_BLUE }}
-                            />
+                              {active ? (
+                                <div
+                                  className="h-2.5 w-2.5 shrink-0 rounded-full md:h-2 md:w-2"
+                                  style={{ backgroundColor: BRAND_BLUE }}
+                                />
+                              ) : null}
+                            </div>
+                          </button>
+
+                          {desktop ? (
+                            <button
+                              onClick={() => openThreadActions(t.id)}
+                              className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-transparent text-zinc-500 opacity-0 transition-all hover:border-zinc-200 hover:bg-white group-hover:opacity-100"
+                              aria-label="Acciones"
+                              title="Acciones"
+                            >
+                              <DotsIcon className="h-[17px] w-[17px]" />
+                            </button>
                           ) : null}
                         </div>
-                      </button>
+                      );
+                    })}
 
-                      {desktop ? (
-                        <button
-                          onClick={() => openThreadActions(t.id)}
-                          className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-transparent text-zinc-500 opacity-0 transition-all hover:border-zinc-200 hover:bg-white group-hover:opacity-100"
-                          aria-label="Acciones"
-                          title="Acciones"
-                        >
-                          <DotsIcon className="h-[17px] w-[17px]" />
-                        </button>
-                      ) : null}
-                    </div>
-                  );
-                })}
-
-                {filteredThreads.length === 0 ? (
-                  <div className="px-2 py-10 text-center text-[15px] text-zinc-500 md:text-[13px]">
-                    No he encontrado conversaciones con ese texto.
+                    {filteredThreads.length === 0 ? (
+                      <div className="px-2 py-10 text-center text-[15px] text-zinc-500 md:text-[13px]">
+                        No he encontrado conversaciones con ese texto.
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
-              </div>
-            </div>
+                </div>
 
-            <div className="shrink-0 border-t border-zinc-200 pt-4">
-  <div className="mb-4 grid gap-2.5 md:gap-1.5">
-    {secondaryLinks.map((item) => (
-      <a
-        key={item.href}
-        href={item.href}
-        onClick={() => setMenuOpen(false)}
-        className="text-[16px] font-medium text-zinc-500 transition hover:text-zinc-950 md:text-[13px]"
-      >
-        {item.label}
-      </a>
-    ))}
-  </div>
+                <div className="shrink-0 border-t border-zinc-200 pt-4">
+                  <div className="mb-4 grid gap-2.5 md:gap-1.5">
+                    {secondaryLinks.map((item) => (
+                      <a
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMenuOpen(false)}
+                        className="text-[16px] font-medium text-zinc-500 transition hover:text-zinc-950 md:text-[13px]"
+                      >
+                        {item.label}
+                      </a>
+                    ))}
+                  </div>
 
-  {accountOpen ? (
-    <div className="mb-3 max-h-[46dvh] overflow-y-auto rounded-[24px] border border-zinc-200 bg-white p-3 shadow-sm [scrollbar-width:thin] md:max-h-[44vh]">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="min-w-0 flex items-center gap-3">
-          {isLoggedIn ? (
-            <div
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[13px] font-semibold text-white"
-              style={{ backgroundColor: BRAND_BLUE }}
-            >
-              {userInitial}
-            </div>
-          ) : (
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-700">
-              <UserIcon className="h-[17px] w-[17px]" />
-            </div>
-          )}
+                  <button
+                    onClick={() => setAccountScreen("account")}
+                    disabled={authLoading}
+                    className={[
+                      "flex w-full items-center justify-between rounded-full border border-zinc-200 bg-white px-4 py-3 shadow-sm transition active:scale-[0.99]",
+                      authLoading ? "opacity-60" : "hover:bg-zinc-50",
+                    ].join(" ")}
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      <span
+                        className={[
+                          "grid h-8 w-8 shrink-0 place-items-center rounded-full text-[12px] font-semibold",
+                          isLoggedIn ? "text-white" : "bg-zinc-100 text-zinc-700",
+                        ].join(" ")}
+                        style={isLoggedIn ? { backgroundColor: BRAND_BLUE } : undefined}
+                      >
+                        {isLoggedIn ? userInitial : <UserIcon className="h-[17px] w-[17px]" />}
+                      </span>
 
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-[14px] font-semibold text-zinc-900">
-              {isLoggedIn ? authUserName ?? "Usuario" : "Sin iniciar sesión"}
-            </div>
-            <div className="truncate text-[11px] text-zinc-500">
-              {isLoggedIn
-                ? authUserEmail ?? "Email no disponible"
-                : "Guarda y sincroniza tus consultas"}
-            </div>
-          </div>
-        </div>
+                      <span className="min-w-0 text-left">
+                        <span className="block truncate text-[14px] font-semibold text-zinc-950 md:text-[13px]">
+                          {isLoggedIn ? userLabel : "Cuenta"}
+                        </span>
+                        <span className="block truncate text-[12px] text-zinc-500 md:text-[11px]">
+                          Plan {currentPlanLabel === "Plus" ? "Plus" : currentPlanLabel}
+                        </span>
+                      </span>
+                    </span>
 
-        <button
-          type="button"
-          onClick={() => setAccountOpen(false)}
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
-          aria-label="Cerrar menú de cuenta"
-        >
-          <CloseIcon className="h-4 w-4" />
-        </button>
-      </div>
-
-      <div className="grid gap-1">
-        <div className="flex items-center justify-between rounded-[18px] px-3 py-2 text-[14px] text-zinc-700 md:text-[13px]">
-          <span>Plan actual</span>
-          <span className="font-semibold text-zinc-950">
-            {currentPlanLabel === "Max"
-              ? "Max"
-              : currentPlanLabel === "Plus"
-              ? PLUS_NODE
-              : currentPlanLabel}
-          </span>
-        </div>
-
-        <button
-          onClick={openPlansFromMenu}
-          className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50 md:text-[13px]"
-        >
-          <span>Planes</span>
-          <ArrowIcon className="h-4 w-4 text-zinc-400" />
-        </button>
-
-        <button
-          onClick={openPlansFromMenu}
-          className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50 md:text-[13px]"
-        >
-          <span>Recargas</span>
-          <ArrowIcon className="h-4 w-4 text-zinc-400" />
-        </button>
-
-        <a
-          href="/recursos"
-          onClick={() => setMenuOpen(false)}
-          className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50 md:text-[13px]"
-        >
-          <span>Recursos</span>
-          <ArrowIcon className="h-4 w-4 text-zinc-400" />
-        </a>
-
-        <button
-          onClick={openPlansFromMenu}
-          className="flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-zinc-900 hover:bg-zinc-50 md:text-[13px]"
-        >
-          <span>Gestionar suscripción</span>
-          <ArrowIcon className="h-4 w-4 text-zinc-400" />
-        </button>
-
-        {isLoggedIn ? (
-          <button
-            onClick={() => {
-              logout();
-              setMenuOpen(false);
-            }}
-            className="mt-1 flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-medium text-red-600 hover:bg-red-50 md:text-[13px]"
-          >
-            <span>Cerrar sesión</span>
-          </button>
-        ) : (
-          <button
-            onClick={() => {
-              openLoginModal("signin");
-              setMenuOpen(false);
-            }}
-            className="mt-1 flex w-full items-center justify-between rounded-[18px] px-3 py-2 text-left text-[14px] font-semibold md:text-[13px]"
-            style={{ color: BRAND_BLUE }}
-          >
-            <span>Iniciar sesión</span>
-            <ArrowIcon className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-    </div>
-  ) : (
-    <button
-      onClick={() => setAccountOpen(true)}
-      disabled={authLoading}
-      className={[
-        "flex w-full items-center justify-between rounded-full border border-zinc-200 bg-white px-4 py-3 shadow-sm transition active:scale-[0.99]",
-        authLoading ? "opacity-60" : "hover:bg-zinc-50",
-      ].join(" ")}
-    >
-      <span className="flex min-w-0 items-center gap-3">
-        <span
-          className={[
-            "grid h-8 w-8 shrink-0 place-items-center rounded-full text-[12px] font-semibold",
-            isLoggedIn ? "text-white" : "bg-zinc-100 text-zinc-700",
-          ].join(" ")}
-          style={isLoggedIn ? { backgroundColor: BRAND_BLUE } : undefined}
-        >
-          {isLoggedIn ? userInitial : <UserIcon className="h-[17px] w-[17px]" />}
-        </span>
-
-        <span className="min-w-0 text-left">
-          <span className="block truncate text-[14px] font-semibold text-zinc-950 md:text-[13px]">
-            {isLoggedIn ? userLabel : "Cuenta"}
-          </span>
-          <span className="block truncate text-[12px] text-zinc-500 md:text-[11px]">
-            Plan {currentPlanLabel === "Plus" ? "Plus" : currentPlanLabel}
-          </span>
-        </span>
-      </span>
-
-      <span className="text-[21px] leading-none text-zinc-400 transition">
-        +
-      </span>
-    </button>
-  )}
-</div>
+                    <ArrowIcon className="h-4 w-4 shrink-0 text-zinc-400" />
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </aside>
       </div>

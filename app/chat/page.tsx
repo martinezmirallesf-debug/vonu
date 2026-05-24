@@ -6168,6 +6168,8 @@ return (
   handleOpenPlansCTA={handleOpenPlansCTA}
   openLoginModal={openLoginModal}
   currentPlanId={usageInfo?.plan_id ?? null}
+  messagesLeft={usageInfo?.messages_left ?? null}
+realtimeSecondsLeft={usageInfo?.realtime_seconds_left ?? null}
 />
 
       {/* MAIN */}
