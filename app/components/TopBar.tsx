@@ -20,6 +20,33 @@ type TopBarProps = {
   UserIcon: React.ComponentType<{ className?: string }>;
 };
 
+function LogoMark() {
+  return (
+    <span className="text-[20px] font-semibold tracking-[-0.045em] text-zinc-950">
+      VonuAI
+    </span>
+  );
+}
+
+function BurgerIcon({ open }: { open: boolean }) {
+  return (
+    <span className="relative block h-5 w-6">
+      <span
+        className={[
+          "absolute left-0 top-[6px] h-[2.4px] rounded-full bg-current transition-all duration-200",
+          open ? "w-6 translate-y-[4px] rotate-45" : "w-6",
+        ].join(" ")}
+      />
+      <span
+        className={[
+          "absolute left-0 top-[14px] h-[2.4px] rounded-full bg-current transition-all duration-200",
+          open ? "w-6 -translate-y-[4px] -rotate-45" : "w-[17px]",
+        ].join(" ")}
+      />
+    </span>
+  );
+}
+
 export default function TopBar({
   topBarRef,
   menuOpen,
@@ -29,66 +56,36 @@ export default function TopBar({
   return (
     <div
       ref={topBarRef}
-      className={`fixed ${
-        menuOpen ? "z-[95]" : "z-50"
-      } flex items-center justify-between pointer-events-none`}
+      className={[
+        "fixed inset-x-0 top-0 z-[95]",
+        "pointer-events-none",
+      ].join(" ")}
       style={{
-        top: "calc(env(safe-area-inset-top, 0px) + 12px)",
-        left: "max(24px, env(safe-area-inset-left, 0px))",
-        right: "max(24px, env(safe-area-inset-right, 0px))",
+        paddingTop: "env(safe-area-inset-top, 0px)",
       }}
     >
-      {/* Burger bubble */}
-      <div className="pointer-events-auto">
-        <button
-  type="button"
-  onClick={() => setMenuOpen((v) => !v)}
-  className={[
-    "grid h-11 w-11 place-items-center rounded-full text-zinc-950",
-    "transition active:scale-95",
-    menuOpen
-      ? "border border-transparent bg-transparent shadow-none backdrop-blur-0"
-      : "border border-zinc-200/80 bg-white/92 shadow-sm backdrop-blur-xl",
-  ].join(" ")}
-  aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-  aria-expanded={menuOpen}
-  title={menuOpen ? "Cerrar menú" : "Menú"}
->
-          <span className="relative block h-5 w-6">
-            <span
-              className={[
-                "absolute left-0 top-[6px] h-[2.4px] rounded-full bg-current transition-all duration-200",
-                menuOpen ? "w-6 translate-y-[4px] rotate-45" : "w-6",
-              ].join(" ")}
-            />
-            <span
-              className={[
-                "absolute left-0 top-[14px] h-[2.4px] rounded-full bg-current transition-all duration-200",
-                menuOpen ? "w-6 -translate-y-[4px] -rotate-45" : "w-[17px]",
-              ].join(" ")}
-            />
-          </span>
-        </button>
-      </div>
+      <div className="mx-auto max-w-[1500px] px-6 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            className="-ml-2 grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition active:scale-95 pointer-events-auto"
+            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={menuOpen}
+            title={menuOpen ? "Cerrar menú" : "Menú"}
+          >
+            <BurgerIcon open={menuOpen} />
+          </button>
 
-      {/* Logo bubble */}
-      <div className="pointer-events-auto">
-        <a
-  href={HOME_URL}
-  className={[
-    "flex h-11 items-center rounded-full px-4",
-    "transition active:scale-[0.99]",
-    menuOpen
-      ? "border border-transparent bg-transparent shadow-none backdrop-blur-0"
-      : "border border-zinc-200/80 bg-white/92 shadow-sm backdrop-blur-xl",
-  ].join(" ")}
-  aria-label="Ir a la home"
-  title="Ir a la home"
->
-          <span className="font-sans text-[19px] font-semibold leading-none tracking-[-0.03em] text-zinc-900">
-            VonuAI
-          </span>
-        </a>
+          <a
+            href={HOME_URL}
+            className="pointer-events-auto"
+            aria-label="Ir a la home"
+            title="Ir a la home"
+          >
+            <LogoMark />
+          </a>
+        </div>
       </div>
     </div>
   );
