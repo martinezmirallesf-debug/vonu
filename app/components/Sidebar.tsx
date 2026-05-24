@@ -244,7 +244,8 @@ cancelSubscriptionFromHere,
   useEffect(() => {
   if (typeof document === "undefined") return;
 
-  const shouldHideTopBar = menuOpen && accountScreen === "account";
+  const shouldHideTopBar =
+    menuOpen && (accountScreen === "account" || accountScreen === "plans");
 
   document.documentElement.classList.toggle(
     "vonu-account-menu-open",
@@ -433,7 +434,7 @@ cancelSubscriptionFromHere,
             style={{
   paddingTop: desktop
     ? 18
-    : accountScreen === "account"
+    : accountScreen !== "main"
     ? "calc(env(safe-area-inset-top, 0px) + 18px)"
     : "calc(env(safe-area-inset-top, 0px) + 76px)",
 }}
@@ -606,11 +607,11 @@ cancelSubscriptionFromHere,
                     <BackIcon className="h-6 w-6" />
                   </button>
 
-                  <div className="mb-4">
+                  <div className="mb-3">
                     <div className="text-[32px] font-semibold leading-none tracking-[-0.06em] text-zinc-950 md:text-[24px]">
                       Planes y recargas
                     </div>
-                    <div className="mt-2 text-[13px] leading-5 text-zinc-500">
+                    <div className="mt-1.5 text-[13px] leading-5 text-zinc-500">
                       Gestiona tu plan, añade recargas o vuelve al plan gratis.
                     </div>
                   </div>
