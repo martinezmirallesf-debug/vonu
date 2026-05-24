@@ -405,50 +405,46 @@ export default function Sidebar({
             {accountScreen === "account" ? (
               <div className="flex min-h-0 flex-1 flex-col">
                 <div className="shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setAccountScreen("main")}
-                    className="-ml-2 mb-5 grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition hover:bg-zinc-100 active:scale-95"
-                    aria-label="Volver al menú"
-                    title="Volver"
-                  >
-                    <BackIcon className="h-6 w-6" />
-                  </button>
+  <button
+    type="button"
+    onClick={() => setAccountScreen("main")}
+    className="-ml-2 mb-4 grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition hover:bg-zinc-100 active:scale-95"
+    aria-label="Volver al menú"
+    title="Volver"
+  >
+    <BackIcon className="h-6 w-6" />
+  </button>
 
-                  <h2 className="text-[42px] font-semibold leading-[0.95] tracking-[-0.065em] text-zinc-950 md:text-[28px]">
-                    Usuario
-                  </h2>
+  <div className="flex w-full items-center justify-between rounded-full border border-zinc-200 bg-white px-4 py-3 shadow-sm">
+  <span className="flex min-w-0 items-center gap-3">
+    <span
+      className={[
+        "grid h-8 w-8 shrink-0 place-items-center rounded-full text-[12px] font-semibold",
+        isLoggedIn ? "text-white" : "bg-zinc-100 text-zinc-700",
+      ].join(" ")}
+      style={isLoggedIn ? { backgroundColor: BRAND_BLUE } : undefined}
+    >
+      {isLoggedIn ? userInitial : <UserIcon className="h-[17px] w-[17px]" />}
+    </span>
 
-                  <div className="mt-6 rounded-[28px] border border-zinc-200 bg-white p-4 shadow-sm md:rounded-[22px]">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span
-                        className={[
-                          "grid h-11 w-11 shrink-0 place-items-center rounded-full text-[15px] font-semibold",
-                          isLoggedIn ? "text-white" : "bg-zinc-100 text-zinc-700",
-                        ].join(" ")}
-                        style={isLoggedIn ? { backgroundColor: BRAND_BLUE } : undefined}
-                      >
-                        {isLoggedIn ? userInitial : <UserIcon className="h-[19px] w-[19px]" />}
-                      </span>
+    <span className="min-w-0 text-left">
+      <span className="block truncate text-[14px] font-semibold text-zinc-950 md:text-[13px]">
+        {isLoggedIn ? userLabel : "Sin iniciar sesión"}
+      </span>
 
-                      <span className="min-w-0">
-                        <span className="block truncate text-[17px] font-semibold text-zinc-950 md:text-[14px]">
-                          {isLoggedIn ? userLabel : "Sin iniciar sesión"}
-                        </span>
-
-                        <span className="block truncate text-[13px] text-zinc-500 md:text-[11px]">
-                          Plan {currentPlanLabel === "Plus" ? "Plus" : currentPlanLabel}
-                        </span>
-                      </span>
-                    </div>
-                  </div>
+      <span className="block truncate text-[12px] text-zinc-500 md:text-[11px]">
+        Plan {currentPlanLabel === "Plus" ? "Plus" : currentPlanLabel}
+      </span>
+    </span>
+  </span>
+</div>
 
                   <div className="mt-4 grid grid-cols-2 gap-3">
-                    <div className="rounded-[22px] border border-zinc-200 bg-zinc-50 p-4 md:p-3">
+                    <div className="rounded-[22px] border border-zinc-200 bg-zinc-50 p-3 md:p-3">
                       <div className="text-[12px] font-medium text-zinc-500">
                         Mensajes
                       </div>
-                      <div className="mt-1 text-[24px] font-semibold tracking-[-0.05em] text-zinc-950 md:text-[20px]">
+                      <div className="mt-1 text-[22px] font-semibold tracking-[-0.05em] text-zinc-950 md:text-[19px]">
                         {typeof messagesLeft === "number" ? messagesLeft : "—"}
                       </div>
                       <div className="mt-1 text-[11px] text-zinc-500">
@@ -456,11 +452,11 @@ export default function Sidebar({
                       </div>
                     </div>
 
-                    <div className="rounded-[22px] border border-zinc-200 bg-zinc-50 p-4 md:p-3">
+                    <div className="rounded-[22px] border border-zinc-200 bg-zinc-50 p-3 md:p-3">
                       <div className="text-[12px] font-medium text-zinc-500">
                         Voz
                       </div>
-                      <div className="mt-1 text-[24px] font-semibold tracking-[-0.05em] text-zinc-950 md:text-[20px]">
+                      <div className="mt-1 text-[22px] font-semibold tracking-[-0.05em] text-zinc-950 md:text-[19px]">
                         {formatVoiceSeconds(realtimeSecondsLeft)}
                       </div>
                       <div className="mt-1 text-[11px] text-zinc-500">
@@ -470,11 +466,11 @@ export default function Sidebar({
                   </div>
                 </div>
 
-                <div className="mt-6 min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-width:thin]">
-                  <div className="grid gap-1">
+                <div className="mt-4 shrink-0 pr-1">
+  <div className="grid gap-1">
                     <button
                       onClick={openPlansFromMenu}
-                      className="flex w-full items-center justify-between rounded-[22px] px-2 py-3 text-left text-[25px] font-semibold leading-none tracking-[-0.055em] text-zinc-950 transition hover:bg-zinc-50 md:text-[16px] md:tracking-[-0.025em]"
+                      className="flex w-full items-center justify-between rounded-[22px] px-2 py-2.5 text-left text-[22px] font-semibold leading-none tracking-[-0.05em] text-zinc-950 transition hover:bg-zinc-50 md:text-[15px] md:tracking-[-0.025em]"
                     >
                       <span>Planes</span>
                       <ArrowIcon className="h-5 w-5 text-zinc-400 md:h-4 md:w-4" />
@@ -482,7 +478,7 @@ export default function Sidebar({
 
                     <button
                       onClick={openPlansFromMenu}
-                      className="flex w-full items-center justify-between rounded-[22px] px-2 py-3 text-left text-[25px] font-semibold leading-none tracking-[-0.055em] text-zinc-950 transition hover:bg-zinc-50 md:text-[16px] md:tracking-[-0.025em]"
+                      className="flex w-full items-center justify-between rounded-[22px] px-2 py-2.5 text-left text-[22px] font-semibold leading-none tracking-[-0.05em] text-zinc-950 transition hover:bg-zinc-50 md:text-[15px] md:tracking-[-0.025em]"
                     >
                       <span>Recargas</span>
                       <ArrowIcon className="h-5 w-5 text-zinc-400 md:h-4 md:w-4" />
@@ -490,7 +486,7 @@ export default function Sidebar({
 
                     <button
                       onClick={openPlansFromMenu}
-                      className="flex w-full items-center justify-between rounded-[22px] px-2 py-3 text-left text-[25px] font-semibold leading-none tracking-[-0.055em] text-zinc-950 transition hover:bg-zinc-50 md:text-[16px] md:tracking-[-0.025em]"
+                      className="flex w-full items-center justify-between rounded-[22px] px-2 py-2.5 text-left text-[22px] font-semibold leading-none tracking-[-0.05em] text-zinc-950 transition hover:bg-zinc-50 md:text-[15px] md:tracking-[-0.025em]"
                     >
                       <span>Gestionar suscripción</span>
                       <ArrowIcon className="h-5 w-5 text-zinc-400 md:h-4 md:w-4" />
@@ -499,7 +495,7 @@ export default function Sidebar({
                     <a
                       href="/recursos"
                       onClick={openResourcesFromMenu}
-                      className="flex w-full items-center justify-between rounded-[22px] px-2 py-3 text-left text-[25px] font-semibold leading-none tracking-[-0.055em] text-zinc-950 transition hover:bg-zinc-50 md:text-[16px] md:tracking-[-0.025em]"
+                      className="flex w-full items-center justify-between rounded-[22px] px-2 py-2.5 text-left text-[22px] font-semibold leading-none tracking-[-0.05em] text-zinc-950 transition hover:bg-zinc-50 md:text-[15px] md:tracking-[-0.025em]"
                     >
                       <span>Recursos</span>
                       <ArrowIcon className="h-5 w-5 text-zinc-400 md:h-4 md:w-4" />
@@ -511,7 +507,7 @@ export default function Sidebar({
                           logout();
                           setMenuOpen(false);
                         }}
-                        className="mt-2 flex w-full items-center justify-between rounded-[22px] px-2 py-3 text-left text-[20px] font-semibold leading-none tracking-[-0.045em] text-red-600 transition hover:bg-red-50 md:text-[14px] md:tracking-normal"
+                        className="mt-1 flex w-full items-center justify-between rounded-[22px] px-2 py-2.5 text-left text-[18px] font-semibold leading-none tracking-[-0.04em] text-red-600 transition hover:bg-red-50 md:text-[13px] md:tracking-normal"
                       >
                         <span>Cerrar sesión</span>
                       </button>
