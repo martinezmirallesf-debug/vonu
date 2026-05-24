@@ -109,8 +109,8 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${appUrl}/?checkout=success`,
-      cancel_url: `${appUrl}/?checkout=cancel`,
+      success_url: `${appUrl}/chat?checkout=success`,
+cancel_url: `${appUrl}/chat?checkout=cancel`,
       allow_promotion_codes: true,
       customer_update: {
         address: "auto",

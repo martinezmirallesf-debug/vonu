@@ -112,8 +112,8 @@ if (!priceId) {
       mode: "subscription",
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/?checkout=success`,
-      cancel_url: `${appUrl}/?checkout=cancel`,
+      success_url: `${appUrl}/chat?checkout=success`,
+cancel_url: `${appUrl}/chat?checkout=cancel`,
       allow_promotion_codes: true,
 
       // Esto ayuda con "pagar con Wallets" y datos de cliente (si Stripe lo necesita)
