@@ -6168,10 +6168,21 @@ return (
   handleOpenPlansCTA={handleOpenPlansCTA}
   openLoginModal={openLoginModal}
   currentPlanId={usageInfo?.plan_id ?? null}
+  messagesLeft={usageInfo?.messages_left ?? null}
+realtimeSecondsLeft={usageInfo?.realtime_seconds_left ?? null}
+billing={billing}
+setBilling={setBilling}
+plan={plan}
+setPlan={setPlan}
+payLoading={payLoading}
+payMsg={payMsg}
+startCheckout={startCheckout}
+startTopupCheckout={startTopupCheckout}
+cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 />
 
       {/* MAIN */}
-      <div className="flex-1 flex flex-col min-h-0">
+<div className="flex-1 flex flex-col min-h-0 md:ml-[304px]">
         {uiError && (
           <div className="mx-auto max-w-6xl px-2 md:px-6" style={{ paddingTop: 78, paddingBottom: chatBottomPad }}>
             <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">Ha fallado la llamada a la IA. (Error: {uiError})</div>

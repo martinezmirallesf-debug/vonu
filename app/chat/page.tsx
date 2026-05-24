@@ -6170,6 +6170,15 @@ return (
   currentPlanId={usageInfo?.plan_id ?? null}
   messagesLeft={usageInfo?.messages_left ?? null}
 realtimeSecondsLeft={usageInfo?.realtime_seconds_left ?? null}
+billing={billing}
+setBilling={setBilling}
+plan={plan}
+setPlan={setPlan}
+payLoading={payLoading}
+payMsg={payMsg}
+startCheckout={startCheckout}
+startTopupCheckout={startTopupCheckout}
+cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 />
 
       {/* MAIN */}

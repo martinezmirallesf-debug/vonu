@@ -31,8 +31,25 @@ type SidebarProps = {
   handleOpenPlansCTA: () => void;
   openLoginModal: (mode: "signin" | "signup") => void;
   currentPlanId: string | null;
-  messagesLeft?: number | null;
-  realtimeSecondsLeft?: number | null;
+messagesLeft?: number | null;
+realtimeSecondsLeft?: number | null;
+
+billing: "monthly" | "yearly" | "topup";
+setBilling: React.Dispatch<React.SetStateAction<"monthly" | "yearly" | "topup">>;
+
+plan: "free" | "plus" | "max";
+setPlan: React.Dispatch<React.SetStateAction<"free" | "plus" | "max">>;
+
+payLoading: boolean;
+payMsg: string | null;
+
+startCheckout: (chosen: {
+  plan: "plus" | "max";
+  billing: "monthly" | "yearly";
+}) => void;
+
+startTopupCheckout: (pack: "basic" | "medium" | "large") => void;
+cancelSubscriptionFromHere: () => void;
 };
 
 const BRAND_BLUE = "#1a73e8";
@@ -207,14 +224,23 @@ export default function Sidebar({
   handleOpenPlansCTA,
   openLoginModal,
   currentPlanId,
-  messagesLeft = null,
-  realtimeSecondsLeft = null,
+messagesLeft = null,
+realtimeSecondsLeft = null,
+billing,
+setBilling,
+plan,
+setPlan,
+payLoading,
+payMsg,
+startCheckout,
+startTopupCheckout,
+cancelSubscriptionFromHere,
 }: SidebarProps) {
   const desktop = isDesktopPointer();
   const [query, setQuery] = useState("");
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [threadMenuOpen, setThreadMenuOpen] = useState(false);
-  const [accountScreen, setAccountScreen] = useState<"main" | "account">("main");
+  const [accountScreen, setAccountScreen] = useState<"main" | "account" | "plans">("main");
   useEffect(() => {
   if (typeof document === "undefined") return;
 
@@ -358,10 +384,21 @@ export default function Sidebar({
     setMenuOpen(false);
   }
 
-  function openPlansFromMenu() {
-    handleOpenPlansCTA();
-    setMenuOpen(false);
+  function openPlansFromMenu(mode: "plans" | "topup" | "manage" = "plans") {
+  if (mode === "topup") {
+    setBilling("topup");
+  } else {
+    setBilling("monthly");
   }
+
+  if (mode === "manage") {
+    setPlan("free");
+  } else {
+    setPlan(isPro ? "free" : "plus");
+  }
+
+  setAccountScreen("plans");
+}
 
   function openResourcesFromMenu() {
     setMenuOpen(false);
@@ -483,7 +520,7 @@ export default function Sidebar({
                 <div className="mt-4 shrink-0 pr-1">
   <div className="grid gap-1">
                     <button
-                      onClick={openPlansFromMenu}
+                      onClick={() => openPlansFromMenu("plans")}
                       className="flex w-full items-center justify-between rounded-[22px] px-2 py-2.5 text-left text-[22px] font-semibold leading-none tracking-[-0.05em] text-zinc-950 transition hover:bg-zinc-50 md:text-[15px] md:tracking-[-0.025em]"
                     >
                       <span>Planes</span>
@@ -491,7 +528,7 @@ export default function Sidebar({
                     </button>
 
                     <button
-                      onClick={openPlansFromMenu}
+                      onClick={() => openPlansFromMenu("topup")}
                       className="flex w-full items-center justify-between rounded-[22px] px-2 py-2.5 text-left text-[22px] font-semibold leading-none tracking-[-0.05em] text-zinc-950 transition hover:bg-zinc-50 md:text-[15px] md:tracking-[-0.025em]"
                     >
                       <span>Recargas</span>
@@ -499,7 +536,7 @@ export default function Sidebar({
                     </button>
 
                     <button
-                      onClick={openPlansFromMenu}
+                      onClick={() => openPlansFromMenu("manage")}
                       className="flex w-full items-center justify-between rounded-[22px] px-2 py-2.5 text-left text-[22px] font-semibold leading-none tracking-[-0.05em] text-zinc-950 transition hover:bg-zinc-50 md:text-[15px] md:tracking-[-0.025em]"
                     >
                       <span>Gestionar suscripción</span>
@@ -553,6 +590,301 @@ export default function Sidebar({
                         {item.label}
                       </a>
                     ))}
+                  </div>
+                </div>
+              </div>
+                        ) : accountScreen === "plans" ? (
+              <div className="flex min-h-0 flex-1 flex-col">
+                <div className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setAccountScreen("account")}
+                    className="-ml-2 mb-4 grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition hover:bg-zinc-100 active:scale-95"
+                    aria-label="Volver al usuario"
+                    title="Volver"
+                  >
+                    <BackIcon className="h-6 w-6" />
+                  </button>
+
+                  <div className="mb-4">
+                    <div className="text-[32px] font-semibold leading-none tracking-[-0.06em] text-zinc-950 md:text-[24px]">
+                      Planes y recargas
+                    </div>
+                    <div className="mt-2 text-[13px] leading-5 text-zinc-500">
+                      Gestiona tu plan, añade recargas o vuelve al plan gratis.
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-1 rounded-full border border-zinc-200 bg-white p-1 shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => setBilling("monthly")}
+                      className={[
+                        "h-9 rounded-full text-[12px] font-semibold transition",
+                        billing === "monthly"
+                          ? "bg-blue-600 text-white"
+                          : "text-zinc-700 hover:bg-zinc-100",
+                      ].join(" ")}
+                    >
+                      Mensual
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setBilling("yearly")}
+                      className={[
+                        "h-9 rounded-full text-[12px] font-semibold transition",
+                        billing === "yearly"
+                          ? "bg-blue-600 text-white"
+                          : "text-zinc-700 hover:bg-zinc-100",
+                      ].join(" ")}
+                    >
+                      Anual
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setBilling("topup")}
+                      className={[
+                        "h-9 rounded-full text-[12px] font-semibold transition",
+                        billing === "topup"
+                          ? "bg-blue-600 text-white"
+                          : "text-zinc-700 hover:bg-zinc-100",
+                      ].join(" ")}
+                    >
+                      Recargas
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-width:thin]">
+                  {billing !== "topup" ? (
+                    <div className="grid gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setPlan("free")}
+                        disabled={!!payLoading}
+                        className={[
+                          "w-full rounded-[24px] border px-4 py-4 text-left transition",
+                          plan === "free"
+                            ? "border-blue-600 bg-blue-50"
+                            : "border-zinc-200 bg-white hover:bg-zinc-50",
+                        ].join(" ")}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-[16px] font-semibold text-zinc-950">
+                              Gratis
+                            </div>
+                            <div className="mt-1 text-[30px] font-extrabold leading-none tracking-[-0.06em] text-zinc-950">
+                              0€
+                            </div>
+                          </div>
+
+                          {plan === "free" ? (
+                            <span className="rounded-full bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white">
+                              Seleccionado
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div className="mt-3 space-y-1.5 text-[13px] leading-5 text-zinc-700">
+                          <div>20 mensajes al mes</div>
+                          <div>Analiza mensajes y situaciones</div>
+                          <div>Pruébalo sin compromiso</div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPlan("plus")}
+                        disabled={!!payLoading}
+                        className={[
+                          "w-full rounded-[24px] border px-4 py-4 text-left transition",
+                          plan === "plus"
+                            ? "border-blue-600 bg-blue-50"
+                            : "border-zinc-200 bg-white hover:bg-zinc-50",
+                        ].join(" ")}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-[16px] font-semibold text-zinc-950">
+                              Plus
+                            </div>
+                            <div className="mt-1 text-[30px] font-extrabold leading-none tracking-[-0.06em] text-zinc-950">
+                              {billing === "monthly" ? "9,99€" : "79,99€"}
+                            </div>
+                          </div>
+
+                          {plan === "plus" ? (
+                            <span className="rounded-full bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white">
+                              Seleccionado
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div className="mt-3 space-y-1.5 text-[13px] leading-5 text-zinc-700">
+                          <div>250 mensajes al mes</div>
+                          <div>15 min de voz</div>
+                          <div>Modo tutor</div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPlan("max")}
+                        disabled={!!payLoading}
+                        className={[
+                          "w-full rounded-[24px] border px-4 py-4 text-left transition",
+                          plan === "max"
+                            ? "border-blue-600 bg-blue-50"
+                            : "border-zinc-200 bg-white hover:bg-zinc-50",
+                        ].join(" ")}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-[16px] font-semibold text-zinc-950">
+                              Max
+                            </div>
+                            <div className="mt-1 text-[30px] font-extrabold leading-none tracking-[-0.06em] text-zinc-950">
+                              {billing === "monthly" ? "19,99€" : "159,99€"}
+                            </div>
+                          </div>
+
+                          {plan === "max" ? (
+                            <span className="rounded-full bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white">
+                              Seleccionado
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div className="mt-3 space-y-1.5 text-[13px] leading-5 text-zinc-700">
+                          <div>800 mensajes al mes</div>
+                          <div>45 min de voz</div>
+                          <div>Uso intensivo</div>
+                        </div>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid gap-3">
+                      <div className="rounded-[24px] border border-zinc-200 bg-white px-4 py-4">
+                        <div className="text-[16px] font-semibold text-zinc-950">
+                          Recarga básica
+                        </div>
+                        <div className="mt-1 text-[30px] font-extrabold leading-none tracking-[-0.06em] text-zinc-950">
+                          2,99€
+                        </div>
+
+                        <div className="mt-3 space-y-1.5 text-[13px] leading-5 text-zinc-700">
+                          <div>50 mensajes extra</div>
+                          <div>5 min de voz</div>
+                          <div>Pago único</div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => startTopupCheckout("basic")}
+                          disabled={!!payLoading}
+                          className="mt-4 h-10 w-full rounded-full bg-blue-600 text-[13px] font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          Comprar
+                        </button>
+                      </div>
+
+                      <div className="rounded-[24px] border border-zinc-200 bg-white px-4 py-4">
+                        <div className="text-[16px] font-semibold text-zinc-950">
+                          Recarga media
+                        </div>
+                        <div className="mt-1 text-[30px] font-extrabold leading-none tracking-[-0.06em] text-zinc-950">
+                          6,99€
+                        </div>
+
+                        <div className="mt-3 space-y-1.5 text-[13px] leading-5 text-zinc-700">
+                          <div>150 mensajes extra</div>
+                          <div>15 min de voz</div>
+                          <div>Pago único</div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => startTopupCheckout("medium")}
+                          disabled={!!payLoading}
+                          className="mt-4 h-10 w-full rounded-full bg-blue-600 text-[13px] font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          Comprar
+                        </button>
+                      </div>
+
+                      <div className="rounded-[24px] border border-zinc-200 bg-white px-4 py-4">
+                        <div className="text-[16px] font-semibold text-zinc-950">
+                          Recarga grande
+                        </div>
+                        <div className="mt-1 text-[30px] font-extrabold leading-none tracking-[-0.06em] text-zinc-950">
+                          14,99€
+                        </div>
+
+                        <div className="mt-3 space-y-1.5 text-[13px] leading-5 text-zinc-700">
+                          <div>400 mensajes extra</div>
+                          <div>40 min de voz</div>
+                          <div>Pago único</div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => startTopupCheckout("large")}
+                          disabled={!!payLoading}
+                          className="mt-4 h-10 w-full rounded-full bg-blue-600 text-[13px] font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          Comprar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {payMsg ? (
+                    <div className="mt-4 rounded-[18px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] leading-5 text-zinc-700">
+                      {payMsg}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="shrink-0 border-t border-zinc-200 pt-4">
+                  {billing !== "topup" ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (payLoading) return;
+
+                        if (plan === "free") {
+                          if (isPro) {
+                            cancelSubscriptionFromHere();
+                          } else {
+                            setAccountScreen("account");
+                          }
+                          return;
+                        }
+
+                        startCheckout({ plan, billing });
+                      }}
+                      disabled={!!payLoading}
+                      className="h-12 w-full rounded-full bg-blue-600 text-[15px] font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {payLoading
+                        ? "Procesando…"
+                        : plan === "free"
+                        ? isPro
+                          ? "Pasar a plan Gratis"
+                          : "Volver"
+                        : "Empezar ahora"}
+                    </button>
+                  ) : (
+                    <div className="text-center text-[12px] leading-5 text-zinc-500">
+                      Elige una recarga para continuar usando Vonu.
+                    </div>
+                  )}
+
+                  <div className="mt-2 text-center text-[11px] text-zinc-500">
+                    Pago seguro con Stripe.
                   </div>
                 </div>
               </div>
