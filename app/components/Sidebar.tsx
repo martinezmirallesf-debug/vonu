@@ -215,6 +215,20 @@ export default function Sidebar({
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [threadMenuOpen, setThreadMenuOpen] = useState(false);
   const [accountScreen, setAccountScreen] = useState<"main" | "account">("main");
+  useEffect(() => {
+  if (typeof document === "undefined") return;
+
+  const shouldHideTopBar = menuOpen && accountScreen === "account";
+
+  document.documentElement.classList.toggle(
+    "vonu-account-menu-open",
+    shouldHideTopBar
+  );
+
+  return () => {
+    document.documentElement.classList.remove("vonu-account-menu-open");
+  };
+}, [menuOpen, accountScreen]);
   const [pinnedIds, setPinnedIds] = useState<string[]>([]);
   const longPressTimerRef = useRef<number | null>(null);
 
@@ -370,7 +384,7 @@ export default function Sidebar({
     "transform transition-all duration-300 ease-out",
     "inset-0",
     "md:fixed md:left-0 md:top-0 md:bottom-0 md:right-auto md:w-[304px]",
-    "md:border-r md:border-zinc-200 md:shadow-none",
+    "md:border-r md:border-zinc-200 md:shadow-none md:pointer-events-auto",
     menuOpen
       ? "translate-x-0 opacity-100"
       : "-translate-x-full opacity-0 md:translate-x-0 md:opacity-100",
@@ -380,8 +394,12 @@ export default function Sidebar({
           <div
             className="flex h-full flex-col px-6 pb-6 md:px-4 md:pb-4"
             style={{
-              paddingTop: desktop ? 18 : "calc(env(safe-area-inset-top, 0px) + 76px)",
-            }}
+  paddingTop: desktop
+    ? 18
+    : accountScreen === "account"
+    ? "calc(env(safe-area-inset-top, 0px) + 18px)"
+    : "calc(env(safe-area-inset-top, 0px) + 76px)",
+}}
           >
             {desktop ? (
   <div className="mb-5 flex items-center px-1">
