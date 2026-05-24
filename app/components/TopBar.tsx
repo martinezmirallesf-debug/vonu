@@ -85,9 +85,9 @@ export default function TopBar({
             </button>
 
             <a
-              href={HOME_URL}
-              className={[
-                "pointer-events-auto flex h-10 items-center rounded-full px-4",
+  href={HOME_URL}
+  className={[
+    "pointer-events-auto translate-x-[2px] flex h-10 items-center rounded-full px-4",
                 "transition active:scale-[0.99]",
                 menuOpen
                   ? "border border-transparent bg-transparent shadow-none backdrop-blur-0"
