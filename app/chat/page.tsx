@@ -832,6 +832,19 @@ const [contextualFilePrompt, setContextualFilePrompt] = useState("");
     typeof window !== "undefined"
       ? window.location.origin.replace(/\/$/, "")
       : ((process.env.NEXT_PUBLIC_SITE_URL as string | undefined) || "https://app.vonuai.com").replace(/\/$/, "");
+      function getAuthRedirectTo() {
+  if (typeof window === "undefined") {
+    return `${SITE_URL}/chat`;
+  }
+
+  const origin = window.location.origin.replace(/\/$/, "");
+  const path =
+    window.location.pathname && window.location.pathname !== "/"
+      ? window.location.pathname
+      : "/chat";
+
+  return `${origin}${path}`;
+}
 
   // ===== AUTH =====
   const [authLoading, setAuthLoading] = useState(true);
@@ -1240,6 +1253,7 @@ const [pendingCheckout, setPendingCheckout] = useState<{
 await refreshAuthSession();
 await refreshProStatus();
 await refreshUsageInfo();
+await refreshUsageInfo();
 
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
         const u = session?.user;
@@ -1535,7 +1549,7 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
       const { error } = await supabaseBrowser.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${SITE_URL}/`,
+          redirectTo: getAuthRedirectTo(),
 
           ...(provider === "google"
             ? {
@@ -1605,7 +1619,7 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
         email,
         password,
         options: {
-          emailRedirectTo: `${SITE_URL}/`,
+          emailRedirectTo: getAuthRedirectTo(),
         },
       });
       if (error) {
