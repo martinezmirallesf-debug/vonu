@@ -69,7 +69,11 @@ export default function TopBar({
           <button
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
-            className="-ml-2 grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition active:scale-95 pointer-events-auto"
+            className={[
+  "-ml-2 grid h-10 w-10 place-items-center rounded-full text-zinc-950",
+  "border border-zinc-200/80 bg-white/92 shadow-sm backdrop-blur-xl",
+  "transition active:scale-95 pointer-events-auto",
+].join(" ")}
             aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={menuOpen}
             title={menuOpen ? "Cerrar menú" : "Menú"}
@@ -79,7 +83,11 @@ export default function TopBar({
 
           <a
             href={HOME_URL}
-            className="pointer-events-auto"
+            className={[
+  "pointer-events-auto flex h-10 items-center rounded-full px-4",
+  "border border-zinc-200/80 bg-white/92 shadow-sm backdrop-blur-xl",
+  "transition active:scale-[0.99]",
+].join(" ")}
             aria-label="Ir a la home"
             title="Ir a la home"
           >
