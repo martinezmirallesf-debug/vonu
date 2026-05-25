@@ -1536,7 +1536,7 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
       "Tu plan se cancelará al final del periodo actual. Mantienes el acceso hasta entonces.";
 
     setPayMsg(message);
-    setToastMsg("✅ Suscripción cancelada. Mantienes acceso hasta el final del periodo.");
+    setToastMsg("✅ Plan cancelado correctamente");
     setTimeout(() => setToastMsg(null), 4500);
 
     await refreshProStatus();
@@ -5699,11 +5699,38 @@ return (
 `}</style>
 
       {/* TOAST */}
-      {toastMsg && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[90] px-3">
-          <div className="rounded-full border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-sm px-4 py-2 text-xs text-zinc-800">{toastMsg}</div>
+{toastMsg && (
+  <div className="pointer-events-none fixed left-0 right-0 top-4 z-[90] flex justify-center px-4">
+    <div className="pointer-events-auto flex w-full max-w-[540px] items-start gap-3 rounded-[28px] border border-zinc-200/80 bg-white/95 px-4 py-3 shadow-[0_18px_60px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+      <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-zinc-950 text-[13px] font-semibold text-white">
+        ✓
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="text-[14px] font-semibold leading-5 tracking-[-0.02em] text-zinc-950">
+          {toastMsg.replace(/^✅\s*/, "")}
         </div>
-      )}
+
+        {toastMsg.toLowerCase().includes("suscripción") ||
+        toastMsg.toLowerCase().includes("plan") ? (
+          <div className="mt-0.5 text-[12.5px] leading-5 text-zinc-500">
+            Puedes seguir usando VonuAI hasta que termine el periodo pagado.
+          </div>
+        ) : null}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setToastMsg(null)}
+        className="-mr-1 grid h-8 w-8 shrink-0 place-items-center rounded-full text-[18px] leading-none text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
+        aria-label="Cerrar aviso"
+        title="Cerrar"
+      >
+        ×
+      </button>
+    </div>
+  </div>
+)}
 
       {/* ===== RENAME MODAL ===== */}
       {renameOpen && (
