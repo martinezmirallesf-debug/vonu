@@ -49,7 +49,7 @@ startCheckout: (chosen: {
 }) => void;
 
 startTopupCheckout: (pack: "basic" | "medium" | "large") => void;
-cancelSubscriptionFromHere: () => void;
+cancelSubscriptionFromHere: () => void | Promise<void>;
 };
 
 const BRAND_BLUE = "#1a73e8";
@@ -240,12 +240,11 @@ cancelSubscriptionFromHere,
   const [query, setQuery] = useState("");
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [threadMenuOpen, setThreadMenuOpen] = useState(false);
-  const [accountScreen, setAccountScreen] = useState<"main" | "account" | "plans">("main");
+  const [accountScreen, setAccountScreen] = useState<"main" | "account" | "plans" | "subscription">("main");
   useEffect(() => {
   if (typeof document === "undefined") return;
 
-  const shouldHideTopBar =
-    menuOpen && (accountScreen === "account" || accountScreen === "plans");
+  const shouldHideTopBar = menuOpen && accountScreen !== "main";
 
   document.documentElement.classList.toggle(
     "vonu-account-menu-open",
@@ -537,12 +536,12 @@ cancelSubscriptionFromHere,
                     </button>
 
                     <button
-                      onClick={() => openPlansFromMenu("manage")}
-                      className="flex w-full items-center justify-between rounded-[22px] px-2 py-2.5 text-left text-[22px] font-semibold leading-none tracking-[-0.05em] text-zinc-950 transition hover:bg-zinc-50 md:text-[15px] md:tracking-[-0.025em]"
-                    >
-                      <span>Gestionar suscripción</span>
-                      <ArrowIcon className="h-5 w-5 text-zinc-400 md:h-4 md:w-4" />
-                    </button>
+  onClick={() => setAccountScreen("subscription")}
+  className="flex w-full items-center justify-between rounded-[22px] px-2 py-2.5 text-left text-[22px] font-semibold leading-none tracking-[-0.05em] text-zinc-950 transition hover:bg-zinc-50 md:text-[15px] md:tracking-[-0.025em]"
+>
+  <span>Gestionar suscripción</span>
+  <ArrowIcon className="h-5 w-5 text-zinc-400 md:h-4 md:w-4" />
+</button>
 
                     <a
                       href="/recursos"
@@ -594,7 +593,100 @@ cancelSubscriptionFromHere,
                   </div>
                 </div>
               </div>
-                        ) : accountScreen === "plans" ? (
+                        ) : accountScreen === "subscription" ? (
+  <div className="flex min-h-0 flex-1 flex-col">
+    <div className="shrink-0">
+      <button
+        type="button"
+        onClick={() => setAccountScreen("account")}
+        className="-ml-2 mb-4 grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition hover:bg-zinc-100 active:scale-95"
+        aria-label="Volver a tu cuenta"
+        title="Volver"
+      >
+        <BackIcon className="h-6 w-6" />
+      </button>
+
+      <div>
+        <h2 className="text-[26px] font-semibold tracking-[-0.055em] text-zinc-950 md:text-[22px]">
+          Gestionar suscripción
+        </h2>
+        <p className="mt-2 text-[14px] leading-6 text-zinc-500 md:text-[13px]">
+          Revisa tu plan actual y cancela tu suscripción cuando quieras.
+        </p>
+      </div>
+
+      <div className="mt-5 rounded-[28px] border border-zinc-200 bg-white p-4 shadow-sm">
+        <div className="text-[12px] font-medium text-zinc-500">
+          Plan actual
+        </div>
+
+        <div className="mt-1 text-[28px] font-semibold tracking-[-0.06em] text-zinc-950 md:text-[24px]">
+          {currentPlanLabel}
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="rounded-[22px] border border-zinc-200 bg-zinc-50 p-3">
+            <div className="text-[12px] font-medium text-zinc-500">
+              Mensajes
+            </div>
+            <div className="mt-1 text-[22px] font-semibold tracking-[-0.05em] text-zinc-950 md:text-[19px]">
+              {typeof messagesLeft === "number" ? messagesLeft : "—"}
+            </div>
+            <div className="mt-1 text-[11px] text-zinc-500">
+              restantes
+            </div>
+          </div>
+
+          <div className="rounded-[22px] border border-zinc-200 bg-zinc-50 p-3">
+            <div className="text-[12px] font-medium text-zinc-500">
+              Voz
+            </div>
+            <div className="mt-1 text-[22px] font-semibold tracking-[-0.05em] text-zinc-950 md:text-[19px]">
+              {formatVoiceSeconds(realtimeSecondsLeft)}
+            </div>
+            <div className="mt-1 text-[11px] text-zinc-500">
+              restantes
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-[28px] border border-red-100 bg-red-50 p-4">
+        <div className="text-[15px] font-semibold text-red-700">
+          Cancelar plan
+        </div>
+
+        <p className="mt-2 text-[13px] leading-6 text-red-700/80">
+          Si cancelas, mantendrás tu acceso hasta el final del periodo ya pagado.
+          Después pasarás automáticamente al plan gratis.
+        </p>
+
+        <button
+          type="button"
+          onClick={() => cancelSubscriptionFromHere()}
+          disabled={payLoading || currentPlanLabel === "Gratis"}
+          className="mt-4 w-full rounded-full bg-red-600 px-5 py-3 text-[14px] font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {payLoading ? "Cancelando..." : "Cancelar plan"}
+        </button>
+
+        {payMsg ? (
+          <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-[13px] leading-5 text-zinc-700">
+            {payMsg}
+          </p>
+        ) : null}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => openPlansFromMenu("plans")}
+        className="mt-4 w-full rounded-full border border-zinc-200 bg-white px-5 py-3 text-[14px] font-semibold text-zinc-950 shadow-sm transition hover:bg-zinc-50"
+      >
+        Ver planes y recargas
+      </button>
+    </div>
+  </div>
+) : accountScreen === "plans" ? (
               <div className="flex min-h-0 flex-1 flex-col">
                 <div className="shrink-0">
                   <button

@@ -1500,47 +1500,54 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
   }
 
   async function cancelSubscriptionFromHere() {
-    setPayLoading(true);
-    setPayMsg(null);
-    try {
-      const { data } = await supabaseBrowser.auth.getSession();
-      const token = data?.session?.access_token;
-      if (!token) {
-        setPayMsg("Necesitas iniciar sesión.");
-        setPayLoading(false);
-        return;
-      }
+  setPayLoading(true);
+  setPayMsg(null);
 
-      const ok = window.confirm("¿Seguro que quieres cancelar tu suscripción?\n\nSeguirás teniendo acceso hasta el final del periodo ya pagado.");
-      if (!ok) {
-        setPayLoading(false);
-        return;
-      }
+  try {
+    const { data } = await supabaseBrowser.auth.getSession();
+    const token = data?.session?.access_token;
 
-      const res = await fetch("/api/stripe/cancel", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        cache: "no-store",
-        body: JSON.stringify({}),
-      });
-
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setPayMsg(json?.error || "No se pudo cancelar la suscripción.");
-        setPayLoading(false);
-        return;
-      }
-
-      setToastMsg("✅ Suscripción cancelada. Mantienes acceso hasta el final del periodo.");
-      setTimeout(() => setToastMsg(null), 4500);
-
-      await refreshProStatus();
+    if (!token) {
+      setPayMsg("Necesitas iniciar sesión para gestionar tu suscripción.");
       setPayLoading(false);
-    } catch (e: any) {
-      setPayMsg(e?.message ?? "Error cancelando suscripción.");
-      setPayLoading(false);
+      return;
     }
+
+    const res = await fetch("/api/stripe/cancel", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+      body: JSON.stringify({}),
+    });
+
+    const json = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      setPayMsg(json?.error || "No se pudo cancelar la suscripción.");
+      setPayLoading(false);
+      return;
+    }
+
+    const message =
+      json?.message ||
+      "Tu plan se cancelará al final del periodo actual. Mantienes el acceso hasta entonces.";
+
+    setPayMsg(message);
+    setToastMsg("✅ Suscripción cancelada. Mantienes acceso hasta el final del periodo.");
+    setTimeout(() => setToastMsg(null), 4500);
+
+    await refreshProStatus();
+    await refreshUsageInfo();
+
+    setPayLoading(false);
+  } catch (e: any) {
+    setPayMsg(e?.message ?? "Error cancelando suscripción.");
+    setPayLoading(false);
   }
+}
 
   async function signInWithOAuth(provider: "google" | "azure") {
     setLoginSending(true);
