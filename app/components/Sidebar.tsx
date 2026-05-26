@@ -18,7 +18,7 @@ type SidebarProps = {
   createThreadAndActivate: () => void;
     openRename: () => void;
   deleteActiveThread: () => void;
-  deleteThreadById: (threadId: string) => void;
+  deleteThreadById?: (threadId: string) => void;
   mounted: boolean;
   isDesktopPointer: () => boolean;
   authLoading: boolean;
@@ -363,7 +363,19 @@ cancelSubscriptionFromHere,
   setPinnedIds((prev) => prev.filter((id) => id !== idToDelete));
   closeThreadActions();
 
-  deleteThreadById(idToDelete);
+  // Nuevo flujo: borrar directamente por id.
+  // Fallback para archivos antiguos/backup que todavía no pasan deleteThreadById.
+  if (deleteThreadById) {
+    deleteThreadById(idToDelete);
+    return;
+  }
+
+  if (idToDelete && idToDelete !== activeThreadId) {
+    activateThread(idToDelete);
+    setTimeout(() => deleteActiveThread(), 30);
+  } else {
+    deleteActiveThread();
+  }
 }
 
   function togglePinFromMenu() {

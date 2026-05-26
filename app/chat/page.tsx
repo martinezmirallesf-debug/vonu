@@ -5805,26 +5805,26 @@ return (
 
     .vonu-input-motion-shell {
   transition:
-    top 1120ms cubic-bezier(.16,.9,.18,1),
-    bottom 1120ms cubic-bezier(.16,.9,.18,1),
-    transform 1120ms cubic-bezier(.16,.9,.18,1),
-    opacity 620ms ease,
-    filter 620ms ease,
-    background-color 620ms ease !important;
+    bottom 980ms cubic-bezier(.16,.9,.18,1),
+    transform 980ms cubic-bezier(.16,.9,.18,1),
+    opacity 520ms ease,
+    filter 520ms ease,
+    background-color 520ms ease !important;
+  will-change: bottom, transform, filter;
 }
 
       .vonu-home-input-centered {
-    top: calc(50% + 76px) !important;
-    bottom: auto !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    max-width: none !important;
-    transform: translateY(-50%) !important;
-    z-index: 70 !important;
-    background: transparent !important;
-    filter: drop-shadow(0 24px 70px rgba(15,23,42,0.14));
-  }
+  top: auto !important;
+  bottom: calc(50dvh - 142px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  transform: translateY(0) !important;
+  z-index: 70 !important;
+  background: transparent !important;
+  filter: drop-shadow(0 24px 70px rgba(15,23,42,0.14));
+}
 
   .vonu-home-input-centered::before,
   .vonu-home-input-centered::after {
@@ -5835,13 +5835,13 @@ return (
      Así Android/iOS no necesitan empujar toda la pantalla hacia arriba. */
   @media (max-width: 767px) {
   .vonu-home-input-centered.vonu-home-input-focused {
-    top: 47vh !important;
-    transform: translateY(-50%) !important;
+    bottom: calc(50dvh - 150px) !important;
+    transform: translateY(0) !important;
   }
 
   html.vonu-home-keyboard-open .vonu-home-input-centered.vonu-home-input-focused {
-    top: 49vh !important;
-    transform: translateY(-50%) !important;
+    bottom: calc(50dvh - 158px) !important;
+    transform: translateY(0) !important;
   }
 
   html.vonu-home-input-focus-mode .vonu-hero-rise {
@@ -5861,14 +5861,15 @@ return (
 }
 
   @media (min-width: 768px) {
-    .vonu-home-input-centered {
-      left: 304px !important;
-      right: 0 !important;
-      top: calc(50% + 76px) !important;
-      width: auto !important;
-      max-width: none !important;
-    }
+  .vonu-home-input-centered {
+    left: 304px !important;
+    right: 0 !important;
+    top: auto !important;
+    bottom: calc(50dvh - 148px) !important;
+    width: auto !important;
+    max-width: none !important;
   }
+}
 
 html.vonu-home-input-mode,
 html.vonu-home-input-mode body {
@@ -5882,7 +5883,7 @@ html.vonu-home-input-mode .vonu-home-scroll {
 }
 
 html.vonu-home-input-mode .vonu-home-input-centered {
-  bottom: auto !important;
+  top: auto !important;
 }
 
 /* Oculta la bandeja/capa blanca del input SOLO cuando está centrado en la home */
