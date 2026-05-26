@@ -5848,6 +5848,68 @@ return (
     animation: vonuAmbientDrift 18s ease-in-out infinite;
   }
 
+  @keyframes vonuDotCloudBreathe {
+  0%, 100% {
+    transform: scale(0.96);
+    opacity: 0.26;
+    background-size: 24px 24px;
+    filter: blur(0.15px);
+  }
+
+  45% {
+    transform: scale(1.045);
+    opacity: 0.42;
+    background-size: 15px 15px;
+    filter: blur(0.35px);
+  }
+
+  70% {
+    transform: scale(1.015);
+    opacity: 0.34;
+    background-size: 18px 18px;
+    filter: blur(0.25px);
+  }
+}
+
+@keyframes vonuDotCloudDrift {
+  0%, 100% {
+    translate: 0 0;
+  }
+
+  50% {
+    translate: 18px -12px;
+  }
+}
+
+.vonu-dot-cloud {
+  border-radius: 9999px;
+  opacity: 0.32;
+  background-image: radial-gradient(circle, rgba(37, 99, 235, 0.34) 2.2px, transparent 2.55px);
+  background-size: 22px 22px;
+  background-position: center;
+  mask-image: radial-gradient(circle, black 0%, black 48%, transparent 76%);
+  -webkit-mask-image: radial-gradient(circle, black 0%, black 48%, transparent 76%);
+  animation:
+    vonuDotCloudBreathe 10s ease-in-out infinite,
+    vonuDotCloudDrift 18s ease-in-out infinite;
+}
+
+.vonu-dot-cloud-a {
+  background-image: radial-gradient(circle, rgba(37, 99, 235, 0.34) 2.2px, transparent 2.55px);
+}
+
+.vonu-dot-cloud-b {
+  background-image: radial-gradient(circle, rgba(16, 185, 129, 0.28) 2.2px, transparent 2.55px);
+  animation-duration: 12s, 21s;
+  animation-delay: -2s, -5s;
+}
+
+.vonu-dot-cloud-c {
+  background-image: radial-gradient(circle, rgba(245, 158, 11, 0.24) 2.2px, transparent 2.55px);
+  animation-duration: 14s, 24s;
+  animation-delay: -4s, -8s;
+}
+
   .vonu-orb-one {
     animation: vonuAmbientDrift 16s ease-in-out infinite;
   }
@@ -5964,8 +6026,8 @@ html.vonu-home-input-mode .chat-input-disclaimer {
   visibility: hidden !important;
 }
 
-/* En PC quitamos solo la placa blanca inferior, pero mantenemos la máscara.
-   La máscara evita que el texto del chat pase por debajo del input. */
+/* En PC quitamos solo la placa blanca inferior, pero mantenemos una máscara más alta.
+   Así el texto del chat no pasa por debajo del input. */
 @media (min-width: 768px) {
   html:not(.vonu-home-input-mode) .chat-input-tray-panel {
     display: none !important;
@@ -5977,6 +6039,20 @@ html.vonu-home-input-mode .chat-input-disclaimer {
     display: block !important;
     opacity: 1 !important;
     visibility: visible !important;
+    position: fixed !important;
+    left: 304px !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    height: 170px !important;
+    pointer-events: none !important;
+    z-index: 45 !important;
+    background: linear-gradient(
+      to top,
+      #f8f9fa 0%,
+      rgba(248, 249, 250, 0.98) 44%,
+      rgba(248, 249, 250, 0.72) 68%,
+      rgba(248, 249, 250, 0) 100%
+    ) !important;
   }
 }
 
@@ -6594,15 +6670,15 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
     ].join(" ")}
     aria-hidden="true"
   >
-    <div className="vonu-home-ambient absolute -inset-[22%]" />
+    <div className="vonu-home-ambient absolute inset-0" />
 
-<div className="vonu-orb-one absolute -left-[18%] top-[0%] h-[520px] w-[520px] rounded-full bg-blue-300/22 blur-3xl" />
-<div className="vonu-orb-two absolute -right-[16%] top-[10%] h-[500px] w-[500px] rounded-full bg-emerald-200/24 blur-3xl" />
-<div className="vonu-geo-three absolute bottom-[-18%] left-[26%] h-[470px] w-[470px] rounded-full bg-amber-100/42 blur-3xl" />
+<div className="vonu-orb-one absolute -left-[14%] top-[4%] h-[460px] w-[460px] rounded-full bg-blue-300/18 blur-3xl" />
+<div className="vonu-orb-two absolute -right-[12%] top-[12%] h-[420px] w-[420px] rounded-full bg-emerald-200/20 blur-3xl" />
+<div className="vonu-geo-three absolute bottom-[-16%] left-[30%] h-[430px] w-[430px] rounded-full bg-amber-100/36 blur-3xl" />
 
-<div className="vonu-geo-one absolute left-[12%] top-[25%] h-[178px] w-[178px] rounded-[46px] border border-blue-300/42 bg-blue-100/18 shadow-[0_30px_90px_rgba(37,99,235,0.10)] backdrop-blur-[1px]" />
-<div className="vonu-geo-two absolute right-[14%] top-[32%] h-[146px] w-[146px] rotate-45 rounded-[38px] border border-emerald-300/40 bg-emerald-100/18 shadow-[0_30px_90px_rgba(16,185,129,0.10)] backdrop-blur-[1px]" />
-<div className="vonu-geo-three absolute left-[46%] top-[62%] h-[118px] w-[118px] rounded-full border border-amber-300/44 bg-amber-100/20 shadow-[0_30px_90px_rgba(245,158,11,0.10)] backdrop-blur-[1px]" />
+<div className="vonu-dot-cloud vonu-dot-cloud-a absolute left-[9%] top-[20%] h-[230px] w-[230px]" />
+<div className="vonu-dot-cloud vonu-dot-cloud-b absolute right-[13%] top-[26%] h-[190px] w-[190px]" />
+<div className="vonu-dot-cloud vonu-dot-cloud-c absolute left-[42%] top-[58%] h-[170px] w-[170px]" />
 
 <div className="vonu-geo-two absolute left-[24%] top-[58%] h-[86px] w-[86px] rotate-12 rounded-[28px] border border-indigo-200/36 bg-indigo-100/14 backdrop-blur-[1px]" />
 <div className="vonu-geo-one absolute right-[30%] top-[20%] h-[72px] w-[72px] rounded-full border border-sky-200/40 bg-sky-100/16 backdrop-blur-[1px]" />
