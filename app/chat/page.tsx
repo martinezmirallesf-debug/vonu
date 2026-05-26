@@ -21,6 +21,7 @@ import AssistantMessageActions from "@/app/components/AssistantMessageActions";
 import { analyzeAttachment } from "@/app/lib/analysis/analyzeAttachment";
 import FilePickerModal from "@/app/components/FilePickerModal";
 import ChatFileDropCard from "@/app/components/ChatFileDropCard";
+import ManualWhiteboardModal from "@/app/components/ManualWhiteboardModal";
 
 import ChalkboardTutorBoard from "@/app/components/ChalkboardTutorBoard";
 import {
@@ -3212,8 +3213,8 @@ function toggleMic() {
   const canvasWrapRef = useRef<HTMLDivElement>(null);
 
   const [boardTool, setBoardTool] = useState<"pen" | "eraser">("pen");
-  const BOARD_BG = "#0b0f0d"; // negro pizarra
-  const [boardColor, setBoardColor] = useState<string>("#f8fafc"); // blanco tiza
+  const BOARD_BG = "#ffffff";
+const [boardColor, setBoardColor] = useState<string>("#111827");
 
   const [boardSize, setBoardSize] = useState<number>(6);
   const [boardMsg, setBoardMsg] = useState<string | null>(null);
@@ -6270,183 +6271,28 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
       )}
 
       {/* ===== WHITEBOARD ===== */}
-      {boardOpen && (
-        <div className="fixed inset-0 z-[75]">
-          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={closeBoard} aria-hidden="true" />
-
-          <div className="relative h-full w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="mx-auto h-full w-full max-w-4xl px-3 md:px-6">
-              <div className="pt-4 flex items-center justify-between">
-                <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-2 h-10 max-w-full">
-                  <div className="hidden sm:block text-[11px] text-zinc-600">Grosor</div>
-                  <input
-                    type="range"
-                    min={2}
-                    max={18}
-                    value={boardSize}
-                    onChange={(e) => setBoardSize(parseInt(e.target.value || "6", 10))}
-                    className="w-[86px] sm:w-[120px] md:w-[140px]"
-                  />
-                </div>
-
-                <button
-                  onClick={closeBoard}
-                  className={[
-                    "h-11 w-11 aspect-square rounded-full",
-                    "bg-white/90 backdrop-blur-xl border border-zinc-200",
-                    "hover:bg-white transition-colors",
-                    "grid place-items-center",
-                    "cursor-pointer disabled:opacity-50 shadow-sm",
-                    "p-0",
-                  ].join(" ")}
-                  aria-label="Cerrar pizarra"
-                  title="Cerrar"
-                >
-                  <span className="text-zinc-700 text-[20px] leading-none relative top-[-0.5px]">×</span>
-                </button>
-              </div>
-
-              <div
-                className="mt-4 rounded-[28px] border border-zinc-200 bg-white/90 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden"
-                style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}
-              >
-                <div className="h-full flex flex-col p-3 md:p-4">
-                  {/* Toolbar */}
-                  <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
-                    <div className="flex items-center gap-2 justify-between md:flex-nowrap flex-wrap">
-                      <div className="flex items-center gap-2 flex-nowrap">
-                        <button
-                          onClick={() => setBoardTool("pen")}
-                          className={[
-                            "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors",
-                            boardTool === "pen" ? "bg-blue-600 text-white border-blue-700/10" : "bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50",
-                          ].join(" ")}
-                        >
-                          Lápiz
-                        </button>
-
-                        <button
-                          onClick={() => setBoardTool("eraser")}
-                          className={[
-                            "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors",
-                            boardTool === "eraser" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50",
-                          ].join(" ")}
-                        >
-                          Goma
-                        </button>
-
-                        <button
-                          onClick={undoBoard}
-                          className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors"
-                          title="Deshacer"
-                        >
-                          Deshacer
-                        </button>
-
-                        <button
-                          onClick={clearBoard}
-                          className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors"
-                          title="Borrar todo"
-                        >
-                          Borrar
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {/* Colores */}
-                        <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 h-10">
-                          {["#f8fafc", "#fde047", "#60a5fa", "#fb7185", "#4ade80"].map((c) => (
-                            <button
-                              key={c}
-                              onClick={() => {
-                                setBoardTool("pen");
-                                setBoardColor(c);
-                              }}
-                              className={["h-7 w-7 rounded-full border grid place-items-center p-0", boardColor === c && boardTool === "pen" ? "border-zinc-900" : "border-zinc-200"].join(" ")}
-                              style={{ backgroundColor: c }}
-                              aria-label={`Color ${c}`}
-                              title="Color"
-                            />
-                          ))}
-                        </div>
-
-                        {/* Grosor */}
-                        <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-2 sm:px-3 h-10">
-                          <div className="text-[11px] text-zinc-600">Grosor</div>
-                          <input
-                            type="range"
-                            min={2}
-                            max={18}
-                            value={boardSize}
-                            onChange={(e) => setBoardSize(parseInt(e.target.value || "6", 10))}
-                            className="w-[92px] sm:w-[120px]"
-                          />
-                        </div>
-
-                        {/* Desktop: Enviar al chat aquí */}
-                        <button
-                          onClick={exportBoardToChat}
-                          className="hidden md:inline-flex h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors items-center justify-center"
-                        >
-                          Enviar al chat
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Status */}
-                  <div className="mt-3 min-h-0 md:min-h-[28px]">
-                    {boardMsg ? (
-                      <div className="rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-[12px] text-zinc-700">{boardMsg}</div>
-                    ) : (
-                      <div className="opacity-0 select-none text-[12px] px-3 py-2">placeholder</div>
-                    )}
-                  </div>
-
-                  {/* Canvas */}
-                  <div className="mt-2 flex-1 min-h-0">
-                    <div
-                      ref={canvasWrapRef}
-                      className="h-full w-full rounded-[22px] border border-zinc-200 overflow-hidden"
-                      style={{
-                        backgroundColor: "#0b0f0d",
-                        backgroundImage:
-                          "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)",
-                        backgroundSize: "26px 26px, 38px 38px",
-                        backgroundPosition: "0 0, 13px 19px",
-                      }}
-                    >
-                      <canvas
-                        ref={canvasRef}
-                        className="h-full w-full"
-                        style={{ touchAction: "none", display: "block" }}
-                        onPointerDown={onCanvasPointerDown}
-                        onPointerMove={onCanvasPointerMove}
-                        onPointerUp={endStroke}
-                        onPointerCancel={endStroke}
-                        onPointerLeave={endStroke}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="pt-2 pb-[calc(env(safe-area-inset-bottom)+6px)] flex items-center justify-between gap-3">
-                    <div className="text-[11px] text-zinc-900">Tip: escribe grande en tablet (dedo o lápiz). Puedes enviar varias pizarras seguidas.</div>
-
-                    <button
-                      onClick={exportBoardToChat}
-                      className="md:hidden inline-flex h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors shrink-0 items-center justify-center"
-                    >
-                      Enviar al chat
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="h-4" />
-            </div>
-          </div>
-        </div>
-      )}
+<ManualWhiteboardModal
+  open={boardOpen}
+  boardMsg={boardMsg}
+  canvasRef={canvasRef}
+  canvasWrapRef={canvasWrapRef}
+  boardTool={boardTool}
+  setBoardTool={setBoardTool}
+  boardColor={boardColor}
+  setBoardColor={setBoardColor}
+  boardSize={boardSize}
+  setBoardSize={setBoardSize}
+  onClose={() => {
+    setBoardOpen(false);
+    setBoardMsg(null);
+  }}
+  onClear={clearBoard}
+  onUndo={undoBoard}
+  onExport={exportBoardToChat}
+  onCanvasPointerDown={onCanvasPointerDown}
+  onCanvasPointerMove={onCanvasPointerMove}
+  onCanvasPointerEnd={endStroke}
+/>
 
 
       <PaywallModal
