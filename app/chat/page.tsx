@@ -4352,6 +4352,65 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
     if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   }
 
+  function deleteThreadById(threadId: string) {
+  if (!threadId) return;
+
+  if (threads.length <= 1) {
+    const fresh = makeNewThread();
+
+    setThreads([fresh]);
+    setActiveThreadId(fresh.id);
+    setMenuOpen(false);
+    setUiError(null);
+    setInput("");
+    setImagePreview(null);
+
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+      shouldStickToBottomRef.current = false;
+    });
+
+    if (isDesktopPointer()) {
+      setTimeout(() => textareaRef.current?.focus(), 60);
+    }
+
+    return;
+  }
+
+  const remaining = threads.filter((t) => t.id !== threadId);
+  if (!remaining.length) {
+    const fresh = makeNewThread();
+    setThreads([fresh]);
+    setActiveThreadId(fresh.id);
+    return;
+  }
+
+  const keepCurrent =
+    activeThreadId &&
+    activeThreadId !== threadId &&
+    remaining.some((t) => t.id === activeThreadId);
+
+  const next = keepCurrent
+    ? remaining.find((t) => t.id === activeThreadId) ?? remaining[0]
+    : remaining[0];
+
+  setThreads(remaining);
+  setActiveThreadId(next.id);
+  setMenuOpen(false);
+  setUiError(null);
+  setInput("");
+  setImagePreview(null);
+
+  requestAnimationFrame(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    shouldStickToBottomRef.current = false;
+  });
+
+  if (isDesktopPointer()) {
+    setTimeout(() => textareaRef.current?.focus(), 60);
+  }
+}
+
   // ✅ regla: tras 2 mensajes, bloquear el siguiente y pedir login/pago
   function enforceLimitIfNeeded(): boolean {
   const nextUserCount = userMsgCountInThread + 1;
@@ -6106,12 +6165,12 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
               </div>
 
               <button
-                onClick={() => setRenameOpen(false)}
-                className="h-9 w-9 aspect-square rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer p-0"
-                aria-label="Cerrar"
-              >
-                <span className="text-[18px] leading-none relative top-[-0.5px]">×</span>
-              </button>
+  onClick={() => setRenameOpen(false)}
+  className="grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition hover:bg-zinc-100 active:scale-95"
+  aria-label="Cerrar"
+>
+  <span className="text-[24px] font-light leading-none relative top-[-1px]">×</span>
+</button>
             </div>
 
             <div className="mt-4">
@@ -6563,6 +6622,7 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
   createThreadAndActivate={createThreadAndActivate}
   openRename={openRename}
   deleteActiveThread={deleteActiveThread}
+    deleteThreadById={deleteThreadById}
   mounted={mounted}
   isDesktopPointer={isDesktopPointer}
   authLoading={authLoading}

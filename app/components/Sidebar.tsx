@@ -16,8 +16,9 @@ type SidebarProps = {
   activeThreadId: string | null;
   activateThread: (id: string) => void;
   createThreadAndActivate: () => void;
-  openRename: () => void;
+    openRename: () => void;
   deleteActiveThread: () => void;
+  deleteThreadById: (threadId: string) => void;
   mounted: boolean;
   isDesktopPointer: () => boolean;
   authLoading: boolean;
@@ -109,13 +110,24 @@ function TrashIcon({ className }: { className?: string }) {
 
 function PinIcon({ className }: { className?: string }) {
   return (
-    <svg className={className ?? "h-5 w-5"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      className={className ?? "h-5 w-5"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
-        d="M14 3l7 7-2.8.8-3.4 3.4.8 2.8-1.4 1.4-4.2-4.2-4.9 4.9a1 1 0 0 1-1.4-1.4l4.9-4.9-4.2-4.2 1.4-1.4 2.8.8 3.4-3.4L14 3Z"
+        d="M15.2 4.2 19.8 8.8c.4.4.25 1.08-.28 1.25l-2.36.76-3.18 3.18.42 3.02c.08.58-.62.94-1.04.52L6.47 10.64c-.42-.42-.06-1.12.52-1.04l3.02.42 3.18-3.18.76-2.36c.17-.53.85-.68 1.25-.28Z"
         stroke="currentColor"
         strokeWidth="1.9"
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+      <path
+        d="M9.4 14.6 5 19"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
       />
     </svg>
   );
@@ -211,6 +223,7 @@ export default function Sidebar({
   createThreadAndActivate,
   openRename,
   deleteActiveThread,
+  deleteThreadById,
   mounted,
   isDesktopPointer,
   authLoading,
@@ -257,6 +270,7 @@ cancelSubscriptionFromHere,
 }, [menuOpen, accountScreen]);
   const [pinnedIds, setPinnedIds] = useState<string[]>([]);
   const longPressTimerRef = useRef<number | null>(null);
+  const longPressTriggeredRef = useRef(false);
 
   useEffect(() => {
     try {
@@ -342,15 +356,15 @@ cancelSubscriptionFromHere,
   }
 
   function handleDeleteFromMenu() {
-    if (selectedThreadId && selectedThreadId !== activeThreadId) {
-      activateThread(selectedThreadId);
-      setTimeout(() => deleteActiveThread(), 30);
-    } else {
-      deleteActiveThread();
-    }
+  if (!selectedThreadId) return;
 
-    closeThreadActions();
-  }
+  const idToDelete = selectedThreadId;
+
+  setPinnedIds((prev) => prev.filter((id) => id !== idToDelete));
+  closeThreadActions();
+
+  deleteThreadById(idToDelete);
+}
 
   function togglePinFromMenu() {
     if (!selectedThreadId) return;
@@ -365,12 +379,16 @@ cancelSubscriptionFromHere,
   }
 
   function startLongPress(threadId: string) {
-    if (desktop) return;
-    clearLongPress();
-    longPressTimerRef.current = window.setTimeout(() => {
-      openThreadActions(threadId);
-    }, 420);
-  }
+  if (desktop) return;
+
+  clearLongPress();
+  longPressTriggeredRef.current = false;
+
+  longPressTimerRef.current = window.setTimeout(() => {
+    longPressTriggeredRef.current = true;
+    openThreadActions(threadId);
+  }, 420);
+}
 
   function clearLongPress() {
     if (longPressTimerRef.current) {
@@ -1033,10 +1051,16 @@ cancelSubscriptionFromHere,
                             onTouchEnd={clearLongPress}
                             onTouchCancel={clearLongPress}
                             onClick={() => {
-                              clearLongPress();
-                              activateThread(t.id);
-                              setMenuOpen(false);
-                            }}
+  clearLongPress();
+
+  if (longPressTriggeredRef.current) {
+    longPressTriggeredRef.current = false;
+    return;
+  }
+
+  activateThread(t.id);
+  setMenuOpen(false);
+}}
                             className="w-full cursor-pointer px-1 py-2.5 text-left md:px-3 md:py-2"
                           >
                             <div className="flex min-w-0 items-center gap-3">
@@ -1170,14 +1194,22 @@ cancelSubscriptionFromHere,
 
             <div className="p-2">
               <button
-                onClick={togglePinFromMenu}
-                className="flex w-full cursor-pointer items-center gap-3 rounded-[20px] px-4 py-3 transition-colors hover:bg-zinc-50"
-              >
-                <PinIcon className="h-[18px] w-[18px] text-zinc-900" />
-                <span className="text-[15px] font-medium text-zinc-900">
-                  {selectedIsPinned ? "Quitar de fijadas" : "Fijar"}
-                </span>
-              </button>
+  onClick={togglePinFromMenu}
+  className="flex w-full cursor-pointer items-center gap-3 rounded-[20px] px-4 py-3 transition-colors hover:bg-blue-50"
+>
+  <span
+    className={[
+      "grid h-9 w-9 shrink-0 place-items-center rounded-full transition",
+      selectedIsPinned ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600",
+    ].join(" ")}
+  >
+    <PinIcon className="h-[18px] w-[18px]" />
+  </span>
+
+  <span className="text-[15px] font-medium text-zinc-900">
+    {selectedIsPinned ? "Quitar de fijadas" : "Fijar conversación"}
+  </span>
+</button>
 
               <button
                 onClick={handleRenameFromMenu}
