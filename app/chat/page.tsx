@@ -6690,7 +6690,9 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   ].join(" ")}
   style={{
     paddingTop: hasUserMessage ? 0 : 92,
-    paddingBottom: hasUserMessage ? chatBottomPad : inputBarH + 180,
+    paddingBottom: hasUserMessage
+      ? chatBottomPad + (isDesktopPointer() ? 90 : 44)
+      : inputBarH + 180,
   }}
 >
 
