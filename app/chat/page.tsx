@@ -6948,38 +6948,8 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
             </div>
           );
         })}
-
-        {showContextualFileCard && !paywallOpen ? (
-  <div className="flex justify-center pt-2 pb-1 animate-[fadeIn_260ms_ease-out]">
-    <div className="w-full max-w-[520px]">
-      {contextualFilePrompt ? (
-        <div className="mb-3 text-center text-[14px] leading-6 text-zinc-600 px-4">
-          {contextualFilePrompt}
-        </div>
-      ) : null}
-
-      <ChatFileDropCard
-        onClick={() => {
-          setShowContextualFileCard(false);
-          setFilePickerOpen(true);
-        }}
-      />
-    </div>
-  </div>
-) : null}
       </div>
     </div>
-
-    {hasUserMessage ? (
-      <div
-        className="pointer-events-none sticky bottom-0 z-30 -mt-[150px] hidden h-[150px] md:block"
-        aria-hidden="true"
-        style={{
-          background:
-            "linear-gradient(to top, #f8f9fa 0%, rgba(248,249,250,0.98) 34%, rgba(248,249,250,0.72) 64%, rgba(248,249,250,0) 100%)",
-        }}
-      />
-    ) : null}
 </div>
 </div>
 
