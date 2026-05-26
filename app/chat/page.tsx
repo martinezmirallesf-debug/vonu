@@ -3960,6 +3960,21 @@ const voiceUiState = useMemo<"idle" | "listening" | "speaking">(() => {
 
   const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
 
+  useEffect(() => {
+  const el = inputBarRef.current;
+  if (!el) return;
+
+  const shouldCenterInput = mounted && !hasUserMessage && !paywallOpen;
+
+  el.classList.add("vonu-input-motion-shell");
+  el.classList.toggle("vonu-home-input-centered", shouldCenterInput);
+
+  return () => {
+    el.classList.remove("vonu-home-input-centered");
+    el.classList.remove("vonu-input-motion-shell");
+  };
+}, [mounted, hasUserMessage, paywallOpen, activeThreadId]);
+
 const quickPrompts = useMemo(
   () => [
     { label: "Hacer deberes", mode: "tutor" as ThreadMode, text: "Tengo este ejercicio. Explícamelo paso a paso como profe:" },
@@ -5507,48 +5522,71 @@ return (
     }
   }
 
-    @keyframes vonuAmbientDrift {
+      @keyframes vonuAmbientDrift {
     0% {
-      transform: translate3d(-3%, -2%, 0) scale(1);
-      opacity: 0.72;
+      transform: translate3d(-4%, -2%, 0) scale(1) rotate(0deg);
+      opacity: 0.58;
     }
-    45% {
-      transform: translate3d(4%, 3%, 0) scale(1.08);
-      opacity: 0.95;
+    35% {
+      transform: translate3d(5%, 4%, 0) scale(1.12) rotate(8deg);
+      opacity: 0.86;
+    }
+    70% {
+      transform: translate3d(2%, -5%, 0) scale(1.04) rotate(-6deg);
+      opacity: 0.68;
     }
     100% {
-      transform: translate3d(-3%, -2%, 0) scale(1);
-      opacity: 0.72;
+      transform: translate3d(-4%, -2%, 0) scale(1) rotate(0deg);
+      opacity: 0.58;
     }
   }
 
   @keyframes vonuAmbientDriftAlt {
     0% {
-      transform: translate3d(4%, 2%, 0) scale(1.05);
-      opacity: 0.44;
+      transform: translate3d(4%, 2%, 0) scale(1.05) rotate(0deg);
+      opacity: 0.42;
     }
-    50% {
-      transform: translate3d(-5%, -3%, 0) scale(1.14);
+    45% {
+      transform: translate3d(-5%, -3%, 0) scale(1.18) rotate(-10deg);
       opacity: 0.72;
     }
     100% {
-      transform: translate3d(4%, 2%, 0) scale(1.05);
-      opacity: 0.44;
+      transform: translate3d(4%, 2%, 0) scale(1.05) rotate(0deg);
+      opacity: 0.42;
     }
   }
 
-  @keyframes vonuLogoBreath {
+  @keyframes vonuGeoFloat {
     0% {
-      transform: scale(1);
-      filter: drop-shadow(0 0 0 rgba(26, 115, 232, 0));
+      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+      opacity: 0.18;
     }
-    45% {
-      transform: scale(1.045);
-      filter: drop-shadow(0 10px 26px rgba(26, 115, 232, 0.18));
+    40% {
+      transform: translate3d(18px, -22px, 0) rotate(14deg) scale(1.06);
+      opacity: 0.28;
+    }
+    75% {
+      transform: translate3d(-14px, 16px, 0) rotate(-8deg) scale(0.98);
+      opacity: 0.20;
     }
     100% {
-      transform: scale(1);
-      filter: drop-shadow(0 0 0 rgba(26, 115, 232, 0));
+      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+      opacity: 0.18;
+    }
+  }
+
+  @keyframes vonuGeoFloatAlt {
+    0% {
+      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+      opacity: 0.14;
+    }
+    50% {
+      transform: translate3d(-20px, 18px, 0) rotate(-18deg) scale(1.08);
+      opacity: 0.26;
+    }
+    100% {
+      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+      opacity: 0.14;
     }
   }
 
@@ -5565,17 +5603,6 @@ return (
     }
   }
 
-  @keyframes vonuChipRise {
-    from {
-      opacity: 0;
-      transform: translateY(10px) scale(0.98);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-
   @keyframes vonuSoftGlow {
     0% {
       box-shadow:
@@ -5585,9 +5612,9 @@ return (
     }
     50% {
       box-shadow:
-        0 22px 70px rgba(15, 23, 42, 0.13),
+        0 22px 76px rgba(15, 23, 42, 0.13),
         0 0 0 1px rgba(255,255,255,0.9),
-        0 0 46px rgba(26,115,232,0.13);
+        0 0 54px rgba(26,115,232,0.15);
     }
     100% {
       box-shadow:
@@ -5599,35 +5626,70 @@ return (
 
   .vonu-home-ambient {
     background:
-      radial-gradient(circle at 18% 18%, rgba(26, 115, 232, 0.14), transparent 34%),
-      radial-gradient(circle at 82% 16%, rgba(34, 197, 94, 0.10), transparent 30%),
-      radial-gradient(circle at 50% 86%, rgba(245, 158, 11, 0.10), transparent 34%),
-      linear-gradient(180deg, rgba(255,255,255,0.92), rgba(246,248,251,0.96));
+      radial-gradient(circle at 22% 20%, rgba(26, 115, 232, 0.16), transparent 34%),
+      radial-gradient(circle at 78% 18%, rgba(34, 197, 94, 0.11), transparent 32%),
+      radial-gradient(circle at 48% 82%, rgba(245, 158, 11, 0.12), transparent 35%),
+      radial-gradient(circle at 50% 48%, rgba(255,255,255,0.72), transparent 32%),
+      linear-gradient(180deg, rgba(255,255,255,0.94), rgba(246,248,251,0.97));
+    animation: vonuAmbientDrift 18s ease-in-out infinite;
   }
 
   .vonu-orb-one {
-    animation: vonuAmbientDrift 15s ease-in-out infinite;
+    animation: vonuAmbientDrift 16s ease-in-out infinite;
   }
 
   .vonu-orb-two {
-    animation: vonuAmbientDriftAlt 18s ease-in-out infinite;
+    animation: vonuAmbientDriftAlt 19s ease-in-out infinite;
   }
 
-  .vonu-logo-alive {
-    animation: vonuLogoBreath 4.8s ease-in-out infinite;
-    transform-origin: center;
+  .vonu-geo-one {
+    animation: vonuGeoFloat 16s ease-in-out infinite;
+  }
+
+  .vonu-geo-two {
+    animation: vonuGeoFloatAlt 18s ease-in-out infinite;
+  }
+
+  .vonu-geo-three {
+    animation: vonuGeoFloat 22s ease-in-out infinite reverse;
   }
 
   .vonu-hero-rise {
     animation: vonuHeroRise 620ms cubic-bezier(.2,.8,.2,1) both;
   }
 
-  .vonu-chip-rise {
-    animation: vonuChipRise 520ms cubic-bezier(.2,.8,.2,1) both;
+  .vonu-input-motion-shell {
+    transition:
+      top 720ms cubic-bezier(.2,.8,.2,1),
+      bottom 720ms cubic-bezier(.2,.8,.2,1),
+      left 720ms cubic-bezier(.2,.8,.2,1),
+      right 720ms cubic-bezier(.2,.8,.2,1),
+      width 720ms cubic-bezier(.2,.8,.2,1),
+      max-width 720ms cubic-bezier(.2,.8,.2,1),
+      transform 720ms cubic-bezier(.2,.8,.2,1),
+      opacity 420ms ease,
+      filter 420ms ease !important;
   }
 
-  .vonu-input-stage {
-    animation: vonuSoftGlow 5.8s ease-in-out infinite;
+  .vonu-home-input-centered {
+    top: calc(50% + 78px) !important;
+    bottom: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    width: calc(100vw - 32px) !important;
+    max-width: 760px !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 70 !important;
+    filter: drop-shadow(0 24px 70px rgba(15,23,42,0.14));
+  }
+
+  @media (min-width: 768px) {
+    .vonu-home-input-centered {
+      left: calc(304px + ((100vw - 304px) / 2)) !important;
+      top: calc(50% + 82px) !important;
+      width: min(760px, calc(100vw - 380px)) !important;
+      max-width: 760px !important;
+    }
   }
 
   @keyframes vonuRevealIn {
@@ -6378,7 +6440,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   onDrop={handleGlobalDrop}
   className="relative flex-1 overflow-y-auto min-h-0 overscroll-contain"
 >
-  <div
+   <div
     className={[
       "pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-700",
       hasUserMessage ? "opacity-0" : "opacity-100",
@@ -6386,16 +6448,24 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
     aria-hidden="true"
   >
     <div className="vonu-home-ambient absolute inset-0" />
-    <div className="vonu-orb-one absolute -left-[12%] top-[8%] h-[420px] w-[420px] rounded-full bg-blue-300/20 blur-3xl" />
-    <div className="vonu-orb-two absolute -right-[10%] top-[18%] h-[360px] w-[360px] rounded-full bg-emerald-200/22 blur-3xl" />
-    <div className="absolute bottom-[-18%] left-[28%] h-[420px] w-[420px] rounded-full bg-amber-100/38 blur-3xl" />
+
+    <div className="vonu-orb-one absolute -left-[14%] top-[4%] h-[460px] w-[460px] rounded-full bg-blue-300/18 blur-3xl" />
+    <div className="vonu-orb-two absolute -right-[12%] top-[12%] h-[420px] w-[420px] rounded-full bg-emerald-200/20 blur-3xl" />
+    <div className="vonu-geo-three absolute bottom-[-16%] left-[30%] h-[430px] w-[430px] rounded-full bg-amber-100/36 blur-3xl" />
+
+    <div className="vonu-geo-one absolute left-[15%] top-[26%] h-[150px] w-[150px] rounded-[42px] border border-blue-200/28 bg-white/18 backdrop-blur-[2px]" />
+    <div className="vonu-geo-two absolute right-[18%] top-[31%] h-[118px] w-[118px] rotate-45 rounded-[34px] border border-emerald-200/26 bg-white/16 backdrop-blur-[2px]" />
+    <div className="vonu-geo-three absolute left-[47%] top-[61%] h-[96px] w-[96px] rounded-full border border-amber-200/30 bg-white/18 backdrop-blur-[2px]" />
   </div>
 
-  <div
-    className="relative z-10 mx-auto max-w-3xl px-3 md:px-6"
+    <div
+    className={[
+      "relative z-10 mx-auto w-full px-4 md:px-6",
+      hasUserMessage ? "max-w-3xl" : "max-w-[980px]",
+    ].join(" ")}
     style={{
-      paddingTop: hasUserMessage ? 0 : 96,
-      paddingBottom: hasUserMessage ? chatBottomPad : inputBarH + 34,
+      paddingTop: hasUserMessage ? 0 : 92,
+      paddingBottom: hasUserMessage ? chatBottomPad : inputBarH + 180,
     }}
   >
 
@@ -6454,96 +6524,20 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
         </div>
       ) : null}
 {!hasUserMessage ? (
-  <div className="px-1">
-    <div className="mx-auto flex min-h-[calc(100dvh-260px)] max-w-[760px] flex-col items-center justify-center text-center md:min-h-[calc(100dvh-250px)]">
-      <div className="vonu-hero-rise flex items-center justify-center gap-3">
-        <span className="relative grid h-11 w-11 place-items-center rounded-2xl bg-white/72 shadow-[0_18px_54px_rgba(15,23,42,0.10)] ring-1 ring-white/80 backdrop-blur-xl">
-          <span className="absolute inset-[-10px] rounded-[28px] bg-blue-400/10 blur-2xl" />
-          <img
-            src="/logo/vonu-cube-black.png?v=3"
-            alt="Vonu"
-            className="vonu-logo-alive relative block h-[22px] w-[22px] object-contain"
-            draggable={false}
-          />
-        </span>
-
-        <div
-          className="text-[23px] leading-none text-zinc-900 md:text-[30px]"
-          style={{
-            fontFamily: "var(--font-playfair-display)",
-            fontWeight: 500,
-          }}
-        >
-          Hola{" "}
-          <span style={{ fontStyle: "italic" }}>
-            {authUserName?.trim() || "Invitado"}
-          </span>
-          ,
-        </div>
-      </div>
-
-      <div className="vonu-hero-rise mt-7 max-w-[820px]" style={{ animationDelay: "90ms" }}>
-        <h1 className="text-balance text-[42px] font-[760] leading-[0.94] tracking-[-0.06em] text-zinc-950 md:text-[76px]">
+  <div className="px-0">
+    <div className="mx-auto flex min-h-[calc(100dvh-250px)] w-full max-w-[980px] flex-col items-center justify-start text-center md:min-h-[calc(100dvh-230px)]">
+      <div className="vonu-hero-rise mt-[7vh] w-full md:mt-[8vh]">
+        <h1 className="mx-auto max-w-[900px] text-balance text-[43px] font-[780] leading-[0.93] tracking-[-0.065em] text-zinc-950 md:text-[82px]">
           ¿Qué quieres revisar antes de actuar?
         </h1>
       </div>
 
       <p
-        className="vonu-hero-rise mt-5 max-w-[560px] text-[16px] leading-7 text-zinc-500 md:text-[18px]"
-        style={{ animationDelay: "170ms" }}
+        className="vonu-hero-rise mt-5 max-w-[620px] px-2 text-[16px] leading-7 text-zinc-500 md:mt-6 md:text-[18px]"
+        style={{ animationDelay: "120ms" }}
       >
         Pega un mensaje, sube una captura o cuéntame la situación. Vonu te ayuda a verlo con calma.
       </p>
-
-      <div
-        className="vonu-hero-rise vonu-input-stage mt-9 w-full rounded-[34px] border border-white/80 bg-white/78 px-4 py-3 backdrop-blur-2xl md:mt-11"
-        style={{ animationDelay: "240ms" }}
-      >
-        <div className="flex items-center gap-3 text-left">
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-zinc-950 text-white">
-            <PlusIcon className="h-5 w-5" />
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <div className="text-[15px] font-semibold tracking-[-0.02em] text-zinc-950 md:text-[16px]">
-              Empieza con cualquier duda
-            </div>
-            <div className="mt-0.5 truncate text-[13px] text-zinc-500 md:text-[14px]">
-              Escribe, adjunta una imagen o usa el botón + del input.
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => textareaRef.current?.focus()}
-            className="hidden rounded-full bg-blue-600 px-5 py-3 text-[13px] font-semibold text-white shadow-[0_12px_30px_rgba(37,99,235,0.28)] transition hover:bg-blue-700 md:inline-flex"
-          >
-            Escribir
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-7 flex max-w-[720px] flex-wrap justify-center gap-3 md:mt-8">
-        {quickPrompts.map((p, index) => (
-          <button
-            key={p.label}
-            onClick={() => applyQuickPrompt(p)}
-            className={[
-              "vonu-chip-rise inline-flex items-center justify-center",
-              "rounded-full border border-white/80 bg-white/74 backdrop-blur-xl",
-              "px-5 py-3 md:px-6 md:py-3.5",
-              "text-[14px] md:text-[15px] font-semibold text-zinc-900",
-              "shadow-[0_12px_34px_rgba(15,23,42,0.08)]",
-              "transition-all duration-300 hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_18px_45px_rgba(15,23,42,0.12)]",
-              "active:scale-[0.985]",
-              "whitespace-nowrap",
-            ].join(" ")}
-            style={{ animationDelay: `${320 + index * 55}ms` }}
-          >
-            {p.label === "Identificar posible estafa" ? "Posible estafa" : p.label}
-          </button>
-        ))}
-      </div>
     </div>
   </div>
 ) : null}
