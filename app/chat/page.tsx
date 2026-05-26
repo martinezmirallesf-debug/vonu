@@ -5853,11 +5853,14 @@ return (
   }
 
   html.vonu-home-input-focus-mode,
-  html.vonu-home-input-focus-mode body {
-    overflow: hidden !important;
-    overscroll-behavior: none !important;
-    touch-action: none;
-  }
+html.vonu-home-input-focus-mode body {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+html.vonu-home-input-focus-mode .vonu-home-scroll {
+  touch-action: none;
+}
 }
 
   @media (min-width: 768px) {
@@ -5871,8 +5874,16 @@ return (
   }
 }
 
-html.vonu-home-input-mode,
+html.vonu-home-input-mode {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
 html.vonu-home-input-mode body {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100dvh !important;
   overflow: hidden !important;
   overscroll-behavior: none !important;
 }
