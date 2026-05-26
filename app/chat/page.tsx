@@ -4007,38 +4007,59 @@ const voiceUiState = useMemo<"idle" | "listening" | "speaking">(() => {
 
   el.classList.add("vonu-input-motion-shell");
   el.classList.toggle("vonu-home-input-centered", shouldCenterInput);
-  el.classList.toggle(
-    "vonu-home-input-focused",
-    shouldCenterInput && homeInputFocused
-  );
 
   document.documentElement.classList.toggle(
     "vonu-home-input-mode",
     shouldCenterInput
   );
 
-  document.documentElement.classList.toggle(
-    "vonu-home-input-focus-mode",
-    shouldCenterInput && homeInputFocused
-  );
-
-  window.dispatchEvent(new Event("resize"));
-
   if (shouldCenterInput) {
     window.scrollTo(0, 0);
     scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }
 
+  window.dispatchEvent(new Event("resize"));
+
   return () => {
     el.classList.remove("vonu-home-input-centered");
-    el.classList.remove("vonu-home-input-focused");
     el.classList.remove("vonu-input-motion-shell");
     document.documentElement.classList.remove("vonu-home-input-mode");
-    document.documentElement.classList.remove("vonu-home-input-focus-mode");
     document.documentElement.classList.remove("vonu-home-keyboard-open");
     window.dispatchEvent(new Event("resize"));
   };
-}, [mounted, hasUserMessage, paywallOpen, activeThreadId, homeInputFocused]);
+}, [mounted, hasUserMessage, paywallOpen, activeThreadId]);
+
+useEffect(() => {
+  const el = inputBarRef.current;
+  if (!el) return;
+
+  const shouldFocusMode =
+    mounted && !hasUserMessage && !paywallOpen && homeInputFocused;
+
+  el.classList.toggle("vonu-home-input-focused", shouldFocusMode);
+
+  document.documentElement.classList.toggle(
+    "vonu-home-input-focus-mode",
+    shouldFocusMode
+  );
+
+  if (shouldFocusMode) {
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    });
+
+    window.setTimeout(() => {
+      window.scrollTo(0, 0);
+      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    }, 180);
+  }
+
+  return () => {
+    el.classList.remove("vonu-home-input-focused");
+    document.documentElement.classList.remove("vonu-home-input-focus-mode");
+  };
+}, [mounted, hasUserMessage, paywallOpen, homeInputFocused]);
 
 const quickPrompts = useMemo(
   () => [
@@ -5724,14 +5745,14 @@ return (
   }
 
     .vonu-input-motion-shell {
-    transition:
-      top 720ms cubic-bezier(.2,.8,.2,1),
-      bottom 720ms cubic-bezier(.2,.8,.2,1),
-      transform 720ms cubic-bezier(.2,.8,.2,1),
-      opacity 420ms ease,
-      filter 420ms ease,
-      background-color 420ms ease !important;
-  }
+  transition:
+    top 1120ms cubic-bezier(.16,.9,.18,1),
+    bottom 1120ms cubic-bezier(.16,.9,.18,1),
+    transform 1120ms cubic-bezier(.16,.9,.18,1),
+    opacity 620ms ease,
+    filter 620ms ease,
+    background-color 620ms ease !important;
+}
 
       .vonu-home-input-centered {
     top: calc(50% + 76px) !important;
@@ -5755,16 +5776,23 @@ return (
      Así Android/iOS no necesitan empujar toda la pantalla hacia arriba. */
   @media (max-width: 767px) {
   .vonu-home-input-centered.vonu-home-input-focused {
-    top: calc(50% + 76px) !important;
+    top: 41vh !important;
     transform: translateY(-50%) !important;
   }
 
   html.vonu-home-input-focus-mode .vonu-hero-rise {
-    transform: none !important;
-    opacity: 1 !important;
+    transform: translateY(-6px) scale(0.99) !important;
+    opacity: 0.98 !important;
     transition:
       transform 520ms cubic-bezier(.2,.8,.2,1),
       opacity 420ms ease !important;
+  }
+
+  html.vonu-home-input-focus-mode,
+  html.vonu-home-input-focus-mode body {
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+    touch-action: none;
   }
 }
 
@@ -6942,8 +6970,26 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   micMsg={micMsg}
   input={input}
   setInput={setInput}
-  onHomeInputFocus={() => setHomeInputFocused(true)}
-  onHomeInputBlur={() => setHomeInputFocused(false)}
+  onHomeInputFocus={() => {
+  setHomeInputFocused(true);
+
+  if (!hasUserMessage) {
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    });
+
+    window.setTimeout(() => {
+      window.scrollTo(0, 0);
+      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    }, 220);
+  }
+}}
+onHomeInputBlur={() => {
+  window.setTimeout(() => {
+    setHomeInputFocused(false);
+  }, 180);
+}}
     isTyping={isTyping}
     textareaRef={textareaRef}
     handleKeyDown={handleKeyDown}

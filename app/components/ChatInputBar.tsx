@@ -200,17 +200,31 @@ function handleMainButtonPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
   if (!mainButtonIsSend) return;
   if (!canSend) return;
 
-  // En móvil, si esperamos al click, el teclado puede bajar primero,
-  // mover el input y cancelar la pulsación. Enviamos aquí, antes del blur.
   e.preventDefault();
   e.stopPropagation();
 
+  if (sendPointerLockRef.current) return;
   sendPointerLockRef.current = true;
-  sendMessage();
+
+  const isMobileHomeInput =
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("vonu-home-input-mode") &&
+    typeof window !== "undefined" &&
+    !window.matchMedia?.("(pointer: fine)")?.matches;
+
+  if (isMobileHomeInput) {
+    textareaRef.current?.blur();
+
+    window.setTimeout(() => {
+      sendMessage();
+    }, 320);
+  } else {
+    sendMessage();
+  }
 
   window.setTimeout(() => {
     sendPointerLockRef.current = false;
-  }, 450);
+  }, 1100);
 }
 
 function handleMainButtonClick(e: React.MouseEvent<HTMLButtonElement>) {
