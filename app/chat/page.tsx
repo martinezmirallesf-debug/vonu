@@ -3969,9 +3969,15 @@ const voiceUiState = useMemo<"idle" | "listening" | "speaking">(() => {
   el.classList.add("vonu-input-motion-shell");
   el.classList.toggle("vonu-home-input-centered", shouldCenterInput);
 
+  document.documentElement.classList.toggle(
+    "vonu-home-input-mode",
+    shouldCenterInput
+  );
+
   return () => {
     el.classList.remove("vonu-home-input-centered");
     el.classList.remove("vonu-input-motion-shell");
+    document.documentElement.classList.remove("vonu-home-input-mode");
   };
 }, [mounted, hasUserMessage, paywallOpen, activeThreadId]);
 
@@ -5658,37 +5664,38 @@ return (
     animation: vonuHeroRise 620ms cubic-bezier(.2,.8,.2,1) both;
   }
 
-  .vonu-input-motion-shell {
+    .vonu-input-motion-shell {
     transition:
       top 720ms cubic-bezier(.2,.8,.2,1),
       bottom 720ms cubic-bezier(.2,.8,.2,1),
-      left 720ms cubic-bezier(.2,.8,.2,1),
-      right 720ms cubic-bezier(.2,.8,.2,1),
-      width 720ms cubic-bezier(.2,.8,.2,1),
-      max-width 720ms cubic-bezier(.2,.8,.2,1),
       transform 720ms cubic-bezier(.2,.8,.2,1),
       opacity 420ms ease,
-      filter 420ms ease !important;
+      filter 420ms ease,
+      background-color 420ms ease !important;
   }
 
   .vonu-home-input-centered {
-    top: calc(50% + 78px) !important;
+    top: calc(50% + 76px) !important;
     bottom: auto !important;
-    left: 50% !important;
-    right: auto !important;
-    width: calc(100vw - 32px) !important;
-    max-width: 760px !important;
-    transform: translate(-50%, -50%) !important;
+    transform: translateY(-50%) !important;
     z-index: 70 !important;
+    background: transparent !important;
     filter: drop-shadow(0 24px 70px rgba(15,23,42,0.14));
+  }
+
+    .vonu-home-input-centered::before,
+  .vonu-home-input-centered::after {
+    opacity: 0 !important;
+  }
+
+  html.vonu-home-input-mode .vonu-bottom-mask,
+  html.vonu-home-input-mode .vonu-top-mask {
+    opacity: 0 !important;
   }
 
   @media (min-width: 768px) {
     .vonu-home-input-centered {
-      left: calc(304px + ((100vw - 304px) / 2)) !important;
-      top: calc(50% + 82px) !important;
-      width: min(760px, calc(100vw - 380px)) !important;
-      max-width: 760px !important;
+      top: calc(50% + 76px) !important;
     }
   }
 
@@ -6376,7 +6383,7 @@ return (
 />
 
 <div
-  className="pointer-events-none fixed inset-x-0 top-0 z-[45] md:hidden"
+  className="vonu-top-mask pointer-events-none fixed inset-x-0 top-0 z-[45] transition-opacity duration-500 md:hidden"
   style={{
     height: "102px",
     background:
@@ -6527,17 +6534,17 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   <div className="px-0">
     <div className="mx-auto flex min-h-[calc(100dvh-250px)] w-full max-w-[980px] flex-col items-center justify-start text-center md:min-h-[calc(100dvh-230px)]">
       <div className="vonu-hero-rise mt-[7vh] w-full md:mt-[8vh]">
-        <h1 className="mx-auto max-w-[900px] text-balance text-[43px] font-[780] leading-[0.93] tracking-[-0.065em] text-zinc-950 md:text-[82px]">
-          ¿Qué quieres revisar antes de actuar?
-        </h1>
+        <h1 className="mx-auto max-w-[980px] whitespace-nowrap text-[38px] font-[690] leading-none tracking-[-0.055em] text-zinc-950 md:text-[62px]">
+  ¿Qué quieres revisar?
+</h1>
       </div>
 
       <p
-        className="vonu-hero-rise mt-5 max-w-[620px] px-2 text-[16px] leading-7 text-zinc-500 md:mt-6 md:text-[18px]"
-        style={{ animationDelay: "120ms" }}
-      >
-        Pega un mensaje, sube una captura o cuéntame la situación. Vonu te ayuda a verlo con calma.
-      </p>
+  className="vonu-hero-rise mt-5 max-w-[680px] px-2 text-[16px] leading-7 text-zinc-500 md:mt-6 md:text-[18px]"
+  style={{ animationDelay: "120ms" }}
+>
+  Antes de actuar, pega un mensaje, sube una captura o cuéntame la situación.
+</p>
     </div>
   </div>
 ) : null}
