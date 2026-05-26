@@ -3782,55 +3782,76 @@ if (cn.includes("katex-display")) {
     }
   }
 
-// VisualViewport (altura visible + inset inferior cuando aparece teclado)
-// ✅ En la home inicial con input centrado NO dejamos que el teclado recalcule toda la pantalla.
-// Así evitamos que el hero/header suban y que la pantalla se pueda arrastrar de forma rara.
+// VisualViewport + teclado móvil
+// En la pantalla inicial intentamos que el teclado NO empuje toda la app hacia arriba.
+// En Chrome/Android usamos VirtualKeyboard.overlaysContent cuando está disponible.
 useEffect(() => {
   if (typeof window === "undefined") return;
 
   const vv = window.visualViewport;
-  let stableHomeHeight = window.innerHeight;
+  const navAny = navigator as any;
+  const virtualKeyboard = navAny?.virtualKeyboard;
+
+  let previousOverlaysContent: boolean | null = null;
+  let stableHomeHeight = window.innerHeight || 720;
+
+  try {
+    if (virtualKeyboard && "overlaysContent" in virtualKeyboard) {
+      previousOverlaysContent = !!virtualKeyboard.overlaysContent;
+      virtualKeyboard.overlaysContent = true;
+    }
+  } catch {
+    previousOverlaysContent = null;
+  }
 
   const isHomeInputMode = () =>
     document.documentElement.classList.contains("vonu-home-input-mode");
+
+  const resetHomeScroll = () => {
+    if (!isHomeInputMode()) return;
+
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  };
 
   const setVars = () => {
     const viewportHeight = vv?.height ?? window.innerHeight;
     const viewportTop = vv?.offsetTop ?? 0;
 
     const keyboardOpen =
-      !!vv && viewportHeight < window.innerHeight - 110;
+      !!vv && viewportHeight < stableHomeHeight - 110;
 
     document.documentElement.classList.toggle(
       "vonu-home-keyboard-open",
       isHomeInputMode() && keyboardOpen
     );
 
-    
-
-    // ✅ Modo home inicial:
-    // congelamos altura y no aplicamos inset inferior.
-    // El teclado aparece por encima, pero la pantalla no se desplaza.
     if (isHomeInputMode()) {
       if (!keyboardOpen) {
-        stableHomeHeight = window.innerHeight;
+        stableHomeHeight = window.innerHeight || stableHomeHeight;
       }
 
+      // Pantalla inicial: altura estable, sin inset inferior.
       document.documentElement.style.setProperty(
         "--vvh",
         `${stableHomeHeight}px`
       );
-
       document.documentElement.style.setProperty("--vvb", "0px");
 
-      window.scrollTo(0, 0);
-      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+      // Si el navegador intenta desplazar la página al enfocar textarea,
+      // la devolvemos a su sitio varias veces durante la animación del teclado.
+      resetHomeScroll();
+      requestAnimationFrame(resetHomeScroll);
+      window.setTimeout(resetHomeScroll, 80);
+      window.setTimeout(resetHomeScroll, 180);
+      window.setTimeout(resetHomeScroll, 360);
 
       return;
     }
 
-    // ✅ Modo conversación normal:
-    // aquí sí dejamos que el input inferior se adapte al teclado.
+    // Conversación normal: aquí sí dejamos que el input inferior siga al teclado.
     document.documentElement.style.setProperty("--vvh", `${viewportHeight}px`);
 
     const bottomInset = Math.max(
@@ -3848,11 +3869,28 @@ useEffect(() => {
   window.addEventListener("resize", setVars);
   window.addEventListener("orientationchange", setVars);
 
+  try {
+    virtualKeyboard?.addEventListener?.("geometrychange", setVars);
+  } catch {}
+
   return () => {
     vv?.removeEventListener("resize", setVars);
     vv?.removeEventListener("scroll", setVars);
     window.removeEventListener("resize", setVars);
     window.removeEventListener("orientationchange", setVars);
+
+    try {
+      virtualKeyboard?.removeEventListener?.("geometrychange", setVars);
+
+      if (
+        virtualKeyboard &&
+        "overlaysContent" in virtualKeyboard &&
+        previousOverlaysContent !== null
+      ) {
+        virtualKeyboard.overlaysContent = previousOverlaysContent;
+      }
+    } catch {}
+
     document.documentElement.classList.remove("vonu-home-keyboard-open");
   };
 }, []);
@@ -4012,8 +4050,8 @@ const voiceUiState = useMemo<"idle" | "listening" | "speaking">(() => {
   };
 
   const setHomeInputBottom = () => {
-    // En móvil, abrir teclado dispara resize.
-    // Si recalculamos aquí, el input y la home saltan hacia arriba.
+    // Cuando el teclado está abierto, NO recalculamos la posición del input.
+    // Si recalculamos aquí, Android empuja la pantalla y el input salta.
     if (keyboardLooksOpen()) return;
 
     stableWindowHeight = window.innerHeight || stableWindowHeight || 720;
@@ -5867,7 +5905,7 @@ html.vonu-home-input-mode {
 
 html.vonu-home-input-mode body {
   width: 100% !important;
-  min-height: 100dvh !important;
+  min-height: var(--vvh, 100dvh) !important;
   overflow: hidden !important;
   overscroll-behavior: none !important;
 }
@@ -5908,12 +5946,6 @@ html.vonu-home-input-mode .chat-input-root .absolute.inset-x-0.top-0.hidden {
 html.vonu-home-keyboard-open .vonu-home-input-centered {
   transform: translateY(0) !important;
 }
-
-  @media (min-width: 768px) {
-    .vonu-home-input-centered {
-      top: calc(50% + 76px) !important;
-    }
-  }
 
   @keyframes vonuRevealIn {
   0% {
@@ -7042,13 +7074,15 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
     };
 
     requestAnimationFrame(resetHomeScroll);
-    window.setTimeout(resetHomeScroll, 80);
-    window.setTimeout(resetHomeScroll, 180);
-    window.setTimeout(resetHomeScroll, 360);
+    window.setTimeout(resetHomeScroll, 60);
+    window.setTimeout(resetHomeScroll, 140);
+    window.setTimeout(resetHomeScroll, 260);
+    window.setTimeout(resetHomeScroll, 420);
   }
 }}
 onHomeInputBlur={() => {
   document.documentElement.classList.remove("vonu-home-input-focus-mode");
+  document.documentElement.classList.remove("vonu-home-keyboard-open");
 }}
     isTyping={isTyping}
     textareaRef={textareaRef}
