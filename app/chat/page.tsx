@@ -6691,8 +6691,8 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   style={{
     paddingTop: hasUserMessage ? 0 : 92,
     paddingBottom: hasUserMessage
-      ? chatBottomPad + (isDesktopPointer() ? 90 : 44)
-      : inputBarH + 180,
+  ? chatBottomPad + (isDesktopPointer() ? 120 : 44)
+  : inputBarH + 180,
   }}
 >
 
