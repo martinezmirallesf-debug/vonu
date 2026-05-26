@@ -6056,7 +6056,7 @@ html.vonu-home-input-mode .chat-input-disclaimer {
 }
 
 /* Cortina segura dentro del scroll del chat.
-   No mueve el input, no toca móvil y tapa el texto que pasa por debajo. */
+   Más pegada al input para no borrar letras demasiado pronto. */
 @media (min-width: 768px) {
   .vonu-home-scroll.vonu-chat-has-messages::after {
     content: "";
@@ -6064,14 +6064,15 @@ html.vonu-home-input-mode .chat-input-disclaimer {
     bottom: 0;
     z-index: 35;
     display: block;
-    height: 190px;
-    margin-top: -190px;
+    height: 145px;
+    margin-top: -145px;
     pointer-events: none;
     background: linear-gradient(
       to top,
       #f8f9fa 0%,
-      #f8f9fa 46%,
-      rgba(248, 249, 250, 0.88) 70%,
+      #f8f9fa 34%,
+      rgba(248, 249, 250, 0.76) 56%,
+      rgba(248, 249, 250, 0.28) 78%,
       rgba(248, 249, 250, 0) 100%
     );
   }
