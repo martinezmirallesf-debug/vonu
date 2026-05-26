@@ -5488,7 +5488,13 @@ function downloadConversationAsPdf() {
 }
 
 return (
-    <div className="bg-[#f8f9fa] flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
+    <div
+      className={[
+        "flex overflow-hidden transition-colors duration-700",
+        hasUserMessage ? "bg-[#f8f9fa]" : "bg-[#f6f8fb]",
+      ].join(" ")}
+      style={{ height: "calc(var(--vvh, 100dvh))" }}
+    >
       <style jsx global>{`
   @keyframes fadeIn {
     from {
@@ -5499,6 +5505,129 @@ return (
       opacity: 1;
       transform: translateY(0px);
     }
+  }
+
+    @keyframes vonuAmbientDrift {
+    0% {
+      transform: translate3d(-3%, -2%, 0) scale(1);
+      opacity: 0.72;
+    }
+    45% {
+      transform: translate3d(4%, 3%, 0) scale(1.08);
+      opacity: 0.95;
+    }
+    100% {
+      transform: translate3d(-3%, -2%, 0) scale(1);
+      opacity: 0.72;
+    }
+  }
+
+  @keyframes vonuAmbientDriftAlt {
+    0% {
+      transform: translate3d(4%, 2%, 0) scale(1.05);
+      opacity: 0.44;
+    }
+    50% {
+      transform: translate3d(-5%, -3%, 0) scale(1.14);
+      opacity: 0.72;
+    }
+    100% {
+      transform: translate3d(4%, 2%, 0) scale(1.05);
+      opacity: 0.44;
+    }
+  }
+
+  @keyframes vonuLogoBreath {
+    0% {
+      transform: scale(1);
+      filter: drop-shadow(0 0 0 rgba(26, 115, 232, 0));
+    }
+    45% {
+      transform: scale(1.045);
+      filter: drop-shadow(0 10px 26px rgba(26, 115, 232, 0.18));
+    }
+    100% {
+      transform: scale(1);
+      filter: drop-shadow(0 0 0 rgba(26, 115, 232, 0));
+    }
+  }
+
+  @keyframes vonuHeroRise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+      filter: blur(3px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0);
+    }
+  }
+
+  @keyframes vonuChipRise {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes vonuSoftGlow {
+    0% {
+      box-shadow:
+        0 18px 60px rgba(15, 23, 42, 0.10),
+        0 0 0 1px rgba(255,255,255,0.82),
+        0 0 0 rgba(26,115,232,0);
+    }
+    50% {
+      box-shadow:
+        0 22px 70px rgba(15, 23, 42, 0.13),
+        0 0 0 1px rgba(255,255,255,0.9),
+        0 0 46px rgba(26,115,232,0.13);
+    }
+    100% {
+      box-shadow:
+        0 18px 60px rgba(15, 23, 42, 0.10),
+        0 0 0 1px rgba(255,255,255,0.82),
+        0 0 0 rgba(26,115,232,0);
+    }
+  }
+
+  .vonu-home-ambient {
+    background:
+      radial-gradient(circle at 18% 18%, rgba(26, 115, 232, 0.14), transparent 34%),
+      radial-gradient(circle at 82% 16%, rgba(34, 197, 94, 0.10), transparent 30%),
+      radial-gradient(circle at 50% 86%, rgba(245, 158, 11, 0.10), transparent 34%),
+      linear-gradient(180deg, rgba(255,255,255,0.92), rgba(246,248,251,0.96));
+  }
+
+  .vonu-orb-one {
+    animation: vonuAmbientDrift 15s ease-in-out infinite;
+  }
+
+  .vonu-orb-two {
+    animation: vonuAmbientDriftAlt 18s ease-in-out infinite;
+  }
+
+  .vonu-logo-alive {
+    animation: vonuLogoBreath 4.8s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  .vonu-hero-rise {
+    animation: vonuHeroRise 620ms cubic-bezier(.2,.8,.2,1) both;
+  }
+
+  .vonu-chip-rise {
+    animation: vonuChipRise 520ms cubic-bezier(.2,.8,.2,1) both;
+  }
+
+  .vonu-input-stage {
+    animation: vonuSoftGlow 5.8s ease-in-out infinite;
   }
 
   @keyframes vonuRevealIn {
@@ -6247,13 +6376,26 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   onDragOver={handleGlobalDragOver}
   onDragLeave={handleGlobalDragLeave}
   onDrop={handleGlobalDrop}
-  className="flex-1 overflow-y-auto min-h-0 overscroll-contain"
+  className="relative flex-1 overflow-y-auto min-h-0 overscroll-contain"
 >
   <div
-    className="mx-auto max-w-3xl px-3 md:px-6"
+    className={[
+      "pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-700",
+      hasUserMessage ? "opacity-0" : "opacity-100",
+    ].join(" ")}
+    aria-hidden="true"
+  >
+    <div className="vonu-home-ambient absolute inset-0" />
+    <div className="vonu-orb-one absolute -left-[12%] top-[8%] h-[420px] w-[420px] rounded-full bg-blue-300/20 blur-3xl" />
+    <div className="vonu-orb-two absolute -right-[10%] top-[18%] h-[360px] w-[360px] rounded-full bg-emerald-200/22 blur-3xl" />
+    <div className="absolute bottom-[-18%] left-[28%] h-[420px] w-[420px] rounded-full bg-amber-100/38 blur-3xl" />
+  </div>
+
+  <div
+    className="relative z-10 mx-auto max-w-3xl px-3 md:px-6"
     style={{
-      paddingTop: hasUserMessage ? 0 : 118,
-      paddingBottom: hasUserMessage ? chatBottomPad : inputBarH + 20,
+      paddingTop: hasUserMessage ? 0 : 96,
+      paddingBottom: hasUserMessage ? chatBottomPad : inputBarH + 34,
     }}
   >
 
@@ -6313,17 +6455,20 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
       ) : null}
 {!hasUserMessage ? (
   <div className="px-1">
-    <div className="pt-[-6px] md:pt-[-6px] ml-2">
-      <div className="flex items-center gap-3 mb-4 md:mb-5">
-        <img
-          src="/logo/vonu-cube-black.png?v=3"
-          alt="Vonu"
-          className="block h-[18px] w-[18px] md:h-[20px] md:w-[20px] object-contain"
-          draggable={false}
-        />
+    <div className="mx-auto flex min-h-[calc(100dvh-260px)] max-w-[760px] flex-col items-center justify-center text-center md:min-h-[calc(100dvh-250px)]">
+      <div className="vonu-hero-rise flex items-center justify-center gap-3">
+        <span className="relative grid h-11 w-11 place-items-center rounded-2xl bg-white/72 shadow-[0_18px_54px_rgba(15,23,42,0.10)] ring-1 ring-white/80 backdrop-blur-xl">
+          <span className="absolute inset-[-10px] rounded-[28px] bg-blue-400/10 blur-2xl" />
+          <img
+            src="/logo/vonu-cube-black.png?v=3"
+            alt="Vonu"
+            className="vonu-logo-alive relative block h-[22px] w-[22px] object-contain"
+            draggable={false}
+          />
+        </span>
 
         <div
-          className="text-[22px] md:text-[30px] leading-none text-zinc-900"
+          className="text-[23px] leading-none text-zinc-900 md:text-[30px]"
           style={{
             fontFamily: "var(--font-playfair-display)",
             fontWeight: 500,
@@ -6337,35 +6482,68 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
         </div>
       </div>
 
-      <div className="max-w-[720px]">
-        <div className="text-zinc-900 font-[700] tracking-[-0.035em] leading-[0.96] text-[44px] md:text-[68px]">
-          ¿Qué quieres
-          <br />
-          hacer hoy?
+      <div className="vonu-hero-rise mt-7 max-w-[820px]" style={{ animationDelay: "90ms" }}>
+        <h1 className="text-balance text-[42px] font-[760] leading-[0.94] tracking-[-0.06em] text-zinc-950 md:text-[76px]">
+          ¿Qué quieres revisar antes de actuar?
+        </h1>
+      </div>
+
+      <p
+        className="vonu-hero-rise mt-5 max-w-[560px] text-[16px] leading-7 text-zinc-500 md:text-[18px]"
+        style={{ animationDelay: "170ms" }}
+      >
+        Pega un mensaje, sube una captura o cuéntame la situación. Vonu te ayuda a verlo con calma.
+      </p>
+
+      <div
+        className="vonu-hero-rise vonu-input-stage mt-9 w-full rounded-[34px] border border-white/80 bg-white/78 px-4 py-3 backdrop-blur-2xl md:mt-11"
+        style={{ animationDelay: "240ms" }}
+      >
+        <div className="flex items-center gap-3 text-left">
+          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-zinc-950 text-white">
+            <PlusIcon className="h-5 w-5" />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="text-[15px] font-semibold tracking-[-0.02em] text-zinc-950 md:text-[16px]">
+              Empieza con cualquier duda
+            </div>
+            <div className="mt-0.5 truncate text-[13px] text-zinc-500 md:text-[14px]">
+              Escribe, adjunta una imagen o usa el botón + del input.
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => textareaRef.current?.focus()}
+            className="hidden rounded-full bg-blue-600 px-5 py-3 text-[13px] font-semibold text-white shadow-[0_12px_30px_rgba(37,99,235,0.28)] transition hover:bg-blue-700 md:inline-flex"
+          >
+            Escribir
+          </button>
         </div>
       </div>
 
-      <div className="mt-9 md:mt-12 flex flex-wrap gap-4">
-        {quickPrompts.map((p) => (
+      <div className="mt-7 flex max-w-[720px] flex-wrap justify-center gap-3 md:mt-8">
+        {quickPrompts.map((p, index) => (
           <button
             key={p.label}
             onClick={() => applyQuickPrompt(p)}
             className={[
-              "inline-flex items-center justify-center",
-              "rounded-full border border-zinc-900/18 bg-white/96",
-              "px-6 py-3 md:px-7 md:py-3.5",
-              "text-[15px] md:text-[16px] font-semibold text-zinc-900",
-              "shadow-[0_2px_10px_rgba(0,0,0,0.06)]",
-              "hover:bg-white transition-all duration-200",
-              "active:scale-[0.99]",
+              "vonu-chip-rise inline-flex items-center justify-center",
+              "rounded-full border border-white/80 bg-white/74 backdrop-blur-xl",
+              "px-5 py-3 md:px-6 md:py-3.5",
+              "text-[14px] md:text-[15px] font-semibold text-zinc-900",
+              "shadow-[0_12px_34px_rgba(15,23,42,0.08)]",
+              "transition-all duration-300 hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_18px_45px_rgba(15,23,42,0.12)]",
+              "active:scale-[0.985]",
               "whitespace-nowrap",
             ].join(" ")}
+            style={{ animationDelay: `${320 + index * 55}ms` }}
           >
             {p.label === "Identificar posible estafa" ? "Posible estafa" : p.label}
           </button>
         ))}
       </div>
-
     </div>
   </div>
 ) : null}
@@ -6433,9 +6611,9 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                     )}
 
                     {(m.text || m.streaming) && (
-                      <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[20px] md:text-[21px] leading-9 md:leading-9 text-zinc-900">
-                        <span className="whitespace-pre-wrap">{mdText}</span>
-                      </div>
+                      <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[21px] md:text-[22px] leading-9 md:leading-9 text-zinc-900">
+  <span className="whitespace-pre-wrap">{mdText}</span>
+</div>
                     )}
                   </div>
                 </div>
@@ -6504,7 +6682,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                   )}
 
                   {(m.text || m.streaming) && (
-  <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[20px] md:text-[21px] leading-9 md:leading-9">
+  <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[21px] md:text-[22px] leading-9 md:leading-9">
     {mdText.includes('"elements"') || mdText.includes("```excalidraw") ? null : (
       <>
         <ReactMarkdown
