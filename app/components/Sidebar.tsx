@@ -1188,35 +1188,34 @@ cancelSubscriptionFromHere,
           onClick={closeThreadActions}
         >
           <div
-            className="absolute inset-x-3 bottom-3 overflow-hidden rounded-[30px] border border-zinc-200 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.20)] md:bottom-6 md:left-6 md:w-[360px] md:inset-x-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-center pt-3 md:hidden">
-              <div className="h-1.5 w-12 rounded-full bg-zinc-300" />
-            </div>
+  className="absolute inset-x-3 bottom-3 overflow-hidden rounded-[30px] border border-zinc-200 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.20)] md:bottom-6 md:left-6 md:w-[360px] md:inset-x-auto"
+  onClick={(e) => e.stopPropagation()}
+>
+  <button
+    type="button"
+    onClick={closeThreadActions}
+    className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition hover:bg-zinc-100 active:scale-95"
+    aria-label="Cerrar acciones"
+    title="Cerrar"
+  >
+    <CloseIcon className="h-5 w-5" />
+  </button>
 
-            <div className="border-b border-zinc-100 px-5 pb-3 pt-4">
-              <div className="truncate text-[15px] font-semibold text-zinc-900">
-                {currentThread.title}
-              </div>
-              <div className="mt-1 text-[12px] text-zinc-500">
-                Acciones para esta conversación
-              </div>
-            </div>
+  <div className="border-b border-zinc-100 px-5 pb-3 pt-5 pr-14">
+    <div className="truncate text-[15px] font-semibold text-zinc-900">
+      {currentThread.title}
+    </div>
+    <div className="mt-1 text-[12px] text-zinc-500">
+      Acciones para esta conversación
+    </div>
+  </div>
 
             <div className="p-2">
               <button
   onClick={togglePinFromMenu}
-  className="flex w-full cursor-pointer items-center gap-3 rounded-[20px] px-4 py-3 transition-colors hover:bg-blue-50"
+  className="flex w-full cursor-pointer items-center gap-3 rounded-[20px] px-4 py-3 transition-colors hover:bg-zinc-50"
 >
-  <span
-    className={[
-      "grid h-9 w-9 shrink-0 place-items-center rounded-full transition",
-      selectedIsPinned ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600",
-    ].join(" ")}
-  >
-    <PinIcon className="h-[18px] w-[18px]" />
-  </span>
+  <PinIcon className="h-[18px] w-[18px] text-zinc-700" />
 
   <span className="text-[15px] font-medium text-zinc-900">
     {selectedIsPinned ? "Quitar de fijadas" : "Fijar conversación"}

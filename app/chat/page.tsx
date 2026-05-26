@@ -6814,7 +6814,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 {!hasUserMessage ? (
   <div className="px-0">
     <div className="mx-auto flex min-h-[calc(100dvh-250px)] w-full max-w-[980px] flex-col items-center justify-start text-center md:min-h-[calc(100dvh-230px)]">
-      <div className="vonu-hero-rise mt-[7vh] flex w-full flex-col items-center text-center md:mt-[8vh]">
+      <div className="vonu-hero-rise mt-[4.8vh] flex w-full flex-col items-center text-center md:mt-[6.5vh]">
         <h1 className="mx-auto max-w-[980px] whitespace-nowrap text-center text-[38px] font-[690] leading-none tracking-[-0.055em] text-zinc-950 md:text-[62px]">
           ¿Qué quieres revisar?
         </h1>
