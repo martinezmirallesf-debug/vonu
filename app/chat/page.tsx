@@ -5776,13 +5776,18 @@ return (
      Así Android/iOS no necesitan empujar toda la pantalla hacia arriba. */
   @media (max-width: 767px) {
   .vonu-home-input-centered.vonu-home-input-focused {
-    top: 41vh !important;
+    top: 47vh !important;
+    transform: translateY(-50%) !important;
+  }
+
+  html.vonu-home-keyboard-open .vonu-home-input-centered.vonu-home-input-focused {
+    top: 49vh !important;
     transform: translateY(-50%) !important;
   }
 
   html.vonu-home-input-focus-mode .vonu-hero-rise {
-    transform: translateY(-6px) scale(0.99) !important;
-    opacity: 0.98 !important;
+    transform: none !important;
+    opacity: 1 !important;
     transition:
       transform 520ms cubic-bezier(.2,.8,.2,1),
       opacity 420ms ease !important;
