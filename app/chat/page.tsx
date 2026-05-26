@@ -5963,9 +5963,10 @@ html.vonu-home-input-mode .chat-input-disclaimer {
   visibility: hidden !important;
 }
 
-/* En PC quitamos la placa blanca inferior del input cuando ya está en su posición normal */
+/* En PC quitamos la placa/degradado inferior del input cuando ya está en su posición normal */
 @media (min-width: 768px) {
-  html:not(.vonu-home-input-mode) .chat-input-tray-panel {
+  html:not(.vonu-home-input-mode) .chat-input-tray-panel,
+  html:not(.vonu-home-input-mode) .chat-input-tray-mask {
     display: none !important;
     opacity: 0 !important;
     visibility: hidden !important;
