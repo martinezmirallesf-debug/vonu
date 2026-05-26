@@ -230,14 +230,14 @@ export default function FilePickerModal({
             </div>
 
             <button
-              type="button"
-              onClick={onClose}
-              className="absolute right-4 top-4 grid h-11 w-11 place-items-center rounded-full border border-zinc-200 bg-white text-zinc-700 shadow-sm transition-colors hover:bg-zinc-100"
-              aria-label="Cerrar"
-              title="Cerrar"
-            >
-              <CloseIcon className="h-[19px] w-[19px]" />
-            </button>
+  type="button"
+  onClick={onClose}
+  className="absolute right-4 top-4 grid h-11 w-11 place-items-center rounded-full text-zinc-950 transition hover:bg-zinc-100 active:scale-95"
+  aria-label="Cerrar"
+  title="Cerrar"
+>
+  <CloseIcon className="h-5 w-5" />
+</button>
           </div>
 
           <div className="max-h-[min(68dvh,620px)] overflow-y-auto px-2 pb-3 [scrollbar-width:thin]">
