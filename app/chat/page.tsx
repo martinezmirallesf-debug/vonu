@@ -1710,7 +1710,6 @@ useEffect(() => {
 
 // -------- UI --------
 const [input, setInput] = useState("");
-const [homeInputFocused, setHomeInputFocused] = useState(false);
 const exampleAutoSentRef = useRef(false);
 const [isDraggingFile, setIsDraggingFile] = useState(false);
 const dragDepthRef = useRef(0);
@@ -4000,6 +3999,33 @@ const voiceUiState = useMemo<"idle" | "listening" | "speaking">(() => {
   const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
 
   useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  const setHomeInputBottom = () => {
+    const h = window.innerHeight || 720;
+
+    // Posición estable del input en la pantalla inicial.
+    // No usamos dvh/vh porque el teclado móvil cambia esos valores y empuja todo.
+    const bottom = Math.max(190, Math.round(h * 0.5 - 150));
+
+    document.documentElement.style.setProperty(
+      "--vonu-home-input-bottom",
+      `${bottom}px`
+    );
+  };
+
+  setHomeInputBottom();
+
+  window.addEventListener("resize", setHomeInputBottom);
+  window.addEventListener("orientationchange", setHomeInputBottom);
+
+  return () => {
+    window.removeEventListener("resize", setHomeInputBottom);
+    window.removeEventListener("orientationchange", setHomeInputBottom);
+  };
+}, []);
+
+  useEffect(() => {
   const el = inputBarRef.current;
   if (!el) return;
 
@@ -4018,48 +4044,14 @@ const voiceUiState = useMemo<"idle" | "listening" | "speaking">(() => {
     scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }
 
-  window.dispatchEvent(new Event("resize"));
-
   return () => {
     el.classList.remove("vonu-home-input-centered");
     el.classList.remove("vonu-input-motion-shell");
     document.documentElement.classList.remove("vonu-home-input-mode");
+    document.documentElement.classList.remove("vonu-home-input-focus-mode");
     document.documentElement.classList.remove("vonu-home-keyboard-open");
-    window.dispatchEvent(new Event("resize"));
   };
 }, [mounted, hasUserMessage, paywallOpen, activeThreadId]);
-
-useEffect(() => {
-  const el = inputBarRef.current;
-  if (!el) return;
-
-  const shouldFocusMode =
-    mounted && !hasUserMessage && !paywallOpen && homeInputFocused;
-
-  el.classList.toggle("vonu-home-input-focused", shouldFocusMode);
-
-  document.documentElement.classList.toggle(
-    "vonu-home-input-focus-mode",
-    shouldFocusMode
-  );
-
-  if (shouldFocusMode) {
-    requestAnimationFrame(() => {
-      window.scrollTo(0, 0);
-      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-    });
-
-    window.setTimeout(() => {
-      window.scrollTo(0, 0);
-      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-    }, 180);
-  }
-
-  return () => {
-    el.classList.remove("vonu-home-input-focused");
-    document.documentElement.classList.remove("vonu-home-input-focus-mode");
-  };
-}, [mounted, hasUserMessage, paywallOpen, homeInputFocused]);
 
 const quickPrompts = useMemo(
   () => [
@@ -4074,7 +4066,6 @@ const quickPrompts = useMemo(
   ],
   []
 );
-
 
 
 // ✅ FIX: en pantalla inicial (sin mensajes del usuario) evitamos el auto-scroll “raro”
@@ -5813,9 +5804,9 @@ return (
   will-change: bottom, transform, filter;
 }
 
-      .vonu-home-input-centered {
+.vonu-home-input-centered {
   top: auto !important;
-  bottom: calc(50dvh - 142px) !important;
+  bottom: var(--vonu-home-input-bottom, 210px) !important;
   left: 0 !important;
   right: 0 !important;
   width: 100% !important;
@@ -5826,49 +5817,29 @@ return (
   filter: drop-shadow(0 24px 70px rgba(15,23,42,0.14));
 }
 
-  .vonu-home-input-centered::before,
-  .vonu-home-input-centered::after {
-    opacity: 0 !important;
-  }
+.vonu-home-input-centered::before,
+.vonu-home-input-centered::after {
+  opacity: 0 !important;
+}
 
-  /* En móvil, al enfocar el input, lo colocamos ya en zona segura.
-     Así Android/iOS no necesitan empujar toda la pantalla hacia arriba. */
-  @media (max-width: 767px) {
-  .vonu-home-input-centered.vonu-home-input-focused {
-    bottom: calc(50dvh - 150px) !important;
-    transform: translateY(0) !important;
-  }
-
-  html.vonu-home-keyboard-open .vonu-home-input-centered.vonu-home-input-focused {
-    bottom: calc(50dvh - 158px) !important;
-    transform: translateY(0) !important;
-  }
-
-  html.vonu-home-input-focus-mode .vonu-hero-rise {
-    transform: none !important;
-    opacity: 1 !important;
-    transition:
-      transform 520ms cubic-bezier(.2,.8,.2,1),
-      opacity 420ms ease !important;
-  }
-
+@media (max-width: 767px) {
   html.vonu-home-input-focus-mode,
-html.vonu-home-input-focus-mode body {
-  overflow: hidden !important;
-  overscroll-behavior: none !important;
+  html.vonu-home-input-focus-mode body {
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+  }
+
+  html.vonu-home-input-focus-mode .vonu-home-scroll {
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+    touch-action: none;
+  }
 }
 
-html.vonu-home-input-focus-mode .vonu-home-scroll {
-  touch-action: none;
-}
-}
-
-  @media (min-width: 768px) {
+@media (min-width: 768px) {
   .vonu-home-input-centered {
     left: 304px !important;
     right: 0 !important;
-    top: auto !important;
-    bottom: calc(50dvh - 148px) !important;
     width: auto !important;
     max-width: none !important;
   }
@@ -7048,24 +7019,17 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   input={input}
   setInput={setInput}
   onHomeInputFocus={() => {
-  setHomeInputFocused(true);
-
   if (!hasUserMessage) {
+    document.documentElement.classList.add("vonu-home-input-focus-mode");
+
     requestAnimationFrame(() => {
       window.scrollTo(0, 0);
       scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
     });
-
-    window.setTimeout(() => {
-      window.scrollTo(0, 0);
-      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-    }, 220);
   }
 }}
 onHomeInputBlur={() => {
-  window.setTimeout(() => {
-    setHomeInputFocused(false);
-  }, 180);
+  document.documentElement.classList.remove("vonu-home-input-focus-mode");
 }}
     isTyping={isTyping}
     textareaRef={textareaRef}
