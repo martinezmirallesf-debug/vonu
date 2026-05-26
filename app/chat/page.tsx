@@ -5964,13 +5964,19 @@ html.vonu-home-input-mode .chat-input-disclaimer {
   visibility: hidden !important;
 }
 
-/* En PC quitamos la placa/degradado inferior del input cuando ya está en su posición normal */
+/* En PC quitamos solo la placa blanca inferior, pero mantenemos la máscara.
+   La máscara evita que el texto del chat pase por debajo del input. */
 @media (min-width: 768px) {
-  html:not(.vonu-home-input-mode) .chat-input-tray-panel,
-  html:not(.vonu-home-input-mode) .chat-input-tray-mask {
+  html:not(.vonu-home-input-mode) .chat-input-tray-panel {
     display: none !important;
     opacity: 0 !important;
     visibility: hidden !important;
+  }
+
+  html:not(.vonu-home-input-mode) .chat-input-tray-mask {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 }
 
