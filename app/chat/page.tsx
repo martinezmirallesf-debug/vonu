@@ -1710,6 +1710,7 @@ useEffect(() => {
 
 // -------- UI --------
 const [input, setInput] = useState("");
+const [homeInputFocused, setHomeInputFocused] = useState(false);
 const exampleAutoSentRef = useRef(false);
 const [isDraggingFile, setIsDraggingFile] = useState(false);
 const dragDepthRef = useRef(0);
@@ -4006,13 +4007,21 @@ const voiceUiState = useMemo<"idle" | "listening" | "speaking">(() => {
 
   el.classList.add("vonu-input-motion-shell");
   el.classList.toggle("vonu-home-input-centered", shouldCenterInput);
+  el.classList.toggle(
+    "vonu-home-input-focused",
+    shouldCenterInput && homeInputFocused
+  );
 
   document.documentElement.classList.toggle(
     "vonu-home-input-mode",
     shouldCenterInput
   );
 
-  // ✅ Forzamos que el efecto de VisualViewport recalcule al cambiar de modo.
+  document.documentElement.classList.toggle(
+    "vonu-home-input-focus-mode",
+    shouldCenterInput && homeInputFocused
+  );
+
   window.dispatchEvent(new Event("resize"));
 
   if (shouldCenterInput) {
@@ -4022,12 +4031,14 @@ const voiceUiState = useMemo<"idle" | "listening" | "speaking">(() => {
 
   return () => {
     el.classList.remove("vonu-home-input-centered");
+    el.classList.remove("vonu-home-input-focused");
     el.classList.remove("vonu-input-motion-shell");
     document.documentElement.classList.remove("vonu-home-input-mode");
+    document.documentElement.classList.remove("vonu-home-input-focus-mode");
     document.documentElement.classList.remove("vonu-home-keyboard-open");
     window.dispatchEvent(new Event("resize"));
   };
-}, [mounted, hasUserMessage, paywallOpen, activeThreadId]);
+}, [mounted, hasUserMessage, paywallOpen, activeThreadId, homeInputFocused]);
 
 const quickPrompts = useMemo(
   () => [
@@ -5722,7 +5733,7 @@ return (
       background-color 420ms ease !important;
   }
 
-    .vonu-home-input-centered {
+      .vonu-home-input-centered {
     top: calc(50% + 76px) !important;
     bottom: auto !important;
     left: 0 !important;
@@ -5738,6 +5749,23 @@ return (
   .vonu-home-input-centered::before,
   .vonu-home-input-centered::after {
     opacity: 0 !important;
+  }
+
+  /* En móvil, al enfocar el input, lo colocamos ya en zona segura.
+     Así Android/iOS no necesitan empujar toda la pantalla hacia arriba. */
+  @media (max-width: 767px) {
+    .vonu-home-input-centered.vonu-home-input-focused {
+      top: 48vh !important;
+      transform: translateY(-50%) !important;
+    }
+
+    html.vonu-home-input-focus-mode .vonu-hero-rise {
+      transform: translateY(-18px) scale(0.96) !important;
+      opacity: 0.82 !important;
+      transition:
+        transform 520ms cubic-bezier(.2,.8,.2,1),
+        opacity 420ms ease !important;
+    }
   }
 
   @media (min-width: 768px) {
@@ -5763,6 +5791,29 @@ html.vonu-home-input-mode .vonu-home-scroll {
 
 html.vonu-home-input-mode .vonu-home-input-centered {
   bottom: auto !important;
+}
+
+/* Oculta la bandeja/capa blanca del input SOLO cuando está centrado en la home */
+html.vonu-home-input-mode .chat-input-root,
+html.vonu-home-input-mode .chat-input-root > div,
+html.vonu-home-input-mode .chat-input-root > div > div {
+  background: transparent !important;
+}
+
+html.vonu-home-input-mode .chat-input-tray-mask,
+html.vonu-home-input-mode .chat-input-tray-panel,
+html.vonu-home-input-mode .chat-input-disclaimer {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Fallback por si alguna capa antigua sigue pintando la máscara */
+html.vonu-home-input-mode .chat-input-root .pointer-events-none.absolute.inset-x-0.z-0,
+html.vonu-home-input-mode .chat-input-root .absolute.inset-x-0.top-0.hidden {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
 
 /* En móvil, cuando el teclado está abierto, mantenemos la home quieta.
@@ -6885,12 +6936,14 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 
 {!paywallOpen && (
   <ChatInputBar
-    inputBarRef={inputBarRef}
-    imagePreview={imagePreview}
-    pdfPreview={pdfPreview}
-    micMsg={micMsg}
-    input={input}
-    setInput={setInput}
+  inputBarRef={inputBarRef}
+  imagePreview={imagePreview}
+  pdfPreview={pdfPreview}
+  micMsg={micMsg}
+  input={input}
+  setInput={setInput}
+  onHomeInputFocus={() => setHomeInputFocused(true)}
+  onHomeInputBlur={() => setHomeInputFocused(false)}
     isTyping={isTyping}
     textareaRef={textareaRef}
     handleKeyDown={handleKeyDown}

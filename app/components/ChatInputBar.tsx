@@ -19,6 +19,8 @@ type ChatInputBarProps = {
     pageCount: number | null;
     pdfText: string;
   } | null;
+    onHomeInputFocus?: () => void;
+  onHomeInputBlur?: () => void;
   micMsg: string | null;
   input: string;
   setInput: React.Dispatch<React.SetStateAction<string>>;
@@ -117,6 +119,8 @@ export default function ChatInputBar({
   inputBarRef,
   imagePreview,
   pdfPreview,
+  onHomeInputFocus,
+  onHomeInputBlur,
   micMsg,
   input,
   setInput,
@@ -300,11 +304,13 @@ shouldExpand
 
               <div className={shouldExpand ? "relative pb-11" : "relative"}>
   <textarea
-    ref={textareaRef}
-    value={input}
-    onChange={(e) => setInput(e.target.value)}
-    onKeyDown={handleKeyDown}
-    onPaste={handlePaste}
+  ref={textareaRef}
+  value={input}
+  onChange={(e) => setInput(e.target.value)}
+  onFocus={onHomeInputFocus}
+  onBlur={onHomeInputBlur}
+  onKeyDown={handleKeyDown}
+  onPaste={handlePaste}
     placeholder={isTyping ? "Vonu está respondiendo…" : "Pregunta lo que quieras"}
     disabled={isTyping}
     rows={1}
