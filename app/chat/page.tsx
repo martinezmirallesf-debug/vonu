@@ -3783,15 +3783,52 @@ if (cn.includes("katex-display")) {
   }
 
 // VisualViewport (altura visible + inset inferior cuando aparece teclado)
+// ✅ En la home inicial con input centrado NO dejamos que el teclado recalcule toda la pantalla.
+// Así evitamos que el hero/header suban y que la pantalla se pueda arrastrar de forma rara.
 useEffect(() => {
   if (typeof window === "undefined") return;
 
   const vv = window.visualViewport;
+  let stableHomeHeight = window.innerHeight;
+
+  const isHomeInputMode = () =>
+    document.documentElement.classList.contains("vonu-home-input-mode");
 
   const setVars = () => {
     const viewportHeight = vv?.height ?? window.innerHeight;
     const viewportTop = vv?.offsetTop ?? 0;
 
+    const keyboardOpen =
+      !!vv && viewportHeight < window.innerHeight - 110;
+
+    document.documentElement.classList.toggle(
+      "vonu-home-keyboard-open",
+      isHomeInputMode() && keyboardOpen
+    );
+
+    // ✅ Modo home inicial:
+    // congelamos altura y no aplicamos inset inferior.
+    // El teclado aparece por encima, pero la pantalla no se desplaza.
+    if (isHomeInputMode()) {
+      if (!keyboardOpen) {
+        stableHomeHeight = window.innerHeight;
+      }
+
+      document.documentElement.style.setProperty(
+        "--vvh",
+        `${stableHomeHeight}px`
+      );
+
+      document.documentElement.style.setProperty("--vvb", "0px");
+
+      window.scrollTo(0, 0);
+      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+
+      return;
+    }
+
+    // ✅ Modo conversación normal:
+    // aquí sí dejamos que el input inferior se adapte al teclado.
     document.documentElement.style.setProperty("--vvh", `${viewportHeight}px`);
 
     const bottomInset = Math.max(
@@ -3814,6 +3851,7 @@ useEffect(() => {
     vv?.removeEventListener("scroll", setVars);
     window.removeEventListener("resize", setVars);
     window.removeEventListener("orientationchange", setVars);
+    document.documentElement.classList.remove("vonu-home-keyboard-open");
   };
 }, []);
 
@@ -3974,10 +4012,20 @@ const voiceUiState = useMemo<"idle" | "listening" | "speaking">(() => {
     shouldCenterInput
   );
 
+  // ✅ Forzamos que el efecto de VisualViewport recalcule al cambiar de modo.
+  window.dispatchEvent(new Event("resize"));
+
+  if (shouldCenterInput) {
+    window.scrollTo(0, 0);
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }
+
   return () => {
     el.classList.remove("vonu-home-input-centered");
     el.classList.remove("vonu-input-motion-shell");
     document.documentElement.classList.remove("vonu-home-input-mode");
+    document.documentElement.classList.remove("vonu-home-keyboard-open");
+    window.dispatchEvent(new Event("resize"));
   };
 }, [mounted, hasUserMessage, paywallOpen, activeThreadId]);
 
@@ -5702,14 +5750,25 @@ return (
     }
   }
 
-html.vonu-home-input-mode .chat-input-tray-mask,
-html.vonu-home-input-mode .chat-input-tray-panel,
-html.vonu-home-input-mode .chat-input-disclaimer {
-  opacity: 0 !important;
+html.vonu-home-input-mode,
+html.vonu-home-input-mode body {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
 }
 
-html.vonu-home-input-mode .chat-input-root {
-  background: transparent !important;
+html.vonu-home-input-mode .vonu-home-scroll {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+html.vonu-home-input-mode .vonu-home-input-centered {
+  bottom: auto !important;
+}
+
+/* En móvil, cuando el teclado está abierto, mantenemos la home quieta.
+   El teclado aparece debajo/encima del viewport visible, pero no empuja el hero. */
+html.vonu-home-keyboard-open .vonu-home-input-centered {
+  transform: translateY(-50%) !important;
 }
 
   @media (min-width: 768px) {
@@ -6464,7 +6523,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   onDragOver={handleGlobalDragOver}
   onDragLeave={handleGlobalDragLeave}
   onDrop={handleGlobalDrop}
-  className="relative flex-1 overflow-y-auto min-h-0 overscroll-contain"
+  className="vonu-home-scroll relative flex-1 overflow-y-auto min-h-0 overscroll-contain"
 >
    <div
     className={[
