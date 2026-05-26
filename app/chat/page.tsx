@@ -6691,8 +6691,8 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   style={{
     paddingTop: hasUserMessage ? 0 : 92,
     paddingBottom: hasUserMessage
-  ? chatBottomPad + (isDesktopPointer() ? 150 : 44)
-  : inputBarH + 180,
+      ? chatBottomPad + (isDesktopPointer() ? 90 : 44)
+      : inputBarH + 180,
   }}
 >
 
@@ -6959,16 +6959,27 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
       ) : null}
 
       <ChatFileDropCard
-  onClick={() => {
-    setShowContextualFileCard(false);
-    setFilePickerOpen(true);
-  }}
-/>
+        onClick={() => {
+          setShowContextualFileCard(false);
+          setFilePickerOpen(true);
+        }}
+      />
     </div>
   </div>
 ) : null}
       </div>
     </div>
+
+    {hasUserMessage ? (
+      <div
+        className="pointer-events-none sticky bottom-0 z-30 -mt-[150px] hidden h-[150px] md:block"
+        aria-hidden="true"
+        style={{
+          background:
+            "linear-gradient(to top, #f8f9fa 0%, rgba(248,249,250,0.98) 34%, rgba(248,249,250,0.72) 64%, rgba(248,249,250,0) 100%)",
+        }}
+      />
+    ) : null}
 </div>
 </div>
 
