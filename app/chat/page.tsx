@@ -3817,16 +3817,40 @@ useEffect(() => {
   };
 
   const setVars = () => {
-    const viewportHeight = vv?.height ?? window.innerHeight;
-    const viewportTop = vv?.offsetTop ?? 0;
+  const viewportHeight = vv?.height ?? window.innerHeight;
+  const viewportTop = vv?.offsetTop ?? 0;
 
-    const keyboardOpen =
-      !!vv && viewportHeight < stableHomeHeight - 110;
+  let keyboardHeight = 0;
 
-    document.documentElement.classList.toggle(
-      "vonu-home-keyboard-open",
-      isHomeInputMode() && keyboardOpen
+  try {
+    const rect = virtualKeyboard?.boundingRect;
+    if (rect && typeof rect.height === "number") {
+      keyboardHeight = Math.max(0, Math.round(rect.height));
+    }
+  } catch {
+    keyboardHeight = 0;
+  }
+
+  if (!keyboardHeight) {
+    keyboardHeight = Math.max(
+      0,
+      Math.round(window.innerHeight - (viewportHeight + viewportTop))
     );
+  }
+
+  const keyboardOpen =
+    keyboardHeight > 80 ||
+    (!!vv && viewportHeight < stableHomeHeight - 110);
+
+  document.documentElement.classList.toggle(
+    "vonu-home-keyboard-open",
+    isHomeInputMode() && keyboardOpen
+  );
+
+  document.documentElement.style.setProperty(
+    "--vonu-keyboard-height",
+    `${keyboardHeight}px`
+  );
 
     if (isHomeInputMode()) {
       if (!keyboardOpen) {
@@ -5870,6 +5894,11 @@ return (
   filter: drop-shadow(0 24px 70px rgba(15,23,42,0.14));
 }
 
+html.vonu-home-keyboard-open .vonu-home-input-centered {
+  bottom: calc(var(--vonu-keyboard-height, 0px) + 12px) !important;
+  transform: translateY(0) !important;
+}
+
 .vonu-home-input-centered::before,
 .vonu-home-input-centered::after {
   opacity: 0 !important;
@@ -7083,6 +7112,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 onHomeInputBlur={() => {
   document.documentElement.classList.remove("vonu-home-input-focus-mode");
   document.documentElement.classList.remove("vonu-home-keyboard-open");
+  document.documentElement.style.removeProperty("--vonu-keyboard-height");
 }}
     isTyping={isTyping}
     textareaRef={textareaRef}
