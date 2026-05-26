@@ -203,13 +203,10 @@ export default function ManualWhiteboardModal({
 
           <div className="relative z-10 flex shrink-0 items-center justify-between gap-3 border-b border-zinc-200/80 bg-white/76 px-4 py-3 backdrop-blur-xl md:px-5">
             <div className="min-w-0">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-zinc-400">
-                Vonu
-              </div>
-              <div className="truncate text-[24px] font-semibold tracking-[-0.06em] text-zinc-950 md:text-[30px]">
-                Pizarra / ayuda visual
-              </div>
-            </div>
+  <div className="truncate text-[24px] font-semibold tracking-[-0.06em] text-zinc-950 md:text-[30px]">
+    Pizarra / ayuda visual
+  </div>
+</div>
 
             <button
               type="button"
@@ -223,70 +220,71 @@ export default function ManualWhiteboardModal({
           </div>
 
           <div className="relative z-10 flex min-h-0 flex-1 flex-col p-3 md:p-4">
-            <div className="mb-3 flex shrink-0 items-center gap-2 overflow-x-auto rounded-[30px] border border-zinc-200 bg-white/82 px-3 py-3 shadow-[0_14px_45px_rgba(15,23,42,0.07)] backdrop-blur-xl [scrollbar-width:none] md:px-4">
-              <div className="flex min-w-[150px] flex-1 items-center gap-3 md:min-w-[260px]">
-                <input
-                  type="range"
-                  min={2}
-                  max={22}
-                  value={boardSize}
-                  onChange={(e) => setBoardSize(Number(e.target.value))}
-                  className="w-full accent-blue-600"
-                  aria-label="Grosor"
-                />
+            <div className="mb-3 shrink-0 rounded-[30px] border border-zinc-200 bg-white/82 px-3 py-3 shadow-[0_14px_45px_rgba(15,23,42,0.07)] backdrop-blur-xl md:px-4">
+  <div className="flex items-center gap-3">
+    <input
+      type="range"
+      min={2}
+      max={22}
+      value={boardSize}
+      onChange={(e) => setBoardSize(Number(e.target.value))}
+      className="w-full accent-blue-600"
+      aria-label="Grosor"
+    />
 
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-zinc-100 text-[13px] font-semibold text-zinc-700">
-                  {boardSize}
-                </div>
-              </div>
+    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-zinc-100 text-[13px] font-semibold text-zinc-700">
+      {boardSize}
+    </div>
+  </div>
 
-              <div className="h-8 w-px shrink-0 bg-zinc-200" />
+  <div className="mt-3 flex items-center justify-between gap-3">
+    <button
+      type="button"
+      onClick={onExport}
+      className="flex h-11 shrink-0 items-center gap-2 rounded-full bg-blue-600 px-5 text-[14px] font-semibold text-white shadow-[0_14px_35px_rgba(37,99,235,0.25)] transition hover:bg-blue-700 active:scale-[0.98]"
+      aria-label="Enviar al chat"
+      title="Enviar al chat"
+    >
+      <span>Enviar al chat</span>
+      <ArrowUpIcon className="h-5 w-5" />
+    </button>
 
-              <ToolButton
-                active={boardTool === "pen"}
-                onClick={() => {
-                  setBoardColor(INK_COLOR);
-                  setBoardTool("pen");
-                }}
-                label="Lápiz"
-              >
-                <PenIcon className="h-5 w-5" />
-              </ToolButton>
+    <div className="flex min-w-0 items-center justify-end gap-1.5">
+      <ToolButton
+        active={boardTool === "pen"}
+        onClick={() => {
+          setBoardColor(INK_COLOR);
+          setBoardTool("pen");
+        }}
+        label="Lápiz"
+      >
+        <PenIcon className="h-5 w-5" />
+      </ToolButton>
 
-              <ToolButton
-                active={boardTool === "eraser"}
-                onClick={() => setBoardTool("eraser")}
-                label="Borrador"
-              >
-                <EraserIcon className="h-5 w-5" />
-              </ToolButton>
+      <ToolButton
+        active={boardTool === "eraser"}
+        onClick={() => setBoardTool("eraser")}
+        label="Borrador"
+      >
+        <EraserIcon className="h-5 w-5" />
+      </ToolButton>
 
-              <ToolButton onClick={onUndo} label="Deshacer">
-                <UndoIcon className="h-5 w-5" />
-              </ToolButton>
+      <ToolButton onClick={onUndo} label="Deshacer">
+        <UndoIcon className="h-5 w-5" />
+      </ToolButton>
 
-              <ToolButton onClick={onClear} label="Limpiar">
-                <TrashIcon className="h-5 w-5" />
-              </ToolButton>
+      <ToolButton onClick={onClear} label="Limpiar">
+        <TrashIcon className="h-5 w-5" />
+      </ToolButton>
+    </div>
+  </div>
 
-              <div className="h-8 w-px shrink-0 bg-zinc-200" />
-
-              {boardMsg ? (
-                <div className="hidden min-w-[180px] max-w-[280px] truncate rounded-full bg-zinc-100 px-3 py-2 text-[12px] text-zinc-600 md:block">
-                  {boardMsg}
-                </div>
-              ) : null}
-
-              <button
-                type="button"
-                onClick={onExport}
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-blue-600 text-white shadow-[0_14px_35px_rgba(37,99,235,0.25)] transition hover:bg-blue-700 active:scale-95"
-                aria-label="Enviar al chat"
-                title="Enviar al chat"
-              >
-                <ArrowUpIcon className="h-5 w-5" />
-              </button>
-            </div>
+  {boardMsg ? (
+    <div className="mt-3 truncate rounded-full bg-zinc-100 px-3 py-2 text-[12px] text-zinc-600">
+      {boardMsg}
+    </div>
+  ) : null}
+</div>
 
             <div className="min-h-0 flex-1">
               <div
