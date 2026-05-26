@@ -447,7 +447,7 @@ cancelSubscriptionFromHere,
 >
         <aside
   className={[
-    "absolute z-[81] overflow-hidden bg-white",
+    "absolute z-[81] overflow-hidden bg-white select-none",
     "transform transition-all duration-300 ease-out",
     "inset-0",
     "md:fixed md:left-0 md:top-0 md:bottom-0 md:right-auto md:w-[304px]",
@@ -1056,25 +1056,30 @@ cancelSubscriptionFromHere,
                           ].join(" ")}
                         >
                           <button
-                            onMouseDown={() => startLongPress(t.id)}
-                            onMouseUp={clearLongPress}
-                            onMouseLeave={clearLongPress}
-                            onTouchStart={() => startLongPress(t.id)}
-                            onTouchEnd={clearLongPress}
-                            onTouchCancel={clearLongPress}
-                            onClick={() => {
-  clearLongPress();
+  onContextMenu={(e) => e.preventDefault()}
+  onPointerDown={(e) => {
+    if (e.pointerType === "touch") {
+      e.preventDefault();
+    }
 
-  if (longPressTriggeredRef.current) {
-    longPressTriggeredRef.current = false;
-    return;
-  }
+    startLongPress(t.id);
+  }}
+  onPointerUp={clearLongPress}
+  onPointerCancel={clearLongPress}
+  onPointerLeave={clearLongPress}
+  onClick={() => {
+    clearLongPress();
 
-  activateThread(t.id);
-  setMenuOpen(false);
-}}
-                            className="w-full cursor-pointer px-1 py-2.5 text-left md:px-3 md:py-2"
-                          >
+    if (longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false;
+      return;
+    }
+
+    activateThread(t.id);
+    setMenuOpen(false);
+  }}
+  className="w-full cursor-pointer select-none touch-manipulation px-1 py-2.5 text-left md:px-3 md:py-2"
+>
                             <div className="flex min-w-0 items-center gap-3">
                               <div className="min-w-0 flex-1">
                                 <div
@@ -1188,8 +1193,9 @@ cancelSubscriptionFromHere,
           onClick={closeThreadActions}
         >
           <div
-  className="absolute inset-x-3 bottom-3 overflow-hidden rounded-[30px] border border-zinc-200 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.20)] md:bottom-6 md:left-6 md:w-[360px] md:inset-x-auto"
+  className="absolute inset-x-3 bottom-3 select-none overflow-hidden rounded-[30px] border border-zinc-200 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.20)] md:bottom-6 md:left-6 md:w-[360px] md:inset-x-auto"
   onClick={(e) => e.stopPropagation()}
+  onContextMenu={(e) => e.preventDefault()}
 >
   <button
     type="button"
