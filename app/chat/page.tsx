@@ -5963,6 +5963,15 @@ html.vonu-home-input-mode .chat-input-disclaimer {
   visibility: hidden !important;
 }
 
+/* En PC quitamos la placa blanca inferior del input cuando ya está en su posición normal */
+@media (min-width: 768px) {
+  html:not(.vonu-home-input-mode) .chat-input-tray-panel {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+}
+
 /* Fallback por si alguna capa antigua sigue pintando la máscara */
 html.vonu-home-input-mode .chat-input-root .pointer-events-none.absolute.inset-x-0.z-0,
 html.vonu-home-input-mode .chat-input-root .absolute.inset-x-0.top-0.hidden {
