@@ -5674,24 +5674,33 @@ return (
       background-color 420ms ease !important;
   }
 
-  .vonu-home-input-centered {
+    .vonu-home-input-centered {
     top: calc(50% + 76px) !important;
     bottom: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
     transform: translateY(-50%) !important;
     z-index: 70 !important;
     background: transparent !important;
     filter: drop-shadow(0 24px 70px rgba(15,23,42,0.14));
   }
 
-    .vonu-home-input-centered::before,
+  .vonu-home-input-centered::before,
   .vonu-home-input-centered::after {
     opacity: 0 !important;
   }
 
-  html.vonu-home-input-mode .vonu-bottom-mask,
-html.vonu-home-input-mode .vonu-top-mask {
-  opacity: 0 !important;
-}
+  @media (min-width: 768px) {
+    .vonu-home-input-centered {
+      left: 304px !important;
+      right: 0 !important;
+      top: calc(50% + 76px) !important;
+      width: auto !important;
+      max-width: none !important;
+    }
+  }
 
 html.vonu-home-input-mode .chat-input-tray-mask,
 html.vonu-home-input-mode .chat-input-tray-panel,
@@ -6479,15 +6488,15 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   </div>
 
     <div
-    className={[
-      "relative z-10 mx-auto w-full px-4 md:px-6",
-      hasUserMessage ? "max-w-3xl" : "max-w-[980px]",
-    ].join(" ")}
-    style={{
-      paddingTop: hasUserMessage ? 0 : 92,
-      paddingBottom: hasUserMessage ? chatBottomPad : inputBarH + 180,
-    }}
-  >
+  className={[
+    "relative z-10 w-full px-4 md:px-6",
+    hasUserMessage ? "mx-auto max-w-3xl" : "mx-auto max-w-[980px]",
+  ].join(" ")}
+  style={{
+    paddingTop: hasUserMessage ? 0 : 92,
+    paddingBottom: hasUserMessage ? chatBottomPad : inputBarH + 180,
+  }}
+>
 
 {showSoftLimitWarning ? (
   <div className="flex justify-start">
@@ -6546,17 +6555,17 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 {!hasUserMessage ? (
   <div className="px-0">
     <div className="mx-auto flex min-h-[calc(100dvh-250px)] w-full max-w-[980px] flex-col items-center justify-start text-center md:min-h-[calc(100dvh-230px)]">
-      <div className="vonu-hero-rise mt-[7vh] w-full md:mt-[8vh]">
-        <h1 className="mx-auto max-w-[980px] whitespace-nowrap text-[38px] font-[690] leading-none tracking-[-0.055em] text-zinc-950 md:text-[62px]">
-  ¿Qué quieres revisar?
-</h1>
+      <div className="vonu-hero-rise mt-[7vh] flex w-full flex-col items-center text-center md:mt-[8vh]">
+        <h1 className="mx-auto max-w-[980px] whitespace-nowrap text-center text-[38px] font-[690] leading-none tracking-[-0.055em] text-zinc-950 md:text-[62px]">
+          ¿Qué quieres revisar?
+        </h1>
       </div>
 
       <p
-  className="vonu-hero-rise mt-5 max-w-[680px] px-2 text-[16px] leading-7 text-zinc-500 md:mt-6 md:text-[18px]"
+  className="vonu-hero-rise mx-auto mt-5 max-w-[720px] px-2 text-center text-[16px] leading-7 text-zinc-500 md:mt-6 md:text-[18px]"
   style={{ animationDelay: "120ms" }}
 >
-  Antes de actuar, pega un mensaje, sube una captura o cuéntame la situación.
+  Antes de actuar, pega un mensaje, sube una captura o un archivo, o cuéntame la situación.
 </p>
     </div>
   </div>
