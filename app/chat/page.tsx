@@ -6055,6 +6055,28 @@ html.vonu-home-input-mode .chat-input-disclaimer {
   }
 }
 
+/* Cortina segura dentro del scroll del chat.
+   No mueve el input, no toca móvil y tapa el texto que pasa por debajo. */
+@media (min-width: 768px) {
+  .vonu-home-scroll.vonu-chat-has-messages::after {
+    content: "";
+    position: sticky;
+    bottom: 0;
+    z-index: 35;
+    display: block;
+    height: 190px;
+    margin-top: -190px;
+    pointer-events: none;
+    background: linear-gradient(
+      to top,
+      #f8f9fa 0%,
+      #f8f9fa 46%,
+      rgba(248, 249, 250, 0.88) 70%,
+      rgba(248, 249, 250, 0) 100%
+    );
+  }
+}
+
 /* Fallback por si alguna capa antigua sigue pintando la máscara */
 html.vonu-home-input-mode .chat-input-root .pointer-events-none.absolute.inset-x-0.z-0,
 html.vonu-home-input-mode .chat-input-root .absolute.inset-x-0.top-0.hidden {
@@ -6660,7 +6682,10 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   onDragOver={handleGlobalDragOver}
   onDragLeave={handleGlobalDragLeave}
   onDrop={handleGlobalDrop}
-  className="vonu-home-scroll relative flex-1 overflow-y-auto min-h-0 overscroll-contain"
+  className={[
+    "vonu-home-scroll relative flex-1 overflow-y-auto min-h-0 overscroll-contain",
+    hasUserMessage ? "vonu-chat-has-messages" : "",
+  ].join(" ")}
 >
    <div
     className={[
