@@ -5850,62 +5850,62 @@ return (
 
   @keyframes vonuDotCloudBreathe {
   0%, 100% {
-    transform: scale(0.82);
-    opacity: 0.12;
-    background-size: 36px 36px;
-    filter: blur(1.15px);
+    transform: scale(0.78);
+    opacity: 0.10;
+    background-size: 42px 42px;
+    filter: blur(1.5px);
   }
 
-  42% {
-    transform: scale(1.55);
-    opacity: 0.24;
-    background-size: 15px 15px;
-    filter: blur(1.55px);
+  38% {
+    transform: scale(1.72);
+    opacity: 0.22;
+    background-size: 18px 18px;
+    filter: blur(1.9px);
   }
 
-  68% {
-    transform: scale(1.85);
+  62% {
+    transform: scale(2.08);
     opacity: 0.28;
-    background-size: 10px 10px;
-    filter: blur(1.8px);
+    background-size: 11px 11px;
+    filter: blur(2.2px);
   }
 
-  84% {
-    transform: scale(1.18);
-    opacity: 0.18;
-    background-size: 24px 24px;
-    filter: blur(1.35px);
+  82% {
+    transform: scale(1.22);
+    opacity: 0.16;
+    background-size: 28px 28px;
+    filter: blur(1.7px);
   }
 }
 
 .vonu-dot-cloud {
   transform-origin: center center;
   border-radius: 9999px;
-  opacity: 0.18;
-  background-size: 30px 30px;
+  opacity: 0.16;
+  background-size: 34px 34px;
   background-position: center;
   background-repeat: repeat;
-  filter: blur(1.2px);
+  filter: blur(1.6px);
   mix-blend-mode: multiply;
-  mask-image: radial-gradient(circle, black 0%, black 46%, transparent 82%);
-  -webkit-mask-image: radial-gradient(circle, black 0%, black 46%, transparent 82%);
-  animation: vonuDotCloudBreathe 12s ease-in-out infinite;
+  mask-image: radial-gradient(circle, black 0%, black 48%, transparent 84%);
+  -webkit-mask-image: radial-gradient(circle, black 0%, black 48%, transparent 84%);
+  animation: vonuDotCloudBreathe 13s ease-in-out infinite;
   will-change: transform, opacity, background-size, filter;
 }
 
 .vonu-dot-cloud-a {
-  background-image: radial-gradient(circle, rgba(59, 130, 246, 0.25) 2.8px, transparent 3.4px);
+  background-image: radial-gradient(circle, rgba(59, 130, 246, 0.26) 3.8px, transparent 4.6px);
 }
 
 .vonu-dot-cloud-b {
-  background-image: radial-gradient(circle, rgba(16, 185, 129, 0.20) 2.8px, transparent 3.4px);
-  animation-duration: 14s;
+  background-image: radial-gradient(circle, rgba(16, 185, 129, 0.20) 3.8px, transparent 4.6px);
+  animation-duration: 15s;
   animation-delay: -3s;
 }
 
 .vonu-dot-cloud-c {
-  background-image: radial-gradient(circle, rgba(245, 158, 11, 0.16) 2.8px, transparent 3.4px);
-  animation-duration: 16s;
+  background-image: radial-gradient(circle, rgba(245, 158, 11, 0.16) 3.8px, transparent 4.6px);
+  animation-duration: 17s;
   animation-delay: -6s;
 }
 
@@ -6661,9 +6661,9 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 <div className="vonu-orb-two absolute -right-[12%] top-[12%] h-[420px] w-[420px] rounded-full bg-emerald-200/20 blur-3xl" />
 <div className="vonu-geo-three absolute bottom-[-16%] left-[30%] h-[430px] w-[430px] rounded-full bg-amber-100/36 blur-3xl" />
 
-<div className="vonu-dot-cloud vonu-dot-cloud-a absolute left-[4%] top-[10%] h-[380px] w-[380px]" />
-<div className="vonu-dot-cloud vonu-dot-cloud-b absolute right-[7%] top-[18%] h-[330px] w-[330px]" />
-<div className="vonu-dot-cloud vonu-dot-cloud-c absolute left-[35%] top-[54%] h-[300px] w-[300px]" />
+<div className="vonu-dot-cloud vonu-dot-cloud-a absolute left-[2%] top-[8%] h-[460px] w-[460px]" />
+<div className="vonu-dot-cloud vonu-dot-cloud-b absolute right-[4%] top-[16%] h-[410px] w-[410px]" />
+<div className="vonu-dot-cloud vonu-dot-cloud-c absolute left-[31%] top-[52%] h-[380px] w-[380px]" />
 
 <div className="vonu-geo-two absolute left-[24%] top-[58%] h-[86px] w-[86px] rotate-12 rounded-[28px] border border-indigo-200/36 bg-indigo-100/14 backdrop-blur-[1px]" />
 <div className="vonu-geo-one absolute right-[30%] top-[20%] h-[72px] w-[72px] rounded-full border border-sky-200/40 bg-sky-100/16 backdrop-blur-[1px]" />
