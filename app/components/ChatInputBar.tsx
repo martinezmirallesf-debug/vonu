@@ -194,6 +194,39 @@ const MAX_HEIGHT = 152;
     ? "listening"
     : "speaking";
 
+    const sendPointerLockRef = React.useRef(false);
+
+function handleMainButtonPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+  if (!mainButtonIsSend) return;
+  if (!canSend) return;
+
+  // En móvil, si esperamos al click, el teclado puede bajar primero,
+  // mover el input y cancelar la pulsación. Enviamos aquí, antes del blur.
+  e.preventDefault();
+  e.stopPropagation();
+
+  sendPointerLockRef.current = true;
+  sendMessage();
+
+  window.setTimeout(() => {
+    sendPointerLockRef.current = false;
+  }, 450);
+}
+
+function handleMainButtonClick(e: React.MouseEvent<HTMLButtonElement>) {
+  if (sendPointerLockRef.current) {
+    e.preventDefault();
+    return;
+  }
+
+  if (mainButtonIsSend) {
+    sendMessage();
+    return;
+  }
+
+  toggleConversation();
+}
+
   const hasActiveStatus =
     !!micMsg ||
     isTyping ||
@@ -369,8 +402,9 @@ shouldExpand
 </div>
 
                   <button
-                    onClick={mainButtonIsSend ? sendMessage : toggleConversation}
-                    disabled={mainButtonIsSend ? !canSend : !canUseVoice}
+  onPointerDown={handleMainButtonPointerDown}
+  onClick={handleMainButtonClick}
+  disabled={mainButtonIsSend ? !canSend : !canUseVoice}
                     className={[
                       "pointer-events-auto relative h-10 w-10 shrink-0 rounded-full flex items-center justify-center",
                       "transition-all duration-300",

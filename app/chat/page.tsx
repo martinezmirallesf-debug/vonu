@@ -5754,19 +5754,19 @@ return (
   /* En móvil, al enfocar el input, lo colocamos ya en zona segura.
      Así Android/iOS no necesitan empujar toda la pantalla hacia arriba. */
   @media (max-width: 767px) {
-    .vonu-home-input-centered.vonu-home-input-focused {
-      top: 48vh !important;
-      transform: translateY(-50%) !important;
-    }
-
-    html.vonu-home-input-focus-mode .vonu-hero-rise {
-      transform: translateY(-18px) scale(0.96) !important;
-      opacity: 0.82 !important;
-      transition:
-        transform 520ms cubic-bezier(.2,.8,.2,1),
-        opacity 420ms ease !important;
-    }
+  .vonu-home-input-centered.vonu-home-input-focused {
+    top: calc(50% + 76px) !important;
+    transform: translateY(-50%) !important;
   }
+
+  html.vonu-home-input-focus-mode .vonu-hero-rise {
+    transform: none !important;
+    opacity: 1 !important;
+    transition:
+      transform 520ms cubic-bezier(.2,.8,.2,1),
+      opacity 420ms ease !important;
+  }
+}
 
   @media (min-width: 768px) {
     .vonu-home-input-centered {
