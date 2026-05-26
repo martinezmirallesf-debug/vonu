@@ -3806,6 +3806,8 @@ useEffect(() => {
       isHomeInputMode() && keyboardOpen
     );
 
+    
+
     // ✅ Modo home inicial:
     // congelamos altura y no aplicamos inset inferior.
     // El teclado aparece por encima, pero la pantalla no se desplaza.
@@ -4001,12 +4003,25 @@ const voiceUiState = useMemo<"idle" | "listening" | "speaking">(() => {
   useEffect(() => {
   if (typeof window === "undefined") return;
 
-  const setHomeInputBottom = () => {
-    const h = window.innerHeight || 720;
+  let stableWindowHeight = window.innerHeight || 720;
 
-    // Posición estable del input en la pantalla inicial.
-    // No usamos dvh/vh porque el teclado móvil cambia esos valores y empuja todo.
-    const bottom = Math.max(190, Math.round(h * 0.5 - 150));
+  const keyboardLooksOpen = () => {
+    const vv = window.visualViewport;
+    if (!vv) return false;
+    return vv.height < stableWindowHeight - 110;
+  };
+
+  const setHomeInputBottom = () => {
+    // En móvil, abrir teclado dispara resize.
+    // Si recalculamos aquí, el input y la home saltan hacia arriba.
+    if (keyboardLooksOpen()) return;
+
+    stableWindowHeight = window.innerHeight || stableWindowHeight || 720;
+
+    const bottom = Math.max(
+      190,
+      Math.round(stableWindowHeight * 0.5 - 150)
+    );
 
     document.documentElement.style.setProperty(
       "--vonu-home-input-bottom",
@@ -5851,10 +5866,8 @@ html.vonu-home-input-mode {
 }
 
 html.vonu-home-input-mode body {
-  position: fixed !important;
-  inset: 0 !important;
   width: 100% !important;
-  height: 100dvh !important;
+  min-height: 100dvh !important;
   overflow: hidden !important;
   overscroll-behavior: none !important;
 }
@@ -5891,10 +5904,9 @@ html.vonu-home-input-mode .chat-input-root .absolute.inset-x-0.top-0.hidden {
   visibility: hidden !important;
 }
 
-/* En móvil, cuando el teclado está abierto, mantenemos la home quieta.
-   El teclado aparece debajo/encima del viewport visible, pero no empuja el hero. */
+/* En modo home usamos bottom estable. No aplicamos translate al abrir teclado. */
 html.vonu-home-keyboard-open .vonu-home-input-centered {
-  transform: translateY(-50%) !important;
+  transform: translateY(0) !important;
 }
 
   @media (min-width: 768px) {
@@ -7022,10 +7034,17 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   if (!hasUserMessage) {
     document.documentElement.classList.add("vonu-home-input-focus-mode");
 
-    requestAnimationFrame(() => {
+    const resetHomeScroll = () => {
       window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
       scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-    });
+    };
+
+    requestAnimationFrame(resetHomeScroll);
+    window.setTimeout(resetHomeScroll, 80);
+    window.setTimeout(resetHomeScroll, 180);
+    window.setTimeout(resetHomeScroll, 360);
   }
 }}
 onHomeInputBlur={() => {
