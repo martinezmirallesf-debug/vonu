@@ -208,17 +208,17 @@ const shellShadow = voiceMode
 
   return (
     <div
-      ref={inputBarRef}
-      className="fixed left-0 right-0 z-[70] bg-transparent md:left-[304px]"
-      style={{
-  bottom: "calc(max(var(--vvb, 0px), 0px) + 10px)",
-  paddingBottom: "env(safe-area-inset-bottom, 0px)",
-}}
-    >
+  ref={inputBarRef}
+  className="chat-input-root fixed left-0 right-0 z-[70] bg-transparent md:left-[304px]"
+  style={{
+    bottom: "calc(max(var(--vvb, 0px), 0px) + 10px)",
+    paddingBottom: "env(safe-area-inset-bottom, 0px)",
+  }}
+>
       <div className="mx-auto max-w-3xl px-3 md:px-6 pt-0 md:pt-2 pb-0 md:pb-1">
         <div className="relative w-full">
           <div
-  className="pointer-events-none absolute inset-x-0 z-0"
+  className="chat-input-tray-mask pointer-events-none absolute inset-x-0 z-0 transition-opacity duration-500"
   style={{
     height: "90px",
     bottom: "-12px",
@@ -227,15 +227,15 @@ const shellShadow = voiceMode
   }}
 />
           <div
-            className="absolute inset-x-0 top-0 hidden md:block bg-[#f8f9fa] pointer-events-none z-0"
-            style={{
-              bottom: "-62px",
-              borderTopLeftRadius: "28px",
-              borderTopRightRadius: "28px",
-              borderBottomLeftRadius: "0px",
-              borderBottomRightRadius: "0px",
-            }}
-          />
+  className="chat-input-tray-panel absolute inset-x-0 top-0 hidden md:block bg-[#f8f9fa] pointer-events-none z-0 transition-opacity duration-500"
+  style={{
+    bottom: "-62px",
+    borderTopLeftRadius: "28px",
+    borderTopRightRadius: "28px",
+    borderBottomLeftRadius: "0px",
+    borderBottomRightRadius: "0px",
+  }}
+/>
 
           <div className="relative z-20 w-full bg-transparent border-none shadow-none">
             <div
@@ -407,11 +407,11 @@ shouldExpand
               </div>
             </div>
 
-            <div className="hidden md:block relative z-10 mt-1 px-3 pb-1 md:mx-0 md:px-3">
-              <div className="text-center text-[11.5px] text-zinc-500">
-                Orientación preventiva · No sustituye profesionales.
-              </div>
-            </div>
+            <div className="chat-input-disclaimer hidden md:block relative z-10 mt-1 px-3 pb-1 md:mx-0 md:px-3 transition-opacity duration-500">
+  <div className="text-center text-[11.5px] text-zinc-500">
+    Orientación preventiva · No sustituye profesionales.
+  </div>
+</div>
           </div>
         </div>
       </div>

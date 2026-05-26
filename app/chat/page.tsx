@@ -5528,22 +5528,22 @@ return (
     }
   }
 
-      @keyframes vonuAmbientDrift {
+        @keyframes vonuAmbientDrift {
     0% {
-      transform: translate3d(-4%, -2%, 0) scale(1) rotate(0deg);
-      opacity: 0.58;
+      transform: translate3d(-2%, -1%, 0) scale(1.04);
+      opacity: 0.66;
     }
     35% {
-      transform: translate3d(5%, 4%, 0) scale(1.12) rotate(8deg);
-      opacity: 0.86;
+      transform: translate3d(3%, 2%, 0) scale(1.10);
+      opacity: 0.9;
     }
     70% {
-      transform: translate3d(2%, -5%, 0) scale(1.04) rotate(-6deg);
-      opacity: 0.68;
+      transform: translate3d(1%, -3%, 0) scale(1.07);
+      opacity: 0.74;
     }
     100% {
-      transform: translate3d(-4%, -2%, 0) scale(1) rotate(0deg);
-      opacity: 0.58;
+      transform: translate3d(-2%, -1%, 0) scale(1.04);
+      opacity: 0.66;
     }
   }
 
@@ -5689,9 +5689,19 @@ return (
   }
 
   html.vonu-home-input-mode .vonu-bottom-mask,
-  html.vonu-home-input-mode .vonu-top-mask {
-    opacity: 0 !important;
-  }
+html.vonu-home-input-mode .vonu-top-mask {
+  opacity: 0 !important;
+}
+
+html.vonu-home-input-mode .chat-input-tray-mask,
+html.vonu-home-input-mode .chat-input-tray-panel,
+html.vonu-home-input-mode .chat-input-disclaimer {
+  opacity: 0 !important;
+}
+
+html.vonu-home-input-mode .chat-input-root {
+  background: transparent !important;
+}
 
   @media (min-width: 768px) {
     .vonu-home-input-centered {
@@ -6454,15 +6464,18 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
     ].join(" ")}
     aria-hidden="true"
   >
-    <div className="vonu-home-ambient absolute inset-0" />
+    <div className="vonu-home-ambient absolute -inset-[22%]" />
 
-    <div className="vonu-orb-one absolute -left-[14%] top-[4%] h-[460px] w-[460px] rounded-full bg-blue-300/18 blur-3xl" />
-    <div className="vonu-orb-two absolute -right-[12%] top-[12%] h-[420px] w-[420px] rounded-full bg-emerald-200/20 blur-3xl" />
-    <div className="vonu-geo-three absolute bottom-[-16%] left-[30%] h-[430px] w-[430px] rounded-full bg-amber-100/36 blur-3xl" />
+<div className="vonu-orb-one absolute -left-[18%] top-[0%] h-[520px] w-[520px] rounded-full bg-blue-300/22 blur-3xl" />
+<div className="vonu-orb-two absolute -right-[16%] top-[10%] h-[500px] w-[500px] rounded-full bg-emerald-200/24 blur-3xl" />
+<div className="vonu-geo-three absolute bottom-[-18%] left-[26%] h-[470px] w-[470px] rounded-full bg-amber-100/42 blur-3xl" />
 
-    <div className="vonu-geo-one absolute left-[15%] top-[26%] h-[150px] w-[150px] rounded-[42px] border border-blue-200/28 bg-white/18 backdrop-blur-[2px]" />
-    <div className="vonu-geo-two absolute right-[18%] top-[31%] h-[118px] w-[118px] rotate-45 rounded-[34px] border border-emerald-200/26 bg-white/16 backdrop-blur-[2px]" />
-    <div className="vonu-geo-three absolute left-[47%] top-[61%] h-[96px] w-[96px] rounded-full border border-amber-200/30 bg-white/18 backdrop-blur-[2px]" />
+<div className="vonu-geo-one absolute left-[12%] top-[25%] h-[178px] w-[178px] rounded-[46px] border border-blue-300/42 bg-blue-100/18 shadow-[0_30px_90px_rgba(37,99,235,0.10)] backdrop-blur-[1px]" />
+<div className="vonu-geo-two absolute right-[14%] top-[32%] h-[146px] w-[146px] rotate-45 rounded-[38px] border border-emerald-300/40 bg-emerald-100/18 shadow-[0_30px_90px_rgba(16,185,129,0.10)] backdrop-blur-[1px]" />
+<div className="vonu-geo-three absolute left-[46%] top-[62%] h-[118px] w-[118px] rounded-full border border-amber-300/44 bg-amber-100/20 shadow-[0_30px_90px_rgba(245,158,11,0.10)] backdrop-blur-[1px]" />
+
+<div className="vonu-geo-two absolute left-[24%] top-[58%] h-[86px] w-[86px] rotate-12 rounded-[28px] border border-indigo-200/36 bg-indigo-100/14 backdrop-blur-[1px]" />
+<div className="vonu-geo-one absolute right-[30%] top-[20%] h-[72px] w-[72px] rounded-full border border-sky-200/40 bg-sky-100/16 backdrop-blur-[1px]" />
   </div>
 
     <div
