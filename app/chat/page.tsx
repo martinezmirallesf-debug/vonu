@@ -5820,82 +5820,6 @@ return (
     }
   }
 
-  @keyframes vonuDotCloudBreathe {
-  0%, 100% {
-    transform: scale(0.82);
-    opacity: 0.08;
-  }
-
-  42% {
-    transform: scale(1.58);
-    opacity: 0.14;
-  }
-
-  68% {
-    transform: scale(1.92);
-    opacity: 0.17;
-  }
-
-  84% {
-    transform: scale(1.18);
-    opacity: 0.11;
-  }
-}
-
-.vonu-dot-cloud {
-  transform-origin: center center;
-  border-radius: 9999px;
-  opacity: 0.1;
-  background-size: 34px 34px;
-  background-position: center;
-  background-repeat: repeat;
-  filter: blur(1.35px);
-  mix-blend-mode: multiply;
-  mask-image: radial-gradient(circle, black 0%, black 48%, transparent 84%);
-  -webkit-mask-image: radial-gradient(circle, black 0%, black 48%, transparent 84%);
-  animation: vonuDotCloudBreathe 13s ease-in-out infinite;
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-  transform: translateZ(0);
-}
-
-.vonu-dot-cloud-a {
-  background-image: radial-gradient(circle, rgba(59, 130, 246, 0.16) 3.8px, transparent 4.6px);
-}
-
-.vonu-dot-cloud-b {
-  background-image: radial-gradient(circle, rgba(16, 185, 129, 0.12) 3.8px, transparent 4.6px);
-  animation-duration: 15s;
-  animation-delay: -3s;
-}
-
-.vonu-dot-cloud-c {
-  background-image: radial-gradient(circle, rgba(245, 158, 11, 0.10) 3.8px, transparent 4.6px);
-  animation-duration: 17s;
-  animation-delay: -6s;
-}
-
-@media (max-width: 767px) {
-  .vonu-dot-cloud {
-    opacity: 0.075;
-    filter: blur(1.1px);
-    animation-duration: 16s;
-  }
-
-  .vonu-dot-cloud-a {
-    background-image: radial-gradient(circle, rgba(59, 130, 246, 0.12) 3.6px, transparent 4.5px);
-  }
-
-  .vonu-dot-cloud-b {
-    background-image: radial-gradient(circle, rgba(16, 185, 129, 0.09) 3.6px, transparent 4.5px);
-  }
-
-  .vonu-dot-cloud-c {
-    background-image: radial-gradient(circle, rgba(245, 158, 11, 0.08) 3.6px, transparent 4.5px);
-  }
-}
-
-
   .vonu-hero-rise {
     animation: vonuHeroRise 620ms cubic-bezier(.2,.8,.2,1) both;
   }
@@ -6278,49 +6202,7 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 .paywall-scroll::-webkit-scrollbar {
   display: none;
 }
-  /* ===== Rendimiento móvil: fondo premium ligero ===== */
-/* En móvil apagamos animaciones decorativas pesadas.
-   Mantiene la estética limpia, pero evita lag al abrir menú, mover input o escribir. */
-@media (max-width: 767px) {
-  .vonu-orb-one,
-  .vonu-orb-two,
-  .vonu-geo-one,
-  .vonu-geo-two,
-  .vonu-geo-three {
-    animation: none !important;
-    transform: none !important;
-    will-change: auto !important;
-  }
 
-  .vonu-hero-rise {
-    animation: none !important;
-    transform: none !important;
-    filter: none !important;
-    will-change: auto !important;
-  }
-
-  .vonu-input-motion-shell {
-    transition:
-      bottom 260ms ease-out,
-      transform 260ms ease-out,
-      opacity 180ms ease-out !important;
-    filter: none !important;
-    will-change: auto !important;
-  }
-
-  .vonu-reveal {
-    animation: none !important;
-    clip-path: none !important;
-    filter: none !important;
-    will-change: auto !important;
-  }
-
-  .vonu-dotmark-wrap,
-  .vonu-dotmark-fill {
-    animation: none !important;
-    will-change: auto !important;
-  }
-}
 `}</style>
 
       {/* TOAST */}
