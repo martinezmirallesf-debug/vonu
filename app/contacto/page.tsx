@@ -5,7 +5,7 @@ import HomeFooter from "../components/HomeFooter";
 import ContactForm from "../components/ContactForm";
 import ResourceSignup from "../components/ResourceSignup";
 
-const siteUrl = "https://app.vonuai.com";
+const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

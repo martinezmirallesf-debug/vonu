@@ -21,6 +21,7 @@ import AssistantMessageActions from "@/app/components/AssistantMessageActions";
 import { analyzeAttachment } from "@/app/lib/analysis/analyzeAttachment";
 import FilePickerModal from "@/app/components/FilePickerModal";
 import ChatFileDropCard from "@/app/components/ChatFileDropCard";
+import ManualWhiteboardModal from "@/app/components/ManualWhiteboardModal";
 
 import ChalkboardTutorBoard from "@/app/components/ChalkboardTutorBoard";
 import {
@@ -832,6 +833,19 @@ const [contextualFilePrompt, setContextualFilePrompt] = useState("");
     typeof window !== "undefined"
       ? window.location.origin.replace(/\/$/, "")
       : ((process.env.NEXT_PUBLIC_SITE_URL as string | undefined) || "https://app.vonuai.com").replace(/\/$/, "");
+      function getAuthRedirectTo() {
+  if (typeof window === "undefined") {
+    return `${SITE_URL}/chat`;
+  }
+
+  const origin = window.location.origin.replace(/\/$/, "");
+  const path =
+    window.location.pathname && window.location.pathname !== "/"
+      ? window.location.pathname
+      : "/chat";
+
+  return `${origin}${path}`;
+}
 
   // ===== AUTH =====
   const [authLoading, setAuthLoading] = useState(true);
@@ -1240,6 +1254,7 @@ const [pendingCheckout, setPendingCheckout] = useState<{
 await refreshAuthSession();
 await refreshProStatus();
 await refreshUsageInfo();
+await refreshUsageInfo();
 
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
         const u = session?.user;
@@ -1486,47 +1501,54 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
   }
 
   async function cancelSubscriptionFromHere() {
-    setPayLoading(true);
-    setPayMsg(null);
-    try {
-      const { data } = await supabaseBrowser.auth.getSession();
-      const token = data?.session?.access_token;
-      if (!token) {
-        setPayMsg("Necesitas iniciar sesión.");
-        setPayLoading(false);
-        return;
-      }
+  setPayLoading(true);
+  setPayMsg(null);
 
-      const ok = window.confirm("¿Seguro que quieres cancelar tu suscripción?\n\nSeguirás teniendo acceso hasta el final del periodo ya pagado.");
-      if (!ok) {
-        setPayLoading(false);
-        return;
-      }
+  try {
+    const { data } = await supabaseBrowser.auth.getSession();
+    const token = data?.session?.access_token;
 
-      const res = await fetch("/api/stripe/cancel", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        cache: "no-store",
-        body: JSON.stringify({}),
-      });
-
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setPayMsg(json?.error || "No se pudo cancelar la suscripción.");
-        setPayLoading(false);
-        return;
-      }
-
-      setToastMsg("✅ Suscripción cancelada. Mantienes acceso hasta el final del periodo.");
-      setTimeout(() => setToastMsg(null), 4500);
-
-      await refreshProStatus();
+    if (!token) {
+      setPayMsg("Necesitas iniciar sesión para gestionar tu suscripción.");
       setPayLoading(false);
-    } catch (e: any) {
-      setPayMsg(e?.message ?? "Error cancelando suscripción.");
-      setPayLoading(false);
+      return;
     }
+
+    const res = await fetch("/api/stripe/cancel", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+      body: JSON.stringify({}),
+    });
+
+    const json = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      setPayMsg(json?.error || "No se pudo cancelar la suscripción.");
+      setPayLoading(false);
+      return;
+    }
+
+    const message =
+      json?.message ||
+      "Tu plan se cancelará al final del periodo actual. Mantienes el acceso hasta entonces.";
+
+    setPayMsg(message);
+    setToastMsg("✅ Plan cancelado correctamente");
+    setTimeout(() => setToastMsg(null), 4500);
+
+    await refreshProStatus();
+    await refreshUsageInfo();
+
+    setPayLoading(false);
+  } catch (e: any) {
+    setPayMsg(e?.message ?? "Error cancelando suscripción.");
+    setPayLoading(false);
   }
+}
 
   async function signInWithOAuth(provider: "google" | "azure") {
     setLoginSending(true);
@@ -1535,7 +1557,7 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
       const { error } = await supabaseBrowser.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${SITE_URL}/`,
+          redirectTo: getAuthRedirectTo(),
 
           ...(provider === "google"
             ? {
@@ -1605,7 +1627,7 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
         email,
         password,
         options: {
-          emailRedirectTo: `${SITE_URL}/`,
+          emailRedirectTo: getAuthRedirectTo(),
         },
       });
       if (error) {
@@ -3191,8 +3213,8 @@ function toggleMic() {
   const canvasWrapRef = useRef<HTMLDivElement>(null);
 
   const [boardTool, setBoardTool] = useState<"pen" | "eraser">("pen");
-  const BOARD_BG = "#0b0f0d"; // negro pizarra
-  const [boardColor, setBoardColor] = useState<string>("#f8fafc"); // blanco tiza
+  const BOARD_BG = "#ffffff";
+const [boardColor, setBoardColor] = useState<string>("#111827");
 
   const [boardSize, setBoardSize] = useState<number>(6);
   const [boardMsg, setBoardMsg] = useState<string | null>(null);
@@ -3761,16 +3783,100 @@ if (cn.includes("katex-display")) {
     }
   }
 
-// VisualViewport (altura visible + inset inferior cuando aparece teclado)
+// VisualViewport + teclado móvil
+// En la pantalla inicial intentamos que el teclado NO empuje toda la app hacia arriba.
+// En Chrome/Android usamos VirtualKeyboard.overlaysContent cuando está disponible.
 useEffect(() => {
   if (typeof window === "undefined") return;
 
   const vv = window.visualViewport;
+  const navAny = navigator as any;
+  const virtualKeyboard = navAny?.virtualKeyboard;
+
+  let previousOverlaysContent: boolean | null = null;
+  let stableHomeHeight = window.innerHeight || 720;
+
+  try {
+    if (virtualKeyboard && "overlaysContent" in virtualKeyboard) {
+      previousOverlaysContent = !!virtualKeyboard.overlaysContent;
+      virtualKeyboard.overlaysContent = true;
+    }
+  } catch {
+    previousOverlaysContent = null;
+  }
+
+  const isHomeInputMode = () =>
+    document.documentElement.classList.contains("vonu-home-input-mode");
+
+  const resetHomeScroll = () => {
+    if (!isHomeInputMode()) return;
+
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  };
 
   const setVars = () => {
-    const viewportHeight = vv?.height ?? window.innerHeight;
-    const viewportTop = vv?.offsetTop ?? 0;
+  const viewportHeight = vv?.height ?? window.innerHeight;
+  const viewportTop = vv?.offsetTop ?? 0;
 
+  let keyboardHeight = 0;
+
+  try {
+    const rect = virtualKeyboard?.boundingRect;
+    if (rect && typeof rect.height === "number") {
+      keyboardHeight = Math.max(0, Math.round(rect.height));
+    }
+  } catch {
+    keyboardHeight = 0;
+  }
+
+  if (!keyboardHeight) {
+    keyboardHeight = Math.max(
+      0,
+      Math.round(window.innerHeight - (viewportHeight + viewportTop))
+    );
+  }
+
+  const keyboardOpen =
+    keyboardHeight > 80 ||
+    (!!vv && viewportHeight < stableHomeHeight - 110);
+
+  document.documentElement.classList.toggle(
+    "vonu-home-keyboard-open",
+    isHomeInputMode() && keyboardOpen
+  );
+
+  document.documentElement.style.setProperty(
+    "--vonu-keyboard-height",
+    `${keyboardHeight}px`
+  );
+
+    if (isHomeInputMode()) {
+      if (!keyboardOpen) {
+        stableHomeHeight = window.innerHeight || stableHomeHeight;
+      }
+
+      // Pantalla inicial: altura estable, sin inset inferior.
+      document.documentElement.style.setProperty(
+        "--vvh",
+        `${stableHomeHeight}px`
+      );
+      document.documentElement.style.setProperty("--vvb", "0px");
+
+      // Si el navegador intenta desplazar la página al enfocar textarea,
+      // la devolvemos a su sitio varias veces durante la animación del teclado.
+      resetHomeScroll();
+      requestAnimationFrame(resetHomeScroll);
+      window.setTimeout(resetHomeScroll, 80);
+      window.setTimeout(resetHomeScroll, 180);
+      window.setTimeout(resetHomeScroll, 360);
+
+      return;
+    }
+
+    // Conversación normal: aquí sí dejamos que el input inferior siga al teclado.
     document.documentElement.style.setProperty("--vvh", `${viewportHeight}px`);
 
     const bottomInset = Math.max(
@@ -3788,11 +3894,29 @@ useEffect(() => {
   window.addEventListener("resize", setVars);
   window.addEventListener("orientationchange", setVars);
 
+  try {
+    virtualKeyboard?.addEventListener?.("geometrychange", setVars);
+  } catch {}
+
   return () => {
     vv?.removeEventListener("resize", setVars);
     vv?.removeEventListener("scroll", setVars);
     window.removeEventListener("resize", setVars);
     window.removeEventListener("orientationchange", setVars);
+
+    try {
+      virtualKeyboard?.removeEventListener?.("geometrychange", setVars);
+
+      if (
+        virtualKeyboard &&
+        "overlaysContent" in virtualKeyboard &&
+        previousOverlaysContent !== null
+      ) {
+        virtualKeyboard.overlaysContent = previousOverlaysContent;
+      }
+    } catch {}
+
+    document.documentElement.classList.remove("vonu-home-keyboard-open");
   };
 }, []);
 
@@ -3939,6 +4063,74 @@ const voiceUiState = useMemo<"idle" | "listening" | "speaking">(() => {
 
   const hasUserMessage = useMemo(() => messages.some((m) => m.role === "user"), [messages]);
 
+  useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  let stableWindowHeight = window.innerHeight || 720;
+
+  const keyboardLooksOpen = () => {
+    const vv = window.visualViewport;
+    if (!vv) return false;
+    return vv.height < stableWindowHeight - 110;
+  };
+
+  const setHomeInputBottom = () => {
+    // Cuando el teclado está abierto, NO recalculamos la posición del input.
+    // Si recalculamos aquí, Android empuja la pantalla y el input salta.
+    if (keyboardLooksOpen()) return;
+
+    stableWindowHeight = window.innerHeight || stableWindowHeight || 720;
+
+    const bottom = Math.max(
+      190,
+      Math.round(stableWindowHeight * 0.5 - 150)
+    );
+
+    document.documentElement.style.setProperty(
+      "--vonu-home-input-bottom",
+      `${bottom}px`
+    );
+  };
+
+  setHomeInputBottom();
+
+  window.addEventListener("resize", setHomeInputBottom);
+  window.addEventListener("orientationchange", setHomeInputBottom);
+
+  return () => {
+    window.removeEventListener("resize", setHomeInputBottom);
+    window.removeEventListener("orientationchange", setHomeInputBottom);
+  };
+}, []);
+
+  useEffect(() => {
+  const el = inputBarRef.current;
+  if (!el) return;
+
+  const shouldCenterInput = mounted && !hasUserMessage && !paywallOpen;
+
+  el.classList.add("vonu-input-motion-shell");
+  el.classList.toggle("vonu-home-input-centered", shouldCenterInput);
+
+  document.documentElement.classList.toggle(
+    "vonu-home-input-mode",
+    shouldCenterInput
+  );
+
+  if (shouldCenterInput) {
+    window.scrollTo(0, 0);
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  return () => {
+    el.classList.remove("vonu-home-input-centered");
+    el.classList.remove("vonu-input-motion-shell");
+    document.documentElement.classList.remove("vonu-home-input-mode");
+    document.documentElement.classList.remove("vonu-home-input-focus-mode");
+    document.documentElement.classList.remove("vonu-home-keyboard-open");
+  };
+}, [mounted, hasUserMessage, paywallOpen, activeThreadId]);
+
 const quickPrompts = useMemo(
   () => [
     { label: "Hacer deberes", mode: "tutor" as ThreadMode, text: "Tengo este ejercicio. Explícamelo paso a paso como profe:" },
@@ -3952,7 +4144,6 @@ const quickPrompts = useMemo(
   ],
   []
 );
-
 
 
 // ✅ FIX: en pantalla inicial (sin mensajes del usuario) evitamos el auto-scroll “raro”
@@ -4229,6 +4420,65 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
 
     if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   }
+
+  function deleteThreadById(threadId: string) {
+  if (!threadId) return;
+
+  if (threads.length <= 1) {
+    const fresh = makeNewThread();
+
+    setThreads([fresh]);
+    setActiveThreadId(fresh.id);
+    setMenuOpen(false);
+    setUiError(null);
+    setInput("");
+    setImagePreview(null);
+
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+      shouldStickToBottomRef.current = false;
+    });
+
+    if (isDesktopPointer()) {
+      setTimeout(() => textareaRef.current?.focus(), 60);
+    }
+
+    return;
+  }
+
+  const remaining = threads.filter((t) => t.id !== threadId);
+  if (!remaining.length) {
+    const fresh = makeNewThread();
+    setThreads([fresh]);
+    setActiveThreadId(fresh.id);
+    return;
+  }
+
+  const keepCurrent =
+    activeThreadId &&
+    activeThreadId !== threadId &&
+    remaining.some((t) => t.id === activeThreadId);
+
+  const next = keepCurrent
+    ? remaining.find((t) => t.id === activeThreadId) ?? remaining[0]
+    : remaining[0];
+
+  setThreads(remaining);
+  setActiveThreadId(next.id);
+  setMenuOpen(false);
+  setUiError(null);
+  setInput("");
+  setImagePreview(null);
+
+  requestAnimationFrame(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    shouldStickToBottomRef.current = false;
+  });
+
+  if (isDesktopPointer()) {
+    setTimeout(() => textareaRef.current?.focus(), 60);
+  }
+}
 
   // ✅ regla: tras 2 mensajes, bloquear el siguiente y pedir login/pago
   function enforceLimitIfNeeded(): boolean {
@@ -5467,7 +5717,13 @@ function downloadConversationAsPdf() {
 }
 
 return (
-    <div className="bg-[#f8f9fa] flex overflow-hidden" style={{ height: "calc(var(--vvh, 100dvh))" }}>
+    <div
+      className={[
+        "flex overflow-hidden transition-colors duration-700",
+        hasUserMessage ? "bg-[#f8f9fa]" : "bg-[#f6f8fb]",
+      ].join(" ")}
+      style={{ height: "calc(var(--vvh, 100dvh))" }}
+    >
       <style jsx global>{`
   @keyframes fadeIn {
     from {
@@ -5479,6 +5735,383 @@ return (
       transform: translateY(0px);
     }
   }
+
+        @keyframes vonuAmbientDrift {
+    0% {
+      transform: translate3d(-2%, -1%, 0) scale(1.04);
+      opacity: 0.66;
+    }
+    35% {
+      transform: translate3d(3%, 2%, 0) scale(1.10);
+      opacity: 0.9;
+    }
+    70% {
+      transform: translate3d(1%, -3%, 0) scale(1.07);
+      opacity: 0.74;
+    }
+    100% {
+      transform: translate3d(-2%, -1%, 0) scale(1.04);
+      opacity: 0.66;
+    }
+  }
+
+  @keyframes vonuAmbientDriftAlt {
+    0% {
+      transform: translate3d(4%, 2%, 0) scale(1.05) rotate(0deg);
+      opacity: 0.42;
+    }
+    45% {
+      transform: translate3d(-5%, -3%, 0) scale(1.18) rotate(-10deg);
+      opacity: 0.72;
+    }
+    100% {
+      transform: translate3d(4%, 2%, 0) scale(1.05) rotate(0deg);
+      opacity: 0.42;
+    }
+  }
+
+  @keyframes vonuGeoFloat {
+    0% {
+      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+      opacity: 0.18;
+    }
+    40% {
+      transform: translate3d(18px, -22px, 0) rotate(14deg) scale(1.06);
+      opacity: 0.28;
+    }
+    75% {
+      transform: translate3d(-14px, 16px, 0) rotate(-8deg) scale(0.98);
+      opacity: 0.20;
+    }
+    100% {
+      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+      opacity: 0.18;
+    }
+  }
+
+  @keyframes vonuGeoFloatAlt {
+    0% {
+      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+      opacity: 0.14;
+    }
+    50% {
+      transform: translate3d(-20px, 18px, 0) rotate(-18deg) scale(1.08);
+      opacity: 0.26;
+    }
+    100% {
+      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+      opacity: 0.14;
+    }
+  }
+
+  @keyframes vonuHeroRise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+      filter: blur(3px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0);
+    }
+  }
+
+  @keyframes vonuSoftGlow {
+    0% {
+      box-shadow:
+        0 18px 60px rgba(15, 23, 42, 0.10),
+        0 0 0 1px rgba(255,255,255,0.82),
+        0 0 0 rgba(26,115,232,0);
+    }
+    50% {
+      box-shadow:
+        0 22px 76px rgba(15, 23, 42, 0.13),
+        0 0 0 1px rgba(255,255,255,0.9),
+        0 0 54px rgba(26,115,232,0.15);
+    }
+    100% {
+      box-shadow:
+        0 18px 60px rgba(15, 23, 42, 0.10),
+        0 0 0 1px rgba(255,255,255,0.82),
+        0 0 0 rgba(26,115,232,0);
+    }
+  }
+
+  .vonu-home-ambient {
+    background:
+      radial-gradient(circle at 22% 20%, rgba(26, 115, 232, 0.16), transparent 34%),
+      radial-gradient(circle at 78% 18%, rgba(34, 197, 94, 0.11), transparent 32%),
+      radial-gradient(circle at 48% 82%, rgba(245, 158, 11, 0.12), transparent 35%),
+      radial-gradient(circle at 50% 48%, rgba(255,255,255,0.72), transparent 32%),
+      linear-gradient(180deg, rgba(255,255,255,0.94), rgba(246,248,251,0.97));
+    animation: vonuAmbientDrift 18s ease-in-out infinite;
+  }
+
+  @keyframes vonuDotCloudBreathe {
+  0%, 100% {
+    transform: scale(0.82);
+    opacity: 0.08;
+  }
+
+  42% {
+    transform: scale(1.58);
+    opacity: 0.14;
+  }
+
+  68% {
+    transform: scale(1.92);
+    opacity: 0.17;
+  }
+
+  84% {
+    transform: scale(1.18);
+    opacity: 0.11;
+  }
+}
+
+.vonu-dot-cloud {
+  transform-origin: center center;
+  border-radius: 9999px;
+  opacity: 0.1;
+  background-size: 34px 34px;
+  background-position: center;
+  background-repeat: repeat;
+  filter: blur(1.35px);
+  mix-blend-mode: multiply;
+  mask-image: radial-gradient(circle, black 0%, black 48%, transparent 84%);
+  -webkit-mask-image: radial-gradient(circle, black 0%, black 48%, transparent 84%);
+  animation: vonuDotCloudBreathe 13s ease-in-out infinite;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.vonu-dot-cloud-a {
+  background-image: radial-gradient(circle, rgba(59, 130, 246, 0.16) 3.8px, transparent 4.6px);
+}
+
+.vonu-dot-cloud-b {
+  background-image: radial-gradient(circle, rgba(16, 185, 129, 0.12) 3.8px, transparent 4.6px);
+  animation-duration: 15s;
+  animation-delay: -3s;
+}
+
+.vonu-dot-cloud-c {
+  background-image: radial-gradient(circle, rgba(245, 158, 11, 0.10) 3.8px, transparent 4.6px);
+  animation-duration: 17s;
+  animation-delay: -6s;
+}
+
+@media (max-width: 767px) {
+  .vonu-dot-cloud {
+    opacity: 0.075;
+    filter: blur(1.1px);
+    animation-duration: 16s;
+  }
+
+  .vonu-dot-cloud-a {
+    background-image: radial-gradient(circle, rgba(59, 130, 246, 0.12) 3.6px, transparent 4.5px);
+  }
+
+  .vonu-dot-cloud-b {
+    background-image: radial-gradient(circle, rgba(16, 185, 129, 0.09) 3.6px, transparent 4.5px);
+  }
+
+  .vonu-dot-cloud-c {
+    background-image: radial-gradient(circle, rgba(245, 158, 11, 0.08) 3.6px, transparent 4.5px);
+  }
+}
+
+  .vonu-orb-one {
+    animation: vonuAmbientDrift 16s ease-in-out infinite;
+  }
+
+  .vonu-orb-two {
+    animation: vonuAmbientDriftAlt 19s ease-in-out infinite;
+  }
+
+  .vonu-geo-one {
+    animation: vonuGeoFloat 16s ease-in-out infinite;
+  }
+
+  .vonu-geo-two {
+    animation: vonuGeoFloatAlt 18s ease-in-out infinite;
+  }
+
+  .vonu-geo-three {
+    animation: vonuGeoFloat 22s ease-in-out infinite reverse;
+  }
+
+  .vonu-hero-rise {
+    animation: vonuHeroRise 620ms cubic-bezier(.2,.8,.2,1) both;
+  }
+
+    .vonu-input-motion-shell {
+  transition:
+    bottom 980ms cubic-bezier(.16,.9,.18,1),
+    transform 980ms cubic-bezier(.16,.9,.18,1),
+    opacity 520ms ease,
+    filter 520ms ease,
+    background-color 520ms ease !important;
+  will-change: bottom, transform, filter;
+}
+
+.vonu-home-input-centered {
+  top: auto !important;
+  bottom: var(--vonu-home-input-bottom, 210px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  transform: translateY(0) !important;
+  z-index: 70 !important;
+  background: transparent !important;
+  filter: drop-shadow(0 24px 70px rgba(15,23,42,0.14));
+}
+
+html.vonu-home-keyboard-open .vonu-home-input-centered {
+  bottom: calc(var(--vonu-keyboard-height, 0px) + 12px) !important;
+  transform: translateY(0) !important;
+}
+
+.vonu-home-input-centered::before,
+.vonu-home-input-centered::after {
+  opacity: 0 !important;
+}
+
+@media (max-width: 767px) {
+  html.vonu-home-input-focus-mode,
+  html.vonu-home-input-focus-mode body {
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+  }
+
+  html.vonu-home-input-focus-mode .vonu-home-scroll {
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+    touch-action: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .vonu-home-input-centered {
+    left: 304px !important;
+    right: 0 !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+}
+
+html.vonu-home-input-mode {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+html.vonu-home-input-mode body {
+  width: 100% !important;
+  min-height: var(--vvh, 100dvh) !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+html.vonu-home-input-mode .vonu-home-scroll {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+html.vonu-home-input-mode .vonu-home-input-centered {
+  top: auto !important;
+}
+
+/* Oculta la bandeja/capa blanca del input SOLO cuando está centrado en la home */
+html.vonu-home-input-mode .chat-input-root,
+html.vonu-home-input-mode .chat-input-root > div,
+html.vonu-home-input-mode .chat-input-root > div > div {
+  background: transparent !important;
+}
+
+html.vonu-home-input-mode .chat-input-tray-mask,
+html.vonu-home-input-mode .chat-input-tray-panel,
+html.vonu-home-input-mode .chat-input-disclaimer {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* En PC quitamos solo la placa blanca inferior.
+   Dejamos la máscara en su comportamiento natural para no desplazar el input. */
+@media (min-width: 768px) {
+  html:not(.vonu-home-input-mode) .chat-input-tray-panel {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+
+  html:not(.vonu-home-input-mode) .chat-input-tray-mask {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+}
+
+/* Cortina segura dentro del scroll del chat.
+   Más pegada al input para no borrar letras demasiado pronto. */
+@media (min-width: 768px) {
+  .vonu-home-scroll.vonu-chat-has-messages::after {
+    content: "";
+    position: sticky;
+    bottom: 0;
+    z-index: 35;
+    display: block;
+    height: 145px;
+    margin-top: -145px;
+    pointer-events: none;
+    background: linear-gradient(
+      to top,
+      #f8f9fa 0%,
+      #f8f9fa 34%,
+      rgba(248, 249, 250, 0.76) 56%,
+      rgba(248, 249, 250, 0.28) 78%,
+      rgba(248, 249, 250, 0) 100%
+    );
+  }
+}
+
+/* Evita que las fórmulas se peguen demasiado a texto normal */
+.prose .katex-display + p,
+.prose p + .katex-display {
+  margin-top: 0.75rem !important;
+}
+
+/* Móvil: legible, pero sin romper ancho */
+@media (max-width: 767px) {
+  .prose .katex-display {
+    margin: 0.9rem 0 !important;
+    padding: 0.2rem 0 0.3rem !important;
+  }
+
+  .prose .katex-display > .katex {
+    font-size: 1.08em !important;
+  }
+
+  .prose .katex {
+    font-size: 1em;
+  }
+}
+
+/* Fallback por si alguna capa antigua sigue pintando la máscara */
+html.vonu-home-input-mode .chat-input-root .pointer-events-none.absolute.inset-x-0.z-0,
+html.vonu-home-input-mode .chat-input-root .absolute.inset-x-0.top-0.hidden {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* En modo home usamos bottom estable. No aplicamos translate al abrir teclado. */
+html.vonu-home-keyboard-open .vonu-home-input-centered {
+  transform: translateY(0) !important;
+}
 
   @keyframes vonuRevealIn {
   0% {
@@ -5552,68 +6185,85 @@ return (
   content: "" !important;
 }
 
-  /* ===== KaTeX bonito y controlado ===== */
+/* ===== KaTeX bonito y controlado ===== */
+
+/* Fórmulas inline: un poco más grandes, pero sin tocar demasiado el flujo */
 .prose .katex {
-  font-size: 1.08em !important;
-  line-height: 1.25 !important;
+  font-size: 1.06em !important;
+  line-height: normal !important;
 }
 
-  .prose .katex-display {
-  display: block;
-  margin: 0.9rem 0 !important;
-  text-align: left !important;
-  overflow: visible !important;
-  padding: 0.1rem 0;
+/* Fórmulas en bloque: centradas, limpias y con espacio vertical suficiente */
+.prose .katex-display {
+  display: block !important;
+  margin: 1rem 0 1.15rem !important;
+  padding: 0.28rem 0 0.38rem !important;
+  text-align: center !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
   max-width: 100%;
 }
+
+/* No apretar KaTeX: dejamos respirar estructuras altas como fracciones anidadas */
+.prose .katex-display > .katex {
+  display: inline-block !important;
+  max-width: 100%;
+  font-size: 1.16em !important;
+  line-height: 1.52 !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
+}
+
+/* Un poco más de aire general para fórmulas de varios pisos */
+.prose .katex-display .vlist-t {
+  line-height: 1.32 !important;
+}
+
+/* Fracciones anidadas: más aire para que el numerador/denominador no toque la raya principal */
+.prose .katex-display .mfrac .mfrac {
+  padding-top: 0.28em !important;
+  padding-bottom: 0.28em !important;
+}
+
+/* Línea de fracción algo fina y limpia */
+.prose .katex .mfrac .frac-line {
+  border-bottom-width: 0.055em !important;
+}
+
+/* Separación entre texto y fórmula */
+.prose .katex-display + p,
+.prose p + .katex-display {
+  margin-top: 0.8rem !important;
+}
+
+/* Móvil: mantener legible sin hacer la fórmula monstruosa */
+@media (max-width: 767px) {
+  .prose .katex {
+    font-size: 1.02em !important;
+    line-height: normal !important;
+  }
+
+  .prose .katex-display {
+    margin: 0.85rem 0 1rem !important;
+    padding: 0.22rem 0 0.32rem !important;
+    text-align: center !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+  }
 
 .prose .katex-display > .katex {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  font-size: 1.05em !important;
-  line-height: 1.15 !important;
-  white-space: normal !important;
-  word-break: break-word;
+  font-size: 1.08em !important;
+  line-height: 1.46 !important;
+  white-space: nowrap !important;
 }
 
-  /* Ajusta mejor raíces, fracciones y operadores altos */
-  .prose .katex .sqrt > .root {
-    margin-right: 0.12em !important;
+  .prose .katex-display .vlist-t {
+    line-height: 1.22 !important;
   }
 
-  .prose .katex .mfrac .frac-line {
-    border-bottom-width: 0.06em !important;
-  }
-
-  .prose .katex .mord,
-  .prose .katex .mop,
-  .prose .katex .mbin,
-  .prose .katex .mrel,
-  .prose .katex .mopen,
-  .prose .katex .mclose,
-  .prose .katex .mpunct {
-    vertical-align: middle;
-  }
-
-/* En móvil: matemáticas más legibles */
-@media (max-width: 768px) {
-  .prose .katex {
-    font-size: 0.95em !important;
-    line-height: 1.12 !important;
-  }
-
-  .prose .katex-display {
-    margin: 0.6rem 0 !important;
-    text-align: left !important;
-    overflow: visible !important;
-    padding: 0 !important;
-  }
-
-  .prose .katex-display > .katex {
-    font-size: 0.98em !important;
-    line-height: 1.1 !important;
-    white-space: normal !important;
+  .prose .katex-display .mfrac .mfrac {
+    padding-top: 0.14em !important;
+    padding-bottom: 0.14em !important;
   }
 }
 
@@ -5678,11 +6328,38 @@ return (
 `}</style>
 
       {/* TOAST */}
-      {toastMsg && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[90] px-3">
-          <div className="rounded-full border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-sm px-4 py-2 text-xs text-zinc-800">{toastMsg}</div>
+{toastMsg && (
+  <div className="pointer-events-none fixed left-0 right-0 top-4 z-[90] flex justify-center px-4">
+    <div className="pointer-events-auto flex w-full max-w-[540px] items-start gap-3 rounded-[28px] border border-zinc-200/80 bg-white/95 px-4 py-3 shadow-[0_18px_60px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+      <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-zinc-950 text-[13px] font-semibold text-white">
+        ✓
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="text-[14px] font-semibold leading-5 tracking-[-0.02em] text-zinc-950">
+          {toastMsg.replace(/^✅\s*/, "")}
         </div>
-      )}
+
+        {toastMsg.toLowerCase().includes("suscripción") ||
+        toastMsg.toLowerCase().includes("plan") ? (
+          <div className="mt-0.5 text-[12.5px] leading-5 text-zinc-500">
+            Puedes seguir usando VonuAI hasta que termine el periodo pagado.
+          </div>
+        ) : null}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setToastMsg(null)}
+        className="-mr-1 grid h-8 w-8 shrink-0 place-items-center rounded-full text-[18px] leading-none text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
+        aria-label="Cerrar aviso"
+        title="Cerrar"
+      >
+        ×
+      </button>
+    </div>
+  </div>
+)}
 
       {/* ===== RENAME MODAL ===== */}
       {renameOpen && (
@@ -5698,12 +6375,12 @@ return (
               </div>
 
               <button
-                onClick={() => setRenameOpen(false)}
-                className="h-9 w-9 aspect-square rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer p-0"
-                aria-label="Cerrar"
-              >
-                <span className="text-[18px] leading-none relative top-[-0.5px]">×</span>
-              </button>
+  onClick={() => setRenameOpen(false)}
+  className="grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition hover:bg-zinc-100 active:scale-95"
+  aria-label="Cerrar"
+>
+  <span className="text-[24px] font-light leading-none relative top-[-1px]">×</span>
+</button>
             </div>
 
             <div className="mt-4">
@@ -5737,183 +6414,28 @@ return (
       )}
 
       {/* ===== WHITEBOARD ===== */}
-      {boardOpen && (
-        <div className="fixed inset-0 z-[75]">
-          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={closeBoard} aria-hidden="true" />
-
-          <div className="relative h-full w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="mx-auto h-full w-full max-w-4xl px-3 md:px-6">
-              <div className="pt-4 flex items-center justify-between">
-                <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-2 h-10 max-w-full">
-                  <div className="hidden sm:block text-[11px] text-zinc-600">Grosor</div>
-                  <input
-                    type="range"
-                    min={2}
-                    max={18}
-                    value={boardSize}
-                    onChange={(e) => setBoardSize(parseInt(e.target.value || "6", 10))}
-                    className="w-[86px] sm:w-[120px] md:w-[140px]"
-                  />
-                </div>
-
-                <button
-                  onClick={closeBoard}
-                  className={[
-                    "h-11 w-11 aspect-square rounded-full",
-                    "bg-white/90 backdrop-blur-xl border border-zinc-200",
-                    "hover:bg-white transition-colors",
-                    "grid place-items-center",
-                    "cursor-pointer disabled:opacity-50 shadow-sm",
-                    "p-0",
-                  ].join(" ")}
-                  aria-label="Cerrar pizarra"
-                  title="Cerrar"
-                >
-                  <span className="text-zinc-700 text-[20px] leading-none relative top-[-0.5px]">×</span>
-                </button>
-              </div>
-
-              <div
-                className="mt-4 rounded-[28px] border border-zinc-200 bg-white/90 backdrop-blur-xl shadow-[0_26px_80px_rgba(0,0,0,0.14)] overflow-hidden"
-                style={{ height: "calc(var(--vvh, 100dvh) - 92px)" }}
-              >
-                <div className="h-full flex flex-col p-3 md:p-4">
-                  {/* Toolbar */}
-                  <div className="rounded-[22px] border border-zinc-200 bg-white p-3">
-                    <div className="flex items-center gap-2 justify-between md:flex-nowrap flex-wrap">
-                      <div className="flex items-center gap-2 flex-nowrap">
-                        <button
-                          onClick={() => setBoardTool("pen")}
-                          className={[
-                            "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors",
-                            boardTool === "pen" ? "bg-blue-600 text-white border-blue-700/10" : "bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50",
-                          ].join(" ")}
-                        >
-                          Lápiz
-                        </button>
-
-                        <button
-                          onClick={() => setBoardTool("eraser")}
-                          className={[
-                            "h-10 px-4 rounded-full text-[12px] font-semibold border transition-colors",
-                            boardTool === "eraser" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50",
-                          ].join(" ")}
-                        >
-                          Goma
-                        </button>
-
-                        <button
-                          onClick={undoBoard}
-                          className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors"
-                          title="Deshacer"
-                        >
-                          Deshacer
-                        </button>
-
-                        <button
-                          onClick={clearBoard}
-                          className="h-10 px-4 rounded-full text-[12px] font-semibold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors"
-                          title="Borrar todo"
-                        >
-                          Borrar
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {/* Colores */}
-                        <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 h-10">
-                          {["#f8fafc", "#fde047", "#60a5fa", "#fb7185", "#4ade80"].map((c) => (
-                            <button
-                              key={c}
-                              onClick={() => {
-                                setBoardTool("pen");
-                                setBoardColor(c);
-                              }}
-                              className={["h-7 w-7 rounded-full border grid place-items-center p-0", boardColor === c && boardTool === "pen" ? "border-zinc-900" : "border-zinc-200"].join(" ")}
-                              style={{ backgroundColor: c }}
-                              aria-label={`Color ${c}`}
-                              title="Color"
-                            />
-                          ))}
-                        </div>
-
-                        {/* Grosor */}
-                        <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-2 sm:px-3 h-10">
-                          <div className="text-[11px] text-zinc-600">Grosor</div>
-                          <input
-                            type="range"
-                            min={2}
-                            max={18}
-                            value={boardSize}
-                            onChange={(e) => setBoardSize(parseInt(e.target.value || "6", 10))}
-                            className="w-[92px] sm:w-[120px]"
-                          />
-                        </div>
-
-                        {/* Desktop: Enviar al chat aquí */}
-                        <button
-                          onClick={exportBoardToChat}
-                          className="hidden md:inline-flex h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors items-center justify-center"
-                        >
-                          Enviar al chat
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Status */}
-                  <div className="mt-3 min-h-0 md:min-h-[28px]">
-                    {boardMsg ? (
-                      <div className="rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-[12px] text-zinc-700">{boardMsg}</div>
-                    ) : (
-                      <div className="opacity-0 select-none text-[12px] px-3 py-2">placeholder</div>
-                    )}
-                  </div>
-
-                  {/* Canvas */}
-                  <div className="mt-2 flex-1 min-h-0">
-                    <div
-                      ref={canvasWrapRef}
-                      className="h-full w-full rounded-[22px] border border-zinc-200 overflow-hidden"
-                      style={{
-                        backgroundColor: "#0b0f0d",
-                        backgroundImage:
-                          "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)",
-                        backgroundSize: "26px 26px, 38px 38px",
-                        backgroundPosition: "0 0, 13px 19px",
-                      }}
-                    >
-                      <canvas
-                        ref={canvasRef}
-                        className="h-full w-full"
-                        style={{ touchAction: "none", display: "block" }}
-                        onPointerDown={onCanvasPointerDown}
-                        onPointerMove={onCanvasPointerMove}
-                        onPointerUp={endStroke}
-                        onPointerCancel={endStroke}
-                        onPointerLeave={endStroke}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="pt-2 pb-[calc(env(safe-area-inset-bottom)+6px)] flex items-center justify-between gap-3">
-                    <div className="text-[11px] text-zinc-900">Tip: escribe grande en tablet (dedo o lápiz). Puedes enviar varias pizarras seguidas.</div>
-
-                    <button
-                      onClick={exportBoardToChat}
-                      className="md:hidden inline-flex h-10 px-5 rounded-full text-[12px] font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors shrink-0 items-center justify-center"
-                    >
-                      Enviar al chat
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="h-4" />
-            </div>
-          </div>
-        </div>
-      )}
+<ManualWhiteboardModal
+  open={boardOpen}
+  boardMsg={boardMsg}
+  canvasRef={canvasRef}
+  canvasWrapRef={canvasWrapRef}
+  boardTool={boardTool}
+  setBoardTool={setBoardTool}
+  boardColor={boardColor}
+  setBoardColor={setBoardColor}
+  boardSize={boardSize}
+  setBoardSize={setBoardSize}
+  onClose={() => {
+    setBoardOpen(false);
+    setBoardMsg(null);
+  }}
+  onClear={clearBoard}
+  onUndo={undoBoard}
+  onExport={exportBoardToChat}
+  onCanvasPointerDown={onCanvasPointerDown}
+  onCanvasPointerMove={onCanvasPointerMove}
+  onCanvasPointerEnd={endStroke}
+/>
 
 
       <PaywallModal
@@ -6137,7 +6659,7 @@ return (
 />
 
 <div
-  className="pointer-events-none fixed inset-x-0 top-0 z-[45] md:hidden"
+  className="vonu-top-mask pointer-events-none fixed inset-x-0 top-0 z-[45] transition-opacity duration-500 md:hidden"
   style={{
     height: "102px",
     background:
@@ -6155,6 +6677,7 @@ return (
   createThreadAndActivate={createThreadAndActivate}
   openRename={openRename}
   deleteActiveThread={deleteActiveThread}
+    deleteThreadById={deleteThreadById}
   mounted={mounted}
   isDesktopPointer={isDesktopPointer}
   authLoading={authLoading}
@@ -6199,15 +6722,44 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   onDragOver={handleGlobalDragOver}
   onDragLeave={handleGlobalDragLeave}
   onDrop={handleGlobalDrop}
-  className="flex-1 overflow-y-auto min-h-0 overscroll-contain"
+  className={[
+    "vonu-home-scroll relative flex-1 overflow-y-auto min-h-0 overscroll-contain",
+    hasUserMessage ? "vonu-chat-has-messages" : "",
+  ].join(" ")}
 >
-  <div
-    className="mx-auto max-w-3xl px-3 md:px-6"
-    style={{
-      paddingTop: hasUserMessage ? 0 : 118,
-      paddingBottom: hasUserMessage ? chatBottomPad : inputBarH + 20,
-    }}
+   <div
+    className={[
+      "pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-700",
+      hasUserMessage ? "opacity-0" : "opacity-100",
+    ].join(" ")}
+    aria-hidden="true"
   >
+    <div className="vonu-home-ambient absolute inset-0" />
+
+<div className="vonu-orb-one absolute -left-[14%] top-[4%] h-[460px] w-[460px] rounded-full bg-blue-300/18 blur-3xl" />
+<div className="vonu-orb-two absolute -right-[12%] top-[12%] h-[420px] w-[420px] rounded-full bg-emerald-200/20 blur-3xl" />
+<div className="vonu-geo-three absolute bottom-[-16%] left-[30%] h-[430px] w-[430px] rounded-full bg-amber-100/36 blur-3xl" />
+
+<div className="vonu-dot-cloud vonu-dot-cloud-a absolute left-[2%] top-[8%] h-[460px] w-[460px]" />
+<div className="vonu-dot-cloud vonu-dot-cloud-b absolute right-[4%] top-[16%] h-[410px] w-[410px]" />
+<div className="vonu-dot-cloud vonu-dot-cloud-c absolute left-[31%] top-[52%] h-[380px] w-[380px]" />
+
+<div className="vonu-geo-two absolute left-[24%] top-[58%] h-[86px] w-[86px] rotate-12 rounded-[28px] border border-indigo-200/36 bg-indigo-100/14 backdrop-blur-[1px]" />
+<div className="vonu-geo-one absolute right-[30%] top-[20%] h-[72px] w-[72px] rounded-full border border-sky-200/40 bg-sky-100/16 backdrop-blur-[1px]" />
+  </div>
+
+    <div
+  className={[
+    "relative z-10 w-full px-4 md:px-6",
+    hasUserMessage ? "mx-auto max-w-3xl" : "mx-auto max-w-[980px]",
+  ].join(" ")}
+  style={{
+    paddingTop: hasUserMessage ? 0 : 92,
+    paddingBottom: hasUserMessage
+      ? chatBottomPad + (isDesktopPointer() ? 90 : 44)
+      : inputBarH + 180,
+  }}
+>
 
 {showSoftLimitWarning ? (
   <div className="flex justify-start">
@@ -6264,60 +6816,20 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
         </div>
       ) : null}
 {!hasUserMessage ? (
-  <div className="px-1">
-    <div className="pt-[-6px] md:pt-[-6px] ml-2">
-      <div className="flex items-center gap-3 mb-4 md:mb-5">
-        <img
-          src="/logo/vonu-cube-black.png?v=3"
-          alt="Vonu"
-          className="block h-[18px] w-[18px] md:h-[20px] md:w-[20px] object-contain"
-          draggable={false}
-        />
-
-        <div
-          className="text-[22px] md:text-[30px] leading-none text-zinc-900"
-          style={{
-            fontFamily: "var(--font-playfair-display)",
-            fontWeight: 500,
-          }}
-        >
-          Hola{" "}
-          <span style={{ fontStyle: "italic" }}>
-            {authUserName?.trim() || "Invitado"}
-          </span>
-          ,
-        </div>
+  <div className="px-0">
+    <div className="mx-auto flex min-h-[calc(100dvh-250px)] w-full max-w-[980px] flex-col items-center justify-start text-center md:min-h-[calc(100dvh-230px)]">
+      <div className="vonu-hero-rise mt-[4.8vh] flex w-full flex-col items-center text-center md:mt-[6.5vh]">
+        <h1 className="mx-auto max-w-[980px] whitespace-nowrap text-center text-[38px] font-[690] leading-none tracking-[-0.055em] text-zinc-950 md:text-[62px]">
+          ¿Qué quieres revisar?
+        </h1>
       </div>
 
-      <div className="max-w-[720px]">
-        <div className="text-zinc-900 font-[700] tracking-[-0.035em] leading-[0.96] text-[44px] md:text-[68px]">
-          ¿Qué quieres
-          <br />
-          hacer hoy?
-        </div>
-      </div>
-
-      <div className="mt-9 md:mt-12 flex flex-wrap gap-4">
-        {quickPrompts.map((p) => (
-          <button
-            key={p.label}
-            onClick={() => applyQuickPrompt(p)}
-            className={[
-              "inline-flex items-center justify-center",
-              "rounded-full border border-zinc-900/18 bg-white/96",
-              "px-6 py-3 md:px-7 md:py-3.5",
-              "text-[15px] md:text-[16px] font-semibold text-zinc-900",
-              "shadow-[0_2px_10px_rgba(0,0,0,0.06)]",
-              "hover:bg-white transition-all duration-200",
-              "active:scale-[0.99]",
-              "whitespace-nowrap",
-            ].join(" ")}
-          >
-            {p.label === "Identificar posible estafa" ? "Posible estafa" : p.label}
-          </button>
-        ))}
-      </div>
-
+      <p
+  className="vonu-hero-rise mx-auto mt-5 max-w-[720px] px-2 text-center text-[16px] leading-7 text-zinc-500 md:mt-6 md:text-[18px]"
+  style={{ animationDelay: "120ms" }}
+>
+  Antes de actuar, pega un mensaje, sube una captura o un archivo, o cuéntame la situación.
+</p>
     </div>
   </div>
 ) : null}
@@ -6385,9 +6897,9 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                     )}
 
                     {(m.text || m.streaming) && (
-                      <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[20px] md:text-[21px] leading-9 md:leading-9 text-zinc-900">
-                        <span className="whitespace-pre-wrap">{mdText}</span>
-                      </div>
+                      <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[21px] md:text-[22px] leading-9 md:leading-9 text-zinc-900">
+  <span className="whitespace-pre-wrap">{mdText}</span>
+</div>
                     )}
                   </div>
                 </div>
@@ -6456,7 +6968,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                   )}
 
                   {(m.text || m.streaming) && (
-  <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[20px] md:text-[21px] leading-9 md:leading-9">
+  <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[21px] md:text-[22px] leading-9 md:leading-9">
     {mdText.includes('"elements"') || mdText.includes("```excalidraw") ? null : (
       <>
         <ReactMarkdown
@@ -6501,25 +7013,6 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
             </div>
           );
         })}
-
-        {showContextualFileCard && !paywallOpen ? (
-  <div className="flex justify-center pt-2 pb-1 animate-[fadeIn_260ms_ease-out]">
-    <div className="w-full max-w-[520px]">
-      {contextualFilePrompt ? (
-        <div className="mb-3 text-center text-[14px] leading-6 text-zinc-600 px-4">
-          {contextualFilePrompt}
-        </div>
-      ) : null}
-
-      <ChatFileDropCard
-  onClick={() => {
-    setShowContextualFileCard(false);
-    setFilePickerOpen(true);
-  }}
-/>
-    </div>
-  </div>
-) : null}
       </div>
     </div>
 </div>
@@ -6577,12 +7070,35 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 
 {!paywallOpen && (
   <ChatInputBar
-    inputBarRef={inputBarRef}
-    imagePreview={imagePreview}
-    pdfPreview={pdfPreview}
-    micMsg={micMsg}
-    input={input}
-    setInput={setInput}
+  inputBarRef={inputBarRef}
+  imagePreview={imagePreview}
+  pdfPreview={pdfPreview}
+  micMsg={micMsg}
+  input={input}
+  setInput={setInput}
+  onHomeInputFocus={() => {
+  if (!hasUserMessage) {
+    document.documentElement.classList.add("vonu-home-input-focus-mode");
+
+    const resetHomeScroll = () => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    };
+
+    requestAnimationFrame(resetHomeScroll);
+    window.setTimeout(resetHomeScroll, 60);
+    window.setTimeout(resetHomeScroll, 140);
+    window.setTimeout(resetHomeScroll, 260);
+    window.setTimeout(resetHomeScroll, 420);
+  }
+}}
+onHomeInputBlur={() => {
+  document.documentElement.classList.remove("vonu-home-input-focus-mode");
+  document.documentElement.classList.remove("vonu-home-keyboard-open");
+  document.documentElement.style.removeProperty("--vonu-keyboard-height");
+}}
     isTyping={isTyping}
     textareaRef={textareaRef}
     handleKeyDown={handleKeyDown}

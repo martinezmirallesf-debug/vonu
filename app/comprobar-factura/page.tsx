@@ -4,7 +4,7 @@ import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
 import ResourceSignup from "../components/ResourceSignup";
 
-const siteUrl = "https://app.vonuai.com";
+const siteUrl = "https://vonuai.com";
 
 const invoiceExample =
   "Ahora te voy a pasar una factura o recibo para comprobar si hay algo raro o si me han cobrado de más.";

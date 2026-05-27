@@ -4,7 +4,7 @@ import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
 import ResourceSignup from "../components/ResourceSignup";
 
-const siteUrl = "https://app.vonuai.com";
+const siteUrl = "https://vonuai.com";
 
 const storeExample =
   "Ahora te voy a pasar una tienda online para comprobar si parece fiable antes de comprar o meter mis datos.";

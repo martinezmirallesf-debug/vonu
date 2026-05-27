@@ -4,7 +4,7 @@ import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
 import ResourceSignup from "../components/ResourceSignup";
 
-const siteUrl = "https://app.vonuai.com";
+const siteUrl = "https://vonuai.com";
 
 const manipulationExample =
   "Ahora te voy a pasar un mensaje o una situación para ver si hay presión, manipulación o algo que debería revisar antes de contestar.";
