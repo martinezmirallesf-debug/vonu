@@ -1,36 +1,68 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 type VonuThinkingProps = {
   size?: number;
+  isThinking?: boolean; // Controla si la IA está pensando o en reposo
 };
 
-// Asumiendo que esta es la ruta del logo azul que se ve en la imagen,
-// para que el fade-in sea sobre el logo correcto.
 const LOGO_SRC = "/logo/vonu-cube-blue.png";
 
-export default function AdvancedVonuThinking({ size = 32 }: VonuThinkingProps) {
+export default function AdvancedVonuThinking({ 
+  size = 32, 
+  isThinking = true 
+}: VonuThinkingProps) {
+  
+  // Estado local para mantener el renderizado durante la animación de salida
+  const [shouldRender, setShouldRender] = useState(isThinking);
+
+  useEffect(() => {
+    if (isThinking) {
+      setShouldRender(true);
+    }
+  }, [isThinking]);
+
+  // Si ya no está pensando y terminó el desvanecimiento, dejamos el logo estático limpio
+  if (!shouldRender && !isThinking) {
+    return (
+      <span 
+        className="vonu-static-logo" 
+        style={{
+          width: `${size}px`,
+          height: `${size}px`,
+          backgroundImage: `url("${LOGO_SRC}")`,
+          backgroundSize: 'contain',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center',
+          display: 'inline-flex'
+        }}
+      />
+    );
+  }
+
   return (
     <span
-      className="vonu-container"
+      className={`vonu-container ${isThinking ? "state-thinking" : "state-fading-out"}`}
       style={
         {
           "--v-size": `${size}px`,
           "--v-logo": `url("${LOGO_SRC}")`,
-          // --- PUNTO 1: AJUSTE DE POSICIÓN ---
-          // Estos valores mueven el contenedor completo (plasma + logo)
-          // hacia la derecha y hacia abajo para cuadrar con el estático.
-          "--v-offset-x": "4px", // Ajuste hacia la derecha
-          "--v-offset-y": "6px", // Ajuste hacia abajo
+          // Ajustes exactos basados en tu captura para evitar el salto de posición
+          "--v-offset-x": "4px", 
+          "--v-offset-y": "6px", 
         } as React.CSSProperties
       }
       aria-hidden="true"
+      onAnimationEnd={(e) => {
+        // Al terminar el fade-out de la capa principal, desmontamos el plasma
+        if (e.animationName === "vonuPresenceOut") {
+          setShouldRender(false);
+        }
+      }}
     >
-      {/* --- PUNTO 2: CONTENEDOR DE PRESENCIA --- */}
-      {/* Esta nueva capa controla el efecto de entrada suave */}
       <span className="vonu-presence">
-        {/* NÚCLEO BIOMÓRFICO */}
+        {/* NÚCLEO BIOMÓRFICO (Líquido/Plasma) */}
         <span className="vonu-plasma vonu-plasma-1" />
         <span className="vonu-plasma vonu-plasma-2" />
         <span className="vonu-plasma vonu-plasma-3" />
@@ -38,7 +70,7 @@ export default function AdvancedVonuThinking({ size = 32 }: VonuThinkingProps) {
         {/* AURA CUÁNTICA */}
         <span className="vonu-quantum-aura" />
 
-        {/* CONTENEDOR DEL LOGO REFRIGERADO POR LUZ */}
+        {/* CONTENEDOR DEL LOGO CON REFRACCIÓN */}
         <span className="vonu-logo-wrapper">
           <span className="vonu-logo-graphic" />
           <span className="vonu-logo-chromatic" />
@@ -54,27 +86,31 @@ export default function AdvancedVonuThinking({ size = 32 }: VonuThinkingProps) {
           width: var(--v-size);
           height: var(--v-size);
           flex: 0 0 auto;
-          /* --- APLICACIÓN DEL AJUSTE DE POSICIÓN --- */
-          /* Mueve el punto de origen de la animación completa */
           transform: translateZ(0) translate(var(--v-offset-x), var(--v-offset-y));
           isolation: isolate;
         }
 
-        /* --- ESTILO DE LA CAPA DE PRESENCIA (Entrada Suave) --- */
-        .vonu-presence {
-          position: relative;
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          /* Animación de entrada única: 600ms de fade-in y escala */
+        /* --- MANEJO DE ESTADOS --- */
+        
+        /* Entrada suave al empezar a pensar */
+        .state-thinking .vonu-presence {
           animation: vonuPresenceIn 600ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
-          will-change: opacity, transform;
         }
 
-        /* --- RESTO DEL CÓDIGO (Plasma, Aura, Logo, Animaciones base) SIN CAMBIOS --- */
+        /* Salida cinematográfica al terminar */
+        .state-fading-out .vonu-presence {
+          animation: vonuPresenceOut 800ms cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
 
+        /* Apagado gradual de las luces de fondo al salir */
+        .state-fading-out .vonu-plasma,
+        .state-fading-out .vonu-quantum-aura,
+        .state-fading-out .vonu-logo-chromatic {
+          transition: opacity 600ms ease;
+          opacity: 0 !important;
+        }
+
+        /* --- PROPIEDADES DE CAPAS --- */
         .vonu-plasma {
           position: absolute;
           inset: -50%;
@@ -123,6 +159,11 @@ export default function AdvancedVonuThinking({ size = 32 }: VonuThinkingProps) {
           z-index: 5;
         }
 
+        /* El logo frena su flotación y aterriza suavemente en su sitio */
+        .state-fading-out .vonu-logo-wrapper {
+          animation: vonuLogoStabilize 800ms cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
         .vonu-logo-graphic {
           position: absolute;
           inset: 0;
@@ -148,14 +189,12 @@ export default function AdvancedVonuThinking({ size = 32 }: VonuThinkingProps) {
           z-index: 1;
         }
 
-        /* --- ANIMACIONES BASE --- */
-        
+        /* --- ANIMACIONES --- */
         @keyframes morphFluid {
           0% { border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%; transform: scale(0.92); }
           50% { border-radius: 70% 30% 52% 48% / 60% 40% 60% 40%; transform: scale(1.08) skewX(3deg); }
           100% { border-radius: 50% 50% 30% 70% / 35% 65% 35% 65%; transform: scale(0.95) skewY(-2deg); }
         }
-
         @keyframes rotateFluid { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes quantumPulse { 0%, 100% { transform: scale(0.88); opacity: 0.25; } 50% { transform: scale(1.15); opacity: 0.5; } }
         @keyframes auraBreathe { 0%, 100% { transform: scale(0.95); opacity: 0.4; } 50% { transform: scale(1.08); opacity: 0.8; } }
@@ -168,19 +207,22 @@ export default function AdvancedVonuThinking({ size = 32 }: VonuThinkingProps) {
           45% { opacity: 0; transform: scale(1); }
         }
 
-        /* --- NUEVA ANIMACIÓN DE ENTRADA --- */
         @keyframes vonuPresenceIn {
-          0% {
-            opacity: 0;
-            transform: scale(0.8); /* Empieza más pequeño */
-          }
-          100% {
-            opacity: 1;
-            transform: scale(1); /* Escala normal final */
-          }
+          0% { opacity: 0; transform: scale(0.85); }
+          100% { opacity: 1; transform: scale(1); }
         }
 
-        /* Accesibilidad total */
+        @keyframes vonuPresenceOut {
+          0% { opacity: 1; }
+          100% { opacity: 1; }
+        }
+
+        @keyframes vonuLogoStabilize {
+          0% { transform: translateY(0) scale(0.96); }
+          100% { transform: translateY(0) scale(1); }
+        }
+
+        /* Modo accesibilidad */
         @media (prefers-reduced-motion: reduce) {
           .vonu-presence { animation: none !important; opacity: 1; transform: scale(1); }
           .vonu-plasma, .vonu-quantum-aura, .vonu-logo-wrapper, .vonu-logo-chromatic { animation: none !important; }
