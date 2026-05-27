@@ -6221,8 +6221,8 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 
 /* Fracciones anidadas: más aire para que el numerador/denominador no toque la raya principal */
 .prose .katex-display .mfrac .mfrac {
-  padding-top: 0.18em !important;
-  padding-bottom: 0.18em !important;
+  padding-top: 0.24em !important;
+  padding-bottom: 0.24em !important;
 }
 
 /* Línea de fracción algo fina y limpia */
