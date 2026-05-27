@@ -6,191 +6,230 @@ type VonuThinkingProps = {
   size?: number;
 };
 
-export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
+export default function VonuThinking({ size = 28 }: VonuThinkingProps) {
   return (
-    <div
+    <span
       className="vonu-thinking"
-      style={
-        {
-          "--vonu-thinking-size": `${size}px`,
-        } as React.CSSProperties
-      }
+      style={{ width: size, height: size }}
       aria-hidden="true"
     >
-      <span className="vonu-thinking-glow" />
-      <span className="vonu-thinking-ring" />
+      <svg viewBox="0 0 64 64" className="vonu-thinking-svg">
+        <g className="vonu-thinking-mark">
+          {/* 3 puntos ancla */}
+          <circle className="vonu-anchor vonu-anchor-a" cx="16" cy="18" r="4.6" />
+          <circle className="vonu-anchor vonu-anchor-b" cx="26" cy="42" r="4.9" />
+          <circle className="vonu-anchor vonu-anchor-c" cx="48" cy="16" r="4.6" />
 
-      <span className="vonu-thinking-dot vonu-thinking-dot-a" />
-      <span className="vonu-thinking-dot vonu-thinking-dot-b" />
-      <span className="vonu-thinking-dot vonu-thinking-dot-c" />
+          {/* Halo suave del trazo */}
+          <path
+            className="vonu-mark-halo"
+            d="M16 18 C18 26, 21 34, 26 42 C32 35, 38 25, 48 16"
+          />
+
+          {/* Trazo principal del logo */}
+          <path
+            className="vonu-mark-stroke"
+            d="M16 18 C18 26, 21 34, 26 42 C32 35, 38 25, 48 16"
+          />
+        </g>
+      </svg>
 
       <style jsx>{`
         .vonu-thinking {
           position: relative;
-          width: var(--vonu-thinking-size);
-          height: var(--vonu-thinking-size);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           flex: 0 0 auto;
-          display: inline-block;
           transform: translateZ(0);
         }
 
-        .vonu-thinking-glow {
-          position: absolute;
-          inset: -34%;
-          border-radius: 999px;
-          background:
-            radial-gradient(
-              circle,
-              rgba(26, 115, 232, 0.18) 0%,
-              rgba(26, 115, 232, 0.10) 34%,
-              rgba(26, 115, 232, 0.00) 72%
-            );
-          animation: vonuThinkingGlow 2100ms ease-in-out infinite;
-          will-change: transform, opacity;
+        .vonu-thinking-svg {
+          width: 100%;
+          height: 100%;
+          display: block;
+          overflow: visible;
         }
 
-        .vonu-thinking-ring {
-          position: absolute;
-          inset: 1px;
-          border-radius: 999px;
-          background:
-            radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.92) 46%, rgba(255, 255, 255, 0.00) 47%),
-            conic-gradient(
-              from 120deg,
-              rgba(26, 115, 232, 0.00),
-              rgba(26, 115, 232, 0.24),
-              rgba(16, 185, 129, 0.16),
-              rgba(245, 158, 11, 0.12),
-              rgba(26, 115, 232, 0.00)
-            );
-          opacity: 0.9;
-          animation: vonuThinkingRing 2400ms ease-in-out infinite;
-          will-change: transform, opacity;
+        .vonu-thinking-mark {
+          transform-origin: 50% 50%;
+          animation: vonuMarkSettle 2200ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
 
-        .vonu-thinking-dot {
-          position: absolute;
-          width: 31%;
-          height: 31%;
-          border-radius: 999px;
-          background: #111827;
-          box-shadow:
-            0 1px 2px rgba(0, 0, 0, 0.12),
-            0 0 0 1px rgba(255, 255, 255, 0.52) inset;
-          will-change: transform, opacity;
+        .vonu-anchor {
+          fill: #1a73e8;
+          opacity: 0;
+          transform-box: fill-box;
+          transform-origin: center;
         }
 
-        .vonu-thinking-dot-a {
-          left: 50%;
-          top: 17%;
-          transform: translate(-50%, -50%);
-          animation: vonuThinkingDotA 1600ms ease-in-out infinite;
+        .vonu-anchor-a {
+          animation: vonuAnchorPulse 2200ms ease-in-out infinite;
         }
 
-        .vonu-thinking-dot-b {
-          left: 26%;
-          top: 68%;
-          transform: translate(-50%, -50%);
-          animation: vonuThinkingDotB 1600ms ease-in-out 130ms infinite;
+        .vonu-anchor-b {
+          animation: vonuAnchorPulse 2200ms ease-in-out 90ms infinite;
         }
 
-        .vonu-thinking-dot-c {
-          left: 74%;
-          top: 68%;
-          transform: translate(-50%, -50%);
-          animation: vonuThinkingDotC 1600ms ease-in-out 260ms infinite;
+        .vonu-anchor-c {
+          animation: vonuAnchorPulse 2200ms ease-in-out 180ms infinite;
         }
 
-        @keyframes vonuThinkingGlow {
-          0%,
-          100% {
-            opacity: 0.42;
-            transform: scale(0.92);
+        .vonu-mark-halo,
+        .vonu-mark-stroke {
+          fill: none;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          stroke-dasharray: 76;
+          stroke-dashoffset: 76;
+        }
+
+        .vonu-mark-halo {
+          stroke: rgba(26, 115, 232, 0.22);
+          stroke-width: 11;
+          opacity: 0;
+          animation: vonuHaloDraw 2200ms ease-in-out infinite;
+        }
+
+        .vonu-mark-stroke {
+          stroke: #1a73e8;
+          stroke-width: 7.5;
+          opacity: 0;
+          animation: vonuStrokeDraw 2200ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes vonuAnchorPulse {
+          0% {
+            opacity: 0;
+            transform: scale(0.72);
           }
 
-          50% {
+          8% {
             opacity: 0.95;
-            transform: scale(1.12);
-          }
-        }
-
-        @keyframes vonuThinkingRing {
-          0%,
-          100% {
-            opacity: 0.58;
-            transform: rotate(0deg) scale(0.98);
+            transform: scale(0.88);
           }
 
-          50% {
+          18% {
+            opacity: 1;
+            transform: scale(1.14);
+          }
+
+          28% {
             opacity: 0.92;
-            transform: rotate(10deg) scale(1.03);
+            transform: scale(0.96);
+          }
+
+          38% {
+            opacity: 0;
+            transform: scale(0.72);
+          }
+
+          100% {
+            opacity: 0;
+            transform: scale(0.72);
           }
         }
 
-        @keyframes vonuThinkingDotA {
+        @keyframes vonuHaloDraw {
           0%,
-          100% {
-            opacity: 0.78;
-            transform: translate(-50%, -50%) scale(0.9);
+          16% {
+            opacity: 0;
+            stroke-dashoffset: 76;
           }
 
-          45% {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1.18);
+          24% {
+            opacity: 0.18;
+          }
+
+          54% {
+            opacity: 0.28;
+            stroke-dashoffset: 0;
+          }
+
+          76% {
+            opacity: 0.18;
+            stroke-dashoffset: 0;
+          }
+
+          100% {
+            opacity: 0;
+            stroke-dashoffset: 0;
           }
         }
 
-        @keyframes vonuThinkingDotB {
+        @keyframes vonuStrokeDraw {
           0%,
-          100% {
-            opacity: 0.76;
-            transform: translate(-50%, -50%) scale(0.88);
+          14% {
+            opacity: 0;
+            stroke-dashoffset: 76;
           }
 
-          45% {
+          20% {
             opacity: 1;
-            transform: translate(-50%, -50%) scale(1.14);
+          }
+
+          54% {
+            opacity: 1;
+            stroke-dashoffset: 0;
+          }
+
+          78% {
+            opacity: 1;
+            stroke-dashoffset: 0;
+          }
+
+          100% {
+            opacity: 1;
+            stroke-dashoffset: 0;
           }
         }
 
-        @keyframes vonuThinkingDotC {
+        @keyframes vonuMarkSettle {
           0%,
-          100% {
-            opacity: 0.76;
-            transform: translate(-50%, -50%) scale(0.88);
+          18% {
+            transform: scale(0.96);
           }
 
-          45% {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1.14);
+          54% {
+            transform: scale(1.03);
+          }
+
+          72% {
+            transform: scale(1);
+          }
+
+          86% {
+            transform: scale(1.025);
+          }
+
+          100% {
+            transform: scale(1);
           }
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .vonu-thinking-glow,
-          .vonu-thinking-ring,
-          .vonu-thinking-dot {
+          .vonu-thinking-mark,
+          .vonu-anchor,
+          .vonu-mark-halo,
+          .vonu-mark-stroke {
             animation: none !important;
           }
-        }
 
-        @media (max-width: 767px) {
-          .vonu-thinking-glow {
-            inset: -26%;
-            animation-duration: 2400ms;
+          .vonu-anchor {
+            opacity: 0;
           }
 
-          .vonu-thinking-ring {
-            animation-duration: 2800ms;
+          .vonu-mark-halo {
+            opacity: 0.14;
+            stroke-dashoffset: 0;
           }
 
-          .vonu-thinking-dot {
-            box-shadow:
-              0 1px 1px rgba(0, 0, 0, 0.10),
-              0 0 0 1px rgba(255, 255, 255, 0.48) inset;
+          .vonu-mark-stroke {
+            opacity: 1;
+            stroke-dashoffset: 0;
           }
         }
       `}</style>
-    </div>
+    </span>
   );
 }
