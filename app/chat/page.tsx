@@ -3876,15 +3876,24 @@ useEffect(() => {
       return;
     }
 
-    // Conversación normal: aquí sí dejamos que el input inferior siga al teclado.
+        // Conversación normal: aquí sí dejamos que el input inferior siga al teclado.
     document.documentElement.style.setProperty("--vvh", `${viewportHeight}px`);
 
     const bottomInset = Math.max(
       0,
-      window.innerHeight - (viewportHeight + viewportTop)
+      Math.round(window.innerHeight - (viewportHeight + viewportTop))
     );
 
-    document.documentElement.style.setProperty("--vvb", `${bottomInset}px`);
+    // En algunos móviles/Android, al usar VirtualKeyboard.overlaysContent,
+    // visualViewport puede devolver poco o 0, pero virtualKeyboard.boundingRect
+    // sí trae la altura real del teclado. Usamos el mayor de los dos.
+    const effectiveBottomInset = Math.max(bottomInset, keyboardHeight);
+
+    document.documentElement.style.setProperty("--vvb", `${effectiveBottomInset}px`);
+    document.documentElement.style.setProperty(
+      "--vonu-keyboard-height",
+      `${effectiveBottomInset}px`
+    );
   };
 
   setVars();
@@ -7097,7 +7106,12 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 onHomeInputBlur={() => {
   document.documentElement.classList.remove("vonu-home-input-focus-mode");
   document.documentElement.classList.remove("vonu-home-keyboard-open");
-  document.documentElement.style.removeProperty("--vonu-keyboard-height");
+
+  // Solo limpiamos la altura del teclado si seguimos en pantalla inicial.
+  // En conversación normal la necesitamos para que el input no quede debajo del teclado.
+  if (!hasUserMessage) {
+    document.documentElement.style.removeProperty("--vonu-keyboard-height");
+  }
 }}
     isTyping={isTyping}
     textareaRef={textareaRef}
