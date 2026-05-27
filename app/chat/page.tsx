@@ -6078,36 +6078,6 @@ html.vonu-home-input-mode .chat-input-disclaimer {
   }
 }
 
-/* Más aire en fracciones complejas/anidadas de KaTeX.
-   Evita que los números de fracciones internas se peguen a la raya principal. */
-.prose .katex-display .mfrac .mfrac {
-  padding-top: 0.12em;
-  padding-bottom: 0.12em;
-}
-
-.prose .katex-display .mfrac .mfrac .frac-line {
-  margin-top: 0.08em;
-  margin-bottom: 0.08em;
-}
-
-/* Un pelín más de respiración para fórmulas de varios pisos */
-.prose .katex-display .vlist-t {
-  line-height: 1.18 !important;
-}
-
-/* En móvil bajamos un poco para no hacer fórmulas gigantes */
-@media (max-width: 767px) {
-  .prose .katex-display .mfrac .mfrac {
-    padding-top: 0.09em;
-    padding-bottom: 0.09em;
-  }
-
-  .prose .katex-display .mfrac .mfrac .frac-line {
-    margin-top: 0.06em;
-    margin-bottom: 0.06em;
-  }
-}
-
 /* Evita que las fórmulas se peguen demasiado a texto normal */
 .prose .katex-display + p,
 .prose p + .katex-display {
@@ -6215,68 +6185,85 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
   content: "" !important;
 }
 
-  /* ===== KaTeX bonito y controlado ===== */
+/* ===== KaTeX bonito y controlado ===== */
+
+/* Fórmulas inline: un poco más grandes, pero sin tocar demasiado el flujo */
 .prose .katex {
-  font-size: 1.08em !important;
-  line-height: 1.25 !important;
+  font-size: 1.06em !important;
+  line-height: normal !important;
 }
 
-  .prose .katex-display {
-  display: block;
-  margin: 0.9rem 0 !important;
-  text-align: left !important;
-  overflow: visible !important;
-  padding: 0.1rem 0;
+/* Fórmulas en bloque: centradas, limpias y con espacio vertical suficiente */
+.prose .katex-display {
+  display: block !important;
+  margin: 1rem 0 1.15rem !important;
+  padding: 0.28rem 0 0.38rem !important;
+  text-align: center !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
   max-width: 100%;
 }
 
+/* No apretar KaTeX: dejamos respirar estructuras altas como fracciones anidadas */
 .prose .katex-display > .katex {
-  display: block;
-  width: 100%;
+  display: inline-block !important;
   max-width: 100%;
-  font-size: 1.05em !important;
-  line-height: 1.15 !important;
-  white-space: normal !important;
-  word-break: break-word;
+  font-size: 1.16em !important;
+  line-height: 1.42 !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
 }
 
-  /* Ajusta mejor raíces, fracciones y operadores altos */
-  .prose .katex .sqrt > .root {
-    margin-right: 0.12em !important;
-  }
+/* Un poco más de aire general para fórmulas de varios pisos */
+.prose .katex-display .vlist-t {
+  line-height: 1.26 !important;
+}
 
-  .prose .katex .mfrac .frac-line {
-    border-bottom-width: 0.06em !important;
-  }
+/* Fracciones anidadas: más aire para que el numerador/denominador no toque la raya principal */
+.prose .katex-display .mfrac .mfrac {
+  padding-top: 0.18em !important;
+  padding-bottom: 0.18em !important;
+}
 
-  .prose .katex .mord,
-  .prose .katex .mop,
-  .prose .katex .mbin,
-  .prose .katex .mrel,
-  .prose .katex .mopen,
-  .prose .katex .mclose,
-  .prose .katex .mpunct {
-    vertical-align: middle;
-  }
+/* Línea de fracción algo fina y limpia */
+.prose .katex .mfrac .frac-line {
+  border-bottom-width: 0.055em !important;
+}
 
-/* En móvil: matemáticas más legibles */
-@media (max-width: 768px) {
+/* Separación entre texto y fórmula */
+.prose .katex-display + p,
+.prose p + .katex-display {
+  margin-top: 0.8rem !important;
+}
+
+/* Móvil: mantener legible sin hacer la fórmula monstruosa */
+@media (max-width: 767px) {
   .prose .katex {
-    font-size: 0.95em !important;
-    line-height: 1.12 !important;
+    font-size: 1.02em !important;
+    line-height: normal !important;
   }
 
   .prose .katex-display {
-    margin: 0.6rem 0 !important;
-    text-align: left !important;
-    overflow: visible !important;
-    padding: 0 !important;
+    margin: 0.85rem 0 1rem !important;
+    padding: 0.22rem 0 0.32rem !important;
+    text-align: center !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
   }
 
   .prose .katex-display > .katex {
-    font-size: 0.98em !important;
-    line-height: 1.1 !important;
-    white-space: normal !important;
+    font-size: 1.08em !important;
+    line-height: 1.36 !important;
+    white-space: nowrap !important;
+  }
+
+  .prose .katex-display .vlist-t {
+    line-height: 1.22 !important;
+  }
+
+  .prose .katex-display .mfrac .mfrac {
+    padding-top: 0.14em !important;
+    padding-bottom: 0.14em !important;
   }
 }
 
