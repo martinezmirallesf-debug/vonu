@@ -6209,20 +6209,20 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
   display: inline-block !important;
   max-width: 100%;
   font-size: 1.16em !important;
-  line-height: 1.42 !important;
+  line-height: 1.52 !important;
   white-space: nowrap !important;
   word-break: normal !important;
 }
 
 /* Un poco más de aire general para fórmulas de varios pisos */
 .prose .katex-display .vlist-t {
-  line-height: 1.26 !important;
+  line-height: 1.32 !important;
 }
 
 /* Fracciones anidadas: más aire para que el numerador/denominador no toque la raya principal */
 .prose .katex-display .mfrac .mfrac {
-  padding-top: 0.24em !important;
-  padding-bottom: 0.24em !important;
+  padding-top: 0.28em !important;
+  padding-bottom: 0.28em !important;
 }
 
 /* Línea de fracción algo fina y limpia */
@@ -6251,11 +6251,11 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
     overflow-y: visible !important;
   }
 
-  .prose .katex-display > .katex {
-    font-size: 1.08em !important;
-    line-height: 1.36 !important;
-    white-space: nowrap !important;
-  }
+.prose .katex-display > .katex {
+  font-size: 1.08em !important;
+  line-height: 1.46 !important;
+  white-space: nowrap !important;
+}
 
   .prose .katex-display .vlist-t {
     line-height: 1.22 !important;
