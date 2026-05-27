@@ -5758,14 +5758,14 @@ return (
 @keyframes vonuAssistantLogoEnter {
   0% {
     opacity: 0;
-    transform: translateY(4px) scale(0.82);
-    filter: blur(2px);
+    transform: translateY(2px) scale(0.96);
+    filter: blur(1px);
   }
 
-  58% {
-    opacity: 1;
-    transform: translateY(0) scale(1.08);
-    filter: blur(0);
+  42% {
+    opacity: 0.58;
+    transform: translateY(1px) scale(0.985);
+    filter: blur(0.45px);
   }
 
   100% {
@@ -5776,14 +5776,14 @@ return (
 }
 
 .vonu-assistant-logo-enter {
-  animation: vonuAssistantLogoEnter 420ms cubic-bezier(0.2, 0.85, 0.2, 1) both;
+  animation: vonuAssistantLogoEnter 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
   transform-origin: center center;
-  will-change: transform, opacity;
+  will-change: transform, opacity, filter;
 }
 
 @media (max-width: 767px) {
   .vonu-assistant-logo-enter {
-    animation-duration: 360ms;
+    animation-duration: 660ms;
   }
 }
 
@@ -6825,8 +6825,8 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   className={[
     "vonu-assistant-logo-enter shrink-0 flex h-8 w-8 md:h-9 md:w-9 items-start justify-center self-start",
     activeThread?.mode === "tutor"
-      ? "mt-[21px] md:mt-[23px] -ml-[1px] md:-ml-[2px]"
-      : "mt-[6px] md:mt-[8px] -ml-[2px] md:-ml-[3px]",
+      ? "mt-[19px] md:mt-[21px] -ml-[1px] md:-ml-[2px]"
+      : "mt-[4px] md:mt-[6px] -ml-[2px] md:-ml-[3px]",
   ].join(" ")}
 >
   <VonuThinking size={28} />
@@ -6850,8 +6850,8 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   className={[
     "vonu-assistant-logo-enter shrink-0 flex h-8 w-8 md:h-9 md:w-9 items-start justify-center self-start",
     activeThread?.mode === "tutor"
-      ? "mt-[21px] md:mt-[23px]"
-      : "mt-[9px] md:mt-[11px]",
+      ? "mt-[19px] md:mt-[21px]"
+      : "mt-[7px] md:mt-[9px]",
   ].join(" ")}
 >
   <img
