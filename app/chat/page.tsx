@@ -6078,6 +6078,46 @@ html.vonu-home-input-mode .chat-input-disclaimer {
   }
 }
 
+/* Fórmulas KaTeX dentro del chat: más legibles y estables */
+.prose .katex-display {
+  margin: 1.05rem 0 !important;
+  padding: 0.25rem 0 0.35rem !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+}
+
+.prose .katex-display > .katex {
+  font-size: 1.22em !important;
+  line-height: 1.35 !important;
+}
+
+.prose .katex {
+  font-size: 1.04em;
+}
+
+/* Evita que las fórmulas se peguen demasiado a texto normal */
+.prose .katex-display + p,
+.prose p + .katex-display {
+  margin-top: 0.75rem !important;
+}
+
+/* Móvil: legible, pero sin romper ancho */
+@media (max-width: 767px) {
+  .prose .katex-display {
+    margin: 0.9rem 0 !important;
+    padding: 0.2rem 0 0.3rem !important;
+  }
+
+  .prose .katex-display > .katex {
+    font-size: 1.08em !important;
+  }
+
+  .prose .katex {
+    font-size: 1em;
+  }
+}
+
 /* Fallback por si alguna capa antigua sigue pintando la máscara */
 html.vonu-home-input-mode .chat-input-root .pointer-events-none.absolute.inset-x-0.z-0,
 html.vonu-home-input-mode .chat-input-root .absolute.inset-x-0.top-0.hidden {
