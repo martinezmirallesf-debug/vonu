@@ -6078,22 +6078,34 @@ html.vonu-home-input-mode .chat-input-disclaimer {
   }
 }
 
-/* Fórmulas KaTeX dentro del chat: más legibles y estables */
-.prose .katex-display {
-  margin: 1.05rem 0 !important;
-  padding: 0.25rem 0 0.35rem !important;
-  overflow-x: auto;
-  overflow-y: hidden;
-  max-width: 100%;
+/* Más aire en fracciones complejas/anidadas de KaTeX.
+   Evita que los números de fracciones internas se peguen a la raya principal. */
+.prose .katex-display .mfrac .mfrac {
+  padding-top: 0.12em;
+  padding-bottom: 0.12em;
 }
 
-.prose .katex-display > .katex {
-  font-size: 1.22em !important;
-  line-height: 1.35 !important;
+.prose .katex-display .mfrac .mfrac .frac-line {
+  margin-top: 0.08em;
+  margin-bottom: 0.08em;
 }
 
-.prose .katex {
-  font-size: 1.04em;
+/* Un pelín más de respiración para fórmulas de varios pisos */
+.prose .katex-display .vlist-t {
+  line-height: 1.18 !important;
+}
+
+/* En móvil bajamos un poco para no hacer fórmulas gigantes */
+@media (max-width: 767px) {
+  .prose .katex-display .mfrac .mfrac {
+    padding-top: 0.09em;
+    padding-bottom: 0.09em;
+  }
+
+  .prose .katex-display .mfrac .mfrac .frac-line {
+    margin-top: 0.06em;
+    margin-bottom: 0.06em;
+  }
 }
 
 /* Evita que las fórmulas se peguen demasiado a texto normal */
