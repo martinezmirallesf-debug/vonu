@@ -4,14 +4,14 @@ import React from "react";
 
 type VonuThinkingProps = {
   size?: number;
-  isThinking?: boolean; // Añadimos la prop para controlar el desvanecimiento
+  isThinking?: boolean;
 };
 
 const LOGO_SRC = "/logo/vonu-cube-blue.png";
 
 export default function AdvancedVonuThinking({ 
   size = 32,
-  isThinking = true // Por defecto está pensando
+  isThinking = true 
 }: VonuThinkingProps) {
   return (
     <span
@@ -27,19 +27,24 @@ export default function AdvancedVonuThinking({
       aria-hidden="true"
     >
       <span className="vonu-presence">
-        {/* NÚCLEO BIOMÓRFICO */}
-        <span className="vonu-plasma vonu-plasma-1" />
-        <span className="vonu-plasma vonu-plasma-2" />
-        <span className="vonu-plasma vonu-plasma-3" />
+        
+        {/* ENVOLTORIO DE EFECTOS: Maneja el difuminado radial externo y la absorción final */}
+        <span className="vonu-effects-wrapper">
+          {/* NÚCLEO BIOMÓRFICO */}
+          <span className="vonu-plasma vonu-plasma-1" />
+          <span className="vonu-plasma vonu-plasma-2" />
+          <span className="vonu-plasma vonu-plasma-3" />
 
-        {/* AURA CUÁNTICA */}
-        <span className="vonu-quantum-aura" />
+          {/* AURA CUÁNTICA */}
+          <span className="vonu-quantum-aura" />
+        </span>
 
-        {/* CONTENEDOR DEL LOGO REFRIGERADO POR LUZ */}
+        {/* CONTENEDOR DEL LOGO GRÁFICO */}
         <span className="vonu-logo-wrapper">
           <span className="vonu-logo-graphic" />
           <span className="vonu-logo-chromatic" />
         </span>
+
       </span>
 
       <style jsx>{`
@@ -66,22 +71,49 @@ export default function AdvancedVonuThinking({
           will-change: opacity, transform;
         }
 
-        /* --- 1. TRANSICIÓN DE DESVANECIMIENTO (FADE OUT) --- */
-        /* Cuando isThinking pasa a false, las luces se apagan suavemente en 700ms */
-        .vonu-plasma,
-        .vonu-quantum-aura,
-        .vonu-logo-chromatic {
-          transition: opacity 700ms cubic-bezier(0.25, 1, 0.5, 1), transform 700ms ease;
+        /* --- 1. ENVOLTORIO DE EFECTOS Y MÁSCARAS --- */
+        .vonu-effects-wrapper {
+          position: absolute;
+          inset: -60%; 
+          pointer-events: none;
+          opacity: 1;
+          /* Transición síncrona de escala, opacidad y el cambio de máscara */
+          transition: 
+            opacity 850ms cubic-bezier(0.4, 0, 0.2, 1), 
+            transform 850ms cubic-bezier(0.4, 0, 0.2, 1),
+            -webkit-mask-image 400ms ease-in-out;
+          
+          /* En estado activo, los bordes exteriores se difuminan con suavidad extrema */
+          -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 25%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0) 85%);
+          mask-image: radial-gradient(circle, rgba(0,0,0,1) 25%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0) 85%);
         }
 
-        .is-fading-out .vonu-plasma,
-        .is-fading-out .vonu-quantum-aura,
+        /* --- EFECTO DE ABSORCIÓN AL LOGO --- */
+        .is-fading-out .vonu-effects-wrapper {
+          opacity: 0 !important;
+          /* Se contrae y reduce su tamaño buscando las dimensiones del isotipo real */
+          transform: scale(0.55) rotate(-10deg) !important; 
+          
+          /* TRUCO TOP: El plasma muta su silueta exterior recortándose con la forma de tu V */
+          -webkit-mask-image: var(--v-logo) !important;
+          mask-image: var(--v-logo) !important;
+          -webkit-mask-size: contain;
+          mask-size: contain;
+          -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+          -webkit-mask-position: center;
+          mask-position: center;
+        }
+
+        /* Desvanecimiento del canal cromático */
+        .vonu-logo-chromatic {
+          transition: opacity 500ms ease;
+        }
         .is-fading-out .vonu-logo-chromatic {
           opacity: 0 !important;
-          transform: scale(0.8) !important; /* Se contraen hacia adentro al apagarse */
         }
 
-        /* El logo frena su flotación de manera fluida y se centra */
+        /* --- 2. FIJACIÓN DEL LOGO --- */
         .vonu-logo-wrapper {
           position: absolute;
           inset: 0;
@@ -92,22 +124,22 @@ export default function AdvancedVonuThinking({
           z-index: 5;
         }
 
-        /* Si está pensando, flota. Si se está desvaneciendo, vuelve a escala 1 estable */
         .is-thinking .vonu-logo-wrapper {
           animation: logoFloat 3500ms ease-in-out infinite;
         }
         
         .is-fading-out .vonu-logo-wrapper {
-          transition: transform 700ms cubic-bezier(0.25, 1, 0.5, 1);
+          /* El logo frena con inercia orgánica y encaja perfectamente en su sitio estático */
+          transition: transform 850ms cubic-bezier(0.25, 1, 0.5, 1);
           transform: translateY(0) scale(1);
         }
 
-        /* --- DETALLES E INTERS INTERNOS --- */
+        /* --- CÓDIGO INTERNO DEL PLASMA --- */
         .vonu-plasma {
           position: absolute;
-          inset: -50%;
+          inset: 0; 
           border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
-          filter: blur(calc(var(--v-size) * 0.28));
+          filter: blur(calc(var(--v-size) * 0.3)); 
           mix-blend-mode: screen;
           will-change: transform, border-radius;
         }
@@ -133,9 +165,9 @@ export default function AdvancedVonuThinking({
 
         .vonu-quantum-aura {
           position: absolute;
-          inset: -30%;
+          inset: 10%;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(26,115,232,0.15) 0%, rgba(0,242,254,0.05) 50%, transparent 100%);
+          background: radial-gradient(circle, rgba(26,115,232,0.18) 0%, rgba(0,242,254,0.06) 50%, transparent 100%);
           animation: auraBreathe 4400ms ease-in-out infinite;
           will-change: transform, opacity;
         }
@@ -147,7 +179,7 @@ export default function AdvancedVonuThinking({
           background-repeat: no-repeat;
           background-position: center;
           background-size: contain;
-          filter: drop-shadow(0 4px 12px rgba(26, 115, 232, 0.25));
+          filter: drop-shadow(0 4px 12px rgba(26, 115, 232, 0.2));
           z-index: 2;
         }
 
@@ -165,7 +197,7 @@ export default function AdvancedVonuThinking({
           z-index: 1;
         }
 
-        /* --- ANIMACIONES --- */
+        /* --- KEYFRAMES --- */
         @keyframes morphFluid {
           0% { border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%; transform: scale(0.92); }
           50% { border-radius: 70% 30% 52% 48% / 60% 40% 60% 40%; transform: scale(1.08) skewX(3deg); }
@@ -190,12 +222,11 @@ export default function AdvancedVonuThinking({
           100% { opacity: 1; transform: scale(1); }
         }
 
-        /* Accesibilidad total */
+        /* Accesibilidad */
         @media (prefers-reduced-motion: reduce) {
           .vonu-presence { animation: none !important; opacity: 1; transform: scale(1); }
-          .vonu-plasma, .vonu-quantum-aura, .vonu-logo-wrapper, .vonu-logo-chromatic { animation: none !important; }
-          .vonu-plasma-1 { opacity: 0.3; border-radius: 50%; transform: scale(1); }
-          .vonu-plasma-2, .vonu-plasma-3, .vonu-logo-chromatic { display: none; }
+          .vonu-effects-wrapper { display: none; }
+          .is-thinking .vonu-logo-wrapper { animation: none !important; }
         }
       `}</style>
     </span>
