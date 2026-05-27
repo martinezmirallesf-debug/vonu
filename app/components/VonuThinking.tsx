@@ -8,6 +8,8 @@ type VonuThinkingProps = {
 };
 
 const LOGO_SRC = "/logo/vonu-cube-blue.png";
+// Usamos el archivo que nos has indicado para la máscara de contracción
+const THINKING_LOGO_SRC = "/logo/vonu-thinking-logo.png";
 
 export default function AdvancedVonuThinking({ 
   size = 32,
@@ -20,6 +22,7 @@ export default function AdvancedVonuThinking({
         {
           "--v-size": `${size}px`,
           "--v-logo": `url("${LOGO_SRC}")`,
+          "--v-thinking-logo": `url("${THINKING_LOGO_SRC}")`,
           "--v-offset-x": "4px", 
           "--v-offset-y": "6px", 
         } as React.CSSProperties
@@ -28,7 +31,7 @@ export default function AdvancedVonuThinking({
     >
       <span className="vonu-presence">
         
-        {/* ENVOLTORIO DE EFECTOS: Maneja el difuminado radial externo y la absorción final */}
+        {/* ENVOLTORIO DE EFECTOS: Ejecuta la compresión y cambio de máscara de tu imagen */}
         <span className="vonu-effects-wrapper">
           {/* NÚCLEO BIOMÓRFICO */}
           <span className="vonu-plasma vonu-plasma-1" />
@@ -71,32 +74,36 @@ export default function AdvancedVonuThinking({
           will-change: opacity, transform;
         }
 
-        /* --- 1. ENVOLTORIO DE EFECTOS Y MÁSCARAS --- */
+        /* --- 1. ENVOLTORIO DE EFECTOS (PLASMA DIFUMINADO ORIGINAL) --- */
         .vonu-effects-wrapper {
           position: absolute;
           inset: -60%; 
           pointer-events: none;
           opacity: 1;
-          /* Transición síncrona de escala, opacidad y el cambio de máscara */
+          /* Transición síncrona súper fluida para la metamorfosis de la imagen */
           transition: 
-            opacity 850ms cubic-bezier(0.4, 0, 0.2, 1), 
-            transform 850ms cubic-bezier(0.4, 0, 0.2, 1),
-            -webkit-mask-image 400ms ease-in-out;
+            opacity 900ms cubic-bezier(0.4, 0, 0.2, 1), 
+            transform 950ms cubic-bezier(0.34, 1.56, 0.64, 1), /* Curva elástica para la contracción */
+            filter 900ms ease-in-out;
           
-          /* En estado activo, los bordes exteriores se difuminan con suavidad extrema */
+          /* En reposo/pensando mantiene los bordes muy suaves y transparentes */
           -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 25%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0) 85%);
           mask-image: radial-gradient(circle, rgba(0,0,0,1) 25%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0) 85%);
+          filter: blur(0px);
         }
 
-        /* --- EFECTO DE ABSORCIÓN AL LOGO --- */
+        /* --- SECUENCIA DE CONTRACCIÓN DE TU IMAGEN (FADE OUT) --- */
         .is-fading-out .vonu-effects-wrapper {
           opacity: 0 !important;
-          /* Se contrae y reduce su tamaño buscando las dimensiones del isotipo real */
-          transform: scale(0.55) rotate(-10deg) !important; 
+          /* Secuencia 1 y 2: Se va encogiendo físicamente buscando la escala del logo */
+          transform: scale(0.45) rotate(-5deg) !important; 
           
-          /* TRUCO TOP: El plasma muta su silueta exterior recortándose con la forma de tu V */
-          -webkit-mask-image: var(--v-logo) !important;
-          mask-image: var(--v-logo) !important;
+          /* Secuencia 3: Condensamos el blur para que deje de ser abstracto y tome nitidez */
+          filter: blur(1px) !important;
+
+          /* Secuencia final: El fluido es absorbido adoptando la silueta de vonu-thinking-logo */
+          -webkit-mask-image: var(--v-thinking-logo) !important;
+          mask-image: var(--v-thinking-logo) !important;
           -webkit-mask-size: contain;
           mask-size: contain;
           -webkit-mask-repeat: no-repeat;
@@ -105,7 +112,7 @@ export default function AdvancedVonuThinking({
           mask-position: center;
         }
 
-        /* Desvanecimiento del canal cromático */
+        /* Desvanecimiento del canal cromático secundario */
         .vonu-logo-chromatic {
           transition: opacity 500ms ease;
         }
@@ -113,7 +120,7 @@ export default function AdvancedVonuThinking({
           opacity: 0 !important;
         }
 
-        /* --- 2. FIJACIÓN DEL LOGO --- */
+        /* --- 2. ESTABILIZACIÓN ASENTADA DEL LOGO --- */
         .vonu-logo-wrapper {
           position: absolute;
           inset: 0;
@@ -129,12 +136,12 @@ export default function AdvancedVonuThinking({
         }
         
         .is-fading-out .vonu-logo-wrapper {
-          /* El logo frena con inercia orgánica y encaja perfectamente en su sitio estático */
-          transition: transform 850ms cubic-bezier(0.25, 1, 0.5, 1);
+          /* El logo frena limpiamente su balanceo y se clava en el sitio */
+          transition: transform 950ms cubic-bezier(0.25, 1, 0.5, 1);
           transform: translateY(0) scale(1);
         }
 
-        /* --- CÓDIGO INTERNO DEL PLASMA --- */
+        /* --- LÓGICA DE PLASMAS --- */
         .vonu-plasma {
           position: absolute;
           inset: 0; 
@@ -197,7 +204,7 @@ export default function AdvancedVonuThinking({
           z-index: 1;
         }
 
-        /* --- KEYFRAMES --- */
+        /* --- KEYFRAMES DE COMPORTAMIENTO --- */
         @keyframes morphFluid {
           0% { border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%; transform: scale(0.92); }
           50% { border-radius: 70% 30% 52% 48% / 60% 40% 60% 40%; transform: scale(1.08) skewX(3deg); }
