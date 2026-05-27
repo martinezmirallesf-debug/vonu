@@ -5745,73 +5745,46 @@ return (
     }
   }
 
-        @keyframes vonuAmbientDrift {
-    0% {
-      transform: translate3d(-2%, -1%, 0) scale(1.04);
-      opacity: 0.66;
-    }
-    35% {
-      transform: translate3d(3%, 2%, 0) scale(1.10);
-      opacity: 0.9;
-    }
-    70% {
-      transform: translate3d(1%, -3%, 0) scale(1.07);
-      opacity: 0.74;
-    }
-    100% {
-      transform: translate3d(-2%, -1%, 0) scale(1.04);
-      opacity: 0.66;
-    }
+  /* Fondo inicial ligero: premium sin coste alto en móvil */
+.vonu-home-soft-bg {
+  background:
+    radial-gradient(circle at 50% 18%, rgba(26, 115, 232, 0.10), transparent 34%),
+    radial-gradient(circle at 16% 38%, rgba(96, 165, 250, 0.08), transparent 28%),
+    radial-gradient(circle at 84% 42%, rgba(16, 185, 129, 0.06), transparent 30%),
+    linear-gradient(180deg, #ffffff 0%, #f8f9fa 56%, #eef5ff 100%);
+}
+
+@media (max-width: 767px) {
+  .vonu-home-soft-bg {
+    background:
+      radial-gradient(circle at 50% 20%, rgba(26, 115, 232, 0.08), transparent 34%),
+      linear-gradient(180deg, #ffffff 0%, #f8f9fa 62%, #eef5ff 100%);
+  }
+}
+
+/* Rendimiento móvil: reducimos animaciones decorativas */
+@media (max-width: 767px) {
+  .vonu-hero-rise,
+  .vonu-input-motion-shell,
+  .vonu-reveal,
+  .vonu-dotmark-wrap,
+  .vonu-dotmark-fill {
+    animation: none !important;
+    filter: none !important;
+    will-change: auto !important;
   }
 
-  @keyframes vonuAmbientDriftAlt {
-    0% {
-      transform: translate3d(4%, 2%, 0) scale(1.05) rotate(0deg);
-      opacity: 0.42;
-    }
-    45% {
-      transform: translate3d(-5%, -3%, 0) scale(1.18) rotate(-10deg);
-      opacity: 0.72;
-    }
-    100% {
-      transform: translate3d(4%, 2%, 0) scale(1.05) rotate(0deg);
-      opacity: 0.42;
-    }
+  .vonu-reveal {
+    clip-path: none !important;
   }
 
-  @keyframes vonuGeoFloat {
-    0% {
-      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
-      opacity: 0.18;
-    }
-    40% {
-      transform: translate3d(18px, -22px, 0) rotate(14deg) scale(1.06);
-      opacity: 0.28;
-    }
-    75% {
-      transform: translate3d(-14px, 16px, 0) rotate(-8deg) scale(0.98);
-      opacity: 0.20;
-    }
-    100% {
-      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
-      opacity: 0.18;
-    }
+  .vonu-input-motion-shell {
+    transition:
+      bottom 240ms ease-out,
+      transform 240ms ease-out,
+      opacity 160ms ease-out !important;
   }
-
-  @keyframes vonuGeoFloatAlt {
-    0% {
-      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
-      opacity: 0.14;
-    }
-    50% {
-      transform: translate3d(-20px, 18px, 0) rotate(-18deg) scale(1.08);
-      opacity: 0.26;
-    }
-    100% {
-      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
-      opacity: 0.14;
-    }
-  }
+}
 
   @keyframes vonuHeroRise {
     from {
@@ -5845,16 +5818,6 @@ return (
         0 0 0 1px rgba(255,255,255,0.82),
         0 0 0 rgba(26,115,232,0);
     }
-  }
-
-  .vonu-home-ambient {
-    background:
-      radial-gradient(circle at 22% 20%, rgba(26, 115, 232, 0.16), transparent 34%),
-      radial-gradient(circle at 78% 18%, rgba(34, 197, 94, 0.11), transparent 32%),
-      radial-gradient(circle at 48% 82%, rgba(245, 158, 11, 0.12), transparent 35%),
-      radial-gradient(circle at 50% 48%, rgba(255,255,255,0.72), transparent 32%),
-      linear-gradient(180deg, rgba(255,255,255,0.94), rgba(246,248,251,0.97));
-    animation: vonuAmbientDrift 18s ease-in-out infinite;
   }
 
   @keyframes vonuDotCloudBreathe {
@@ -5932,25 +5895,6 @@ return (
   }
 }
 
-  .vonu-orb-one {
-    animation: vonuAmbientDrift 16s ease-in-out infinite;
-  }
-
-  .vonu-orb-two {
-    animation: vonuAmbientDriftAlt 19s ease-in-out infinite;
-  }
-
-  .vonu-geo-one {
-    animation: vonuGeoFloat 16s ease-in-out infinite;
-  }
-
-  .vonu-geo-two {
-    animation: vonuGeoFloatAlt 18s ease-in-out infinite;
-  }
-
-  .vonu-geo-three {
-    animation: vonuGeoFloat 22s ease-in-out infinite reverse;
-  }
 
   .vonu-hero-rise {
     animation: vonuHeroRise 620ms cubic-bezier(.2,.8,.2,1) both;
@@ -6333,6 +6277,49 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 
 .paywall-scroll::-webkit-scrollbar {
   display: none;
+}
+  /* ===== Rendimiento móvil: fondo premium ligero ===== */
+/* En móvil apagamos animaciones decorativas pesadas.
+   Mantiene la estética limpia, pero evita lag al abrir menú, mover input o escribir. */
+@media (max-width: 767px) {
+  .vonu-orb-one,
+  .vonu-orb-two,
+  .vonu-geo-one,
+  .vonu-geo-two,
+  .vonu-geo-three {
+    animation: none !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+
+  .vonu-hero-rise {
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+    will-change: auto !important;
+  }
+
+  .vonu-input-motion-shell {
+    transition:
+      bottom 260ms ease-out,
+      transform 260ms ease-out,
+      opacity 180ms ease-out !important;
+    filter: none !important;
+    will-change: auto !important;
+  }
+
+  .vonu-reveal {
+    animation: none !important;
+    clip-path: none !important;
+    filter: none !important;
+    will-change: auto !important;
+  }
+
+  .vonu-dotmark-wrap,
+  .vonu-dotmark-fill {
+    animation: none !important;
+    will-change: auto !important;
+  }
 }
 `}</style>
 
@@ -6737,25 +6724,14 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   ].join(" ")}
 >
    <div
-    className={[
-      "pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-700",
-      hasUserMessage ? "opacity-0" : "opacity-100",
-    ].join(" ")}
-    aria-hidden="true"
-  >
-    <div className="vonu-home-ambient absolute inset-0" />
-
-<div className="vonu-orb-one absolute -left-[14%] top-[4%] h-[460px] w-[460px] rounded-full bg-blue-300/18 blur-3xl" />
-<div className="vonu-orb-two absolute -right-[12%] top-[12%] h-[420px] w-[420px] rounded-full bg-emerald-200/20 blur-3xl" />
-<div className="vonu-geo-three absolute bottom-[-16%] left-[30%] h-[430px] w-[430px] rounded-full bg-amber-100/36 blur-3xl" />
-
-<div className="vonu-dot-cloud vonu-dot-cloud-a absolute left-[2%] top-[8%] h-[460px] w-[460px]" />
-<div className="vonu-dot-cloud vonu-dot-cloud-b absolute right-[4%] top-[16%] h-[410px] w-[410px]" />
-<div className="vonu-dot-cloud vonu-dot-cloud-c absolute left-[31%] top-[52%] h-[380px] w-[380px]" />
-
-<div className="vonu-geo-two absolute left-[24%] top-[58%] h-[86px] w-[86px] rotate-12 rounded-[28px] border border-indigo-200/36 bg-indigo-100/14 backdrop-blur-[1px]" />
-<div className="vonu-geo-one absolute right-[30%] top-[20%] h-[72px] w-[72px] rounded-full border border-sky-200/40 bg-sky-100/16 backdrop-blur-[1px]" />
-  </div>
+  className={[
+    "pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-500",
+    hasUserMessage ? "opacity-0" : "opacity-100",
+  ].join(" ")}
+  aria-hidden="true"
+>
+  <div className="vonu-home-soft-bg absolute inset-0" />
+</div>
 
     <div
   className={[
