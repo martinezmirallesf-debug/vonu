@@ -1,4 +1,4 @@
-// app/page.tsx
+// app/chat/page.tsx
 
 
 "use client";
@@ -5745,6 +5745,7 @@ return (
     }
   }
 
+
   /* Fondo inicial ligero: premium sin coste alto en móvil */
 .vonu-home-soft-bg {
   background:
@@ -5752,6 +5753,44 @@ return (
     radial-gradient(circle at 16% 38%, rgba(96, 165, 250, 0.08), transparent 28%),
     radial-gradient(circle at 84% 42%, rgba(16, 185, 129, 0.06), transparent 30%),
     linear-gradient(180deg, #ffffff 0%, #f8f9fa 56%, #eef5ff 100%);
+}
+
+@keyframes vonuAssistantLogoEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(4px) scale(0.82);
+    filter: blur(2px);
+  }
+
+  58% {
+    opacity: 1;
+    transform: translateY(0) scale(1.08);
+    filter: blur(0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.vonu-assistant-logo-enter {
+  animation: vonuAssistantLogoEnter 420ms cubic-bezier(0.2, 0.85, 0.2, 1) both;
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+
+@media (max-width: 767px) {
+  .vonu-assistant-logo-enter {
+    animation-duration: 360ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vonu-assistant-logo-enter {
+    animation: none !important;
+  }
 }
 
 @media (max-width: 767px) {
@@ -6783,15 +6822,15 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
               >
                 <div className="ml-2 mr-3 md:mr-0 flex w-full max-w-[93%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
                   <div
-                    className={[
-                      "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center self-start",
-                      activeThread?.mode === "tutor"
-                        ? "mt-[22px] md:mt-[24px] -ml-[1px] md:-ml-[2px]"
-                        : "mt-[7px] md:mt-[9px] -ml-[2px] md:-ml-[3px]",
-                    ].join(" ")}
-                  >
-                    <VonuThinking />
-                  </div>
+  className={[
+    "vonu-assistant-logo-enter shrink-0 flex h-8 w-8 md:h-9 md:w-9 items-start justify-center self-start",
+    activeThread?.mode === "tutor"
+      ? "mt-[21px] md:mt-[23px] -ml-[1px] md:-ml-[2px]"
+      : "mt-[6px] md:mt-[8px] -ml-[2px] md:-ml-[3px]",
+  ].join(" ")}
+>
+  <VonuThinking size={28} />
+</div>
 
                   <div className="min-w-0 flex-1" />
                 </div>
@@ -6808,20 +6847,20 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
             >
               <div className="ml-2 mr-2 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
                 <div
-                  className={[
-                    "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center self-start",
-                    activeThread?.mode === "tutor"
-                      ? "mt-[22px] md:mt-[24px]"
-                      : "mt-[10px] md:mt-[12px]",
-                  ].join(" ")}
-                >
-                  <img
-                    src="/logo/vonu-cube-black.png?v=3"
-                    alt="Vonu"
-                    className="block h-[20px] w-[20px] md:h-[21px] md:w-[21px] object-contain"
-                    draggable={false}
-                  />
-                </div>
+  className={[
+    "vonu-assistant-logo-enter shrink-0 flex h-8 w-8 md:h-9 md:w-9 items-start justify-center self-start",
+    activeThread?.mode === "tutor"
+      ? "mt-[21px] md:mt-[23px]"
+      : "mt-[9px] md:mt-[11px]",
+  ].join(" ")}
+>
+  <img
+    src="/logo/vonu-cube-black.png?v=3"
+    alt="Vonu"
+    className="block h-[24px] w-[24px] md:h-[26px] md:w-[26px] object-contain"
+    draggable={false}
+  />
+</div>
 
                 <div className="min-w-0 flex-1 vonu-reveal">
                   {m.image && (
