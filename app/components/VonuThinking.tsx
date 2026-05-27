@@ -8,7 +8,7 @@ type VonuThinkingProps = {
 
 const LOGO_SRC = "/logo/vonu-cube-black.png";
 
-export default function VonuThinking({ size = 30 }: VonuThinkingProps) {
+export default function VonuThinking({ size = 24 }: VonuThinkingProps) {
   return (
     <span
       className="vonu-thinking"
@@ -20,6 +20,7 @@ export default function VonuThinking({ size = 30 }: VonuThinkingProps) {
       }
       aria-hidden="true"
     >
+      <span className="vonu-thinking-spectrum" />
       <span className="vonu-thinking-aura" />
       <span className="vonu-thinking-logo" />
       <span className="vonu-thinking-light" />
@@ -34,22 +35,50 @@ export default function VonuThinking({ size = 30 }: VonuThinkingProps) {
           height: var(--vonu-thinking-size);
           flex: 0 0 auto;
           transform: translateZ(0);
+          isolation: isolate;
+        }
+
+        /* 1. SEPARACIÓN DE ANIMACIONES Y DESFASE DE TIEMPOS */
+        .vonu-thinking-spectrum {
+          position: absolute;
+          inset: -42%;
+          border-radius: 999px;
+          background: conic-gradient(
+            from 0deg,
+            rgba(66, 133, 244, 0) 0deg,
+            rgba(66, 133, 244, 0.3) 45deg,
+            rgba(52, 168, 83, 0.25) 110deg,
+            rgba(251, 188, 5, 0.28) 180deg,
+            rgba(234, 67, 53, 0.25) 250deg,
+            rgba(66, 133, 244, 0.3) 320deg,
+            rgba(66, 133, 244, 0) 360deg
+          );
+          /* Incrementado un poco el desenfoque base estático */
+          filter: blur(calc(var(--vonu-thinking-size) * 0.25));
+          opacity: 0.5;
+          /* Combinamos rotación continua y pulso con tiempos asíncronos (4200ms y 3100ms) */
+          animation: 
+            vonuSpectrumSpin 5000ms linear infinite,
+            vonuSpectrumPulse 3100ms ease-in-out infinite;
+          will-change: transform;
+          z-index: 0;
         }
 
         .vonu-thinking-aura {
           position: absolute;
-          inset: -44%;
+          inset: -26%;
           border-radius: 999px;
-          background:
-            radial-gradient(
-              circle,
-              rgba(26, 115, 232, 0.26) 0%,
-              rgba(26, 115, 232, 0.13) 35%,
-              rgba(26, 115, 232, 0.00) 72%
-            );
-          opacity: 0.55;
-          animation: vonuThinkingAura 2400ms ease-in-out infinite;
-          will-change: transform, opacity;
+          background: radial-gradient(
+            circle,
+            rgba(26, 115, 232, 0.22) 0%,
+            rgba(26, 115, 232, 0.12) 40%,
+            rgba(26, 115, 232, 0.04) 65%,
+            rgba(26, 115, 232, 0) 80%
+          );
+          /* Tiempo desfasado (2700ms) para romper la simetría */
+          animation: vonuAuraPulse 2700ms ease-in-out infinite;
+          will-change: transform;
+          z-index: 1;
         }
 
         .vonu-thinking-logo {
@@ -59,29 +88,26 @@ export default function VonuThinking({ size = 30 }: VonuThinkingProps) {
           background-repeat: no-repeat;
           background-position: center;
           background-size: contain;
-          opacity: 0.96;
-          filter:
-            drop-shadow(0 2px 5px rgba(26, 115, 232, 0.22))
-            drop-shadow(0 0 8px rgba(26, 115, 232, 0.10));
-          animation: vonuThinkingBreathe 2400ms ease-in-out infinite;
-          will-change: transform, opacity, filter;
+          opacity: 0.98;
+          /* Quitamos la animación de filtros pesados y usamos un drop-shadow fijo y limpio */
+          filter: drop-shadow(0 2px 8px rgba(26, 115, 232, 0.16));
+          animation: vonuLogoBreathe 2100ms ease-in-out infinite;
+          will-change: transform;
+          z-index: 2;
         }
 
         .vonu-thinking-light {
           position: absolute;
           inset: 0;
-          background:
-            linear-gradient(
-              115deg,
-              rgba(255, 255, 255, 0) 10%,
-              rgba(255, 255, 255, 0.20) 30%,
-              rgba(255, 255, 255, 0.58) 46%,
-              rgba(255, 255, 255, 0.16) 62%,
-              rgba(255, 255, 255, 0) 82%
-            );
+          background: linear-gradient(
+            115deg,
+            rgba(255, 255, 255, 0) 15%,
+            rgba(255, 255, 255, 0.25) 35%,
+            rgba(255, 255, 255, 0.65) 50%,
+            rgba(255, 255, 255, 0.2) 65%,
+            rgba(255, 255, 255, 0) 85%
+          );
           background-size: 260% 260%;
-          background-position: 135% 50%;
-
           -webkit-mask-image: var(--vonu-thinking-logo);
           mask-image: var(--vonu-thinking-logo);
           -webkit-mask-repeat: no-repeat;
@@ -90,104 +116,80 @@ export default function VonuThinking({ size = 30 }: VonuThinkingProps) {
           mask-position: center;
           -webkit-mask-size: contain;
           mask-size: contain;
-
-          opacity: 0;
-          mix-blend-mode: screen;
-          animation: vonuThinkingLight 3200ms ease-in-out infinite;
-          will-change: opacity, background-position;
+          mix-blend-mode: overlay; /* 'overlay' o 'color-dodge' suelen integrarse mejor que 'screen' con fondos oscuros/claros */
+          animation: vonuLogoSweep 4000ms cubic-bezier(0.25, 1, 0.5, 1) infinite;
+          will-change: background-position;
+          z-index: 3;
         }
 
-        @keyframes vonuThinkingAura {
-          0%,
-          100% {
-            opacity: 0.35;
-            transform: scale(0.92);
+        /* 2. OPTIMIZACIÓN DE KEYFRAMES (Sólo transformaciones de GPU) */
+        @keyframes vonuSpectrumSpin {
+          0% {
+            transform: rotate(0deg);
           }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
 
+        /* Separamos el cambio de escala del de rotación para evitar saltos bruscos */
+        @keyframes vonuSpectrumPulse {
+          0%, 100% {
+            transform: scale(0.85);
+          }
           50% {
-            opacity: 0.78;
-            transform: scale(1.16);
+            transform: scale(1.05);
           }
         }
 
-        @keyframes vonuThinkingBreathe {
-          0%,
-          100% {
-            opacity: 0.9;
-            transform: scale(0.985) rotate(-0.25deg);
-            filter:
-              drop-shadow(0 2px 5px rgba(26, 115, 232, 0.18))
-              drop-shadow(0 0 7px rgba(26, 115, 232, 0.08));
+        @keyframes vonuAuraPulse {
+          0%, 100% {
+            transform: scale(0.9);
           }
-
           50% {
-            opacity: 1;
-            transform: scale(1.045) rotate(0.25deg);
-            filter:
-              drop-shadow(0 2px 7px rgba(26, 115, 232, 0.28))
-              drop-shadow(0 0 12px rgba(26, 115, 232, 0.14));
+            transform: scale(1.1);
           }
         }
 
-        @keyframes vonuThinkingLight {
-          0%,
-          38% {
-            opacity: 0;
-            background-position: 135% 50%;
+        @keyframes vonuLogoBreathe {
+          0%, 100% {
+            transform: scale(0.94);
           }
-
-          48% {
-            opacity: 0.42;
-          }
-
-          66% {
-            opacity: 0;
-            background-position: -35% 50%;
-          }
-
-          100% {
-            opacity: 0;
-            background-position: -35% 50%;
+          50% {
+            transform: scale(1.02);
           }
         }
 
+        /* Un barrido con una curva bezier más elegante (rápido al principio, suave al final) */
+        @keyframes vonuLogoSweep {
+          0% {
+            background-position: 150% 50%;
+          }
+          40%, 100% {
+            background-position: -60% 50%;
+          }
+        }
+
+        /* Responsive */
         @media (max-width: 767px) {
-          .vonu-thinking-aura {
-            inset: -36%;
-            animation-duration: 2800ms;
-          }
-
-          .vonu-thinking-logo {
-            animation-duration: 2800ms;
-            filter:
-              drop-shadow(0 1px 4px rgba(26, 115, 232, 0.18))
-              drop-shadow(0 0 6px rgba(26, 115, 232, 0.08));
-          }
-
-          .vonu-thinking-light {
-            animation-duration: 3600ms;
+          .vonu-thinking-spectrum {
+            inset: -34%;
+            filter: blur(calc(var(--vonu-thinking-size) * 0.2));
           }
         }
 
+        /* Accesibilidad */
         @media (prefers-reduced-motion: reduce) {
+          .vonu-thinking-spectrum,
           .vonu-thinking-aura,
           .vonu-thinking-logo,
           .vonu-thinking-light {
             animation: none !important;
           }
-
-          .vonu-thinking-aura {
-            opacity: 0.38;
-          }
-
-          .vonu-thinking-logo {
-            opacity: 1;
-            transform: none;
-          }
-
-          .vonu-thinking-light {
-            opacity: 0;
-          }
+          .vonu-thinking-spectrum { opacity: 0.25; transform: scale(0.9); }
+          .vonu-thinking-aura { opacity: 0.4; transform: scale(1); }
+          .vonu-thinking-logo { transform: scale(1); }
+          .vonu-thinking-light { display: none; }
         }
       `}</style>
     </span>
