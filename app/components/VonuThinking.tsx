@@ -11,8 +11,8 @@ const LOGO_SRC = "/logo/vonu-cube-black.png";
 export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
   const uid = React.useId().replace(/:/g, "");
   const beamGradientId = `${uid}-beam-gradient`;
-  const glowFilterId = `${uid}-glow-filter`;
-  const softGlowFilterId = `${uid}-soft-glow-filter`;
+  const beamGlowId = `${uid}-beam-glow`;
+  const beamSoftGlowId = `${uid}-beam-soft-glow`;
 
   return (
     <span
@@ -49,7 +49,13 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
             <stop offset="100%" stopColor="#22c55e" />
           </linearGradient>
 
-          <filter id={glowFilterId} x="-200%" y="-200%" width="400%" height="400%">
+          <filter
+            id={beamGlowId}
+            x="-250%"
+            y="-250%"
+            width="500%"
+            height="500%"
+          >
             <feGaussianBlur stdDeviation="2.4" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
@@ -58,13 +64,13 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           </filter>
 
           <filter
-            id={softGlowFilterId}
-            x="-250%"
-            y="-250%"
-            width="500%"
-            height="500%"
+            id={beamSoftGlowId}
+            x="-300%"
+            y="-300%"
+            width="600%"
+            height="600%"
           >
-            <feGaussianBlur stdDeviation="4.8" result="blur" />
+            <feGaussianBlur stdDeviation="5.5" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
@@ -72,49 +78,55 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           </filter>
         </defs>
 
-        {/* Glow más grande y suave */}
-        <g filter={`url(#${softGlowFilterId})`} opacity="0.32">
-          <ellipse rx="14" ry="8.5" fill={`url(#${beamGradientId})`}>
-            <animateMotion
-              dur="1.85s"
-              repeatCount="indefinite"
-              rotate="auto"
-              path="M 18 16 C 24 34, 29 54, 37 73 C 40 80, 44 84, 49 84 C 54 84, 58 79, 63 69 C 72 49, 77 28, 86 12"
-            />
-          </ellipse>
-        </g>
+        {/*
+          Path pegado al contorno exterior de la V.
+          Si luego queremos afinar aún más, lo podremos hacer,
+          pero esta versión ya evita pasar por el centro.
+        */}
 
-        {/* Haz principal */}
-        <g filter={`url(#${glowFilterId})`} opacity="0.98">
-          <ellipse rx="10.5" ry="4.8" fill={`url(#${beamGradientId})`}>
-            <animateMotion
-              dur="1.85s"
-              repeatCount="indefinite"
-              rotate="auto"
-              path="M 18 16 C 24 34, 29 54, 37 73 C 40 80, 44 84, 49 84 C 54 84, 58 79, 63 69 C 72 49, 77 28, 86 12"
-            />
-          </ellipse>
+        {/* Glow grande y suave */}
+        <path
+          className="beam beam-soft"
+          d="M 15 15
+             C 18 25, 20 37, 23 49
+             C 26 63, 29 75, 36 83
+             C 40 87, 45 88, 50 86
+             C 58 83, 64 72, 69 59
+             C 75 44, 79 28, 86 13"
+          pathLength="100"
+          fill="none"
+          stroke={`url(#${beamGradientId})`}
+          filter={`url(#${beamSoftGlowId})`}
+        />
 
-          <ellipse rx="8.2" ry="3.9" fill={`url(#${beamGradientId})`} opacity="0.72">
-            <animateMotion
-              dur="1.85s"
-              begin="-0.10s"
-              repeatCount="indefinite"
-              rotate="auto"
-              path="M 18 16 C 24 34, 29 54, 37 73 C 40 80, 44 84, 49 84 C 54 84, 58 79, 63 69 C 72 49, 77 28, 86 12"
-            />
-          </ellipse>
+        {/* Haz principal brillante */}
+        <path
+          className="beam beam-main"
+          d="M 15 15
+             C 18 25, 20 37, 23 49
+             C 26 63, 29 75, 36 83
+             C 40 87, 45 88, 50 86
+             C 58 83, 64 72, 69 59
+             C 75 44, 79 28, 86 13"
+          pathLength="100"
+          fill="none"
+          stroke={`url(#${beamGradientId})`}
+          filter={`url(#${beamGlowId})`}
+        />
 
-          <ellipse rx="6" ry="2.9" fill={`url(#${beamGradientId})`} opacity="0.50">
-            <animateMotion
-              dur="1.85s"
-              begin="-0.18s"
-              repeatCount="indefinite"
-              rotate="auto"
-              path="M 18 16 C 24 34, 29 54, 37 73 C 40 80, 44 84, 49 84 C 54 84, 58 79, 63 69 C 72 49, 77 28, 86 12"
-            />
-          </ellipse>
-        </g>
+        {/* Núcleo más definido */}
+        <path
+          className="beam beam-core"
+          d="M 15 15
+             C 18 25, 20 37, 23 49
+             C 26 63, 29 75, 36 83
+             C 40 87, 45 88, 50 86
+             C 58 83, 64 72, 69 59
+             C 75 44, 79 28, 86 13"
+          pathLength="100"
+          fill="none"
+          stroke={`url(#${beamGradientId})`}
+        />
       </svg>
 
       <span className="vonu-thinking-sheen" />
@@ -135,17 +147,17 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
 
         .vonu-thinking-aura {
           position: absolute;
-          inset: -28%;
+          inset: -30%;
           border-radius: 999px;
           z-index: 0;
           background: radial-gradient(
             circle,
-            rgba(59, 130, 246, 0.18) 0%,
-            rgba(59, 130, 246, 0.09) 38%,
-            rgba(59, 130, 246, 0.03) 56%,
-            rgba(59, 130, 246, 0) 76%
+            rgba(59, 130, 246, 0.20) 0%,
+            rgba(59, 130, 246, 0.10) 38%,
+            rgba(59, 130, 246, 0.03) 58%,
+            rgba(59, 130, 246, 0) 78%
           );
-          filter: blur(calc(var(--vonu-thinking-size) * 0.10));
+          filter: blur(calc(var(--vonu-thinking-size) * 0.12));
           opacity: 0.72;
           animation: vonuAuraPulse 1900ms ease-in-out infinite;
           will-change: transform, opacity;
@@ -163,17 +175,17 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           transform: translateX(1px) scale(0.96);
           filter:
             drop-shadow(0 1px 2px rgba(15, 23, 42, 0.08))
-            drop-shadow(0 0 6px rgba(59, 130, 246, 0.10));
+            drop-shadow(0 0 7px rgba(59, 130, 246, 0.12));
           animation: vonuLogoPulse 1900ms ease-in-out infinite;
           will-change: transform, opacity, filter;
         }
 
         .vonu-thinking-beam-layer {
           position: absolute;
-          inset: -2%;
+          inset: -3%;
           z-index: 2;
-          overflow: visible;
           pointer-events: none;
+          overflow: visible;
           transform: translateX(1px) scale(1.02);
 
           -webkit-mask-image: var(--vonu-thinking-logo);
@@ -184,6 +196,36 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           mask-size: contain;
           -webkit-mask-position: calc(50% + 1px) 50%;
           mask-position: calc(50% + 1px) 50%;
+        }
+
+        .beam {
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          fill: none;
+        }
+
+        .beam-soft {
+          stroke-width: 13;
+          opacity: 0.55;
+          stroke-dasharray: 24 130;
+          stroke-dashoffset: 124;
+          animation: vonuBeamTravel 1700ms linear infinite;
+        }
+
+        .beam-main {
+          stroke-width: 7.2;
+          opacity: 1;
+          stroke-dasharray: 17 130;
+          stroke-dashoffset: 117;
+          animation: vonuBeamTravel 1700ms linear infinite;
+        }
+
+        .beam-core {
+          stroke-width: 4.6;
+          opacity: 0.98;
+          stroke-dasharray: 11 130;
+          stroke-dashoffset: 111;
+          animation: vonuBeamTravel 1700ms linear infinite;
         }
 
         .vonu-thinking-sheen {
@@ -215,10 +257,19 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           will-change: opacity, background-position;
         }
 
+        @keyframes vonuBeamTravel {
+          from {
+            stroke-dashoffset: 124;
+          }
+          to {
+            stroke-dashoffset: 0;
+          }
+        }
+
         @keyframes vonuAuraPulse {
           0%,
           100% {
-            opacity: 0.54;
+            opacity: 0.56;
             transform: scale(0.94);
           }
 
@@ -235,7 +286,7 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
             transform: translateX(1px) scale(0.95);
             filter:
               drop-shadow(0 1px 2px rgba(15, 23, 42, 0.08))
-              drop-shadow(0 0 6px rgba(59, 130, 246, 0.10));
+              drop-shadow(0 0 7px rgba(59, 130, 246, 0.12));
           }
 
           50% {
@@ -243,7 +294,7 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
             transform: translateX(1px) scale(1.01);
             filter:
               drop-shadow(0 2px 4px rgba(15, 23, 42, 0.10))
-              drop-shadow(0 0 10px rgba(59, 130, 246, 0.18));
+              drop-shadow(0 0 12px rgba(59, 130, 246, 0.20));
           }
         }
 
@@ -272,11 +323,23 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
         @media (max-width: 767px) {
           .vonu-thinking-aura {
             inset: -22%;
-            opacity: 0.62;
+            opacity: 0.64;
           }
 
           .vonu-thinking-beam-layer {
-            inset: -1%;
+            inset: -2%;
+          }
+
+          .beam-soft {
+            stroke-width: 11.5;
+          }
+
+          .beam-main {
+            stroke-width: 6.4;
+          }
+
+          .beam-core {
+            stroke-width: 4.1;
           }
         }
 
@@ -285,6 +348,13 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           .vonu-thinking-logo-base,
           .vonu-thinking-sheen {
             animation: none !important;
+          }
+
+          .beam-soft,
+          .beam-main,
+          .beam-core {
+            animation: none !important;
+            stroke-dashoffset: 46;
           }
 
           .vonu-thinking-aura {
