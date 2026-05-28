@@ -105,8 +105,8 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           flex: 0 0 auto;
           isolation: isolate;
           overflow: visible;
-          /* AJUSTE SOLICITADO: Desplaza todo el componente un pelín a la derecha y abajo */
-          transform: translate3d(1.5px, 1.5px, 0);
+          /* AJUSTE FINAL SOLICITADO: Desplaza todo el componente un pelito más (un pixel más) a la derecha y abajo */
+          transform: translate3d(2.5px, 2.5px, 0);
         }
 
         .vonu-thinking-aura {
