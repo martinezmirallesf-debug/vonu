@@ -4,236 +4,373 @@ import React from "react";
 
 type VonuThinkingProps = {
   size?: number;
-  isThinking?: boolean;
 };
 
-const LOGO_SRC = "/logo/vonu-cube-blue.png";
-// Usamos el archivo que nos has indicado para la máscara de contracción
-const THINKING_LOGO_SRC = "/logo/vonu-thinking-logo.png";
+const LOGO_SRC = "/logo/vonu-cube-black.png";
 
-export default function AdvancedVonuThinking({ 
-  size = 32,
-  isThinking = true 
-}: VonuThinkingProps) {
+export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
   return (
     <span
-      className={`vonu-container ${isThinking ? "is-thinking" : "is-fading-out"}`}
+      className="vonu-thinking"
       style={
         {
-          "--v-size": `${size}px`,
-          "--v-logo": `url("${LOGO_SRC}")`,
-          "--v-thinking-logo": `url("${THINKING_LOGO_SRC}")`,
-          "--v-offset-x": "4px", 
-          "--v-offset-y": "6px", 
+          "--vonu-thinking-size": `${size}px`,
+          "--vonu-thinking-logo": `url("${LOGO_SRC}")`,
         } as React.CSSProperties
       }
       aria-hidden="true"
     >
-      <span className="vonu-presence">
-        
-        {/* ENVOLTORIO DE EFECTOS: Ejecuta la compresión y cambio de máscara de tu imagen */}
-        <span className="vonu-effects-wrapper">
-          {/* NÚCLEO BIOMÓRFICO */}
-          <span className="vonu-plasma vonu-plasma-1" />
-          <span className="vonu-plasma vonu-plasma-2" />
-          <span className="vonu-plasma vonu-plasma-3" />
+      <span className="vonu-thinking-blob vonu-thinking-blob-a" />
+      <span className="vonu-thinking-blob vonu-thinking-blob-b" />
+      <span className="vonu-thinking-blob vonu-thinking-blob-c" />
 
-          {/* AURA CUÁNTICA */}
-          <span className="vonu-quantum-aura" />
-        </span>
-
-        {/* CONTENEDOR DEL LOGO GRÁFICO */}
-        <span className="vonu-logo-wrapper">
-          <span className="vonu-logo-graphic" />
-          <span className="vonu-logo-chromatic" />
-        </span>
-
-      </span>
+      <span className="vonu-thinking-ring" />
+      <span className="vonu-thinking-aura" />
+      <span className="vonu-thinking-logo" />
+      <span className="vonu-thinking-sheen" />
 
       <style jsx>{`
-        .vonu-container {
+        .vonu-thinking {
           position: relative;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: var(--v-size);
-          height: var(--v-size);
+          width: var(--vonu-thinking-size);
+          height: var(--vonu-thinking-size);
           flex: 0 0 auto;
-          transform: translateZ(0) translate(var(--v-offset-x), var(--v-offset-y));
           isolation: isolate;
+          transform: translateZ(0);
+          contain: layout paint;
         }
 
-        .vonu-presence {
-          position: relative;
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          animation: vonuPresenceIn 600ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
-          will-change: opacity, transform;
-        }
-
-        /* --- 1. ENVOLTORIO DE EFECTOS (PLASMA DIFUMINADO ORIGINAL) --- */
-        .vonu-effects-wrapper {
+        .vonu-thinking-blob {
           position: absolute;
-          inset: -60%; 
-          pointer-events: none;
-          opacity: 1;
-          /* Transición síncrona súper fluida para la metamorfosis de la imagen */
-          transition: 
-            opacity 900ms cubic-bezier(0.4, 0, 0.2, 1), 
-            transform 950ms cubic-bezier(0.34, 1.56, 0.64, 1), /* Curva elástica para la contracción */
-            filter 900ms ease-in-out;
-          
-          /* En reposo/pensando mantiene los bordes muy suaves y transparentes */
-          -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 25%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0) 85%);
-          mask-image: radial-gradient(circle, rgba(0,0,0,1) 25%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0) 85%);
-          filter: blur(0px);
+          inset: -54%;
+          border-radius: 999px;
+          opacity: 0.55;
+          filter: blur(calc(var(--vonu-thinking-size) * 0.28));
+          transform-origin: center;
+          will-change: transform, opacity;
+          z-index: 0;
         }
 
-        /* --- SECUENCIA DE CONTRACCIÓN DE TU IMAGEN (FADE OUT) --- */
-        .is-fading-out .vonu-effects-wrapper {
-          opacity: 0 !important;
-          /* Secuencia 1 y 2: Se va encogiendo físicamente buscando la escala del logo */
-          transform: scale(0.45) rotate(-5deg) !important; 
-          
-          /* Secuencia 3: Condensamos el blur para que deje de ser abstracto y tome nitidez */
-          filter: blur(1px) !important;
+        .vonu-thinking-blob-a {
+          background:
+            radial-gradient(
+              circle at 34% 34%,
+              rgba(37, 99, 235, 0.42) 0%,
+              rgba(37, 99, 235, 0.18) 34%,
+              rgba(37, 99, 235, 0) 68%
+            );
+          animation: vonuBlobA 4200ms ease-in-out infinite;
+        }
 
-          /* Secuencia final: El fluido es absorbido adoptando la silueta de vonu-thinking-logo */
-          -webkit-mask-image: var(--v-thinking-logo) !important;
-          mask-image: var(--v-thinking-logo) !important;
-          -webkit-mask-size: contain;
-          mask-size: contain;
+        .vonu-thinking-blob-b {
+          background:
+            radial-gradient(
+              circle at 68% 40%,
+              rgba(16, 185, 129, 0.32) 0%,
+              rgba(16, 185, 129, 0.13) 36%,
+              rgba(16, 185, 129, 0) 70%
+            );
+          animation: vonuBlobB 5200ms ease-in-out infinite;
+        }
+
+        .vonu-thinking-blob-c {
+          background:
+            radial-gradient(
+              circle at 48% 70%,
+              rgba(245, 158, 11, 0.28) 0%,
+              rgba(244, 63, 94, 0.13) 42%,
+              rgba(244, 63, 94, 0) 72%
+            );
+          animation: vonuBlobC 6100ms ease-in-out infinite;
+        }
+
+        .vonu-thinking-ring {
+          position: absolute;
+          inset: -30%;
+          border-radius: 999px;
+          background:
+            conic-gradient(
+              from 160deg,
+              rgba(37, 99, 235, 0) 0deg,
+              rgba(37, 99, 235, 0.34) 54deg,
+              rgba(16, 185, 129, 0.24) 116deg,
+              rgba(245, 158, 11, 0.20) 184deg,
+              rgba(244, 63, 94, 0.18) 252deg,
+              rgba(37, 99, 235, 0.28) 318deg,
+              rgba(37, 99, 235, 0) 360deg
+            );
+          filter: blur(calc(var(--vonu-thinking-size) * 0.12));
+          opacity: 0.28;
+          animation: vonuRingTurn 7200ms linear infinite;
+          will-change: transform, opacity;
+          z-index: 1;
+        }
+
+        .vonu-thinking-aura {
+          position: absolute;
+          inset: -18%;
+          border-radius: 999px;
+          background:
+            radial-gradient(
+              circle,
+              rgba(255, 255, 255, 0.88) 0%,
+              rgba(255, 255, 255, 0.46) 32%,
+              rgba(37, 99, 235, 0.12) 54%,
+              rgba(37, 99, 235, 0) 76%
+            );
+          opacity: 0.74;
+          animation: vonuAuraBreathe 2600ms ease-in-out infinite;
+          will-change: transform, opacity;
+          z-index: 2;
+        }
+
+        .vonu-thinking-logo {
+          position: absolute;
+          inset: 0;
+          background-image: var(--vonu-thinking-logo);
+          background-repeat: no-repeat;
+          background-position: center;
+          background-size: contain;
+          opacity: 0.98;
+          transform: scale(0.94);
+          filter:
+            drop-shadow(0 1px 3px rgba(15, 23, 42, 0.10))
+            drop-shadow(0 0 10px rgba(37, 99, 235, 0.18));
+          animation: vonuLogoPulse 2600ms cubic-bezier(0.22, 1, 0.36, 1) infinite;
+          will-change: transform, filter, opacity;
+          z-index: 3;
+        }
+
+        .vonu-thinking-sheen {
+          position: absolute;
+          inset: -1%;
+          background:
+            linear-gradient(
+              118deg,
+              rgba(255, 255, 255, 0) 10%,
+              rgba(255, 255, 255, 0.12) 31%,
+              rgba(255, 255, 255, 0.78) 46%,
+              rgba(255, 255, 255, 0.18) 62%,
+              rgba(255, 255, 255, 0) 84%
+            );
+          background-size: 280% 280%;
+          background-position: 140% 50%;
+          -webkit-mask-image: var(--vonu-thinking-logo);
+          mask-image: var(--vonu-thinking-logo);
           -webkit-mask-repeat: no-repeat;
           mask-repeat: no-repeat;
           -webkit-mask-position: center;
           mask-position: center;
-        }
-
-        /* Desvanecimiento del canal cromático secundario */
-        .vonu-logo-chromatic {
-          transition: opacity 500ms ease;
-        }
-        .is-fading-out .vonu-logo-chromatic {
-          opacity: 0 !important;
-        }
-
-        /* --- 2. ESTABILIZACIÓN ASENTADA DEL LOGO --- */
-        .vonu-logo-wrapper {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          will-change: transform;
-          z-index: 5;
-        }
-
-        .is-thinking .vonu-logo-wrapper {
-          animation: logoFloat 3500ms ease-in-out infinite;
-        }
-        
-        .is-fading-out .vonu-logo-wrapper {
-          /* El logo frena limpiamente su balanceo y se clava en el sitio */
-          transition: transform 950ms cubic-bezier(0.25, 1, 0.5, 1);
-          transform: translateY(0) scale(1);
-        }
-
-        /* --- LÓGICA DE PLASMAS --- */
-        .vonu-plasma {
-          position: absolute;
-          inset: 0; 
-          border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
-          filter: blur(calc(var(--v-size) * 0.3)); 
-          mix-blend-mode: screen;
-          will-change: transform, border-radius;
-        }
-
-        .vonu-plasma-1 {
-          background: conic-gradient(from 0deg, #4285f4, #1a73e8, transparent, #4285f4);
-          animation: morphFluid 7000ms ease-in-out infinite alternate, rotateFluid 11000ms linear infinite;
-          opacity: 0.55;
-        }
-
-        .vonu-plasma-2 {
-          background: conic-gradient(from 120deg, #34a853, #00f2fe, transparent, #34a853);
-          animation: morphFluid 5000ms ease-in-out infinite alternate-reverse, rotateFluid 8000ms linear infinite reverse;
-          opacity: 0.45;
-          scale: 0.95;
-        }
-
-        .vonu-plasma-3 {
-          background: radial-gradient(circle, #ea4335 0%, #fbbc05 40%, transparent 70%);
-          animation: quantumPulse 3300ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
-          opacity: 0.35;
-        }
-
-        .vonu-quantum-aura {
-          position: absolute;
-          inset: 10%;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(26,115,232,0.18) 0%, rgba(0,242,254,0.06) 50%, transparent 100%);
-          animation: auraBreathe 4400ms ease-in-out infinite;
-          will-change: transform, opacity;
-        }
-
-        .vonu-logo-graphic {
-          position: absolute;
-          inset: 0;
-          background-image: var(--v-logo);
-          background-repeat: no-repeat;
-          background-position: center;
-          background-size: contain;
-          filter: drop-shadow(0 4px 12px rgba(26, 115, 232, 0.2));
-          z-index: 2;
-        }
-
-        .vonu-logo-chromatic {
-          position: absolute;
-          inset: -2px;
-          background-image: var(--v-logo);
-          background-repeat: no-repeat;
-          background-position: center;
-          background-size: contain;
-          mix-blend-mode: color-dodge;
+          -webkit-mask-size: contain;
+          mask-size: contain;
           opacity: 0;
-          filter: brightness(2) blur(1px);
-          animation: chromaticAberration 6000ms ease-in-out infinite;
-          z-index: 1;
+          mix-blend-mode: screen;
+          animation: vonuSheenSweep 3600ms ease-in-out infinite;
+          will-change: opacity, background-position;
+          z-index: 4;
         }
 
-        /* --- KEYFRAMES DE COMPORTAMIENTO --- */
-        @keyframes morphFluid {
-          0% { border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%; transform: scale(0.92); }
-          50% { border-radius: 70% 30% 52% 48% / 60% 40% 60% 40%; transform: scale(1.08) skewX(3deg); }
-          100% { border-radius: 50% 50% 30% 70% / 35% 65% 35% 65%; transform: scale(0.95) skewY(-2deg); }
+        @keyframes vonuBlobA {
+          0%,
+          100% {
+            transform: scale(0.82);
+            opacity: 0.22;
+          }
+
+          42% {
+            transform: scale(1.28);
+            opacity: 0.42;
+          }
+
+          70% {
+            transform: scale(1.08);
+            opacity: 0.32;
+          }
         }
 
-        @keyframes rotateFluid { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes quantumPulse { 0%, 100% { transform: scale(0.88); opacity: 0.25; } 50% { transform: scale(1.15); opacity: 0.5; } }
-        @keyframes auraBreathe { 0%, 100% { transform: scale(0.95); opacity: 0.4; } 50% { transform: scale(1.08); opacity: 0.8; } }
-        @keyframes logoFloat { 0%, 100% { transform: translateY(0) scale(0.96); } 50% { transform: translateY(-3%) scale(1.02); } }
-        
-        @keyframes chromaticAberration { 
-          0%, 100% { opacity: 0; transform: scale(1) rotate(0deg); }
-          30% { opacity: 0.7; transform: scale(1.04) translate(1px, -1px); filter: hue-rotate(90deg) brightness(2); }
-          35% { opacity: 0.2; transform: scale(0.98) translate(-1px, 1px); }
-          40% { opacity: 0.8; transform: scale(1.02) translate(0, 0); filter: hue-rotate(0deg) brightness(2.5); }
-          45% { opacity: 0; transform: scale(1); }
+        @keyframes vonuBlobB {
+          0%,
+          100% {
+            transform: scale(0.76);
+            opacity: 0.16;
+          }
+
+          48% {
+            transform: scale(1.36);
+            opacity: 0.34;
+          }
+
+          76% {
+            transform: scale(1.02);
+            opacity: 0.24;
+          }
         }
 
-        @keyframes vonuPresenceIn {
-          0% { opacity: 0; transform: scale(0.8); }
-          100% { opacity: 1; transform: scale(1); }
+        @keyframes vonuBlobC {
+          0%,
+          100% {
+            transform: scale(0.72);
+            opacity: 0.12;
+          }
+
+          52% {
+            transform: scale(1.44);
+            opacity: 0.27;
+          }
+
+          80% {
+            transform: scale(1.04);
+            opacity: 0.18;
+          }
         }
 
-        /* Accesibilidad */
+        @keyframes vonuRingTurn {
+          0% {
+            transform: rotate(0deg) scale(0.94);
+            opacity: 0.22;
+          }
+
+          50% {
+            transform: rotate(180deg) scale(1.04);
+            opacity: 0.34;
+          }
+
+          100% {
+            transform: rotate(360deg) scale(0.94);
+            opacity: 0.22;
+          }
+        }
+
+        @keyframes vonuAuraBreathe {
+          0%,
+          100% {
+            transform: scale(0.92);
+            opacity: 0.48;
+          }
+
+          50% {
+            transform: scale(1.12);
+            opacity: 0.84;
+          }
+        }
+
+        @keyframes vonuLogoPulse {
+          0%,
+          100% {
+            opacity: 0.94;
+            transform: scale(0.91);
+            filter:
+              drop-shadow(0 1px 3px rgba(15, 23, 42, 0.08))
+              drop-shadow(0 0 7px rgba(37, 99, 235, 0.12));
+          }
+
+          46% {
+            opacity: 1;
+            transform: scale(1.04);
+            filter:
+              drop-shadow(0 2px 6px rgba(15, 23, 42, 0.10))
+              drop-shadow(0 0 16px rgba(37, 99, 235, 0.26));
+          }
+
+          64% {
+            opacity: 1;
+            transform: scale(0.99);
+          }
+        }
+
+        @keyframes vonuSheenSweep {
+          0%,
+          42% {
+            opacity: 0;
+            background-position: 140% 50%;
+          }
+
+          52% {
+            opacity: 0.52;
+          }
+
+          68% {
+            opacity: 0;
+            background-position: -38% 50%;
+          }
+
+          100% {
+            opacity: 0;
+            background-position: -38% 50%;
+          }
+        }
+
+        @media (max-width: 767px) {
+          .vonu-thinking-blob {
+            inset: -44%;
+            filter: blur(calc(var(--vonu-thinking-size) * 0.22));
+            opacity: 0.38;
+          }
+
+          .vonu-thinking-ring {
+            inset: -24%;
+            opacity: 0.22;
+            filter: blur(calc(var(--vonu-thinking-size) * 0.10));
+            animation-duration: 8200ms;
+          }
+
+          .vonu-thinking-aura {
+            inset: -14%;
+            animation-duration: 3100ms;
+          }
+
+          .vonu-thinking-logo {
+            animation-duration: 3000ms;
+          }
+
+          .vonu-thinking-sheen {
+            animation-duration: 4200ms;
+          }
+        }
+
         @media (prefers-reduced-motion: reduce) {
-          .vonu-presence { animation: none !important; opacity: 1; transform: scale(1); }
-          .vonu-effects-wrapper { display: none; }
-          .is-thinking .vonu-logo-wrapper { animation: none !important; }
+          .vonu-thinking-blob,
+          .vonu-thinking-ring,
+          .vonu-thinking-aura,
+          .vonu-thinking-logo,
+          .vonu-thinking-sheen {
+            animation: none !important;
+          }
+
+          .vonu-thinking-blob-a {
+            opacity: 0.18;
+            transform: scale(1.05);
+          }
+
+          .vonu-thinking-blob-b {
+            opacity: 0.14;
+            transform: scale(1);
+          }
+
+          .vonu-thinking-blob-c {
+            opacity: 0.10;
+            transform: scale(0.96);
+          }
+
+          .vonu-thinking-ring {
+            opacity: 0.20;
+          }
+
+          .vonu-thinking-aura {
+            opacity: 0.42;
+          }
+
+          .vonu-thinking-logo {
+            transform: scale(0.96);
+            opacity: 1;
+          }
+
+          .vonu-thinking-sheen {
+            opacity: 0;
+          }
         }
       `}</style>
     </span>
