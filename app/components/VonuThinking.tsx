@@ -11,10 +11,10 @@ const LOGO_SRC = "/logo/vonu-cube-black.png";
 export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
   const uid = React.useId().replace(/:/g, "");
   const beamGradientId = `${uid}-beam-gradient`;
-  const beamGlowId = `${uid}-beam-glow`;
+  const sparkGlowId = `${uid}-spark-glow`;
 
-  // Path simétrico optimizado en una matriz de 100x100 que calca el contorno de una "V" estilizada.
-  const vContourPath = "M 18,15 L 43,76 C 46,83 54,83 57,76 L 82,15";
+  // Path curvado de precisión que emula exactamente la silueta exterior e interior del logo VonuAI
+  const vonuLogoPath = "M 16,27 C 22,27 28,34 33,45 C 39,59 44,73 50,73 C 54,73 56,69 58,63 L 84,27 C 78,28 72,35 67,46 C 61,58 56,66 52,62 L 31,33 C 26,29 21,27 16,27 Z";
 
   return (
     <span
@@ -27,13 +27,13 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
       }
       aria-hidden="true"
     >
-      {/* Fondo de apoyo sutil sin saturar */}
+      {/* Aura sutil de fondo */}
       <span className="vonu-thinking-aura" />
       
-      {/* Isotipo Base Limpio */}
+      {/* Isotipo Oficial VonuAI */}
       <span className="vonu-thinking-logo-base" />
 
-      {/* Capa de Energía: Capas SVG superpuestas para intensidad lumínica y estela */}
+      {/* Capa del haz de luz y destello camaleónico */}
       <svg
         className="vonu-thinking-beam-layer"
         viewBox="0 0 100 100"
@@ -41,67 +41,54 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
         aria-hidden="true"
       >
         <defs>
-          {/* Gradiente de alto contraste con los 5 colores solicitados */}
-          <linearGradient
-            id={beamGradientId}
-            x1="0%"
-            y1="0%"
-            x2="100%"
-            y2="100%"
-          >
-            <stop offset="0%" stopColor="#ef4444" />    {/* Rojo */}
-            <stop offset="25%" stopColor="#f97316" />   {/* Naranja */}
-            <stop offset="50%" stopColor="#22c55e" />   {/* Verde */}
-            <stop offset="75%" stopColor="#facc15" />   {/* Amarillo */}
-            <stop offset="100%" stopColor="#3b82f6" />  {/* Azul */}
+          {/* Gradiente cromático continuo (Rojo -> Naranja -> Verde -> Amarillo -> Azul) */}
+          <linearGradient id={beamGradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#ef4444" />
+            <stop offset="25%" stopColor="#f97316" />
+            <stop offset="50%" stopColor="#22c55e" />
+            <stop offset="75%" stopColor="#facc15" />
+            <stop offset="100%" stopColor="#3b82f6" />
           </linearGradient>
 
-          {/* Filtro de brillo avanzado de alto rendimiento */}
-          <filter
-            id={beamGlowId}
-            x="-50%"
-            y="-50%"
-            width="200%"
-            height="200%"
-          >
-            <feGaussianBlur stdDeviation="5" result="blur" />
-            <feComponentTransfer in="blur" result="boost">
-              <feFuncA type="linear" slope="1.8" />
-            </feComponentTransfer>
+          {/* Filtro premium de destello: expande el brillo e incrementa la saturación del color */}
+          <filter id={sparkGlowId} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3.5" result="blur1" />
+            <feGaussianBlur stdDeviation="1.2" result="blur2" />
             <feMerge>
-              <feMergeNode in="boost" />
+              <feMergeNode in="blur1" />
+              <feMergeNode in="blur2" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
         </defs>
 
-        {/* 1. Resplandor Exterior Suave (Estela de energía amplia) */}
+        {/* 1. Estela de color trasera: cambia de tono según su posición en el gradiente */}
         <path
-          className="beam beam-glow"
-          d={vContourPath}
-          pathLength="100"
-          stroke={`url(#${beamGradientId})`}
-          filter={`url(#${beamGlowId})`}
-        />
-
-        {/* 2. Haz de Luz Principal (El cuerpo del cometa) */}
-        <path
-          className="beam beam-main"
-          d={vContourPath}
+          className="spark spark-trail"
+          d={vonuLogoPath}
           pathLength="100"
           stroke={`url(#${beamGradientId})`}
         />
 
-        {/* 3. Núcleo Incandescente (Efecto premium hiper-brillante central) */}
+        {/* 2. El punto hiperbrillante: un segmento muy corto con un glow masivo */}
         <path
-          className="beam beam-core"
-          d={vContourPath}
+          className="spark spark-flare"
+          d={vonuLogoPath}
+          pathLength="100"
+          stroke={`url(#${beamGradientId})`}
+          filter={`url(#${sparkGlowId})`}
+        />
+
+        {/* 3. Núcleo incandescente: el centro blanco puro que le da el aspecto de "estrella/cometa" */}
+        <path
+          className="spark spark-core"
+          d={vonuLogoPath}
           pathLength="100"
           stroke="#ffffff"
         />
       </svg>
 
-      {/* Destello metálico que barre el logo en sincronía */}
+      {/* Brillo de barrido interno opcional */}
       <span className="vonu-thinking-sheen" />
 
       <style jsx>{`
@@ -115,21 +102,20 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           flex: 0 0 auto;
           isolation: isolate;
           overflow: visible;
-          /* Corrección de alineación del icono chat + 1px derecho */
-          transform: translate3d(1px, 0, 0); 
+          /* Desplazamiento de 1px a la derecha solicitado para balancear el chat */
+          transform: translate3d(1px, 0, 0);
         }
 
         .vonu-thinking-aura {
           position: absolute;
-          inset: -15%;
+          inset: -10%;
           border-radius: 50%;
           z-index: 0;
           background: radial-gradient(
             circle,
-            rgba(59, 130, 246, 0.15) 0%,
+            rgba(59, 130, 246, 0.12) 0%,
             rgba(59, 130, 246, 0) 70%
           );
-          opacity: 0.6;
           mix-blend-mode: plus-lighter;
         }
 
@@ -141,44 +127,48 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           background-repeat: no-repeat;
           background-size: contain;
           background-position: center;
-          opacity: 1;
-          filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.16));
         }
 
         .vonu-thinking-beam-layer {
           position: absolute;
-          inset: -20%; 
-          width: 140%;
-          height: 140%;
+          /* Dejamos margen exterior para que el punto brillante refleje fuera del contorno libremente */
+          inset: -30%;
+          width: 160%;
+          height: 160%;
           z-index: 2;
           pointer-events: none;
           overflow: visible;
           mix-blend-mode: screen;
         }
 
-        .beam {
+        .spark {
           fill: none;
           stroke-linecap: round;
           stroke-linejoin: round;
           will-change: stroke-dashoffset;
-          animation: vonuBeamMotion 1800ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          /* Ajuste de velocidad: 2.2 segundos para mantener el tono premium e hipnótico */
+          animation: vonuSparkFlight 2200ms linear infinite;
         }
 
-        .beam-glow {
-          stroke-width: 10;
-          stroke-dasharray: 25 100; 
-          opacity: 0.65;
+        /* Estela sutil que va dejando el punto de luz */
+        .spark-trail {
+          stroke-width: 3.5;
+          stroke-dasharray: 12 88;
+          opacity: 0.45;
         }
 
-        .beam-main {
+        /* El haz/cometa brillante principal */
+        .spark-flare {
           stroke-width: 5;
-          stroke-dasharray: 20 100;
-          opacity: 0.95;
-          }
+          /* Un dash corto (6 sobre 100) crea el efecto de un "punto" viajando en lugar de una línea larga */
+          stroke-dasharray: 6 94;
+          opacity: 1;
+        }
 
-        .beam-core {
-          stroke-width: 2;
-          stroke-dasharray: 10 100;
+        /* El núcleo blanco superbrillante */
+        .spark-core {
+          stroke-width: 1.8;
+          stroke-dasharray: 3 97;
           opacity: 1;
         }
 
@@ -189,9 +179,9 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           pointer-events: none;
           background: linear-gradient(
             135deg,
-            rgba(255, 255, 255, 0) 30%,
-            rgba(255, 255, 255, 0.4) 50%,
-            rgba(255, 255, 255, 0) 70%
+            rgba(255, 255, 255, 0) 40%,
+            rgba(255, 255, 255, 0.25) 50%,
+            rgba(255, 255, 255, 0) 60%
           );
           background-size: 300% 300%;
           background-position: 150% 50%;
@@ -201,20 +191,21 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           -webkit-mask-size: contain;
           -webkit-mask-position: center;
           mix-blend-mode: overlay;
-          animation: vonuSheenSweep 3600ms ease-in-out infinite;
+          animation: vonuSheenSweep 4000ms ease-in-out infinite;
         }
 
-        @keyframes vonuBeamMotion {
+        /* Animación cíclica perfecta del punto de luz */
+        @keyframes vonuSparkFlight {
           0% {
-            stroke-dashoffset: 125;
+            stroke-dashoffset: 100;
           }
           100% {
-            stroke-dashoffset: -25;
+            stroke-dashoffset: 0;
           }
         }
 
         @keyframes vonuSheenSweep {
-          0%, 60% {
+          0%, 70% {
             background-position: 150% 50%;
           }
           100% {
@@ -222,30 +213,28 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           }
         }
 
+        /* Optimización de hardware para pantallas pequeñas / móviles */
         @media (max-width: 768px) {
           .vonu-thinking-beam-layer {
-            inset: -10%;
-            width: 120%;
-            height: 120%;
+            inset: -20%;
+            width: 140%;
+            height: 140%;
           }
-          .beam-glow {
-            stroke-width: 8;
-            filter: none; 
-            opacity: 0.4;
-          }
-          .beam-main {
-            stroke-width: 4.5;
+          .spark-flare {
+            stroke-width: 4;
+            filter: drop-shadow(0 0 4px rgba(255,255,255,0.8));
           }
         }
 
+        /* Accesibilidad completa */
         @media (prefers-reduced-motion: reduce) {
-          .beam, .vonu-thinking-sheen {
+          .spark, .vonu-thinking-sheen {
             animation: none !important;
           }
-          .beam-glow, .beam-main, .beam-core {
-            stroke-dashoffset: 50; 
+          .spark-flare, .spark-core, .spark-trail {
+            /* Se detiene fijando el punto brillante justo en la curva inferior */
+            stroke-dashoffset: 38;
           }
-          .beam-glow { opacity: 0.3; }
         }
       `}</style>
     </span>
