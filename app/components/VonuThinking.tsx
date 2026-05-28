@@ -41,7 +41,7 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
         aria-hidden="true"
       >
         <defs>
-          {/* Gradiente cromático continuo (Rojo -> Naranja -> Verde -> Amarillo -> Azul) */}
+          {/* Gradiente cromático continuo para el cambio de color ambiental */}
           <linearGradient id={beamGradientId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#ef4444" />
             <stop offset="25%" stopColor="#f97316" />
@@ -50,19 +50,22 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
             <stop offset="100%" stopColor="#3b82f6" />
           </linearGradient>
 
-          {/* Filtro premium de destello: expande el brillo e incrementa la saturación del color */}
-          <filter id={sparkGlowId} x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3.5" result="blur1" />
-            <feGaussianBlur stdDeviation="1.2" result="blur2" />
+          {/* Filtro premium de súper destello: genera el resplandor de alta intensidad */}
+          <filter id={sparkGlowId} x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="6" result="bigBlur" />
+            <feGaussianBlur stdDeviation="1.5" result="intenseBlur" />
+            <feComponentTransfer in="bigBlur" result="boostGlow">
+              <feFuncA type="linear" slope="2.5" />
+            </feComponentTransfer>
             <feMerge>
-              <feMergeNode in="blur1" />
-              <feMergeNode in="blur2" />
+              <feMergeNode in="boostGlow" />
+              <feMergeNode in="intenseBlur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
         </defs>
 
-        {/* 1. Estela de color trasera: cambia de tono según su posición en el gradiente */}
+        {/* 1. Micro-estela trasera para evitar cortes abruptos de luz */}
         <path
           className="spark spark-trail"
           d={vonuLogoPath}
@@ -70,7 +73,7 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           stroke={`url(#${beamGradientId})`}
         />
 
-        {/* 2. El punto hiperbrillante: un segmento muy corto con un glow masivo */}
+        {/* 2. El punto de luz: Ahora híper concentrado con un glow envolvente */}
         <path
           className="spark spark-flare"
           d={vonuLogoPath}
@@ -79,7 +82,7 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           filter={`url(#${sparkGlowId})`}
         />
 
-        {/* 3. Núcleo incandescente: el centro blanco puro que le da el aspecto de "estrella/cometa" */}
+        {/* 3. Núcleo incandescente: Centro blanco puro, diminuto y súper brillante */}
         <path
           className="spark spark-core"
           d={vonuLogoPath}
@@ -102,8 +105,8 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           flex: 0 0 auto;
           isolation: isolate;
           overflow: visible;
-          /* Desplazamiento de 1px a la derecha solicitado para balancear el chat */
-          transform: translate3d(1px, 0, 0);
+          /* AJUSTE SOLICITADO: Desplaza todo el componente un pelín a la derecha y abajo */
+          transform: translate3d(1.5px, 1.5px, 0);
         }
 
         .vonu-thinking-aura {
@@ -131,10 +134,10 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
 
         .vonu-thinking-beam-layer {
           position: absolute;
-          /* Dejamos margen exterior para que el punto brillante refleje fuera del contorno libremente */
-          inset: -30%;
-          width: 160%;
-          height: 160%;
+          /* Ampliado el margen exterior para que el nuevo mega-glow no sufra recortes en las cajas contenedoras */
+          inset: -40%;
+          width: 180%;
+          height: 180%;
           z-index: 2;
           pointer-events: none;
           overflow: visible;
@@ -146,29 +149,28 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           stroke-linecap: round;
           stroke-linejoin: round;
           will-change: stroke-dashoffset;
-          /* Ajuste de velocidad: 2.2 segundos para mantener el tono premium e hipnótico */
           animation: vonuSparkFlight 2200ms linear infinite;
         }
 
-        /* Estela sutil que va dejando el punto de luz */
+        /* Estela ultracorta que evita el efecto gusano alargado */
         .spark-trail {
-          stroke-width: 3.5;
-          stroke-dasharray: 12 88;
-          opacity: 0.45;
+          stroke-width: 2.5;
+          stroke-dasharray: 4 96;
+          opacity: 0.35;
         }
 
-        /* El haz/cometa brillante principal */
+        /* El punto de luz principal: Ahora es una chispa esférica densa */
         .spark-flare {
-          stroke-width: 5;
-          /* Un dash corto (6 sobre 100) crea el efecto de un "punto" viajando en lugar de una línea larga */
-          stroke-dasharray: 6 94;
+          stroke-width: 6.5;
+          /* Al bajar a 1.5, la energía se concentra en un píxel esférico hiperbrillante */
+          stroke-dasharray: 1.5 98.5;
           opacity: 1;
         }
 
-        /* El núcleo blanco superbrillante */
+        /* Núcleo blanco del centro del orbe */
         .spark-core {
-          stroke-width: 1.8;
-          stroke-dasharray: 3 97;
+          stroke-width: 2.8;
+          stroke-dasharray: 0.1 99.9;
           opacity: 1;
         }
 
@@ -194,7 +196,6 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           animation: vonuSheenSweep 4000ms ease-in-out infinite;
         }
 
-        /* Animación cíclica perfecta del punto de luz */
         @keyframes vonuSparkFlight {
           0% {
             stroke-dashoffset: 100;
@@ -213,26 +214,23 @@ export default function VonuThinking({ size = 26 }: VonuThinkingProps) {
           }
         }
 
-        /* Optimización de hardware para pantallas pequeñas / móviles */
         @media (max-width: 768px) {
           .vonu-thinking-beam-layer {
-            inset: -20%;
-            width: 140%;
-            height: 140%;
+            inset: -30%;
+            width: 160%;
+            height: 160%;
           }
           .spark-flare {
-            stroke-width: 4;
-            filter: drop-shadow(0 0 4px rgba(255,255,255,0.8));
+            stroke-width: 5;
+            filter: drop-shadow(0 0 6px rgba(255,255,255,0.9));
           }
         }
 
-        /* Accesibilidad completa */
         @media (prefers-reduced-motion: reduce) {
           .spark, .vonu-thinking-sheen {
             animation: none !important;
           }
           .spark-flare, .spark-core, .spark-trail {
-            /* Se detiene fijando el punto brillante justo en la curva inferior */
             stroke-dashoffset: 38;
           }
         }
