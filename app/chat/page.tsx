@@ -6212,8 +6212,8 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 
 .vonu-dotmark-base,
 .vonu-dotmark-fill {
-  -webkit-mask: url("/logo/vonu-cube-black.png?v=1") center / contain no-repeat;
-  mask: url("/logo/vonu-cube-black.png?v=1") center / contain no-repeat;
+  -webkit-mask: url("/logo/vonu-cube-black.png?v=4?v=1") center / contain no-repeat;
+  mask: url("/logo/vonu-cube-black.png?v=4?v=1") center / contain no-repeat;
 }
 
 .vonu-dotmark-base {
@@ -6855,7 +6855,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   ].join(" ")}
 >
   <img
-    src="/logo/vonu-cube-black.png?v=3"
+    src="/logo/vonu-cube-black.png?v=4?v=3"
     alt="Vonu"
     className="block h-[24px] w-[24px] md:h-[26px] md:w-[26px] object-contain"
     draggable={false}

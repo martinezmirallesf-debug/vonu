@@ -123,7 +123,7 @@ const jsonLd = {
       name: "VonuAI",
       url: siteUrl,
       email: "hello@vonuai.com",
-      logo: `${siteUrl}/logo/vonu-cube-black.png`,
+      logo: `${siteUrl}/logo/vonu-cube-black.png?v=4`,
     },
     {
       "@type": "WebSite",
@@ -161,7 +161,7 @@ function LogoMark() {
   return (
     <div className="flex items-center gap-1">
       <img
-        src="/logo/vonu-cube-black.png"
+        src="/logo/vonu-cube-black.png?v=4"
         alt="VonuAI"
         className="h-[23px] w-[23px] object-contain"
       />
@@ -317,7 +317,7 @@ export default function HomePage() {
 
   <div className="flex items-start gap-3">
     <img
-      src="/logo/vonu-cube-black.png"
+      src="/logo/vonu-cube-black.png?v=4"
       alt=""
       className="mt-1 h-5 w-5 shrink-0 object-contain"
       aria-hidden="true"
