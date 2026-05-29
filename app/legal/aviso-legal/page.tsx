@@ -64,7 +64,7 @@ export default function AvisoLegalPage() {
             <strong>Email legal:</strong> legal@vonuai.com
           </li>
           <li>
-            <strong>Dominios asociados:</strong> vonuai.com y app.vonuai.com
+            <strong>Dominios asociados:</strong> vonuai.com y sus subdominios asociados
           </li>
         </ul>
 

@@ -828,11 +828,11 @@ export default function Page() {
   const [showContextualFileCard, setShowContextualFileCard] = useState(false);
 const [contextualFilePrompt, setContextualFilePrompt] = useState("");
 
-  // ✅ FIX: usar el origin real del navegador para evitar PKCE cross-domain (vonuai.com vs app.vonuai.com vs preview)
+  // ✅ FIX: usar el origin real del navegador para evitar problemas PKCE entre dominio principal y previews
   const SITE_URL =
     typeof window !== "undefined"
       ? window.location.origin.replace(/\/$/, "")
-      : ((process.env.NEXT_PUBLIC_SITE_URL as string | undefined) || "https://app.vonuai.com").replace(/\/$/, "");
+      : ((process.env.NEXT_PUBLIC_SITE_URL as string | undefined) || "https://vonuai.com").replace(/\/$/, "");
       function getAuthRedirectTo() {
   if (typeof window === "undefined") {
     return `${SITE_URL}/chat`;

@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 
 function getAppUrl(req: NextRequest) {
   // Prioridad:
-  // 1) NEXT_PUBLIC_APP_URL (ideal: https://app.vonuai.com)
+  // 1) NEXT_PUBLIC_APP_URL (ideal: https://vonuai.com)
   // 2) NEXT_PUBLIC_SITE_URL (si lo usas)
   // 3) Origin de la request (fallback útil para previews)
   // 4) localhost

@@ -71,7 +71,7 @@ export default function CookiesPage() {
             <strong>Email privacidad:</strong> privacy@vonuai.com
           </li>
           <li>
-            <strong>Dominios asociados:</strong> vonuai.com y app.vonuai.com
+            <strong>Dominios asociados:</strong> vonuai.com y sus subdominios asociados
           </li>
         </ul>
 
