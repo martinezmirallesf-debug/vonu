@@ -7059,7 +7059,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
     >
       <div className="ml-2 mr-3 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col">
         <div className="mb-1.5 md:mb-2 flex justify-start pl-0 md:pl-0">
-          <VonuThinking size={36} status="thinking" active />
+          <VonuThinking size={38} status="thinking" active />
         </div>
       </div>
     </div>
@@ -7091,7 +7091,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   return (
     <div className="mb-2 md:mb-2.5 flex justify-start pl-0 md:pl-0">
       <VonuThinking
-  size={36}
+  size={38}
   status={finalRiskStatus}
   active={false}
 />

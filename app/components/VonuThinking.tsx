@@ -50,21 +50,21 @@ export default function VonuThinking({
 
       <style jsx>{`
         .vonu-thinking {
-          position: relative;
-          display: inline-block;
-          width: calc(var(--vonu-thinking-size) * 2.28);
-          height: calc(var(--vonu-thinking-size) * 1.28);
-          flex: 0 0 auto;
-          overflow: visible;
-          transform: translateZ(0);
-        }
+  position: relative;
+  display: inline-block;
+  width: calc(var(--vonu-thinking-size) * 2.05);
+  height: calc(var(--vonu-thinking-size) * 1.24);
+  flex: 0 0 auto;
+  overflow: visible;
+  transform: translateZ(0);
+}
 
         .vonu-thinking-dot {
   position: absolute;
   left: 0;
   top: 50%;
-  width: calc(var(--vonu-thinking-size) * 0.40);
-  height: calc(var(--vonu-thinking-size) * 0.40);
+  width: calc(var(--vonu-thinking-size) * 0.44);
+  height: calc(var(--vonu-thinking-size) * 0.44);
   border-radius: 9999px;
   display: block;
   transform-origin: center;
@@ -89,12 +89,12 @@ export default function VonuThinking({
         }
 
         .is-static .dot-b {
-          transform: translate(calc(var(--vonu-thinking-size) * 0.84), -50%) scale(1);
+          transform: translate(calc(var(--vonu-thinking-size) * 0.74), -50%) scale(1);
           opacity: 1;
         }
 
         .is-static .dot-c {
-          transform: translate(calc(var(--vonu-thinking-size) * 1.68), -50%) scale(1);
+          transform: translate(calc(var(--vonu-thinking-size) * 1.48), -50%) scale(1);
           opacity: 1;
         }
 
@@ -126,12 +126,12 @@ export default function VonuThinking({
           }
 
           18% {
-            transform: translate(calc(var(--vonu-thinking-size) * 1.68), -50%) scale(1.02);
+            transform: translate(calc(var(--vonu-thinking-size) * 1.48), -50%) scale(1.02);
             opacity: 1;
           }
 
           36% {
-            transform: translate(calc(var(--vonu-thinking-size) * -0.12), -50%) scale(1.08);
+            transform: translate(calc(var(--vonu-thinking-size) * -0.04), -50%) scale(1.08);
             opacity: 1;
           }
 
@@ -141,7 +141,7 @@ export default function VonuThinking({
           }
 
           80% {
-            transform: translate(calc(var(--vonu-thinking-size) * 1.86), calc(var(--vonu-thinking-size) * 0.18)) scale(1.12);
+            transform: translate(calc(var(--vonu-thinking-size) * 1.58), calc(var(--vonu-thinking-size) * 0.16)) scale(1.12);
             opacity: 1;
           }
         }
@@ -149,7 +149,7 @@ export default function VonuThinking({
         @keyframes vonuDotB {
           0%,
           100% {
-            transform: translate(calc(var(--vonu-thinking-size) * 0.84), -50%) scale(1);
+            transform: translate(calc(var(--vonu-thinking-size) * 0.74), -50%) scale(1);
             opacity: 0.96;
           }
 
@@ -164,7 +164,7 @@ export default function VonuThinking({
           }
 
           58% {
-            transform: translate(calc(var(--vonu-thinking-size) * 1.58), calc(var(--vonu-thinking-size) * 0.22)) scale(1.08);
+            transform: translate(calc(var(--vonu-thinking-size) * 1.38), calc(var(--vonu-thinking-size) * 0.18)) scale(1.08);
             opacity: 0.98;
           }
 
@@ -177,7 +177,7 @@ export default function VonuThinking({
         @keyframes vonuDotC {
           0%,
           100% {
-            transform: translate(calc(var(--vonu-thinking-size) * 1.68), -50%) scale(1);
+            transform: translate(calc(var(--vonu-thinking-size) * 1.48), -50%) scale(1);
             opacity: 0.92;
           }
 
@@ -187,7 +187,7 @@ export default function VonuThinking({
           }
 
           36% {
-            transform: translate(calc(var(--vonu-thinking-size) * 1.80), -50%) scale(1.08);
+            transform: translate(calc(var(--vonu-thinking-size) * 1.54), -50%) scale(1.08);
             opacity: 1;
           }
 
@@ -197,23 +197,22 @@ export default function VonuThinking({
           }
 
           80% {
-            transform: translate(calc(var(--vonu-thinking-size) * -0.18), calc(var(--vonu-thinking-size) * 0.18)) scale(1.12);
+            transform: translate(calc(var(--vonu-thinking-size) * -0.08), calc(var(--vonu-thinking-size) * 0.16)) scale(1.12);
             opacity: 1;
           }
         }
 
         @media (max-width: 767px) {
-          .vonu-thinking {
-            width: calc(var(--vonu-thinking-size) * 2.16);
-            height: calc(var(--vonu-thinking-size) * 1.2);
-          }
+  .vonu-thinking {
+    width: calc(var(--vonu-thinking-size) * 1.98);
+    height: calc(var(--vonu-thinking-size) * 1.16);
+  }
 
-          .vonu-thinking-dot {
-  width: calc(var(--vonu-thinking-size) * 0.38);
-  height: calc(var(--vonu-thinking-size) * 0.38);
+  .vonu-thinking-dot {
+    width: calc(var(--vonu-thinking-size) * 0.42);
+    height: calc(var(--vonu-thinking-size) * 0.42);
+  }
 }
-        }
-
         @media (prefers-reduced-motion: reduce) {
           .is-active .dot-a,
           .is-active .dot-b,
