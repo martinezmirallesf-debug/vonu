@@ -119,88 +119,88 @@ export default function VonuThinking({
         */
 
         @keyframes vonuDotA {
-          0%,
-          100% {
-            transform: translate(0, -50%) scale(1);
-            opacity: 0.92;
-          }
+  0%,
+  100% {
+    transform: translate(0, -50%) scale(1);
+    opacity: 0.92;
+  }
 
-          18% {
-            transform: translate(calc(var(--vonu-thinking-size) * 1.48), -50%) scale(1.02);
-            opacity: 1;
-          }
+  18% {
+    transform: translate(calc(var(--vonu-thinking-size) * 1.48), -50%) scale(1.16);
+    opacity: 1;
+  }
 
-          36% {
-            transform: translate(calc(var(--vonu-thinking-size) * -0.04), -50%) scale(1.08);
-            opacity: 1;
-          }
+  36% {
+    transform: translate(calc(var(--vonu-thinking-size) * -0.04), -50%) scale(1.22);
+    opacity: 1;
+  }
 
-          58% {
-            transform: translate(calc(var(--vonu-thinking-size) * 0.84), calc(var(--vonu-thinking-size) * -0.98)) scale(1.04);
-            opacity: 0.96;
-          }
+  58% {
+    transform: translate(calc(var(--vonu-thinking-size) * 0.84), calc(var(--vonu-thinking-size) * -0.98)) scale(1.08);
+    opacity: 0.98;
+  }
 
-          80% {
-            transform: translate(calc(var(--vonu-thinking-size) * 1.58), calc(var(--vonu-thinking-size) * 0.16)) scale(1.12);
-            opacity: 1;
-          }
-        }
+  80% {
+    transform: translate(calc(var(--vonu-thinking-size) * 1.58), calc(var(--vonu-thinking-size) * 0.16)) scale(1.12);
+    opacity: 1;
+  }
+}
 
         @keyframes vonuDotB {
-          0%,
-          100% {
-            transform: translate(calc(var(--vonu-thinking-size) * 0.74), -50%) scale(1);
-            opacity: 0.96;
-          }
+  0%,
+  100% {
+    transform: translate(calc(var(--vonu-thinking-size) * 0.74), -50%) scale(1);
+    opacity: 0.96;
+  }
 
-          18% {
-            transform: translate(calc(var(--vonu-thinking-size) * 0.84), -50%) scale(1.16);
-            opacity: 1;
-          }
+  18% {
+    transform: translate(calc(var(--vonu-thinking-size) * 0.84), -50%) scale(1.16);
+    opacity: 1;
+  }
 
-          36% {
-            transform: translate(calc(var(--vonu-thinking-size) * 0.84), -50%) scale(1.22);
-            opacity: 1;
-          }
+  36% {
+    transform: translate(calc(var(--vonu-thinking-size) * 0.84), -50%) scale(1.22);
+    opacity: 1;
+  }
 
-          58% {
-            transform: translate(calc(var(--vonu-thinking-size) * 1.38), calc(var(--vonu-thinking-size) * 0.18)) scale(1.08);
-            opacity: 0.98;
-          }
+  58% {
+    transform: translate(calc(var(--vonu-thinking-size) * 1.38), calc(var(--vonu-thinking-size) * 0.18)) scale(1.08);
+    opacity: 0.98;
+  }
 
-          80% {
-            transform: translate(calc(var(--vonu-thinking-size) * 0.84), calc(var(--vonu-thinking-size) * -1.06)) scale(1.12);
-            opacity: 1;
-          }
-        }
+  80% {
+    transform: translate(calc(var(--vonu-thinking-size) * 0.84), calc(var(--vonu-thinking-size) * -1.06)) scale(1.12);
+    opacity: 1;
+  }
+}
 
         @keyframes vonuDotC {
-          0%,
-          100% {
-            transform: translate(calc(var(--vonu-thinking-size) * 1.48), -50%) scale(1);
-            opacity: 0.92;
-          }
+  0%,
+  100% {
+    transform: translate(calc(var(--vonu-thinking-size) * 1.48), -50%) scale(1);
+    opacity: 0.92;
+  }
 
-          18% {
-            transform: translate(0, -50%) scale(1.02);
-            opacity: 1;
-          }
+  18% {
+    transform: translate(0, -50%) scale(1.16);
+    opacity: 1;
+  }
 
-          36% {
-            transform: translate(calc(var(--vonu-thinking-size) * 1.54), -50%) scale(1.08);
-            opacity: 1;
-          }
+  36% {
+    transform: translate(calc(var(--vonu-thinking-size) * 1.54), -50%) scale(1.22);
+    opacity: 1;
+  }
 
-          58% {
-            transform: translate(calc(var(--vonu-thinking-size) * 0.10), calc(var(--vonu-thinking-size) * 0.22)) scale(1.08);
-            opacity: 0.98;
-          }
+  58% {
+    transform: translate(calc(var(--vonu-thinking-size) * 0.10), calc(var(--vonu-thinking-size) * 0.22)) scale(1.08);
+    opacity: 0.98;
+  }
 
-          80% {
-            transform: translate(calc(var(--vonu-thinking-size) * -0.08), calc(var(--vonu-thinking-size) * 0.16)) scale(1.12);
-            opacity: 1;
-          }
-        }
+  80% {
+    transform: translate(calc(var(--vonu-thinking-size) * -0.08), calc(var(--vonu-thinking-size) * 0.16)) scale(1.12);
+    opacity: 1;
+  }
+}
 
         @media (max-width: 767px) {
   .vonu-thinking {
