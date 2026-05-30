@@ -210,6 +210,93 @@ function getProgressiveChunkDelay(index: number, total: number) {
   return 360;
 }
 
+function looksLikeRiskAnalysis(text: string) {
+  const t = String(text ?? "").toLowerCase();
+
+  const riskWords = [
+    "estafa",
+    "fraude",
+    "phishing",
+    "smishing",
+    "sms",
+    "whatsapp",
+    "telegram",
+    "email",
+    "correo sospechoso",
+    "enlace",
+    "link",
+    "url",
+    "web",
+    "tienda online",
+    "pagar",
+    "transferencia",
+    "bizum",
+    "tarjeta",
+    "banco",
+    "correos",
+    "seur",
+    "dhl",
+    "paquete",
+    "envío",
+    "envio",
+    "aduanas",
+    "factura",
+    "contrato",
+    "cláusula",
+    "clausula",
+    "me manipula",
+    "manipulación",
+    "manipulacion",
+    "me presiona",
+    "presión",
+    "presion",
+    "amenaza",
+    "chantaje",
+    "sextorsión",
+    "sextorsion",
+    "tinder",
+    "badoo",
+    "bumble",
+    "instagram",
+    "facebook",
+    "app de citas",
+    "red social",
+    "perfil falso",
+    "cripto",
+    "crypto",
+    "bitcoin",
+    "trading",
+    "inversión",
+    "inversion",
+    "invertir",
+    "ganar dinero",
+    "oportunidad única",
+    "oportunidad unica",
+    "urgente",
+    "urgencia",
+    "médico",
+    "medico",
+    "salud",
+    "dolor",
+    "síntoma",
+    "sintoma",
+    "urgencias",
+  ];
+
+  return riskWords.some((word) => t.includes(word));
+}
+
+function getPreviousUserMessage(messages: Message[], index: number) {
+  for (let j = index - 1; j >= 0; j -= 1) {
+    const candidate = messages[j];
+    if (candidate?.role === "user") {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
 function initialAssistantMessage(): Message {
   return {
     id: "init",
@@ -6813,26 +6900,26 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
             );
           }
 
-          // ===== VONU PENSANDO (misma estructura que la respuesta para que no se mueva) =====
+                    // ===== VONU ANALIZANDO RIESGO =====
+          // Los puntos grandes solo aparecen cuando el mensaje anterior parece un caso de riesgo.
+          // Para respuestas normales no mostramos loader grande ni logo.
           if (isStreaming && !((m.text ?? "").trim())) {
+            const previousUserMessage = getPreviousUserMessage(messages, i);
+            const showRiskThinking = looksLikeRiskAnalysis(previousUserMessage?.text ?? "");
+
+            if (!showRiskThinking) {
+              return null;
+            }
+
             return (
               <div
                 key={m.id}
                 className="flex w-full justify-start mt-3 md:mt-4 vonu-answer-in"
               >
-                <div className="ml-2 mr-3 md:mr-0 flex w-full max-w-[93%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
-                  <div
-  className={[
-    "vonu-assistant-logo-enter shrink-0 flex h-8 w-8 md:h-9 md:w-9 items-start justify-center self-start",
-    activeThread?.mode === "tutor"
-      ? "mt-[19px] md:mt-[21px] -ml-[1px] md:-ml-[2px]"
-      : "mt-[4px] md:mt-[6px] -ml-[2px] md:-ml-[3px]",
-  ].join(" ")}
->
-  <VonuThinking size={28} />
-</div>
-
-                  <div className="min-w-0 flex-1" />
+                <div className="ml-2 mr-3 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col">
+                  <div className="mb-1.5 md:mb-2 pl-0.5 md:pl-1">
+                    <VonuThinking size={36} status="thinking" />
+                  </div>
                 </div>
               </div>
             );
@@ -6846,21 +6933,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
               style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
             >
               <div className="ml-2 mr-2 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
-                <div
-  className={[
-    "vonu-assistant-logo-enter shrink-0 flex h-8 w-8 md:h-9 md:w-9 items-start justify-center self-start",
-    activeThread?.mode === "tutor"
-      ? "mt-[19px] md:mt-[21px]"
-      : "mt-[7px] md:mt-[9px]",
-  ].join(" ")}
->
-  <img
-    src="/logo/vonu-cube-black.png?v=4"
-    alt="Vonu"
-    className="block h-[24px] w-[24px] md:h-[26px] md:w-[26px] object-contain"
-    draggable={false}
-  />
-</div>
+                                <div className="hidden" aria-hidden="true" />
 
                 <div className="min-w-0 flex-1 vonu-reveal">
                   {m.image && (
