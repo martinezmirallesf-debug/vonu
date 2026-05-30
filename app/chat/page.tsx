@@ -7052,19 +7052,19 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
           // Sale siempre durante la espera para que Vonu se sienta vivo.
           // Si luego la respuesta es de riesgo, quedará un indicador fijo encima.
           if (isStreaming && !((m.text ?? "").trim())) {
-            return (
-              <div
-                key={m.id}
-                className="flex w-full justify-start mt-3 md:mt-4 vonu-answer-in"
-              >
-                <div className="ml-2 mr-3 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col">
-                  <div className="mb-1.5 md:mb-2 pl-0.5 md:pl-1">
-                    <VonuThinking size={34} status="thinking" active />
-                  </div>
-                </div>
-              </div>
-            );
-          }
+  return (
+    <div
+      key={m.id}
+      className="flex w-full justify-start mt-3 md:mt-4 vonu-answer-in"
+    >
+      <div className="ml-2 mr-3 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col">
+        <div className="mb-1.5 md:mb-2 pl-0 md:pl-0">
+          <VonuThinking size={34} status="thinking" active />
+        </div>
+      </div>
+    </div>
+  );
+}
 
           // ===== VONU RESPONDIENDO (sin burbuja) =====
           return (
@@ -7077,25 +7077,29 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                                 <div className="hidden" aria-hidden="true" />
 
                                 <div className="min-w-0 flex-1 vonu-reveal">
-                  {(() => {
-                    const previousUserMessage = getPreviousUserMessage(messages, i);
+                 {(() => {
+  if (isStreaming || isUser) return null;
 
-                    const finalRiskStatus =
-                      inferRiskStatusFromAssistantText(m.text ?? "") ||
-                      inferRiskStatusFromUserText(previousUserMessage?.text ?? "");
+  const previousUserMessage = getPreviousUserMessage(messages, i);
 
-                    if (!finalRiskStatus) return null;
+  const finalRiskStatus =
+    inferRiskStatusFromAssistantText(m.text ?? "") ||
+    inferRiskStatusFromUserText(previousUserMessage?.text ?? "");
 
-                    return (
-                      <div className="mb-2 md:mb-2.5 pl-1 md:pl-1.5">
-                        <VonuThinking
-                          size={32}
-                          status={finalRiskStatus}
-                          active={false}
-                        />
-                      </div>
-                    );
-                  })()}
+  if (!finalRiskStatus) return null;
+
+  return (
+    <div className="mb-2 md:mb-2.5 flex justify-start">
+      <div className="pl-0 md:pl-0">
+        <VonuThinking
+          size={34}
+          status={finalRiskStatus}
+          active={false}
+        />
+      </div>
+    </div>
+  );
+})()}
 
                   {m.image && (
                     <div className="mb-2">
