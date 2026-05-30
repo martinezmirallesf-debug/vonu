@@ -330,6 +330,8 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
 
   const highSignals = [
     "riesgo alto",
+    "intento de estafa",
+"huele a intento de estafa",
     "alto riesgo",
     "muy sospechoso",
     "parece phishing",
@@ -7025,27 +7027,6 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                   ].join(" ")}
                 >
                   <div className="relative z-10">
-                                        {(() => {
-                      if (isStreaming || isUser) return null;
-
-                      const previousUserMessage = getPreviousUserMessage(messages, i);
-
-                      const finalRiskStatus =
-                        inferRiskStatusFromAssistantText(m.text ?? "") ||
-                        inferRiskStatusFromUserText(previousUserMessage?.text ?? "");
-
-                      if (!finalRiskStatus) return null;
-
-                      return (
-                        <div className="mb-2 md:mb-2.5 pl-1 md:pl-1.5">
-                          <VonuThinking
-                            size={32}
-                            status={finalRiskStatus}
-                            active={false}
-                          />
-                        </div>
-                      );
-                    })()}
                     {m.image && (
                       <div className="mb-2">
                         <img
@@ -7095,7 +7076,27 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
               <div className="ml-2 mr-2 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
                                 <div className="hidden" aria-hidden="true" />
 
-                <div className="min-w-0 flex-1 vonu-reveal">
+                                <div className="min-w-0 flex-1 vonu-reveal">
+                  {(() => {
+                    const previousUserMessage = getPreviousUserMessage(messages, i);
+
+                    const finalRiskStatus =
+                      inferRiskStatusFromAssistantText(m.text ?? "") ||
+                      inferRiskStatusFromUserText(previousUserMessage?.text ?? "");
+
+                    if (!finalRiskStatus) return null;
+
+                    return (
+                      <div className="mb-2 md:mb-2.5 pl-1 md:pl-1.5">
+                        <VonuThinking
+                          size={32}
+                          status={finalRiskStatus}
+                          active={false}
+                        />
+                      </div>
+                    );
+                  })()}
+
                   {m.image && (
                     <div className="mb-2">
                       <img
