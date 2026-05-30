@@ -7089,14 +7089,14 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   if (!finalRiskStatus) return null;
 
   return (
-    <div className="mb-2 md:mb-2.5 flex justify-start pl-0 md:pl-0">
-      <VonuThinking
-  size={38}
-  status={finalRiskStatus}
-  active={false}
-/>
-    </div>
-  );
+  <div className="mb-2 md:mb-2.5 flex justify-start overflow-visible pt-2 md:pt-0 pl-0 md:pl-0">
+    <VonuThinking
+      size={38}
+      status={finalRiskStatus}
+      active={false}
+    />
+  </div>
+);
 })()}
 
                   {m.image && (
