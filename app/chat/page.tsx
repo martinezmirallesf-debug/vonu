@@ -7089,14 +7089,16 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
     if (!finalRiskStatus) return null;
 
     return (
-      <div className="mb-2 md:mb-2.5 flex justify-start overflow-visible pt-1 md:pt-0 pl-0 md:pl-0">
-        <VonuThinking
-          size={38}
-          status={finalRiskStatus}
-          active={false}
-        />
-      </div>
-    );
+  <div className="mb-2 md:mb-2.5 flex min-h-[34px] md:min-h-0 items-start justify-start overflow-visible pt-2.5 md:pt-0 pl-0 md:pl-0">
+    <div className="overflow-visible translate-y-[5px] md:translate-y-0">
+      <VonuThinking
+        size={38}
+        status={finalRiskStatus}
+        active={false}
+      />
+    </div>
+  </div>
+);
   })()}
 
   <div className="vonu-reveal overflow-visible">
