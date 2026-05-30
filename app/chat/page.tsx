@@ -7017,27 +7017,6 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   isFirstUserMessage ? "mt-12 lg:mt-0" : "",
 ].join(" ")}
               >
-                                {(() => {
-  if (isStreaming || isUser) return null;
-
-  const previousUserMessage = getPreviousUserMessage(messages, i);
-
-  const finalRiskStatus =
-    inferRiskStatusFromAssistantText(m.text ?? "") ||
-    inferRiskStatusFromUserText(previousUserMessage?.text ?? "");
-
-  if (!finalRiskStatus) return null;
-
-  return (
-    <div className="mb-2 md:mb-2.5 pl-1 md:pl-1.5">
-      <VonuThinking
-        size={32}
-        status={finalRiskStatus}
-        active={false}
-      />
-    </div>
-  );
-})()}
 
                 <div
                   className={[
@@ -7046,6 +7025,27 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                   ].join(" ")}
                 >
                   <div className="relative z-10">
+                                        {(() => {
+                      if (isStreaming || isUser) return null;
+
+                      const previousUserMessage = getPreviousUserMessage(messages, i);
+
+                      const finalRiskStatus =
+                        inferRiskStatusFromAssistantText(m.text ?? "") ||
+                        inferRiskStatusFromUserText(previousUserMessage?.text ?? "");
+
+                      if (!finalRiskStatus) return null;
+
+                      return (
+                        <div className="mb-2 md:mb-2.5 pl-1 md:pl-1.5">
+                          <VonuThinking
+                            size={32}
+                            status={finalRiskStatus}
+                            active={false}
+                          />
+                        </div>
+                      );
+                    })()}
                     {m.image && (
                       <div className="mb-2">
                         <img
