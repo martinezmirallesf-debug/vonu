@@ -7058,7 +7058,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
       className="flex w-full justify-start mt-3 md:mt-4 vonu-answer-in"
     >
       <div className="ml-2 mr-3 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col">
-        <div className="mb-1.5 md:mb-2 pl-0 md:pl-0">
+        <div className="mb-1.5 md:mb-2 flex justify-start pl-0 md:pl-0">
           <VonuThinking size={34} status="thinking" active />
         </div>
       </div>
@@ -7089,14 +7089,12 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   if (!finalRiskStatus) return null;
 
   return (
-    <div className="mb-2 md:mb-2.5 flex justify-start">
-      <div className="pl-0 md:pl-0">
-        <VonuThinking
-          size={34}
-          status={finalRiskStatus}
-          active={false}
-        />
-      </div>
+    <div className="mb-2 md:mb-2.5 flex justify-start pl-0 md:pl-0">
+      <VonuThinking
+        size={34}
+        status={finalRiskStatus}
+        active={false}
+      />
     </div>
   );
 })()}

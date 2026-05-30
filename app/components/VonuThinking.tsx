@@ -54,10 +54,10 @@ export default function VonuThinking({
           display: inline-flex;
           align-items: center;
           justify-content: flex-start;
-          width: calc(var(--vonu-thinking-size) * 1.95);
-          height: calc(var(--vonu-thinking-size) * 0.95);
+          width: calc(var(--vonu-thinking-size) * 2.08);
+          height: calc(var(--vonu-thinking-size) * 1);
           flex: 0 0 auto;
-          gap: calc(var(--vonu-thinking-size) * 0.24);
+          gap: calc(var(--vonu-thinking-size) * 0.31);
           overflow: visible;
           transform: translateZ(0);
         }
@@ -207,8 +207,8 @@ export default function VonuThinking({
 
         @media (max-width: 767px) {
           .vonu-thinking {
-            width: calc(var(--vonu-thinking-size) * 1.85);
-            gap: calc(var(--vonu-thinking-size) * 0.22);
+            width: calc(var(--vonu-thinking-size) * 1.98);
+            gap: calc(var(--vonu-thinking-size) * 0.29);
           }
 
           .vonu-thinking-dot {
