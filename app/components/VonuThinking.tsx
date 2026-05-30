@@ -42,8 +42,8 @@ export default function VonuThinking({
         .vonu-thinking {
           position: relative;
           display: inline-block;
-          width: calc(var(--vonu-thinking-size) * 1.85);
-          height: calc(var(--vonu-thinking-size) * 1.12);
+          width: calc(var(--vonu-thinking-size) * 1.9);
+          height: calc(var(--vonu-thinking-size) * 1.15);
           flex: 0 0 auto;
           overflow: visible;
           transform: translateZ(0);
@@ -73,21 +73,18 @@ export default function VonuThinking({
           background: #00c983;
         }
 
-        /* Estado final: bajo riesgo */
         .vonu-thinking-safe .dot-a,
         .vonu-thinking-safe .dot-b,
         .vonu-thinking-safe .dot-c {
           background: #00c983;
         }
 
-        /* Estado final: precaución */
         .vonu-thinking-warning .dot-a,
         .vonu-thinking-warning .dot-b,
         .vonu-thinking-warning .dot-c {
           background: #ffb000;
         }
 
-        /* Estado final: riesgo alto */
         .vonu-thinking-high .dot-a,
         .vonu-thinking-high .dot-b {
           background: #ff5a5f;
@@ -97,7 +94,6 @@ export default function VonuThinking({
           background: #ff8a00;
         }
 
-        /* Estado final: peligro muy alto */
         .vonu-thinking-danger .dot-a,
         .vonu-thinking-danger .dot-b,
         .vonu-thinking-danger .dot-c {
@@ -105,62 +101,67 @@ export default function VonuThinking({
         }
 
         .is-active .dot-a {
-          animation: vonuDotA 2200ms cubic-bezier(0.45, 0, 0.2, 1) infinite;
+          animation: vonuDotA 2400ms cubic-bezier(0.45, 0, 0.2, 1) infinite;
         }
 
         .is-active .dot-b {
-          animation: vonuDotB 2200ms cubic-bezier(0.45, 0, 0.2, 1) infinite;
+          animation: vonuDotB 2400ms cubic-bezier(0.45, 0, 0.2, 1) infinite;
         }
 
         .is-active .dot-c {
-          animation: vonuDotC 2200ms cubic-bezier(0.45, 0, 0.2, 1) infinite;
+          animation: vonuDotC 2400ms cubic-bezier(0.45, 0, 0.2, 1) infinite;
         }
 
         .is-still .dot-a {
-          transform: translate(-160%, -50%) scale(1);
-          opacity: 0.95;
+          transform: translate(-165%, -50%) scale(1);
+          opacity: 0.96;
         }
 
         .is-still .dot-b {
           transform: translate(-50%, -50%) scale(1);
-          opacity: 0.95;
+          opacity: 0.96;
         }
 
         .is-still .dot-c {
-          transform: translate(60%, -50%) scale(1);
-          opacity: 0.95;
+          transform: translate(65%, -50%) scale(1);
+          opacity: 0.96;
         }
+
+        /*
+          Animación simétrica:
+          0% línea normal
+          20% intercambio horizontal compacto
+          40% triángulo arriba
+          60% línea invertida
+          80% triángulo abajo
+          100% línea normal
+        */
 
         @keyframes vonuDotA {
           0%,
           100% {
-            transform: translate(-160%, -50%) scale(0.92);
-            opacity: 0.58;
+            transform: translate(-165%, -50%) scale(0.95);
+            opacity: 0.62;
           }
 
-          18% {
-            transform: translate(-118%, -50%) scale(1.14);
+          20% {
+            transform: translate(-50%, -50%) scale(1.22);
             opacity: 0.96;
           }
 
-          36% {
-            transform: translate(-50%, -118%) scale(1.22);
+          40% {
+            transform: translate(-50%, -118%) scale(1.12);
             opacity: 0.92;
           }
 
-          54% {
-            transform: translate(60%, -50%) scale(1.05);
-            opacity: 0.82;
+          60% {
+            transform: translate(65%, -50%) scale(1.05);
+            opacity: 0.84;
           }
 
-          72% {
-            transform: translate(-50%, 22%) scale(1.28);
+          80% {
+            transform: translate(-108%, 18%) scale(1.24);
             opacity: 0.96;
-          }
-
-          88% {
-            transform: translate(-132%, -50%) scale(1.02);
-            opacity: 0.76;
           }
         }
 
@@ -168,31 +169,26 @@ export default function VonuThinking({
           0%,
           100% {
             transform: translate(-50%, -50%) scale(1);
-            opacity: 0.72;
+            opacity: 0.76;
           }
 
-          18% {
-            transform: translate(-50%, -50%) scale(1.32);
-            opacity: 1;
-          }
-
-          36% {
-            transform: translate(48%, 18%) scale(1.08);
+          20% {
+            transform: translate(65%, -50%) scale(1.12);
             opacity: 0.88;
           }
 
-          54% {
-            transform: translate(-50%, -118%) scale(1.24);
-            opacity: 0.96;
+          40% {
+            transform: translate(-108%, 18%) scale(1.26);
+            opacity: 1;
           }
 
-          72% {
-            transform: translate(-152%, -50%) scale(1.06);
-            opacity: 0.82;
+          60% {
+            transform: translate(-165%, -50%) scale(1.05);
+            opacity: 0.84;
           }
 
-          88% {
-            transform: translate(-50%, -50%) scale(1.22);
+          80% {
+            transform: translate(-50%, -118%) scale(1.12);
             opacity: 0.92;
           }
         }
@@ -200,40 +196,35 @@ export default function VonuThinking({
         @keyframes vonuDotC {
           0%,
           100% {
-            transform: translate(60%, -50%) scale(0.92);
-            opacity: 0.58;
+            transform: translate(65%, -50%) scale(0.95);
+            opacity: 0.62;
           }
 
-          18% {
-            transform: translate(18%, -50%) scale(1.14);
+          20% {
+            transform: translate(-165%, -50%) scale(1.05);
+            opacity: 0.84;
+          }
+
+          40% {
+            transform: translate(8%, 18%) scale(1.24);
             opacity: 0.96;
           }
 
-          36% {
-            transform: translate(-152%, 18%) scale(1.08);
-            opacity: 0.88;
-          }
-
-          54% {
-            transform: translate(-160%, -50%) scale(1.05);
-            opacity: 0.82;
-          }
-
-          72% {
-            transform: translate(48%, 18%) scale(1.28);
+          60% {
+            transform: translate(-50%, -50%) scale(1.22);
             opacity: 0.96;
           }
 
-          88% {
-            transform: translate(32%, -50%) scale(1.02);
-            opacity: 0.76;
+          80% {
+            transform: translate(8%, 18%) scale(1.24);
+            opacity: 0.96;
           }
         }
 
         @media (max-width: 767px) {
           .vonu-thinking {
-            width: calc(var(--vonu-thinking-size) * 1.72);
-            height: calc(var(--vonu-thinking-size) * 1.02);
+            width: calc(var(--vonu-thinking-size) * 1.76);
+            height: calc(var(--vonu-thinking-size) * 1.05);
           }
 
           .vonu-thinking-dot {
@@ -248,7 +239,7 @@ export default function VonuThinking({
           }
 
           .dot-a {
-            transform: translate(-160%, -50%) scale(1) !important;
+            transform: translate(-165%, -50%) scale(1) !important;
           }
 
           .dot-b {
@@ -256,7 +247,7 @@ export default function VonuThinking({
           }
 
           .dot-c {
-            transform: translate(60%, -50%) scale(1) !important;
+            transform: translate(65%, -50%) scale(1) !important;
           }
         }
       `}</style>

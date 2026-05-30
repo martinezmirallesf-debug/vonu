@@ -305,13 +305,21 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
   const dangerSignals = [
     "estafa confirmada",
     "fraude confirmado",
+    "phishing confirmado",
+    "smishing confirmado",
     "peligro muy alto",
     "riesgo muy alto",
     "alerta máxima",
-    "no pagues",
+    "alerta maxima",
     "no pulses",
+    "no abras el enlace",
+    "no pagues",
     "no envíes dinero",
     "no envies dinero",
+    "no compartas códigos",
+    "no compartas codigos",
+    "bloquéalo",
+    "bloquealo",
     "bloquea",
     "denuncia",
   ];
@@ -322,17 +330,26 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
 
   const highSignals = [
     "riesgo alto",
+    "alto riesgo",
     "muy sospechoso",
     "parece phishing",
+    "parece smishing",
     "parece una estafa",
+    "huele a estafa",
     "yo no pagaría",
     "yo no pagaria",
+    "yo no pulsaría",
+    "yo no pulsaria",
     "frenaría",
     "frenaria",
     "no lo haría",
     "no lo haria",
+    "me haría frenar",
+    "me haria frenar",
     "señales de fraude",
     "senales de fraude",
+    "señales claras de riesgo",
+    "senales claras de riesgo",
   ];
 
   if (highSignals.some((s) => t.includes(s))) {
@@ -343,6 +360,7 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
     "riesgo medio",
     "precaución",
     "precaucion",
+    "cuidado",
     "no concluyente",
     "no puedo confirmarlo",
     "conviene revisar",
@@ -351,6 +369,9 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
     "me haría comprobar",
     "me haria comprobar",
     "antes de seguir",
+    "verifica",
+    "compruébalo",
+    "compruebalo",
   ];
 
   if (warningSignals.some((s) => t.includes(s))) {
@@ -359,17 +380,65 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
 
   const safeSignals = [
     "riesgo bajo",
+    "bajo riesgo",
     "parece fiable",
     "parece seguro",
     "no veo señales claras",
     "no veo senales claras",
     "no parece una estafa",
     "no parece phishing",
+    "no parece sospechoso",
   ];
 
   if (safeSignals.some((s) => t.includes(s))) {
     return "safe";
   }
+
+  return null;
+}
+
+function inferRiskStatusFromUserText(text: string): "safe" | "warning" | "high" | "danger" | null {
+  const t = String(text ?? "").toLowerCase();
+
+  if (!t.trim()) return null;
+
+  const veryHighRisk = [
+    "sms",
+    "correos",
+    "seur",
+    "dhl",
+    "aduanas",
+    "pagar",
+    "1,99",
+    "1.99",
+    "enlace",
+    "link",
+    "url",
+    "banco",
+    "bizum",
+    "tarjeta",
+    "código",
+    "codigo",
+    "whatsapp",
+    "telegram",
+    "cripto",
+    "crypto",
+    "bitcoin",
+    "trading",
+    "inversión",
+    "inversion",
+    "tinder",
+    "app de citas",
+    "instagram",
+    "oportunidad única",
+    "oportunidad unica",
+    "urgente",
+  ];
+
+  const score = veryHighRisk.reduce((acc, word) => acc + (t.includes(word) ? 1 : 0), 0);
+
+  if (score >= 4) return "high";
+  if (score >= 2) return "warning";
 
   return null;
 }
@@ -6949,23 +7018,26 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 ].join(" ")}
               >
                                 {(() => {
-                  const finalRiskStatus =
-                    !isStreaming && !isUser
-                      ? inferRiskStatusFromAssistantText(m.text ?? "")
-                      : null;
+  if (isStreaming || isUser) return null;
 
-                  if (!finalRiskStatus) return null;
+  const previousUserMessage = getPreviousUserMessage(messages, i);
 
-                  return (
-                    <div className="mb-2 md:mb-2.5 pl-1 md:pl-1.5">
-                      <VonuThinking
-                        size={32}
-                        status={finalRiskStatus}
-                        active={false}
-                      />
-                    </div>
-                  );
-                })()}
+  const finalRiskStatus =
+    inferRiskStatusFromAssistantText(m.text ?? "") ||
+    inferRiskStatusFromUserText(previousUserMessage?.text ?? "");
+
+  if (!finalRiskStatus) return null;
+
+  return (
+    <div className="mb-2 md:mb-2.5 pl-1 md:pl-1.5">
+      <VonuThinking
+        size={32}
+        status={finalRiskStatus}
+        active={false}
+      />
+    </div>
+  );
+})()}
 
                 <div
                   className={[
