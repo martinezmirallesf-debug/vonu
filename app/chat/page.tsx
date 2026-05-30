@@ -297,6 +297,83 @@ function getPreviousUserMessage(messages: Message[], index: number) {
   return null;
 }
 
+function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "high" | "danger" | null {
+  const t = String(text ?? "").toLowerCase();
+
+  if (!t.trim()) return null;
+
+  const dangerSignals = [
+    "estafa confirmada",
+    "fraude confirmado",
+    "peligro muy alto",
+    "riesgo muy alto",
+    "alerta máxima",
+    "no pagues",
+    "no pulses",
+    "no envíes dinero",
+    "no envies dinero",
+    "bloquea",
+    "denuncia",
+  ];
+
+  if (dangerSignals.some((s) => t.includes(s))) {
+    return "danger";
+  }
+
+  const highSignals = [
+    "riesgo alto",
+    "muy sospechoso",
+    "parece phishing",
+    "parece una estafa",
+    "yo no pagaría",
+    "yo no pagaria",
+    "frenaría",
+    "frenaria",
+    "no lo haría",
+    "no lo haria",
+    "señales de fraude",
+    "senales de fraude",
+  ];
+
+  if (highSignals.some((s) => t.includes(s))) {
+    return "high";
+  }
+
+  const warningSignals = [
+    "riesgo medio",
+    "precaución",
+    "precaucion",
+    "no concluyente",
+    "no puedo confirmarlo",
+    "conviene revisar",
+    "revisaría",
+    "revisaria",
+    "me haría comprobar",
+    "me haria comprobar",
+    "antes de seguir",
+  ];
+
+  if (warningSignals.some((s) => t.includes(s))) {
+    return "warning";
+  }
+
+  const safeSignals = [
+    "riesgo bajo",
+    "parece fiable",
+    "parece seguro",
+    "no veo señales claras",
+    "no veo senales claras",
+    "no parece una estafa",
+    "no parece phishing",
+  ];
+
+  if (safeSignals.some((s) => t.includes(s))) {
+    return "safe";
+  }
+
+  return null;
+}
+
 function initialAssistantMessage(): Message {
   return {
     id: "init",
@@ -6871,13 +6948,31 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   isFirstUserMessage ? "mt-12 lg:mt-0" : "",
 ].join(" ")}
               >
+                                {(() => {
+                  const finalRiskStatus =
+                    !isStreaming && !isUser
+                      ? inferRiskStatusFromAssistantText(m.text ?? "")
+                      : null;
+
+                  if (!finalRiskStatus) return null;
+
+                  return (
+                    <div className="mb-2 md:mb-2.5 pl-1 md:pl-1.5">
+                      <VonuThinking
+                        size={32}
+                        status={finalRiskStatus}
+                        active={false}
+                      />
+                    </div>
+                  );
+                })()}
+
                 <div
                   className={[
                     "relative min-w-0 max-w-[88%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
                     "md:shadow-sm bg-[#e9edf1] text-zinc-900 rounded-[22px] mr-1 md:mr-2",
                   ].join(" ")}
                 >
-
                   <div className="relative z-10">
                     {m.image && (
                       <div className="mb-2">
@@ -6891,8 +6986,8 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 
                     {(m.text || m.streaming) && (
                       <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[21px] md:text-[22px] leading-9 md:leading-9 text-zinc-900">
-  <span className="whitespace-pre-wrap">{mdText}</span>
-</div>
+                        <span className="whitespace-pre-wrap">{mdText}</span>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -6900,17 +6995,10 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
             );
           }
 
-                    // ===== VONU ANALIZANDO RIESGO =====
-          // Los puntos grandes solo aparecen cuando el mensaje anterior parece un caso de riesgo.
-          // Para respuestas normales no mostramos loader grande ni logo.
+                              // ===== VONU PENSANDO =====
+          // Sale siempre durante la espera para que Vonu se sienta vivo.
+          // Si luego la respuesta es de riesgo, quedará un indicador fijo encima.
           if (isStreaming && !((m.text ?? "").trim())) {
-            const previousUserMessage = getPreviousUserMessage(messages, i);
-            const showRiskThinking = looksLikeRiskAnalysis(previousUserMessage?.text ?? "");
-
-            if (!showRiskThinking) {
-              return null;
-            }
-
             return (
               <div
                 key={m.id}
@@ -6918,7 +7006,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
               >
                 <div className="ml-2 mr-3 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col">
                   <div className="mb-1.5 md:mb-2 pl-0.5 md:pl-1">
-                    <VonuThinking size={36} status="thinking" />
+                    <VonuThinking size={34} status="thinking" active />
                   </div>
                 </div>
               </div>

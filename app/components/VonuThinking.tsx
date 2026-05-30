@@ -2,20 +2,31 @@
 
 import React from "react";
 
-type VonuThinkingStatus = "thinking" | "safe" | "warning" | "danger";
+export type VonuThinkingStatus =
+  | "thinking"
+  | "safe"
+  | "warning"
+  | "high"
+  | "danger";
 
 type VonuThinkingProps = {
   size?: number;
   status?: VonuThinkingStatus;
+  active?: boolean;
 };
 
 export default function VonuThinking({
   size = 34,
   status = "thinking",
+  active = true,
 }: VonuThinkingProps) {
   return (
     <span
-      className={`vonu-thinking vonu-thinking-${status}`}
+      className={[
+        "vonu-thinking",
+        `vonu-thinking-${status}`,
+        active ? "is-active" : "is-still",
+      ].join(" ")}
       style={
         {
           "--vonu-thinking-size": `${size}px`,
@@ -30,20 +41,20 @@ export default function VonuThinking({
       <style jsx>{`
         .vonu-thinking {
           position: relative;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: calc(var(--vonu-thinking-size) * 1.72);
-          height: var(--vonu-thinking-size);
+          display: inline-block;
+          width: calc(var(--vonu-thinking-size) * 1.85);
+          height: calc(var(--vonu-thinking-size) * 1.12);
           flex: 0 0 auto;
-          gap: calc(var(--vonu-thinking-size) * 0.18);
           overflow: visible;
           transform: translateZ(0);
         }
 
         .vonu-thinking-dot {
-          width: calc(var(--vonu-thinking-size) * 0.30);
-          height: calc(var(--vonu-thinking-size) * 0.30);
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: calc(var(--vonu-thinking-size) * 0.31);
+          height: calc(var(--vonu-thinking-size) * 0.31);
           border-radius: 9999px;
           display: block;
           transform-origin: center;
@@ -52,123 +63,200 @@ export default function VonuThinking({
 
         .dot-a {
           background: #ff5a5f;
-          animation: vonuDotA 1650ms cubic-bezier(0.45, 0, 0.2, 1) infinite;
         }
 
         .dot-b {
           background: #ffb000;
-          animation: vonuDotB 1650ms cubic-bezier(0.45, 0, 0.2, 1) infinite;
         }
 
         .dot-c {
           background: #00c983;
-          animation: vonuDotC 1650ms cubic-bezier(0.45, 0, 0.2, 1) infinite;
         }
 
+        /* Estado final: bajo riesgo */
         .vonu-thinking-safe .dot-a,
         .vonu-thinking-safe .dot-b,
         .vonu-thinking-safe .dot-c {
           background: #00c983;
         }
 
+        /* Estado final: precaución */
         .vonu-thinking-warning .dot-a,
         .vonu-thinking-warning .dot-b,
         .vonu-thinking-warning .dot-c {
           background: #ffb000;
         }
 
+        /* Estado final: riesgo alto */
+        .vonu-thinking-high .dot-a,
+        .vonu-thinking-high .dot-b {
+          background: #ff5a5f;
+        }
+
+        .vonu-thinking-high .dot-c {
+          background: #ff8a00;
+        }
+
+        /* Estado final: peligro muy alto */
         .vonu-thinking-danger .dot-a,
         .vonu-thinking-danger .dot-b,
         .vonu-thinking-danger .dot-c {
-          background: #ff5a5f;
+          background: #ff3b30;
+        }
+
+        .is-active .dot-a {
+          animation: vonuDotA 2200ms cubic-bezier(0.45, 0, 0.2, 1) infinite;
+        }
+
+        .is-active .dot-b {
+          animation: vonuDotB 2200ms cubic-bezier(0.45, 0, 0.2, 1) infinite;
+        }
+
+        .is-active .dot-c {
+          animation: vonuDotC 2200ms cubic-bezier(0.45, 0, 0.2, 1) infinite;
+        }
+
+        .is-still .dot-a {
+          transform: translate(-160%, -50%) scale(1);
+          opacity: 0.95;
+        }
+
+        .is-still .dot-b {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 0.95;
+        }
+
+        .is-still .dot-c {
+          transform: translate(60%, -50%) scale(1);
+          opacity: 0.95;
         }
 
         @keyframes vonuDotA {
           0%,
           100% {
-            transform: translateX(0) scale(0.88);
-            opacity: 0.50;
+            transform: translate(-160%, -50%) scale(0.92);
+            opacity: 0.58;
           }
 
-          28% {
-            transform: translateX(calc(var(--vonu-thinking-size) * 0.10)) scale(1.08);
+          18% {
+            transform: translate(-118%, -50%) scale(1.14);
+            opacity: 0.96;
+          }
+
+          36% {
+            transform: translate(-50%, -118%) scale(1.22);
             opacity: 0.92;
           }
 
-          52% {
-            transform: translateX(calc(var(--vonu-thinking-size) * 0.42)) scale(1.30);
+          54% {
+            transform: translate(60%, -50%) scale(1.05);
             opacity: 0.82;
           }
 
-          76% {
-            transform: translateX(calc(var(--vonu-thinking-size) * 0.08)) scale(1);
-            opacity: 0.66;
+          72% {
+            transform: translate(-50%, 22%) scale(1.28);
+            opacity: 0.96;
+          }
+
+          88% {
+            transform: translate(-132%, -50%) scale(1.02);
+            opacity: 0.76;
           }
         }
 
         @keyframes vonuDotB {
           0%,
           100% {
-            transform: translateX(0) scale(1);
-            opacity: 0.68;
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.72;
           }
 
-          30% {
-            transform: translateX(calc(var(--vonu-thinking-size) * -0.10)) scale(1.12);
+          18% {
+            transform: translate(-50%, -50%) scale(1.32);
+            opacity: 1;
+          }
+
+          36% {
+            transform: translate(48%, 18%) scale(1.08);
             opacity: 0.88;
           }
 
           54% {
-            transform: translateX(0) scale(1.36);
-            opacity: 1;
+            transform: translate(-50%, -118%) scale(1.24);
+            opacity: 0.96;
           }
 
-          78% {
-            transform: translateX(calc(var(--vonu-thinking-size) * 0.10)) scale(1.06);
-            opacity: 0.76;
+          72% {
+            transform: translate(-152%, -50%) scale(1.06);
+            opacity: 0.82;
+          }
+
+          88% {
+            transform: translate(-50%, -50%) scale(1.22);
+            opacity: 0.92;
           }
         }
 
         @keyframes vonuDotC {
           0%,
           100% {
-            transform: translateX(0) scale(0.88);
-            opacity: 0.50;
+            transform: translate(60%, -50%) scale(0.92);
+            opacity: 0.58;
           }
 
-          28% {
-            transform: translateX(calc(var(--vonu-thinking-size) * -0.08)) scale(1);
-            opacity: 0.66;
+          18% {
+            transform: translate(18%, -50%) scale(1.14);
+            opacity: 0.96;
           }
 
-          52% {
-            transform: translateX(calc(var(--vonu-thinking-size) * -0.42)) scale(1.30);
+          36% {
+            transform: translate(-152%, 18%) scale(1.08);
+            opacity: 0.88;
+          }
+
+          54% {
+            transform: translate(-160%, -50%) scale(1.05);
             opacity: 0.82;
           }
 
-          78% {
-            transform: translateX(calc(var(--vonu-thinking-size) * -0.10)) scale(1.08);
-            opacity: 0.92;
+          72% {
+            transform: translate(48%, 18%) scale(1.28);
+            opacity: 0.96;
+          }
+
+          88% {
+            transform: translate(32%, -50%) scale(1.02);
+            opacity: 0.76;
           }
         }
 
         @media (max-width: 767px) {
           .vonu-thinking {
-            width: calc(var(--vonu-thinking-size) * 1.62);
-            gap: calc(var(--vonu-thinking-size) * 0.16);
+            width: calc(var(--vonu-thinking-size) * 1.72);
+            height: calc(var(--vonu-thinking-size) * 1.02);
           }
 
           .vonu-thinking-dot {
-            width: calc(var(--vonu-thinking-size) * 0.29);
-            height: calc(var(--vonu-thinking-size) * 0.29);
+            width: calc(var(--vonu-thinking-size) * 0.30);
+            height: calc(var(--vonu-thinking-size) * 0.30);
           }
         }
 
         @media (prefers-reduced-motion: reduce) {
           .vonu-thinking-dot {
             animation: none !important;
-            transform: none !important;
-            opacity: 0.9;
+          }
+
+          .dot-a {
+            transform: translate(-160%, -50%) scale(1) !important;
+          }
+
+          .dot-b {
+            transform: translate(-50%, -50%) scale(1) !important;
+          }
+
+          .dot-c {
+            transform: translate(60%, -50%) scale(1) !important;
           }
         }
       `}</style>
