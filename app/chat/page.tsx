@@ -6267,19 +6267,21 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
   @keyframes vonuRevealIn {
   0% {
     opacity: 0;
-    clip-path: inset(0 0 100% 0);
+    transform: translateY(4px);
     filter: blur(1px);
   }
+
   100% {
     opacity: 1;
-    clip-path: inset(0 0 0 0);
+    transform: translateY(0);
     filter: blur(0);
   }
 }
 
 .vonu-reveal {
   animation: vonuRevealIn var(--vonu-reveal-ms, 520ms) ease-out both;
-  will-change: opacity, clip-path, filter;
+  will-change: opacity, transform, filter;
+  overflow: visible !important;
 }
 
 .modal-close-btn {
