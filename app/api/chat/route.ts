@@ -31,6 +31,101 @@ function looksLikeFootballIntent(text: string) {
 
   return hasVs || hasMarkets;
 }
+function looksLikeFraudOrPaymentSafetyIntent(text: string) {
+  const t = (text || "").toLowerCase();
+
+  if (!t.trim()) return false;
+
+  const fraudSignals = [
+    "qr",
+    "código qr",
+    "codigo qr",
+    "quishing",
+    "parquímetro",
+    "parquimetro",
+    "parking",
+    "aparcamiento",
+    "estacionamiento",
+    "zona azul",
+    "zona verde",
+    "ayuntamiento",
+    "sede electrónica",
+    "sede electronica",
+    "multa",
+    "sanción",
+    "sancion",
+    "sms",
+    "whatsapp",
+    "email",
+    "correo",
+    "enlace",
+    "link",
+    "url",
+    "web",
+    "dominio",
+    "tarjeta",
+    "pagar",
+    "pago",
+    "bizum",
+    "transferencia",
+    "banco",
+    "datos bancarios",
+    "correos",
+    "seur",
+    "dhl",
+    "paypal",
+    "amazon",
+    "wallapop",
+    "vinted",
+    "tinder",
+    "metamask",
+    "binance",
+    "rustdesk",
+    "anydesk",
+    "cripto",
+    "crypto",
+    "estafa",
+    "fraude",
+    "phishing",
+    "smishing",
+    "vishing",
+    "sospechoso",
+    "sospechosa",
+    "raro",
+    "rara",
+    "no parece",
+  ];
+
+  const hasFraudSignal = fraudSignals.some((signal) => t.includes(signal));
+
+  if (!hasFraudSignal) return false;
+
+  // Caso especialmente claro: QR físico + pago/tarjeta/web
+  const hasQr = t.includes("qr") || t.includes("código qr") || t.includes("codigo qr");
+  const hasPhysicalPaymentContext =
+    t.includes("parquímetro") ||
+    t.includes("parquimetro") ||
+    t.includes("parking") ||
+    t.includes("aparcamiento") ||
+    t.includes("ayuntamiento") ||
+    t.includes("multa");
+
+  const hasPaymentOrDataContext =
+    t.includes("tarjeta") ||
+    t.includes("pagar") ||
+    t.includes("pago") ||
+    t.includes("web") ||
+    t.includes("enlace") ||
+    t.includes("link") ||
+    t.includes("datos");
+
+  if (hasQr && hasPhysicalPaymentContext && hasPaymentOrDataContext) {
+    return true;
+  }
+
+  // Protección general: si hay señales de fraude/pago/datos, no lo mandamos al interceptor de fútbol
+  return true;
+}
 
 function pickUserTextFromBody(body: any): string {
   // prioridad: userText explícito
@@ -146,9 +241,10 @@ const normalized = {
     // ==========================================================
     const userText = pickUserTextFromBody(body);
     const isTutor = normalized.mode === "tutor";
+    const fraudOrPaymentSafetyIntent = looksLikeFraudOrPaymentSafetyIntent(userText);
 
     // Solo si parece fútbol, no hay imagen, y no es tutor:
-    if (!isTutor && !normalized.imageBase64 && looksLikeFootballIntent(userText)) {
+    if (!fraudOrPaymentSafetyIntent && !isTutor && !normalized.imageBase64 && looksLikeFootballIntent(userText)) {
   // ✅ Si fútbol está desactivado: detectar pero NO analizar (respuesta bonita y 200 OK)
   if (FOOTBALL_DISABLED) {
     return json(
