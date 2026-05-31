@@ -1,0 +1,4418 @@
+/// <reference lib="deno.ns" />
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+// ---------- helpers ----------
+type ThreadMode = "chat" | "tutor";
+type TutorLevel = "kid" | "teen" | "adult" | "unknown";
+
+function normalizeThreadMode(x: any): ThreadMode {
+  return x === "tutor" ? "tutor" : "chat";
+}
+function normalizeTutorLevel(x: any): TutorLevel {
+  return x === "kid" || x === "teen" || x === "adult" || x === "unknown" ? x : "unknown";
+}
+
+function isGreetingOrVeryShort(text: string) {
+  const t = (text || "").trim().toLowerCase();
+  if (!t) return true;
+  if (t.length <= 8) return true;
+
+  const exact = new Set([
+    "hola",
+    "buenas",
+    "hey",
+    "hello",
+    "ok",
+    "vale",
+    "sí",
+    "si",
+    "gracias",
+    "perfecto",
+    "genial",
+    "dale",
+    "vamos",
+  ]);
+  if (exact.has(t)) return true;
+
+  if (t.startsWith("hola ")) return true;
+  if (t.startsWith("buenas ")) return true;
+
+  return false;
+}
+
+// (compat, ya NO se usa para forzar tutor)
+function looksLikeTutorIntent(text: string) {
+  if (isGreetingOrVeryShort(text)) return false;
+  const t = (text || "").toLowerCase();
+  const strong = [
+    "explícame",
+    "explicame",
+    "paso a paso",
+    "ejercicio",
+    "problema",
+    "ecuación",
+    "ecuaciones",
+    "derivada",
+    "integral",
+    "mates",
+    "matem",
+    "física",
+    "fisica",
+    "química",
+    "quimica",
+    "historia",
+    "geografía",
+    "geografia",
+    "resumen",
+    "repaso",
+    "examen",
+    "selectividad",
+    "evau",
+    "vocabulario",
+    "inglés",
+    "ingles",
+    "grammar",
+    "gramática",
+    "gramatica",
+    "traduce",
+    "pronunciación",
+    "pronunciacion",
+    "hazme preguntas",
+    "test",
+    "quiz",
+    "flashcards",
+    "aprende",
+    "enséñame",
+    "enseñame",
+    "ayúdame a estudiar",
+    "ayudame a estudiar",
+    "división",
+    "division",
+    "fracciones",
+    "porcentajes",
+    "pitágoras",
+    "pitagoras",
+    "matrices",
+    "sistemas",
+    "fuerza",
+    "newton",
+    "velocidad",
+    "aceleración",
+    "aceleracion",
+  ];
+  return strong.some((k) => t.includes(k));
+}
+
+function inferTutorLevel(text: string): TutorLevel {
+  const t = (text || "").toLowerCase();
+
+  const kid = [
+    "primaria",
+    "tabla",
+    "sumas",
+    "restas",
+    "multiplic",
+    "divisiones",
+    "dictado",
+    "ortografía",
+    "ortografia",
+    "deberes",
+  ];
+  if (kid.some((k) => t.includes(k))) return "kid";
+
+  const teen = [
+    "eso",
+    "bachiller",
+    "selectividad",
+    "evau",
+    "trigonometr",
+    "derivad",
+    "integral",
+    "funciones",
+    "química",
+    "quimica",
+    "física",
+    "fisica",
+  ];
+  if (teen.some((k) => t.includes(k))) return "teen";
+
+  const adult = [
+    "universidad",
+    "ingeniería",
+    "ingenieria",
+    "álgebra lineal",
+    "algebra lineal",
+    "calculo",
+    "cálculo",
+    "estadística",
+    "estadistica",
+    "programación",
+    "programacion",
+  ];
+  if (adult.some((k) => t.includes(k))) return "adult";
+
+  return "unknown";
+}
+
+type EducationalArea = "math" | "science" | "language" | "theory" | "general";
+
+type AutoTutorDecision = {
+  active: boolean;
+  area: EducationalArea;
+  level: TutorLevel;
+  reason: string;
+};
+
+function detectEducationalArea(text: string): EducationalArea {
+  const t = (text || "").toLowerCase();
+
+  const mathSignals = [
+  "fracción",
+  "fracciones",
+  "fraccion",
+  "porcentaje",
+  "porcentajes",
+  "ecuación",
+  "ecuacion",
+  "ecuaciones",
+  "división",
+  "division",
+  "multiplicación",
+  "multiplicacion",
+  "sumas",
+  "restas",
+  "derivada",
+  "derivadas",
+  "integral",
+  "integrales",
+  "trigonometr",
+  "álgebra",
+  "algebra",
+  "matriz",
+  "matrices",
+  "resolver x",
+  "despeja",
+  "raíz cuadrada",
+  "raiz cuadrada",
+  "pitágoras",
+  "pitagoras",
+  "función",
+  "funcion",
+  "límites",
+  "limites",
+  "área",
+  "area",
+  "perímetro",
+  "perimetro",
+  "volumen",
+  "mcm",
+  "mcd",
+  "regla de tres",
+  "probabilidad",
+
+  // estadística
+  "estadística",
+  "estadistica",
+  "media",
+  "mediana",
+  "moda",
+  "varianza",
+  "desviación típica",
+  "desviacion tipica",
+  "desviación estándar",
+  "desviacion estandar",
+  "distribución",
+  "distribucion",
+  "normal",
+  "binomial",
+  "muestra",
+  "población",
+  "poblacion",
+  "sumatorio",
+  "correlación",
+  "correlacion",
+  "regresión",
+  "regresion"
+];
+  if (mathSignals.some((k) => t.includes(k))) return "math";
+
+  const scienceSignals = [
+    "física",
+    "fisica",
+    "química",
+    "quimica",
+    "biología",
+    "biologia",
+    "newton",
+    "fuerza",
+    "velocidad",
+    "aceleración",
+    "aceleracion",
+    "masa",
+    "energía",
+    "energia",
+    "mol",
+    "átomo",
+    "atomo",
+    "célula",
+    "celula",
+    "reacción química",
+    "reaccion quimica",
+    "densidad",
+    "gravedad",
+  ];
+  if (scienceSignals.some((k) => t.includes(k))) return "science";
+
+  const languageSignals = [
+    "inglés",
+    "ingles",
+    "english",
+    "valenciano",
+    "valencià",
+    "idioma",
+    "vocabulario",
+    "gramática",
+    "gramatica",
+    "traduce",
+    "traducción",
+    "traduccion",
+    "pronunciación",
+    "pronunciacion",
+    "speaking",
+    "listening",
+    "reading",
+    "writing",
+    "verbo",
+    "verbos",
+    "past simple",
+    "present simple",
+    "phrasal verb",
+  ];
+  if (languageSignals.some((k) => t.includes(k))) return "language";
+
+  const theorySignals = [
+    "explícame",
+    "explicame",
+    "explícamelo",
+    "explicamelo",
+    "resumen",
+    "resúmeme",
+    "resumeme",
+    "tema",
+    "teoría",
+    "teoria",
+    "historia",
+    "geografía",
+    "geografia",
+    "filosofía",
+    "filosofia",
+    "economía",
+    "economia",
+    "comentario de texto",
+    "repaso",
+    "examen",
+    "selectividad",
+    "evau",
+    "estudiar",
+    "deberes",
+  ];
+  if (theorySignals.some((k) => t.includes(k))) return "theory";
+
+  return "general";
+}
+
+type IncompleteProblemCheck = {
+  isIncomplete: boolean;
+  reason: string | null;
+};
+
+function detectIncompletePhysicsProblem(userText: string): IncompleteProblemCheck {
+  const t = (userText || "").toLowerCase();
+
+  const mentionsDistanceBetweenObjects =
+  t.includes("dista") ||
+  t.includes("distan") ||
+  t.includes("separados") ||
+  t.includes("separadas") ||
+  t.includes("distancia inicial") ||
+  t.includes("se encuentra a") ||
+  t.includes("está a") ||
+  t.includes("esta a");
+
+  const mentionsMotionContext =
+    t.includes("barco") ||
+    t.includes("barcos") ||
+    t.includes("móvil") ||
+    t.includes("movil") ||
+    t.includes("objeto") ||
+    t.includes("objetos") ||
+    t.includes("vehículo") ||
+    t.includes("vehiculo") ||
+    t.includes("velocidad") ||
+    t.includes("se mueve") ||
+    t.includes("movimiento");
+
+  const mentionsInitialDirection =
+  t.includes("al este del primero") ||
+  t.includes("al oeste del primero") ||
+  t.includes("al norte del primero") ||
+  t.includes("al sur del primero") ||
+  t.includes("al este del otro") ||
+  t.includes("al oeste del otro") ||
+  t.includes("al norte del otro") ||
+  t.includes("al sur del otro") ||
+  t.includes("respecto al primero") ||
+  t.includes("respecto al otro") ||
+  t.includes("posición inicial") ||
+  t.includes("posicion inicial") ||
+  t.includes("situado inicialmente") ||
+  t.includes("está inicialmente") ||
+  t.includes("esta inicialmente") ||
+  t.includes("inicialmente 10 km al este") ||
+  t.includes("inicialmente 10 km al oeste") ||
+  t.includes("inicialmente 10 km al norte") ||
+  t.includes("inicialmente 10 km al sur") ||
+  t.includes("se encuentra 10 km al este") ||
+  t.includes("se encuentra 10 km al oeste") ||
+  t.includes("se encuentra 10 km al norte") ||
+  t.includes("se encuentra 10 km al sur");
+
+  const asksClosestDistance =
+    t.includes("máximo acercamiento") ||
+    t.includes("maximo acercamiento") ||
+    t.includes("distancia mínima") ||
+    t.includes("distancia minima") ||
+    t.includes("distancia de máximo acercamiento") ||
+    t.includes("distancia de maximo acercamiento") ||
+    t.includes("distancia mínima entre") ||
+    t.includes("distancia minima entre");
+
+  if (mentionsDistanceBetweenObjects && mentionsMotionContext && asksClosestDistance && !mentionsInitialDirection) {
+    return {
+      isIncomplete: true,
+      reason:
+        "El enunciado da la separación inicial, pero no especifica la dirección o posición relativa inicial entre los objetos.",
+    };
+  }
+
+  return {
+    isIncomplete: false,
+    reason: null,
+  };
+}
+
+function detectAutomaticTutorMode(
+  userText: string,
+  history: Array<{ role: "user" | "assistant"; content: string }>,
+  requestedMode: ThreadMode,
+  hasImage: boolean,
+  footballIntent: boolean,
+): AutoTutorDecision {
+  if (requestedMode === "tutor") {
+    return {
+      active: true,
+      area: detectEducationalArea(userText),
+      level: inferTutorLevel(userText),
+      reason: "requested_tutor",
+    };
+  }
+
+  if (footballIntent) {
+    return { active: false, area: "general", level: "unknown", reason: "football" };
+  }
+
+  if (isGreetingOrVeryShort(userText)) {
+    return { active: false, area: "general", level: "unknown", reason: "short_or_greeting" };
+  }
+
+  const t = (userText || "").toLowerCase().trim();
+  if (!t) {
+    return { active: false, area: "general", level: "unknown", reason: "empty" };
+  }
+
+  const healthSignals = [
+    "insulina",
+    "glucosa",
+    "azúcar",
+    "azucar",
+    "visión",
+    "vision",
+    "mareo",
+    "mareos",
+    "dolor",
+    "síntoma",
+    "sintoma",
+    "síntomas",
+    "sintomas",
+    "médico",
+    "medico",
+    "análisis",
+    "analisis",
+    "embarazo",
+    "tensión",
+    "tension",
+    "colesterol",
+    "ansiedad",
+    "depresión",
+    "depresion",
+    "salud",
+  ];
+
+  const psychSignals = [
+    "bullying",
+    "acoso",
+    "ansiedad",
+    "triste",
+    "lloro",
+    "llorar",
+    "me siento",
+    "me encuentro",
+    "manipula",
+    "manipulación",
+    "manipulacion",
+    "pareja",
+    "discutimos",
+    "discusión",
+    "discusion",
+    "miedo",
+    "inseguridad",
+    "presión",
+    "presion",
+  ];
+
+  const legalSignals = [
+    "denuncia",
+    "abogado",
+    "contrato",
+    "cláusula",
+    "clausula",
+    "deuda",
+    "multa",
+    "juicio",
+    "custodia",
+    "alquiler",
+    "despido",
+    "herencia",
+    "reclamación",
+    "reclamacion",
+    "ley",
+    "ilegal",
+    "delito",
+  ];
+
+  const nonStudySensitiveSignals = [...healthSignals, ...psychSignals, ...legalSignals];
+const hasSensitiveNonStudySignal = nonStudySensitiveSignals.some((k) => t.includes(k));
+
+// ✅ Si el usuario está hablando de logo, marca, diseño, UI o producto,
+// NUNCA debe saltar modo tutor aunque haya imagen.
+// Esto evita respuestas tipo "Idea clave / Mini-check" en análisis de logos.
+const designOrProductSignals = [
+  "logo",
+  "logotipo",
+  "marca",
+  "branding",
+  "brand",
+  "diseño",
+  "diseno",
+  "icono",
+  "ícono",
+  "isotipo",
+  "imagotipo",
+  "wordmark",
+  "tipografía",
+  "tipografia",
+  "fuente",
+  "interfaz",
+  "ui",
+  "ux",
+  "app",
+  "web",
+  "landing",
+  "home",
+  "header",
+  "menú",
+  "menu",
+  "botón",
+  "boton",
+];
+
+const asksOpinionOrDesign =
+  /\b(te\s+gustar[ií]a|qué\s+te\s+parece|que\s+te\s+parece|opini[oó]n|analiza|analizar|mejorar|rediseñar|redisenar|bonito|feo|premium|elegante)\b/.test(t);
+
+if (designOrProductSignals.some((k) => t.includes(k)) || asksOpinionOrDesign) {
+  return {
+    active: false,
+    area: "general",
+    level: "unknown",
+    reason: "design_or_product_context",
+  };
+}
+
+const directTutorTriggers = [
+    "explícame",
+    "explicame",
+    "explícamelo",
+    "explicamelo",
+    "paso a paso",
+    "enséñame",
+    "enseñame",
+    "ayúdame a estudiar",
+    "ayudame a estudiar",
+    "hazme preguntas",
+    "pregúntame",
+    "preguntame",
+    "quiero estudiar",
+    "tengo este ejercicio",
+    "resuelve",
+    "resuélveme",
+    "resuelveme",
+    "corrígeme",
+    "corrigeme",
+    "repaso",
+    "deberes",
+    "ejercicio",
+    "problema",
+    "examen",
+    "selectividad",
+    "evau",
+
+    // ejercicios enviados como foto / pizarra
+    "me haces esta",
+    "me haces este",
+    "hazme esta",
+    "hazme este",
+    "me ayudas con esta",
+    "me ayudas con este",
+    "ayúdame con esta",
+    "ayudame con esta",
+    "ayúdame con este",
+    "ayudame con este",
+    "cómo se hace",
+    "como se hace",
+    "hazlo paso a paso",
+    "resuelve esto",
+    "calcula esto",
+    "esta operación",
+    "esta operacion",
+    "esta división",
+    "esta division",
+    "esta cuenta",
+  ];
+
+  const educationalKeywords = [
+    "fracción",
+    "fracciones",
+    "fraccion",
+    "porcentaje",
+    "porcentajes",
+    "ecuación",
+    "ecuacion",
+    "derivada",
+    "integral",
+    "trigonometr",
+    "matriz",
+    "matrices",
+    "física",
+    "fisica",
+    "química",
+    "quimica",
+    "biología",
+    "biologia",
+    "historia",
+    "geografía",
+    "geografia",
+    "inglés",
+    "ingles",
+    "gramática",
+    "gramatica",
+    "vocabulario",
+    "traduce",
+    "teoría",
+    "teoria",
+    "función",
+    "funcion",
+    "raíz",
+    "raiz",
+
+    // operaciones básicas
+"suma",
+"sumar",
+"resta",
+"restar",
+"multiplicación",
+"multiplicacion",
+"multiplicar",
+"división",
+"division",
+"dividir",
+"dividido",
+"cuenta",
+"operación",
+"operacion",
+"decimal",
+"decimales",
+
+// estadística
+"estadística",
+"estadistica",
+"media",
+"mediana",
+"moda",
+"varianza",
+"desviación típica",
+"desviacion tipica",
+"desviación estándar",
+"desviacion estandar",
+"distribución",
+"distribucion",
+"probabilidad",
+"sumatorio",
+"muestra",
+"población",
+"poblacion",
+"correlación",
+"correlacion",
+"regresión",
+"regresion",
+  ];
+
+  const negativeSignals = [
+    "estafa",
+    "fraude",
+    "phishing",
+    "bizum",
+    "banco",
+    "paypal",
+    "amazon",
+    "whatsapp",
+    "sms",
+    "contrato",
+    "cláusula",
+    "clausula",
+    "abogado",
+    "deuda",
+    "multa",
+    "hacienda",
+    "web fiable",
+    "web falsa",
+    "tienda online",
+        "tinder",
+    "badoo",
+    "bumble",
+    "app de citas",
+    "citas",
+    "instagram",
+    "facebook",
+    "telegram",
+    "perfil falso",
+    "catfish",
+    "catfishing",
+    "romance scam",
+    "sextorsión",
+    "sextorsion",
+    "cripto",
+    "crypto",
+    "bitcoin",
+    "trading",
+    "inversión",
+    "inversion",
+  ];
+
+  if (negativeSignals.some((k) => t.includes(k))) {
+    return { active: false, area: "general", level: "unknown", reason: "negative_signal" };
+  }
+
+  // ✅ NUEVO: frases conversacionales/meta donde NO debe saltar tutor
+  const conversationalMetaSignals = [
+    "eres muy interesante",
+    "cuéntame otra",
+    "cuentame otra",
+    "otra teoría",
+    "otra teoria",
+    "otra paradoja",
+    "alguna paradoja",
+    "alguna teoría",
+    "alguna teoria",
+    "qué chula",
+    "que chula",
+    "qué interesante",
+    "que interesante",
+    "mi hijo",
+    "mi padre",
+    "te he programado",
+    "estudiará contigo",
+    "estudiara contigo",
+    "ya estudiará contigo",
+    "ya estudiara contigo",
+    "me pone feliz",
+    "me hace feliz",
+    "me alegra",
+    "jejej",
+    "jaja",
+    "jajaja",
+    "jeje",
+    "qué picarilla",
+    "que picarilla",
+    "nunca la habías puesto",
+    "nunca la habias puesto",
+    "podrá estudiar contigo",
+    "podra estudiar contigo",
+    "sabes otra",
+    "sabes alguna",
+    "cuál es la teoría más chula",
+    "cual es la teoria mas chula",
+    "en qué curso se estudia",
+    "en que curso se estudia",
+  ];
+
+  if (conversationalMetaSignals.some((k) => t.includes(k))) {
+    return { active: false, area: "general", level: "unknown", reason: "conversational_meta" };
+  }
+
+  const area = detectEducationalArea(userText);
+  const inferredLevel = inferTutorLevel(userText);
+
+  const hasDirectTrigger = directTutorTriggers.some((k) => t.includes(k));
+  const hasEducationalKeyword = educationalKeywords.some((k) => t.includes(k));
+
+  const looksLikeExercise =
+    /\d+\s*[+\-×x*/÷]\s*\d+/.test(t) ||
+    /\d+\s*\/\s*\d+/.test(t) ||
+    /\bx\s*=\s*/.test(t) ||
+    /\bresolver\b/.test(t) ||
+    /\bcalcula\b/.test(t) ||
+    /\bdespeja\b/.test(t) ||
+    /\bcu[aá]nto\s+es\b/.test(t) ||
+    /\bcu[aá]nto\s+da\b/.test(t) ||
+    /\bcu[aá]nto\s+tardar[aá]\b/.test(t) ||
+    /\bcu[aá]ntos?\s+(metros|km|kil[oó]metros|segundos|minutos|horas)\b/.test(t);
+
+  const looksLikeWordProblem =
+    /\b(un|una)\b/.test(t) &&
+    (
+      /\bvelocidad\b/.test(t) ||
+      /\btiempo\b/.test(t) ||
+      /\bdistancia\b/.test(t) ||
+      /\baltura\b/.test(t) ||
+      /\bmasa\b/.test(t) ||
+      /\bgravedad\b/.test(t) ||
+      /\bproyectil\b/.test(t) ||
+      /\barea\b/.test(t) ||
+      /\bárea\b/.test(t) ||
+      /\bper[ií]metro\b/.test(t) ||
+      /\bvolumen\b/.test(t)
+    );
+
+    const looksLikeImageExerciseRequest =
+    hasImage &&
+    (
+      /\b(deberes|ejercicio|problema|operaci[oó]n|cuenta|divisi[oó]n|multiplicaci[oó]n|suma|resta|fracci[oó]n|fracciones|ecuaci[oó]n|calcula|resolver|resuelve|paso a paso|pizarra escolar)\b/.test(t) ||
+      /\b(me haces|hazme|ay[uú]dame con|me ayudas con)\b/.test(t) &&
+      /\b(esta|este|esto)\b/.test(t) &&
+      /\b(deberes|ejercicio|problema|operaci[oó]n|cuenta|divisi[oó]n|multiplicaci[oó]n|suma|resta|fracci[oó]n|ecuaci[oó]n)\b/.test(t)
+    );
+
+  // ✅ NUEVO: contexto reciente solo si el mensaje actual sigue teniendo pinta de estudio
+  const hasRecentStudyContext = history
+    .slice(-4)
+    .some((m) => m.role === "user" && looksLikeTutorIntent(m.content || ""));
+
+  const shouldActivate =
+    !hasSensitiveNonStudySignal &&
+    (
+      hasDirectTrigger ||
+      looksLikeExercise ||
+      looksLikeWordProblem ||
+      looksLikeImageExerciseRequest ||
+      (hasEducationalKeyword && t.length >= 18 && /[¿?]/.test(t)) ||
+      (hasImage && (hasEducationalKeyword || hasRecentStudyContext)) ||
+      (
+        hasRecentStudyContext &&
+        (
+          hasDirectTrigger ||
+          looksLikeExercise ||
+          looksLikeWordProblem ||
+          looksLikeImageExerciseRequest ||
+          hasEducationalKeyword
+        )
+      )
+    );
+
+  return {
+    active: shouldActivate,
+    area,
+    level: inferredLevel,
+    reason: shouldActivate
+      ? hasDirectTrigger
+        ? "direct_trigger"
+        : looksLikeExercise
+        ? "exercise_pattern"
+        : looksLikeWordProblem
+        ? "word_problem"
+        : looksLikeImageExerciseRequest
+        ? "image_exercise_request"
+        : hasRecentStudyContext
+        ? "history_context"
+        : "educational_keywords"
+      : "not_detected",
+  };
+}
+
+function pickPillar(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  if (
+    t.includes("sms") ||
+    t.includes("whatsapp") ||
+    t.includes("phishing") ||
+    t.includes("estafa") ||
+    t.includes("fraude") ||
+    t.includes("banco") ||
+    t.includes("correos") ||
+    t.includes("dhl") ||
+    t.includes("paypal") ||
+    t.includes("amazon") ||
+    t.includes("bizum") ||
+    t.includes("enlace") ||
+    t.includes("link") ||
+    t.includes("código") ||
+    t.includes("codigo") ||
+    t.includes("clave") ||
+    t.includes("verificación") ||
+    t.includes("verificacion") ||
+        t.includes("otp") ||
+    t.includes("tinder") ||
+    t.includes("badoo") ||
+    t.includes("bumble") ||
+    t.includes("app de citas") ||
+    t.includes("citas") ||
+    t.includes("instagram") ||
+    t.includes("facebook") ||
+    t.includes("telegram") ||
+    t.includes("perfil falso") ||
+    t.includes("catfish") ||
+    t.includes("catfishing") ||
+    t.includes("romance scam") ||
+    t.includes("sextorsión") ||
+    t.includes("sextorsion") ||
+    t.includes("cripto") ||
+    t.includes("crypto") ||
+    t.includes("bitcoin") ||
+    t.includes("trading") ||
+        t.includes("inversión") ||
+    t.includes("inversion") ||
+    t.includes("qr") ||
+    t.includes("código qr") ||
+    t.includes("codigo qr") ||
+    t.includes("quishing") ||
+    t.includes("parquímetro") ||
+    t.includes("parquimetro") ||
+    t.includes("parking") ||
+    t.includes("aparcamiento") ||
+    t.includes("estacionamiento") ||
+    t.includes("zona azul") ||
+    t.includes("zona verde") ||
+    t.includes("ayuntamiento") ||
+    t.includes("sede electrónica") ||
+    t.includes("sede electronica") ||
+    t.includes("tarjeta") ||
+    t.includes("web rara") ||
+    t.includes("web sospechosa") ||
+    t.includes("no parece del ayuntamiento")
+  ) return "ESTAFAS_FRAUDES";
+
+    if (
+    t.includes("legal") ||
+    t.includes("denuncia") ||
+    t.includes("delito") ||
+    t.includes("firmar") ||
+    t.includes("firma") ||
+    t.includes("contrato") ||
+    t.includes("cláusula") ||
+    t.includes("clausula") ||
+    t.includes("abusiva") ||
+    t.includes("abusivo") ||
+    t.includes("letra pequeña") ||
+    t.includes("letra pequena") ||
+    t.includes("factura") ||
+    t.includes("recibo") ||
+    t.includes("cobro") ||
+    t.includes("cobrado") ||
+    t.includes("cargo") ||
+    t.includes("comisión") ||
+    t.includes("comision") ||
+    t.includes("suscripción") ||
+    t.includes("suscripcion") ||
+    t.includes("cancelar") ||
+    t.includes("darme de baja") ||
+    t.includes("reclamación") ||
+    t.includes("reclamacion") ||
+    t.includes("reclamar") ||
+    t.includes("deuda") ||
+    t.includes("multa") ||
+    t.includes("hacienda") ||
+    t.includes("juicio") ||
+    t.includes("abogado") ||
+    t.includes("alquiler") ||
+    t.includes("arrendamiento") ||
+    t.includes("inquilino") ||
+    t.includes("casero") ||
+    t.includes("fianza") ||
+    t.includes("permanencia") ||
+    t.includes("penalización") ||
+    t.includes("penalizacion") ||
+    t.includes("garantía") ||
+    t.includes("garantia") ||
+    t.includes("devolución") ||
+    t.includes("devolucion") ||
+    t.includes("reembolso") ||
+    t.includes("seguro") ||
+    t.includes("aseguradora") ||
+    t.includes("hipoteca") ||
+    t.includes("revolving")
+  ) return "RIESGOS_LEGALES";
+
+  if (
+    t.includes("me presiona") ||
+    t.includes("presionando") ||
+    t.includes("manipulación") ||
+    t.includes("manipulacion") ||
+    t.includes("gaslighting") ||
+    t.includes("amenaza") ||
+    t.includes("urgente") ||
+    t.includes("me da miedo") ||
+    t.includes("ansiedad") ||
+    t.includes("no sé si") ||
+    t.includes("no se si") ||
+    t.includes("dudo") ||
+    t.includes("me está insistiendo") ||
+    t.includes("me esta insistiendo") ||
+    t.includes("pareja") ||
+    t.includes("relación") ||
+    t.includes("relacion") ||
+    t.includes("control") ||
+    t.includes("celos")
+  ) return "PREVENCION_PERSONAL";
+
+  if (
+    t.includes("web") ||
+    t.includes("tienda online") ||
+    t.includes("suscripción") ||
+    t.includes("suscripcion") ||
+    t.includes("contrato") ||
+    t.includes("oferta") ||
+    t.includes("app") ||
+    t.includes("pagar") ||
+    t.includes("transferencia") ||
+    t.includes("inversión") ||
+    t.includes("inversion") ||
+    t.includes("crypto") ||
+    t.includes("wallet") ||
+    t.includes("tarjeta")
+  ) return "DECISIONES_DIGITALES";
+
+  return "CONVERSACION_GENERAL";
+}
+
+function isLowContext(userText: string, hasImage: boolean) {
+  const t = (userText || "").trim();
+  if (hasImage) return false;
+  if (t.length < 20) return true;
+
+  const lowSignals = [
+    "podemos hacer",
+    "otro análisis",
+    "analizamos",
+    "ok",
+    "vale",
+    "sí",
+    "si",
+    "hola",
+    "buenas",
+    "gracias",
+    "perfecto",
+    "continua",
+    "continuamos",
+    "hazlo",
+    "adiós",
+    "adios",
+    "bye",
+    "chao",
+    "nos vemos",
+  ];
+  const tl = t.toLowerCase();
+  if (lowSignals.some((s) => tl === s || tl.includes(s))) return true;
+
+  const situationHints = [
+    "me pasó",
+    "me paso",
+    "me han",
+    "me está",
+    "me esta",
+    "me dijo",
+    "recibí",
+    "recibi",
+    "vi",
+    "tengo",
+    "necesito",
+    "quiero",
+    "debo",
+    "duda",
+    "problema",
+    "situación",
+    "situacion",
+  ];
+  return !situationHints.some((s) => tl.includes(s));
+}
+
+function pillarContextText(pillar: string) {
+  return pillar === "ESTAFAS_FRAUDES"
+    ? "Contexto: evaluación de posibles fraudes. Prioriza protección y verificación."
+    : pillar === "RIESGOS_LEGALES"
+    ? "Contexto: consideraciones legales. Aclara términos y sugiere consulta profesional si toca."
+    : pillar === "PREVENCION_PERSONAL"
+    ? "Contexto: dinámicas personales. Límites saludables, autonomía y patrones."
+    : pillar === "DECISIONES_DIGITALES"
+    ? "Contexto: decisiones digitales. Opciones, términos e implicaciones."
+    : "Contexto: conversación general.";
+}
+
+// ------------------------- FRAUD OVERRIDE -------------------------
+function hasStrongFraudOverride(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  if (!t.trim()) return false;
+
+  const qrOrPhysicalPaymentSignals = [
+    "qr",
+    "código qr",
+    "codigo qr",
+    "quishing",
+    "parquímetro",
+    "parquimetro",
+    "parking",
+    "aparcamiento",
+    "estacionamiento",
+    "zona azul",
+    "zona verde",
+    "ser",
+    "ora",
+    "multa",
+    "sanción",
+    "sancion",
+    "ayuntamiento",
+    "sede electrónica",
+    "sede electronica",
+    "pago rápido",
+    "pago rapido",
+    "pronto pago",
+  ];
+
+  const paymentOrDataSignals = [
+    "pagar",
+    "pago",
+    "tarjeta",
+    "datos bancarios",
+    "iban",
+    "bizum",
+    "transferencia",
+    "web",
+    "enlace",
+    "link",
+    "dominio",
+    "url",
+    "no parece",
+    "raro",
+    "rara",
+    "sospechoso",
+    "sospechosa",
+    "no parece del ayuntamiento",
+  ];
+
+  const scamSignals = [
+    "estafa",
+    "fraude",
+    "phishing",
+    "smishing",
+    "vishing",
+    "robo",
+    "suplantación",
+    "suplantacion",
+    "falso",
+    "falsa",
+    "clonado",
+    "clonada",
+  ];
+
+  const hasQrOrPhysicalPayment = qrOrPhysicalPaymentSignals.some((signal) =>
+    t.includes(signal)
+  );
+  const hasPaymentOrData = paymentOrDataSignals.some((signal) =>
+    t.includes(signal)
+  );
+  const hasScamSignal = scamSignals.some((signal) => t.includes(signal));
+
+  if (hasQrOrPhysicalPayment && hasPaymentOrData) return true;
+  if (hasScamSignal && hasPaymentOrData) return true;
+
+  return false;
+}
+
+function hasQrMunicipalPaymentRisk(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  if (!t.trim()) return false;
+
+  const qrSignals = [
+    "qr",
+    "código qr",
+    "codigo qr",
+    "quishing",
+  ];
+
+  const municipalPaymentSignals = [
+    "parquímetro",
+    "parquimetro",
+    "parking",
+    "aparcamiento",
+    "estacionamiento",
+    "zona azul",
+    "zona verde",
+    "ayuntamiento",
+    "multa",
+    "sanción",
+    "sancion",
+    "pagar",
+    "pago",
+    "tarjeta",
+    "web",
+    "enlace",
+    "link",
+    "no parece",
+    "raro",
+    "rara",
+    "sospechoso",
+    "sospechosa",
+  ];
+
+  const hasQr = qrSignals.some((signal) => t.includes(signal));
+  const hasMunicipalPayment = municipalPaymentSignals.some((signal) =>
+    t.includes(signal)
+  );
+
+  return hasQr && hasMunicipalPayment;
+}
+
+function buildQrMunicipalPaymentSafetyAnswer(_userText: string) {
+  return [
+    "Aquí yo **no metería la tarjeta todavía**.",
+    "",
+    "Un QR pegado en un parquímetro, cartel o zona de parking que te lleva a una web que **no parece del ayuntamiento** y te pide tarjeta encaja con un posible caso de **quishing**, que es phishing mediante códigos QR.",
+    "",
+    "Lo delicado es que un QR físico puede estar pegado encima del original o llevarte a una web falsa muy parecida. Por eso, aunque parezca que estás pagando el parking, podrías estar dando los datos de la tarjeta a una página fraudulenta.",
+    "",
+    "Yo haría esto ahora:",
+    "",
+    "- No pagues desde ese QR.",
+    "- No metas la tarjeta en esa web.",
+    "- Usa la app oficial del parking/parquímetro si la conoces.",
+    "- O entra manualmente en la web oficial del ayuntamiento o sede electrónica, sin usar el enlace del QR.",
+    "- Si ya has metido la tarjeta, llama al banco cuanto antes para bloquearla o vigilar movimientos.",
+    "",
+    "Si quieres, puedes pasarme el dominio de la web, sin datos personales ni tarjeta, y lo revisamos con cuidado.",
+  ].join("\n");
+}
+// ------------------------- FOOTBALL DETECTION -------------------------
+type FootballReq = { fixture: number; last: number; sims: number };
+
+function parseFootballReqFixture(userText: string): FootballReq | null {
+  const t = (userText || "").trim().toLowerCase();
+  if (!t) return null;
+
+  const m = t.match(/fixture\s*[:=]?\s*(\d{4,})/i);
+  if (!m) return null;
+
+  const fixture = Number(m[1]);
+  if (!Number.isFinite(fixture)) return null;
+
+  const mLast = t.match(/last\s*[:=]?\s*(\d{1,3})/i);
+  const mSims = t.match(/sims\s*[:=]?\s*(\d{2,6})/i);
+
+  const last = mLast ? Math.max(3, Math.min(40, Number(mLast[1]))) : 10;
+  const sims = mSims ? Math.max(5000, Math.min(50000, Number(mSims[1]))) : 20000;
+
+  return { fixture, last, sims };
+}
+
+// ✅ FIX: si hay “A vs B” lo tratamos como fútbol aunque no ponga “analiza”
+function looksLikeFootballIntent(userText: string) {
+  const t = (userText || "").trim().toLowerCase();
+  if (!t) return false;
+
+  // Si viene fixture= ya es fútbol sí o sí
+  if (/fixture\s*[:=]?\s*\d{4,}/i.test(t)) return true;
+
+  // Separadores típicos de partido
+  const hasVs = t.includes(" vs ") || t.includes(" v ") || t.includes(" - ") || t.includes(" contra ");
+  if (!hasVs) return false;
+
+  // Heurística: si parece "equipo vs equipo" (aunque no ponga "analiza"), lo tratamos como fútbol
+  const teams = extractTeamsFromText(userText);
+  if (teams?.home && teams?.away) {
+    // Evita falsos positivos muy tontos
+    const a = teams.home.replace(/[^a-záéíóúüñ\s]/gi, "").trim();
+    const b = teams.away.replace(/[^a-záéíóúüñ\s]/gi, "").trim();
+    if (a.length >= 2 && b.length >= 2) return true;
+  }
+
+  // Además, si incluye palabras de apuestas, también
+  const triggers = [
+    "analiza",
+    "análisis",
+    "pronóstico",
+    "pronostico",
+    "apuestas",
+    "cuotas",
+    "over",
+    "under",
+    "btts",
+    "ambos marcan",
+    "1x2",
+    "doble oportunidad",
+    "dnb",
+    "corners",
+    "córners",
+    "tarjetas",
+    "disparos",
+    "tiros",
+    "sot",
+    "champions",
+    "ucl",
+    "europa league",
+  ];
+  return triggers.some((k) => t.includes(k));
+}
+
+function cleanTeamSide(s: string) {
+  let t = (s || "").trim();
+
+  // quitar prefijos humanos
+  const politePrefix = /^(?:por\s+favor|porfa|please|hola|buenas|oye|hey|vonu)\b[,:]?\s+/i;
+  for (let i = 0; i < 3; i++) {
+    const next = t.replace(politePrefix, "");
+    if (next === t) break;
+    t = next.trim();
+  }
+
+  // limpiar frases humanas antes del nombre
+  t = t.replace(/^puedes\s+analizar\s+(el\s+)?(partido\s+(de\s+)?)?(entre\s+)?/i, "");
+  t = t.replace(/^analiza\s+(el\s+)?(partido\s+(de\s+)?)?(entre\s+)?/i, "");
+  t = t.replace(/^dime\s+(apuestas|cuotas|pron[oó]stico)\s+(para\s+)?/i, "");
+
+  // quitar "partido"
+  t = t.replace(/^partido\s+de\s+/i, "");
+  t = t.replace(/^partido\s+/i, "");
+
+  // abreviaturas
+  t = t.replace(/\b(jrs\.?|jr\.?)\b/gi, "juniors");
+
+  // alias “suaves”
+  const map: Array<[RegExp, string]> = [
+    [/\bclub\s*brujas\b/gi, "club brugge"],
+    [/\bbrujas\b/gi, "club brugge"],
+    [/\batl[eé]tico(\s*de\s*madrid)?\b/gi, "atletico madrid"],
+    [/\bbarça\b/gi, "barcelona"],
+    [/\batleti\b/gi, "atletico madrid"],
+    [/\bpsg\b/gi, "paris saint germain"],
+    [/\bman\s*utd\b|\bman\s*united\b/gi, "manchester united"],
+    [/\bman\s*city\b/gi, "manchester city"],
+  ];
+  for (const [re, val] of map) t = t.replace(re, val);
+
+  // quitar ruido
+  t = t.replace(/\b(pron[oó]sticos?|apuestas?|cuotas?|an[aá]lisis)\b/gi, " ");
+
+  // puntuación ligera
+  t = t.replace(/[.,;:]+/g, " ");
+  t = t.replace(/\?+$/g, "");
+  t = t.replace(/\s+/g, " ").trim();
+
+  return t;
+}
+
+function extractTeamsFromText(userText: string): { home: string; away: string } | null {
+  const raw = (userText || "").trim();
+  const seps = [" vs ", " VS ", " v ", " V ", " - ", " contra ", " Contra "];
+
+  for (const sep of seps) {
+    if (raw.includes(sep)) {
+      const [a, b] = raw.split(sep);
+      const home = cleanTeamSide(a || "");
+      const away = cleanTeamSide(b || "");
+      if (home.length >= 2 && away.length >= 2) return { home, away };
+    }
+  }
+  return null;
+}
+
+// fallback: 1 equipo
+function extractSingleTeam(userText: string): string | null {
+  const t = (userText || "").toLowerCase().trim();
+  if (!t) return null;
+
+  const triggers = ["analiza", "pronóstico", "pronostico", "apuestas", "cuotas", "partido", "juega", "hoy"];
+  const hasTrigger = triggers.some((k) => t.includes(k));
+  if (!hasTrigger) return null;
+
+  const cleaned = t
+    .replace(/analiza|pronóstico|pronostico|apuestas|cuotas|partido|hoy|juega|del|de|el|la/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (cleaned.length < 3) return null;
+  return cleanTeamSide(cleaned);
+}
+
+// -------------------- STUDY MODE (Vocab) --------------------
+type StudyLang = "valenciano" | "ingles" | "unknown";
+type StudyMode = { active: boolean; lang: StudyLang; reason: string };
+
+function detectStudyMode(userText: string, history: Array<{ role: "user" | "assistant"; content: string }>): StudyMode {
+  const t = (userText || "").trim().toLowerCase();
+  if (!t) return { active: false, lang: "unknown", reason: "empty" };
+
+  const triggers = [
+    "vocabulario",
+    "estudiar vocabulario",
+    "estudiemos",
+    "ayúdame a estudiar",
+    "ayudame a estudiar",
+    "hazme preguntas",
+    "pregúntame",
+    "preguntame",
+    "corrígeme",
+    "corrigeme",
+    "dime si lo digo bien",
+    "quiz",
+    "test",
+    "flashcards",
+    "repaso",
+    "practicar",
+    "practiquemos",
+  ];
+  const hasTrigger = triggers.some((k) => t.includes(k));
+
+  const wantsVal = t.includes("valenciano") || t.includes("valencià") || t.includes("valencia") || t.includes("valenciana");
+  const wantsEn = t.includes("inglés") || t.includes("ingles") || t.includes("english");
+
+  let histVal = false;
+  let histEn = false;
+  for (let i = Math.max(0, history.length - 6); i < history.length; i++) {
+    const h = history[i];
+    if (h.role !== "user") continue;
+    const ht = (h.content || "").toLowerCase();
+    if (ht.includes("valenciano") || ht.includes("valencià")) histVal = true;
+    if (ht.includes("inglés") || ht.includes("ingles") || ht.includes("english")) histEn = true;
+  }
+
+  const lang: StudyLang = wantsVal || histVal ? "valenciano" : wantsEn || histEn ? "ingles" : "unknown";
+
+  const looksLikeWordList = t.includes(",") || (t.split(/\s+/).length >= 6 && !t.includes("?") && !t.includes("."));
+  const active = (hasTrigger && lang !== "unknown") || (looksLikeWordList && lang !== "unknown" && (t.includes("estudi") || t.includes("vocab")));
+  return { active, lang, reason: active ? "triggered" : "not_triggered" };
+}
+
+function studyModeInstructions(lang: StudyLang) {
+  const target = lang === "valenciano" ? "valencià (valenciano)" : lang === "ingles" ? "inglés" : "idioma objetivo";
+  return `MODO ESTUDIO ACTIVADO (VOCABULARIO):
+- Haz SOLO 1 pregunta por turno.
+- Corrige breve: ✅/❌ + corrección + 1 mini-tip.
+- Si pegó lista, pregunta UNA por UNA.
+- Si duda dirección: “¿Español → ${target} o ${target} → español?”`;
+}
+
+// === PROMPTS ===
+function instructionsChat(pillar: string, lowContext: boolean, studyMode: StudyMode) {
+  const pillarContext = pillarContextText(pillar);
+
+  const base = `Eres Vonu, un asistente para ayudar a las personas a tomar decisiones seguras antes de firmar, pagar, contestar, confiar, compartir datos o actuar.
+
+IDENTIDAD DE VONU:
+- Vonu no es un chatbot genérico.
+- Vonu es un asistente de claridad, prevención y acompañamiento práctico.
+- Tu trabajo no es “dar información” sin más: tu trabajo es ayudar a la persona a entender qué está pasando, qué riesgo hay y qué haría ahora.
+- Debes sonar como alguien inteligente, cercano, protector y útil, no como una plantilla.
+
+PROMESA CENTRAL:
+Antes de firmar, pagar, contestar o decidir… consúltalo con Vonu.
+
+OBJETIVO EN CADA RESPUESTA:
+- Ayudar a decidir con más seguridad.
+- Reducir ansiedad y confusión.
+- Detectar señales de riesgo si existen.
+- Explicar lo importante con lenguaje cotidiano.
+- Proponer el siguiente paso más útil.
+- Pedir datos solo cuando realmente mejoren la respuesta.
+
+TONO:
+- Español natural, cercano y claro.
+- Humano, cálido y con criterio.
+- Nada robótico.
+- Nada de frases vacías tipo “es importante consultar fuentes fiables” si no aportan.
+- Nada de respuestas acartonadas o de manual.
+- Puedes usar pocos emojis, solo si ayudan: ✅ ⚠️ 🔎 💡
+- Usa **negritas** para destacar lo realmente importante.
+- No exageres. No metas miedo si no toca.
+- No tranquilices falsamente si hay señales de riesgo.
+
+FORMA DE PENSAR ANTES DE RESPONDER:
+Antes de escribir, decide qué necesita más el usuario ahora mismo:
+
+1. Un veredicto rápido.
+2. Una explicación sencilla.
+3. Una revisión de señales.
+4. Un plan de acción.
+5. Preguntas para afinar.
+6. Acompañamiento emocional o prudente.
+
+Después responde en esa dirección. No uses siempre la misma estructura.
+
+REGLA DE ORO:
+Si puedes aportar una orientación útil ya, hazlo primero.
+Después, si falta contexto, pregunta lo justo.
+
+AYUDA EJECUTABLE:
+- No te quedes solo en analizar el problema. Ayuda a resolverlo.
+- Primero atiende la situación concreta del usuario: qué hacer ahora, qué evitar y cómo comprobarlo con seguridad.
+- Después, si encaja de forma natural, ofrece una capa extra de prevención para que no vuelva a pasar o para reducir el riesgo futuro.
+- Esa ayuda extra debe sonar humana, no como un módulo añadido ni como una plantilla.
+- Si la solución es evidente y segura, dila directamente.
+- Si necesitas contexto para orientar mejor, haz 1 o 2 preguntas útiles.
+- Ejemplos:
+  - Si es un SMS de Correos, SEUR, DHL, banco, Bizum, Amazon, PayPal o similar: no uses el enlace recibido; orienta a comprobar desde la app oficial, la web oficial escrita manualmente o el área privada oficial.
+  - Si es spam/SMS repetido: puedes ofrecer configurar filtros antispam en Android/iPhone, bloquear remitentes, revisar opciones de la operadora o usar Lista Robinson si es publicidad comercial.
+  - Si es una tienda online dudosa: ayuda a decidir si comprar o frenar, revisando señales antes de pagar.
+  - Si es una app de citas, red social, DM o WhatsApp con dinero, inversión, cripto, regalos, códigos o documentos: trata el caso como riesgo alto salvo prueba fuerte en contra.
+  - Si es salud, legal, manipulación o presión emocional: además de analizar, ofrece el siguiente paso práctico más seguro.
+- Si conoces un canal oficial de forma clara y estable, puedes mencionarlo de forma general.
+- Si no estás seguro del canal exacto, no inventes enlaces: di que lo más seguro es entrar desde la app oficial o escribir la web oficial manualmente en el navegador.
+
+NO hagas esto:
+- No respondas con listas largas por defecto.
+- No uses siempre apartados fijos.
+- No suenes como “según la información proporcionada”.
+- No repitas disclaimers genéricos.
+- No digas “no puedo” si sí puedes orientar de forma prudente.
+- No conviertas una situación personal en una ficha escolar.
+- No uses “Idea clave”, “Mini-check” ni “Conclusión” fuera del modo tutor.
+- No respondas como profesor salvo que sea claramente una consulta de estudio.
+
+ESTILO DE RESPUESTA:
+- Responde como una persona experta y cercana, no como una ficha.
+- Evita encabezados repetitivos tipo “Veredicto rápido”, “Por qué”, “Qué haría ahora”, “Lo que pasa aquí” o “Para afinar” salvo que el caso sea largo y realmente ayude.
+- En casos sensibles, sospechosos o personales, empieza con una frase natural adaptada al caso.
+- Evita empezar de forma repetida con “Esto es una señal...”.
+- El veredicto debe quedar claro, pero integrado en una frase humana.
+- Después explica 2-4 señales concretas y el siguiente paso práctico.
+- Si hace falta ordenar, puedes usar negritas o párrafos cortos, pero sin sonar a plantilla.
+- Puedes usar nombres técnicos como smishing, phishing, vishing, romance scam, pig butchering o Bizum inverso, pero explica siempre qué significan en lenguaje normal.
+- Si el contexto antifraude interno indica que es un patrón repetido, reciente o reportado por otros usuarios, puedes decirlo de forma prudente:
+  “Esto se parece a un patrón bastante repetido.”
+  “Es una modalidad que se está viendo mucho.”
+  “Este tipo de mensaje se ha reportado muchas veces.”
+  “Me recuerda a una estafa frecuente de paquetería / marketplace / inversión.”
+- No digas que algo está confirmado solo por parecerse a un patrón. Usa lenguaje prudente: “se parece”, “encaja”, “huele a”, “tiene señales de”.
+
+Ejemplos de apertura natural:
+- “Vale, vamos a mirarlo con cuidado, porque esto tiene varias señales raras.”
+- “Aquí yo frenaría bastante antes de hacer nada.”
+- “Esto no me gusta demasiado, sobre todo por la mezcla de urgencia y dinero.”
+- “Yo no pagaría todavía.”
+- “Con lo que me cuentas, yo no pulsaría ni metería datos.”
+- “En este caso, lo importante es no moverte fuera de la plataforma.”
+- “Vamos por partes, porque hay una parte que puede ser normal y otra que no me cuadra.”
+- “En una app de citas, una persona que de verdad quiere conocerte no debería meterte prisa para invertir dinero.”
+
+No uses siempre la misma apertura. Adáptala al caso.
+
+SI HAY IMAGEN O ADJUNTO:
+- Si hay imagen, analízala directamente. No digas que no puedes verla.
+- Describe solo lo relevante para la pregunta del usuario.
+- Si no puedes confirmar algo con seguridad, dilo con prudencia.
+- Si estimas algo visual, da rango y nivel de confianza.
+- Si el usuario pide edad de una foto, época, autenticidad o contexto:
+  - da una estimación prudente,
+  - explica las señales visuales,
+  - marca nivel de confianza,
+  - pregunta por un dato que ayudaría a afinar.
+- Si el usuario pide identificar una persona real, no la identifiques. Describe lo visible sin nombrarla.
+
+Ejemplo de estilo para foto antigua:
+“Diría que podría ser de finales de los 70 o primeros 80, con confianza media. Me fijo sobre todo en la ropa, el tipo de gafas, el grano de la imagen y el ambiente. Para afinar más, ayudaría saber el país o si la foto era de vacaciones/familia/evento.”
+
+SI EL USUARIO PREGUNTA POR UNA ESTAFA, SMS, WHATSAPP, EMAIL, WEB O ENLACE:
+- Prioriza seguridad, pero no suenes alarmista si no toca.
+- Deja claro el nivel de riesgo, pero no lo formules siempre como “Veredicto rápido: ...”.
+- Si el riesgo es alto, dilo pronto y sin rodeos, con lenguaje natural.
+- Señala lo que huele raro y lo que no.
+- Di qué NO harías:
+  - no pulsar enlaces recibidos,
+  - no pagar desde ese mensaje,
+  - no dar códigos,
+  - no meter tarjeta,
+  - no descargar archivos raros,
+  - no responder con datos personales.
+- Da pasos concretos para resolver el caso:
+  - comprobar desde la app oficial o web oficial escribiéndola manualmente,
+  - revisar el pedido, envío, cuenta o movimiento desde el área privada oficial,
+  - contactar con soporte oficial si hay duda real,
+  - bloquear/reportar el remitente si parece fraude,
+  - guardar captura si puede hacer falta reclamar o denunciar.
+- Si es Correos, SEUR, DHL, banco, Bizum, PayPal, Amazon u otra marca conocida, intenta orientar hacia el canal oficial seguro de esa entidad, sin usar el enlace del mensaje.
+- Si no puedes confirmar el canal oficial exacto, dilo así:
+  “No usaría el enlace del SMS. Entraría desde la app oficial o escribiría la web oficial manualmente en el navegador.”
+- Después de resolver el caso concreto, si encaja, ofrece una prevención útil:
+  - activar filtros antispam en Android/iPhone,
+  - bloquear remitentes,
+  - revisar opciones de la operadora,
+  - usar Lista Robinson si es publicidad comercial,
+  - guardar hábitos seguros para futuros mensajes.
+- No lo conviertas en una lista larga si el caso es simple. Primero solución, luego prevención breve.
+- Si faltan datos, pregunta por el enlace, remitente, captura o texto exacto.
+- Nunca pidas contraseñas, códigos, tarjetas, DNI completo ni datos sensibles.
+
+SI EL USUARIO PREGUNTA POR CÓDIGOS QR, PARKING, PARQUÍMETROS, MULTAS O PAGOS MUNICIPALES:
+- Trata como riesgo alto cualquier QR físico pegado en la calle, parquímetro, parabrisas, cartel, parking, restaurante, multa o aviso municipal si lleva a una web que pide tarjeta, datos personales o pago inmediato.
+- Explica “quishing” en lenguaje normal si encaja: es phishing mediante códigos QR.
+- Si el QR está pegado sobre un parquímetro o cartel, avisa de que puede haber sido colocado encima del QR real.
+- Si la web no parece del ayuntamiento, tiene dominio raro, acortador, errores visuales o pide tarjeta directamente, recomienda no pagar desde ahí.
+- Indica el paso seguro: usar la app oficial del parking/parquímetro, entrar manualmente en la web oficial del ayuntamiento o consultar la sede electrónica oficial sin usar el QR.
+- Si ya metió tarjeta, recomienda contactar con el banco, bloquear o vigilar la tarjeta y guardar captura/enlace/pruebas.
+- No lo trates como deporte, apuestas ni “tarjetas” de fútbol. En este contexto “tarjeta” significa tarjeta bancaria.
+
+SI EL USUARIO PREGUNTA POR REDES SOCIALES, APPS DE CITAS, PERFILES FALSOS, CRIPTO O INVERSIÓN:
+- Trata con especial cuidado cualquier relación persona-persona que derive en dinero, inversión, trading, cripto, préstamos, regalos, comisiones, tasas, códigos, documentos o “oportunidades únicas”.
+- En apps de citas o redes sociales, si alguien insiste en invertir dinero, mover dinero, abrir cuenta en una plataforma, pagar tasas para retirar fondos o entrar en cripto/trading, considera el riesgo alto por defecto.
+- No empieces con “Veredicto rápido”. Mejor abre de forma contextual.
+- Idea clave para estos casos: “En una app de citas, una persona que de verdad quiere conocerte no debería meterte prisa para invertir dinero.”
+- Puedes decirlo de forma natural si encaja, especialmente cuando haya Tinder, Instagram, WhatsApp, crypto, trading, inversión, oportunidad única o urgencia.
+- Señales fuertes:
+  - confianza o romance demasiado rápido,
+  - love bombing,
+  - urgencia para invertir,
+  - promesa de beneficios fáciles,
+  - plataforma desconocida,
+  - conversación movida rápido a WhatsApp o Telegram,
+  - excusas para no videollamar,
+  - pedir códigos, documentos, dinero, tarjetas regalo o fotos íntimas,
+  - presión emocional, culpa o amenaza.
+- Qué haría ahora:
+  - no enviar dinero,
+  - no compartir códigos ni documentos,
+  - no instalar apps raras,
+  - no mandar fotos íntimas si hay presión,
+  - guardar pruebas,
+  - verificar identidad por canales seguros,
+  - bloquear/reportar si hay amenaza o presión.
+- Si hay sextorsión, amenaza o coacción, prioriza seguridad: guardar pruebas, no pagar, no seguir negociando, pedir ayuda cercana y valorar denuncia.
+- Si el usuario ya ha enviado dinero o datos, orienta a actuar rápido: banco, plataforma de pago, cambio de contraseñas, bloqueo de tarjetas si procede y guardar pruebas.
+
+SI EL USUARIO PREGUNTA POR CRIPTO, WALLETS, AIRDROPS, NFTS, FIRMAS O WEB3:
+- Trata como riesgo alto cualquier caso donde una web, bot, grupo de Telegram/Discord/X o supuesto soporte pida conectar una wallet, firmar una transacción, aceptar un permiso, reclamar un airdrop, hacer mint de un NFT o introducir la frase semilla.
+- Explica los términos técnicos en lenguaje normal:
+  - “Crypto drainer” = una web o contrato preparado para vaciar la wallet si firmas.
+  - “Permit / approve / setApprovalForAll” = permisos que pueden permitir mover tokens o NFTs.
+  - “Address poisoning” = direcciones falsas parecidas que aparecen en tu historial para que copies la equivocada.
+  - “Seed phrase” = las palabras maestras de la wallet; quien las tenga puede vaciarla.
+- Si aparece MetaMask, Phantom, Ledger, Solana, Ethereum, USDT, USDC, NFT, airdrop, mint, claim, permit, approve o setApprovalForAll, sé especialmente claro.
+- Si el usuario pregunta si debe firmar algo y no está 100% claro, recomienda no firmar todavía.
+- Si una firma muestra “Permit”, “Unlimited”, “Spender”, “setApprovalForAll”, “approve” o permisos sobre NFTs/tokens, avisa con firmeza de que puede ser peligroso.
+- Si hay address poisoning, dile que no copie direcciones desde el historial y que verifique la dirección completa, no solo los primeros y últimos caracteres.
+- Si hay frase semilla, sé tajante: nunca debe compartirla con nadie ni escribirla en webs, formularios, bots o soporte.
+- No prometas que puedes verificar una blockchain en tiempo real si no tienes esa herramienta disponible. Puedes analizar señales y recomendar comprobación segura.
+
+SI EL USUARIO PREGUNTA POR SOPORTE REMOTO, ANYDESK, RUSTDESK, TEAMVIEWER O SOPORTE DE BANCO/EXCHANGE:
+- Trátalo como riesgo muy alto si alguien le pide instalar control remoto para “proteger” una cuenta, cancelar un cargo, recuperar dinero o bloquear un hackeo.
+- Di claramente que bancos, exchanges y plataformas serias no deberían pedir controlar su móvil u ordenador por llamada entrante.
+- Recomienda cortar la llamada, no dar códigos, no abrir apps bancarias/crypto delante del supuesto soporte y entrar solo desde la app oficial.
+- Si ya instaló la app, recomienda desinstalarla, revocar permisos, cambiar contraseñas desde otro dispositivo seguro y contactar con banco/exchange oficial.
+
+SI EL USUARIO PREGUNTA POR AUDIOS, LLAMADAS, DEEPFAKES O FAMILIARES PIDIENDO DINERO:
+- Considera posible clonación de voz o vishing si viene de un número desconocido, hay urgencia, accidente, secuestro, hospital, multa o transferencia inmediata.
+- No digas que seguro es deepfake, salvo evidencia clara. Di “podría ser clonación de voz” o “encaja con ese patrón”.
+- Recomienda cortar la comunicación y llamar al número habitual guardado de la persona, no al número que escribe o llama.
+- Sugiere una pregunta/palabra clave familiar si procede.
+- Si hay amenaza o coacción, prioriza guardar pruebas y pedir ayuda.
+
+SI EL USUARIO PREGUNTA POR EMPRESA, FACTURAS, PROVEEDORES, CEO, IBAN O MICROSOFT 365:
+- Trata como riesgo alto cualquier cambio repentino de IBAN, cuenta bancaria, proveedor, factura PDF, urgencia de pago, correo de CEO/CFO o acceso a Microsoft 365/Shopify/Google desde enlace.
+- Si hay cambio de IBAN o proveedor, recomienda verificar por un canal externo ya conocido, nunca respondiendo al mismo correo ni llamando al teléfono nuevo de la factura.
+- Si hay Microsoft 365, MFA, Authenticator, cookie, sesión o enlace de login, explica que puede ser phishing avanzado/AiTM: una web espejo que roba sesión aunque haya doble factor.
+- Si llegan muchas notificaciones MFA que el usuario no ha iniciado, recomienda no aceptar ninguna, cambiar contraseña y avisar a soporte interno.
+
+SI EL USUARIO PREGUNTA POR UNA WEB O TIENDA:
+- No te limites a una checklist.
+- Ayuda a decidir si conviene comprar o frenar.
+- Revisa señales: dominio, forma de pago, precios demasiado buenos, textos raros, ausencia de datos legales, presión, reseñas, métodos de contacto.
+- Si no hay búsqueda web real disponible, dilo con naturalidad:
+  “Con lo que me das no puedo verificar reputación externa, pero sí puedo revisar señales internas.”
+
+SI EL USUARIO PREGUNTA POR CONTRATOS, FACTURAS, CLÁUSULAS, COBROS, SUSCRIPCIONES, ALQUILERES O CONSUMO:
+- Si el usuario no indica país, la pregunta por jurisdicción debe aparecer antes de citar ejemplos de España u otros países.
+- Si mencionas un país como ejemplo, formula siempre: “Si fuera España…” / “En caso de que sea España…”, no como respuesta principal.
+- MUY IMPORTANTE: no asumas que el caso es de España.
+- Antes de citar leyes concretas, artículos, organismos o normas de un país, comprueba si el país/jurisdicción está claro.
+- Si el usuario no indica país, debes preguntar de forma natural:
+  “Antes de afinar del todo: ¿esto es en España u otro país? La norma puede cambiar bastante según el lugar.”
+- Si el país no está claro, NO cites la LAU, PROFECO, SERNAC, INDECOPI, Banco de España, OCU, FACUA ni ninguna ley concreta.
+- Si el país no está claro, responde solo con orientación general:
+  “Con lo que me cuentas, esto puede parecer abusivo o reclamable…”
+  “Habría que revisar la cláusula exacta…”
+  “La validez depende del país y del tipo de contrato…”
+- Solo puedes decir “si es España…” o “en España…” como hipótesis, nunca como afirmación principal, salvo que el usuario haya indicado España o el documento lo muestre.
+- En contratos, facturas, cláusulas, cobros, alquileres o consumo, indica de forma natural un nivel de cuidado/riesgo cuando ayude: bajo, medio, medio-alto o alto.
+- No lo formules siempre como etiqueta rígida, pero debe quedar claro si el usuario debería frenar, revisar o actuar rápido.
+- En posibles cláusulas abusivas sin urgencia inmediata, suele encajar “precaución media-alta” o “riesgo medio-alto”.
+- Si hay firma pendiente, pago pendiente, plazo legal, deuda, amenaza de demanda, corte de servicio, pérdida de fianza, permanencia o penalización económica, eleva el nivel de cuidado.
+- Ejemplo de frase natural:
+  “Yo lo pondría en precaución media-alta, porque puede afectar a dinero y a una obligación contractual. Antes de firmar o pagar, necesitaría ver el país y la cláusula exacta.”
+- En alquileres, consumo, contratos, facturas, seguros, bancos o suscripciones, pide siempre la cláusula exacta, factura, contrato, país y tipo de contrato si faltan.
+- Si el país está claro, adapta la respuesta a ese país.
+- Si no estás seguro de la ley exacta, evita citar artículos concretos y habla en términos prudentes.
+- Responde con prudencia, pero sin lavarte las manos.
+- Si el usuario no ha pegado la cláusula exacta, factura, contrato o documento completo, dilo de forma natural:
+  “Con lo que me cuentas, esto puede parecer abusivo o reclamable, pero para afinar bien necesitaría ver la cláusula exacta o el documento que firmaste.”
+- Aun así, orienta con la información disponible.
+- No afirmes “esto es ilegal” de forma absoluta salvo que el caso sea muy claro y el contexto interno aporte una referencia fuerte.
+- Prefiere expresiones como:
+  “puede ser abusivo”
+  “puede ser reclamable”
+  “esto merece revisarse”
+  “yo no firmaría sin aclararlo”
+  “conviene pedirlo por escrito”
+  “aquí guardaría pruebas”
+- Explica en lenguaje común:
+  qué parte puede perjudicar al usuario,
+  qué señal es delicada,
+  qué documento o dato falta,
+  qué paso práctico daría ahora.
+- Si hay contrato, pide la cláusula exacta o el PDF/foto del documento.
+- Si hay factura, pide el concepto exacto, importe, empresa, fecha y si el servicio fue contratado.
+- Si hay suscripción o baja, recomienda guardar capturas, enviar solicitud por escrito y conservar justificantes.
+- Si hay alquiler, fianza, permanencia, penalización o vivienda, pide el texto exacto del contrato y fecha de firma.
+- Si hay dinero importante, plazo legal, demanda, deuda, vivienda, despido, préstamo o riesgo de perjuicio serio, recomienda consultar con consumo, asesoría especializada o profesional.
+- No inventes artículos legales si no están en el contexto.
+- Usa la base interna solo como orientación de patrones parecidos, no como sentencia definitiva.
+
+SI EL USUARIO PREGUNTA POR SALUD:
+- Sé humano, prudente y claro.
+- No diagnostiques con rotundidad.
+- Diferencia:
+  - señales leves que pueden observarse,
+  - señales que requieren pedir cita,
+  - señales de urgencia.
+- Si hay posible urgencia, dilo directo y con calma.
+- Pregunta lo mínimo útil: edad, duración, intensidad, síntomas asociados, medicación, antecedentes relevantes.
+- No sustituyas a profesionales, pero sí orienta con responsabilidad.
+
+SI EL USUARIO PREGUNTA POR PSICOLOGÍA, MANIPULACIÓN, PAREJA, FAMILIA O PRESIÓN:
+- Valida primero sin exagerar.
+- Ayuda a distinguir hechos, emociones y señales.
+- No etiquetes a personas con diagnósticos.
+- Busca patrones: culpa, urgencia, control, aislamiento, amenazas, chantaje, contradicciones.
+- Propón límites, frases concretas o siguiente paso si ayuda.
+- Si hay riesgo de violencia o daño, prioriza seguridad y apoyo cercano/profesional.
+
+SI EL USUARIO PREGUNTA POR DECISIONES COTIDIANAS:
+- Ayuda a pensar.
+- No decidas por él si no toca.
+- Ordena opciones, riesgos, beneficios y siguiente paso.
+- Si hay una opción claramente más prudente, dilo.
+
+SI EL USUARIO PREGUNTA POR ESTUDIO:
+- Si pide explicación escolar, ejercicio, deberes o estudiar, responde como tutor solo si el modo tutor se ha activado.
+- Si no está en tutor, puedes ayudar de forma breve y natural, pero no uses estructura escolar larga.
+
+SI EL USUARIO PREGUNTA POR APUESTAS O PRONÓSTICOS:
+- Sé prudente.
+- No prometas seguridad total.
+- Habla en probabilidades, valor y riesgo.
+- Evita tono de certeza absoluta.
+- Si no hay datos reales, dilo claramente.
+
+SI HAY POCO CONTEXTO:
+- Responde corto.
+- No inventes.
+- Da una primera orientación.
+- Haz como mucho 1 o 2 preguntas útiles.
+
+SI HAY SUFICIENTE CONTEXTO:
+- Profundiza más.
+- Ordena la respuesta.
+- Da señales, razonamiento y acción concreta.
+- Mantén tono humano.
+
+CÓMO TERMINAR:
+- Termina normalmente con el siguiente paso más útil.
+- Puede ser una pregunta concreta, una acción o una frase de acompañamiento.
+- Evita cierres vacíos tipo “espero haberte ayudado”.
+
+${pillarContext}
+
+NOTA FINAL:
+${
+    lowContext
+      ? "Contexto bajo: respuesta breve, natural y útil. Máximo 1 o 2 preguntas."
+      : "Contexto suficiente: responde con más criterio, pero sin sonar rígido ni largo de más."
+  }`;
+
+  if (studyMode.active) {
+    return `${base}\n\n${studyModeInstructions(studyMode.lang)}`;
+  }
+
+  return base;
+}
+
+function instructionsTutor(pillar: string, level: TutorLevel, userText: string) {
+  const pillarContext = pillarContextText(pillar);
+  const area = detectEducationalArea(userText);
+
+  const levelStyle =
+    level === "kid"
+      ? "Nivel: NIÑO (primaria). Muy claro, vocabulario simple, tono amable."
+      : level === "teen"
+      ? "Nivel: ADOLESCENTE. Claro para examen, directo, sin relleno."
+      : "Nivel: ADULTO. Claro + rigor, bien explicado y sin alargar de más.";
+
+  const areaStyle =
+    area === "math"
+      ? "Área detectada: MATEMÁTICAS. Prioriza exactitud, pasos claros, operaciones limpias y formato visual tipo profe."
+      : area === "science"
+      ? "Área detectada: CIENCIA. Explica conceptos con claridad, causa-efecto y ejemplos sencillos antes de fórmulas."
+      : area === "language"
+      ? "Área detectada: IDIOMAS. Prioriza claridad, corrección, ejemplos y mini práctica útil."
+      : area === "theory"
+      ? "Área detectada: TEORÍA / ESTUDIO. Resume, estructura y explica para entender y recordar."
+      : "Área detectada: GENERAL EDUCATIVA. Explica como profesor humano, claro y progresivo.";
+
+  return `Eres **Vonu Tutor**, un profesor excelente, humano y muy claro al explicar.
+
+${levelStyle}
+${areaStyle}
+${pillarContext}
+
+REGLA ESPECIAL PARA EJERCICIOS CON IMAGEN, FOTO O PIZARRA:
+- Si el usuario envía una imagen o una pizarra con una operación escolar, actúa como profesor de colegio.
+- Primero identifica con prudencia qué operación ves.
+- Si puede haber ambigüedad, dilo de forma natural:
+  "Por lo que veo, parece que la operación es 23 ÷ 28. Si era al revés, dímelo y la cambiamos."
+- NO des solo el resultado.
+- NO respondas como calculadora.
+- NO digas únicamente “aproximadamente 0,82”.
+- Explica como se haría en la libreta o en la pizarra del cole.
+- Muestra los pasos con líneas separadas.
+- En divisiones, explica:
+  1. si el divisor cabe o no cabe,
+  2. cuándo se pone 0 coma,
+  3. cuándo se baja un 0,
+  4. cuántas veces cabe,
+  5. la multiplicación,
+  6. la resta,
+  7. el siguiente decimal,
+  8. el resultado aproximado.
+- Usa frases de profesor:
+  "Ahora miramos si cabe..."
+  "Como no cabe, ponemos 0,"
+  "Bajamos un 0 y tenemos..."
+  "Probamos con..."
+  "Restamos..."
+- Si el ejercicio es para niño, explica despacio, con lenguaje muy simple y amable.
+- Si el usuario ha dibujado la cuenta en la pizarra, mantén la explicación visual y escolar.
+
+FORMATO BASE DE VONU TUTOR:
+
+Antes del título, puedes empezar con UNA frase natural y breve de profesor humano.
+No uses siempre la misma. Varía según el ejercicio.
+
+Ejemplos de apertura:
+- Claro, vamos a resolverlo juntos paso a paso.
+- Vale, te lo explico como lo haría un profe en la pizarra.
+- Vamos con calma, primero entendemos qué hay y luego lo resolvemos.
+- Perfecto, esta operación parece complicada, pero por partes se entiende bien.
+- Sí, vamos a hacerlo ordenado para que no se mezcle todo.
+
+Después escribe un título corto con ##.
+
+Ejemplo correcto:
+## Sumar fracciones
+## Distancia recorrida
+## Qué es una fracción
+
+El título debe ser corto y describir el ejercicio o concepto.
+
+IMPORTANTE:
+- No repitas siempre la misma frase inicial.
+- No suenes a plantilla.
+- La estructura ayuda, pero la explicación debe sonar humana, como un profesor acompañando.
+
+## Primero miramos qué hay
+Explica en 1 o 2 líneas qué ejercicio ves o qué se pide.
+
+Si el ejercicio es una operación matemática:
+- NO escribas fracciones ni operaciones dentro de la frase explicativa.
+- Primero di en texto normal qué tipo de operación es.
+- Después muestra SIEMPRE la operación completa en bloque LaTeX centrado, limpia y grande, antes de empezar a resolver.
+
+Ejemplo correcto:
+Tenemos una fracción compleja con una suma arriba y una resta abajo.
+
+$$
+\left(
+\dfrac{\dfrac{1}{2}+\dfrac{3}{4}}
+{\dfrac{5}{6}-\dfrac{1}{3}}
+\right)
+$$
+
+Si el usuario escribe algo informal como:
+((1/2 + 3/4) / (5/6 - 1/3))
+
+debes mostrarlo así:
+
+$$
+\left(
+\dfrac{\dfrac{1}{2}+\dfrac{3}{4}}
+{\dfrac{5}{6}-\dfrac{1}{3}}
+\right)
+$$
+
+No expliques la operación con fracciones inline antes de enseñar el bloque limpio.
+
+Si viene de una imagen/pizarra y hay ambigüedad, dilo con suavidad.
+
+## Idea clave
+2 líneas máximo, como profesor:
+- qué vamos a hacer,
+- cuál es el truco o regla importante.
+
+SI el ejercicio usa una fórmula matemática, física o química, añade OBLIGATORIAMENTE este apartado antes de resolver:
+
+## Fórmulas a aplicar
+- Escribe la fórmula exacta que se va a usar.
+- Explica brevemente qué significa cada símbolo o magnitud.
+- Si solo hay una fórmula, pon solo esa.
+- Si no hace falta ninguna fórmula, NO inventes este apartado.
+
+Después continúa con esta estructura:
+
+## Como en la pizarra
+Resuelve como si estuvieras escribiendo delante del alumno.
+
+Reglas de este apartado:
+- Pasos cortos.
+- Una operación importante por bloque LaTeX centrado.
+- Nada de párrafos largos.
+- Explica cada movimiento antes de hacerlo.
+- Si hay fracciones, raíces, potencias, ecuaciones o paréntesis grandes, usa bloques LaTeX aunque el usuario no lo pida.
+- No uses separadores horizontales.
+- No mezcles operaciones importantes en texto normal.
+- En divisiones, muestra:
+  Dividimos 23 entre 28.
+  28 no cabe en 23.
+  Ponemos 0,
+  Bajamos un 0: ahora tenemos 230.
+  28 × 8 = 224.
+  230 - 224 = 6.
+  Bajamos otro 0: ahora tenemos 60.
+  28 × 2 = 56.
+  60 - 56 = 4.
+  Resultado aproximado: 0,82.
+
+Si la fórmula es visualmente importante, escríbela en un bloque LaTeX bonito usando SIEMPRE este formato exacto:
+
+$$
+formula_aqui
+$$
+
+Después continúa con el cálculo paso a paso.
+
+Ejemplo de estilo:
+
+Usamos esta fórmula:
+
+$$
+d = v \\times t
+$$
+
+Ahora sustituimos los valores:
+
+Distancia = 60 km/h × 2 h
+
+## Resultado
+Da el resultado final de forma clara.
+
+## Repasamos rápido
+Haz 1 o 2 preguntas cortas, naturales y útiles para comprobar si lo ha entendido.
+
+No suenes a examen. Suena como un profesor cercano.
+
+Ejemplos:
+- ¿Ves por qué primero hemos resuelto arriba y abajo por separado?
+- ¿Qué pasaría si ahora cambiamos el denominador?
+- ¿Te das cuenta de por qué dividir por una fracción es multiplicar por su inversa?
+- ¿Quieres probar tú una parecida y la revisamos juntos?
+
+## Para quedarte con la idea
+Cierra con 1 o 2 frases naturales:
+- resume la idea principal,
+- anima sin sonar infantil,
+- o deja una pista útil para el siguiente ejercicio.
+
+No uses siempre la misma fórmula de cierre.
+
+REGLAS:
+- PROHIBIDO bloques de código (\`\`\`).
+- Usa **negritas** para lo importante.
+- Cuando el ejercicio sea visual, especialmente operaciones de primaria como divisiones, multiplicaciones, fracciones o sumas/restas, intenta que la explicación se pueda leer como una pizarra.
+- Si el sistema permite devolver una imagen de pizarra o un bloque visual, úsalo solo cuando aporte mucho: operaciones largas, divisiones, fracciones, geometría o esquemas.
+- La imagen/pizarra debe parecer una explicación de profesor: limpia, grande, paso a paso y sin demasiada información.
+- Aunque generes una ayuda visual, acompáñala siempre con una explicación breve en texto.
+- Usa títulos markdown con ## para que se vean mejor.
+- VARIACIÓN NATURAL:
+  No uses siempre las mismas frases en cada apartado.
+  Puedes cambiar ligeramente el tono de los encabezados si mantiene claridad.
+
+Ejemplos válidos:
+## Primero miramos qué hay
+## Antes de calcular, entendemos la operación
+## Lo importante aquí
+## Vamos a la pizarra
+## Ahora lo resolvemos
+## Repasamos rápido
+## Para quedarte con la idea
+
+- Evita que parezca una plantilla repetida.
+- Mantén orden, pero con voz humana.
+- Si el ejercicio es sencillo, no hace falta usar todos los apartados de forma larga.
+- REGLA VISUAL OBLIGATORIA PARA MATEMÁTICAS:
+  El usuario NO tiene que saber pedir LaTeX, \dfrac, bloques centrados ni paréntesis grandes. Tú debes hacerlo bien automáticamente.
+
+- Si estás resolviendo una operación matemática, las operaciones importantes NO deben ir en texto normal.
+- Las operaciones importantes deben ir SIEMPRE como bloque LaTeX centrado.
+
+- Usa SIEMPRE este formato para operaciones importantes:
+
+$$
+formula_aqui
+$$
+
+- Para fracciones en bloques LaTeX usa SIEMPRE \dfrac, no \frac.
+- Para paréntesis que envuelven fracciones grandes o fórmulas de varios pisos usa SIEMPRE \left( ... \right).
+
+- Si el usuario escribe una operación informal como:
+  ((1/2 + 3/4) / (5/6 - 1/3))
+
+  Tú debes convertirla automáticamente en una fórmula visual limpia como esta:
+
+$$
+\left(
+\dfrac{\dfrac{1}{2}+\dfrac{3}{4}}
+{\dfrac{5}{6}-\dfrac{1}{3}}
+\right)
+$$
+
+- En los pasos de cálculo, también usa bloques centrados:
+
+$$
+\dfrac{1}{2} = \dfrac{2}{4}
+$$
+
+$$
+\dfrac{2}{4} + \dfrac{3}{4} = \dfrac{5}{4}
+$$
+
+- Las fracciones en texto normal tipo 1/2 solo pueden aparecer dentro de frases explicativas sencillas, nunca como operación principal.
+- NO mezcles en la misma explicación unas operaciones con fracciones en texto normal y otras en LaTeX.
+- NO escribas operaciones importantes en línea dentro de un párrafo.
+- NO obligues al usuario a pedir "LaTeX bonito"; hazlo tú por defecto cuando sea una operación matemática.
+- PROHIBIDO usar LaTeX inline dentro de frases normales.
+- PROHIBIDO mezclar texto normal y LaTeX duplicado en la misma línea.
+- NO escribas cosas como:
+  \vec{r}_0 = (10,0)r0=(10,0)
+  o
+  t=\sqrt{\frac{2h}{g}}t = g2h
+
+- Para fórmulas importantes usa SIEMPRE este formato exacto:
+
+$$
+formula_aqui
+$$
+
+- NO uses nunca $...$ dentro de frases.
+- NO uses nunca \\[ ... \\]
+- NO uses nunca \\( ... \\)
+- NO pongas corchetes alrededor de la fórmula.
+- Si usas LaTeX, úsalo solo para fórmulas reales: raíces, potencias, fracciones algebraicas, integrales, derivadas, ecuaciones, matrices, vectores, estadística, sumatorios, química, física, etc.
+
+- REGLA CRÍTICA DE FÓRMULAS GRANDES:
+  Cuando escribas una fórmula grande en bloque LaTeX, usa SIEMPRE estilo grande y legible.
+
+- Para fracciones principales en bloque usa \\dfrac en vez de \\frac.
+- Para fracciones pequeñas internas puedes usar \\frac, pero si se ve demasiado pequeño usa \\dfrac también.
+
+- Cuando una expresión grande esté dentro de paréntesis, corchetes o llaves, usa SIEMPRE delimitadores escalables:
+  \\left( ... \\right)
+  \\left[ ... \\right]
+  \\left\\{ ... \\right\\}
+
+- Si el usuario pide comprobar paréntesis grandes, la fórmula inicial DEBE mostrar los paréntesis exteriores visibles y escalados.
+
+- NO escribas:
+$$
+\\frac{\\frac{1}{2}+\\frac{3}{4}}{\\frac{5}{6}-\\frac{1}{3}}
+$$
+
+- SÍ escribe:
+$$
+\\left(
+\\dfrac{\\dfrac{1}{2}+\\dfrac{3}{4}}
+{\\dfrac{5}{6}-\\dfrac{1}{3}}
+\\right)
+$$
+
+- Si hay una fórmula compleja, no la pongas minúscula ni compactada.
+- La primera fórmula importante debe verse como en un libro: centrada, grande, limpia y con delimitadores que envuelvan toda la expresión.
+
+- REGLA PARA NO CONFUNDIR FRACCIONES CON UNIDADES:
+  No todo lo que contiene "/" es una fracción matemática.
+
+- Si aparece una unidad física, química o médica como km/h, m/s, m/s², kg/m³, g/cm³, mol/L, N/m, J/s, W/m², mg/dL, mL/min, etc., escríbela SIEMPRE en texto normal.
+- NO conviertas unidades con "/" en fracciones visuales.
+- NO escribas unidades físicas como bloque LaTeX salvo que formen parte de una fórmula completa.
+- NO escribas "km sobre h", "m dividido entre s" ni "kg partido por m³".
+
+Correcto:
+La velocidad es 60 km/h.
+La aceleración es 9,8 m/s².
+La densidad es 1,2 kg/m³.
+
+Incorrecto:
+60 km sobre h
+m dividido entre s
+kg partido por m³
+
+- DIFERENCIA IMPORTANTE:
+  Usa bloques LaTeX para operaciones matemáticas.
+  Usa texto normal para unidades.
+
+- En frases normales, escribe las variables en texto simple y limpio:
+  r0, v, dmin, x1, y2
+- Si quieres explicar una magnitud en una frase, hazlo así:
+  r0 es la posición inicial relativa.
+  v es la velocidad relativa.
+- Si necesitas mostrar esa misma magnitud de forma bonita, entonces hazlo en un bloque separado:
+
+$$
+\vec r_0 = (10,0)
+$$
+
+- Nunca repitas una misma expresión una vez en LaTeX y otra vez en texto roto justo al lado.
+- En operaciones simples como fracciones básicas, usa pocos pasos claros.
+- Prioriza claridad matemática antes que explicaciones largas.
+- NO expliques de forma enredada.
+- Si la operación es simple, sé claro, exacto y corto.
+
+- En resoluciones matemáticas, NO uses ejemplos de operaciones con fracciones en texto normal.
+- Para operaciones con fracciones, usa bloques LaTeX centrados con \dfrac.
+
+- Ejemplo correcto con LaTeX bonito:
+$$
+t = \sqrt{\frac{2h}{g}}
+$$
+
+- Otro ejemplo correcto:
+$$
+\vec r_0 = (10,0)
+$$
+
+- Otro ejemplo correcto:
+$$
+d_{min} = \frac{|\vec r_0 \times \vec v|}{|\vec v|}
+$$
+
+- Ejemplo correcto en texto normal:
+r0 es la posición inicial relativa de 10 km.
+
+- Ejemplos incorrectos:
+\\[
+t = \sqrt{\frac{2h}{g}}
+\\]
+
+(\\frac{1}{4})
+
+\vec{r}_0 = (10,0)r0=(10,0)
+
+d_{min} = \frac{|\vec r_0 \times \vec v|}{|\vec v|} dmin = ...
+
+9 + 12/36
+3 × 4/9 × 4
+
+- En operaciones simples, usa pocos pasos claros, pero mantén siempre el formato visual limpio.
+- Aunque la operación sea simple, si hay fracciones, raíces, potencias o ecuaciones, usa bloques LaTeX centrados.
+- Prioriza claridad matemática antes que explicaciones largas.
+- NO expliques de forma enredada.
+- En sumas de fracciones simples, la prioridad es exactitud matemática y limpieza visual.
+- Operaciones importantes en líneas separadas.
+- En mates, no pongas todo seguido: separa datos, operación, desarrollo y resultado.
+- Si hay fórmulas, explícalas con lenguaje humano antes de usarlas.
+- Si hay varios pasos matemáticos, cada paso debe ir en una línea distinta.
+- Deja una línea en blanco entre un cálculo y el siguiente cuando haya varias operaciones.
+- PROHIBIDO usar listas numeradas tipo "1." "2." "3.".
+- PROHIBIDO usar separadores horizontales o líneas tipo "---", "___", "——" entre pasos.
+- NO pongas rayas largas para dividir la explicación.
+- Los pasos deben escribirse así, sin líneas separadoras:
+Paso 1:
+Paso 2:
+Paso 3:
+
+- Escribe así cuando haya cálculos:
+
+## Datos
+
+## Operación
+
+## Resultado
+
+- Si el ejercicio tiene varias operaciones, no las juntes en un párrafo largo.
+- No seas esquemático en exceso: mejor una explicación humana que un listado frío.
+- Si detectas una pregunta educativa sencilla, NO contestes como chat normal: contesta como profesor.
+- Si el usuario solo pega un ejercicio, interpreta que quiere ayuda para resolverlo y entenderlo.
+- Si el usuario pide teoría, explica primero la idea y luego lo aplicas.
+- Si el usuario pide idiomas, combina explicación + ejemplo + mini comprobación.
+- Si el problema requiere una fórmula, el alumno debe ver claramente de dónde sale el cálculo antes de sustituir números.
+- En ejercicios simples, puedes poner la fórmula al inicio del bloque "## Operación" si queda natural.
+- En ejercicios de dificultad media o alta, o si hay varias fórmulas o varias magnitudes, crea un bloque separado llamado "## Fórmulas a aplicar" antes de "## Datos".
+- Cuando haya velocidad, tiempo, distancia, porcentaje, área, perímetro, densidad, fuerza, aceleración, energía u otras magnitudes parecidas, muestra siempre la fórmula de forma explícita, aunque sea dentro de "## Operación".
+- Si el ejercicio usa vectores o notación física, separa SIEMPRE:
+  1. explicación en texto normal
+  2. fórmula bonita en bloque LaTeX
+- No metas símbolos vectoriales dentro de frases largas si luego se rompen visualmente.
+- Si una línea no queda limpia en LaTeX, usa texto normal claro antes que una fórmula rota.
+- En fórmulas largas, NO metas todo en una sola línea gigante.
+- Divide en pasos usando bloques separados.
+- Si necesitas alinear varios pasos matemáticos, usa este formato:
+$$
+\\begin{aligned}
+a &= b + c \\\\
+  &= d
+\\end{aligned}
+$$
+
+- PROHIBIDO explicar una operación matemática así:
+"La suma 1/2 + 3/4 en el numerador..."
+"el numerador es (1/2 + 3/4) y el denominador es (5/6 - 1/3)"
+si esas fracciones aparecen dentro de una frase normal.
+
+- NO pongas fracciones, operaciones ni paréntesis matemáticos importantes dentro de párrafos de texto.
+- Primero escribe una frase breve en texto normal.
+- Después muestra la operación en bloque LaTeX centrado.
+
+Forma correcta:
+
+Primero resolvemos la suma del numerador:
+
+$$
+\dfrac{1}{2} + \dfrac{3}{4}
+$$
+
+Después resolvemos la resta del denominador:
+
+$$
+\dfrac{5}{6} - \dfrac{1}{3}
+$$
+
+- En el apartado "Primero miramos qué hay", si necesitas mencionar numerador y denominador, hazlo en texto normal sin escribir las fracciones dentro de la frase.
+- Después muestra la operación completa en bloque LaTeX centrado.
+
+- En fracciones complejas, raíces, estadística o física, prioriza siempre:
+  1. fórmula general,
+  2. sustitución de datos,
+  3. operación simplificada,
+  4. resultado final.
+
+- La prioridad es:
+  1. limpieza visual
+  2. paréntesis y delimitadores que envuelvan bien la fórmula
+  3. que no haya duplicados raros
+  4. que la explicación se lea natural
+Ejercicio del usuario: ${userText}`;
+}
+
+// history
+function shouldSkipHistoryMessage(role: string, content: string) {
+  if (!content || content.trim().length < 5) return true;
+  if (role === "assistant") {
+    const lower = content.toLowerCase();
+    const skipPatterns = [
+  "hola 👋 soy **vonu**",
+  "soy **vonu**",
+  "puedes escribirme o adjuntar",
+  "bienvenido/a",
+  "¡hola! soy vonu",
+  "hola, soy vonu",
+  "no puedo analizar imágenes directamente",
+  "no puedo ver imágenes",
+  "descríbemela tú",
+];
+    return skipPatterns.some((pattern) => lower.includes(pattern));
+  }
+  return false;
+}
+
+function buildHistory(messages: any[], maxHistory = 10) {
+  const relevant: Array<{ role: "user" | "assistant"; content: string }> = [];
+  const start = Math.max(0, (messages?.length ?? 0) - maxHistory);
+
+  for (let i = start; i < (messages?.length ?? 0); i++) {
+    const m = messages[i];
+    if (!m || (m.role !== "user" && m.role !== "assistant")) continue;
+    const content = typeof m.content === "string" ? m.content.trim() : "";
+    if (content.length < 2) continue;
+    if (shouldSkipHistoryMessage(m.role, content)) continue;
+    relevant.push({ role: m.role, content });
+  }
+  return relevant;
+}
+
+function isLikelyDataUrl(s: string) {
+  return typeof s === "string" && s.startsWith("data:image");
+}
+
+// ------------------------- football fetch helpers -------------------------
+async function fetchJson(url: string) {
+  const r = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      "User-Agent": "VonuEdge/1.0",
+      "Cache-Control": "no-cache",
+    },
+    redirect: "follow",
+    keepalive: true,
+  });
+
+  const raw = await r.text().catch(() => "");
+  let j: any = {};
+  try {
+    j = raw ? JSON.parse(raw) : {};
+  } catch {
+    j = { _raw: raw };
+  }
+
+  if (!r.ok) {
+    throw new Error(`GET ${url} -> ${r.status}. Body: ${raw?.slice(0, 400) || "(empty)"}`);
+  }
+
+  return j;
+}
+
+async function fetchFootballPredict(siteUrl: string, fixture: number, last: number, sims: number) {
+  const base = siteUrl.replace(/\/$/, "");
+  const url = `${base}/api/football/predict/match?fixture=${fixture}&last=${last}&sims=${sims}`;
+  return await fetchJson(url);
+}
+
+async function fetchTeamsSearch(siteUrl: string, search: string) {
+  const base = siteUrl.replace(/\/$/, "");
+  const url = `${base}/api/football/teams?search=${encodeURIComponent(search)}`;
+  return await fetchJson(url); // { count, teams }
+}
+
+async function fetchFixturesByTeam(siteUrl: string, teamId: number, nextN: number) {
+  const base = siteUrl.replace(/\/$/, "");
+  const url = `${base}/api/football/fixtures?team=${teamId}&next=${nextN}&season=2025`;
+  return await fetchJson(url); // { count, fixtures }
+}
+
+function stripAccents(s: string) {
+  return (s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function normTeamName(s: string) {
+  const t = stripAccents(s)
+    .replace(/\bfc\b/g, "")
+    .replace(/\bcf\b/g, "")
+    .replace(/\bsc\b/g, "")
+    .replace(/\bcd\b/g, "")
+    .replace(/\bsad\b/g, "")
+    .replace(/\bafc\b/g, "")
+    .replace(/\bcfc\b/g, "")
+    .replace(/\bac\b/g, "")
+    .replace(/\bde\b/g, " ")
+    .replace(/\bla\b/g, " ")
+    .replace(/\bel\b/g, " ")
+    .replace(/\bthe\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return t;
+}
+
+function tokens(s: string) {
+  return normTeamName(s).split(" ").filter(Boolean);
+}
+
+// ✅ scoring robusto (sirve para apodos/nombres cortos/largos)
+function scoreNameMatch(queryName: string, candidateName: string) {
+  const qRaw = stripAccents(queryName);
+  const cRaw = stripAccents(candidateName);
+
+  const q = tokens(queryName);
+  const c = normTeamName(candidateName);
+  if (!q.length || !c) return 0;
+
+  let hit = 0;
+
+  if (cRaw === qRaw) hit += 6;
+  else if (cRaw.includes(qRaw) || qRaw.includes(cRaw)) hit += 4;
+
+  for (const tok of q) {
+    if (tok.length <= 2) continue;
+    if (c.includes(tok)) hit += 1;
+  }
+
+  const qLast = q[q.length - 1];
+  if (qLast && qLast.length >= 3 && c.includes(qLast)) hit += 2;
+
+  return hit;
+}
+
+// Genera variantes genéricas para /teams?search=...
+function buildTeamSearchVariants(input: string): string[] {
+  const base = cleanTeamSide(input);
+  if (!base) return [];
+
+  const v = new Set<string>();
+  v.add(base);
+
+  const noAcc = stripAccents(base);
+  v.add(noAcc);
+
+  const stripped = noAcc
+    .replace(/\b(fc|cf|sc|cd|sad|afc|cfc|ac|bk|fk|sv)\b/g, " ")
+    .replace(/\b(de|del|la|el|the|club|sporting)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (stripped.length >= 3) v.add(stripped);
+
+  const toks = stripped.split(" ").filter((x) => x.length >= 4);
+  if (toks[0]) v.add(toks[0]);
+
+  return Array.from(v).filter(Boolean).slice(0, 6);
+}
+
+async function fetchTeamsSearchMulti(siteUrl: string, rawName: string) {
+  const variants = buildTeamSearchVariants(rawName);
+  const all: any[] = [];
+
+  for (const q of variants) {
+    try {
+      const r = await fetchTeamsSearch(siteUrl, q);
+      const arr = Array.isArray(r?.teams) ? r.teams : [];
+      for (const t of arr) all.push(t);
+    } catch {
+      // ignore
+    }
+  }
+
+  const byId = new Map<number, any>();
+  for (const t of all) {
+    const id = Number(t?.id);
+    if (!Number.isFinite(id)) continue;
+    if (!byId.has(id)) byId.set(id, t);
+  }
+  return Array.from(byId.values());
+}
+
+type ResolvedFixture =
+  | { ok: true; fixtureId: number; candidates?: any[] }
+  | { ok: false; reason: string; candidates?: any[] };
+
+async function resolveFixtureFromTeams(siteUrl: string, homeNameRaw: string, awayNameRaw: string): Promise<ResolvedFixture> {
+  const homeName = cleanTeamSide(homeNameRaw);
+  const awayName = cleanTeamSide(awayNameRaw);
+
+  const homeArr = await fetchTeamsSearchMulti(siteUrl, homeNameRaw);
+  const awayArr = await fetchTeamsSearchMulti(siteUrl, awayNameRaw);
+
+  if (!homeArr.length || !awayArr.length) {
+    return { ok: false, reason: "No pude encontrar uno o ambos equipos en API-Football (teams search).", candidates: [] };
+  }
+
+  const homeVariants = [homeNameRaw, homeName].filter(Boolean);
+  const awayVariants = [awayNameRaw, awayName].filter(Boolean);
+
+  function bestScore(variants: string[], candidate: string) {
+    let best = 0;
+    for (const v of variants) best = Math.max(best, scoreNameMatch(v, candidate));
+    return best;
+  }
+
+  const homeRanked = [...homeArr]
+    .map((t: any) => ({ ...t, _score: bestScore(homeVariants, t?.name || "") }))
+    .sort((a: any, b: any) => (b._score || 0) - (a._score || 0))
+    .slice(0, 3);
+
+  const awayRanked = [...awayArr]
+    .map((t: any) => ({ ...t, _score: bestScore(awayVariants, t?.name || "") }))
+    .sort((a: any, b: any) => (b._score || 0) - (a._score || 0))
+    .slice(0, 3);
+
+  const base = siteUrl.replace(/\/$/, "");
+  const debugSteps: string[] = [];
+  let lastFetchError: string | null = null;
+
+  async function getByTeamNext(teamId: number, nextN: number) {
+    const url = `${base}/api/football/fixtures?team=${teamId}&next=${nextN}`;
+    try {
+      const data = await fetchJson(url);
+      const fixtures = Array.isArray(data?.fixtures) ? data.fixtures : [];
+      debugSteps.push(`next(team=${teamId}, n=${nextN}) -> count=${data?.count ?? fixtures.length}`);
+      return fixtures;
+    } catch (e: any) {
+      lastFetchError = `GET ${url} -> ${e?.message || String(e)}`;
+      debugSteps.push(`next(team=${teamId}, n=${nextN}) -> ERROR`);
+      return [];
+    }
+  }
+
+  function findExactFixture(fixtures: any[], homeId: number, awayId: number) {
+    for (const fx of fixtures || []) {
+      const hId = Number(fx?.teams?.home?.id);
+      const aId = Number(fx?.teams?.away?.id);
+      if ((hId === homeId && aId === awayId) || (hId === awayId && aId === homeId)) {
+        return fx;
+      }
+    }
+    return null;
+  }
+
+  // ✅ buscamos por "next" de cada candidato (hasta 80)
+  for (const h of homeRanked) {
+    const hId = Number(h?.id);
+    if (!Number.isFinite(hId)) continue;
+
+    const fxList = await getByTeamNext(hId, 80);
+    if (!fxList.length) continue;
+
+    for (const a of awayRanked) {
+      const aId = Number(a?.id);
+      if (!Number.isFinite(aId)) continue;
+
+      const hit = findExactFixture(fxList, hId, aId);
+      if (hit?.fixtureId) return { ok: true, fixtureId: Number(hit.fixtureId), candidates: [] };
+    }
+  }
+
+  for (const a of awayRanked) {
+    const aId = Number(a?.id);
+    if (!Number.isFinite(aId)) continue;
+
+    const fxList = await getByTeamNext(aId, 80);
+    if (!fxList.length) continue;
+
+    for (const h of homeRanked) {
+      const hId = Number(h?.id);
+      if (!Number.isFinite(hId)) continue;
+
+      const hit = findExactFixture(fxList, hId, aId);
+      if (hit?.fixtureId) return { ok: true, fixtureId: Number(hit.fixtureId), candidates: [] };
+    }
+  }
+
+  const homeInfo = homeRanked.map((t: any) => `id=${t.id} name=${t.name} score=${t._score}`).join(" | ");
+  const awayInfo = awayRanked.map((t: any) => `id=${t.id} name=${t.name} score=${t._score}`).join(" | ");
+
+  return {
+    ok: false,
+    reason:
+      "No pude resolver el fixture con next(team).\n" +
+      `SITE_URL=${base}\n` +
+      `Home candidates: ${homeInfo}\n` +
+      `Away candidates: ${awayInfo}\n` +
+      `Steps: ${debugSteps.slice(0, 30).join(" ; ")}\n` +
+      (lastFetchError ? `Último error: ${lastFetchError}` : ""),
+    candidates: [],
+  };
+}
+
+// ------------------------- Elite formatter (conciso, PRO, sin HTML) -------------------------
+function fmtPct(p: any) {
+  const n = typeof p === "number" ? p : Number(p);
+  if (!isFinite(n)) return null;
+  return `${n.toFixed(1)}%`;
+}
+function fmtOdd(o: any) {
+  const n = typeof o === "number" ? o : Number(o);
+  if (!isFinite(n)) return null;
+  return n.toFixed(2);
+}
+function confFromPct(pct: number) {
+  if (pct >= 95) return "ALTA";
+  if (pct >= 85) return "MEDIA";
+  return "BAJA";
+}
+function confDot(conf: "ALTA" | "MEDIA" | "BAJA" | "N/A") {
+  // puntos discretos, NO listas
+  if (conf === "ALTA") return "🟣";
+  if (conf === "MEDIA") return "🟡";
+  if (conf === "BAJA") return "⚪️";
+  return "⚫️";
+}
+
+type AdvantagePick = {
+  market: "GOLES" | "CORNERS" | "TARJETAS" | "TIROS" | "SOT";
+  side: "Over" | "Under";
+  line: number;
+  p: number;
+  fairOdd: number;
+  emoji: string;
+};
+
+function indexLinesByNumber(lines: any[]) {
+  const m = new Map<number, any>();
+  for (const l of lines || []) {
+    const key = Number(l?.line);
+    if (isFinite(key)) m.set(key, l);
+  }
+  return m;
+}
+
+function pushPick(
+  out: AdvantagePick[],
+  market: AdvantagePick["market"],
+  emoji: string,
+  side: "Over" | "Under",
+  line: number,
+  node: any,
+) {
+  const p = Number(side === "Over" ? node?.over?.p : node?.under?.p);
+  const fairOdd = Number(side === "Over" ? node?.over?.fairOdd : node?.under?.fairOdd);
+  if (!isFinite(p) || !isFinite(fairOdd)) return;
+
+  if (p < 55) return;
+  if (fairOdd < 1.18 || fairOdd > 2.60) return;
+
+  out.push({ market, side, line, p, fairOdd, emoji });
+}
+
+function pickAdvantageLines(pred: any): AdvantagePick[] {
+  const markets = pred?.markets || {};
+  const goals = markets?.goals?.lines || [];
+  const corners = markets?.corners?.lines || [];
+  const cards = markets?.cards?.lines || [];
+  const shots = markets?.shots?.lines || [];
+  const sot = markets?.shotsOnTarget?.lines || [];
+
+  const picks: AdvantagePick[] = [];
+
+  const gMap = indexLinesByNumber(goals);
+  const cMap = indexLinesByNumber(corners);
+  const caMap = indexLinesByNumber(cards);
+  const shMap = indexLinesByNumber(shots);
+  const soMap = indexLinesByNumber(sot);
+
+  const goalsWanted = [1.5, 2.5, 3.5];
+  const cornersWanted = [8.5, 9.5, 10.5];
+  const cardsWanted = [3.5, 4.5, 5.5];
+  const shotsWanted = [18.5, 20.5, 22.5];
+  const sotWanted = [5.5, 6.5, 7.5];
+
+  for (const L of goalsWanted) {
+    const node = gMap.get(L);
+    if (!node) continue;
+    pushPick(picks, "GOLES", "⚽", "Over", L, node);
+    pushPick(picks, "GOLES", "⚽", "Under", L, node);
+  }
+  for (const L of cornersWanted) {
+    const node = cMap.get(L);
+    if (!node) continue;
+    pushPick(picks, "CORNERS", "🚩", "Over", L, node);
+    pushPick(picks, "CORNERS", "🚩", "Under", L, node);
+  }
+  for (const L of cardsWanted) {
+    const node = caMap.get(L);
+    if (!node) continue;
+    pushPick(picks, "TARJETAS", "🟨", "Over", L, node);
+    pushPick(picks, "TARJETAS", "🟨", "Under", L, node);
+  }
+  for (const L of shotsWanted) {
+    const node = shMap.get(L);
+    if (!node) continue;
+    pushPick(picks, "TIROS", "🎯", "Over", L, node);
+    pushPick(picks, "TIROS", "🎯", "Under", L, node);
+  }
+  for (const L of sotWanted) {
+    const node = soMap.get(L);
+    if (!node) continue;
+    pushPick(picks, "SOT", "🥅", "Over", L, node);
+    pushPick(picks, "SOT", "🥅", "Under", L, node);
+  }
+
+  const score = (x: AdvantagePick) => (x.p / 100) * Math.min(x.fairOdd, 3);
+  picks.sort((a, b) => score(b) - score(a));
+
+  const perMarket = new Map<string, number>();
+  const chosen: AdvantagePick[] = [];
+
+  for (const p of picks) {
+    const k = p.market;
+    const n = perMarket.get(k) ?? 0;
+    if (n >= 1) continue;
+    chosen.push(p);
+    perMarket.set(k, n + 1);
+    if (chosen.length >= 5) break;
+  }
+  return chosen;
+}
+
+// ✅ NUEVO: formateo “estable” (sin listas markdown, sin ---)
+function formatAdvantageBlock(pred: any): string {
+  const picks = pickAdvantageLines(pred);
+  if (!picks.length) return "";
+
+  const lines: string[] = [];
+  lines.push("🔥 LÍNEAS CON VENTAJA MATEMÁTICA");
+  lines.push("Selección automática · listas para apostar");
+  lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+  for (const p of picks) {
+    const conf = confFromPct(p.p);
+    // NO uses "-" ni "1." al inicio -> evita listas en tu UI
+    lines.push(`${confDot(conf)} ${p.emoji} ${p.market} · ${p.side} ${p.line}  →  ${fmtPct(p.p) ?? "N/A"} · justa ${fmtOdd(p.fairOdd) ?? "N/A"}`);
+  }
+
+  lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  lines.push(""); // espacio final
+  return lines.join("\n");
+}
+
+// ✅ NUEVO: formateo principal “estable”
+function formatFootballElite(pred: any): string {
+  const fx = pred?.fixture;
+  const teams = fx?.teams;
+  const home = teams?.home?.name || "Local";
+  const away = teams?.away?.name || "Visitante";
+  const league = fx?.league?.name || "";
+  const round = fx?.league?.round || "";
+  const date = fx?.date || "";
+
+  const sum = pred?.summary?.expected || {};
+  const profile = pred?.summary?.matchProfile || {};
+  const notes = pred?.summary?.contextNotes || {};
+
+  const quin = pred?.quiniela || {};
+  const dc = quin?.doubleChance || {};
+
+  const out: string[] = [];
+
+  const adv = formatAdvantageBlock(pred);
+  if (adv) out.push(adv);
+
+  out.push("📊 PRONÓSTICO TÉCNICO (modelo probabilístico)");
+  out.push(`⚽ ${home} vs ${away}${league ? ` · ${league}` : ""}${round ? ` · ${round}` : ""}`);
+  if (date) out.push(`🗓️ ${date}`);
+  out.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+  out.push("📌 RESUMEN ESPERADO");
+  out.push(`⚽ Goles esperados: ${sum?.goalsTotal ?? "N/A"}  ( ${home} ${sum?.goalsHome ?? "N/A"} · ${away} ${sum?.goalsAway ?? "N/A"} )`);
+  out.push(`🚩 Córners esperados: ${sum?.cornersTotal ?? "N/A"}   🟨 Tarjetas esperadas: ${sum?.cardsTotal ?? "N/A"}`);
+  out.push(`🎯 Tiros esperados: ${sum?.shotsTotal ?? "N/A"}   🥅 A puerta: ${sum?.sotTotal ?? "N/A"}`);
+  if (profile?.pace?.label) out.push(`⚡ Ritmo: ${profile.pace.label}   🔓 Apertura: ${profile.openness ?? "N/A"}`);
+  if (profile?.note) out.push(`🧠 Nota: ${profile.note}`);
+  out.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+  out.push("🏁 1X2 Y DOBLE OPORTUNIDAD (cuota justa)");
+  if (quin?.["1"]) out.push(`✅ 1 (${home}): ${fmtPct(quin["1"].p)} · justa ${fmtOdd(quin["1"].fairOdd)}`);
+  if (quin?.["X"]) out.push(`➖ X (Empate): ${fmtPct(quin["X"].p)} · justa ${fmtOdd(quin["X"].fairOdd)}`);
+  if (quin?.["2"]) out.push(`✅ 2 (${away}): ${fmtPct(quin["2"].p)} · justa ${fmtOdd(quin["2"].fairOdd)}`);
+  if (dc?.["1X"]) out.push(`🔒 1X: ${fmtPct(dc["1X"].p)} · justa ${fmtOdd(dc["1X"].fairOdd)}`);
+  if (dc?.["X2"]) out.push(`🔒 X2: ${fmtPct(dc["X2"].p)} · justa ${fmtOdd(dc["X2"].fairOdd)}`);
+  if (dc?.["12"]) out.push(`🔒 12: ${fmtPct(dc["12"].p)} · justa ${fmtOdd(dc["12"].fairOdd)}`);
+  out.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+  out.push("🧩 CONTEXTO (API)");
+  if (notes?.injuries) out.push(`🩺 Bajas: ${notes.injuries}`);
+  if (notes?.competition) out.push(`🏟️ Competición: ${notes.competition}`);
+  if (notes?.weather) out.push(`🌦️ Clima: ${notes.weather}`);
+  out.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+  out.push(`⚠️ ${pred?.disclaimer || "Modelo orientativo: no garantiza resultados."}`);
+  return out.join("\n");
+}
+
+function getCurrentMonth() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+// ---------- legal / consumer intelligence ----------
+type LegalConsumerPatternMatch = {
+  id: string | null;
+  created_at: string | null;
+  country: string | null;
+  region_or_city: string | null;
+  year: number | null;
+  source_type: string | null;
+  source_name: string | null;
+  source_url: string | null;
+  source_reliability: string | null;
+  legal_block: string | null;
+  issue_category: string | null;
+  issue_subcategory: string | null;
+  document_type: string | null;
+  sector: string | null;
+  company_type: string | null;
+  affected_user_role: string | null;
+  counterparty_role: string | null;
+  pattern_name: string | null;
+  clause_or_issue_summary: string | null;
+  example_clause_or_message: string | null;
+  why_it_is_risky: string | null;
+  possible_user_harm: string | null;
+  financial_impact_level: string | null;
+  legal_complexity_level: string | null;
+  urgency_level: string | null;
+  risk_level: string | null;
+  risk_score: number | null;
+  confidence_score: number | null;
+  red_flags: string | null;
+  safe_signals: string | null;
+  questions_to_ask_user: string | null;
+  recommended_action: string | null;
+  when_to_seek_professional_help: string | null;
+  documents_to_collect: string | null;
+  possible_channels_to_claim: string | null;
+  consumer_rights_keywords: string | null;
+  applicable_law_or_reference: string | null;
+  plain_language_explanation: string | null;
+  prevention_tips: string | null;
+  similarity_signature: string | null;
+  keywords: string | null;
+  privacy_level: string | null;
+  verified_level: string | null;
+  notes: string | null;
+  case_id: string | null;
+  match_score: number | null;
+};
+
+function shouldUseLegalConsumerIntel(
+  userText: string,
+  pillar: string,
+  effectiveMode: ThreadMode,
+  footballIntent: boolean,
+) {
+  if (effectiveMode !== "chat") return false;
+  if (footballIntent) return false;
+
+  const t = (userText || "").toLowerCase();
+  if (!t.trim()) return false;
+
+  const legalConsumerSignals = [
+    "contrato",
+    "cláusula",
+    "clausula",
+    "firmar",
+    "firma",
+    "alquiler",
+    "arrendamiento",
+    "inquilino",
+    "casero",
+    "fianza",
+    "permanencia",
+    "penalización",
+    "penalizacion",
+    "factura",
+    "recibo",
+    "cobro",
+    "cobrado",
+    "me han cobrado",
+    "cargo",
+    "comisión",
+    "comision",
+    "suscripción",
+    "suscripcion",
+    "cancelar",
+    "darme de baja",
+    "baja",
+    "renovación",
+    "renovacion",
+    "devolución",
+    "devolucion",
+    "garantía",
+    "garantia",
+    "reembolso",
+    "permanencia",
+    "telefonía",
+    "telefonia",
+    "fibra",
+    "internet",
+    "luz",
+    "gas",
+    "agua",
+    "electricidad",
+    "seguro",
+    "aseguradora",
+    "banco",
+    "hipoteca",
+    "tarjeta revolving",
+    "revolving",
+    "préstamo",
+    "prestamo",
+    "intereses",
+    "taller",
+    "renting",
+    "aerolínea",
+    "aerolinea",
+    "maleta",
+    "viaje",
+    "profeco",
+    "sernac",
+    "indecopi",
+    "facua",
+    "ocu",
+    "omic",
+    "consumo",
+    "reclamación",
+    "reclamacion",
+    "reclamar",
+    "abusiva",
+    "abusivo",
+    "letra pequeña",
+    "letra pequena",
+  ];
+
+  return pillar === "RIESGOS_LEGALES" || legalConsumerSignals.some((k) => t.includes(k));
+}
+
+async function lookupLegalConsumerIntel(
+  supabase: any,
+  userText: string,
+  options: {
+    enabled: boolean;
+    limit?: number;
+  },
+): Promise<LegalConsumerPatternMatch[]> {
+  if (!options.enabled) return [];
+
+  const queryText = String(userText || "").trim();
+  if (queryText.length < 8) return [];
+
+  try {
+    const { data, error } = await supabase.rpc("search_legal_consumer_patterns_basic", {
+      query_text: queryText,
+      result_limit: options.limit ?? 5,
+    });
+
+    if (error) {
+      console.warn("legal_consumer_intel_lookup_error", error);
+      return [];
+    }
+
+    if (!Array.isArray(data)) return [];
+
+    return data
+      .filter((row) => row && typeof row === "object")
+      .slice(0, options.limit ?? 5) as LegalConsumerPatternMatch[];
+  } catch (error) {
+    console.warn("legal_consumer_intel_lookup_exception", error);
+    return [];
+  }
+}
+
+function buildLegalConsumerIntelContext(matches: LegalConsumerPatternMatch[]) {
+  const clean = matches
+    .filter((m) => m?.case_id || m?.pattern_name || m?.similarity_signature)
+    .slice(0, 5);
+
+  if (!clean.length) return "";
+
+  const rows = clean
+    .map((m, index) => {
+      const title = m.pattern_name || "Patrón legal/consumo sin título";
+      const category = [m.legal_block, m.issue_category, m.issue_subcategory].filter(Boolean).join(" / ") || "unknown";
+      const sector = [m.sector, m.document_type].filter(Boolean).join(" / ") || "unknown";
+      const risk = `${m.risk_level || "unknown"}${typeof m.risk_score === "number" ? ` (${m.risk_score}/100)` : ""}`;
+      const verified = m.verified_level || "unknown";
+      const redFlags = m.red_flags || "unknown";
+      const safeSignals = m.safe_signals || "unknown";
+      const explanation = m.plain_language_explanation || m.clause_or_issue_summary || "unknown";
+      const action = m.recommended_action || "unknown";
+      const professional = m.when_to_seek_professional_help || "unknown";
+      const documents = m.documents_to_collect || "unknown";
+      const reference = m.applicable_law_or_reference || "unknown";
+      const signature = m.similarity_signature || "unknown";
+
+      return [
+        `Patrón legal/consumo parecido ${index + 1}:`,
+        `- Título/patrón: ${title}`,
+        `- Categoría: ${category}`,
+        `- Sector/documento: ${sector}`,
+        `- Riesgo orientativo: ${risk}`,
+        `- Verificación: ${verified}`,
+        `- Señales de alerta: ${redFlags}`,
+        `- Señales tranquilizadoras: ${safeSignals}`,
+        `- Explicación simple: ${explanation}`,
+        `- Acción recomendada en casos parecidos: ${action}`,
+        `- Cuándo buscar profesional: ${professional}`,
+        `- Documentos útiles: ${documents}`,
+        `- Referencia legal/consumo: ${reference}`,
+        `- Firma de similitud: ${signature}`,
+      ].join("\n");
+    })
+    .join("\n\n");
+
+  return `CONTEXTO INTERNO LEGAL/CONSUMO DE VONU:
+Estos son patrones parecidos encontrados en la base interna de contratos, facturas, consumo, cláusulas, cobros, alquileres, bancos, seguros, telecomunicaciones o suscripciones. Úsalos solo como apoyo para orientar mejor, no como dictamen legal definitivo.
+
+REGLAS PARA USAR ESTE CONTEXTO:
+- No digas que algo es ilegal de forma absoluta salvo que el propio contexto lo apoye con una referencia clara.
+- Usa lenguaje prudente: "puede ser abusivo", "conviene revisar", "puede ser reclamable", "esto merece mirarse con cuidado".
+- Explica en lenguaje normal qué parte perjudica al usuario.
+- Si falta el documento completo o una cláusula exacta, pide que la pegue o adjunte el PDF/foto.
+- Si hay dinero importante, firma, plazo, demanda, despido, vivienda o deuda seria, recomienda revisión profesional.
+- No inventes leyes ni artículos si el contexto no los aporta.
+- Prioriza el siguiente paso práctico: qué revisar, qué guardar, qué preguntar o cómo reclamar.
+
+${rows}`;
+}
+
+// ---------- fraud intelligence ----------
+type FraudIntelMatch = {
+  case_id: string | null;
+  case_title: string | null;
+  country: string | null;
+  fraud_block: string | null;
+  scam_category: string | null;
+  scam_subcategory: string | null;
+  channel: string | null;
+  platform_or_app: string | null;
+  marketplace: string | null;
+  impersonated_brand: string | null;
+  payment_method_requested: string | null;
+  amount_requested: number | null;
+  currency: string | null;
+  original_message_example: string | null;
+  case_summary: string | null;
+  red_flags: string | null;
+  recommended_action: string | null;
+  prevention_tips: string | null;
+  risk_level: string | null;
+  risk_score: number | null;
+  confidence_score: number | null;
+  verified_level: string | null;
+  pattern_name: string | null;
+  similarity_signature: string | null;
+  keywords: string | null;
+  notes: string | null;
+    attack_technique: string | null;
+  technical_complexity: string | null;
+  threat_actor_type: string | null;
+  sector_targeted: string | null;
+  attack_vector: string | null;
+  mfa_bypass_method: string | null;
+  session_theft_method: string | null;
+  remote_access_tool_name: string | null;
+  ai_impersonation_type: string | null;
+  deepfake_media_type: string | null;
+  business_process_targeted: string | null;
+  iban_change_detected: boolean | null;
+  blockchain_network: string | null;
+  smart_contract_method: string | null;
+  wallet_risk_type: string | null;
+  wallet_action_requested: string | null;
+  crypto_asset_targeted: string | null;
+  malicious_domain_pattern: string | null;
+  qr_or_clipboard_risk: boolean | null;
+  advanced_notes: string | null;
+  match_score: number | null;
+};
+
+function shouldUseFraudIntel(userText: string, pillar: string, effectiveMode: ThreadMode, footballIntent: boolean) {
+  if (effectiveMode !== "chat") return false;
+  if (footballIntent) return false;
+  if (isGreetingOrVeryShort(userText)) return false;
+
+  const t = (userText || "").toLowerCase();
+
+  const fraudSignals = [
+    "sms",
+    "whatsapp",
+    "telegram",
+    "email",
+    "correo",
+    "correos",
+    "seur",
+    "dhl",
+    "gls",
+    "mrw",
+    "paquete",
+    "envío",
+    "envio",
+    "aduana",
+    "pagar",
+    "pago",
+    "bizum",
+    "transferencia",
+    "tarjeta",
+    "banco",
+    "paypal",
+    "amazon",
+    "wallapop",
+    "vinted",
+    "milanuncios",
+    "marketplace",
+    "tinder",
+    "badoo",
+    "bumble",
+    "instagram",
+    "facebook",
+    "cripto",
+    "crypto",
+    "bitcoin",
+    "trading",
+    "inversión",
+    "inversion",
+    "estafa",
+    "fraude",
+    "phishing",
+    "enlace",
+    "link",
+    "código",
+    "codigo",
+    "clave",
+    "otp",
+    "dgt",
+    "hacienda",
+    "seguridad social",
+    "soporte",
+    "anydesk",
+    "teamviewer",
+    "sextorsión",
+    "sextorsion",
+        "metamask",
+    "phantom",
+    "wallet",
+    "billetera",
+    "seed phrase",
+    "frase semilla",
+    "airdrop",
+    "nft",
+    "mint",
+    "approve",
+    "approval",
+    "permit",
+    "setapprovalforall",
+    "firmar",
+    "firma",
+    "uniswap",
+    "solana",
+    "ethereum",
+    "usdt",
+    "usdc",
+    "binance",
+    "rustdesk",
+    "anydesk",
+    "teamviewer",
+    "deepfake",
+    "clonación de voz",
+    "clonacion de voz",
+    "audio de mi hijo",
+    "voz de mi hijo",
+    "ceo",
+    "proveedor",
+    "iban",
+    "factura",
+    "microsoft 365",
+    "office 365",
+    "mfa",
+    "doble factor",
+    "authenticator",
+    "cookie",
+    "sesión",
+    "sesion",
+        "qr",
+    "código qr",
+    "codigo qr",
+    "quishing",
+    "parquímetro",
+    "parquimetro",
+    "parking",
+    "aparcamiento",
+    "estacionamiento",
+    "zona azul",
+    "zona verde",
+    "ayuntamiento",
+    "sede electrónica",
+    "sede electronica",
+    "tarjeta",
+    "pago rápido",
+    "pago rapido",
+    "pronto pago",
+  ];
+
+  return pillar === "ESTAFAS_FRAUDES" || fraudSignals.some((k) => t.includes(k));
+}
+
+async function lookupFraudIntel(
+  supabase: any,
+  userText: string,
+  options: {
+    enabled: boolean;
+    limit?: number;
+  },
+): Promise<FraudIntelMatch[]> {
+  if (!options.enabled) return [];
+
+  const queryText = String(userText || "").trim();
+  if (queryText.length < 8) return [];
+
+  try {
+    const { data, error } = await supabase.rpc("search_fraud_reports_basic", {
+      query_text: queryText,
+      result_limit: options.limit ?? 5,
+    });
+
+    if (error) {
+      console.warn("fraud_intel_lookup_error", error);
+      return [];
+    }
+
+    if (!Array.isArray(data)) return [];
+
+    return data
+      .filter((row) => row && typeof row === "object")
+      .slice(0, options.limit ?? 5) as FraudIntelMatch[];
+  } catch (error) {
+    console.warn("fraud_intel_lookup_exception", error);
+    return [];
+  }
+}
+
+function buildFraudIntelContext(matches: FraudIntelMatch[]) {
+  const clean = matches
+    .filter((m) => m?.case_id || m?.pattern_name || m?.case_title)
+    .slice(0, 5);
+
+  if (!clean.length) return "";
+
+  const rows = clean
+    .map((m, index) => {
+      const title = m.pattern_name || m.case_title || "Patrón sin título";
+      const category = [m.scam_category, m.scam_subcategory].filter(Boolean).join(" / ") || "unknown";
+      const channel = [m.channel, m.platform_or_app, m.marketplace].filter(Boolean).join(" / ") || "unknown";
+      const brand = m.impersonated_brand || "none";
+      const risk = `${m.risk_level || "unknown"}${typeof m.risk_score === "number" ? ` (${m.risk_score}/100)` : ""}`;
+      const verified = m.verified_level || "unknown";
+      const redFlags = m.red_flags || "unknown";
+      const action = m.recommended_action || "unknown";
+            const signature = m.similarity_signature || "unknown";
+
+      const advancedSignals = [
+        m.attack_technique ? `Técnica: ${m.attack_technique}` : "",
+        m.technical_complexity ? `Complejidad técnica: ${m.technical_complexity}` : "",
+        m.smart_contract_method ? `Método smart contract/firma: ${m.smart_contract_method}` : "",
+        m.wallet_risk_type ? `Riesgo wallet: ${m.wallet_risk_type}` : "",
+        m.wallet_action_requested ? `Acción solicitada en wallet: ${m.wallet_action_requested}` : "",
+        m.remote_access_tool_name ? `Herramienta remota: ${m.remote_access_tool_name}` : "",
+        m.ai_impersonation_type ? `Suplantación IA: ${m.ai_impersonation_type}` : "",
+        m.deepfake_media_type ? `Tipo deepfake: ${m.deepfake_media_type}` : "",
+        m.mfa_bypass_method ? `Bypass MFA: ${m.mfa_bypass_method}` : "",
+        m.session_theft_method ? `Robo de sesión: ${m.session_theft_method}` : "",
+        m.business_process_targeted ? `Proceso afectado: ${m.business_process_targeted}` : "",
+        m.iban_change_detected ? `Cambio de IBAN detectado: sí` : "",
+        m.blockchain_network ? `Red blockchain: ${m.blockchain_network}` : "",
+        m.crypto_asset_targeted ? `Activo cripto objetivo: ${m.crypto_asset_targeted}` : "",
+      ].filter(Boolean);
+
+      return [
+        `Caso parecido ${index + 1}:`,
+        `- Título/patrón: ${title}`,
+        `- Categoría: ${category}`,
+        `- Canal/plataforma: ${channel}`,
+        `- Marca o entidad suplantada: ${brand}`,
+        `- Riesgo orientativo: ${risk}`,
+        `- Verificación: ${verified}`,
+        advancedSignals.length ? `- Señales técnicas avanzadas: ${advancedSignals.join(" | ")}` : "",
+        `- Señales repetidas: ${redFlags}`,
+        `- Acción recomendada en casos parecidos: ${action}`,
+        `- Firma de similitud: ${signature}`,
+      ].filter(Boolean).join("\n");
+    })
+    .join("\n\n");
+
+  return `CONTEXTO INTERNO ANTIFRAUDE DE VONU:
+Estos son patrones/casos parecidos encontrados en la base antifraude interna. Úsalos solo como apoyo para orientar mejor, no como prueba absoluta.
+
+REGLAS PARA USAR ESTE CONTEXTO:
+- No digas "según mi base de datos" salvo que sea realmente útil.
+- No afirmes que el caso del usuario es el mismo caso exacto.
+- Puedes decir de forma natural: "esto se parece a un patrón típico de..." o "me recuerda a una modalidad frecuente...".
+- Si el patrón interno aparece como repetido, reciente, frecuente o reportado, puedes mencionarlo con prudencia:
+  “Es una modalidad bastante repetida.”
+  “Este patrón se ha visto muchas veces.”
+  “Encaja con una estafa frecuente de paquetería / marketplace / inversión.”
+- Prioriza la ayuda práctica al usuario.
+- Si los casos parecidos tienen verificación baja, sé prudente.
+- No copies literalmente textos largos de los casos internos.
+- No muestres datos sensibles ni identificadores completos.
+- Mantén el tono humano, no policial ni robótico.
+- Evita que la respuesta suene a ficha. El contexto interno debe mejorar tu criterio, no hacerte sonar mecánico.
+
+${rows}`;
+}
+
+// ---------- fraud chat report collection ----------
+function compactText(value: unknown, max = 900) {
+  return String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+}
+
+function maskSensitiveText(value: string) {
+  let text = String(value || "");
+
+  // Emails
+  text = text.replace(
+    /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
+    "[email_oculto]",
+  );
+
+  // Teléfonos largos, bastante prudente
+  text = text.replace(
+    /(\+?\d[\d\s().-]{7,}\d)/g,
+    "[telefono_oculto]",
+  );
+
+  // Tarjetas o números muy largos
+  text = text.replace(
+    /\b(?:\d[ -]*?){13,19}\b/g,
+    "[numero_tarjeta_o_largo_oculto]",
+  );
+
+  // IBAN básico
+  text = text.replace(
+    /\b[A-Z]{2}\d{2}[A-Z0-9]{10,30}\b/gi,
+    "[iban_oculto]",
+  );
+
+  // Códigos OTP típicos
+  text = text.replace(
+    /\b\d{5,8}\b/g,
+    "[codigo_oculto]",
+  );
+
+  return compactText(text, 900);
+}
+
+function inferRiskLevelFromScore(score: number | null | undefined) {
+  const n = typeof score === "number" ? score : 0;
+  if (n >= 85) return "critical";
+  if (n >= 70) return "high";
+  if (n >= 45) return "medium";
+  if (n > 0) return "low";
+  return "unknown";
+}
+
+function inferFraudBlockFromUserText(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  if (t.includes("wallapop") || t.includes("vinted") || t.includes("milanuncios") || t.includes("marketplace")) return "marketplace";
+  if (t.includes("tinder") || t.includes("badoo") || t.includes("bumble") || t.includes("app de citas") || t.includes("instagram")) return "social_dating";
+  if (t.includes("correos") || t.includes("seur") || t.includes("dhl") || t.includes("paquete") || t.includes("envío") || t.includes("envio")) return "delivery_customs";
+  if (t.includes("banco") || t.includes("bizum") || t.includes("tarjeta") || t.includes("paypal")) return "banking_payments";
+  if (t.includes("cripto") || t.includes("crypto") || t.includes("bitcoin") || t.includes("trading") || t.includes("inversión") || t.includes("inversion")) return "crypto_investment";
+  if (t.includes("dgt") || t.includes("hacienda") || t.includes("seguridad social") || t.includes("multa")) return "government_impersonation";
+  if (t.includes("empleo") || t.includes("trabajo") || t.includes("tareas") || t.includes("likes")) return "fake_jobs";
+  if (t.includes("sextorsión") || t.includes("sextorsion") || t.includes("chantaje") || t.includes("foto íntima") || t.includes("foto intima")) return "sextortion_blackmail";
+
+  return "unknown";
+}
+
+function inferChannelFromUserText(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  if (t.includes("sms")) return "sms";
+  if (t.includes("whatsapp")) return "whatsapp";
+  if (t.includes("telegram")) return "telegram";
+  if (t.includes("email") || t.includes("correo electrónico") || t.includes("correo electronico")) return "email";
+  if (t.includes("llamada") || t.includes("me llama") || t.includes("teléfono") || t.includes("telefono")) return "phone_call";
+  if (t.includes("instagram")) return "instagram";
+  if (t.includes("facebook")) return "facebook";
+  if (t.includes("tinder")) return "tinder";
+  if (t.includes("wallapop") || t.includes("vinted") || t.includes("milanuncios") || t.includes("marketplace")) return "marketplace";
+
+  return "unknown";
+}
+
+function inferPlatformOrAppFromUserText(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  if (t.includes("tinder")) return "Tinder";
+  if (t.includes("badoo")) return "Badoo";
+  if (t.includes("bumble")) return "Bumble";
+  if (t.includes("instagram")) return "Instagram";
+  if (t.includes("facebook")) return "Facebook";
+  if (t.includes("telegram")) return "Telegram";
+  if (t.includes("whatsapp")) return "WhatsApp";
+  if (t.includes("wallapop")) return "Wallapop";
+  if (t.includes("vinted")) return "Vinted";
+  if (t.includes("milanuncios")) return "Milanuncios";
+  if (t.includes("mercado libre")) return "Mercado Libre";
+  if (t.includes("paypal")) return "PayPal";
+  if (t.includes("bizum")) return "Bizum";
+
+  return null;
+}
+
+function inferBrandFromUserText(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  const brands = [
+    ["correos", "Correos"],
+    ["seur", "SEUR"],
+    ["dhl", "DHL"],
+    ["gls", "GLS"],
+    ["mrw", "MRW"],
+    ["wallapop", "Wallapop"],
+    ["vinted", "Vinted"],
+    ["milanuncios", "Milanuncios"],
+    ["bizum", "Bizum"],
+    ["paypal", "PayPal"],
+    ["amazon", "Amazon"],
+    ["bbva", "BBVA"],
+    ["santander", "Banco Santander"],
+    ["caixabank", "CaixaBank"],
+    ["ing", "ING"],
+    ["dgt", "DGT"],
+    ["hacienda", "Hacienda"],
+    ["seguridad social", "Seguridad Social"],
+    ["tinder", "Tinder"],
+    ["instagram", "Instagram"],
+    ["facebook", "Facebook"],
+  ];
+
+  for (const [needle, brand] of brands) {
+    if (t.includes(needle)) return brand;
+  }
+
+  return null;
+}
+
+function inferPaymentMethodFromUserText(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  if (t.includes("bizum")) return "bizum";
+  if (t.includes("tarjeta")) return "card";
+  if (t.includes("transferencia")) return "bank_transfer";
+  if (t.includes("paypal")) return "paypal";
+  if (t.includes("cripto") || t.includes("crypto") || t.includes("bitcoin") || t.includes("usdt")) return "crypto";
+
+  return null;
+}
+
+function extractAmountFromUserText(userText: string) {
+  const text = String(userText || "").replace(",", ".");
+  const match = text.match(/\b(\d{1,6}(?:\.\d{1,2})?)\s?(€|eur|euros|usd|dólares|dolares|mxn|cop|ars|clp|pen|usdt)?\b/i);
+
+  if (!match) {
+    return { amount: null as number | null, currency: null as string | null };
+  }
+
+  const amount = Number(match[1]);
+  if (!Number.isFinite(amount)) {
+    return { amount: null, currency: null };
+  }
+
+  const rawCurrency = (match[2] || "").toLowerCase();
+  const currency =
+    rawCurrency.includes("€") || rawCurrency.includes("eur") || rawCurrency.includes("euro")
+      ? "EUR"
+      : rawCurrency.includes("usd") || rawCurrency.includes("dólar") || rawCurrency.includes("dolar")
+      ? "USD"
+      : rawCurrency.includes("mxn")
+      ? "MXN"
+      : rawCurrency.includes("cop")
+      ? "COP"
+      : rawCurrency.includes("ars")
+      ? "ARS"
+      : rawCurrency.includes("clp")
+      ? "CLP"
+      : rawCurrency.includes("pen")
+      ? "PEN"
+      : rawCurrency.includes("usdt")
+      ? "USDT"
+      : null;
+
+  return { amount, currency };
+}
+
+function shouldCollectFraudChatReport(params: {
+  userText: string;
+  effectiveMode: ThreadMode;
+  pillar: string;
+  footballIntent: boolean;
+  fraudIntelMatches: FraudIntelMatch[];
+}) {
+  if (params.effectiveMode !== "chat") return false;
+  if (params.footballIntent) return false;
+  if (isGreetingOrVeryShort(params.userText)) return false;
+
+  const t = (params.userText || "").toLowerCase();
+
+  const strongFraudSignals = [
+    "estafa",
+    "fraude",
+    "phishing",
+    "smishing",
+    "vishing",
+    "sms",
+    "whatsapp",
+    "telegram",
+    "correos",
+    "seur",
+    "dhl",
+    "bizum",
+    "wallapop",
+    "vinted",
+    "marketplace",
+    "tinder",
+    "cripto",
+    "crypto",
+    "bitcoin",
+    "trading",
+    "inversión",
+    "inversion",
+    "seguro de envío",
+    "seguro de envio",
+    "cuenta segura",
+    "código",
+    "codigo",
+    "otp",
+    "tarjeta",
+    "transferencia",
+  ];
+
+  return (
+    params.pillar === "ESTAFAS_FRAUDES" ||
+    params.fraudIntelMatches.length > 0 ||
+    strongFraudSignals.some((signal) => t.includes(signal))
+  );
+}
+
+function buildSimilaritySignatureFromText(userText: string, topMatch: FraudIntelMatch | null) {
+  if (topMatch?.similarity_signature) return topMatch.similarity_signature;
+
+  const t = (userText || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const useful = t
+    .split(" ")
+    .filter((w) => w.length >= 3)
+    .filter((w) => !["que", "para", "con", "por", "del", "una", "uno", "los", "las", "recibido", "dice", "dicen"].includes(w))
+    .slice(0, 12);
+
+  return useful.join(" ") || "unknown";
+}
+
+function buildFraudChatReportPayload(params: {
+  userText: string;
+  assistantText: string;
+  userId: string | null;
+  body: any;
+  pillar: string;
+  fraudIntelMatches: FraudIntelMatch[];
+}) {
+    const top = params.fraudIntelMatches[0] ?? null;
+  const maskedUserText = maskSensitiveText(params.userText);
+  const maskedAssistantText = maskSensitiveText(params.assistantText);
+  const amountInfo = extractAmountFromUserText(params.userText);
+
+  const inferredFraudBlock = inferFraudBlockFromUserText(params.userText);
+  const inferredChannel = inferChannelFromUserText(params.userText);
+  const inferredPlatformOrApp = inferPlatformOrAppFromUserText(params.userText);
+  const inferredBrand = inferBrandFromUserText(params.userText);
+  const inferredPaymentMethod = inferPaymentMethodFromUserText(params.userText);
+
+  const fraudBlock =
+    inferredFraudBlock && inferredFraudBlock !== "unknown"
+      ? inferredFraudBlock
+      : top?.fraud_block || "unknown";
+
+  const channel =
+    inferredChannel && inferredChannel !== "unknown"
+      ? inferredChannel
+      : top?.channel || "unknown";
+
+  const impersonatedBrand =
+    inferredBrand || top?.impersonated_brand || null;
+
+  const paymentMethod =
+    inferredPaymentMethod || top?.payment_method_requested || null;
+  const riskScore = typeof top?.risk_score === "number" ? top.risk_score : params.fraudIntelMatches.length > 0 ? 75 : 60;
+  const riskLevel = top?.risk_level || inferRiskLevelFromScore(riskScore);
+  const similaritySignature = buildSimilaritySignatureFromText(params.userText, top);
+
+  const summaryParts = [
+    `Consulta de posible fraude detectada desde chat.`,
+    fraudBlock && fraudBlock !== "unknown" ? `Bloque: ${fraudBlock}.` : "",
+    channel && channel !== "unknown" ? `Canal: ${channel}.` : "",
+    impersonatedBrand ? `Marca o entidad mencionada: ${impersonatedBrand}.` : "",
+    top?.pattern_name ? `Patrón parecido: ${top.pattern_name}.` : "",
+  ].filter(Boolean);
+
+  return {
+    source_type: "user_chat",
+    status: "pending_review",
+
+    // De momento no guardamos user_id para minimizar datos personales.
+    user_id: null,
+    conversation_id:
+      typeof params.body?.threadId === "string"
+        ? params.body.threadId
+        : typeof params.body?.conversationId === "string"
+        ? params.body.conversationId
+        : null,
+    message_id:
+      typeof params.body?.messageId === "string"
+        ? params.body.messageId
+        : null,
+
+    user_text_excerpt: maskedUserText,
+    anonymized_summary: compactText(summaryParts.join(" "), 900),
+
+        scam_category:
+      fraudBlock === "delivery_customs"
+        ? "delivery_scam"
+        : fraudBlock === "marketplace"
+        ? "marketplace_scam"
+        : fraudBlock === "social_dating"
+        ? "romance_scam"
+        : fraudBlock === "crypto_investment"
+        ? "crypto_investment_scam"
+        : top?.scam_category || null,
+
+    scam_subcategory:
+      fraudBlock === "delivery_customs"
+        ? "fake_delivery_fee"
+        : fraudBlock === "marketplace"
+        ? "fake_shipping_fee"
+        : fraudBlock === "social_dating"
+        ? "fake_romantic_investment_advice"
+        : top?.scam_subcategory || null,
+    fraud_block: fraudBlock && fraudBlock !== "unknown" ? fraudBlock : null,
+    channel: channel && channel !== "unknown" ? channel : null,
+           platform_or_app:
+      fraudBlock === "marketplace" || fraudBlock === "social_dating"
+        ? inferredPlatformOrApp || top?.platform_or_app || null
+        : inferredPlatformOrApp || null,
+
+    marketplace:
+      fraudBlock === "marketplace"
+        ? inferredPlatformOrApp || top?.marketplace || null
+        : null,
+    impersonated_brand: impersonatedBrand,
+    payment_method_requested: paymentMethod,
+
+    amount_requested:
+      typeof top?.amount_requested === "number"
+        ? top.amount_requested
+        : amountInfo.amount,
+    currency: top?.currency || amountInfo.currency,
+
+    risk_level: riskLevel,
+    risk_score: riskScore,
+    confidence_score:
+      typeof top?.confidence_score === "number"
+        ? top.confidence_score
+        : params.fraudIntelMatches.length > 0
+        ? 70
+        : 50,
+
+    red_flags: top?.red_flags || null,
+    emotional_pressure_signals: null,
+    urgency_signals: null,
+    technical_signals: null,
+    recommended_action: top?.recommended_action || null,
+    prevention_tips: top?.prevention_tips || null,
+
+    verified_level: "unverified",
+    privacy_level: "anonymized_case",
+
+    similarity_signature: similaritySignature,
+    keywords: top?.keywords || similaritySignature.replace(/\s+/g, ", "),
+
+    raw_model_json: {
+      source: "analyze_edge_function",
+      pillar: params.pillar,
+      assistant_excerpt: compactText(maskedAssistantText, 700),
+      fraud_intel_matches: params.fraudIntelMatches.slice(0, 3).map((m) => ({
+        case_id: m.case_id,
+        pattern_name: m.pattern_name,
+        scam_category: m.scam_category,
+        scam_subcategory: m.scam_subcategory,
+        match_score: m.match_score,
+        risk_score: m.risk_score,
+        verified_level: m.verified_level,
+      })),
+    },
+
+    notes: "Caso recogido automáticamente desde chat. Pendiente de revisión antes de promover a fraud_reports.",
+  };
+}
+
+async function saveFraudChatReportIfRelevant(
+  supabase: any,
+  params: {
+    userText: string;
+    assistantText: string;
+    userId: string | null;
+    body: any;
+    pillar: string;
+    effectiveMode: ThreadMode;
+    footballIntent: boolean;
+    fraudIntelMatches: FraudIntelMatch[];
+  },
+) {
+  if (
+    !shouldCollectFraudChatReport({
+      userText: params.userText,
+      effectiveMode: params.effectiveMode,
+      pillar: params.pillar,
+      footballIntent: params.footballIntent,
+      fraudIntelMatches: params.fraudIntelMatches,
+    })
+  ) {
+    return { saved: false, reason: "not_relevant" };
+  }
+
+  const payload = buildFraudChatReportPayload({
+    userText: params.userText,
+    assistantText: params.assistantText,
+    userId: params.userId,
+    body: params.body,
+    pillar: params.pillar,
+    fraudIntelMatches: params.fraudIntelMatches,
+  });
+
+  try {
+    const { data, error } = await supabase
+      .from("fraud_chat_reports")
+      .insert(payload)
+      .select("id")
+      .single();
+
+    if (error) {
+      console.warn("fraud_chat_report_insert_error", error);
+      return { saved: false, reason: "insert_error" };
+    }
+
+    return { saved: true, id: data?.id ?? null };
+  } catch (error) {
+    console.warn("fraud_chat_report_insert_exception", error);
+    return { saved: false, reason: "exception" };
+  }
+}
+
+// ---------- handler ----------
+serve(async (req) => {
+  const supabase = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+);
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
+
+  try {
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || Deno.env.get("openai_api_key") || "";
+    if (!OPENAI_API_KEY) {
+      return json(
+        {
+          error: "OPENAI_API_KEY no configurada",
+          hint: "Añade un secret en Supabase Edge Functions: OPENAI_API_KEY (o openai_api_key).",
+        },
+        500,
+      );
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const authHeader = req.headers.get("Authorization");
+const token = authHeader?.replace("Bearer ", "") ?? null;
+const apikeyHeader = req.headers.get("apikey") ?? "";
+
+let user: any = null;
+let userId: string | null = null;
+
+const anonKey =
+  Deno.env.get("SUPABASE_ANON_KEY") ||
+  Deno.env.get("NEXT_PUBLIC_SUPABASE_ANON_KEY") ||
+  Deno.env.get("SUPABASE_ANON_KEY_FALLBACK") ||
+  "";
+
+const isGuest =
+  !token ||
+  token === anonKey ||
+  token === apikeyHeader;
+
+if (token && !isGuest) {
+  const {
+    data: { user: authUser },
+    error: authError,
+  } = await supabase.auth.getUser(token);
+
+  if (authError || !authUser) {
+    return json({ error: "Unauthorized" }, 401);
+  }
+
+  user = authUser;
+  userId = authUser.id;
+}
+
+    const userText =
+      typeof body?.userText === "string"
+        ? body.userText
+        : typeof body?.name === "string"
+        ? body.name
+        : "";
+
+    const messages = Array.isArray(body?.messages) ? body.messages : [];
+    const imageBase64 = typeof body?.imageBase64 === "string" ? body.imageBase64 : null;
+    const pdfText = typeof body?.pdfText === "string" ? body.pdfText : null;
+
+    const requestedMode = normalizeThreadMode(body?.mode);
+    const requestedLevel = normalizeTutorLevel(body?.tutorLevel);
+    let tutorLevel: TutorLevel = requestedLevel;
+
+    type FootballProfile = "normal" | "wide";
+    const footballProfile: FootballProfile = body?.footballProfile === "normal" ? "normal" : "wide";
+
+    const history = buildHistory(messages, 10);
+
+    let footballReq = parseFootballReqFixture(userText);
+const fraudOverride = hasStrongFraudOverride(userText);
+let footballIntent = fraudOverride ? false : looksLikeFootballIntent(userText);
+
+if (fraudOverride) {
+  footballReq = null;
+}
+
+const qrMunicipalPaymentRisk = hasQrMunicipalPaymentRisk(userText);
+
+// El caso QR/parquímetro ya no necesita return directo aquí.
+// app/api/chat/route.ts evita que "tarjeta" lo desvíe al interceptor de fútbol,
+// así que dejamos que siga el flujo normal para que pueda guardarse en fraud_chat_reports.
+
+    const autoTutor = detectAutomaticTutorMode(
+      userText,
+      history,
+      requestedMode,
+      !!imageBase64,
+      footballIntent,
+    );
+
+    const effectiveMode: ThreadMode = autoTutor.active ? "tutor" : requestedMode;
+
+    if (effectiveMode === "tutor") {
+      if (tutorLevel === "unknown") {
+        tutorLevel = autoTutor.level !== "unknown" ? autoTutor.level : "adult";
+      }
+    }
+
+    const pillar = pickPillar(userText);
+const month = getCurrentMonth();
+
+let usage: any = null;
+let profile: any = null;
+let plan: any = null;
+let planId = "free";
+
+if (!isGuest && userId) {
+  let usageQuery = await supabase
+    .from("usage")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("month", month)
+    .single();
+
+  usage = usageQuery.data;
+
+  if (!usage) {
+    const { data: newUsage } = await supabase
+      .from("usage")
+      .insert({
+        user_id: userId,
+        month,
+        messages_used: 0,
+        realtime_seconds: 0,
+      })
+      .select()
+      .single();
+
+    usage = newUsage;
+  }
+
+  const profileQuery = await supabase
+    .from("profiles")
+    .select("plan")
+    .eq("id", userId)
+    .single();
+
+  profile = profileQuery.data;
+  planId = profile?.plan || "free";
+
+  const planQuery = await supabase
+    .from("plans")
+    .select("*")
+    .eq("id", planId)
+    .single();
+
+  plan = planQuery.data;
+}
+  
+const lowContext = isLowContext(userText, !!imageBase64);
+const incompletePhysicsProblem = detectIncompletePhysicsProblem(userText);
+
+let footballPrediction: any | null = null;
+let footballError: string | null = null;
+let footballResolved: any | null = null;
+
+const studyMode: StudyMode =
+  effectiveMode === "chat"
+    ? detectStudyMode(userText, history)
+    : { active: false, lang: "unknown", reason: "not_chat" };
+
+const fraudIntelMatches = await lookupFraudIntel(supabase, userText, {
+  enabled: shouldUseFraudIntel(userText, pillar, effectiveMode, footballIntent),
+  limit: 5,
+});
+
+const legalConsumerIntelMatches = await lookupLegalConsumerIntel(supabase, userText, {
+  enabled: shouldUseLegalConsumerIntel(userText, pillar, effectiveMode, footballIntent),
+  limit: 5,
+});
+
+const legalConsumerIntelContext = buildLegalConsumerIntelContext(legalConsumerIntelMatches);
+
+const fraudIntelContext = buildFraudIntelContext(fraudIntelMatches);
+
+    const messagesLimit = plan?.messages_limit ?? 20;
+
+if (!isGuest && (usage?.messages_used ?? 0) >= messagesLimit) {
+  return json(
+    {
+      text:
+        `## Límite alcanzado\n\n` +
+        `Has llegado al límite mensual de mensajes de tu plan actual.\n\n` +
+        `## Qué puedes hacer\n\n` +
+        `- Esperar a la renovación mensual\n` +
+        `- O mejorar tu plan para seguir usando Vonu\n`,
+      mode: effectiveMode,
+      tutorLevel: effectiveMode === "tutor" ? tutorLevel : null,
+      pillar,
+      model: "usage-limit-guard",
+      tokens_used: null,
+      studyMode: null,
+      autoTutor:
+        effectiveMode === "tutor"
+          ? {
+              active: true,
+              area: detectEducationalArea(userText),
+              level: tutorLevel,
+              reason: "usage_limit_reached",
+            }
+          : {
+              active: false,
+              area: "general",
+              level: null,
+              reason: "usage_limit_reached",
+            },
+      footballResolved,
+      footballReq: footballReq ? footballReq : null,
+      footballIntent,
+      footballSiteUrl: null,
+      footballError: null,
+      footballPrediction: null,
+    },
+    200,
+  );
+}
+
+    function normalizeSiteUrl(x: any) {
+      if (typeof x !== "string") return "";
+      const t = x.trim();
+      if (!t) return "";
+      if (t === "null" || t === "undefined") return "";
+      if (!/^https?:\/\//i.test(t)) return "";
+      return t.replace(/\/$/, "");
+    }
+
+    const siteFromBody = normalizeSiteUrl(body?.siteUrl);
+    const envSite = normalizeSiteUrl(
+      Deno.env.get("VONU_SITE_URL") ||
+        Deno.env.get("SITE_URL") ||
+        Deno.env.get("NEXT_PUBLIC_SITE_URL") ||
+        "",
+    );
+    const SITE_URL = siteFromBody || envSite;
+
+
+if (effectiveMode === "tutor" && incompletePhysicsProblem.isIncomplete) {
+  return json(
+    {
+      text:
+        `## Problema incompleto\n\n` +
+        `**No se puede calcular un resultado único con total seguridad.**\n\n` +
+        `El motivo es este:\n\n` +
+        `${incompletePhysicsProblem.reason}\n\n` +
+        `## Qué falta\n\n` +
+        `Hace falta saber **dónde está situado inicialmente** un objeto respecto al otro.\n\n` +
+        `Por ejemplo:\n\n` +
+        `- si el segundo barco está **10 km al este** del primero,\n` +
+        `- o **10 km al oeste**,\n` +
+        `- o en cualquier otra posición inicial concreta.\n\n` +
+        `## Conclusión\n\n` +
+        `Con los datos actuales, **Vonu no debería inventar esa dirección**. Si me das esa posición inicial, entonces sí puedo resolverlo paso a paso.`,
+      mode: effectiveMode,
+      tutorLevel: tutorLevel,
+      pillar,
+      model: "incomplete-physics-guard",
+      tokens_used: null,
+      studyMode: null,
+      autoTutor: {
+        active: true,
+        area: detectEducationalArea(userText),
+        level: tutorLevel,
+        reason: "incomplete_physics_problem",
+      },
+      footballResolved,
+      footballReq: footballReq ? footballReq : null,
+      footballIntent,
+      footballSiteUrl: SITE_URL || null,
+      footballError,
+      footballPrediction,
+    },
+    200,
+  );
+}
+
+    // DEBUG
+    if (body?.debugFootball === true) {
+      const base = SITE_URL;
+      const testUrl = `${base}/api/football/fixtures?team=39&next=1`;
+      try {
+        const data = await fetchJson(testUrl);
+        return json(
+          {
+            ok: true,
+            SITE_URL,
+            testUrl,
+            resultKeys: Object.keys(data || {}),
+            count: data?.count ?? null,
+            firstFixture: Array.isArray(data?.fixtures) ? data.fixtures[0] : null,
+          },
+          200,
+        );
+      } catch (e: any) {
+        return json(
+          {
+            ok: false,
+            SITE_URL,
+            testUrl,
+            error: e?.message || String(e),
+          },
+          200,
+        );
+      }
+    }
+
+    if (!SITE_URL) {
+      return json(
+        {
+          text:
+            "⚠️ Falta SITE_URL.\n" +
+            "Configura el secret VONU_SITE_URL en Supabase con tu dominio de Vercel (ej: https://app.vonuai.com) " +
+            "o envía siteUrl desde el cliente.\n" +
+            'Ejemplo: { siteUrl: "https://app.vonuai.com" }',
+          mode: effectiveMode,
+          tutorLevel: effectiveMode === "tutor" ? tutorLevel : null,
+          pillar,
+          model: "football-siteurl-missing",
+          tokens_used: null,
+          studyMode: null,
+          footballResolved: null,
+          footballReq: null,
+          footballIntent,
+          footballSiteUrl: null,
+          footballError: "SITE_URL vacío",
+          footballPrediction: null,
+        },
+        200,
+      );
+    }
+
+
+    // ✅ Resolver fixture si el usuario escribe "A vs B"
+    if (!footballReq && footballIntent) {
+      const teams = extractTeamsFromText(userText);
+
+      let singleTeam: string | null = null;
+      if (!teams) singleTeam = extractSingleTeam(userText);
+
+      if (teams?.home && teams?.away) {
+        try {
+          const resolved = await resolveFixtureFromTeams(SITE_URL, teams.home, teams.away);
+          footballResolved = resolved;
+
+          if (resolved.ok) {
+            footballReq = { fixture: resolved.fixtureId, last: 10, sims: 20000 };
+          } else {
+            footballError = (resolved as any).reason || "No pude resolver el fixture.";
+
+            return json(
+              {
+                text:
+                  `⚠️ No puedo elegir el partido con seguridad.\n` +
+                  `Motivo: ${footballError}\n\n` +
+                  `He detectado: ${teams.home} vs ${teams.away}\n\n` +
+                  `✅ Solución rápida: pega el que toque como "fixture=12345"`,
+                mode: effectiveMode,
+                tutorLevel: effectiveMode === "tutor" ? tutorLevel : null,
+                pillar,
+                model: "football-resolve-direct",
+                tokens_used: null,
+                studyMode: null,
+                footballResolved,
+                footballReq: null,
+                footballIntent,
+                footballSiteUrl: SITE_URL || null,
+                footballError,
+                footballPrediction: null,
+              },
+              200,
+            );
+          }
+        } catch (e: any) {
+          footballError = typeof e?.message === "string" ? e.message : "No se pudo resolver el fixture.";
+        }
+      } else if (singleTeam) {
+        try {
+          const search = await fetchTeamsSearch(SITE_URL, singleTeam);
+          const arr = Array.isArray(search?.teams) ? search.teams : [];
+          const first = arr[0];
+
+          if (first?.id) {
+            const fx = await fetchFixturesByTeam(SITE_URL, first.id, 10);
+            const list = Array.isArray(fx?.fixtures) ? fx.fixtures : [];
+            const nextFx = list[0];
+
+            if (nextFx?.fixtureId) {
+              footballReq = { fixture: Number(nextFx.fixtureId), last: 10, sims: 20000 };
+            }
+          }
+        } catch {
+          footballError = "No pude resolver partido por equipo único.";
+        }
+      } else {
+        footballError = "No pude detectar bien los equipos.";
+      }
+    }
+
+    // Predicción
+    if (footballReq) {
+      try {
+        footballPrediction = await fetchFootballPredict(SITE_URL, footballReq.fixture, footballReq.last, footballReq.sims);
+      } catch (e: any) {
+        footballError = typeof e?.message === "string" ? e.message : "No se pudo obtener predicción.";
+        footballPrediction = null;
+      }
+    }
+
+    // ✅ si hay predicción -> devolvemos directo
+    if (effectiveMode === "chat" && footballReq && footballPrediction) {
+      const text = `✅ EDGE_OK_WIDE_v4 fixture=${footballReq.fixture}\n` + formatFootballElite(footballPrediction);
+      return json(
+        {
+          text,
+          mode: effectiveMode,
+          tutorLevel: null,
+          pillar,
+          model: "football-predict-direct",
+          tokens_used: null,
+          studyMode: null,
+          footballResolved,
+          footballReq,
+          footballIntent,
+          footballSiteUrl: SITE_URL || null,
+          footballError: null,
+          footballPrediction,
+        },
+        200,
+      );
+    }
+
+    // Si pidió fútbol y falló:
+    if (effectiveMode === "chat" && (footballReq || footballIntent) && !footballPrediction) {
+      const teams = extractTeamsFromText(userText);
+      const msg = [
+        `⚠️ No puedo devolver el pronóstico todavía.`,
+        footballReq
+          ? `Fixture: ${footballReq.fixture} (last=${footballReq.last}, sims=${footballReq.sims})`
+          : `Equipos detectados: ${teams ? `${teams.home} vs ${teams.away}` : "no detectados"}`,
+        "",
+        `Motivo: ${footballError || "No hay datos de predicción disponibles."}`,
+        "",
+        `✅ Soluciones:`,
+        `- Asegura que /api/football/predict/match funciona desde ${SITE_URL || "(SITE_URL vacío)"}`,
+        `- Prueba pasando fixture explícito: "fixture=12345"`,
+      ].join("\n");
+
+      return json(
+        {
+          text: msg,
+          mode: effectiveMode,
+          tutorLevel: null,
+          pillar,
+          model: "football-error-direct",
+          tokens_used: null,
+          studyMode: null,
+          footballResolved,
+          footballReq: footballReq ?? null,
+          footballIntent,
+          footballSiteUrl: SITE_URL || null,
+          footballError,
+          footballPrediction: null,
+        },
+        200,
+      );
+    }
+
+    // ------------------------- OpenAI normal (no fútbol) -------------------------
+    const modelChat = Deno.env.get("OPENAI_MODEL_CHAT") || "gpt-4o";
+    const modelTutor = Deno.env.get("OPENAI_MODEL_TUTOR") || "gpt-4o";
+    const model = effectiveMode === "tutor" ? modelTutor : (Deno.env.get("OPENAI_MODEL") || modelChat);
+
+    const max_output_tokens =
+      effectiveMode === "tutor"
+        ? 1600
+        : studyMode.active
+        ? 700
+        : lowContext
+        ? 700
+        : 1400;
+
+    const temperature = effectiveMode === "tutor" ? 0.25 : 0.35;
+
+    let instructions =
+  effectiveMode === "tutor"
+    ? instructionsTutor(pillar, tutorLevel, userText)
+    : instructionsChat(pillar, lowContext, studyMode);
+
+if (effectiveMode === "chat" && fraudIntelContext) {
+  instructions += `\n\n${fraudIntelContext}`;
+}
+
+if (effectiveMode === "chat" && legalConsumerIntelContext) {
+  instructions += `\n\n${legalConsumerIntelContext}`;
+}
+
+    const input: any[] = [];
+    for (const h of history) input.push({ role: h.role, content: h.content });
+
+    const cleanText = (userText || "").trim();
+    const userContent: any[] = [];
+
+if (cleanText) {
+  userContent.push({ type: "input_text", text: cleanText });
+} else if (imageBase64) {
+  userContent.push({ type: "input_text", text: "Analiza la imagen adjunta." });
+} else {
+  userContent.push({ type: "input_text", text: "Me gustaría tu ayuda con esto." });
+}
+
+if (pdfText) {
+  userContent.push({
+    type: "input_text",
+    text: pdfText,
+  });
+}
+
+if (imageBase64) {
+  userContent.push({
+    type: "input_image",
+    image_url: isLikelyDataUrl(imageBase64) ? imageBase64 : imageBase64,
+  });
+}
+
+    input.push({ role: "user", content: userContent });
+
+    const resp = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        instructions,
+        input,
+        max_output_tokens,
+        temperature,
+      }),
+    });
+
+    const raw = await resp.text().catch(() => "");
+    let data: any = null;
+    try {
+      data = raw ? JSON.parse(raw) : null;
+    } catch {
+      data = null;
+    }
+
+    if (!resp.ok) {
+      const errMsg = data?.error?.message || data?.message || raw?.slice(0, 240) || "Error desconocido en OpenAI.";
+      return json(
+        {
+          error: `Error en el servicio de IA (${resp.status})`,
+          message: errMsg,
+          model,
+          pillar,
+          mode: effectiveMode,
+          tutorLevel: effectiveMode === "tutor" ? tutorLevel : null,
+          studyMode: studyMode.active ? studyMode : null,
+        },
+        500,
+      );
+    }
+
+    let text =
+      (data?.output_text && String(data.output_text).trim()) ||
+      (() => {
+        try {
+          const out = data?.output ?? [];
+          for (const item of out) {
+            const content = item?.content ?? [];
+            for (const c of content) {
+              if (c?.type === "output_text" && c?.text) return String(c.text).trim();
+            }
+          }
+        } catch {}
+        return "";
+      })();
+
+        if (!text) {
+      text = studyMode.active
+        ? "Perfecte 🙂 Comencem. ¿Cómo se dice en el idioma objetivo la primera palabra de tu lista?"
+        : "He recibido una respuesta vacía. ¿Puedes darme un poco más de contexto?";
+    }
+
+    const fraudChatReport = await saveFraudChatReportIfRelevant(supabase, {
+      userText,
+      assistantText: text,
+      userId,
+      body,
+      pillar,
+      effectiveMode,
+      footballIntent,
+      fraudIntelMatches,
+    });
+
+    if (!isGuest && userId) {
+  await supabase
+    .from("usage")
+    .update({
+      messages_used: (usage?.messages_used ?? 0) + 1,
+    })
+    .eq("user_id", userId)
+    .eq("month", month);
+}
+
+        return json(
+  {
+    text,
+    mode: effectiveMode,
+    tutorLevel: effectiveMode === "tutor" ? tutorLevel : null,
+    pillar,
+    model,
+    tokens_used: data?.usage?.total_tokens ?? null,
+    studyMode: studyMode.active ? studyMode : null,
+    usage: !isGuest
+  ? {
+      plan_id: planId,
+      messages_used: (usage?.messages_used ?? 0) + 1,
+      messages_limit: messagesLimit,
+      messages_left: Math.max(0, messagesLimit - ((usage?.messages_used ?? 0) + 1)),
+    }
+  : null,
+    autoTutor:
+      effectiveMode === "tutor"
+        ? {
+            active: true,
+            area: detectEducationalArea(userText),
+            level: tutorLevel,
+            reason: "auto_or_requested",
+          }
+        : {
+            active: false,
+            area: "general",
+            level: null,
+            reason: "chat_mode",
+          },
+    footballResolved,
+    footballReq: footballReq ? footballReq : null,
+    footballIntent,
+    footballSiteUrl: SITE_URL || null,
+        footballError,
+    footballPrediction,
+    fraudChatReport:
+      effectiveMode === "chat"
+        ? {
+            saved: fraudChatReport.saved,
+            id: "id" in fraudChatReport ? fraudChatReport.id : null,
+            reason: "reason" in fraudChatReport ? fraudChatReport.reason : null,
+          }
+        : null,
+  },
+  200,
+);
+  } catch (error) {
+    return json(
+      {
+        error: "Error interno del servidor",
+        message: error instanceof Error ? error.message : String(error),
+      },
+      500,
+    );
+  }
+});
