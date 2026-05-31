@@ -3693,6 +3693,371 @@ function buildFraudChatReportPayload(params: {
   };
 }
 
+// ---------- legal / consumer chat reports ----------
+function inferLegalBlockFromUserText(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  if (t.includes("alquiler") || t.includes("arrendamiento") || t.includes("inquilino") || t.includes("casero") || t.includes("fianza")) {
+    return "rental";
+  }
+
+  if (t.includes("factura") || t.includes("recibo") || t.includes("cobro") || t.includes("me han cobrado") || t.includes("cargo")) {
+    return "billing";
+  }
+
+  if (t.includes("suscripción") || t.includes("suscripcion") || t.includes("darme de baja") || t.includes("cancelar") || t.includes("renovación") || t.includes("renovacion")) {
+    return "subscriptions";
+  }
+
+  if (t.includes("fibra") || t.includes("internet") || t.includes("telefonía") || t.includes("telefonia") || t.includes("móvil") || t.includes("movil")) {
+    return "telecom";
+  }
+
+  if (t.includes("luz") || t.includes("gas") || t.includes("agua") || t.includes("electricidad")) {
+    return "utilities";
+  }
+
+  if (t.includes("banco") || t.includes("hipoteca") || t.includes("revolving") || t.includes("préstamo") || t.includes("prestamo") || t.includes("comisión") || t.includes("comision")) {
+    return "banking";
+  }
+
+  if (t.includes("seguro") || t.includes("aseguradora") || t.includes("póliza") || t.includes("poliza")) {
+    return "insurance";
+  }
+
+  if (t.includes("garantía") || t.includes("garantia") || t.includes("devolución") || t.includes("devolucion") || t.includes("reembolso") || t.includes("compra online")) {
+    return "ecommerce";
+  }
+
+  if (t.includes("contrato") || t.includes("cláusula") || t.includes("clausula") || t.includes("firmar") || t.includes("firma")) {
+    return "contracts";
+  }
+
+  return "consumer_rights";
+}
+
+function inferLegalIssueCategoryFromUserText(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  if (t.includes("abusiva") || t.includes("abusivo") || t.includes("cláusula") || t.includes("clausula") || t.includes("letra pequeña") || t.includes("letra pequena")) {
+    return "abusive_clause";
+  }
+
+  if (t.includes("permanencia") || t.includes("penalización") || t.includes("penalizacion") || t.includes("multa") || t.includes("pagar un año") || t.includes("pagar todo el año")) {
+    return "unfair_penalty";
+  }
+
+  if (t.includes("no contraté") || t.includes("no contrate") || t.includes("no he contratado") || t.includes("cobro no reconocido") || t.includes("me han cobrado") || t.includes("cargo no reconocido")) {
+    return "unauthorized_charge";
+  }
+
+  if (t.includes("cancelar") || t.includes("darme de baja") || t.includes("baja") || t.includes("no me deja cancelar")) {
+    return "cancellation_problem";
+  }
+
+  if (t.includes("renovación") || t.includes("renovacion") || t.includes("renovar") || t.includes("automática") || t.includes("automatica")) {
+    return "automatic_renewal";
+  }
+
+  if (t.includes("garantía") || t.includes("garantia")) {
+    return "warranty_problem";
+  }
+
+  if (t.includes("devolución") || t.includes("devolucion") || t.includes("reembolso")) {
+    return "refund_problem";
+  }
+
+  if (t.includes("fianza") || t.includes("depósito") || t.includes("deposito")) {
+    return "rent_deposit_problem";
+  }
+
+  if (t.includes("precio") || t.includes("subida") || t.includes("tarifa") || t.includes("más caro") || t.includes("mas caro")) {
+    return "price_change";
+  }
+
+  if (t.includes("oculto") || t.includes("sorpresa") || t.includes("extra") || t.includes("mantenimiento")) {
+    return "hidden_fee";
+  }
+
+  return "unclear_terms";
+}
+
+function inferLegalDocumentTypeFromUserText(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  if (t.includes("contrato") && (t.includes("alquiler") || t.includes("arrendamiento"))) return "contrato_arrendamiento";
+  if (t.includes("contrato")) return "contrato";
+  if (t.includes("factura")) return "factura_servicios";
+  if (t.includes("recibo")) return "recibo";
+  if (t.includes("póliza") || t.includes("poliza") || t.includes("seguro")) return "poliza_seguro";
+  if (t.includes("extracto") || t.includes("banco")) return "extracto_bancario";
+  if (t.includes("ticket")) return "ticket";
+  if (t.includes("términos") || t.includes("terminos") || t.includes("condiciones")) return "terminos_y_condiciones";
+
+  return null;
+}
+
+function inferLegalRiskScoreFromText(userText: string, legalConsumerIntelMatches: LegalConsumerPatternMatch[]) {
+  const t = (userText || "").toLowerCase();
+  const top = legalConsumerIntelMatches[0];
+
+  if (typeof top?.risk_score === "number") return top.risk_score;
+
+  if (
+    t.includes("demanda") ||
+    t.includes("juicio") ||
+    t.includes("desahucio") ||
+    t.includes("deuda") ||
+    t.includes("embargo") ||
+    t.includes("amenaza") ||
+    t.includes("corte de luz") ||
+    t.includes("corte de suministro") ||
+    t.includes("me obligan a pagar")
+  ) {
+    return 82;
+  }
+
+  if (
+    t.includes("firmar") ||
+    t.includes("contrato") ||
+    t.includes("cláusula") ||
+    t.includes("clausula") ||
+    t.includes("fianza") ||
+    t.includes("permanencia") ||
+    t.includes("penalización") ||
+    t.includes("penalizacion") ||
+    t.includes("me han cobrado")
+  ) {
+    return 72;
+  }
+
+  return legalConsumerIntelMatches.length > 0 ? 65 : 55;
+}
+
+function buildLegalSimilaritySignature(userText: string, top?: LegalConsumerPatternMatch | null) {
+  const t = (userText || "").toLowerCase();
+
+  const parts = [
+    inferLegalBlockFromUserText(userText),
+    inferLegalIssueCategoryFromUserText(userText),
+    top?.sector || null,
+    top?.document_type || inferLegalDocumentTypeFromUserText(userText),
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const keywords = t
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .split(/\s+/)
+    .filter((w) => w.length >= 4)
+    .slice(0, 10)
+    .join(" ");
+
+  return compactText(`${parts} ${keywords}`.trim(), 220);
+}
+
+function shouldCollectLegalChatReport(params: {
+  userText: string;
+  effectiveMode: ThreadMode;
+  pillar: string;
+  footballIntent: boolean;
+  legalConsumerIntelMatches: LegalConsumerPatternMatch[];
+}) {
+  if (params.effectiveMode !== "chat") return false;
+  if (params.footballIntent) return false;
+  if (isGreetingOrVeryShort(params.userText)) return false;
+
+  const t = (params.userText || "").toLowerCase();
+  const hasLegalSignal =
+    params.pillar === "RIESGOS_LEGALES" ||
+    params.legalConsumerIntelMatches.length > 0 ||
+    [
+      "contrato",
+      "cláusula",
+      "clausula",
+      "factura",
+      "recibo",
+      "cobro",
+      "cobrado",
+      "suscripción",
+      "suscripcion",
+      "darme de baja",
+      "alquiler",
+      "fianza",
+      "permanencia",
+      "penalización",
+      "penalizacion",
+      "garantía",
+      "garantia",
+      "devolución",
+      "devolucion",
+      "reembolso",
+      "seguro",
+      "banco",
+      "hipoteca",
+      "revolving",
+      "reclamación",
+      "reclamacion",
+      "reclamar",
+      "abusiva",
+      "abusivo",
+    ].some((k) => t.includes(k));
+
+  return hasLegalSignal;
+}
+
+function buildLegalChatReportPayload(params: {
+  userText: string;
+  assistantText: string;
+  userId: string | null;
+  body: any;
+  pillar: string;
+  legalConsumerIntelMatches: LegalConsumerPatternMatch[];
+}) {
+  const top = params.legalConsumerIntelMatches[0] || null;
+
+  const maskedUserText = maskSensitiveText(params.userText);
+  const maskedAssistantText = maskSensitiveText(params.assistantText);
+
+  const legalBlock = top?.legal_block || inferLegalBlockFromUserText(params.userText);
+  const issueCategory = top?.issue_category || inferLegalIssueCategoryFromUserText(params.userText);
+  const issueSubcategory = top?.issue_subcategory || null;
+  const documentType = top?.document_type || inferLegalDocumentTypeFromUserText(params.userText);
+  const riskScore = inferLegalRiskScoreFromText(params.userText, params.legalConsumerIntelMatches);
+  const riskLevel = top?.risk_level || inferRiskLevelFromScore(riskScore);
+  const similaritySignature = buildLegalSimilaritySignature(params.userText, top);
+
+  const summaryParts = [
+    "Consulta legal/consumo detectada desde chat.",
+    legalBlock ? `Bloque: ${legalBlock}.` : "",
+    issueCategory ? `Categoría: ${issueCategory}.` : "",
+    top?.pattern_name ? `Patrón parecido: ${top.pattern_name}.` : "",
+    top?.country ? `País del patrón parecido: ${top.country}.` : "",
+  ].filter(Boolean);
+
+  return {
+    source_type: "user_chat",
+    status: "pending_review",
+
+    legal_block: legalBlock,
+    issue_category: issueCategory,
+    issue_subcategory: issueSubcategory,
+    document_type: documentType,
+    sector: top?.sector || null,
+
+    country: top?.country || null,
+    region_or_city: top?.region_or_city || null,
+    affected_user_role: top?.affected_user_role || null,
+    counterparty_role: top?.counterparty_role || null,
+    company_or_counterparty_type: top?.company_type || null,
+
+    risk_level: riskLevel,
+    risk_score: riskScore,
+    financial_impact_level: top?.financial_impact_level || null,
+    legal_complexity_level: top?.legal_complexity_level || null,
+    urgency_level: top?.urgency_level || null,
+
+    user_text_excerpt: compactText(maskedUserText, 1200),
+    anonymized_summary: compactText(summaryParts.join(" "), 900),
+    clause_or_issue_summary: top?.clause_or_issue_summary || null,
+    example_clause_or_message: top?.example_clause_or_message || null,
+    why_it_is_risky: top?.why_it_is_risky || null,
+    possible_user_harm: top?.possible_user_harm || null,
+
+    red_flags: top?.red_flags || null,
+    safe_signals: top?.safe_signals || null,
+    questions_to_ask_user: top?.questions_to_ask_user || null,
+    recommended_action: top?.recommended_action || null,
+    when_to_seek_professional_help: top?.when_to_seek_professional_help || null,
+    documents_to_collect: top?.documents_to_collect || null,
+    possible_channels_to_claim: top?.possible_channels_to_claim || null,
+    consumer_rights_keywords: top?.consumer_rights_keywords || null,
+    applicable_law_or_reference: top?.applicable_law_or_reference || null,
+    prevention_tips: top?.prevention_tips || null,
+
+    detected_sensitive_data: false,
+    sensitive_data_notes: null,
+    privacy_level: "anonymized_case",
+    verified_level: "user_reported",
+    similarity_signature: similaritySignature,
+    keywords: top?.keywords || similaritySignature.replace(/\s+/g, ", "),
+    notes: "Caso legal/consumo recogido automáticamente desde chat. Pendiente de revisión antes de promover a legal_consumer_patterns.",
+
+    ai_review_status: "unreviewed",
+    ai_promote_candidate: false,
+    ai_detected_sensitive_data: false,
+    ai_review_json: {
+      source: "quick_service",
+      pillar: params.pillar,
+      assistant_excerpt: compactText(maskedAssistantText, 700),
+      legal_consumer_intel_matches: params.legalConsumerIntelMatches.slice(0, 3).map((m) => ({
+        case_id: m.case_id,
+        pattern_name: m.pattern_name,
+        legal_block: m.legal_block,
+        issue_category: m.issue_category,
+        issue_subcategory: m.issue_subcategory,
+        match_score: m.match_score,
+        risk_score: m.risk_score,
+        verified_level: m.verified_level,
+        country: m.country,
+      })),
+    },
+  };
+}
+
+async function saveLegalChatReportIfRelevant(
+  supabase: any,
+  params: {
+    userText: string;
+    assistantText: string;
+    userId: string | null;
+    body: any;
+    pillar: string;
+    effectiveMode: ThreadMode;
+    footballIntent: boolean;
+    legalConsumerIntelMatches: LegalConsumerPatternMatch[];
+  },
+) {
+  if (
+    !shouldCollectLegalChatReport({
+      userText: params.userText,
+      effectiveMode: params.effectiveMode,
+      pillar: params.pillar,
+      footballIntent: params.footballIntent,
+      legalConsumerIntelMatches: params.legalConsumerIntelMatches,
+    })
+  ) {
+    return { saved: false, reason: "not_relevant" };
+  }
+
+  const payload = buildLegalChatReportPayload({
+    userText: params.userText,
+    assistantText: params.assistantText,
+    userId: params.userId,
+    body: params.body,
+    pillar: params.pillar,
+    legalConsumerIntelMatches: params.legalConsumerIntelMatches,
+  });
+
+  try {
+    const { data, error } = await supabase
+      .from("legal_chat_reports")
+      .insert(payload)
+      .select("id")
+      .single();
+
+    if (error) {
+      console.warn("legal_chat_report_insert_error", error);
+      return { saved: false, reason: "insert_error" };
+    }
+
+    return { saved: true, id: data?.id ?? null };
+  } catch (error) {
+    console.warn("legal_chat_report_insert_exception", error);
+    return { saved: false, reason: "exception" };
+  }
+}
+
 async function saveFraudChatReportIfRelevant(
   supabase: any,
   params: {
@@ -4348,6 +4713,17 @@ if (imageBase64) {
       fraudIntelMatches,
     });
 
+    const legalChatReport = await saveLegalChatReportIfRelevant(supabase, {
+  userText,
+  assistantText: text,
+  userId,
+  body,
+  pillar,
+  effectiveMode,
+  footballIntent,
+  legalConsumerIntelMatches,
+});
+
     if (!isGuest && userId) {
   await supabase
     .from("usage")
@@ -4403,6 +4779,14 @@ if (imageBase64) {
             reason: "reason" in fraudChatReport ? fraudChatReport.reason : null,
           }
         : null,
+        legalChatReport:
+  effectiveMode === "chat"
+    ? {
+        saved: legalChatReport.saved,
+        id: "id" in legalChatReport ? legalChatReport.id : null,
+        reason: "reason" in legalChatReport ? legalChatReport.reason : null,
+      }
+    : null,
   },
   200,
 );

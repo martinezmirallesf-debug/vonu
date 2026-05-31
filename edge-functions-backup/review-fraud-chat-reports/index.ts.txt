@@ -766,6 +766,13 @@ serve(async (req) => {
     return json({ error: "Method not allowed" }, 405);
   }
 
+  const cronSecret = Deno.env.get("CRON_SECRET");
+const receivedCronSecret = req.headers.get("x-cron-secret");
+
+if (!cronSecret || receivedCronSecret !== cronSecret) {
+  return json({ ok: false, error: "Unauthorized cron request" }, 401);
+}
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 

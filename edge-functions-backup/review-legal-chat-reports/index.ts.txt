@@ -1,0 +1,548 @@
+/// <reference lib="deno.ns" />
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function compactText(value: unknown, max = 1200) {
+  const text = String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (text.length <= max) return text;
+  return text.slice(0, max - 1).trim() + "…";
+}
+
+function maskSensitiveText(value: unknown) {
+  let text = String(value ?? "");
+
+  // Emails
+  text = text.replace(
+    /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
+    "[EMAIL]"
+  );
+
+  // Teléfonos largos
+  text = text.replace(
+    /(\+?\d[\d\s().-]{7,}\d)/g,
+    "[PHONE]"
+  );
+
+  // DNI/NIE español aproximado
+  text = text.replace(
+    /\b\d{8}[A-Z]\b/gi,
+    "[ID_DOCUMENT]"
+  );
+  text = text.replace(
+    /\b[XYZ]\d{7}[A-Z]\b/gi,
+    "[ID_DOCUMENT]"
+  );
+
+  // IBAN aproximado
+  text = text.replace(
+    /\b[A-Z]{2}\d{2}[A-Z0-9]{10,30}\b/gi,
+    "[IBAN]"
+  );
+
+  // Tarjetas
+  text = text.replace(
+    /\b(?:\d[ -]*?){13,19}\b/g,
+    "[CARD]"
+  );
+
+  // Importes muy concretos no son siempre sensibles, pero reducimos precisión si están en texto largo.
+  return text;
+}
+
+function hasSensitiveData(value: unknown) {
+  const text = String(value ?? "");
+
+  const patterns = [
+    /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i,
+    /(\+?\d[\d\s().-]{7,}\d)/,
+    /\b\d{8}[A-Z]\b/i,
+    /\b[XYZ]\d{7}[A-Z]\b/i,
+    /\b[A-Z]{2}\d{2}[A-Z0-9]{10,30}\b/i,
+    /\b(?:\d[ -]*?){13,19}\b/,
+  ];
+
+  return patterns.some((re) => re.test(text));
+}
+
+function inferRiskLevelFromScore(score: number | null | undefined) {
+  const n = typeof score === "number" ? score : 0;
+  if (n >= 85) return "critical";
+  if (n >= 70) return "high";
+  if (n >= 45) return "medium";
+  return "low";
+}
+
+function mapReviewStatusToChatReportStatus(finalStatus: string) {
+  if (finalStatus === "ai_promoted") return "promoted_to_legal_patterns";
+  if (finalStatus === "duplicate_candidate") return "reviewed_duplicate";
+  if (finalStatus === "needs_human_review") return "needs_human_review";
+  if (finalStatus === "rejected") return "rejected";
+  if (finalStatus === "ai_approved" || finalStatus === "ai_approved_after_redaction") {
+    return "reviewed_ready_to_promote";
+  }
+  return "pending_review";
+}
+
+function normalizeForSignature(value: unknown) {
+  return String(value ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9\s_/-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildCandidateSignature(report: any) {
+  const parts = [
+    report.legal_block,
+    report.issue_category,
+    report.issue_subcategory,
+    report.document_type,
+    report.sector,
+    report.similarity_signature,
+    report.clause_or_issue_summary,
+    report.user_text_excerpt,
+  ];
+
+  return compactText(normalizeForSignature(parts.filter(Boolean).join(" ")), 240);
+}
+
+function reviewLegalReport(report: any, similarMatches: any[]) {
+  const textBlob = [
+    report.user_text_excerpt,
+    report.anonymized_summary,
+    report.clause_or_issue_summary,
+    report.example_clause_or_message,
+    report.notes,
+  ].join(" ");
+
+  const sensitive = Boolean(report.detected_sensitive_data) || hasSensitiveData(textBlob);
+
+  const topMatch = Array.isArray(similarMatches) ? similarMatches[0] : null;
+  const topMatchScore = typeof topMatch?.match_score === "number" ? topMatch.match_score : 0;
+
+  const sameBlock = topMatch?.legal_block && report.legal_block && topMatch.legal_block === report.legal_block;
+  const sameCategory = topMatch?.issue_category && report.issue_category && topMatch.issue_category === report.issue_category;
+  const sameSubcategory =
+    topMatch?.issue_subcategory &&
+    report.issue_subcategory &&
+    topMatch.issue_subcategory === report.issue_subcategory;
+
+  let duplicateLikelihood = 0;
+
+  if (topMatchScore >= 90) duplicateLikelihood += 70;
+  else if (topMatchScore >= 70) duplicateLikelihood += 55;
+  else if (topMatchScore >= 50) duplicateLikelihood += 35;
+  else if (topMatchScore >= 30) duplicateLikelihood += 20;
+
+  if (sameBlock) duplicateLikelihood += 10;
+  if (sameCategory) duplicateLikelihood += 10;
+  if (sameSubcategory) duplicateLikelihood += 10;
+
+  duplicateLikelihood = Math.min(95, duplicateLikelihood);
+
+  const riskScore = typeof report.risk_score === "number" ? report.risk_score : 55;
+  const hasUsefulPattern =
+    Boolean(report.legal_block) &&
+    Boolean(report.issue_category) &&
+    Boolean(report.user_text_excerpt || report.clause_or_issue_summary || report.anonymized_summary);
+
+  const highLegalComplexity =
+    report.legal_complexity_level === "high" ||
+    report.risk_level === "critical" ||
+    riskScore >= 90 ||
+    String(report.user_text_excerpt ?? "").toLowerCase().includes("demanda") ||
+    String(report.user_text_excerpt ?? "").toLowerCase().includes("juicio") ||
+    String(report.user_text_excerpt ?? "").toLowerCase().includes("despido") ||
+    String(report.user_text_excerpt ?? "").toLowerCase().includes("embargo");
+
+  if (sensitive && highLegalComplexity) {
+    return {
+      review_status: "needs_human_review",
+      review_score: Math.max(70, riskScore),
+      duplicate_likelihood: duplicateLikelihood,
+      promote_candidate: false,
+      recommendation:
+        "Dejar en revisión humana: contiene posibles datos sensibles o complejidad legal alta.",
+      reason:
+        "El caso puede tener valor como patrón, pero por privacidad/complejidad no conviene promoverlo automáticamente.",
+      detected_sensitive_data: true,
+    };
+  }
+
+  if (duplicateLikelihood >= 75) {
+    return {
+      review_status: "duplicate_candidate",
+      review_score: Math.max(60, Math.min(80, riskScore)),
+      duplicate_likelihood: duplicateLikelihood,
+      promote_candidate: false,
+      recommendation:
+        "Este caso parece duplicado o muy parecido a un patrón legal/consumo existente.",
+      reason:
+        "La similitud con patrones existentes es alta por categoría, firma y coincidencia textual.",
+      detected_sensitive_data: sensitive,
+    };
+  }
+
+  if (sensitive) {
+    return {
+      review_status: "ai_approved_after_redaction",
+      review_score: Math.max(65, Math.min(85, riskScore)),
+      duplicate_likelihood: duplicateLikelihood,
+      promote_candidate: hasUsefulPattern && duplicateLikelihood < 60,
+      recommendation:
+        "El caso parece útil tras anonimización básica. Promover solo si no contiene datos identificativos completos.",
+      reason:
+        "Se han enmascarado datos sensibles detectables automáticamente. Mantener prudencia.",
+      detected_sensitive_data: true,
+    };
+  }
+
+  if (hasUsefulPattern && riskScore >= 55) {
+    return {
+      review_status: "ai_approved",
+      review_score: Math.max(60, Math.min(90, riskScore)),
+      duplicate_likelihood: duplicateLikelihood,
+      promote_candidate: duplicateLikelihood < 60,
+      recommendation:
+        "Caso útil como patrón legal/consumo. Puede promoverse si no duplica patrones existentes.",
+      reason:
+        "Tiene señales claras, categoría útil y no se detectan datos sensibles evidentes.",
+      detected_sensitive_data: false,
+    };
+  }
+
+  return {
+    review_status: "rejected",
+    review_score: 30,
+    duplicate_likelihood: duplicateLikelihood,
+    promote_candidate: false,
+    recommendation:
+      "No promover: el caso es demasiado genérico o no aporta un patrón claro.",
+    reason:
+      "Falta información suficiente para convertirlo en patrón reutilizable.",
+    detected_sensitive_data: sensitive,
+  };
+}
+
+async function searchSimilarLegalPatterns(supabase: any, report: any) {
+  const queryText = [
+    report.similarity_signature,
+    report.user_text_excerpt,
+    report.clause_or_issue_summary,
+    report.example_clause_or_message,
+    report.legal_block,
+    report.issue_category,
+    report.issue_subcategory,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  if (!queryText.trim()) return [];
+
+  try {
+    const { data, error } = await supabase.rpc("search_legal_consumer_patterns_basic", {
+      query_text: compactText(queryText, 900),
+      result_limit: 5,
+    });
+
+    if (error) {
+      console.warn("search_legal_patterns_error", error);
+      return [];
+    }
+
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.warn("search_legal_patterns_exception", error);
+    return [];
+  }
+}
+
+async function generateLegalCaseId(supabase: any) {
+  const year = new Date().getUTCFullYear();
+
+  const { count } = await supabase
+    .from("legal_consumer_patterns")
+    .select("id", { count: "exact", head: true })
+    .like("case_id", `VONU-LEGAL-CHAT-${year}-%`);
+
+  const next = String((count ?? 0) + 1).padStart(4, "0");
+  return `VONU-LEGAL-CHAT-${year}-${next}`;
+}
+
+async function promoteToLegalConsumerPatterns(supabase: any, report: any, review: any) {
+  const caseId = await generateLegalCaseId(supabase);
+
+  const maskedUserText = maskSensitiveText(report.user_text_excerpt);
+  const maskedSummary = maskSensitiveText(report.anonymized_summary || report.clause_or_issue_summary || "");
+
+  const payload = {
+    country: report.country || "unknown",
+    region_or_city: report.region_or_city || "unknown",
+    year: new Date().getUTCFullYear(),
+    source_type: "user_chat_ai_reviewed",
+    source_name: "VonuAI legal_chat_reports",
+    source_url: "internal",
+    source_reliability: "user_reported",
+
+    legal_block: report.legal_block || "consumer_rights",
+    issue_category: report.issue_category || "unclear_terms",
+    issue_subcategory: report.issue_subcategory || null,
+    document_type: report.document_type || null,
+    sector: report.sector || null,
+    company_type: report.company_or_counterparty_type || null,
+    affected_user_role: report.affected_user_role || null,
+    counterparty_role: report.counterparty_role || null,
+
+    pattern_name:
+      compactText(
+        report.clause_or_issue_summary ||
+          report.anonymized_summary ||
+          "Patrón legal/consumo detectado desde chat",
+        120
+      ),
+
+    clause_or_issue_summary:
+      compactText(maskedSummary || "Caso legal/consumo detectado desde chat.", 900),
+
+    example_clause_or_message:
+      compactText(maskedUserText || report.example_clause_or_message || "", 900),
+
+    why_it_is_risky:
+      compactText(report.why_it_is_risky || "Puede afectar a dinero, derechos del consumidor u obligaciones contractuales.", 900),
+
+    possible_user_harm:
+      compactText(report.possible_user_harm || "Pago indebido, pérdida económica, aceptación de una obligación poco clara o dificultad para reclamar.", 900),
+
+    financial_impact_level: report.financial_impact_level || "medium",
+    legal_complexity_level: report.legal_complexity_level || "medium",
+    urgency_level: report.urgency_level || "medium",
+    risk_level: report.risk_level || inferRiskLevelFromScore(report.risk_score),
+    risk_score: typeof report.risk_score === "number" ? report.risk_score : 60,
+    confidence_score: Math.max(55, Math.min(90, review.review_score || 60)),
+
+    red_flags: report.red_flags || "Cláusula o cobro poco claro, posible perjuicio económico o dificultad para cancelar/reclamar.",
+    safe_signals: report.safe_signals || null,
+    questions_to_ask_user:
+      report.questions_to_ask_user ||
+      "¿En qué país es? ¿Puedes pegar la cláusula exacta o adjuntar el contrato/factura? ¿Ya firmaste o pagaste?",
+    recommended_action:
+      report.recommended_action ||
+      "Pedir el texto exacto por escrito, guardar pruebas y consultar consumo o profesional si hay dinero/plazo/obligación importante.",
+    when_to_seek_professional_help:
+      report.when_to_seek_professional_help ||
+      "Cuando haya firma pendiente, deuda, amenaza de demanda, vivienda, despido, préstamo, corte de servicio o importe relevante.",
+    documents_to_collect:
+      report.documents_to_collect ||
+      "Contrato, factura, capturas, comunicaciones, justificantes de pago y número de reclamación.",
+    possible_channels_to_claim:
+      report.possible_channels_to_claim ||
+      "Atención al cliente por escrito, organismos de consumo o asesoría profesional según país.",
+    consumer_rights_keywords: report.consumer_rights_keywords || report.keywords || null,
+    applicable_law_or_reference:
+      report.applicable_law_or_reference ||
+      "Depende del país/jurisdicción. Requiere confirmar ubicación antes de citar norma concreta.",
+    plain_language_explanation:
+      compactText(
+        report.clause_or_issue_summary ||
+          report.anonymized_summary ||
+          "Este caso puede ser delicado porque podría imponer una obligación o cobro que conviene revisar antes de aceptar.",
+        900
+      ),
+    prevention_tips:
+      report.prevention_tips ||
+      "No firmar ni pagar sin entender la cláusula o concepto exacto. Pedir todo por escrito y conservar pruebas.",
+    similarity_signature:
+      compactText(report.similarity_signature || buildCandidateSignature(report), 240),
+    keywords:
+      report.keywords ||
+      compactText(buildCandidateSignature(report).replace(/\s+/g, ", "), 500),
+    privacy_level: "anonymized_case",
+    verified_level: "user_reported",
+    notes:
+      compactText(
+        `Promovido automáticamente desde legal_chat_reports. Review status: ${review.review_status}. Reason: ${review.reason}`,
+        900
+      ),
+    case_id: caseId,
+  };
+
+  const { data, error } = await supabase
+    .from("legal_consumer_patterns")
+    .insert(payload)
+    .select("id, case_id")
+    .single();
+
+  if (error) {
+    console.warn("promote_legal_pattern_error", error);
+    return { ok: false, error: String(error.message || error) };
+  }
+
+  return { ok: true, id: data?.id ?? null, case_id: data?.case_id ?? caseId };
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  if (req.method !== "POST") {
+    return json({ ok: false, error: "Method not allowed" }, 405);
+  }
+
+  const cronSecret = Deno.env.get("CRON_SECRET");
+const receivedCronSecret = req.headers.get("x-cron-secret");
+
+if (!cronSecret || receivedCronSecret !== cronSecret) {
+  return json({ ok: false, error: "Unauthorized cron request" }, 401);
+}
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    return json(
+      {
+        ok: false,
+        error: "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY secrets",
+      },
+      500
+    );
+  }
+
+  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false },
+  });
+
+  let body: any = {};
+  try {
+    body = await req.json();
+  } catch {
+    body = {};
+  }
+
+  const limit = Math.max(1, Math.min(25, Number(body.limit ?? 5)));
+  const dryRun = body.dryRun !== false;
+  const onlyId = typeof body.id === "string" && body.id.trim() ? body.id.trim() : null;
+
+  let query = supabase
+    .from("legal_chat_reports")
+    .select("*")
+    .eq("ai_review_status", "unreviewed")
+    .order("created_at", { ascending: true })
+    .limit(limit);
+
+  if (onlyId) {
+    query = supabase
+      .from("legal_chat_reports")
+      .select("*")
+      .eq("id", onlyId)
+      .limit(1);
+  }
+
+  const { data: reports, error: fetchError } = await query;
+
+  if (fetchError) {
+    return json({ ok: false, error: fetchError.message }, 500);
+  }
+
+  const rows = Array.isArray(reports) ? reports : [];
+  const results = [];
+
+  for (const report of rows) {
+    const similarMatches = await searchSimilarLegalPatterns(supabase, report);
+    const review = reviewLegalReport(report, similarMatches);
+
+    let finalStatus = review.review_status;
+    let promotedLegalPatternId: string | null = null;
+    let promotionError: string | null = null;
+
+    if (
+      !dryRun &&
+      review.promote_candidate &&
+      (review.review_status === "ai_approved" ||
+        review.review_status === "ai_approved_after_redaction")
+    ) {
+      const promoted = await promoteToLegalConsumerPatterns(supabase, report, review);
+
+      if (promoted.ok) {
+        finalStatus = "ai_promoted";
+        promotedLegalPatternId = promoted.id;
+      } else {
+        promotionError = promoted.error || "unknown_promotion_error";
+        finalStatus = "needs_human_review";
+      }
+    }
+
+    if (!dryRun) {
+      const { error: updateError } = await supabase
+        .from("legal_chat_reports")
+        .update({
+          status: mapReviewStatusToChatReportStatus(finalStatus),
+          ai_review_status: finalStatus,
+          ai_review_score: review.review_score,
+          ai_review_recommendation: review.recommendation,
+          ai_review_reason: review.reason,
+          ai_detected_sensitive_data: review.detected_sensitive_data,
+          ai_duplicate_likelihood: review.duplicate_likelihood,
+          ai_promote_candidate: review.promote_candidate,
+          ai_reviewed_at: new Date().toISOString(),
+          ai_review_json: {
+            review,
+            similar_matches: similarMatches.slice(0, 5),
+            dry_run: dryRun,
+            promotion_error: promotionError,
+          },
+          promoted_legal_pattern_id: promotedLegalPatternId,
+          promoted_at: promotedLegalPatternId ? new Date().toISOString() : null,
+        })
+        .eq("id", report.id);
+
+      if (updateError) {
+        console.warn("legal_report_update_error", updateError);
+        results.push({
+          id: report.id,
+          ok: false,
+          error: updateError.message,
+          dry_run: dryRun,
+        });
+        continue;
+      }
+    }
+
+    results.push({
+      id: report.id,
+      ok: true,
+      review_status: finalStatus,
+      review_score: review.review_score,
+      duplicate_likelihood: review.duplicate_likelihood,
+      promote_candidate: review.promote_candidate,
+      promoted_legal_pattern_id: promotedLegalPatternId,
+      dry_run: dryRun,
+    });
+  }
+
+  return json({
+    ok: true,
+    processed: rows.length,
+    dryRun,
+    results,
+  });
+});
