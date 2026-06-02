@@ -217,7 +217,42 @@ export default function PrivacidadPage() {
           de seguridad.
         </p>
 
-        <h2>8. Conservación de los datos</h2>
+        <h2>8. Casos, patrones anonimizados y mejora de la detección</h2>
+
+<p>
+  Cuando utilizas VonuAI para analizar posibles fraudes, mensajes
+  sospechosos, webs, contratos, facturas, situaciones de presión,
+  manipulación u otros riesgos, el sistema puede generar registros internos
+  de revisión para mejorar la seguridad, calidad y utilidad del servicio.
+</p>
+
+<p>
+  Estos registros no tienen como finalidad identificar al usuario, sino
+  detectar señales repetidas, patrones de riesgo, abusos, errores, campañas
+  fraudulentas o casos similares. Para ello, VonuAI puede aplicar procesos
+  automáticos de revisión, limpieza, anonimización, deduplicación y
+  clasificación antes de conservar o reutilizar información como patrón
+  interno.
+</p>
+
+<p>
+  En la medida de lo posible, VonuAI evita conservar información sensible
+  innecesaria como contraseñas, códigos de verificación, datos bancarios
+  completos, documentos identificativos completos, información médica
+  detallada, datos de menores o datos de terceros que no sean necesarios para
+  entender el riesgo.
+</p>
+
+<p>
+  Algunas señales anonimizadas o agregadas pueden utilizarse para mejorar la
+  detección de fraudes, riesgos legales o de consumo, patrones de presión
+  emocional, seguridad personal u otras situaciones similares. Este uso ayuda
+  a que VonuAI pueda reconocer mejor casos parecidos en el futuro, sin vender
+  datos personales ni convertir la información original del usuario en una
+  base pública.
+</p>
+
+        <h2>9. Conservación de los datos</h2>
 
         <p>
           Los datos se conservarán durante el tiempo necesario para cumplir la
@@ -233,7 +268,7 @@ export default function PrivacidadPage() {
           cuando proceda.
         </p>
 
-        <h2>9. Comunicación de datos a terceros</h2>
+        <h2>10. Comunicación de datos a terceros</h2>
 
         <p>
           No vendemos tus datos personales a terceros. Podemos comunicar datos a
@@ -243,7 +278,7 @@ export default function PrivacidadPage() {
           derechos, seguridad o prevenir fraude.
         </p>
 
-        <h2>10. Transferencias internacionales</h2>
+        <h2>11. Transferencias internacionales</h2>
 
         <p>
           Algunos proveedores tecnológicos pueden estar ubicados fuera del Espacio
@@ -253,7 +288,7 @@ export default function PrivacidadPage() {
           otros mecanismos reconocidos por la normativa de protección de datos.
         </p>
 
-        <h2>11. Derechos de las personas usuarias</h2>
+        <h2>12. Derechos de las personas usuarias</h2>
 
         <p>
           Puedes ejercer los derechos reconocidos por la normativa de protección
@@ -275,7 +310,7 @@ export default function PrivacidadPage() {
           ajusta a la normativa aplicable.
         </p>
 
-        <h2>12. Seguridad</h2>
+        <h2>13. Seguridad</h2>
 
         <p>
           VonuAI aplica medidas técnicas y organizativas razonables para proteger
@@ -284,7 +319,7 @@ export default function PrivacidadPage() {
           garantizar una seguridad absoluta.
         </p>
 
-        <h2>13. Menores de edad</h2>
+        <h2>14. Menores de edad</h2>
 
         <p>
           VonuAI puede utilizarse para apoyo educativo o de estudio, pero el uso
@@ -293,7 +328,7 @@ export default function PrivacidadPage() {
           faciliten datos personales sensibles sin acompañamiento adulto.
         </p>
 
-        <h2>14. Cambios en esta política</h2>
+        <h2>15. Cambios en esta política</h2>
 
         <p>
           Esta política de privacidad podrá actualizarse para reflejar cambios

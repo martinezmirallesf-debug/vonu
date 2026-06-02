@@ -185,7 +185,31 @@ export default function TerminosPage() {
           de terceros.
         </p>
 
-        <h2>9. Respuestas generadas por VonuAI</h2>
+        <h2>9. Registros internos, seguridad y mejora del servicio</h2>
+
+<p>
+  Para mejorar la seguridad, detectar abusos, reducir errores y reconocer
+  patrones de riesgo, VonuAI puede generar registros internos derivados del
+  uso del servicio. Estos registros pueden incluir señales generales del caso,
+  tipo de riesgo, canal, categoría, nivel estimado, acciones recomendadas o
+  patrones técnicos relevantes.
+</p>
+
+<p>
+  Cuando estos registros se utilicen para mejorar la detección o alimentar
+  bases internas de patrones, VonuAI procurará aplicar procesos de revisión,
+  limpieza, anonimización, deduplicación y minimización de datos, evitando
+  conservar información sensible innecesaria.
+</p>
+
+<p>
+  Este tratamiento no convierte el contenido del usuario en una base pública,
+  no implica la venta de datos personales y no autoriza a VonuAI a usar datos
+  sensibles más allá de lo necesario para prestar, proteger y mejorar el
+  servicio conforme a la política de privacidad.
+</p>
+
+        <h2>10. Respuestas generadas por VonuAI</h2>
 
         <p>
           Las respuestas de VonuAI pueden contener errores, omisiones,
@@ -201,7 +225,7 @@ export default function TerminosPage() {
           incorrecta, la respuesta puede ser menos precisa.
         </p>
 
-        <h2>10. Planes, límites y recargas</h2>
+        <h2>11. Planes, límites y recargas</h2>
 
         <p>
           VonuAI puede ofrecer planes gratuitos y de pago, límites de mensajes,
@@ -222,7 +246,7 @@ export default function TerminosPage() {
           aplicables al usuario.
         </p>
 
-        <h2>11. Pagos y gestión de suscripciones</h2>
+        <h2>12. Pagos y gestión de suscripciones</h2>
 
         <p>
           Los pagos, suscripciones y recargas pueden gestionarse mediante
@@ -237,7 +261,7 @@ export default function TerminosPage() {
           habilitados si no desea continuar con el servicio.
         </p>
 
-        <h2>12. Cancelación</h2>
+        <h2>13. Cancelación</h2>
 
         <p>
           El usuario podrá cancelar su suscripción desde la zona de usuario, el
@@ -247,7 +271,7 @@ export default function TerminosPage() {
           otra cosa durante el proceso.
         </p>
 
-        <h2>13. Disponibilidad del servicio</h2>
+        <h2>14. Disponibilidad del servicio</h2>
 
         <p>
           VonuAI trabaja para mantener el servicio disponible y funcionando
@@ -257,7 +281,7 @@ export default function TerminosPage() {
           causas ajenas al control de VonuAI.
         </p>
 
-        <h2>14. Propiedad intelectual</h2>
+        <h2>15. Propiedad intelectual</h2>
 
         <p>
           La marca, diseño, textos, estructura, elementos visuales, código,
@@ -271,7 +295,7 @@ export default function TerminosPage() {
           uso limitado conforme a estos términos.
         </p>
 
-        <h2>15. Limitación de responsabilidad</h2>
+        <h2>16. Limitación de responsabilidad</h2>
 
         <p>
           VonuAI no será responsable de decisiones adoptadas exclusivamente a
@@ -284,7 +308,7 @@ export default function TerminosPage() {
           decisión final sobre cómo actuar corresponde siempre al usuario.
         </p>
 
-        <h2>16. Cambios en los términos</h2>
+        <h2>17. Cambios en los términos</h2>
 
         <p>
           VonuAI podrá actualizar estos términos para adaptarlos a cambios
@@ -292,7 +316,7 @@ export default function TerminosPage() {
           vigente será la publicada en esta página.
         </p>
 
-        <h2>17. Legislación aplicable</h2>
+        <h2>18. Legislación aplicable</h2>
 
         <p>
           Estos términos se rigen por la legislación española, sin perjuicio de
@@ -300,7 +324,7 @@ export default function TerminosPage() {
           usuarios conforme a la normativa aplicable.
         </p>
 
-        <h2>18. Contacto</h2>
+        <h2>19. Contacto</h2>
 
         <p>
           Para dudas sobre estos términos puedes escribir a{" "}

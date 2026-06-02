@@ -132,6 +132,24 @@ const sections = [
     ],
   },
   {
+  id: "privacidad-patrones",
+  label: "Privacidad y patrones",
+  questions: [
+    {
+      q: "¿VonuAI aprende de los casos que analiza?",
+      a: "VonuAI puede aprender de señales generales y patrones de riesgo, no de datos sensibles innecesarios. Por ejemplo, puede detectar que cierto tipo de SMS, web, factura, presión emocional o intento de inversión se parece a casos ya revisados.",
+    },
+    {
+      q: "¿Qué pasa con los casos sospechosos?",
+      a: "Algunos casos pueden generar registros internos de revisión. Antes de convertirse en patrones útiles, VonuAI puede limpiarlos, anonimizarlos, deduplicarlos y clasificarlos para evitar guardar información sensible que no haga falta.",
+    },
+    {
+      q: "¿Esto significa que mis datos se venden o se hacen públicos?",
+      a: "No. La finalidad es mejorar la protección y reconocer riesgos parecidos en el futuro. VonuAI no vende tus datos personales ni convierte tus conversaciones originales en una base pública.",
+    },
+  ],
+},
+  {
     id: "limites",
     label: "Límites responsables",
     questions: [

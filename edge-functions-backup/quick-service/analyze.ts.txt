@@ -875,6 +875,80 @@ const directTutorTriggers = [
 function pickPillar(userText: string) {
   const t = (userText || "").toLowerCase();
 
+  // 1) Seguridad personal / manipulación / acoso / bullying / sextorsión
+  // Va antes que fraude porque palabras como WhatsApp, Instagram, Tinder o sextorsión
+  // pueden aparecer tanto en estafas como en problemas personales.
+  if (
+    t.includes("mi pareja") ||
+    t.includes("mi novio") ||
+    t.includes("mi novia") ||
+    t.includes("mi ex") ||
+    t.includes("expareja") ||
+    t.includes("ex pareja") ||
+    t.includes("mi marido") ||
+    t.includes("mi mujer") ||
+    t.includes("me controla") ||
+    t.includes("me vigila") ||
+    t.includes("me revisa el móvil") ||
+    t.includes("me revisa el movil") ||
+    t.includes("me pide la ubicación") ||
+    t.includes("me pide la ubicacion") ||
+    t.includes("ubicación") ||
+    t.includes("ubicacion") ||
+    t.includes("localización") ||
+    t.includes("localizacion") ||
+    t.includes("celos") ||
+    t.includes("me hace sentir culpable") ||
+    t.includes("me culpa") ||
+    t.includes("chantaje emocional") ||
+    t.includes("gaslighting") ||
+    t.includes("me dice que exagero") ||
+    t.includes("me dice que estoy loca") ||
+    t.includes("me amenaza") ||
+    t.includes("amenaza con") ||
+    t.includes("me humilla") ||
+    t.includes("me insulta") ||
+    t.includes("insultos") ||
+    t.includes("bullying") ||
+    t.includes("acoso escolar") ||
+    t.includes("ciberbullying") ||
+    t.includes("se ríen de mi hijo") ||
+    t.includes("se rien de mi hijo") ||
+    t.includes("se ríen de mi hija") ||
+    t.includes("se rien de mi hija") ||
+    t.includes("mi hijo en un grupo") ||
+    t.includes("mi hija en un grupo") ||
+    t.includes("grupo de whatsapp") ||
+    t.includes("colegio") ||
+    t.includes("instituto") ||
+    t.includes("compañeros") ||
+    t.includes("companeros") ||
+    t.includes("acoso laboral") ||
+    t.includes("mobbing") ||
+    t.includes("fotos íntimas") ||
+    t.includes("fotos intimas") ||
+    t.includes("foto íntima") ||
+    t.includes("foto intima") ||
+    t.includes("publicar fotos") ||
+    t.includes("difundir fotos") ||
+    t.includes("mandar más fotos") ||
+    t.includes("mandar mas fotos") ||
+    t.includes("sextorsión") ||
+    t.includes("sextorsion") ||
+    t.includes("grooming") ||
+    t.includes("love bombing") ||
+    t.includes("perfil falso") ||
+    t.includes("catfishing") ||
+    t.includes("me aísla") ||
+    t.includes("me aisla") ||
+    t.includes("no quiere que vea a mis amigos") ||
+    t.includes("no quiere que vea a mi familia") ||
+    t.includes("control económico") ||
+    t.includes("control economico") ||
+    t.includes("me controla el dinero")
+  ) return "MANIPULACION_PERSONAL";
+
+  // 2) Fraudes / estafas
   if (
     t.includes("sms") ||
     t.includes("whatsapp") ||
@@ -894,7 +968,7 @@ function pickPillar(userText: string) {
     t.includes("clave") ||
     t.includes("verificación") ||
     t.includes("verificacion") ||
-        t.includes("otp") ||
+    t.includes("otp") ||
     t.includes("tinder") ||
     t.includes("badoo") ||
     t.includes("bumble") ||
@@ -913,7 +987,7 @@ function pickPillar(userText: string) {
     t.includes("crypto") ||
     t.includes("bitcoin") ||
     t.includes("trading") ||
-        t.includes("inversión") ||
+    t.includes("inversión") ||
     t.includes("inversion") ||
     t.includes("qr") ||
     t.includes("código qr") ||
@@ -935,7 +1009,8 @@ function pickPillar(userText: string) {
     t.includes("no parece del ayuntamiento")
   ) return "ESTAFAS_FRAUDES";
 
-    if (
+  // 3) Legal / contratos / facturas / consumo
+  if (
     t.includes("legal") ||
     t.includes("denuncia") ||
     t.includes("delito") ||
@@ -986,6 +1061,7 @@ function pickPillar(userText: string) {
     t.includes("revolving")
   ) return "RIESGOS_LEGALES";
 
+  // 4) Prevención personal más general
   if (
     t.includes("me presiona") ||
     t.includes("presionando") ||
@@ -1008,6 +1084,7 @@ function pickPillar(userText: string) {
     t.includes("celos")
   ) return "PREVENCION_PERSONAL";
 
+  // 5) Decisiones digitales generales
   if (
     t.includes("web") ||
     t.includes("tienda online") ||
@@ -2772,6 +2849,258 @@ function getCurrentMonth() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
+// ---------- personal safety intelligence ----------
+type PersonalSafetyPatternMatch = {
+  id: string | null;
+  created_at: string | null;
+  case_id: string | null;
+  country: string | null;
+  region_or_city: string | null;
+  year: number | null;
+  source_type: string | null;
+  source_name: string | null;
+  source_url: string | null;
+  source_reliability: string | null;
+  safety_block: string | null;
+  risk_category: string | null;
+  risk_subcategory: string | null;
+  context_type: string | null;
+  relationship_context: string | null;
+  channel_or_environment: string | null;
+  affected_user_role: string | null;
+  other_party_role: string | null;
+  pattern_name: string | null;
+  situation_summary: string | null;
+  example_message_or_behavior: string | null;
+  why_it_is_concerning: string | null;
+  possible_user_harm: string | null;
+  emotional_impact_level: string | null;
+  safety_risk_level: string | null;
+  urgency_level: string | null;
+  risk_level: string | null;
+  risk_score: number | null;
+  confidence_score: number | null;
+  red_flags: string | null;
+  safe_signals: string | null;
+  questions_to_ask_user: string | null;
+  recommended_action: string | null;
+  when_to_seek_help: string | null;
+  evidence_to_save: string | null;
+  support_channels: string | null;
+  protective_steps: string | null;
+  what_not_to_do: string | null;
+  plain_language_explanation: string | null;
+  validation_message: string | null;
+  deescalation_or_boundary_tip: string | null;
+  emergency_or_escalation_signals: string | null;
+  prevention_tips: string | null;
+  similarity_signature: string | null;
+  keywords: string | null;
+  privacy_level: string | null;
+  verified_level: string | null;
+  notes: string | null;
+  match_score: number | null;
+};
+
+function shouldUsePersonalSafetyIntel(
+  userText: string,
+  pillar: string,
+  effectiveMode: ThreadMode,
+  footballIntent: boolean,
+) {
+  if (effectiveMode !== "chat") return false;
+  if (footballIntent) return false;
+
+  const t = (userText || "").toLowerCase();
+  if (!t.trim()) return false;
+
+  const personalSafetySignals = [
+    "mi pareja",
+    "mi novio",
+    "mi novia",
+    "mi ex",
+    "expareja",
+    "ex pareja",
+    "me controla",
+    "me vigila",
+    "me revisa el móvil",
+    "me revisa el movil",
+    "me pide la ubicación",
+    "me pide la ubicacion",
+    "ubicación",
+    "ubicacion",
+    "contraseña",
+    "contrasena",
+    "celos",
+    "se enfada si no contesto",
+    "me hace sentir culpable",
+    "me culpa",
+    "chantaje emocional",
+    "gaslighting",
+    "me dice que estoy loca",
+    "me dice que exagero",
+    "me amenaza",
+    "amenaza",
+    "coacción",
+    "coaccion",
+    "me humilla",
+    "insultos",
+    "me insulta",
+    "bullying",
+    "acoso escolar",
+    "ciberbullying",
+    "se ríen de mi hijo",
+    "se rien de mi hijo",
+    "grupo de whatsapp",
+    "colegio",
+    "instituto",
+    "clase",
+    "compañeros",
+    "companeros",
+    "acoso laboral",
+    "jefe",
+    "trabajo",
+    "mobbing",
+    "fotos íntimas",
+    "fotos intimas",
+    "foto íntima",
+    "foto intima",
+    "publicar fotos",
+    "difundir fotos",
+    "mandar más fotos",
+    "mandar mas fotos",
+    "sextorsión",
+    "sextorsion",
+    "grooming",
+    "menor",
+    "adulto",
+    "app de citas",
+    "tinder",
+    "instagram",
+    "tiktok",
+    "redes sociales",
+    "perfil falso",
+    "catfishing",
+    "love bombing",
+    "me aísla",
+    "me aisla",
+    "no quiere que vea a mis amigos",
+    "no quiere que vea a mi familia",
+    "control económico",
+    "control economico",
+    "me controla el dinero",
+  ];
+
+  return (
+    pillar === "MANIPULACION_PERSONAL" ||
+    pillar === "RIESGO_PERSONAL" ||
+    personalSafetySignals.some((k) => t.includes(k))
+  );
+}
+
+async function lookupPersonalSafetyIntel(
+  supabase: any,
+  userText: string,
+  options: {
+    enabled: boolean;
+    limit?: number;
+  },
+): Promise<PersonalSafetyPatternMatch[]> {
+  if (!options.enabled) return [];
+
+  const queryText = String(userText || "").trim();
+  if (queryText.length < 8) return [];
+
+  try {
+    const { data, error } = await supabase.rpc("search_personal_safety_patterns_basic", {
+      query_text: queryText,
+      result_limit: options.limit ?? 5,
+    });
+
+    if (error) {
+      console.warn("personal_safety_intel_lookup_error", error);
+      return [];
+    }
+
+    if (!Array.isArray(data)) return [];
+
+    return data
+      .filter((row) => row && typeof row === "object")
+      .slice(0, options.limit ?? 5) as PersonalSafetyPatternMatch[];
+  } catch (error) {
+    console.warn("personal_safety_intel_lookup_exception", error);
+    return [];
+  }
+}
+
+function buildPersonalSafetyIntelContext(matches: PersonalSafetyPatternMatch[]) {
+  const clean = matches
+    .filter((m) => m?.case_id || m?.pattern_name || m?.similarity_signature)
+    .slice(0, 5);
+
+  if (!clean.length) return "";
+
+  const rows = clean
+    .map((m, index) => {
+      const title = m.pattern_name || "Patrón de seguridad personal sin título";
+      const category = [m.safety_block, m.risk_category, m.risk_subcategory].filter(Boolean).join(" / ") || "unknown";
+      const context = [m.context_type, m.relationship_context, m.channel_or_environment].filter(Boolean).join(" / ") || "unknown";
+      const risk = `${m.risk_level || "unknown"}${typeof m.risk_score === "number" ? ` (${m.risk_score}/100)` : ""}`;
+      const urgency = m.urgency_level || "unknown";
+      const redFlags = m.red_flags || "unknown";
+      const safeSignals = m.safe_signals || "unknown";
+      const explanation = m.plain_language_explanation || m.situation_summary || "unknown";
+      const validation = m.validation_message || "unknown";
+      const action = m.recommended_action || "unknown";
+      const help = m.when_to_seek_help || "unknown";
+      const evidence = m.evidence_to_save || "unknown";
+      const protective = m.protective_steps || "unknown";
+      const notToDo = m.what_not_to_do || "unknown";
+      const escalation = m.emergency_or_escalation_signals || "unknown";
+      const signature = m.similarity_signature || "unknown";
+
+      return [
+        `Patrón de seguridad personal parecido ${index + 1}:`,
+        `- Título/patrón: ${title}`,
+        `- Categoría: ${category}`,
+        `- Contexto/canal: ${context}`,
+        `- Riesgo orientativo: ${risk}`,
+        `- Urgencia: ${urgency}`,
+        `- Señales de alerta: ${redFlags}`,
+        `- Señales tranquilizadoras: ${safeSignals}`,
+        `- Explicación simple: ${explanation}`,
+        `- Validación emocional sugerida: ${validation}`,
+        `- Acción recomendada en casos parecidos: ${action}`,
+        `- Cuándo buscar ayuda: ${help}`,
+        `- Pruebas a guardar: ${evidence}`,
+        `- Pasos de protección: ${protective}`,
+        `- Qué evitar: ${notToDo}`,
+        `- Señales de escalada/emergencia: ${escalation}`,
+        `- Firma de similitud: ${signature}`,
+      ].join("\n");
+    })
+    .join("\n\n");
+
+  return `CONTEXTO INTERNO DE SEGURIDAD PERSONAL / MANIPULACIÓN / ACOSO DE VONU:
+Estos son patrones parecidos encontrados en la base interna de manipulación emocional, control de pareja, acoso, bullying, ciberbullying, sextorsión, grooming, amenazas, presión y seguridad personal. Úsalos solo como apoyo para orientar mejor, no como diagnóstico ni como sentencia sobre la otra persona.
+
+REGLAS PARA USAR ESTE CONTEXTO:
+- No diagnostiques a nadie.
+- No digas "es narcisista", "es psicópata", "tiene un trastorno" o etiquetas clínicas.
+- No afirmes "es maltratador" de forma tajante salvo que haya violencia, amenaza, coacción clara o peligro evidente; aun así, céntrate en conductas y seguridad.
+- Habla de patrones de conducta: "esto puede ser una señal de control", "esto puede indicar presión", "esto merece tomarse en serio".
+- Valida al usuario sin asustarlo ni culparlo.
+- Si faltan datos, pregunta con cuidado y de forma concreta.
+- Si hay menores, sextorsión, amenazas, violencia, miedo real, persecución, coacción o riesgo inmediato, prioriza seguridad, pedir ayuda y guardar pruebas.
+- Si hay fotos íntimas o amenazas de difusión, recomienda no enviar más material, no pagar, guardar capturas y pedir ayuda fiable.
+- Si hay bullying escolar, recomienda guardar pruebas, hablar con adulto/centro y actuar pronto.
+- Si hay control de pareja, evita decirle simplemente "déjalo"; primero orienta sobre señales, límites seguros, red de apoyo y seguridad.
+- No conviertas la respuesta en terapia. Ofrece orientación práctica, segura y humana.
+- Mantén un tono muy empático, cercano y sin juicio.
+
+${rows}`;
+}
+
 // ---------- legal / consumer intelligence ----------
 type LegalConsumerPatternMatch = {
   id: string | null;
@@ -3693,6 +4022,670 @@ function buildFraudChatReportPayload(params: {
   };
 }
 
+// ---------- personal safety chat reports ----------
+function inferPersonalSafetyBlockFromUserText(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  if (
+    t.includes("fotos íntimas") ||
+    t.includes("fotos intimas") ||
+    t.includes("foto íntima") ||
+    t.includes("foto intima") ||
+    t.includes("publicar fotos") ||
+    t.includes("difundir fotos") ||
+    t.includes("mandar más fotos") ||
+    t.includes("mandar mas fotos") ||
+    t.includes("sextorsión") ||
+    t.includes("sextorsion")
+  ) {
+    return "sextortion";
+  }
+
+  if (
+    t.includes("grooming") ||
+    (t.includes("menor") && (t.includes("adulto") || t.includes("instagram") || t.includes("tiktok") || t.includes("whatsapp")))
+  ) {
+    return "grooming";
+  }
+
+  if (
+    t.includes("colegio") ||
+    t.includes("instituto") ||
+    t.includes("clase") ||
+    t.includes("compañeros") ||
+    t.includes("companeros") ||
+    t.includes("mi hijo") ||
+    t.includes("mi hija") ||
+    t.includes("bullying") ||
+    t.includes("acoso escolar")
+  ) {
+    if (t.includes("whatsapp") || t.includes("instagram") || t.includes("tiktok") || t.includes("grupo")) {
+      return "cyberbullying";
+    }
+    return "bullying";
+  }
+
+  if (
+    t.includes("trabajo") ||
+    t.includes("jefe") ||
+    t.includes("empresa") ||
+    t.includes("compañero de trabajo") ||
+    t.includes("companero de trabajo") ||
+    t.includes("acoso laboral") ||
+    t.includes("mobbing")
+  ) {
+    return "workplace_harassment";
+  }
+
+  if (
+    t.includes("mi pareja") ||
+    t.includes("mi novio") ||
+    t.includes("mi novia") ||
+    t.includes("mi ex") ||
+    t.includes("expareja") ||
+    t.includes("ex pareja") ||
+    t.includes("marido") ||
+    t.includes("mujer")
+  ) {
+    if (
+      t.includes("ubicación") ||
+      t.includes("ubicacion") ||
+      t.includes("localización") ||
+      t.includes("localizacion") ||
+      t.includes("me controla") ||
+      t.includes("me vigila") ||
+      t.includes("me revisa el móvil") ||
+      t.includes("me revisa el movil") ||
+      t.includes("contraseña") ||
+      t.includes("contrasena") ||
+      t.includes("celos")
+    ) {
+      return "relationship_control";
+    }
+
+    return "emotional_abuse";
+  }
+
+  if (
+    t.includes("amenaza") ||
+    t.includes("me amenaza") ||
+    t.includes("coacción") ||
+    t.includes("coaccion") ||
+    t.includes("me obliga") ||
+    t.includes("me presiona")
+  ) {
+    return "coercion";
+  }
+
+  if (
+    t.includes("me hace sentir culpable") ||
+    t.includes("chantaje emocional") ||
+    t.includes("gaslighting") ||
+    t.includes("me dice que exagero") ||
+    t.includes("me culpa") ||
+    t.includes("me manipula") ||
+    t.includes("manipulación") ||
+    t.includes("manipulacion")
+  ) {
+    return "manipulation";
+  }
+
+  return "personal_safety";
+}
+
+function inferPersonalSafetyRiskCategoryFromUserText(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  if (
+    t.includes("fotos íntimas") ||
+    t.includes("fotos intimas") ||
+    t.includes("publicar fotos") ||
+    t.includes("difundir fotos") ||
+    t.includes("sextorsión") ||
+    t.includes("sextorsion")
+  ) {
+    return "sextortion";
+  }
+
+  if (t.includes("grooming") || (t.includes("menor") && t.includes("adulto"))) {
+    return "grooming_risk";
+  }
+
+  if (t.includes("ubicación") || t.includes("ubicacion") || t.includes("localización") || t.includes("localizacion")) {
+    return "digital_control";
+  }
+
+  if (t.includes("contraseña") || t.includes("contrasena") || t.includes("me revisa el móvil") || t.includes("me revisa el movil")) {
+    return "digital_control";
+  }
+
+  if (t.includes("celos")) {
+    return "jealousy_control";
+  }
+
+  if (t.includes("bullying") || t.includes("acoso escolar") || t.includes("colegio") || t.includes("instituto")) {
+    if (t.includes("whatsapp") || t.includes("grupo") || t.includes("instagram") || t.includes("tiktok")) {
+      return "cyberbullying";
+    }
+    return "bullying";
+  }
+
+  if (t.includes("acoso laboral") || t.includes("mobbing") || t.includes("jefe") || t.includes("trabajo")) {
+    return "workplace_harassment";
+  }
+
+  if (t.includes("amenaza") || t.includes("me amenaza") || t.includes("me obliga") || t.includes("coacción") || t.includes("coaccion")) {
+    return "threats";
+  }
+
+  if (t.includes("me hace sentir culpable") || t.includes("chantaje emocional") || t.includes("me culpa")) {
+    return "emotional_blackmail";
+  }
+
+  if (t.includes("gaslighting") || t.includes("me dice que exagero") || t.includes("me dice que estoy loca")) {
+    return "gaslighting";
+  }
+
+  if (t.includes("love bombing")) {
+    return "love_bombing";
+  }
+
+  if (t.includes("me aísla") || t.includes("me aisla") || t.includes("no quiere que vea a mis amigos") || t.includes("no quiere que vea a mi familia")) {
+    return "isolation";
+  }
+
+  if (t.includes("control económico") || t.includes("control economico") || t.includes("me controla el dinero")) {
+    return "financial_control";
+  }
+
+  return "emotional_manipulation";
+}
+
+function inferPersonalSafetyRiskSubcategoryFromUserText(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  if (t.includes("ubicación") || t.includes("ubicacion") || t.includes("localización") || t.includes("localizacion")) {
+    return "location_control";
+  }
+
+  if (t.includes("contraseña") || t.includes("contrasena")) {
+    return "phone_password_control";
+  }
+
+  if (t.includes("me revisa el móvil") || t.includes("me revisa el movil") || t.includes("redes")) {
+    return "social_media_monitoring";
+  }
+
+  if (t.includes("publicar fotos") || t.includes("difundir fotos")) {
+    return "threat_share_images";
+  }
+
+  if (t.includes("mandar más fotos") || t.includes("mandar mas fotos")) {
+    return "demand_intimate_photos";
+  }
+
+  if (t.includes("colegio") || t.includes("instituto") || t.includes("clase")) {
+    return "school_bullying";
+  }
+
+  if (t.includes("grupo de whatsapp") || t.includes("grupo")) {
+    return "group_bullying";
+  }
+
+  if (t.includes("se ríen") || t.includes("se rien") || t.includes("humilla") || t.includes("humillan")) {
+    return "humiliation_public";
+  }
+
+  if (t.includes("menor") && t.includes("adulto")) {
+    return "adult_minor_contact";
+  }
+
+  if (t.includes("me hace sentir culpable") || t.includes("me culpa")) {
+    return "repeated_guilt";
+  }
+
+  if (t.includes("amenaza con hacerse daño") || t.includes("amenaza con suicidarse") || t.includes("autolesión") || t.includes("autolesion")) {
+    return "threat_self_harm_to_control";
+  }
+
+  if (t.includes("miedo") || t.includes("me da miedo")) {
+    return "fear_of_reaction";
+  }
+
+  if (t.includes("insulta") || t.includes("insultos")) {
+    return "repeated_insults";
+  }
+
+  if (t.includes("me sigue") || t.includes("stalking") || t.includes("persecución") || t.includes("persecucion")) {
+    return "stalking_behavior";
+  }
+
+  return null;
+}
+
+function inferPersonalSafetyContextTypeFromUserText(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  if (t.includes("pareja") || t.includes("novio") || t.includes("novia") || t.includes("marido") || t.includes("mujer")) return "pareja";
+  if (t.includes("expareja") || t.includes("ex pareja") || t.includes("mi ex")) return "expareja";
+  if (t.includes("colegio")) return "colegio";
+  if (t.includes("instituto")) return "instituto";
+  if (t.includes("trabajo") || t.includes("jefe") || t.includes("empresa")) return "trabajo";
+  if (t.includes("familia") || t.includes("madre") || t.includes("padre") || t.includes("hermano") || t.includes("hermana")) return "familia";
+  if (t.includes("tinder") || t.includes("bumble") || t.includes("badoo") || t.includes("app de citas")) return "app_citas";
+  if (t.includes("instagram") || t.includes("tiktok") || t.includes("facebook") || t.includes("redes sociales")) return "redes_sociales";
+  if (t.includes("whatsapp")) return "whatsapp";
+
+  return "unknown";
+}
+
+function inferPersonalSafetyRelationshipContextFromUserText(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  if (t.includes("mi pareja") || t.includes("mi novio") || t.includes("mi novia") || t.includes("marido") || t.includes("mujer")) return "current_partner";
+  if (t.includes("mi ex") || t.includes("expareja") || t.includes("ex pareja")) return "ex_partner";
+  if (t.includes("mi hijo") || t.includes("mi hija")) return "parent_child";
+  if (t.includes("colegio") || t.includes("instituto") || t.includes("compañeros") || t.includes("companeros")) return "classmate";
+  if (t.includes("jefe")) return "boss";
+  if (t.includes("compañero de trabajo") || t.includes("companero de trabajo")) return "coworker";
+  if (t.includes("adulto") && t.includes("menor")) return "adult_minor";
+  if (t.includes("perfil falso") || t.includes("catfishing") || t.includes("instagram") || t.includes("tinder")) return "online_contact";
+
+  return "unknown";
+}
+
+function inferPersonalSafetyChannelFromUserText(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  if (t.includes("whatsapp")) return "whatsapp";
+  if (t.includes("instagram")) return "instagram";
+  if (t.includes("tiktok")) return "tiktok";
+  if (t.includes("tinder")) return "tinder";
+  if (t.includes("bumble")) return "bumble";
+  if (t.includes("badoo")) return "badoo";
+  if (t.includes("facebook")) return "facebook";
+  if (t.includes("email") || t.includes("correo")) return "email";
+  if (t.includes("llamada") || t.includes("teléfono") || t.includes("telefono")) return "phone_call";
+  if (t.includes("colegio")) return "school";
+  if (t.includes("instituto")) return "school";
+  if (t.includes("trabajo")) return "workplace";
+
+  return "unknown";
+}
+
+function inferPersonalSafetyFlags(userText: string) {
+  const t = (userText || "").toLowerCase();
+
+  const involvesMinor =
+    t.includes("menor") ||
+    t.includes("mi hijo") ||
+    t.includes("mi hija") ||
+    t.includes("niño") ||
+    t.includes("nino") ||
+    t.includes("niña") ||
+    t.includes("nina") ||
+    t.includes("colegio") ||
+    t.includes("instituto");
+
+  const involvesSexualContent =
+    t.includes("fotos íntimas") ||
+    t.includes("fotos intimas") ||
+    t.includes("foto íntima") ||
+    t.includes("foto intima") ||
+    t.includes("nudes") ||
+    t.includes("sexual") ||
+    t.includes("sextorsión") ||
+    t.includes("sextorsion");
+
+  const involvesThreats =
+    t.includes("amenaza") ||
+    t.includes("me amenaza") ||
+    t.includes("publicar fotos") ||
+    t.includes("difundir fotos") ||
+    t.includes("si no") ||
+    t.includes("chantaje");
+
+  const involvesViolenceOrImmediateDanger =
+    t.includes("me pega") ||
+    t.includes("me ha pegado") ||
+    t.includes("violencia") ||
+    t.includes("agresión") ||
+    t.includes("agresion") ||
+    t.includes("me persigue") ||
+    t.includes("me espera en la puerta") ||
+    t.includes("me da miedo volver") ||
+    t.includes("peligro") ||
+    t.includes("arma") ||
+    t.includes("me quiere hacer daño") ||
+    t.includes("me quiere hacer dano");
+
+  return {
+    involvesMinor,
+    involvesSexualContent,
+    involvesThreats,
+    involvesViolenceOrImmediateDanger,
+  };
+}
+
+function inferPersonalSafetyRiskScoreFromText(
+  userText: string,
+  personalSafetyIntelMatches: PersonalSafetyPatternMatch[],
+) {
+  const t = (userText || "").toLowerCase();
+  const top = personalSafetyIntelMatches[0];
+
+  if (typeof top?.risk_score === "number") return top.risk_score;
+
+  const flags = inferPersonalSafetyFlags(userText);
+
+  if (flags.involvesViolenceOrImmediateDanger) return 92;
+  if (flags.involvesSexualContent && flags.involvesThreats) return 90;
+  if (flags.involvesMinor && (flags.involvesThreats || flags.involvesSexualContent)) return 88;
+
+  if (
+    t.includes("me amenaza") ||
+    t.includes("amenaza") ||
+    t.includes("coacción") ||
+    t.includes("coaccion") ||
+    t.includes("me obliga")
+  ) {
+    return 78;
+  }
+
+  if (
+    t.includes("bullying") ||
+    t.includes("acoso escolar") ||
+    t.includes("ciberbullying") ||
+    t.includes("se ríen") ||
+    t.includes("se rien") ||
+    t.includes("insultan")
+  ) {
+    return 72;
+  }
+
+  if (
+    t.includes("me controla") ||
+    t.includes("ubicación") ||
+    t.includes("ubicacion") ||
+    t.includes("celos") ||
+    t.includes("me vigila")
+  ) {
+    return 70;
+  }
+
+  return personalSafetyIntelMatches.length > 0 ? 65 : 55;
+}
+
+function buildPersonalSafetySimilaritySignature(
+  userText: string,
+  top?: PersonalSafetyPatternMatch | null,
+) {
+  const t = (userText || "").toLowerCase();
+
+  const parts = [
+    inferPersonalSafetyBlockFromUserText(userText),
+    inferPersonalSafetyRiskCategoryFromUserText(userText),
+    inferPersonalSafetyRiskSubcategoryFromUserText(userText),
+    inferPersonalSafetyContextTypeFromUserText(userText),
+    inferPersonalSafetyChannelFromUserText(userText),
+    top?.country || null,
+    top?.region_or_city || null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const keywords = t
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .split(/\s+/)
+    .filter((w) => w.length >= 4)
+    .slice(0, 10)
+    .join(" ");
+
+  return compactText(`${parts} ${keywords}`.trim(), 240);
+}
+
+function shouldCollectPersonalSafetyChatReport(params: {
+  userText: string;
+  effectiveMode: ThreadMode;
+  pillar: string;
+  footballIntent: boolean;
+  personalSafetyIntelMatches: PersonalSafetyPatternMatch[];
+}) {
+  if (params.effectiveMode !== "chat") return false;
+  if (params.footballIntent) return false;
+  if (isGreetingOrVeryShort(params.userText)) return false;
+
+  const t = (params.userText || "").toLowerCase();
+
+  const hasPersonalSafetySignal =
+    params.pillar === "MANIPULACION_PERSONAL" ||
+    params.pillar === "PREVENCION_PERSONAL" ||
+    params.personalSafetyIntelMatches.length > 0 ||
+    [
+      "mi pareja",
+      "mi novio",
+      "mi novia",
+      "mi ex",
+      "expareja",
+      "ex pareja",
+      "me controla",
+      "me vigila",
+      "ubicación",
+      "ubicacion",
+      "celos",
+      "chantaje emocional",
+      "gaslighting",
+      "me amenaza",
+      "me humilla",
+      "bullying",
+      "acoso escolar",
+      "ciberbullying",
+      "acoso laboral",
+      "mobbing",
+      "fotos íntimas",
+      "fotos intimas",
+      "publicar fotos",
+      "difundir fotos",
+      "sextorsión",
+      "sextorsion",
+      "grooming",
+      "love bombing",
+      "catfishing",
+      "control económico",
+      "control economico",
+    ].some((k) => t.includes(k));
+
+  return hasPersonalSafetySignal;
+}
+
+function buildPersonalSafetyChatReportPayload(params: {
+  userText: string;
+  assistantText: string;
+  userId: string | null;
+  body: any;
+  pillar: string;
+  personalSafetyIntelMatches: PersonalSafetyPatternMatch[];
+}) {
+  const top = params.personalSafetyIntelMatches[0] || null;
+
+  const maskedUserText = maskSensitiveText(params.userText);
+  const maskedAssistantText = maskSensitiveText(params.assistantText);
+
+  const flags = inferPersonalSafetyFlags(params.userText);
+  const riskScore = inferPersonalSafetyRiskScoreFromText(
+    params.userText,
+    params.personalSafetyIntelMatches,
+  );
+
+  const safetyBlock = top?.safety_block || inferPersonalSafetyBlockFromUserText(params.userText);
+  const riskCategory = top?.risk_category || inferPersonalSafetyRiskCategoryFromUserText(params.userText);
+  const riskSubcategory = top?.risk_subcategory || inferPersonalSafetyRiskSubcategoryFromUserText(params.userText);
+
+  const similaritySignature = buildPersonalSafetySimilaritySignature(params.userText, top);
+
+  const summaryParts = [
+    "Consulta de seguridad personal detectada desde chat.",
+    safetyBlock ? `Bloque: ${safetyBlock}.` : "",
+    riskCategory ? `Categoría: ${riskCategory}.` : "",
+    riskSubcategory ? `Subcategoría: ${riskSubcategory}.` : "",
+    top?.pattern_name ? `Patrón parecido: ${top.pattern_name}.` : "",
+    flags.involvesMinor ? "Incluye posible menor." : "",
+    flags.involvesSexualContent ? "Incluye posible contenido sexual/intimo." : "",
+    flags.involvesThreats ? "Incluye amenazas o chantaje." : "",
+    flags.involvesViolenceOrImmediateDanger ? "Incluye posible peligro inmediato." : "",
+  ].filter(Boolean);
+
+  return {
+    source_type: "user_chat",
+    status: "pending_review",
+
+    safety_block: safetyBlock,
+    risk_category: riskCategory,
+    risk_subcategory: riskSubcategory,
+    context_type: top?.context_type || inferPersonalSafetyContextTypeFromUserText(params.userText),
+    relationship_context: top?.relationship_context || inferPersonalSafetyRelationshipContextFromUserText(params.userText),
+    channel_or_environment: top?.channel_or_environment || inferPersonalSafetyChannelFromUserText(params.userText),
+
+    affected_user_role: top?.affected_user_role || null,
+    other_party_role: top?.other_party_role || null,
+    country: top?.country || null,
+    region_or_city: top?.region_or_city || null,
+
+    risk_level: top?.risk_level || inferRiskLevelFromScore(riskScore),
+    risk_score: riskScore,
+    emotional_impact_level: top?.emotional_impact_level || null,
+    safety_risk_level: top?.safety_risk_level || null,
+    urgency_level: flags.involvesViolenceOrImmediateDanger
+      ? "immediate"
+      : flags.involvesSexualContent && flags.involvesThreats
+      ? "high"
+      : top?.urgency_level || null,
+
+    user_text_excerpt: compactText(maskedUserText, 900),
+    anonymized_summary: compactText(summaryParts.join(" "), 900),
+    situation_summary: top?.situation_summary || null,
+    example_message_or_behavior: top?.example_message_or_behavior || null,
+    why_it_is_concerning: top?.why_it_is_concerning || null,
+    possible_user_harm: top?.possible_user_harm || null,
+
+    red_flags: top?.red_flags || null,
+    safe_signals: top?.safe_signals || null,
+    questions_to_ask_user: top?.questions_to_ask_user || null,
+    recommended_action: top?.recommended_action || null,
+    when_to_seek_help: top?.when_to_seek_help || null,
+    evidence_to_save: top?.evidence_to_save || null,
+    support_channels: top?.support_channels || null,
+    protective_steps: top?.protective_steps || null,
+    what_not_to_do: top?.what_not_to_do || null,
+    plain_language_explanation: top?.plain_language_explanation || null,
+    validation_message: top?.validation_message || null,
+    deescalation_or_boundary_tip: top?.deescalation_or_boundary_tip || null,
+    emergency_or_escalation_signals: top?.emergency_or_escalation_signals || null,
+    prevention_tips: top?.prevention_tips || null,
+
+    detected_sensitive_data:
+      flags.involvesMinor ||
+      flags.involvesSexualContent ||
+      flags.involvesThreats ||
+      flags.involvesViolenceOrImmediateDanger,
+    sensitive_data_notes: [
+      flags.involvesMinor ? "possible_minor" : "",
+      flags.involvesSexualContent ? "possible_sexual_content" : "",
+      flags.involvesThreats ? "possible_threats" : "",
+      flags.involvesViolenceOrImmediateDanger ? "possible_immediate_danger" : "",
+    ].filter(Boolean).join(", ") || null,
+
+    privacy_level: "anonymized_case",
+    verified_level: "user_reported",
+    similarity_signature: similaritySignature,
+    keywords: top?.keywords || similaritySignature.replace(/\s+/g, ", "),
+    notes:
+      "Caso de seguridad personal recogido automáticamente desde chat. Pendiente de revisión antes de promover a personal_safety_patterns. No usar para diagnosticar personas.",
+
+    involves_minor: flags.involvesMinor,
+    involves_sexual_content: flags.involvesSexualContent,
+    involves_threats: flags.involvesThreats,
+    involves_violence_or_immediate_danger: flags.involvesViolenceOrImmediateDanger,
+
+    ai_review_status: "unreviewed",
+    ai_promote_candidate: false,
+    ai_detected_sensitive_data:
+      flags.involvesMinor ||
+      flags.involvesSexualContent ||
+      flags.involvesThreats ||
+      flags.involvesViolenceOrImmediateDanger,
+    ai_review_json: {
+      source: "quick_service",
+      pillar: params.pillar,
+      assistant_excerpt: compactText(maskedAssistantText, 700),
+      personal_safety_intel_matches: params.personalSafetyIntelMatches.slice(0, 3).map((m) => ({
+        case_id: m.case_id,
+        pattern_name: m.pattern_name,
+        safety_block: m.safety_block,
+        risk_category: m.risk_category,
+        risk_subcategory: m.risk_subcategory,
+        match_score: m.match_score,
+        risk_score: m.risk_score,
+        verified_level: m.verified_level,
+        country: m.country,
+      })),
+    },
+  };
+}
+
+async function savePersonalSafetyChatReportIfRelevant(
+  supabase: any,
+  params: {
+    userText: string;
+    assistantText: string;
+    userId: string | null;
+    body: any;
+    pillar: string;
+    effectiveMode: ThreadMode;
+    footballIntent: boolean;
+    personalSafetyIntelMatches: PersonalSafetyPatternMatch[];
+  },
+) {
+  if (
+    !shouldCollectPersonalSafetyChatReport({
+      userText: params.userText,
+      effectiveMode: params.effectiveMode,
+      pillar: params.pillar,
+      footballIntent: params.footballIntent,
+      personalSafetyIntelMatches: params.personalSafetyIntelMatches,
+    })
+  ) {
+    return { saved: false, reason: "not_relevant" };
+  }
+
+  const payload = buildPersonalSafetyChatReportPayload({
+    userText: params.userText,
+    assistantText: params.assistantText,
+    userId: params.userId,
+    body: params.body,
+    pillar: params.pillar,
+    personalSafetyIntelMatches: params.personalSafetyIntelMatches,
+  });
+
+  try {
+    const { data, error } = await supabase
+      .from("personal_safety_chat_reports")
+      .insert(payload)
+      .select("id")
+      .single();
+
+    if (error) {
+      console.warn("personal_safety_chat_report_insert_error", error);
+      return { saved: false, reason: "insert_error" };
+    }
+
+    return { saved: true, id: data?.id ?? null };
+  } catch (error) {
+    console.warn("personal_safety_chat_report_insert_exception", error);
+    return { saved: false, reason: "exception" };
+  }
+}
+
 // ---------- legal / consumer chat reports ----------
 function inferLegalBlockFromUserText(userText: string) {
   const t = (userText || "").toLowerCase();
@@ -4290,6 +5283,13 @@ const legalConsumerIntelMatches = await lookupLegalConsumerIntel(supabase, userT
 
 const legalConsumerIntelContext = buildLegalConsumerIntelContext(legalConsumerIntelMatches);
 
+const personalSafetyIntelMatches = await lookupPersonalSafetyIntel(supabase, userText, {
+  enabled: shouldUsePersonalSafetyIntel(userText, pillar, effectiveMode, footballIntent),
+  limit: 5,
+});
+
+const personalSafetyIntelContext = buildPersonalSafetyIntelContext(personalSafetyIntelMatches);
+
 const fraudIntelContext = buildFraudIntelContext(fraudIntelMatches);
 
     const messagesLimit = plan?.messages_limit ?? 20;
@@ -4612,6 +5612,10 @@ if (effectiveMode === "chat" && legalConsumerIntelContext) {
   instructions += `\n\n${legalConsumerIntelContext}`;
 }
 
+if (effectiveMode === "chat" && personalSafetyIntelContext) {
+  instructions += `\n\n${personalSafetyIntelContext}`;
+}
+
     const input: any[] = [];
     for (const h of history) input.push({ role: h.role, content: h.content });
 
@@ -4724,6 +5728,18 @@ if (imageBase64) {
   legalConsumerIntelMatches,
 });
 
+const personalSafetyChatReport = await savePersonalSafetyChatReportIfRelevant(supabase, {
+  userText,
+  assistantText: text,
+  userId,
+  body,
+  pillar,
+  effectiveMode,
+  footballIntent,
+  personalSafetyIntelMatches,
+});
+
+
     if (!isGuest && userId) {
   await supabase
     .from("usage")
@@ -4785,6 +5801,14 @@ if (imageBase64) {
         saved: legalChatReport.saved,
         id: "id" in legalChatReport ? legalChatReport.id : null,
         reason: "reason" in legalChatReport ? legalChatReport.reason : null,
+      }
+    : null,
+personalSafetyChatReport:
+  effectiveMode === "chat"
+    ? {
+        saved: personalSafetyChatReport.saved,
+        id: "id" in personalSafetyChatReport ? personalSafetyChatReport.id : null,
+        reason: "reason" in personalSafetyChatReport ? personalSafetyChatReport.reason : null,
       }
     : null,
   },

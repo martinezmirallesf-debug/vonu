@@ -89,31 +89,40 @@ export default function UsoResponsablePage() {
 
         <h2>4. No compartas información innecesariamente sensible</h2>
 
-        <p>
-          Para que VonuAI pueda ayudarte, puedes aportar contexto, mensajes,
-          capturas o documentos. Aun así, debes compartir solo la información
-          necesaria para entender la situación.
-        </p>
+<p>
+  Para que VonuAI pueda ayudarte, puedes aportar contexto, mensajes, capturas
+  o documentos. Aun así, debes compartir solo la información necesaria para
+  entender la situación.
+</p>
 
-        <p>Evita introducir o subir:</p>
+<p>Evita introducir o subir:</p>
 
-        <ul>
-          <li>contraseñas;</li>
-          <li>códigos de verificación;</li>
-          <li>números completos de tarjetas bancarias;</li>
-          <li>credenciales de acceso;</li>
-          <li>datos bancarios completos;</li>
-          <li>documentación de terceros sin base legítima;</li>
-          <li>
-            información extremadamente sensible que no sea necesaria para el
-            análisis.
-          </li>
-        </ul>
+<ul>
+  <li>contraseñas;</li>
+  <li>códigos de verificación u OTP;</li>
+  <li>números completos de tarjetas bancarias;</li>
+  <li>credenciales de acceso;</li>
+  <li>IBAN, cuentas bancarias o datos financieros completos;</li>
+  <li>DNI, NIE, pasaporte u otros documentos identificativos completos;</li>
+  <li>firmas, direcciones completas o matrículas si no son necesarias;</li>
+  <li>historiales médicos completos o datos de salud muy sensibles;</li>
+  <li>información íntima, sexual o especialmente delicada si no aporta al análisis;</li>
+  <li>datos de menores o de terceros sin base legítima;</li>
+  <li>documentación de terceros sin autorización o motivo válido.</li>
+</ul>
 
-        <p>
-          Cuando sea posible, tapa o elimina datos innecesarios antes de subir
-          una captura, factura, contrato o documento.
-        </p>
+<p>
+  Cuando sea posible, tapa o elimina datos innecesarios antes de subir una
+  captura, factura, contrato o documento. En muchos casos basta con dejar
+  visible el texto sospechoso, la fecha, el remitente, el dominio, el importe o
+  la parte concreta que quieres revisar.
+</p>
+
+<p>
+  VonuAI puede extraer señales generales de algunos casos para mejorar la
+  detección de riesgos futuros, pero la idea no es guardar tu vida privada:
+  es aprender de patrones útiles minimizando datos sensibles innecesarios.
+</p>
 
         <h2>5. Revisa las respuestas antes de actuar</h2>
 
