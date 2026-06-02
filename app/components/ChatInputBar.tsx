@@ -261,10 +261,9 @@ const shellShadow = voiceMode
     <div
   ref={inputBarRef}
   className="chat-input-root fixed left-0 right-0 z-[70] bg-transparent md:left-[304px]"
-    style={{
+  style={{
     bottom:
-      "calc(max(var(--vvb, 0px), var(--vonu-keyboard-height, 0px), 0px) + 10px)",
-    paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      "calc(max(var(--vvb, 0px), var(--vonu-keyboard-height, 0px), 0px) + env(safe-area-inset-bottom, 0px) + 8px)",
   }}
 >
       <div className="mx-auto max-w-3xl px-3 md:px-6 pt-0 md:pt-2 pb-0 md:pb-1">

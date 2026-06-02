@@ -6193,12 +6193,19 @@ return (
 
     .vonu-input-motion-shell {
   transition:
-    bottom 980ms cubic-bezier(.16,.9,.18,1),
-    transform 980ms cubic-bezier(.16,.9,.18,1),
-    opacity 520ms ease,
-    filter 520ms ease,
-    background-color 520ms ease !important;
-  will-change: bottom, transform, filter;
+    opacity 260ms ease,
+    filter 260ms ease,
+    background-color 260ms ease !important;
+  will-change: filter;
+}
+
+.vonu-input-motion-shell.vonu-home-input-centered {
+  transition:
+    bottom 520ms cubic-bezier(.2,.8,.2,1),
+    transform 520ms cubic-bezier(.2,.8,.2,1),
+    opacity 320ms ease,
+    filter 320ms ease,
+    background-color 320ms ease !important;
 }
 
 .vonu-home-input-centered {
@@ -6215,7 +6222,7 @@ return (
 }
 
 html.vonu-home-keyboard-open .vonu-home-input-centered {
-  bottom: calc(var(--vonu-keyboard-height, 0px) + 12px) !important;
+  bottom: calc(var(--vonu-keyboard-height, 0px) + env(safe-area-inset-bottom, 0px) + 8px) !important;
   transform: translateY(0) !important;
 }
 
