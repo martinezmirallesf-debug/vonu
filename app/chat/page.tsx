@@ -6193,16 +6193,18 @@ return (
 
     .vonu-input-motion-shell {
   transition:
+    bottom 240ms cubic-bezier(.22, .61, .36, 1),
+    transform 240ms cubic-bezier(.22, .61, .36, 1),
     opacity 260ms ease,
     filter 260ms ease,
     background-color 260ms ease !important;
-  will-change: filter;
+  will-change: bottom, transform, filter;
 }
 
 .vonu-input-motion-shell.vonu-home-input-centered {
   transition:
-    bottom 520ms cubic-bezier(.2,.8,.2,1),
-    transform 520ms cubic-bezier(.2,.8,.2,1),
+    bottom 420ms cubic-bezier(.2,.8,.2,1),
+    transform 420ms cubic-bezier(.2,.8,.2,1),
     opacity 320ms ease,
     filter 320ms ease,
     background-color 320ms ease !important;
