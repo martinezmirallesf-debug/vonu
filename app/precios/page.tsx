@@ -70,7 +70,7 @@ const plans = [
     name: "Max",
     price: "19,99€",
     period: "/ mes",
-    description: "Para uso intensivo, más voz y más margen mensual.",
+    description: "Más margen para documentos y análisis dentro de los límites del plan",
     badge: null,
     cta: "Probar Max",
     highlighted: false,

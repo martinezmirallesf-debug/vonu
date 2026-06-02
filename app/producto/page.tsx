@@ -41,8 +41,8 @@ const productPillars = [
     text: "Pega un mensaje, enlace, cláusula, factura o situación y Vonu te ayuda a detectar señales importantes antes de responder, pagar o firmar.",
   },
   {
-    title: "Entiende el riesgo real",
-    text: "Vonu no solo dice si algo parece raro. Te explica qué señales ve, por qué importan y qué deberías comprobar antes de decidir.",
+    title: "Entiende mejor el riesgo",
+text: "Vonu no solo dice si algo parece raro. Te explica qué señales ve, por qué importan y qué conviene comprobar antes de decidir.",
   },
   {
     title: "Decide con más calma",

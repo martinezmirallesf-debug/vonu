@@ -87,7 +87,7 @@ const sections = [
       },
       {
         q: "¿Qué hace Vonu con un PDF?",
-        a: "Lee el contenido disponible, identifica el tipo de documento, resume lo más relevante y te explica qué puntos conviene revisar según el caso.",
+        a: "Lee el contenido disponible, identifica el tipo de documento, resume lo más relevante y te explica qué puntos conviene revisar según el caso. Si el archivo está borroso, incompleto, escaneado con mala calidad o contiene partes no legibles, el análisis puede ser limitado.",
       },
       {
         q: "¿Debo subir documentos sensibles?",

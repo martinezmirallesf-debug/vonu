@@ -30,12 +30,12 @@ export default function HomeFooter() {
           </h3>
 
           <div className="mt-4 grid gap-3 text-[14px] text-zinc-600">
-            <Link href="/#producto" className="hover:text-zinc-950">
-              Producto
-            </Link>
-            <Link href="/#casos" className="hover:text-zinc-950">
-              Casos de uso
-            </Link>
+            <Link href="/producto" className="hover:text-zinc-950">
+  Producto
+</Link>
+<Link href="/casos-de-uso" className="hover:text-zinc-950">
+  Casos de uso
+</Link>
             <Link href="/precios" className="hover:text-zinc-950">
               Precios
             </Link>

@@ -121,7 +121,7 @@ const moments = [
 const faqs = [
   {
     q: "¿Para qué sirve VonuAI?",
-    a: "VonuAI sirve para revisar mensajes, webs, contratos, facturas, documentos y situaciones delicadas antes de firmar, pagar, contestar o decidir. Ayuda a detectar señales de riesgo y ordenar los siguientes pasos.",
+    a: "VonuAI sirve para revisar mensajes, webs, contratos, facturas, documentos y situaciones delicadas antes de firmar, pagar, contestar o decidir. Ayuda a detectar posibles señales de riesgo y ordenar los siguientes pasos.",
   },
   {
     q: "¿VonuAI solo detecta estafas?",
