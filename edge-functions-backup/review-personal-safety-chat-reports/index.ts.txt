@@ -1,0 +1,394 @@
+/// <reference lib="deno.ns" />
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function clampNumber(value: unknown, min: number, max: number, fallback: number) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(min, Math.min(max, Math.round(n)));
+}
+
+function compactText(value: unknown, max = 700) {
+  const text = String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (text.length <= max) return text;
+  return `${text.slice(0, max - 1).trim()}…`;
+}
+
+function normalizeText(value: unknown) {
+  return String(value ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^\p{L}\p{N}\s_/-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function containsSensitiveData(text: string) {
+  const t = String(text || "");
+
+  const email = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(t);
+  const phone = /(?:\+?\d[\s.-]?){8,}/.test(t);
+  const dniNie = /\b(?:\d{8}[A-Z]|[XYZ]\d{7}[A-Z])\b/i.test(t);
+  const iban = /\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/i.test(t);
+  const card = /\b(?:\d[ -]*?){13,19}\b/.test(t);
+  const address = /\b(calle|avenida|av\.|piso|portal|bloque|cp|c\.p\.)\b/i.test(t);
+
+  return email || phone || dniNie || iban || card || address;
+}
+
+function inferRiskLevel(score: number) {
+  if (score >= 88) return "critical";
+  if (score >= 70) return "high";
+  if (score >= 45) return "medium";
+  return "low";
+}
+
+function buildSearchText(report: any) {
+  return compactText(
+    [
+      report.user_text_excerpt,
+      report.anonymized_summary,
+      report.situation_summary,
+      report.example_message_or_behavior,
+      report.why_it_is_concerning,
+      report.red_flags,
+      report.recommended_action,
+      report.similarity_signature,
+      report.keywords,
+      report.safety_block,
+      report.risk_category,
+      report.risk_subcategory,
+      report.context_type,
+      report.channel_or_environment,
+    ]
+      .filter(Boolean)
+      .join(" "),
+    1200,
+  );
+}
+
+function hasSpecialSensitiveFlags(report: any) {
+  return Boolean(
+    report.detected_sensitive_data ||
+      report.involves_minor ||
+      report.involves_sexual_content ||
+      report.involves_threats ||
+      report.involves_violence_or_immediate_danger,
+  );
+}
+
+function isHighSensitivityCase(report: any) {
+  const safetyBlock = String(report.safety_block || "").toLowerCase();
+  const category = String(report.risk_category || "").toLowerCase();
+  const subcategory = String(report.risk_subcategory || "").toLowerCase();
+
+  return Boolean(
+    report.involves_minor ||
+      report.involves_sexual_content ||
+      report.involves_threats ||
+      report.involves_violence_or_immediate_danger ||
+      safetyBlock.includes("sextortion") ||
+      safetyBlock.includes("grooming") ||
+      category.includes("sextortion") ||
+      category.includes("grooming") ||
+      subcategory.includes("threat_share_images") ||
+      subcategory.includes("demand_intimate_photos") ||
+      subcategory.includes("adult_minor_contact"),
+  );
+}
+
+function computeDuplicateLikelihood(report: any, matches: any[]) {
+  if (!matches.length) return 0;
+
+  const top = matches[0];
+  const reportSig = normalizeText(report.similarity_signature);
+  const topSig = normalizeText(top.similarity_signature);
+
+  let score = 25;
+
+  if (reportSig && topSig && reportSig === topSig) score += 55;
+
+  if (report.safety_block && top.safety_block && report.safety_block === top.safety_block) score += 10;
+  if (report.risk_category && top.risk_category && report.risk_category === top.risk_category) score += 10;
+  if (report.risk_subcategory && top.risk_subcategory && report.risk_subcategory === top.risk_subcategory) score += 10;
+  if (report.context_type && top.context_type && report.context_type === top.context_type) score += 5;
+  if (report.channel_or_environment && top.channel_or_environment && report.channel_or_environment === top.channel_or_environment) score += 5;
+
+  const matchScore = Number(top.match_score ?? 0);
+  if (matchScore >= 120) score += 15;
+  else if (matchScore >= 80) score += 10;
+  else if (matchScore >= 40) score += 5;
+
+  return Math.max(0, Math.min(95, score));
+}
+
+function buildReviewDecision(report: any, matches: any[]) {
+  const specialSensitive = hasSpecialSensitiveFlags(report);
+  const highSensitivity = isHighSensitivityCase(report);
+  const duplicateLikelihood = computeDuplicateLikelihood(report, matches);
+  const riskScore = clampNumber(report.risk_score, 0, 100, 50);
+
+  const containsSensitive =
+    specialSensitive ||
+    containsSensitiveData(report.user_text_excerpt || "") ||
+    containsSensitiveData(report.anonymized_summary || "");
+
+  const top = matches[0] || null;
+
+  let reviewStatus = "reviewed";
+  let status = "reviewed";
+  let reviewScore = riskScore;
+  let promoteCandidate = false;
+  let recommendation = "Caso revisado y conservado como reporte anonimizado.";
+  let reason = "El caso no presenta señales suficientes para promoción automática.";
+
+  if (highSensitivity || containsSensitive) {
+    reviewStatus = "needs_human_review";
+    status = "needs_human_review";
+    reviewScore = Math.max(riskScore, highSensitivity ? 85 : 70);
+    promoteCandidate = false;
+    recommendation =
+      "No promover automáticamente. Revisar manualmente por sensibilidad: puede incluir menores, sextorsión, amenazas, violencia, contenido íntimo o datos sensibles.";
+    reason =
+      "Los casos de seguridad personal sensibles deben quedar fuera de promoción automática para evitar guardar datos delicados o relatos íntimos completos.";
+  } else if (duplicateLikelihood >= 75) {
+    reviewStatus = "duplicate_candidate";
+    status = "reviewed_duplicate";
+    reviewScore = Math.max(riskScore, 60);
+    promoteCandidate = false;
+    recommendation = "Parece duplicado o muy parecido a un patrón existente. No promover.";
+    reason =
+      "La categoría, subcategoría, contexto o firma de similitud coinciden con patrones ya existentes.";
+  } else if (riskScore >= 60 && !highSensitivity && !containsSensitive) {
+    reviewStatus = "candidate_safe_pattern";
+    status = "reviewed_candidate";
+    reviewScore = riskScore;
+    promoteCandidate = true;
+    recommendation =
+      "Puede ser candidato a patrón futuro si una revisión humana confirma que está suficientemente anonimizado.";
+    reason =
+      "El caso parece útil como patrón general y no se han detectado banderas sensibles fuertes.";
+  } else {
+    reviewStatus = "reviewed_low_value";
+    status = "reviewed_low_value";
+    reviewScore = riskScore;
+    promoteCandidate = false;
+    recommendation = "No promover. Mantener solo como reporte revisado.";
+    reason = "El caso aporta poco valor nuevo o tiene poca intensidad de señal.";
+  }
+
+  return {
+    status,
+    review_status: reviewStatus,
+    review_score: reviewScore,
+    duplicate_likelihood: duplicateLikelihood,
+    promote_candidate: promoteCandidate,
+    recommendation,
+    reason,
+    detected_sensitive_data: containsSensitive,
+    top_match: top
+      ? {
+          case_id: top.case_id,
+          pattern_name: top.pattern_name,
+          safety_block: top.safety_block,
+          risk_category: top.risk_category,
+          risk_subcategory: top.risk_subcategory,
+          risk_level: top.risk_level,
+          risk_score: top.risk_score,
+          match_score: top.match_score,
+          similarity_signature: top.similarity_signature,
+        }
+      : null,
+  };
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  if (req.method !== "POST") {
+    return json({ ok: false, error: "Method not allowed" }, 405);
+  }
+
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  const receivedCronSecret = req.headers.get("x-cron-secret");
+
+  if (!cronSecret || receivedCronSecret !== cronSecret) {
+    return json({ ok: false, error: "Unauthorized cron request" }, 401);
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    return json(
+      {
+        ok: false,
+        error: "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY",
+      },
+      500,
+    );
+  }
+
+  let body: any = {};
+  try {
+    body = await req.json();
+  } catch {
+    body = {};
+  }
+
+  const limit = clampNumber(body.limit, 1, 25, 10);
+  const dryRun = body.dryRun === true;
+  const onlyIds = Array.isArray(body.ids)
+    ? body.ids.filter((x: unknown) => typeof x === "string" && x.length > 10)
+    : [];
+
+  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false },
+  });
+
+  let query = supabase
+    .from("personal_safety_chat_reports")
+    .select("*")
+    .eq("ai_review_status", "unreviewed")
+    .order("created_at", { ascending: true })
+    .limit(limit);
+
+  if (onlyIds.length > 0) {
+    query = supabase
+      .from("personal_safety_chat_reports")
+      .select("*")
+      .in("id", onlyIds)
+      .order("created_at", { ascending: true })
+      .limit(limit);
+  }
+
+  const { data: reports, error: fetchError } = await query;
+
+  if (fetchError) {
+    return json({ ok: false, error: "fetch_error", details: fetchError }, 500);
+  }
+
+  const results = [];
+
+  for (const report of reports ?? []) {
+    try {
+      const searchText = buildSearchText(report);
+
+      const { data: matches, error: matchError } = await supabase.rpc(
+        "search_personal_safety_patterns_basic",
+        {
+          query_text: searchText,
+          result_limit: 5,
+        },
+      );
+
+      if (matchError) {
+        results.push({
+          id: report.id,
+          ok: false,
+          error: "match_error",
+          details: matchError.message,
+          dry_run: dryRun,
+        });
+        continue;
+      }
+
+      const cleanMatches = Array.isArray(matches) ? matches : [];
+      const decision = buildReviewDecision(report, cleanMatches);
+
+      const updatePayload = {
+        status: decision.status,
+        ai_review_status: decision.review_status,
+        ai_review_score: decision.review_score,
+        ai_review_recommendation: decision.recommendation,
+        ai_review_reason: decision.reason,
+        ai_detected_sensitive_data: decision.detected_sensitive_data,
+        ai_duplicate_likelihood: decision.duplicate_likelihood,
+        ai_promote_candidate: decision.promote_candidate,
+        ai_reviewed_at: new Date().toISOString(),
+        ai_review_json: {
+          reviewer: "review-personal-safety-chat-reports",
+          dryRun,
+          decision,
+          matched_patterns: cleanMatches.slice(0, 5).map((m: any) => ({
+            case_id: m.case_id,
+            pattern_name: m.pattern_name,
+            safety_block: m.safety_block,
+            risk_category: m.risk_category,
+            risk_subcategory: m.risk_subcategory,
+            risk_level: m.risk_level,
+            risk_score: m.risk_score,
+            match_score: m.match_score,
+            similarity_signature: m.similarity_signature,
+          })),
+          caution:
+            "No se promocionan automáticamente casos sensibles de menores, sextorsión, amenazas, violencia o contenido íntimo.",
+        },
+      };
+
+      if (!dryRun) {
+        const { error: updateError } = await supabase
+          .from("personal_safety_chat_reports")
+          .update(updatePayload)
+          .eq("id", report.id);
+
+        if (updateError) {
+          results.push({
+            id: report.id,
+            ok: false,
+            error: "update_error",
+            details: updateError.message,
+            dry_run: dryRun,
+          });
+          continue;
+        }
+      }
+
+      results.push({
+        id: report.id,
+        ok: true,
+        review_status: decision.review_status,
+        review_score: decision.review_score,
+        duplicate_likelihood: decision.duplicate_likelihood,
+        promote_candidate: decision.promote_candidate,
+        sensitive: decision.detected_sensitive_data,
+        top_match_case_id: decision.top_match?.case_id ?? null,
+        dry_run: dryRun,
+      });
+    } catch (error) {
+      results.push({
+        id: report.id,
+        ok: false,
+        error: "exception",
+        details: error instanceof Error ? error.message : String(error),
+        dry_run: dryRun,
+      });
+    }
+  }
+
+  return json({
+    ok: true,
+    processed: results.length,
+    dryRun,
+    results,
+  });
+});
