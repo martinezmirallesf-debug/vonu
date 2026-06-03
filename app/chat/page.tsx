@@ -570,6 +570,38 @@ function makeTitleFromText(text: string) {
 const STORAGE_KEY = "vonu_threads_v2";
 const HOME_URL = "https://vonuai.com";
 
+const MAX_STORED_THREADS = 24;
+const MAX_STORED_MESSAGES_PER_THREAD = 80;
+
+function stripHeavyMessageForStorage(message: Message): Message {
+  const clean: Message = { ...message };
+
+  // Evitamos guardar imágenes grandes en base64 dentro de localStorage.
+  // La imagen se usa para el análisis en el momento, pero no debe romper el historial.
+  if (typeof clean.image === "string" && clean.image.startsWith("data:")) {
+    clean.image = undefined;
+  }
+
+  // La pizarra/imagen de tutor también puede pesar mucho.
+  if (typeof clean.boardImageB64 === "string" && clean.boardImageB64.startsWith("data:")) {
+    clean.boardImageB64 = null;
+    clean.boardImagePlacement = null;
+  }
+
+  return clean;
+}
+
+function sanitizeThreadsForStorage(threads: ChatThread[]): ChatThread[] {
+  return threads
+    .slice(0, MAX_STORED_THREADS)
+    .map((thread) => ({
+      ...thread,
+      messages: (thread.messages ?? [])
+        .slice(-MAX_STORED_MESSAGES_PER_THREAD)
+        .map(stripHeavyMessageForStorage),
+    }));
+}
+
 // ✅ regla: tras 1 mensaje, pedir login/pago
 const GUEST_MESSAGE_LIMIT = 1;
 
@@ -2031,11 +2063,29 @@ useEffect(() => {
   }, []);
 
   useEffect(() => {
-    if (!mounted) return;
+  if (!mounted) return;
+  if (typeof window === "undefined") return;
+
+  try {
+    const safeThreads = sanitizeThreadsForStorage(threads);
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(safeThreads));
+  } catch (error) {
+    console.warn("[Vonu] No se pudo guardar el historial completo:", error);
+
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(threads));
-    } catch {}
-  }, [threads, mounted]);
+      const ultraSafeThreads = sanitizeThreadsForStorage(threads)
+        .slice(0, 8)
+        .map((thread) => ({
+          ...thread,
+          messages: thread.messages.slice(-30),
+        }));
+
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(ultraSafeThreads));
+    } catch (fallbackError) {
+      console.warn("[Vonu] No se pudo guardar ni el historial reducido:", fallbackError);
+    }
+  }
+}, [threads, mounted]);
 
 // -------- UI --------
 const [input, setInput] = useState("");
