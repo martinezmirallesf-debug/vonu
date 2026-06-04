@@ -314,6 +314,17 @@ function looksLikeRiskAnalysis(text: string) {
     "precaución media-alta",
     "precaucion media-alta",
     "riesgo medio-alto",
+    "malware",
+"script",
+".sh",
+"ip directa",
+"puerto",
+"infectar",
+"robar información",
+"robar informacion",
+"amenaza conocida",
+"comprobación de seguridad",
+"comprobacion de seguridad",
   ];
 
   return riskWords.some((word) => t.includes(word));
@@ -336,6 +347,7 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
   if (!t.trim()) return null;
 
   const dangerSignals = [
+    
     "estafa confirmada",
     "fraude confirmado",
     "phishing confirmado",
@@ -355,6 +367,21 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
     "bloquealo",
     "bloquea",
     "denuncia",
+    "malware",
+"relacionado con malware",
+"asociado a malware",
+"amenaza conocida",
+"no lo abras",
+"no lo descargues",
+"no lo ejecutes",
+"no abras ni descargues",
+"podría infectar",
+"podria infectar",
+"robar información",
+"robar informacion",
+"script malicioso",
+"archivo .sh",
+"ip directa",
   ];
 
   if (dangerSignals.some((s) => t.includes(s))) {
@@ -404,6 +431,11 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
     "obligacion contractual",
     "penalización económica",
     "penalizacion economica",
+    "comprobación de seguridad",
+"comprobacion de seguridad",
+"enlace malicioso",
+"script para sistemas tipo linux",
+"puerto raro",
   ];
 
   if (highSignals.some((s) => t.includes(s))) {
