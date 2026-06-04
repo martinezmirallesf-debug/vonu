@@ -325,6 +325,17 @@ function looksLikeRiskAnalysis(text: string) {
 "amenaza conocida",
 "comprobación de seguridad",
 "comprobacion de seguridad",
+"malware",
+"script",
+".sh",
+"ip directa",
+"puerto",
+"infectar",
+"robar información",
+"robar informacion",
+"amenaza conocida",
+"comprobación de seguridad",
+"comprobacion de seguridad",
   ];
 
   return riskWords.some((word) => t.includes(word));
@@ -346,8 +357,53 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
 
   if (!t.trim()) return null;
 
+  const safeSignals = [
+    "riesgo bajo",
+    "bajo riesgo",
+    "pinta bien",
+    "parece fiable",
+    "parece seguro",
+    "parece segura",
+    "parece legítima",
+    "parece legitima",
+    "parece legítimo",
+    "parece legitimo",
+    "parece oficial",
+    "web oficial",
+    "dominio oficial",
+    "dominio reconocido",
+    "marca conocida",
+    "puedes usarla con confianza",
+    "puedes usarlo con confianza",
+    "puedes usarla con tranquilidad",
+    "puedes usarlo con tranquilidad",
+    "tranquilidad razonable",
+    "confianza razonable",
+    "no aparece marcada",
+    "no aparece marcado",
+    "no aparece marcada en esta primera revisión",
+    "no aparece marcado en esta primera revisión",
+    "no aparece relacionada con malware",
+    "no aparece relacionado con malware",
+    "no aparece como peligrosa",
+    "no aparece como peligroso",
+    "no veo señales claras",
+    "no veo señales claras de peligro",
+    "no veo señales claras de riesgo",
+    "no parece una estafa",
+    "no parece phishing",
+    "no parece sospechoso",
+    "es un buen indicio",
+  ];
+
+  // ✅ Importante: detectar primero conclusiones tranquilizadoras.
+  // Así evitamos que frases como “no aparece relacionada con malware”
+  // se conviertan en puntos rojos solo por contener la palabra malware.
+  if (safeSignals.some((s) => t.includes(s))) {
+    return "safe";
+  }
+
   const dangerSignals = [
-    
     "estafa confirmada",
     "fraude confirmado",
     "phishing confirmado",
@@ -367,21 +423,23 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
     "bloquealo",
     "bloquea",
     "denuncia",
+
+    // malware / enlaces técnicos peligrosos
     "malware",
-"relacionado con malware",
-"asociado a malware",
-"amenaza conocida",
-"no lo abras",
-"no lo descargues",
-"no lo ejecutes",
-"no abras ni descargues",
-"podría infectar",
-"podria infectar",
-"robar información",
-"robar informacion",
-"script malicioso",
-"archivo .sh",
-"ip directa",
+    "relacionado con malware",
+    "asociado a malware",
+    "amenaza conocida",
+    "no lo abras",
+    "no lo descargues",
+    "no lo ejecutes",
+    "no abras ni descargues",
+    "podría infectar",
+    "podria infectar",
+    "robar información",
+    "robar informacion",
+    "script malicioso",
+    "archivo .sh",
+    "ip directa",
   ];
 
   if (dangerSignals.some((s) => t.includes(s))) {
@@ -391,7 +449,7 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
   const highSignals = [
     "riesgo alto",
     "intento de estafa",
-"huele a intento de estafa",
+    "huele a intento de estafa",
     "alto riesgo",
     "muy sospechoso",
     "parece phishing",
@@ -412,7 +470,7 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
     "senales de fraude",
     "señales claras de riesgo",
     "senales claras de riesgo",
-        "riesgo medio-alto",
+    "riesgo medio-alto",
     "precaución media-alta",
     "precaucion media-alta",
     "puede ser abusivo",
@@ -431,11 +489,13 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
     "obligacion contractual",
     "penalización económica",
     "penalizacion economica",
+
+    // web/malware técnico
     "comprobación de seguridad",
-"comprobacion de seguridad",
-"enlace malicioso",
-"script para sistemas tipo linux",
-"puerto raro",
+    "comprobacion de seguridad",
+    "enlace malicioso",
+    "script para sistemas tipo linux",
+    "puerto raro",
   ];
 
   if (highSignals.some((s) => t.includes(s))) {
@@ -458,7 +518,6 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
     "verifica",
     "compruébalo",
     "compruebalo",
-        "conviene revisar",
     "merece revisarse",
     "merece mirarlo",
     "revisaría la cláusula",
@@ -477,22 +536,6 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
 
   if (warningSignals.some((s) => t.includes(s))) {
     return "warning";
-  }
-
-  const safeSignals = [
-    "riesgo bajo",
-    "bajo riesgo",
-    "parece fiable",
-    "parece seguro",
-    "no veo señales claras",
-    "no veo senales claras",
-    "no parece una estafa",
-    "no parece phishing",
-    "no parece sospechoso",
-  ];
-
-  if (safeSignals.some((s) => t.includes(s))) {
-    return "safe";
   }
 
   return null;
