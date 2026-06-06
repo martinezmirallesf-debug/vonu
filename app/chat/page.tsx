@@ -447,6 +447,98 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
     return riskStatusFromScore(percentScore);
   }
 
+  const isDatingOrSocialProfile =
+    t.includes("tinder") ||
+    t.includes("bumble") ||
+    t.includes("badoo") ||
+    t.includes("instagram") ||
+    t.includes("facebook") ||
+    t.includes("tiktok") ||
+    t.includes("perfil") ||
+    t.includes("app de citas") ||
+    t.includes("red social");
+
+  const isAiImageAnalysis =
+    t.includes("ia") ||
+    t.includes("inteligencia artificial") ||
+    t.includes("generada por ia") ||
+    t.includes("imagen generada") ||
+    t.includes("edición fuerte") ||
+    t.includes("edicion fuerte") ||
+    t.includes("manipulada") ||
+    t.includes("manipulado") ||
+    t.includes("deepfake");
+
+  const hasHardScamEscalation =
+    t.includes("pide dinero") ||
+    t.includes("pedir dinero") ||
+    t.includes("enviar dinero") ||
+    t.includes("envíes dinero") ||
+    t.includes("envies dinero") ||
+    t.includes("transferencia") ||
+    t.includes("bizum") ||
+    t.includes("tarjeta") ||
+    t.includes("código") ||
+    t.includes("codigo") ||
+    t.includes("otp") ||
+    t.includes("documento") ||
+    t.includes("dni") ||
+    t.includes("pasaporte") ||
+    t.includes("cripto") ||
+    t.includes("crypto") ||
+    t.includes("bitcoin") ||
+    t.includes("trading") ||
+    t.includes("inversión") ||
+    t.includes("inversion") ||
+    t.includes("telegram") ||
+    t.includes("whatsapp") ||
+    t.includes("fotos íntimas") ||
+    t.includes("fotos intimas") ||
+    t.includes("sextorsión") ||
+    t.includes("sextorsion") ||
+    t.includes("amenaza") ||
+    t.includes("chantaje");
+
+  const hasMixedOrCautionTone =
+    t.includes("señales mixtas") ||
+    t.includes("senales mixtas") ||
+    t.includes("iría con cuidado") ||
+    t.includes("iria con cuidado") ||
+    t.includes("cuidado antes de confiar") ||
+    t.includes("no se puede asegurar") ||
+    t.includes("no se puede confirmar") ||
+    t.includes("no puedo confirmarlo") ||
+    t.includes("no significa que sea scam") ||
+    t.includes("posible indicio") ||
+    t.includes("no verificado") ||
+    t.includes("no veo verificación") ||
+    t.includes("no se ve verificación") ||
+    t.includes("no aparece verificación") ||
+    t.includes("duda razonable");
+
+  // ✅ Perfiles/redes/apps de citas:
+  // Sin dinero, crypto, códigos, amenazas o presión fuerte => precaución, no rojo.
+  if (isDatingOrSocialProfile && hasMixedOrCautionTone && !hasHardScamEscalation) {
+    return "warning";
+  }
+
+  // ✅ Imágenes IA/manipulación:
+  // Si el análisis dice que no hay señales claras, pero hay incertidumbre, mejor amarillo que rojo.
+  if (
+    isAiImageAnalysis &&
+    (
+      t.includes("no muestra señales claras") ||
+      t.includes("no veo señales claras") ||
+      t.includes("parece bastante natural") ||
+      t.includes("puede ser una foto real") ||
+      t.includes("imagen sola no permite") ||
+      t.includes("no se puede confirmar") ||
+      t.includes("no puedo confirmarlo")
+    )
+  ) {
+    return "warning";
+  }
+
   const safeSignals = [
     "riesgo bajo",
     "bajo riesgo",
@@ -479,16 +571,12 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
     "no aparece relacionado con malware",
     "no aparece como peligrosa",
     "no aparece como peligroso",
-    "no veo señales claras",
-    "no veo señales claras de peligro",
-    "no veo señales claras de riesgo",
     "no parece una estafa",
     "no parece phishing",
     "no parece sospechoso",
     "es un buen indicio",
   ];
 
-  // Primero señales tranquilizadoras para no pintar rojo por palabras sueltas como "malware".
   if (safeSignals.some((s) => t.includes(s))) {
     return "safe";
   }
@@ -512,10 +600,6 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
     "no envies dinero",
     "no compartas códigos",
     "no compartas codigos",
-    "bloquéalo",
-    "bloquealo",
-    "bloquea",
-    "denuncia",
     "malware",
     "relacionado con malware",
     "asociado a malware",
@@ -551,12 +635,6 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
     "yo no pagaria",
     "yo no pulsaría",
     "yo no pulsaria",
-    "frenaría",
-    "frenaria",
-    "no lo haría",
-    "no lo haria",
-    "me haría frenar",
-    "me haria frenar",
     "señales de fraude",
     "senales de fraude",
     "señales claras de riesgo",
@@ -622,14 +700,6 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
     "no aparece verificado",
     "no se ve verificación",
     "perfil no verificado",
-    "revisaría la cláusula",
-    "revisaria la clausula",
-    "pide la cláusula exacta",
-    "pide la clausula exacta",
-    "necesitaría ver la cláusula",
-    "necesitaria ver la clausula",
-    "necesitaría ver el contrato",
-    "necesitaria ver el contrato",
     "guarda copia",
     "guarda pruebas",
     "pídelo por escrito",
