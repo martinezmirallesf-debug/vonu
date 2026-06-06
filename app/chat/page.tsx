@@ -523,21 +523,49 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
   }
 
   // ✅ Imágenes IA/manipulación:
-  // Si el análisis dice que no hay señales claras, pero hay incertidumbre, mejor amarillo que rojo.
-  if (
-    isAiImageAnalysis &&
-    (
-      t.includes("no muestra señales claras") ||
-      t.includes("no veo señales claras") ||
-      t.includes("parece bastante natural") ||
-      t.includes("puede ser una foto real") ||
-      t.includes("imagen sola no permite") ||
-      t.includes("no se puede confirmar") ||
-      t.includes("no puedo confirmarlo")
-    )
-  ) {
-    return "warning";
-  }
+// Si Vonu concluye que NO ve señales claras de IA/manipulación,
+// el color debe tranquilizar: verde, no naranja.
+// La mejora de detección visual la haremos en el prompt/modelo, no alarmando con el color.
+if (
+  isAiImageAnalysis &&
+  (
+    t.includes("no muestra señales claras") ||
+    t.includes("no veo señales claras") ||
+    t.includes("no hay señales claras") ||
+    t.includes("parece bastante natural") ||
+    t.includes("parece una foto real") ||
+    t.includes("parece real") ||
+    t.includes("los detalles") && t.includes("son consistentes") ||
+    t.includes("coherencia visual") && t.includes("sin artefactos") ||
+    t.includes("sin artefactos extraños") ||
+    t.includes("no generada por ia") ||
+    t.includes("no parece generada por ia")
+  )
+) {
+  return "safe";
+}
+
+// Si habla de IA pero reconoce duda real, edición fuerte o incertidumbre,
+// ahí sí dejamos naranja/precaución.
+if (
+  isAiImageAnalysis &&
+  (
+    t.includes("duda razonable") ||
+    t.includes("demasiado perfecta") ||
+    t.includes("demasiado pulida") ||
+    t.includes("edición fuerte") ||
+    t.includes("edicion fuerte") ||
+    t.includes("podría ser ia") ||
+    t.includes("podria ser ia") ||
+    t.includes("podría estar manipulada") ||
+    t.includes("podria estar manipulada") ||
+    t.includes("no puedo confirmarlo") ||
+    t.includes("no se puede confirmar") ||
+    t.includes("imagen sola no permite")
+  )
+) {
+  return "warning";
+}
 
   const safeSignals = [
     "riesgo bajo",
