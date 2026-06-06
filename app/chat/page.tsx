@@ -352,14 +352,106 @@ function getPreviousUserMessage(messages: Message[], index: number) {
   return null;
 }
 
-function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "high" | "danger" | null {
+type RiskStatus = "safe" | "warning" | "high" | "danger";
+
+function riskStatusFromScore(score: number): RiskStatus {
+  if (score >= 85) return "danger";
+  if (score >= 65) return "high";
+  if (score >= 35) return "warning";
+  return "safe";
+}
+
+function extractRiskPercentFromAssistantText(text: string): number | null {
+  const t = String(text ?? "").toLowerCase();
+  if (!t.trim()) return null;
+
+  const riskContextWords = [
+    "probabilidad estimada",
+    "probabilidad de estafa",
+    "probabilidad estimada de estafa",
+    "probabilidad de riesgo",
+    "probabilidad estimada de riesgo",
+    "probabilidad de engaño",
+    "probabilidad estimada de engaño",
+    "probabilidad de phishing",
+    "probabilidad de smishing",
+    "riesgo estimado",
+    "riesgo del perfil",
+    "riesgo general",
+    "nivel de riesgo",
+    "estafa",
+    "fraude",
+    "phishing",
+    "smishing",
+    "malware",
+    "engaño",
+    "scam",
+    "perfil falso",
+    "ia",
+    "inteligencia artificial",
+    "manipulación",
+    "manipulacion",
+    "edición fuerte",
+    "edicion fuerte",
+  ];
+
+  const hasRiskContext = riskContextWords.some((word) => t.includes(word));
+  if (!hasRiskContext) return null;
+
+  // Detecta rangos tipo 90-98%, 90–98%, 90 a 98%
+  const rangeRegex =
+    /(?:probabilidad estimada|probabilidad|riesgo estimado|riesgo|nivel de riesgo)[^%\n]{0,90}?(\d{1,3})\s*(?:-|–|—|a)\s*(\d{1,3})\s*%/gi;
+
+  let rangeMatch: RegExpExecArray | null;
+  let bestRange: number | null = null;
+
+  while ((rangeMatch = rangeRegex.exec(t)) !== null) {
+    const a = Number(rangeMatch[1]);
+    const b = Number(rangeMatch[2]);
+
+    if (Number.isFinite(a) && Number.isFinite(b)) {
+      const avg = Math.max(0, Math.min(100, (a + b) / 2));
+      bestRange = bestRange === null ? avg : Math.max(bestRange, avg);
+    }
+  }
+
+  if (bestRange !== null) return bestRange;
+
+  // Detecta porcentajes simples tipo 95%
+  const singleRegex =
+    /(?:probabilidad estimada|probabilidad|riesgo estimado|riesgo|nivel de riesgo)[^%\n]{0,90}?(\d{1,3})\s*%/gi;
+
+  let singleMatch: RegExpExecArray | null;
+  let bestSingle: number | null = null;
+
+  while ((singleMatch = singleRegex.exec(t)) !== null) {
+    const n = Number(singleMatch[1]);
+
+    if (Number.isFinite(n)) {
+      const score = Math.max(0, Math.min(100, n));
+      bestSingle = bestSingle === null ? score : Math.max(bestSingle, score);
+    }
+  }
+
+  return bestSingle;
+}
+
+function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
   const t = String(text ?? "").toLowerCase();
 
   if (!t.trim()) return null;
 
+  const percentScore = extractRiskPercentFromAssistantText(t);
+
+  if (typeof percentScore === "number") {
+    return riskStatusFromScore(percentScore);
+  }
+
   const safeSignals = [
     "riesgo bajo",
     "bajo riesgo",
+    "probabilidad baja",
+    "probabilidad estimada baja",
     "pinta bien",
     "parece fiable",
     "parece seguro",
@@ -396,20 +488,21 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
     "es un buen indicio",
   ];
 
-  // ✅ Importante: detectar primero conclusiones tranquilizadoras.
-  // Así evitamos que frases como “no aparece relacionada con malware”
-  // se conviertan en puntos rojos solo por contener la palabra malware.
+  // Primero señales tranquilizadoras para no pintar rojo por palabras sueltas como "malware".
   if (safeSignals.some((s) => t.includes(s))) {
     return "safe";
   }
 
   const dangerSignals = [
+    "riesgo crítico",
+    "riesgo critico",
+    "riesgo muy alto",
+    "peligro muy alto",
+    "probabilidad muy alta",
     "estafa confirmada",
     "fraude confirmado",
     "phishing confirmado",
     "smishing confirmado",
-    "peligro muy alto",
-    "riesgo muy alto",
     "alerta máxima",
     "alerta maxima",
     "no pulses",
@@ -423,8 +516,6 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
     "bloquealo",
     "bloquea",
     "denuncia",
-
-    // malware / enlaces técnicos peligrosos
     "malware",
     "relacionado con malware",
     "asociado a malware",
@@ -448,9 +539,9 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
 
   const highSignals = [
     "riesgo alto",
+    "alto riesgo",
     "intento de estafa",
     "huele a intento de estafa",
-    "alto riesgo",
     "muy sospechoso",
     "parece phishing",
     "parece smishing",
@@ -489,8 +580,6 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
     "obligacion contractual",
     "penalización económica",
     "penalizacion economica",
-
-    // web/malware técnico
     "comprobación de seguridad",
     "comprobacion de seguridad",
     "enlace malicioso",
@@ -520,6 +609,19 @@ function inferRiskStatusFromAssistantText(text: string): "safe" | "warning" | "h
     "compruebalo",
     "merece revisarse",
     "merece mirarlo",
+    "duda razonable",
+    "confianza media",
+    "confianza media-baja",
+    "no se puede asegurar",
+    "no se puede confirmar",
+    "no significa que sea scam",
+    "posible indicio",
+    "no verificado",
+    "no veo verificación",
+    "no aparece verificación",
+    "no aparece verificado",
+    "no se ve verificación",
+    "perfil no verificado",
     "revisaría la cláusula",
     "revisaria la clausula",
     "pide la cláusula exacta",
