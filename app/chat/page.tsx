@@ -61,7 +61,13 @@ type Message = {
   id: string;
   role: "user" | "assistant";
   text?: string;
+
+  // Imagen completa: solo para el análisis en vivo, NO para persistir en localStorage.
   image?: string;
+
+  // Miniatura ligera: sí se puede guardar en historial local.
+  imageThumb?: string;
+
   streaming?: boolean;
   pizarra?: string | null;
   boardImageB64?: string | null;
@@ -852,9 +858,18 @@ function stripHeavyMessageForStorage(message: Message): Message {
   const clean: Message = { ...message };
 
   // Evitamos guardar imágenes grandes en base64 dentro de localStorage.
-  // La imagen se usa para el análisis en el momento, pero no debe romper el historial.
+  // La imagen completa se usa para el análisis en el momento, pero no debe romper el historial.
   if (typeof clean.image === "string" && clean.image.startsWith("data:")) {
     clean.image = undefined;
+  }
+
+  // La miniatura sí se guarda porque es ligera y mantiene el contexto visual del chat.
+  if (
+    typeof clean.imageThumb === "string" &&
+    clean.imageThumb.startsWith("data:") &&
+    clean.imageThumb.length > 220_000
+  ) {
+    clean.imageThumb = undefined;
   }
 
   // La pizarra/imagen de tutor también puede pesar mucho.
@@ -2875,6 +2890,66 @@ function fileToDataUrl(file: File): Promise<string> {
     reader.onload = () => resolve(String(reader.result || ""));
     reader.onerror = reject;
     reader.readAsDataURL(file);
+  });
+}
+
+function createImageThumbnailFromDataUrl(
+  dataUrl: string,
+  options?: { maxSide?: number; quality?: number }
+): Promise<string | null> {
+  const maxSide = options?.maxSide ?? 520;
+  const quality = options?.quality ?? 0.72;
+
+  return new Promise((resolve) => {
+    try {
+      if (!dataUrl || !dataUrl.startsWith("data:image")) {
+        resolve(null);
+        return;
+      }
+
+      const img = new Image();
+
+      img.onload = () => {
+        try {
+          const width = img.naturalWidth || img.width;
+          const height = img.naturalHeight || img.height;
+
+          if (!width || !height) {
+            resolve(null);
+            return;
+          }
+
+          const ratio = Math.min(1, maxSide / Math.max(width, height));
+          const nextW = Math.max(1, Math.round(width * ratio));
+          const nextH = Math.max(1, Math.round(height * ratio));
+
+          const canvas = document.createElement("canvas");
+          canvas.width = nextW;
+          canvas.height = nextH;
+
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            resolve(null);
+            return;
+          }
+
+          // Fondo blanco por si la imagen original tiene transparencia.
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, nextW, nextH);
+          ctx.drawImage(img, 0, 0, nextW, nextH);
+
+          const thumb = canvas.toDataURL("image/jpeg", quality);
+          resolve(thumb);
+        } catch {
+          resolve(null);
+        }
+      };
+
+      img.onerror = () => resolve(null);
+      img.src = dataUrl;
+    } catch {
+      resolve(null);
+    }
   });
 }
 
@@ -5576,6 +5651,13 @@ const userText = input.trim();
 const imageBase64 = imagePreview;
 const pdfAttachment = pdfPreview;
 
+const imageThumb = imageBase64
+  ? await createImageThumbnailFromDataUrl(imageBase64, {
+      maxSide: 520,
+      quality: 0.72,
+    })
+  : null;
+
 setUiError(null);
 
 // ===== Tutor auto-activación (DESACTIVADA) =====
@@ -5623,6 +5705,7 @@ const userMsg: Message = {
           ? `He adjuntado un PDF: ${pdfAttachment.filename}`
           : undefined),
   image: imageBase64 || undefined,
+  imageThumb: imageThumb || undefined,
 };
 
 const assistantId = crypto.randomUUID();
@@ -7456,15 +7539,15 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                   ].join(" ")}
                 >
                   <div className="relative z-10">
-                    {m.image && (
-                      <div className="mb-2">
-                        <img
-                          src={m.image}
-                          alt="Adjunto"
-                          className="rounded-md max-h-60 max-w-full object-cover"
-                        />
-                      </div>
-                    )}
+                    {(m.image || m.imageThumb) && (
+                    <div className="mb-2">
+                      <img
+                        src={m.image || m.imageThumb}
+                        alt="Adjunto"
+                        className="rounded-md max-h-60 max-w-full object-cover"
+                      />
+                    </div>
+                  )}
 
                     {(m.text || m.streaming) && (
                       <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[21px] md:text-[22px] leading-9 md:leading-9 text-zinc-900">
