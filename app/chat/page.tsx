@@ -528,6 +528,39 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
     return "warning";
   }
 
+    const hasReusedImageSignal =
+    t.includes("aparece reutilizada") ||
+    t.includes("foto reutilizada") ||
+    t.includes("imagen reutilizada") ||
+    t.includes("aparece en varias fuentes") ||
+    t.includes("varias fuentes en la web") ||
+    t.includes("varias fuentes distintas") ||
+    t.includes("foto reciclada") ||
+    t.includes("imagen reciclada") ||
+    t.includes("foto robada") ||
+    t.includes("imagen robada") ||
+    t.includes("no parece una foto única") ||
+    t.includes("no parece una foto original") ||
+    t.includes("no es una foto original") ||
+    t.includes("procedencia dudosa");
+
+  if (hasReusedImageSignal) {
+    if (
+      t.includes("perfil falso") ||
+      t.includes("catfish") ||
+      t.includes("tinder") ||
+      t.includes("app de citas") ||
+      t.includes("instagram") ||
+      t.includes("red social") ||
+      t.includes("precaución alta") ||
+      t.includes("precaucion alta")
+    ) {
+      return "high";
+    }
+
+    return "warning";
+  }
+
   // ✅ Imágenes IA/manipulación:
 // Si Vonu concluye que NO ve señales claras de IA/manipulación,
 // el color debe tranquilizar: verde, no naranja.
@@ -697,6 +730,17 @@ if (
     "enlace malicioso",
     "script para sistemas tipo linux",
     "puerto raro",
+    "aparece reutilizada en varias fuentes",
+"aparece en varias fuentes",
+"foto reutilizada",
+"imagen reutilizada",
+"foto reciclada",
+"imagen reciclada",
+"foto robada",
+"imagen robada",
+"catfish",
+"perfil falso",
+"procedencia dudosa",
   ];
 
   if (highSignals.some((s) => t.includes(s))) {
@@ -1185,6 +1229,48 @@ function normalizeMathMarkdown(text: string) {
 
   // compactar saltos excesivos
   s = s.replace(/\n{3,}/g, "\n\n");
+
+  return s.trim();
+}
+
+function normalizeBulletMarkdown(text: string) {
+  let s = String(text ?? "");
+
+  // Convierte viñetas tipo "• texto" o "● texto" a Markdown real.
+  s = s.replace(/^\s*[•●]\s+/gm, "- ");
+
+  // Convierte falsas listas indentadas a listas reales SOLO cuando hay varias líneas seguidas.
+  const lines = s.split("\n");
+  const out: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    const prev = lines[i - 1] ?? "";
+    const next = lines[i + 1] ?? "";
+
+    const isIndentedText =
+      /^\s{2,}\S/.test(line) &&
+      !/^\s{2,}[-*+]\s+/.test(line) &&
+      !/^\s{2,}\d+\.\s+/.test(line);
+
+    const hasIndentedNeighbour =
+      /^\s{2,}\S/.test(prev) || /^\s{2,}\S/.test(next);
+
+    const looksLikeHeading =
+      /^\s{2,}.{1,48}:\s*$/.test(line);
+
+    if (isIndentedText && hasIndentedNeighbour && !looksLikeHeading) {
+      out.push(line.replace(/^\s+/, "- "));
+    } else {
+      out.push(line);
+    }
+  }
+
+  s = out.join("\n");
+
+  // Asegura salto antes de listas Markdown.
+  s = s.replace(/([^\n])\n(-\s+)/g, "$1\n\n$2");
 
   return s.trim();
 }
@@ -4155,29 +4241,23 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
   // ✅ Lista ordenada con contador “badge” (como tu captura)
       ol({ children, ...props }: any) {
   return (
-    <ol
-      className="my-3 ml-5 list-decimal space-y-2 text-zinc-900 marker:text-blue-700 marker:font-bold"
-      {...props}
-    >
+    <ol className="vonu-md-list vonu-md-ol" {...props}>
       {renderChildrenWithFractions(children)}
     </ol>
   );
 },
 
-      ul({ children, ...props }: any) {
+ul({ children, ...props }: any) {
   return (
-    <ul
-      className="my-3 ml-5 list-disc space-y-2 text-zinc-900 marker:text-zinc-500 marker:font-bold"
-      {...props}
-    >
+    <ul className="vonu-md-list vonu-md-ul" {...props}>
       {renderChildrenWithFractions(children)}
     </ul>
   );
 },
 
-      li({ children, ...props }: any) {
+li({ children, ...props }: any) {
   return (
-    <li className="pl-1 leading-7 text-zinc-900" {...props}>
+    <li className="vonu-md-li" {...props}>
       {renderChildrenWithFractions(children)}
     </li>
   );
@@ -6487,81 +6567,79 @@ return (
   /* Markdown real de respuestas Vonu */
 .vonu-markdown {
   font-size: 18px;
-  line-height: 1.85;
+  line-height: 1.78;
   color: #18181b;
+  font-weight: 500;
 }
 
 .vonu-markdown p {
-  margin: 0.75rem 0 !important;
+  margin: 0.72rem 0 !important;
 }
 
 .vonu-markdown strong {
-  font-weight: 900 !important;
-  color: #050505 !important;
+  font-weight: 950 !important;
+  color: #000 !important;
 }
 
 .vonu-markdown h1,
 .vonu-markdown h2,
 .vonu-markdown h3 {
-  color: #050505 !important;
-  font-weight: 900 !important;
+  color: #000 !important;
+  font-weight: 950 !important;
   letter-spacing: -0.025em;
 }
 
 .vonu-markdown h2 {
-  margin-top: 1.35rem !important;
-  margin-bottom: 0.55rem !important;
-  font-size: 1.18em !important;
+  margin: 1.35rem 0 0.55rem !important;
+  font-size: 1.22em !important;
   line-height: 1.25 !important;
 }
 
 .vonu-markdown h3 {
-  margin-top: 1.1rem !important;
-  margin-bottom: 0.45rem !important;
-  font-size: 1.05em !important;
+  margin: 1.15rem 0 0.45rem !important;
+  font-size: 1.08em !important;
   line-height: 1.3 !important;
 }
 
-.vonu-markdown ul {
-  list-style-type: disc !important;
-  list-style-position: outside !important;
-  padding-left: 1.45rem !important;
-  margin: 0.85rem 0 1rem !important;
+.vonu-markdown .vonu-md-list {
+  display: block !important;
+  margin: 0.85rem 0 1rem 0 !important;
+  padding-left: 1.35rem !important;
 }
 
-.vonu-markdown ol {
-  list-style-type: decimal !important;
-  list-style-position: outside !important;
-  padding-left: 1.45rem !important;
-  margin: 0.85rem 0 1rem !important;
+.vonu-markdown .vonu-md-ul {
+  list-style: disc outside !important;
 }
 
-.vonu-markdown li {
+.vonu-markdown .vonu-md-ol {
+  list-style: decimal outside !important;
+}
+
+.vonu-markdown .vonu-md-li {
   display: list-item !important;
-  margin: 0.35rem 0 !important;
-  padding-left: 0.15rem !important;
-  line-height: 1.7 !important;
+  margin: 0.38rem 0 !important;
+  padding-left: 0.2rem !important;
+  line-height: 1.65 !important;
 }
 
-.vonu-markdown li::marker {
-  color: #52525b;
-  font-weight: 800;
+.vonu-markdown .vonu-md-li::marker {
+  color: #52525b !important;
+  font-weight: 900 !important;
 }
 
 @media (max-width: 767px) {
   .vonu-markdown {
     font-size: 18px;
-    line-height: 1.82;
+    line-height: 1.76;
   }
 
   .vonu-markdown strong {
     font-weight: 950 !important;
-    color: #000000 !important;
+    color: #000 !important;
   }
 
-  .vonu-markdown ul,
-  .vonu-markdown ol {
-    padding-left: 1.35rem !important;
+  .vonu-markdown .vonu-md-list {
+    padding-left: 1.25rem !important;
   }
 }
 
@@ -7595,10 +7673,12 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
             : normalizeAssistantText(rawText);
 
           const mdText = !isUser
-            ? normalizeMathMarkdown(
-                sanitizeTutorLikeImage(normalizeAssistantText(mdTextRaw))
-              )
-            : mdTextRaw;
+  ? normalizeBulletMarkdown(
+      normalizeMathMarkdown(
+        sanitizeTutorLikeImage(normalizeAssistantText(mdTextRaw))
+      )
+    )
+  : mdTextRaw;
 
           const isStreaming = !!m.streaming;
           const hasText = (m.text ?? "").length > 0;
@@ -7633,7 +7713,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                   )}
 
                     {(m.text || m.streaming) && (
-                      <div className="vonu-markdown prose max-w-none min-w-0 overflow-visible break-words font-sans text-[18px] md:text-[19px] leading-8 md:leading-8">
+                      <div className="vonu-markdown max-w-none min-w-0 overflow-visible break-words font-sans">
                         <span className="whitespace-pre-wrap">{mdText}</span>
                       </div>
                     )}
