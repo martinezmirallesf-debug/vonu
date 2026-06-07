@@ -4154,20 +4154,20 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
 
   // ✅ Lista ordenada con contador “badge” (como tu captura)
       ol({ children, ...props }: any) {
-    return (
-      <ol
-        className="my-3 pl-6 list-decimal space-y-2 text-zinc-900 marker:text-blue-700 marker:font-bold"
-        {...props}
-      >
-        {renderChildrenWithFractions(children)}
-      </ol>
-    );
-  },
+  return (
+    <ol
+      className="my-3 ml-5 list-decimal space-y-2 text-zinc-900 marker:text-blue-700 marker:font-bold"
+      {...props}
+    >
+      {renderChildrenWithFractions(children)}
+    </ol>
+  );
+},
 
       ul({ children, ...props }: any) {
   return (
     <ul
-      className="my-3 ml-5 list-disc space-y-2 text-zinc-900 marker:text-zinc-500"
+      className="my-3 ml-5 list-disc space-y-2 text-zinc-900 marker:text-zinc-500 marker:font-bold"
       {...props}
     >
       {renderChildrenWithFractions(children)}
@@ -6484,6 +6484,86 @@ return (
     }
   }
 
+  /* Markdown real de respuestas Vonu */
+.vonu-markdown {
+  font-size: 18px;
+  line-height: 1.85;
+  color: #18181b;
+}
+
+.vonu-markdown p {
+  margin: 0.75rem 0 !important;
+}
+
+.vonu-markdown strong {
+  font-weight: 900 !important;
+  color: #050505 !important;
+}
+
+.vonu-markdown h1,
+.vonu-markdown h2,
+.vonu-markdown h3 {
+  color: #050505 !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.025em;
+}
+
+.vonu-markdown h2 {
+  margin-top: 1.35rem !important;
+  margin-bottom: 0.55rem !important;
+  font-size: 1.18em !important;
+  line-height: 1.25 !important;
+}
+
+.vonu-markdown h3 {
+  margin-top: 1.1rem !important;
+  margin-bottom: 0.45rem !important;
+  font-size: 1.05em !important;
+  line-height: 1.3 !important;
+}
+
+.vonu-markdown ul {
+  list-style-type: disc !important;
+  list-style-position: outside !important;
+  padding-left: 1.45rem !important;
+  margin: 0.85rem 0 1rem !important;
+}
+
+.vonu-markdown ol {
+  list-style-type: decimal !important;
+  list-style-position: outside !important;
+  padding-left: 1.45rem !important;
+  margin: 0.85rem 0 1rem !important;
+}
+
+.vonu-markdown li {
+  display: list-item !important;
+  margin: 0.35rem 0 !important;
+  padding-left: 0.15rem !important;
+  line-height: 1.7 !important;
+}
+
+.vonu-markdown li::marker {
+  color: #52525b;
+  font-weight: 800;
+}
+
+@media (max-width: 767px) {
+  .vonu-markdown {
+    font-size: 18px;
+    line-height: 1.82;
+  }
+
+  .vonu-markdown strong {
+    font-weight: 950 !important;
+    color: #000000 !important;
+  }
+
+  .vonu-markdown ul,
+  .vonu-markdown ol {
+    padding-left: 1.35rem !important;
+  }
+}
 
   /* Fondo inicial ligero: premium sin coste alto en móvil */
 .vonu-home-soft-bg {
@@ -7553,7 +7633,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                   )}
 
                     {(m.text || m.streaming) && (
-                      <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[21px] md:text-[22px] leading-9 md:leading-9 text-zinc-900">
+                      <div className="vonu-markdown prose max-w-none min-w-0 overflow-visible break-words font-sans text-[18px] md:text-[19px] leading-8 md:leading-8">
                         <span className="whitespace-pre-wrap">{mdText}</span>
                       </div>
                     )}
