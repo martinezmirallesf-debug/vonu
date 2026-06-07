@@ -4165,20 +4165,23 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
   },
 
       ul({ children, ...props }: any) {
-    return (
-      <ul className="my-3 space-y-2 text-zinc-900" {...props}>
-        {renderChildrenWithFractions(children)}
-      </ul>
-    );
-  },
+  return (
+    <ul
+      className="my-3 ml-5 list-disc space-y-2 text-zinc-900 marker:text-zinc-500"
+      {...props}
+    >
+      {renderChildrenWithFractions(children)}
+    </ul>
+  );
+},
 
       li({ children, ...props }: any) {
-    return (
-      <li className="leading-relaxed text-zinc-900" {...props}>
-        {renderChildrenWithFractions(children)}
-      </li>
-    );
-  },
+  return (
+    <li className="pl-1 leading-7 text-zinc-900" {...props}>
+      {renderChildrenWithFractions(children)}
+    </li>
+  );
+},
 
     // ✅ Títulos y negritas más potentes
     h1({ children, ...props }: any) {
@@ -4195,7 +4198,7 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
   h2({ children, ...props }: any) {
     return (
       <h2
-        className="mt-4 mb-2 text-[20px] md:text-[23px] leading-tight font-extrabold tracking-tight text-zinc-900"
+        className="mt-5 mb-2 text-[20px] md:text-[22px] leading-tight font-extrabold tracking-tight text-zinc-950"
         {...props}
       >
         {renderChildrenWithFractions(children)}
@@ -4206,7 +4209,7 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
   h3({ children, ...props }: any) {
     return (
       <h3
-        className="mt-3 mb-1.5 text-[17px] md:text-[19px] leading-snug font-bold text-zinc-900"
+        className="mt-4 mb-2 text-[18px] md:text-[19px] leading-snug font-extrabold text-zinc-950"
         {...props}
       >
         {renderChildrenWithFractions(children)}
@@ -4231,23 +4234,23 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
       }
 
       return (
-        <p
-          className={
-            looksMathLine
-              ? "my-4 leading-8 text-zinc-900 font-medium"
-              : "my-2 leading-7 text-zinc-900"
-          }
-          {...props}
-        >
-          {renderChildrenWithFractions(children)}
-        </p>
-      );
+  <p
+    className={
+      looksMathLine
+        ? "my-4 leading-8 text-zinc-900 font-medium"
+        : "my-3 leading-8 text-zinc-900"
+    }
+    {...props}
+  >
+    {renderChildrenWithFractions(children)}
+  </p>
+);
     },
 
   // ✅ Negritas más visibles
   strong({ children, ...props }: any) {
   return (
-    <strong className="font-extrabold text-zinc-900" {...props}>
+    <strong className="font-extrabold text-zinc-950" {...props}>
       {renderChildrenWithFractions(children)}
     </strong>
   );
@@ -7625,7 +7628,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                   )}
 
                   {(m.text || m.streaming) && (
-  <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[21px] md:text-[22px] leading-9 md:leading-9">
+  <div className="vonu-markdown prose max-w-none min-w-0 overflow-visible break-words font-sans text-[18px] md:text-[19px] leading-8 md:leading-8">
     {mdText.includes('"elements"') || mdText.includes("```excalidraw") ? null : (
       <>
         <ReactMarkdown
