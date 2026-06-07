@@ -439,6 +439,43 @@ function extractRiskPercentFromAssistantText(text: string): number | null {
     }
   }
 
+  const reverseRangeRegex =
+  /(\d{1,3})\s*(?:-|–|—|a)\s*(\d{1,3})\s*%\s*(?:de\s+)?(?:probabilidad|riesgo|posibilidad)/gi;
+
+let reverseRangeMatch: RegExpExecArray | null;
+let bestReverseRange: number | null = null;
+
+while ((reverseRangeMatch = reverseRangeRegex.exec(t)) !== null) {
+  const a = Number(reverseRangeMatch[1]);
+  const b = Number(reverseRangeMatch[2]);
+
+  if (Number.isFinite(a) && Number.isFinite(b)) {
+    const avg = Math.max(0, Math.min(100, (a + b) / 2));
+    bestReverseRange =
+      bestReverseRange === null ? avg : Math.max(bestReverseRange, avg);
+  }
+}
+
+if (bestReverseRange !== null) return bestReverseRange;
+
+const reverseSingleRegex =
+  /(\d{1,3})\s*%\s*(?:de\s+)?(?:probabilidad|riesgo|posibilidad)/gi;
+
+let reverseSingleMatch: RegExpExecArray | null;
+let bestReverseSingle: number | null = null;
+
+while ((reverseSingleMatch = reverseSingleRegex.exec(t)) !== null) {
+  const n = Number(reverseSingleMatch[1]);
+
+  if (Number.isFinite(n)) {
+    const score = Math.max(0, Math.min(100, n));
+    bestReverseSingle =
+      bestReverseSingle === null ? score : Math.max(bestReverseSingle, score);
+  }
+}
+
+if (bestReverseSingle !== null) return bestReverseSingle;
+
   return bestSingle;
 }
 
@@ -560,6 +597,23 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
 
     return "warning";
   }
+
+  if (
+  isAiImageAnalysis &&
+  (
+    t.includes("edición fuerte") ||
+    t.includes("edicion fuerte") ||
+    t.includes("retoque digital") ||
+    t.includes("retocada") ||
+    t.includes("retocado") ||
+    t.includes("probabilidad de edición") ||
+    t.includes("probabilidad de edicion") ||
+    t.includes("podría estar editada") ||
+    t.includes("podria estar editada")
+  )
+) {
+  return "warning";
+}
 
   // ✅ Imágenes IA/manipulación:
 // Si Vonu concluye que NO ve señales claras de IA/manipulación,
