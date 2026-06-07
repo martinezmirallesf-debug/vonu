@@ -559,11 +559,6 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
     t.includes("no aparece verificación") ||
     t.includes("duda razonable");
 
-  // ✅ Perfiles/redes/apps de citas:
-  // Sin dinero, crypto, códigos, amenazas o presión fuerte => precaución, no rojo.
-  if (isDatingOrSocialProfile && hasMixedOrCautionTone && !hasHardScamEscalation) {
-    return "warning";
-  }
 
     const hasReusedImageSignal =
     t.includes("aparece reutilizada") ||
@@ -595,6 +590,12 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
       return "high";
     }
 
+    return "warning";
+  }
+
+    // ✅ Perfiles/redes/apps de citas:
+  // Sin dinero, crypto, códigos, amenazas o presión fuerte => precaución, no rojo.
+  if (isDatingOrSocialProfile && hasMixedOrCautionTone && !hasHardScamEscalation) {
     return "warning";
   }
 
@@ -7842,7 +7843,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                   )}
 
                   {(m.text || m.streaming) && (
-    <div className="vonu-markdown prose max-w-none min-w-0 overflow-visible break-words font-sans text-[18px] md:text-[19px] leading-8 md:leading-8">
+    <div className="vonu-markdown max-w-none min-w-0 overflow-visible break-words font-sans text-[18px] md:text-[19px] leading-8 md:leading-8">
     {mdText.includes('"elements"') || mdText.includes("```excalidraw") ? null : (
       <>
         <ReactMarkdown
