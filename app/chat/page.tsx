@@ -512,7 +512,7 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
     t.includes("manipulado") ||
     t.includes("deepfake");
 
-  const hasHardScamEscalation =
+    const hasHardScamEscalation =
     t.includes("pide dinero") ||
     t.includes("pedir dinero") ||
     t.includes("enviar dinero") ||
@@ -533,14 +533,78 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
     t.includes("trading") ||
     t.includes("inversión") ||
     t.includes("inversion") ||
-    t.includes("telegram") ||
-    t.includes("whatsapp") ||
     t.includes("fotos íntimas") ||
     t.includes("fotos intimas") ||
     t.includes("sextorsión") ||
     t.includes("sextorsion") ||
     t.includes("amenaza") ||
-    t.includes("chantaje");
+    t.includes("chantaje") ||
+    t.includes("presión fuerte") ||
+    t.includes("presion fuerte") ||
+    t.includes("urgencia clara") ||
+    t.includes("urgencia sospechosa") ||
+    t.includes("mete prisa") ||
+    t.includes("meten prisa");
+
+  const hasExternalMoveRisk =
+    (
+      t.includes("mover rápido") ||
+      t.includes("mover la conversación") ||
+      t.includes("llevarte rápido") ||
+      t.includes("sacarte de tinder") ||
+      t.includes("fuera de tinder") ||
+      t.includes("pasar rápido") ||
+      t.includes("pasa rápido")
+    ) &&
+    (t.includes("whatsapp") || t.includes("telegram"));
+
+  const hasReusedImageSignal =
+    t.includes("aparece reutilizada") ||
+    t.includes("foto reutilizada") ||
+    t.includes("imagen reutilizada") ||
+    t.includes("aparece en varias fuentes") ||
+    t.includes("varias fuentes en la web") ||
+    t.includes("varias fuentes distintas") ||
+    t.includes("foto reciclada") ||
+    t.includes("imagen reciclada") ||
+    t.includes("foto robada") ||
+    t.includes("imagen robada") ||
+    t.includes("no parece una foto única") ||
+    t.includes("no parece una foto original") ||
+    t.includes("no es una foto original") ||
+    t.includes("procedencia dudosa");
+
+  const hasDatingLowRiskTone =
+    isDatingOrSocialProfile &&
+    (
+      t.includes("no hay banderas rojas claras") ||
+      t.includes("no se detectan señales claras") ||
+      t.includes("no hay señales claras de riesgo") ||
+      t.includes("no hay señales claras por las que preocuparse") ||
+      t.includes("no hay indicios de presión") ||
+      t.includes("no hay indicios visibles de presión") ||
+      t.includes("no hay dinero") ||
+      t.includes("no hay enlaces") ||
+      t.includes("no hay urgencia") ||
+      t.includes("no se ve ninguna señal de dinero") ||
+      t.includes("no se ve ninguna señal de presión") ||
+      t.includes("no se ve ninguna señal de urgencia") ||
+      t.includes("de entrada no me da mala espina") ||
+      t.includes("no veo nada especialmente raro")
+    ) &&
+    !hasHardScamEscalation &&
+    !hasExternalMoveRisk &&
+    !hasReusedImageSignal &&
+    !t.includes("precaución alta") &&
+    !t.includes("precaucion alta") &&
+    !t.includes("bastante precaución") &&
+    !t.includes("bastante precaucion") &&
+    !t.includes("perfil falso") &&
+    !t.includes("catfish");
+
+  if (hasDatingLowRiskTone) {
+    return "safe";
+  }
 
   const hasMixedOrCautionTone =
     t.includes("señales mixtas") ||
@@ -559,23 +623,6 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
     t.includes("no aparece verificación") ||
     t.includes("duda razonable");
 
-
-    const hasReusedImageSignal =
-    t.includes("aparece reutilizada") ||
-    t.includes("foto reutilizada") ||
-    t.includes("imagen reutilizada") ||
-    t.includes("aparece en varias fuentes") ||
-    t.includes("varias fuentes en la web") ||
-    t.includes("varias fuentes distintas") ||
-    t.includes("foto reciclada") ||
-    t.includes("imagen reciclada") ||
-    t.includes("foto robada") ||
-    t.includes("imagen robada") ||
-    t.includes("no parece una foto única") ||
-    t.includes("no parece una foto original") ||
-    t.includes("no es una foto original") ||
-    t.includes("procedencia dudosa");
-
   if (hasReusedImageSignal) {
     if (
       t.includes("perfil falso") ||
@@ -593,9 +640,14 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
     return "warning";
   }
 
-    // ✅ Perfiles/redes/apps de citas:
+  // ✅ Perfiles/redes/apps de citas:
   // Sin dinero, crypto, códigos, amenazas o presión fuerte => precaución, no rojo.
-  if (isDatingOrSocialProfile && hasMixedOrCautionTone && !hasHardScamEscalation) {
+  if (
+    isDatingOrSocialProfile &&
+    hasMixedOrCautionTone &&
+    !hasHardScamEscalation &&
+    !hasExternalMoveRisk
+  ) {
     return "warning";
   }
 
