@@ -7628,7 +7628,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                   )}
 
                   {(m.text || m.streaming) && (
-  <div className="vonu-markdown prose max-w-none min-w-0 overflow-visible break-words font-sans text-[18px] md:text-[19px] leading-8 md:leading-8">
+    <div className="vonu-markdown prose max-w-none min-w-0 overflow-visible break-words font-sans text-[18px] md:text-[19px] leading-8 md:leading-8">
     {mdText.includes('"elements"') || mdText.includes("```excalidraw") ? null : (
       <>
         <ReactMarkdown
