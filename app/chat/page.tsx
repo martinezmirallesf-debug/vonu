@@ -512,6 +512,46 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
     t.includes("manipulado") ||
     t.includes("deepfake");
 
+    const hasLowRiskNormalImageTone =
+  (
+    t.includes("parece una selfie natural") ||
+    t.includes("parece una foto natural") ||
+    t.includes("parece una imagen natural") ||
+    t.includes("parece una foto real") ||
+    t.includes("parece una selfie real") ||
+    t.includes("tomada al aire libre") ||
+    t.includes("sin señales evidentes de manipulación") ||
+    t.includes("sin señales claras de manipulación") ||
+    t.includes("sin señales evidentes de edición fuerte") ||
+    t.includes("sin anomalías visibles") ||
+    t.includes("no hay anomalías visibles") ||
+    t.includes("no muestra señales claras de edición") ||
+    t.includes("no parece generada por ia") ||
+    t.includes("no parece ia pura")
+  ) &&
+  !t.includes("aparece reutilizada") &&
+  !t.includes("imagen reutilizada") &&
+  !t.includes("foto reutilizada") &&
+  !t.includes("varias fuentes") &&
+  !t.includes("foto robada") &&
+  !t.includes("perfil falso") &&
+  !t.includes("catfish") &&
+  !t.includes("estafa") &&
+  !t.includes("dinero") &&
+  !t.includes("inversión") &&
+  !t.includes("inversion") &&
+  !t.includes("cripto") &&
+  !t.includes("código") &&
+  !t.includes("codigo") &&
+  !t.includes("documentos") &&
+  !t.includes("presión") &&
+  !t.includes("presion") &&
+  !t.includes("urgencia");
+
+  if (hasLowRiskNormalImageTone) {
+  return "safe";
+}
+
     const hasHardScamEscalation =
     t.includes("pide dinero") ||
     t.includes("pedir dinero") ||
