@@ -490,6 +490,60 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
     return riskStatusFromScore(percentScore);
   }
 
+  const strongAiOrManipulationSignals = [
+  "muchas señales que sugieren que es generada",
+  "muchas señales que sugieren que es generado",
+  "generada o manipulada por ia",
+  "generado o manipulado por ia",
+  "no una foto real",
+  "no parece una foto real",
+  "no la daría por una foto real",
+  "señales compatibles con ia",
+  "senales compatibles con ia",
+  "señales claras de ia",
+  "senales claras de ia",
+  "señales de generación por ia",
+  "senales de generacion por ia",
+  "imagen generada por ia",
+  "foto generada por ia",
+  "manipulada por ia",
+  "manipulado por ia",
+  "postura antinatural",
+  "postura físicamente imposible",
+  "postura fisicamente imposible",
+  "proporciones inusuales",
+  "extremidades deformes",
+  "brazos y piernas deformes",
+  "pies deformes",
+  "manos deformes",
+  "sombras incoherentes",
+  "sombra no corresponde",
+  "contacto con el suelo no parece realista",
+];
+
+const lowRiskNegationsForAi = [
+  "no parece generada por ia",
+  "no parece generado por ia",
+  "no parece una imagen generada por ia",
+  "no parece una foto generada por ia",
+  "no muestra señales claras de manipulación",
+  "no muestra senales claras de manipulacion",
+  "sin señales claras de manipulación",
+  "sin senales claras de manipulacion",
+  "sin señales evidentes de manipulación",
+  "sin senales evidentes de manipulacion",
+];
+
+const hasStrongAiOrManipulationSignal = strongAiOrManipulationSignals.some((s) =>
+  t.includes(s)
+);
+
+const hasLowRiskAiNegation = lowRiskNegationsForAi.some((s) => t.includes(s));
+
+if (hasStrongAiOrManipulationSignal && !hasLowRiskAiNegation) {
+  return "warning";
+}
+
   const isDatingOrSocialProfile =
     t.includes("tinder") ||
     t.includes("bumble") ||
