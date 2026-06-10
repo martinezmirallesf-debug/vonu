@@ -768,6 +768,7 @@ if (hasStrongAiOrManipulationSignal && !hasLowRiskAiNegation) {
 
   if (
   isAiImageAnalysis &&
+  !hasLowRiskAiNegation &&
   (
     t.includes("edición fuerte") ||
     t.includes("edicion fuerte") ||
