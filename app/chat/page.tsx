@@ -490,131 +490,6 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
     return riskStatusFromScore(percentScore);
   }
 
-  // ✅ PRIORIDAD: si Vonu detecta IA/manipulación clara,
-// nunca debe salir verde solo porque también diga "no es 100% seguro".
-const hasClearAiOrManipulationConclusion =
-  t.includes("muchas señales que sugieren que es generada") ||
-  t.includes("muchas señales que sugieren que es generado") ||
-  t.includes("tiene muchas señales que sugieren que es generada") ||
-  t.includes("tiene muchas señales que sugieren que es generado") ||
-  t.includes("generada o manipulada por ia") ||
-  t.includes("generado o manipulado por ia") ||
-  t.includes("generada o editada con ia") ||
-  t.includes("generado o editado con ia") ||
-  t.includes("no una foto real") ||
-  t.includes("no parece una foto real") ||
-  t.includes("no la daría por una foto real") ||
-  t.includes("no la daria por una foto real") ||
-  t.includes("no la daría por una foto real sin más") ||
-  t.includes("no la daria por una foto real sin mas") ||
-  t.includes("detalles visuales que me hacen dudar") ||
-  t.includes("señales compatibles con ia") ||
-  t.includes("senales compatibles con ia") ||
-  t.includes("señales claras de ia") ||
-  t.includes("senales claras de ia") ||
-  t.includes("señales de generación por ia") ||
-  t.includes("senales de generacion por ia") ||
-  t.includes("imagen generada por ia") ||
-  t.includes("foto generada por ia") ||
-  t.includes("manipulada por ia") ||
-  t.includes("manipulado por ia") ||
-  t.includes("postura antinatural") ||
-  t.includes("postura físicamente imposible") ||
-  t.includes("postura fisicamente imposible") ||
-  t.includes("proporciones inusuales") ||
-  t.includes("extremidades deformes") ||
-  t.includes("brazos y piernas deformes") ||
-  t.includes("piernas en vez de brazos") ||
-  t.includes("cabeza doblada") ||
-  t.includes("pies deformes") ||
-  t.includes("manos deformes") ||
-  t.includes("calzado deformado") ||
-  t.includes("zapatillas deformadas") ||
-  t.includes("suelas imposibles") ||
-  t.includes("apoyo poco realista") ||
-  t.includes("sombras incoherentes") ||
-  t.includes("sombra no corresponde") ||
-  t.includes("contacto con el suelo no parece realista");
-
-if (hasClearAiOrManipulationConclusion) {
-  return "warning";
-}
-
-  const strongAiOrManipulationSignals = [
-  "muchas señales que sugieren que es generada",
-  "muchas señales que sugieren que es generado",
-  "generada o manipulada por ia",
-  "generado o manipulado por ia",
-  "no una foto real",
-  "no parece una foto real",
-  "no la daría por una foto real",
-  "señales compatibles con ia",
-  "senales compatibles con ia",
-  "señales claras de ia",
-  "senales claras de ia",
-  "señales de generación por ia",
-  "senales de generacion por ia",
-  "imagen generada por ia",
-  "foto generada por ia",
-  "manipulada por ia",
-  "manipulado por ia",
-  "postura antinatural",
-  "postura físicamente imposible",
-  "postura fisicamente imposible",
-  "proporciones inusuales",
-  "extremidades deformes",
-  "brazos y piernas deformes",
-  "pies deformes",
-  "manos deformes",
-  "sombras incoherentes",
-  "sombra no corresponde",
-  "contacto con el suelo no parece realista",
-  "tiene muchas señales que sugieren que es generada",
-"tiene muchas señales que sugieren que es generado",
-"generada o manipulada por ia",
-"generado o manipulado por ia",
-"no una foto real",
-"no parece una foto real",
-"no la daría por una foto real",
-"no la daria por una foto real",
-"detalles visuales que me hacen dudar",
-"detalles en pies",
-"detalles en el calzado",
-"detalles en pies, calzado",
-"pies deformes",
-"calzado deformado",
-"zapatillas deformadas",
-"suelas imposibles",
-"apoyo poco realista",
-"contacto con el suelo no parece realista",
-"postura antinatural",
-"proporciones inusuales",
-"extremidades deformes",
-];
-
-const lowRiskNegationsForAi = [
-  "no parece generada por ia",
-  "no parece generado por ia",
-  "no parece una imagen generada por ia",
-  "no parece una foto generada por ia",
-  "no muestra señales claras de manipulación",
-  "no muestra senales claras de manipulacion",
-  "sin señales claras de manipulación",
-  "sin senales claras de manipulacion",
-  "sin señales evidentes de manipulación",
-  "sin senales evidentes de manipulacion",
-];
-
-const hasStrongAiOrManipulationSignal = strongAiOrManipulationSignals.some((s) =>
-  t.includes(s)
-);
-
-const hasLowRiskAiNegation = lowRiskNegationsForAi.some((s) => t.includes(s));
-
-if (hasStrongAiOrManipulationSignal && !hasLowRiskAiNegation) {
-  return "warning";
-}
-
   const isDatingOrSocialProfile =
     t.includes("tinder") ||
     t.includes("bumble") ||
@@ -630,54 +505,35 @@ if (hasStrongAiOrManipulationSignal && !hasLowRiskAiNegation) {
     t.includes("ia") ||
     t.includes("inteligencia artificial") ||
     t.includes("generada por ia") ||
+    t.includes("generado por ia") ||
     t.includes("imagen generada") ||
+    t.includes("foto generada") ||
     t.includes("edición fuerte") ||
     t.includes("edicion fuerte") ||
     t.includes("manipulada") ||
     t.includes("manipulado") ||
     t.includes("deepfake");
 
-    const hasLowRiskNormalImageTone =
-  (
-    t.includes("parece una selfie natural") ||
-    t.includes("parece una foto natural") ||
-    t.includes("parece una imagen natural") ||
-    t.includes("parece una foto real") ||
-    t.includes("parece una selfie real") ||
-    t.includes("tomada al aire libre") ||
-    t.includes("sin señales evidentes de manipulación") ||
-    t.includes("sin señales claras de manipulación") ||
-    t.includes("sin señales evidentes de edición fuerte") ||
-    t.includes("sin anomalías visibles") ||
-    t.includes("no hay anomalías visibles") ||
-    t.includes("no muestra señales claras de edición") ||
-    t.includes("no parece generada por ia") ||
-    t.includes("no parece ia pura")
-  ) &&
-  !t.includes("aparece reutilizada") &&
-  !t.includes("imagen reutilizada") &&
-  !t.includes("foto reutilizada") &&
-  !t.includes("varias fuentes") &&
-  !t.includes("foto robada") &&
-  !t.includes("perfil falso") &&
-  !t.includes("catfish") &&
-  !t.includes("estafa") &&
-  !t.includes("dinero") &&
-  !t.includes("inversión") &&
-  !t.includes("inversion") &&
-  !t.includes("cripto") &&
-  !t.includes("código") &&
-  !t.includes("codigo") &&
-  !t.includes("documentos") &&
-  !t.includes("presión") &&
-  !t.includes("presion") &&
-  !t.includes("urgencia");
+  const hasReusedImageSignal =
+    t.includes("aparece reutilizada") ||
+    t.includes("aparece reutilizado") ||
+    t.includes("foto reutilizada") ||
+    t.includes("imagen reutilizada") ||
+    t.includes("aparece en varias fuentes") ||
+    t.includes("varias fuentes en la web") ||
+    t.includes("varias fuentes distintas") ||
+    t.includes("coincidencias completas") ||
+    t.includes("foto reciclada") ||
+    t.includes("imagen reciclada") ||
+    t.includes("foto robada") ||
+    t.includes("imagen robada") ||
+    t.includes("no parece una foto única") ||
+    t.includes("no parece una foto unica") ||
+    t.includes("no parece una foto original") ||
+    t.includes("no es una foto original") ||
+    t.includes("procedencia dudosa");
 
-  if (hasLowRiskNormalImageTone) {
-  return "safe";
-}
-
-    const hasHardScamEscalation =
+  const hasMoneyCryptoOrRealDanger =
     t.includes("pide dinero") ||
     t.includes("pedir dinero") ||
     t.includes("enviar dinero") ||
@@ -685,7 +541,7 @@ if (hasStrongAiOrManipulationSignal && !hasLowRiskAiNegation) {
     t.includes("envies dinero") ||
     t.includes("transferencia") ||
     t.includes("bizum") ||
-    t.includes("tarjeta") ||
+    t.includes("tarjeta bancaria") ||
     t.includes("código") ||
     t.includes("codigo") ||
     t.includes("otp") ||
@@ -706,295 +562,169 @@ if (hasStrongAiOrManipulationSignal && !hasLowRiskAiNegation) {
     t.includes("chantaje") ||
     t.includes("presión fuerte") ||
     t.includes("presion fuerte") ||
-    t.includes("urgencia clara") ||
-    t.includes("urgencia sospechosa") ||
-    t.includes("mete prisa") ||
-    t.includes("meten prisa");
+    t.includes("urgencia sospechosa");
 
-  const hasExternalMoveRisk =
+  const hasClearAiFakeConclusion =
+    isAiImageAnalysis &&
     (
-      t.includes("mover rápido") ||
-      t.includes("mover la conversación") ||
-      t.includes("llevarte rápido") ||
-      t.includes("sacarte de tinder") ||
-      t.includes("fuera de tinder") ||
-      t.includes("pasar rápido") ||
-      t.includes("pasa rápido")
-    ) &&
-    (t.includes("whatsapp") || t.includes("telegram"));
+      t.includes("no parece una foto real") ||
+      t.includes("no parece una imagen real") ||
+      t.includes("no la daría por una foto real") ||
+      t.includes("no la daria por una foto real") ||
+      t.includes("no la daría por una foto real sin más") ||
+      t.includes("no la daria por una foto real sin mas") ||
+      t.includes("hay varias anomalías") ||
+      t.includes("hay varias anomalias") ||
+      t.includes("anomalías físicas") ||
+      t.includes("anomalias fisicas") ||
+      t.includes("generada o manipulada por ia") ||
+      t.includes("generado o manipulado por ia") ||
+      t.includes("generada o editada con ia") ||
+      t.includes("generado o editado con ia") ||
+      t.includes("sugieren que esta imagen está generada por ia") ||
+      t.includes("sugieren que esta imagen esta generada por ia") ||
+      t.includes("sugieren que es generada o manipulada por ia") ||
+      t.includes("imagen está generada por ia") ||
+      t.includes("imagen esta generada por ia") ||
+      t.includes("señales compatibles con ia") ||
+      t.includes("senales compatibles con ia") ||
+      t.includes("señales claras de ia") ||
+      t.includes("senales claras de ia") ||
+      t.includes("postura físicamente improbable") ||
+      t.includes("postura fisicamente improbable") ||
+      t.includes("postura físicamente imposible") ||
+      t.includes("postura fisicamente imposible") ||
+      t.includes("postura antinatural") ||
+      t.includes("proporciones inusuales") ||
+      t.includes("extremidades deformes") ||
+      t.includes("brazos y piernas deformes") ||
+      t.includes("piernas en vez de brazos") ||
+      t.includes("cabeza doblada") ||
+      t.includes("pies deformes") ||
+      t.includes("manos deformes") ||
+      t.includes("calzado deformado") ||
+      t.includes("zapatillas deformadas") ||
+      t.includes("suelas imposibles") ||
+      t.includes("apoyo poco realista") ||
+      t.includes("no transmite un contacto real") ||
+      t.includes("mal apoyado") ||
+      t.includes("flotando") ||
+      t.includes("sombras incoherentes") ||
+      t.includes("sombra no corresponde") ||
+      t.includes("contacto con el suelo no parece realista") ||
+      t.includes("detalles visuales que me hacen dudar")
+    );
 
-  const hasReusedImageSignal =
-    t.includes("aparece reutilizada") ||
-    t.includes("foto reutilizada") ||
-    t.includes("imagen reutilizada") ||
-    t.includes("aparece en varias fuentes") ||
-    t.includes("varias fuentes en la web") ||
-    t.includes("varias fuentes distintas") ||
-    t.includes("foto reciclada") ||
-    t.includes("imagen reciclada") ||
-    t.includes("foto robada") ||
-    t.includes("imagen robada") ||
-    t.includes("no parece una foto única") ||
-    t.includes("no parece una foto original") ||
-    t.includes("no es una foto original") ||
-    t.includes("procedencia dudosa");
-    // ✅ PRIORIDAD: perfil de citas verificado + sin señales fuertes = verde.
-// La prudencia normal de "ve con calma" no debe convertirlo en naranja.
-const hasVerifiedDatingLowRisk =
-  isDatingOrSocialProfile &&
-  (
-    t.includes("el perfil está verificado en tinder") ||
-    t.includes("el perfil esta verificado en tinder") ||
-    t.includes("está verificado en tinder") ||
-    t.includes("esta verificado en tinder") ||
-    t.includes("perfil verificado") ||
-    t.includes("está verificado") ||
-    t.includes("esta verificado") ||
-    t.includes("verificación y una bio coherente") ||
-    t.includes("verificacion y una bio coherente") ||
-    t.includes("tiene señales positivas como la verificación") ||
-    t.includes("tiene senales positivas como la verificacion") ||
-    t.includes("suma confianza sobre la identidad")
-  ) &&
-  (
-    t.includes("no veo indicios claros") ||
-    t.includes("no veo indicios claros de que este perfil") ||
-    t.includes("no veo indicios claros de que este perfil de tinder sea peligroso") ||
-    t.includes("no veo indicios claros de que este perfil de tinder sea peligroso o falso") ||
-    t.includes("no hay señales visibles de solicitudes de dinero") ||
-    t.includes("no hay señales visibles de solicitud de dinero") ||
-    t.includes("no hay señales visibles de solicitudes de dinero, enlaces sospechosos o presión") ||
-    t.includes("no hay señales visibles de solicitudes de dinero, enlaces sospechosos o presion") ||
-    t.includes("no hay señales visibles de dinero") ||
-    t.includes("no hay enlaces sospechosos") ||
-    t.includes("no hay presión") ||
-    t.includes("no hay presion") ||
-    t.includes("no hay banderas rojas claras") ||
-    t.includes("no hay señales típicas de perfil falso") ||
-    t.includes("no veo señales típicas de perfil falso")
-  ) &&
-  !hasHardScamEscalation &&
-  !hasExternalMoveRisk &&
-  !hasReusedImageSignal &&
-  !t.includes("foto reutilizada") &&
-  !t.includes("imagen reutilizada") &&
-  !t.includes("aparece reutilizada") &&
-  !t.includes("aparece en varias fuentes") &&
-  !t.includes("cripto") &&
-  !t.includes("crypto") &&
-  !t.includes("trading") &&
-  !t.includes("inversión") &&
-  !t.includes("inversion") &&
-  !t.includes("pide dinero") &&
-  !t.includes("enviar dinero") &&
-  !t.includes("código") &&
-  !t.includes("codigo") &&
-  !t.includes("documentos") &&
-  !t.includes("amenaza") &&
-  !t.includes("chantaje") &&
-  !t.includes("perfil falso") &&
-  !t.includes("catfish");
+  if (hasClearAiFakeConclusion) {
+    return "warning";
+  }
 
-if (hasVerifiedDatingLowRisk) {
-  return "safe";
-}
-
-  const hasDatingLowRiskTone =
+  const hasCalmDatingOpening =
     isDatingOrSocialProfile &&
-      (
+    (
+      t.includes("en principio, no se detectan señales claras") ||
+      t.includes("en principio, no se detectan senales claras") ||
+      t.includes("en principio, no veo indicios claros") ||
       t.includes("no hay banderas rojas claras") ||
       t.includes("no se detectan señales claras") ||
+      t.includes("no se detectan senales claras") ||
       t.includes("no hay señales claras de riesgo") ||
+      t.includes("no hay senales claras de riesgo") ||
       t.includes("no hay señales claras por las que preocuparse") ||
-      t.includes("no veo indicios claros de que este perfil") ||
+      t.includes("no hay senales claras por las que preocuparse") ||
+      t.includes("no veo indicios claros de que este perfil sea peligroso") ||
       t.includes("no veo indicios claros de que este perfil de tinder sea peligroso") ||
-      t.includes("no veo indicios claros de que este perfil de tinder sea peligroso o falso") ||
-      t.includes("no veo indicios de que este perfil sea peligroso") ||
       t.includes("no veo señales típicas de perfil falso") ||
-      t.includes("el perfil está verificado en tinder") ||
-      t.includes("el perfil esta verificado en tinder") ||
-      t.includes("está verificado en tinder") ||
-      t.includes("esta verificado en tinder") ||
-      t.includes("tiene señales positivas como la verificación") ||
-      t.includes("verificación y una bio coherente") ||
-      t.includes("verificacion y una bio coherente") ||
-      t.includes("suma confianza sobre la identidad") ||
-      t.includes("no hay indicios de presión") ||
-      t.includes("no hay indicios visibles de presión") ||
-      t.includes("no hay dinero") ||
-      t.includes("no hay enlaces") ||
-      t.includes("no hay urgencia") ||
-      t.includes("no hay señales visibles de solicitudes de dinero") ||
-      t.includes("no hay señales visibles de solicitud de dinero") ||
-      t.includes("no hay señales visibles de solicitudes de dinero, enlaces sospechosos o presión") ||
-      t.includes("no hay señales visibles de solicitudes de dinero, enlaces sospechosos o presion") ||
-      t.includes("no se ve ninguna señal de dinero") ||
-      t.includes("no se ve ninguna señal de presión") ||
-      t.includes("no se ve ninguna señal de urgencia") ||
-      t.includes("de entrada no me da mala espina") ||
-      t.includes("no veo nada especialmente raro")
-    ) &&
-    !hasHardScamEscalation &&
-    !hasExternalMoveRisk &&
-    !hasReusedImageSignal &&
-    !t.includes("precaución alta") &&
-    !t.includes("precaucion alta") &&
-    !t.includes("bastante precaución") &&
-    !t.includes("bastante precaucion") &&
-    !t.includes("perfil falso") &&
-    !t.includes("catfish");
+      t.includes("no veo senales tipicas de perfil falso")
+    );
 
-  if (hasDatingLowRiskTone) {
+  const hasVerifiedDatingSignal =
+    isDatingOrSocialProfile &&
+    (
+      t.includes("perfil está verificado") ||
+      t.includes("perfil esta verificado") ||
+      t.includes("perfil verificado") ||
+      t.includes("foto está verificada") ||
+      t.includes("foto esta verificada") ||
+      t.includes("foto verificada") ||
+      t.includes("verificación visible") ||
+      t.includes("verificacion visible") ||
+      t.includes("la foto está verificada") ||
+      t.includes("la foto esta verificada")
+    );
+
+  const hasDatingHardNegative =
+    hasMoneyCryptoOrRealDanger ||
+    hasReusedImageSignal ||
+    t.includes("perfil falso") ||
+    t.includes("catfish") ||
+    t.includes("catfishing") ||
+    t.includes("foto robada") ||
+    t.includes("imagen robada") ||
+    t.includes("aparece reutilizada") ||
+    t.includes("aparece en varias fuentes") ||
+    t.includes("precaución alta") ||
+    t.includes("precaucion alta") ||
+    t.includes("bastante precaución") ||
+    t.includes("bastante precaucion");
+
+  // ✅ Caso importante:
+  // Perfil Tinder/Bumble/Badoo/Instagram normal o verificado, sin señales fuertes:
+  // verde aunque Vonu recomiende prudencia normal.
+  if (
+    isDatingOrSocialProfile &&
+    hasCalmDatingOpening &&
+    !hasDatingHardNegative
+  ) {
     return "safe";
   }
 
-  const hasMixedOrCautionTone =
-    t.includes("señales mixtas") ||
-    t.includes("senales mixtas") ||
-    t.includes("iría con cuidado") ||
-    t.includes("iria con cuidado") ||
-    t.includes("cuidado antes de confiar") ||
-    t.includes("no se puede asegurar") ||
-    t.includes("no se puede confirmar") ||
-    t.includes("no puedo confirmarlo") ||
-    t.includes("no significa que sea scam") ||
-    t.includes("posible indicio") ||
-    t.includes("no verificado") ||
-    t.includes("no veo verificación") ||
-    t.includes("no se ve verificación") ||
-    t.includes("no aparece verificación") ||
-    t.includes("duda razonable");
-
-  if (hasReusedImageSignal) {
-    if (
-      t.includes("perfil falso") ||
-      t.includes("catfish") ||
-      t.includes("tinder") ||
-      t.includes("app de citas") ||
-      t.includes("instagram") ||
-      t.includes("red social") ||
-      t.includes("precaución alta") ||
-      t.includes("precaucion alta")
-    ) {
-      return "high";
-    }
-
-    return "warning";
-  }
-
-  // ✅ Perfiles/redes/apps de citas:
-  // Sin dinero, crypto, códigos, amenazas o presión fuerte => precaución, no rojo.
   if (
     isDatingOrSocialProfile &&
-    hasMixedOrCautionTone &&
-    !hasHardScamEscalation &&
-    !hasExternalMoveRisk
+    hasVerifiedDatingSignal &&
+    !hasDatingHardNegative
   ) {
+    return "safe";
+  }
+
+  // ✅ Foto reutilizada: naranja.
+  // No la subimos a rojo solo por reutilización.
+  if (hasReusedImageSignal) {
     return "warning";
   }
 
-  if (
-  isAiImageAnalysis &&
-  !hasLowRiskAiNegation &&
-  (
-    t.includes("edición fuerte") ||
-    t.includes("edicion fuerte") ||
-    t.includes("retoque digital") ||
-    t.includes("retocada") ||
-    t.includes("retocado") ||
-    t.includes("probabilidad de edición") ||
-    t.includes("probabilidad de edicion") ||
-    t.includes("podría estar editada") ||
-    t.includes("podria estar editada")
-  )
-) {
-  return "warning";
-}
+  const hasLowRiskNormalImageTone =
+    (
+      t.includes("parece una selfie natural") ||
+      t.includes("parece una foto natural") ||
+      t.includes("parece una imagen natural") ||
+      t.includes("parece una foto real") ||
+      t.includes("parece una selfie real") ||
+      t.includes("tomada al aire libre") ||
+      t.includes("sin señales evidentes de manipulación") ||
+      t.includes("sin senales evidentes de manipulacion") ||
+      t.includes("sin señales claras de manipulación") ||
+      t.includes("sin senales claras de manipulacion") ||
+      t.includes("sin señales evidentes de edición fuerte") ||
+      t.includes("sin senales evidentes de edicion fuerte") ||
+      t.includes("sin anomalías visibles") ||
+      t.includes("sin anomalias visibles") ||
+      t.includes("no hay anomalías visibles") ||
+      t.includes("no hay anomalias visibles") ||
+      t.includes("no muestra señales claras de edición") ||
+      t.includes("no muestra senales claras de edicion") ||
+      t.includes("no parece generada por ia") ||
+      t.includes("no parece generado por ia") ||
+      t.includes("no parece ia pura")
+    ) &&
+    !hasReusedImageSignal &&
+    !hasMoneyCryptoOrRealDanger &&
+    !hasClearAiFakeConclusion &&
+    !t.includes("perfil falso") &&
+    !t.includes("catfish") &&
+    !t.includes("estafa");
 
-  // ✅ Imágenes IA/manipulación:
-// Si Vonu concluye que NO ve señales claras de IA/manipulación,
-// el color debe tranquilizar: verde, no naranja.
-// La mejora de detección visual la haremos en el prompt/modelo, no alarmando con el color.
-if (
-  isAiImageAnalysis &&
-  (
-    t.includes("no muestra señales claras") ||
-    t.includes("no veo señales claras") ||
-    t.includes("no hay señales claras") ||
-    t.includes("parece bastante natural") ||
-    t.includes("parece una foto real") ||
-    t.includes("parece real") ||
-    t.includes("los detalles") && t.includes("son consistentes") ||
-    t.includes("coherencia visual") && t.includes("sin artefactos") ||
-    t.includes("sin artefactos extraños") ||
-    t.includes("no generada por ia") ||
-    t.includes("no parece generada por ia")
-  )
-) {
-  return "safe";
-}
-
-// Si habla de IA pero reconoce duda real, edición fuerte o incertidumbre,
-// ahí sí dejamos naranja/precaución.
-if (
-  isAiImageAnalysis &&
-  (
-    t.includes("duda razonable") ||
-    t.includes("demasiado perfecta") ||
-    t.includes("demasiado pulida") ||
-    t.includes("edición fuerte") ||
-    t.includes("edicion fuerte") ||
-    t.includes("podría ser ia") ||
-    t.includes("podria ser ia") ||
-    t.includes("podría estar manipulada") ||
-    t.includes("podria estar manipulada") ||
-    t.includes("no puedo confirmarlo") ||
-    t.includes("no se puede confirmar") ||
-    t.includes("imagen sola no permite")
-  )
-) {
-  return "warning";
-}
-
-  const safeSignals = [
-    "riesgo bajo",
-    "bajo riesgo",
-    "probabilidad baja",
-    "probabilidad estimada baja",
-    "pinta bien",
-    "parece fiable",
-    "parece seguro",
-    "parece segura",
-    "parece legítima",
-    "parece legitima",
-    "parece legítimo",
-    "parece legitimo",
-    "parece oficial",
-    "web oficial",
-    "dominio oficial",
-    "dominio reconocido",
-    "marca conocida",
-    "puedes usarla con confianza",
-    "puedes usarlo con confianza",
-    "puedes usarla con tranquilidad",
-    "puedes usarlo con tranquilidad",
-    "tranquilidad razonable",
-    "confianza razonable",
-    "no aparece marcada",
-    "no aparece marcado",
-    "no aparece marcada en esta primera revisión",
-    "no aparece marcado en esta primera revisión",
-    "no aparece relacionada con malware",
-    "no aparece relacionado con malware",
-    "no aparece como peligrosa",
-    "no aparece como peligroso",
-    "no parece una estafa",
-    "no parece phishing",
-    "no parece sospechoso",
-    "es un buen indicio",
-  ];
-
-  if (safeSignals.some((s) => t.includes(s))) {
+  if (hasLowRiskNormalImageTone) {
     return "safe";
   }
 
@@ -1080,21 +810,37 @@ if (
     "enlace malicioso",
     "script para sistemas tipo linux",
     "puerto raro",
-    "aparece reutilizada en varias fuentes",
-"aparece en varias fuentes",
-"foto reutilizada",
-"imagen reutilizada",
-"foto reciclada",
-"imagen reciclada",
-"foto robada",
-"imagen robada",
-"catfish",
-"perfil falso",
-"procedencia dudosa",
   ];
 
   if (highSignals.some((s) => t.includes(s))) {
     return "high";
+  }
+
+  if (
+    isAiImageAnalysis &&
+    (
+      t.includes("edición fuerte") ||
+      t.includes("edicion fuerte") ||
+      t.includes("retoque digital") ||
+      t.includes("retocada") ||
+      t.includes("retocado") ||
+      t.includes("probabilidad de edición") ||
+      t.includes("probabilidad de edicion") ||
+      t.includes("podría estar editada") ||
+      t.includes("podria estar editada") ||
+      t.includes("podría ser ia") ||
+      t.includes("podria ser ia") ||
+      t.includes("podría estar manipulada") ||
+      t.includes("podria estar manipulada") ||
+      t.includes("duda razonable") ||
+      t.includes("demasiado perfecta") ||
+      t.includes("demasiado pulida") ||
+      t.includes("no puedo confirmarlo") ||
+      t.includes("no se puede confirmar") ||
+      t.includes("imagen sola no permite")
+    )
+  ) {
+    return "warning";
   }
 
   const warningSignals = [
@@ -1136,6 +882,48 @@ if (
 
   if (warningSignals.some((s) => t.includes(s))) {
     return "warning";
+  }
+
+  const safeSignals = [
+    "riesgo bajo",
+    "bajo riesgo",
+    "probabilidad baja",
+    "probabilidad estimada baja",
+    "pinta bien",
+    "parece fiable",
+    "parece seguro",
+    "parece segura",
+    "parece legítima",
+    "parece legitima",
+    "parece legítimo",
+    "parece legitimo",
+    "parece oficial",
+    "web oficial",
+    "dominio oficial",
+    "dominio reconocido",
+    "marca conocida",
+    "puedes usarla con confianza",
+    "puedes usarlo con confianza",
+    "puedes usarla con tranquilidad",
+    "puedes usarlo con tranquilidad",
+    "tranquilidad razonable",
+    "confianza razonable",
+    "no aparece marcada",
+    "no aparece marcado",
+    "no aparece marcada en esta primera revisión",
+    "no aparece marcado en esta primera revisión",
+    "no aparece relacionada con malware",
+    "no aparece relacionado con malware",
+    "no aparece como peligrosa",
+    "no aparece como peligroso",
+    "no parece una estafa",
+    "no parece phishing",
+    "no parece sospechoso",
+    "es un buen indicio",
+  ];
+
+  if (safeSignals.some((s) => t.includes(s))) {
+    return "safe";
   }
 
   return null;
