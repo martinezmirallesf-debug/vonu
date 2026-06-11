@@ -691,16 +691,33 @@ if (hasStrongAiOrManipulationSignal && !hasLowRiskAiNegation) {
 
   const hasDatingLowRiskTone =
     isDatingOrSocialProfile &&
-    (
+      (
       t.includes("no hay banderas rojas claras") ||
       t.includes("no se detectan señales claras") ||
       t.includes("no hay señales claras de riesgo") ||
       t.includes("no hay señales claras por las que preocuparse") ||
+      t.includes("no veo indicios claros de que este perfil") ||
+      t.includes("no veo indicios claros de que este perfil de tinder sea peligroso") ||
+      t.includes("no veo indicios claros de que este perfil de tinder sea peligroso o falso") ||
+      t.includes("no veo indicios de que este perfil sea peligroso") ||
+      t.includes("no veo señales típicas de perfil falso") ||
+      t.includes("el perfil está verificado en tinder") ||
+      t.includes("el perfil esta verificado en tinder") ||
+      t.includes("está verificado en tinder") ||
+      t.includes("esta verificado en tinder") ||
+      t.includes("tiene señales positivas como la verificación") ||
+      t.includes("verificación y una bio coherente") ||
+      t.includes("verificacion y una bio coherente") ||
+      t.includes("suma confianza sobre la identidad") ||
       t.includes("no hay indicios de presión") ||
       t.includes("no hay indicios visibles de presión") ||
       t.includes("no hay dinero") ||
       t.includes("no hay enlaces") ||
       t.includes("no hay urgencia") ||
+      t.includes("no hay señales visibles de solicitudes de dinero") ||
+      t.includes("no hay señales visibles de solicitud de dinero") ||
+      t.includes("no hay señales visibles de solicitudes de dinero, enlaces sospechosos o presión") ||
+      t.includes("no hay señales visibles de solicitudes de dinero, enlaces sospechosos o presion") ||
       t.includes("no se ve ninguna señal de dinero") ||
       t.includes("no se ve ninguna señal de presión") ||
       t.includes("no se ve ninguna señal de urgencia") ||
