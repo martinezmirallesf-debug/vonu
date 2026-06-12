@@ -520,7 +520,34 @@ const hasLowRiskDatingProfileVerdict =
     t.includes("perfil tiene una verificacion visible")
   );
 
-const hasRealDatingDangerInVerdict =
+const hasCalmVerifiedDatingAnswer =
+  (
+    t.includes("tinder") ||
+    t.includes("bumble") ||
+    t.includes("badoo") ||
+    t.includes("app de citas") ||
+    t.includes("perfil de citas")
+  ) &&
+  (
+    t.includes("no hay banderas rojas claras") ||
+    t.includes("no se detectan señales claras") ||
+    t.includes("no se detectan senales claras") ||
+    t.includes("no veo señales claras de peligro") ||
+    t.includes("no veo senales claras de peligro") ||
+    t.includes("no hay señales claras de peligro") ||
+    t.includes("no hay senales claras de peligro")
+  ) &&
+  (
+    t.includes("verificación visible") ||
+    t.includes("verificacion visible") ||
+    t.includes("perfil tiene una verificación visible") ||
+    t.includes("perfil tiene una verificacion visible") ||
+    t.includes("muestra una verificación visible") ||
+    t.includes("muestra una verificacion visible") ||
+    t.includes("suma confianza")
+  );
+
+const hasStrongDatingDanger =
   t.includes("aparece reutilizada") ||
   t.includes("foto reutilizada") ||
   t.includes("imagen reutilizada") ||
@@ -538,17 +565,21 @@ const hasRealDatingDangerInVerdict =
   t.includes("crypto") ||
   t.includes("bitcoin") ||
   t.includes("trading") ||
-  t.includes("inversión") && !t.includes("no hay señales visibles de urgencia, dinero, inversión") ||
-  t.includes("inversion") && !t.includes("no hay senales visibles de urgencia, dinero, inversion") ||
   t.includes("enlace sospechoso") ||
   t.includes("enlaces sospechosos") ||
-  t.includes("códigos") ||
-  t.includes("codigos") ||
-  t.includes("documentos") ||
-  t.includes("presión fuerte") ||
-  t.includes("presion fuerte") ||
   t.includes("amenaza") ||
-  t.includes("chantaje");
+  t.includes("chantaje") ||
+  t.includes("presión fuerte") ||
+  t.includes("presion fuerte");
+
+// ✅ Este caso debe ganar sí o sí:
+// Tinder/Bumble/Badoo + apertura tranquila + verificación visible = verde,
+// salvo que haya señales fuertes reales.
+if (hasCalmVerifiedDatingAnswer && !hasStrongDatingDanger) {
+  return "safe";
+}
+
+const hasRealDatingDangerInVerdict = hasStrongDatingDanger;
 
 if (hasLowRiskDatingProfileVerdict && !hasRealDatingDangerInVerdict) {
   return "safe";
