@@ -8047,11 +8047,56 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 
     const previousUserMessage = getPreviousUserMessage(messages, i);
 
-    const finalRiskStatus =
-      inferRiskStatusFromAssistantText(m.text ?? "") ||
-      inferRiskStatusFromUserText(previousUserMessage?.text ?? "");
+const assistantRiskStatus = inferRiskStatusFromAssistantText(m.text ?? "");
+const userRiskStatus = inferRiskStatusFromUserText(previousUserMessage?.text ?? "");
 
-    if (!finalRiskStatus) return null;
+const assistantTextForDots = String(m.text ?? "").toLowerCase();
+
+const assistantClearlyLowRiskDating =
+  (
+    assistantTextForDots.includes("tinder") ||
+    assistantTextForDots.includes("bumble") ||
+    assistantTextForDots.includes("badoo") ||
+    assistantTextForDots.includes("app de citas") ||
+    assistantTextForDots.includes("perfil de citas")
+  ) &&
+  (
+    assistantTextForDots.includes("no hay banderas rojas claras") ||
+    assistantTextForDots.includes("no se detectan señales claras") ||
+    assistantTextForDots.includes("no se detectan senales claras") ||
+    assistantTextForDots.includes("no veo señales claras de peligro") ||
+    assistantTextForDots.includes("no veo senales claras de peligro") ||
+    assistantTextForDots.includes("no hay señales claras de peligro") ||
+    assistantTextForDots.includes("no hay senales claras de peligro")
+  ) &&
+  (
+    assistantTextForDots.includes("verificación visible") ||
+    assistantTextForDots.includes("verificacion visible") ||
+    assistantTextForDots.includes("suma confianza") ||
+    assistantTextForDots.includes("buen indicio")
+  ) &&
+  !assistantTextForDots.includes("aparece reutilizada") &&
+  !assistantTextForDots.includes("foto reutilizada") &&
+  !assistantTextForDots.includes("imagen reutilizada") &&
+  !assistantTextForDots.includes("foto robada") &&
+  !assistantTextForDots.includes("imagen robada") &&
+  !assistantTextForDots.includes("perfil falso") &&
+  !assistantTextForDots.includes("catfish") &&
+  !assistantTextForDots.includes("pide dinero") &&
+  !assistantTextForDots.includes("pedir dinero") &&
+  !assistantTextForDots.includes("enviar dinero") &&
+  !assistantTextForDots.includes("envíes dinero") &&
+  !assistantTextForDots.includes("envies dinero") &&
+  !assistantTextForDots.includes("enlace sospechoso") &&
+  !assistantTextForDots.includes("enlaces sospechosos") &&
+  !assistantTextForDots.includes("amenaza") &&
+  !assistantTextForDots.includes("chantaje");
+
+const finalRiskStatus = assistantClearlyLowRiskDating
+  ? "safe"
+  : assistantRiskStatus ?? userRiskStatus;
+
+if (!finalRiskStatus) return null;
 
     return (
   <div className="mb-2 md:mb-2.5 flex min-h-[34px] md:min-h-0 items-start justify-start overflow-visible pt-2.5 md:pt-0 pl-0 md:pl-0">
