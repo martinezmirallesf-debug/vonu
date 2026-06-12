@@ -490,6 +490,70 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
     return riskStatusFromScore(percentScore);
   }
 
+  // ✅ OVERRIDE PRIORITARIO: perfil de citas tranquilo/verificado = verde.
+// Esto debe ir arriba del todo, antes de cualquier regla de "precaución".
+const hasLowRiskDatingProfileVerdict =
+  (
+    t.includes("tinder") ||
+    t.includes("bumble") ||
+    t.includes("badoo") ||
+    t.includes("app de citas") ||
+    t.includes("perfil de citas")
+  ) &&
+  (
+    t.includes("no hay banderas rojas claras") ||
+    t.includes("no se detectan señales claras") ||
+    t.includes("no se detectan senales claras") ||
+    t.includes("no veo señales claras de peligro") ||
+    t.includes("no veo senales claras de peligro") ||
+    t.includes("no veo señales claras de riesgo") ||
+    t.includes("no veo senales claras de riesgo") ||
+    t.includes("no hay señales claras de peligro") ||
+    t.includes("no hay senales claras de peligro") ||
+    t.includes("no hay señales visibles de urgencia") ||
+    t.includes("no hay senales visibles de urgencia") ||
+    t.includes("no hay señales visibles de urgencia, dinero") ||
+    t.includes("no hay senales visibles de urgencia, dinero") ||
+    t.includes("verificación visible") ||
+    t.includes("verificacion visible") ||
+    t.includes("perfil tiene una verificación visible") ||
+    t.includes("perfil tiene una verificacion visible")
+  );
+
+const hasRealDatingDangerInVerdict =
+  t.includes("aparece reutilizada") ||
+  t.includes("foto reutilizada") ||
+  t.includes("imagen reutilizada") ||
+  t.includes("foto robada") ||
+  t.includes("imagen robada") ||
+  t.includes("perfil falso") ||
+  t.includes("catfish") ||
+  t.includes("catfishing") ||
+  t.includes("pide dinero") ||
+  t.includes("pedir dinero") ||
+  t.includes("enviar dinero") ||
+  t.includes("envíes dinero") ||
+  t.includes("envies dinero") ||
+  t.includes("cripto") ||
+  t.includes("crypto") ||
+  t.includes("bitcoin") ||
+  t.includes("trading") ||
+  t.includes("inversión") && !t.includes("no hay señales visibles de urgencia, dinero, inversión") ||
+  t.includes("inversion") && !t.includes("no hay senales visibles de urgencia, dinero, inversion") ||
+  t.includes("enlace sospechoso") ||
+  t.includes("enlaces sospechosos") ||
+  t.includes("códigos") ||
+  t.includes("codigos") ||
+  t.includes("documentos") ||
+  t.includes("presión fuerte") ||
+  t.includes("presion fuerte") ||
+  t.includes("amenaza") ||
+  t.includes("chantaje");
+
+if (hasLowRiskDatingProfileVerdict && !hasRealDatingDangerInVerdict) {
+  return "safe";
+}
+
   const isDatingOrSocialProfile =
     t.includes("tinder") ||
     t.includes("bumble") ||
