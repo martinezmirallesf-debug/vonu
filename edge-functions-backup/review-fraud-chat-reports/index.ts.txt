@@ -303,6 +303,22 @@ Tu trabajo:
 7. Si es basura, demasiado genérico o no es fraude, rechazarlo.
 8. Si parece duplicado de un patrón ya existente, marcarlo como duplicate_candidate salvo que aporte señales nuevas.
 
+REGLAS CRÍTICAS PARA NO CONTAMINAR LA BASE PRINCIPAL:
+- No promociones consultas donde el asistente haya concluido que la web, dominio, email o situación tiene riesgo bajo, parece oficial, parece fiable o no muestra señales claras.
+- Si el usuario solo pregunta por una web oficial conocida y la respuesta indica que parece legítima, debes devolver ai_review_status = "rejected" y ai_promote_candidate = false.
+- No inventes canal, plataforma, marca suplantada, categoría, subcategoría, técnica de ataque ni patrón de dominio.
+- Si no hay una marca suplantada clara en el caso, impersonated_brand debe ser null.
+- Si no hay inversión, cripto, Instagram, marketplace o phishing real descrito, no rellenes esos campos.
+- No conviertas una comprobación segura de amazon.es, crocs.es, shopify.com u otra web oficial en un caso de suplantación.
+- Solo puedes promover si hay señales reales de fraude, malware, phishing, smishing, vishing, QR fraudulento, tienda falsa, soporte remoto, cripto, manipulación o patrón claramente útil.
+- Si la evidencia es débil, genérica o ambigua, usa needs_human_review o rejected, nunca inventes datos para completar el caso.
+- Para enlaces técnicos peligrosos como IP directa + puerto raro + archivo .sh/.exe/.apk/.bat/.cmd/.ps1:
+  - no inventes marca suplantada;
+  - usa impersonated_brand = null si no hay marca clara;
+  - usa fraud_block relacionado con malware_delivery, tech_support_malware o advanced_cyber_fraud según encaje;
+  - rellena malicious_domain_pattern con un patrón seguro y técnico, por ejemplo "ip_direct_download_script_sh_malware";
+  - el canal puede ser direct_link, messaging_app, email o unknown según lo que indique el caso.
+
 NUNCA deben pasar a la base principal:
 - contraseñas
 - códigos OTP
@@ -319,6 +335,8 @@ NUNCA deben pasar a la base principal:
 - seed phrase / frase semilla
 - claves privadas
 - identificadores completos de wallets personales si no son públicos o necesarios
+- URLs completas con tokens, códigos de sesión, enlaces de recuperación, identificadores privados o parámetros sensibles
+- parámetros de URL como token, code, session, sid, auth, key, password, reset, invite, email, phone, dni, iban, card, checkout_session
 
 Sí puede pasar:
 - resumen anonimizado
@@ -331,6 +349,25 @@ Sí puede pasar:
 - acciones recomendadas
 - similarity_signature
 - ejemplo breve del mensaje, pero sin datos sensibles completos
+- dominio normalizado si no contiene datos personales
+- patrón de dominio sospechoso sin parámetros sensibles
+- tipo de web sospechosa: phishing, fake_shop, fake_delivery_fee, fake_login, fake_investment, fake_marketplace, malware, unknown
+
+CRITERIOS ESPECÍFICOS PARA WEBS, URLS, DOMINIOS Y ENLACES:
+- Si el caso contiene una URL, no conserves la URL completa si incluye parámetros, tokens, sesiones, códigos, emails, teléfonos, identificadores personales o datos de pago.
+- Extrae solo el dominio y, si aporta valor, un patrón general del path sin datos sensibles.
+- Rellena malicious_domain_pattern con una versión segura y general, por ejemplo:
+  - "dominio parecido a marca de paquetería + pago pequeño"
+  - "tienda online desconocida + descuentos agresivos + datos legales débiles"
+  - "login bancario falso + dominio no oficial"
+  - "checkout externo + método de pago no recuperable"
+  - "app de citas/red social + inversión/cripto + plataforma desconocida"
+- Si el dominio parece imitar una marca conocida, rellena impersonated_brand.
+- Si el canal es una web, enlace, SMS con URL, email con URL o tienda online, rellena channel y attack_vector de forma coherente.
+- Si el patrón es una tienda falsa, usa scam_category o scam_subcategory relacionados con fake_shop, ecommerce_scam, phishing, fake_delivery_fee, marketplace_scam o similares.
+- Si el caso solo contiene una web dudosa pero no hay señales suficientes, no lo promociones automáticamente: usa needs_human_review o un riesgo más prudente.
+- No marques como fraude confirmado solo porque una web sea desconocida. Evalúa señales: dominio, marca, urgencia, pago, datos legales, promesas, presión, forma de contacto y contexto.
+- Si la URL viene de un mensaje de Correos, SEUR, DHL, banco, Bizum, PayPal, Amazon u otra marca conocida y pide pago, login, tarjeta o códigos, aumenta el riesgo.
 
 Estados posibles:
 - ai_approved: limpio, útil, sin datos sensibles relevantes.
@@ -417,6 +454,12 @@ Formato JSON exacto:
   "qr_or_clipboard_risk": false,
   "advanced_notes": null
 }
+
+Si el caso contiene una web, URL, dominio, tienda online o enlace sospechoso:
+- malicious_domain_pattern debe resumir el patrón de dominio/web sin guardar parámetros sensibles.
+- attack_vector debería indicar si llegó por SMS, WhatsApp, email, anuncio, red social, app de citas, buscador, marketplace u otro canal.
+- impersonated_brand debe indicar la marca suplantada si se aprecia.
+- cleaned_similarity_signature debe incluir términos útiles para detectar casos parecidos en el futuro, evitando URLs privadas completas.
 
 Caso recogido:
 ${JSON.stringify(reportPayload, null, 2)}
@@ -733,6 +776,97 @@ async function getSimilarMatches(supabase: any, report: FraudChatReport) {
   })) as SimilarMatch[];
 }
 
+function reportLooksLikeLowRiskSafeCheck(report: FraudChatReport) {
+  const text = [
+    report.user_text_excerpt,
+    report.anonymized_summary,
+    report.red_flags,
+    report.technical_signals,
+    report.recommended_action,
+    report.prevention_tips,
+    report.notes,
+    JSON.stringify(report.raw_model_json ?? {}),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (!text.trim()) return false;
+
+  const safeSignals = [
+    "riesgo bajo",
+    "pinta bien",
+    "parece fiable",
+    "parece segura",
+    "parece seguro",
+    "parece oficial",
+    "web oficial",
+    "dominio oficial",
+    "dominio reconocido",
+    "marca conocida",
+    "parece legítima",
+    "parece legitima",
+    "puedes usarla con confianza",
+    "puedes usarlo con confianza",
+    "puedes usarla con tranquilidad",
+    "puedes usarlo con tranquilidad",
+    "tranquilidad razonable",
+    "confianza razonable",
+    "no aparece marcada",
+    "no aparece marcado",
+    "no aparece señalada",
+    "no aparece señalado",
+    "no aparece relacionada con malware",
+    "no aparece relacionado con malware",
+    "no aparece como peligrosa",
+    "no aparece como peligroso",
+    "buen indicio",
+    "no veo señales claras de peligro",
+    "no veo señales claras de riesgo",
+    "no veo señales claras",
+  ];
+
+  const actualRiskSignals = [
+    "riesgo alto",
+    "riesgo muy alto",
+    "peligro alto",
+    "peligro muy alto",
+    "crítico",
+    "critico",
+    "muy sospechoso",
+    "parece una estafa",
+    "parece phishing",
+    "parece smishing",
+    "huele a estafa",
+    "huele a phishing",
+    "intento de estafa",
+    "fraude claro",
+    "estafa confirmada",
+    "phishing confirmado",
+    "no lo abras",
+    "no lo descargues",
+    "no lo ejecutes",
+    "no pagues",
+    "no metas datos",
+    "no metería tarjeta",
+    "no introduciría datos",
+    "aparece relacionado con malware",
+    "aparece relacionada con malware",
+    "asociado a malware",
+    "asociada a malware",
+    "amenaza conocida",
+    "podría infectar",
+    "podria infectar",
+    "robar información",
+    "robar informacion",
+  ];
+
+  const safe = safeSignals.some((s) => text.includes(s));
+  const risky = actualRiskSignals.some((s) => text.includes(s));
+
+  return safe && !risky;
+}
+
 function mapReviewStatusToChatReportStatus(finalStatus: string) {
   if (finalStatus === "ai_promoted") {
     return "promoted_to_fraud_reports";
@@ -808,7 +942,47 @@ if (!cronSecret || receivedCronSecret !== cronSecret) {
 
   for (const report of (reports || []) as FraudChatReport[]) {
     try {
-      const similarMatches = await getSimilarMatches(supabase, report);
+            if (reportLooksLikeLowRiskSafeCheck(report)) {
+        if (!dryRun) {
+          await supabase
+            .from("fraud_chat_reports")
+            .update({
+              ai_review_status: "rejected",
+              ai_review_score: 100,
+              ai_review_recommendation:
+                "No promover. La respuesta del asistente concluye riesgo bajo, web oficial o comprobación segura.",
+              ai_review_reason:
+                "Caso de consulta segura/oficial detectado por regla determinista. No aporta valor como patrón antifraude y no debe contaminar fraud_reports.",
+              ai_detected_sensitive_data: false,
+              ai_duplicate_likelihood: 0,
+              ai_promote_candidate: false,
+              ai_reviewed_at: new Date().toISOString(),
+              ai_review_json: {
+                deterministic_guard: "low_risk_safe_check",
+                dry_run: dryRun,
+              },
+              promoted_fraud_report_id: null,
+              promoted_at: null,
+              status: "rejected",
+            })
+            .eq("id", report.id);
+        }
+
+        results.push({
+          id: report.id,
+          ok: true,
+          review_status: "rejected",
+          review_score: 100,
+          duplicate_likelihood: 0,
+          promote_candidate: false,
+          promoted_fraud_report_id: null,
+          dryRun,
+          reason: "low_risk_safe_check",
+        });
+
+        continue;
+      }
+            const similarMatches = await getSimilarMatches(supabase, report);
       const prompt = buildReviewPrompt(report, similarMatches);
       const review = await callOpenAIReview(prompt);
 

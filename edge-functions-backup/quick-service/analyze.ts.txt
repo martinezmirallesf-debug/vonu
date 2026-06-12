@@ -8,6 +8,10 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
+const GEMINI_MODEL_IMAGE =
+  Deno.env.get("GEMINI_MODEL_IMAGE") || "gemini-2.5-flash-lite";
+
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -1156,6 +1160,740 @@ function isLowContext(userText: string, hasImage: boolean) {
   return !situationHints.some((s) => tl.includes(s));
 }
 
+function buildCurrentDateContext() {
+  const now = new Date();
+
+  const madridDateTime = new Intl.DateTimeFormat("es-ES", {
+    timeZone: "Europe/Madrid",
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(now);
+
+  const madridDate = new Intl.DateTimeFormat("es-ES", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+
+  return `
+CONTEXTO TEMPORAL ACTUAL:
+- Fecha/hora actual del sistema en UTC: ${now.toISOString()}
+- Fecha/hora actual aproximada en España peninsular: ${madridDateTime}
+- Fecha actual en formato ES: ${madridDate}
+- Interpreta "hoy", "ayer", "mañana", "esta semana", vencimientos, plazos, fechas de emails, facturas, envíos y avisos tomando esta fecha como referencia.
+- No marques una fecha como futura, caducada o sospechosa sin compararla antes con este contexto temporal.
+- Si una fecha parece rara, explica con prudencia si realmente está en el futuro/pasado respecto a la fecha actual.
+`.trim();
+}
+
+type UrlhausRiskResult = {
+  hasUrl: boolean;
+  originalInput: string | null;
+  safeUrl: string | null;
+  domain: string | null;
+  queryRemoved: boolean;
+  urlhausChecked: boolean;
+  urlhausFound: boolean;
+  urlhausQueryStatus: string | null;
+  urlhausThreat: string | null;
+  urlhausTags: string[];
+  urlhausUrlStatus: string | null;
+  urlhausHost: string | null;
+  urlhausError: string | null;
+};
+
+function extractFirstUrlLike(text: string) {
+  const raw = String(text ?? "");
+
+  const fullUrlMatch = raw.match(/\bhttps?:\/\/[^\s<>"')]+/i);
+  if (fullUrlMatch?.[0]) return fullUrlMatch[0];
+
+  const domainMatch = raw.match(
+    /\b(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s<>"')]+)?/i,
+  );
+
+  if (domainMatch?.[0]) {
+    return `https://${domainMatch[0]}`;
+  }
+
+  return null;
+}
+
+function normalizeUrlForExternalRisk(input: string): {
+  safeUrl: string | null;
+  domain: string | null;
+  queryRemoved: boolean;
+} {
+  try {
+    const candidate = extractFirstUrlLike(input);
+    if (!candidate) {
+      return { safeUrl: null, domain: null, queryRemoved: false };
+    }
+
+    const url = new URL(candidate);
+
+    const domain = url.hostname.toLowerCase().replace(/^www\./, "");
+
+    const queryRemoved = !!url.search || !!url.hash;
+
+    // Importante: quitamos query/hash para evitar tokens, sesiones, emails, etc.
+    url.search = "";
+    url.hash = "";
+
+    // Normalizamos path, pero no lo eliminamos porque puede aportar señal:
+    // /login, /checkout, /tracking, /verify, etc.
+    const safeUrl = url.toString();
+
+    return {
+      safeUrl,
+      domain,
+      queryRemoved,
+    };
+  } catch {
+    return { safeUrl: null, domain: null, queryRemoved: false };
+  }
+}
+
+async function queryUrlhaus(safeUrl: string): Promise<Partial<UrlhausRiskResult>> {
+  const authKey = Deno.env.get("URLHAUS_AUTH_KEY") || "";
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 4500);
+
+  try {
+    const body = new URLSearchParams();
+    body.set("url", safeUrl);
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/x-www-form-urlencoded",
+    };
+
+    if (authKey) {
+      headers["Auth-Key"] = authKey;
+    }
+
+    const res = await fetch("https://urlhaus-api.abuse.ch/v1/url/", {
+      method: "POST",
+      headers,
+      body,
+      signal: controller.signal,
+    });
+
+    const json = await res.json().catch(() => null);
+
+    if (!res.ok || !json) {
+      return {
+        urlhausChecked: true,
+        urlhausFound: false,
+        urlhausQueryStatus: null,
+        urlhausThreat: null,
+        urlhausTags: [],
+        urlhausUrlStatus: null,
+        urlhausHost: null,
+        urlhausError: `urlhaus_http_${res.status}`,
+      };
+    }
+
+    const queryStatus = String(json.query_status ?? "");
+
+    const found =
+      queryStatus === "ok" ||
+      queryStatus === "url_found" ||
+      (!!json.url_status && queryStatus !== "no_results");
+
+    return {
+      urlhausChecked: true,
+      urlhausFound: found,
+      urlhausQueryStatus: queryStatus || null,
+      urlhausThreat:
+        typeof json.threat === "string"
+          ? json.threat
+          : typeof json.signature === "string"
+          ? json.signature
+          : null,
+      urlhausTags: Array.isArray(json.tags)
+        ? json.tags.map((x: unknown) => String(x)).slice(0, 12)
+        : [],
+      urlhausUrlStatus:
+        typeof json.url_status === "string" ? json.url_status : null,
+      urlhausHost:
+        typeof json.host === "string" ? json.host : null,
+      urlhausError: null,
+    };
+  } catch (error) {
+    return {
+      urlhausChecked: false,
+      urlhausFound: false,
+      urlhausQueryStatus: null,
+      urlhausThreat: null,
+      urlhausTags: [],
+      urlhausUrlStatus: null,
+      urlhausHost: null,
+      urlhausError: String(error),
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function buildExternalWebRiskContext(userText: string) {
+  const normalized = normalizeUrlForExternalRisk(userText);
+
+  if (!normalized.safeUrl || !normalized.domain) return "";
+
+  const urlhaus = await queryUrlhaus(normalized.safeUrl);
+
+  const result: UrlhausRiskResult = {
+    hasUrl: true,
+    originalInput: extractFirstUrlLike(userText),
+    safeUrl: normalized.safeUrl,
+    domain: normalized.domain,
+    queryRemoved: normalized.queryRemoved,
+    urlhausChecked: Boolean(urlhaus.urlhausChecked),
+    urlhausFound: Boolean(urlhaus.urlhausFound),
+    urlhausQueryStatus: urlhaus.urlhausQueryStatus ?? null,
+    urlhausThreat: urlhaus.urlhausThreat ?? null,
+    urlhausTags: urlhaus.urlhausTags ?? [],
+    urlhausUrlStatus: urlhaus.urlhausUrlStatus ?? null,
+    urlhausHost: urlhaus.urlhausHost ?? null,
+    urlhausError: urlhaus.urlhausError ?? null,
+  };
+
+  return `
+CONTEXTO EXTERNO DE RIESGO WEB:
+Se ha detectado una URL o dominio en el mensaje del usuario.
+
+Resultado normalizado:
+${JSON.stringify(result, null, 2)}
+
+Cómo usar este contexto:
+- No digas que esta comprobación es exhaustiva.
+- URLhaus es una primera capa externa útil sobre todo para malware/campañas maliciosas conocidas.
+- Si urlhausFound es true, eleva claramente el nivel de cuidado.
+- Si urlhausFound es true y la URL apunta a un archivo ejecutable, script, .sh, .exe, .apk, .bat, .cmd, .ps1 o descarga directa, responde con más firmeza y más detalle práctico.
+- En esos casos no seas demasiado escueto: explica 2-4 señales concretas y qué hacer si ya se abrió o descargó.
+- Si es una IP directa con puerto raro y archivo .sh, considéralo riesgo muy alto salvo contexto técnico muy claro.
+- Para enlaces peligrosos de malware, usa aperturas como:
+  “Yo no abriría ni ejecutaría ese enlace.”
+  “Ese enlace lo trataría como peligroso.”
+  “Aquí no descargaría absolutamente nada.”
+  “Esto no parece un enlace normal para un usuario.”
+- Evita usar siempre “frenaría”.
+- No digas “bases externas” ni nombres técnicos de fuentes salvo que el usuario lo pida.
+- Fórmulas preferidas:
+  “una comprobación de seguridad lo marca como relacionado con malware”
+  “aparece señalado en una revisión de seguridad”
+  “hay una coincidencia de seguridad que lo relaciona con malware”
+  “este enlace aparece asociado a una amenaza conocida”
+- Si urlhausThreat o urlhausTags indican malware concreto, puedes mencionarlo de forma natural:
+  “concretamente aparece asociado a Mozi, un malware conocido”
+- No digas “según nuestra base de datos” si la señal viene de una fuente externa. Puedes decir “comprobación de seguridad” o “señal de seguridad”.
+- Si urlhausFound es false, NO digas automáticamente que la web es segura.
+- Pero si además el dominio encaja claramente con una marca conocida, parece oficial y no hay señales raras, puedes transmitir confianza prudente.
+- Fórmulas buenas:
+  “No aparece marcada en esta primera revisión de seguridad, lo cual es un buen indicio.”
+  “El dominio parece coherente con la marca y no aparece señalado en esta comprobación.”
+  “Con lo que se ve, el riesgo parece bajo.”
+- Evita sonar alarmista cuando no hay señales claras.
+- Combina siempre esta señal externa con el análisis propio: dominio, marca, urgencia, pagos, datos legales, precios, contacto, reputación aparente y contexto.
+- Si queryRemoved es true, puedes decir que se han ignorado parámetros sensibles del enlace para analizarlo con más seguridad.
+- Responde de forma natural, no como informe técnico.
+`.trim();
+}
+
+function buildVisualRiskContext(hasImage: boolean, userText: string) {
+  if (!hasImage) return "";
+
+  const t = String(userText || "").toLowerCase();
+
+  const asksAiOrManipulation =
+  t.includes("ia") ||
+  t.includes("inteligencia artificial") ||
+  t.includes("generada por ia") ||
+  t.includes("hecha por ia") ||
+  t.includes("creada por ia") ||
+  t.includes("foto ia") ||
+  t.includes("imagen ia") ||
+  t.includes("es ia") ||
+  t.includes("puede ser ia") ||
+  t.includes("puede ser una ia") ||
+  t.includes("puede ser de ia") ||
+  t.includes("deepfake") ||
+  t.includes("fake") ||
+  t.includes("falsa") ||
+  t.includes("falso") ||
+  t.includes("manipulada") ||
+  t.includes("manipulado") ||
+  t.includes("editada") ||
+  t.includes("editado") ||
+  t.includes("retocada") ||
+  t.includes("retocado") ||
+  t.includes("photoshop") ||
+  t.includes("foto real") ||
+  t.includes("imagen real") ||
+  t.includes("es real") ||
+  t.includes("parece real");
+
+  const asksReliabilityOrScam =
+    t.includes("fiable") ||
+    t.includes("seguro") ||
+    t.includes("segura") ||
+    t.includes("estafa") ||
+    t.includes("scam") ||
+    t.includes("sospechoso") ||
+    t.includes("sospechosa") ||
+    t.includes("raro") ||
+    t.includes("rara") ||
+    t.includes("me da mala espina") ||
+    t.includes("no me da buena espina") ||
+    t.includes("te parece real") ||
+    t.includes("es real");
+
+  const socialOrDatingContext =
+    t.includes("tinder") ||
+    t.includes("bumble") ||
+    t.includes("badoo") ||
+    t.includes("instagram") ||
+    t.includes("facebook") ||
+    t.includes("tiktok") ||
+    t.includes("x ") ||
+    t.includes("twitter") ||
+    t.includes("telegram") ||
+    t.includes("whatsapp") ||
+    t.includes("perfil") ||
+    t.includes("red social") ||
+    t.includes("app de citas") ||
+    t.includes("citas");
+
+  return `
+CONTEXTO VISUAL / IMÁGENES / CAPTURAS:
+El usuario ha adjuntado una imagen o captura. Analízala directamente y con criterio de seguridad práctica.
+
+Objetivo:
+- No te limites a describir la imagen.
+- Detecta si puede haber riesgo, engaño, manipulación, estafa, perfil falso, phishing, deepfake, imagen IA, comprobante falso, anuncio engañoso o presión emocional.
+- Si la imagen es una captura de conversación, SMS, WhatsApp, email, perfil social, web, anuncio, QR, factura, contrato o pago, interpreta el contexto visible y orienta qué hacer.
+
+- Trata como la misma intención estas preguntas:
+  “Esta imagen puede ser IA?”
+  “Esta foto es IA?”
+  “Puede ser generada por IA?”
+  “Es real?”
+  “Está editada?”
+  “Está manipulada?”
+  “Es fake?”
+- No cambies la jerarquía de respuesta por usar “foto” en vez de “imagen”.
+- En todos esos casos, si hay búsqueda inversa positiva, la reutilización debe ir en el primer párrafo.
+- Si hay sombra/anomalía visual, también debe mencionarse arriba.
+
+REGLA DE EQUIVALENCIA DE PREGUNTAS SOBRE IA:
+- Trata como la misma intención estas preguntas:
+  “Esta imagen puede ser IA?”
+  “Esta foto es IA?”
+  “Puede ser generada por IA?”
+  “Es real?”
+  “Parece real?”
+  “Está editada?”
+  “Está manipulada?”
+  “Es fake?”
+- No cambies la jerarquía de respuesta por usar “foto” en vez de “imagen”, ni por usar “es IA” en vez de “puede ser IA”.
+- En todos esos casos, si hay búsqueda inversa positiva, la reutilización debe ir en el primer párrafo.
+- Si hay sombra rara, anomalía visual o posible edición, también debe aparecer arriba.
+- Orden obligatorio:
+  1. reutilización si existe;
+  2. IA pura o no;
+  3. edición/retoque/anomalías;
+  4. fiabilidad del origen/perfil;
+  5. qué hacer ahora.
+
+REGLA DE ESTIMACIÓN:
+Cuando el usuario pregunte si algo es real, falso, IA, estafa, fiable, seguro o sospechoso, da una estimación orientativa de forma natural y humana.
+
+- No uses etiquetas frías tipo “confianza baja”, “confianza media-baja”, “confianza media” o “confianza alta” como fórmula fija.
+- No suenes como un informe técnico ni como una plantilla.
+- Sí puedes dar porcentajes aproximados si ayudan a decidir.
+- Formula la estimación como hablaría una persona experta:
+  “Yo lo pondría alrededor de un 70% de probabilidad de estafa.”
+  “Veo una posibilidad bastante alta, quizá en torno al 65%, de que tenga edición fuerte o retoque con IA.”
+  “No lo daría por IA segura, pero sí me parece demasiado pulida; la pondría en un 45-60%.”
+  “Me parece más probable que sea una foto real editada que una imagen generada desde cero.”
+  “Con esta captura yo no lo puedo cerrar al 100%, pero sí me deja dudas razonables.”
+  “Aquí el riesgo lo veo bajo; no hay señales claras de engaño en lo que se ve.”
+- Si hay señales mixtas, usa rangos amplios: 35-55%, 50-70%, 75-90%.
+- Si la imagen no da para tanto, no fuerces precisión falsa. Mejor di:
+  “No me atrevería a poner un porcentaje fino con esta captura, pero sí diría que...”
+- En vez de “nivel de riesgo: medio”, puedes decir:
+  “Lo dejaría en precaución moderada.”
+  “Aquí no veo alarma, pero tampoco lo daría por confirmado.”
+  “Esto me preocuparía bastante.”
+  “Esto sí lo trataría como riesgo alto.”
+- No presentes el porcentaje como una certeza matemática. Es una estimación visual y contextual.
+
+Si parece una captura de SMS, WhatsApp, email, web o pago:
+- Busca señales de phishing, smishing, suplantación, urgencia, enlaces raros, dominios extraños, faltas, presión para pagar, pedir códigos, tarjeta, Bizum, transferencia o datos personales.
+- Si hay enlace acortado, dominio raro, urgencia, paquetería, banco, pago, tarjeta, QR o código, eleva el riesgo.
+- En casos de SMS/correo de paquetería, bancos, pagos, QR, multas o supuestos soportes, si hay varias señales claras, la probabilidad de estafa puede ser alta o muy alta.
+- Si hay riesgo, di claramente qué NO harías: no pulsar, no pagar, no meter datos, no enviar códigos, no descargar archivos.
+- Recomienda comprobar desde canal oficial: app oficial, web escrita manualmente o soporte oficial.
+
+SOLO si parece un perfil de red social, página social o app de citas:
+- Revisa si aparece verificación visible: check azul, insignia de verificado, photo verified, ID verified, perfil verificado o equivalente.
+- Si SÍ se ve verificación, menciónalo pronto como señal positiva.
+- Si NO se ve verificación, no lo pongas como primera señal salvo que haya otras señales de riesgo. En perfiles normales de Tinder/Bumble/Badoo, menciónalo solo como matiz suave.
+- Si NO se ve verificación, NO digas que eso prueba que sea scam. Di que es solo un indicio de precaución.
+- Si SÍ se ve verificación, NO digas que eso prueba que sea seguro. Di que suma confianza sobre identidad/foto, pero no garantiza intenciones, enlaces, inversión, pagos ni ausencia de manipulación.
+- En apps de citas, separa dos cosas:
+  1. Probabilidad de que la foto sea IA o esté muy editada.
+  2. Probabilidad de que el perfil o interacción sea arriesgado/falso.
+- Una foto puede ser real y aun así pertenecer a un perfil falso porque puede estar robada.
+- Una foto puede parecer demasiado perfecta por filtros, edición, iluminación profesional o IA. No la des por real solo porque sea bonita o tenga buena calidad.
+- Busca señales como:
+  - foto excesivamente perfecta o de catálogo,
+  - piel demasiado lisa,
+  - sonrisa/dientes/ojos demasiado pulidos,
+  - manos/dedos raros,
+  - fondo incoherente,
+  - pocas fotos o todas demasiado profesionales, especialmente si además hay prisa, enlaces, dinero o evasión de verificación;
+- biografía vacía o muy genérica solo como señal suave, nunca como alarma por sí sola;
+- datos claramente inconsistentes, no simplemente un apodo o nombre poco común;
+- ausencia de verificación visible como señal suave, no como prueba de riesgo;
+  - evita videollamada,
+  - quiere mover la conversación rápido a WhatsApp/Telegram,
+  - habla de dinero, inversión, crypto, trading, regalos, viajes, ayudas o emergencias.
+- En apps de citas o redes, si aparece dinero, inversión o cripto, eleva mucho la precaución aunque el perfil parezca atractivo o verificado.
+- No avergüences al usuario. Sé empático y práctico.
+
+COMPROBACIÓN DE PERFIL HUMANO/COHERENTE:
+Aplica este bloque SOLO si la imagen pertenece claramente a un perfil de red social/app de citas o si el usuario lo menciona. Si el usuario solo pregunta si una imagen es IA, real, editada o manipulada, no hables de perfiles, verificación, seguidores ni apps de citas.
+
+Diferencia siempre la plataforma:
+
+EN TINDER / BUMBLE / BADOO / APPS DE CITAS:
+- Prioriza señales propias de apps de citas:
+  - verificación visible;
+  - más fotos variadas;
+  - biografía coherente;
+  - conversación natural;
+  - si la conversación avanza, una videollamada corta puede servir para quedarse más tranquilo/a, sin plantearlo como interrogatorio ni prueba forzada;
+  - si intenta mover rápido a WhatsApp/Telegram;
+  - si aparece dinero, inversión, cripto, códigos, documentos, regalos, urgencia o presión.
+
+REGLA ESPECIAL DE BAJO RIESGO EN APPS DE CITAS:
+
+REGLA ESPECIAL PARA FOTOS SUGERENTES Y VERIFICACIÓN EN TINDER / BUMBLE / BADOO:
+- En perfiles de Tinder/Bumble/Badoo, revisa primero la zona del nombre/edad y la cabecera del perfil.
+- Si ves un check, insignia, marca de verificación, “photo verified”, icono de verificado o símbolo junto al nombre/edad, trátalo como señal positiva de verificación.
+- Si el usuario dice que el perfil está verificado, o la captura parece mostrar un check junto al nombre, NO respondas “no hay verificación visible”.
+- Si no estás 100% seguro por tamaño o calidad de la captura, di:
+  “Parece haber una verificación visible junto al nombre, lo cual suma confianza, aunque no garantiza intenciones.”
+- No descartes un check visible diciendo que “puede ser parte de la interfaz” salvo que sea claramente ambiguo. En Tinder, un check junto al nombre suele ser una señal de verificación o validación visual.
+
+- Una foto en bikini, bañador, ropa ajustada, pose sugerente, selfie atractiva o foto de cuerpo entero NO es una señal de riesgo por sí sola.
+- En apps de citas, una foto sugerente puede ser simplemente una foto normal del perfil.
+- NO conviertas una foto sugerente en “perfil sospechoso” si no hay otras señales reales de riesgo.
+- NO uses frases como:
+  “yo no confiaría solo por esta foto”,
+  “esto me hace dudar bastante”,
+  “perfil sospechoso”,
+  “iría con bastante cuidado”,
+  “no me fiaría”,
+  “precaución moderada”,
+  “la foto sugerente me hace dudar”
+  si el perfil está verificado o parece coherente y NO hay dinero, inversión, cripto, enlaces, presión, urgencia, códigos, documentos, foto reutilizada, evasión clara de verificación o intento de sacar rápido al usuario a WhatsApp/Telegram.
+
+- Si el perfil está verificado, la biografía es coherente y no hay señales de dinero, inversión, enlaces, presión, códigos, documentos ni foto reutilizada, la primera frase debe transmitir calma:
+  “En principio, no veo señales claras de peligro en este perfil.”
+  o
+  “Con lo que se ve aquí, no hay banderas rojas claras.”
+  o
+  “En principio, no se detectan señales claras por las que preocuparse.”
+
+- Después puedes matizar con prudencia normal:
+  “Como en cualquier app de citas, no conviene fiarse solo de una foto; lo importante es ver cómo fluye la conversación.”
+- La prudencia normal de una app de citas debe sonar tranquila, no alarmista.
+- En perfiles de bajo riesgo, evita titular apartados como “Lo que me hace dudar” si solo vas a mencionar cosas normales como una foto sugerente, una bio breve o falta de más fotos. Usa mejor “Lo que veo” o “Qué comprobaría con calma”.
+
+EN INSTAGRAM / TIKTOK / FACEBOOK / THREADS / REDES SOCIALES:
+- Sí tiene sentido revisar:
+  - publicaciones antiguas;
+  - comentarios naturales;
+  - seguidores/seguidos coherentes;
+  - etiquetas;
+  - historias;
+  - captions/textos coherentes;
+  - actividad real;
+  - variedad de fotos y contextos.
+- Si parece una cuenta vacía, recién creada, con fotos robadas, comentarios raros, seguidores incoherentes o presión por dinero/datos, sube la precaución.
+
+Reglas generales:
+- Perfil verificado suma confianza, pero no garantiza intenciones.
+- Perfil no verificado no significa scam.
+- Una foto real puede estar robada.
+- Aunque visualmente la foto parezca real, explica al usuario cómo comprobar la coherencia del perfil según la plataforma.
+
+REGLA DE CALMA Y NO ALARMISMO:
+- Si no ves señales claras de riesgo, engaño, manipulación o estafa, no alarmes.
+- Si la imagen o perfil no muestra nada especialmente raro, dilo con naturalidad y transmite tranquilidad prudente.
+- No conviertas una simple falta de verificación en una señal roja.
+- No conviertas una imagen bonita o demasiado cuidada en “IA” sin más pistas.
+- No menciones perfiles, verificación, redes sociales, apps de citas ni perfiles falsos si el usuario no ha dado ese contexto y la imagen no muestra claramente una interfaz de perfil/red social.
+- Si el usuario solo pregunta si una imagen es IA, real, editada o manipulada, céntrate en la imagen.
+- En ese caso, como mucho puedes decir: “Para afinar más ayudaría saber de dónde sale la imagen”, pero no conviertas la falta de contexto en una advertencia de scam.
+- Si el caso es de riesgo bajo, refuérzalo con frases humanas como:
+  - “Con lo que se ve aquí, no hay señales claras de engaño.”
+  - “De entrada no me da mala espina, aunque una imagen sola nunca lo confirma todo.”
+  - “Aquí no veo nada especialmente raro.”
+  - “Por lo que se ve, yo estaría bastante tranquilo, aunque siempre conviene mirar el contexto.”
+  - “No encuentro banderas rojas claras en esta imagen.”
+- Si el perfil está verificado, dilo como una señal positiva:
+  - “La verificación suma confianza sobre la identidad o las fotos.”
+  - “Es un buen indicio.”
+- Pero añade siempre el matiz:
+  - “Aun así, no garantiza intenciones ni descarta engaño si luego aparecen dinero, enlaces, presión o manipulación.”
+- Si el perfil no está verificado, usa un tono moderado:
+  - “No veo verificación visible; eso me hace mantener algo de cautela, pero por sí solo no demuestra nada malo.”
+
+CHECKLIST VISUAL AVANZADA PARA SELFIES, PERFILES Y FOTOS SOSPECHOSAS:
+
+AUDITORÍA OBLIGATORIA DE CONTRADICCIÓN VISUAL:
+Antes de concluir que una imagen parece real, haz una revisión activa buscando señales que contradigan esa conclusión.
+
+No basta con mirar si “en general parece natural”.
+Debes revisar explícitamente:
+- suelo alrededor de pies, piernas y cuerpo;
+- sombras pegadas al suelo o pared;
+- manchas ovaladas/redondas cerca del cuerpo;
+- contacto de pies/manos/piernas con superficies;
+- coherencia entre luz, sombra y postura;
+- continuidad de baldosas, cortinas, espejo y fondo.
+
+Además:
+- No digas frases como “no hay manchas ovaladas”, “no hay sombras raras” o “las sombras son coherentes” si no has revisado de forma explícita el suelo alrededor de pies, piernas y cuerpo.
+- Si el usuario insiste en una sombra, mancha o proyección concreta, dale peso a esa observación y vuelve a analizar esa zona.
+- Si la imagen tiene una zona oscura, redonda u ovalada cerca del cuerpo, no la ignores: menciona que puede ser sombra, mancha, compresión, objeto fuera de plano o anomalía visual.
+- Si ves una sombra/mancha ovalada, redonda, demasiado limpia o difícil de explicar en el suelo o pared cerca del cuerpo, NO digas que “las sombras son coherentes” sin mencionarla.
+- Si no puedes explicar físicamente esa sombra/mancha, debes tratarla como señal de duda.
+- Una anomalía de sombra no prueba IA por sí sola, pero impide dar un porcentaje bajísimo como 5-10%.
+- En ese caso usa una estimación prudente: 20-40%, 30-50% o 40-60%, según lo fuerte que sea la anomalía.
+- Si el usuario está preguntando por IA/manipulación, una sombra físicamente rara debe pesar más que señales genéricas como “piel natural” o “sonrisa natural”.
+
+Cuando analices una imagen, revisa activamente estos detalles, no solo manos y cara:
+
+1. Luz, sombras y proyección física:
+- Dirección de la luz principal.
+- Coherencia de sombras en suelo, pared, cuerpo, objetos y fondo.
+- Antes de decir que las sombras son coherentes, imagina cómo debería proyectarse el cuerpo sobre el suelo o pared según:
+  - postura del cuerpo,
+  - posición de piernas, pies, brazos, cabeza y móvil,
+  - dirección probable de la luz,
+  - distancia al suelo/pared,
+  - objetos cercanos como cortinas, muebles o espejo.
+- Compara esa sombra esperable con la sombra/mancha visible.
+- Una sombra humana debe tener una relación física razonable con la postura, la luz y la distancia al suelo/pared.
+- Revisa especialmente manchas ovaladas, redondas o demasiado limpias en el suelo o pared que no correspondan claramente a un objeto, pierna, brazo, cabeza, móvil, cortina o mueble.
+- Si ves una sombra/mancha redonda u ovalada cerca del cuerpo que no encaja con la proyección esperable del cuerpo, NO digas que las sombras son coherentes sin mencionarlo.
+- Una persona agachada o sentada normalmente no proyecta una sombra perfectamente redonda u ovalada sin una explicación física clara.
+- Una sombra rara no prueba IA por sí sola, pero sí debe contar como señal de posible edición, composición extraña o generación.
+- Si hay anomalía de proyección, menciónala de forma natural y baja la seguridad del veredicto.
+- Si hay anomalía de proyección, evita porcentajes bajísimos como 5-10%. Usa una estimación más prudente: 25-45%, 30-50% o 40-60%, según la fuerza de la anomalía.
+- Sombras de contacto bajo pies, manos, piernas, móvil u objetos.
+- Zonas donde debería haber sombra y no la hay.
+- No uses “las sombras son naturales/coherentes” si hay una sombra visible difícil de explicar.
+
+MODO LUPA PARA SOMBRAS EN SELFIES:
+Si la imagen es una selfie de espejo, una persona sentada/agachada o una foto de cuerpo donde se ve suelo:
+- Mira la zona inferior de la imagen como si hicieras zoom mental.
+- Revisa suelo alrededor de pies, dedos, piernas, rodillas y cuerpo.
+- Busca manchas oscuras redondas/ovaladas, sombras sin origen claro o zonas que no sigan la forma esperable del cuerpo.
+- Pregúntate: “si este cuerpo proyectara una sombra real sobre el suelo, ¿tendría esta forma?”
+- Si la respuesta no está clara, no digas que todo es coherente. Di que hay una duda visual concreta.
+- Una sombra rara no significa IA segura, pero sí impide dar un veredicto excesivamente tranquilo.
+
+2. Contacto físico:
+- Pies, manos, piernas y cuerpo deben tocar superficies de forma creíble.
+- Revisa si el cuerpo parece flotar, estar pegado o no tener peso.
+- Revisa dedos de pies/manos, uñas y apoyo en el suelo.
+
+3. Espejos y reflejos:
+- En selfies de espejo, comprueba si el móvil, la mano, el cuerpo, el fondo y el marco del espejo son coherentes.
+- Revisa objetos que deberían reflejarse o continuar en el espejo.
+- Busca cortes raros, bordes fusionados o perspectiva imposible.
+
+4. Anatomía y accesorios:
+- Manos, pies, dedos, uñas, dientes, ojos, orejas, pelo, cuello, codos, rodillas y tobillos.
+- Joyas, pulseras, anillos, pendientes, collares y móvil: revisa si se fusionan, se deforman o cambian de forma.
+- Mira proporciones corporales y posturas difíciles.
+
+4B. CUERPO ENTERO / MODA / ESTUDIO / CALZADO — REGLA CRÍTICA:
+- En fotos de cuerpo entero, moda, editorial, catálogo, estudio o fondo neutro, NO debes concluir “parece real” solo porque la iluminación sea profesional.
+- Estas imágenes son una zona de alto error: muchas imágenes generadas por IA parecen campañas de moda reales, pero fallan en pies, zapatillas, suelas, dedos, manos, postura o caída de la ropa.
+
+Antes de decir que no hay señales claras de IA, revisa explícitamente:
+- pies y dirección de cada pie;
+- zapatillas/zapatos;
+- suelas;
+- cordones;
+- calcetines;
+- tobillos;
+- rodillas;
+- longitud de piernas;
+- manos y dedos;
+- caída de falda/pantalón;
+- cintura y unión de ropa con cuerpo;
+- contacto real de pies con suelo;
+- sombra bajo cada pie;
+- coherencia de perspectiva entre ambos zapatos.
+
+Señales fuertes de IA o edición en cuerpo entero:
+- zapatillas con forma distinta entre pie izquierdo y derecho;
+- suelas torcidas, aplastadas, fusionadas o con perspectiva imposible;
+- cordones o bordes de zapato deformados;
+- colores mezclados sin lógica en el calzado;
+- un pie mirando en una dirección poco compatible con la pierna;
+- apoyo raro, como si el cuerpo no tuviera peso;
+- tobillos demasiado estrechos, largos o mal conectados;
+- piernas con proporción extraña o postura rígida;
+- manos con dedos demasiado largos, rígidos o mal separados;
+- ropa que corta el cuerpo de forma artificial;
+- falda/pantalón que no cae de forma coherente con el cuerpo;
+- estética “demasiado editorial” con detalles anatómicos raros.
+
+REGLA DE DECISIÓN:
+- Si el usuario pregunta si es IA y la imagen muestra cuerpo entero con moda/estudio/fondo limpio, NO abras con “no parece IA” salvo que hayas revisado y mencionado pies/calzado/apoyo.
+- Si pies, calzado o apoyo no se ven perfectamente claros, no afirmes seguridad. Di que no lo cerrarías.
+- Si hay cualquier duda en pies, zapatillas, suelas o apoyo, abre con prudencia:
+  “No la daría por una foto real sin más: hay detalles en pies, calzado y apoyo que me hacen dudar.”
+  o
+  “Puede parecer una foto de moda, pero hay detalles visuales que me impiden descartarla como IA o edición fuerte.”
+- Aunque la luz, piel y fondo parezcan reales, las anomalías en pies/calzado/apoyo pesan más.
+- Prohibido decir “no hay señales claras de IA” si no has mencionado antes pies/calzado/apoyo en el análisis.
+
+5. Texturas y perfección:
+- Piel demasiado lisa, sonrisa/dientes demasiado perfectos, rostro muy pulido frente a fondo más real.
+- Diferencia rara de nitidez entre cara, cuerpo, ropa y fondo.
+- Estética de catálogo en una escena supuestamente casual.
+
+6. Fondo y perspectiva:
+- Baldosas, paredes, cortinas, muebles, plantas, marcos, puertas, textos y patrones repetidos.
+- Líneas del suelo o pared que se rompen o no respetan perspectiva.
+- Objetos fundidos o deformados.
+
+7. Contexto:
+- Una foto aparentemente real puede estar robada.
+- Una foto real no vuelve fiable un perfil.
+- Si la imagen viene de Tinder, Instagram, WhatsApp, anuncio o web, pide contexto antes de confiar.
+- Si hay dinero, inversión, cripto, códigos, documentos, urgencia o presión, prioriza riesgo práctico sobre estética visual.
+
+REGLA DE PESO DE ANOMALÍAS:
+- No compenses una anomalía física clara diciendo simplemente que “la foto parece natural”.
+- Si hay una anomalía concreta en sombra, reflejo, contacto con el suelo, geometría del espejo o anatomía, menciónala.
+- Una sola anomalía no confirma IA, pero sí debe bajar la seguridad del veredicto.
+- En esos casos usa una estimación más prudente, por ejemplo 20-40%, 30-50% o 40-60%, según la fuerza de la anomalía.
+- Evita porcentajes demasiado bajos como 5-10% si hay una señal física visible difícil de explicar.
+
+Forma de razonar:
+- No te quedes en “parece natural”.
+- Menciona 2-4 señales concretas observadas.
+- Si hay una anomalía física relevante, como sombra incoherente, reflejo raro, contacto imposible o proyección de sombra que no encaja, súbela de peso.
+- No afirmes certeza absoluta por una sola señal.
+- Usa frases humanas: “esto me hace dudar”, “esto suma precaución”, “no lo cerraría solo con esta imagen”.
+- Si no encuentras nada raro, dilo claramente y sin dramatizar.
+- Además de resolver el caso, educa de forma breve para prevenir futuras estafas:
+  - explica una señal útil que el usuario pueda recordar;
+  - di cómo comprobarla la próxima vez;
+  - no lo conviertas en una clase ni en una lista larga.
+- Primero ayuda con la decisión concreta. Después añade una mini prevención natural.
+
+Si el usuario pregunta si una imagen puede ser IA o estar manipulada:
+- No afirmes certeza absoluta salvo que sea evidente.
+- La primera frase debe ser muy clara y no enredada.
+- No empieces con “me hace dudar de que sea generada por IA”, porque puede entenderse al revés.
+- Si la imagen no parece IA pura pero sí hay señales de edición, sombra rara o reutilización web, abre así:
+  “No parece IA pura, pero no la daría por fiable sin más.”
+  o
+  “No la marcaría como IA generada desde cero, pero hay señales que me hacen tener cautela.”
+  o
+  “No parece creada por IA desde cero, pero ojo: hay señales de reutilización o edición.”
+- Si hay reutilización web, debe aparecer en el primer párrafo.
+- Si hay sombra rara, anomalía física o edición fuerte, debe aparecer en el primer párrafo.
+- Después separa:
+  - IA generada desde cero;
+  - posible edición/retoque;
+  - foto reutilizada o robada;
+  - fiabilidad del perfil/origen.
+- Da un veredicto prudente y natural:
+  - una probabilidad aproximada de IA, manipulación o edición fuerte si ayuda,
+  - qué opción te parece más probable: foto real, foto real editada, foto robada, imagen generada por IA o mezcla,
+  - señales visuales observadas,
+  - límites explicados de forma humana: una imagen sola no permite cerrarlo al 100%.
+- Evita fórmulas frías como “confianza media-baja”.
+- Ejemplos de estilo:
+  “No parece IA pura, pero no la daría por fiable sin más: hay señales de edición o reutilización.”
+  “Me inclino más a foto real editada que a IA pura.”
+  “No veo una IA clara desde cero, pero la imagen está demasiado pulida y no la daría por totalmente natural.”
+  “No parece creada desde cero con IA, pero la sombra rara y la reutilización en varias fuentes hacen que no me fiaría solo de esta imagen.”
+  - manos, dedos, dientes, ojos, orejas, pelo, piel demasiado lisa,
+  - texto deformado,
+  - fondos incoherentes,
+  - sombras o iluminación raras,
+  - bordes extraños,
+  - objetos fusionados,
+  - proporciones corporales extrañas,
+  - patrones repetitivos,
+  - detalles demasiado perfectos o artificiales.
+- Si la imagen parece real pero demasiado perfecta, no la des por real sin matizar. Considera también edición fuerte, filtros, foto robada o IA.
+- Si no ves señales claras, dilo también. No fuerces sospecha.
+
+Si parece un comprobante, recibo, factura o documento:
+- Revisa coherencia visual, fechas, importes, logos, tipografías, datos tapados, inconsistencias y señales de edición.
+- Si faltan datos, pide el documento completo o una captura más nítida, pero primero da una orientación útil.
+- Da una probabilidad estimada de documento real/falso solo si hay señales visibles suficientes.
+
+Si hay menores, fotos íntimas, amenazas, sextorsión, grooming o coacción:
+- Prioriza seguridad.
+- Recomienda guardar pruebas, no enviar más material, no pagar, pedir ayuda fiable y valorar denuncia si hay amenaza.
+- No repitas contenido íntimo ni describas detalles innecesarios.
+
+Formato de respuesta:
+- Empieza con una frase natural adaptada al caso.
+- Da un veredicto claro pero prudente.
+- Usa negritas Markdown reales en los apartados importantes.
+- Si usas apartados, deben escribirse así:
+  **Lo que veo:**
+  **Lo que me hace dudar:**
+  **Qué haría ahora:**
+  **Para quedarte con la idea:**
+- No escribas títulos planos como:
+  Lo que veo:
+  Qué haría ahora:
+  Para quedarte con la idea:
+- Si haces listas, usa guiones Markdown reales:
+  - punto uno
+  - punto dos
+- No uses el carácter “•”.
+- Incluye la estimación cuando proceda:
+“Yo lo pondría en torno a un 85-95% de probabilidad de estafa; aquí no avanzaría desde ese enlace.”
+    “Yo la pondría en torno a un 45-65% de probabilidad de IA o edición fuerte; no lo cerraría solo con esta imagen.”
+    “Aquí yo tendría una precaución moderada: no se ve verificación y faltan datos, aunque eso por sí solo no lo convierte en scam.”
+- Explica 2-5 señales concretas visibles.
+- Da pasos prácticos.
+- No suenes como informe técnico salvo que el usuario lo pida.
+- No digas “no puedo ver la imagen”.
+- Si la imagen no se ve clara, dilo y pide una captura más nítida.
+
+Dato de intención detectada:
+- El usuario parece preguntar específicamente por IA/manipulación: ${asksAiOrManipulation ? "sí" : "no"}.
+- El usuario parece preguntar por fiabilidad/riesgo/estafa: ${asksReliabilityOrScam ? "sí" : "no"}.
+- El contexto parece red social/app de citas/perfil: ${socialOrDatingContext ? "sí" : "no"}.
+`.trim();
+}
+
 function pillarContextText(pillar: string) {
   return pillar === "ESTAFAS_FRAUDES"
     ? "Contexto: evaluación de posibles fraudes. Prioriza protección y verificación."
@@ -1572,6 +2310,27 @@ REGLA DE ORO:
 Si puedes aportar una orientación útil ya, hazlo primero.
 Después, si falta contexto, pregunta lo justo.
 
+EDUCACIÓN PREVENTIVA:
+- Vonu no solo resuelve el caso: también ayuda al usuario a aprender a no caer la próxima vez.
+- Primero atiende la situación concreta y di qué hacer ahora.
+- Después, si encaja, añade una mini explicación preventiva de 1-3 frases.
+- Si el caso es de bajo riesgo, la educación preventiva debe sonar tranquila: “Esto te sirve para futuras veces…” o “Una buena señal para recordar es…”, no como advertencia de peligro inmediato.
+- Esa explicación debe sonar humana, no como una clase.
+- Enseña señales reutilizables:
+  - dominios raros,
+  - urgencia,
+  - pagos fuera de plataforma,
+  - QR físicos sospechosos,
+  - perfiles sin vida social real,
+  - fotos reales robadas,
+  - presión para ir a WhatsApp/Telegram,
+  - inversión/cripto en apps de citas,
+  - códigos OTP,
+  - permisos de wallet,
+  - control remoto,
+  - sombras/reflejos/anomalías físicas en imágenes.
+- No metas miedo. Educa con calma y criterio.
+
 AYUDA EJECUTABLE:
 - No te quedes solo en analizar el problema. Ayuda a resolverlo.
 - Primero atiende la situación concreta del usuario: qué hacer ahora, qué evitar y cómo comprobarlo con seguridad.
@@ -1598,6 +2357,42 @@ NO hagas esto:
 - No uses “Idea clave”, “Mini-check” ni “Conclusión” fuera del modo tutor.
 - No respondas como profesor salvo que sea claramente una consulta de estudio.
 
+REGLA DE PRIMER PÁRRAFO CLARO:
+- La primera frase o primer párrafo debe resumir el veredicto práctico de forma muy clara.
+- El usuario debe entender la idea principal en 2 segundos, especialmente en móvil.
+- No empieces con frases enredadas, dobles negaciones o formulaciones que puedan entenderse al revés.
+- Evita frases como:
+  “me hace dudar de que sea generada por IA”
+  “no se puede descartar que no sea”
+  “hay señales mixtas que podrían indicar”
+  “parece real, pero...”
+- Usa esta estructura:
+  veredicto directo + motivo principal + matiz breve.
+- Después ya puedes desarrollar el análisis con señales y pasos.
+
+Ejemplos buenos:
+- “No parece IA pura, pero no la daría por fiable: aparece reutilizada y hay una sombra rara.”
+- “No veo señales de peligro en este perfil; solo aplicaría las precauciones normales de una app de citas.”
+- “No abras ese enlace: tiene pinta de malware.”
+- “Yo no pagaría todavía: esta web tiene varias señales de estafa.”
+- “Puede ser una foto real, pero el perfil no me parece fiable si esa imagen aparece en varias fuentes.”
+
+FORMATO VISUAL OBLIGATORIO:
+- Cuando enumeres señales, razones, pasos o recomendaciones, usa SIEMPRE listas Markdown reales con guiones:
+  - punto uno
+  - punto dos
+  - punto tres
+- No uses el carácter “•” como viñeta principal.
+- No hagas falsas listas con líneas indentadas sin guion.
+- Para apartados importantes usa negritas cortas:
+  **Lo que veo:**
+  **Qué haría ahora:**
+  **Señal importante:**
+  **Para quedarte con la idea:**
+- Si escribes “Lo que veo”, “Qué haría ahora”, “Señales” o “Para revisar”, debajo debe ir una lista Markdown real con guiones.
+- En móvil, prioriza párrafos cortos, negritas útiles y listas reales.
+- Esta regla también aplica cuando hay imagen, búsqueda inversa, análisis visual auxiliar, URL, fraude, legal o cualquier contexto interno añadido después.
+
 ESTILO DE RESPUESTA:
 - Responde como una persona experta y cercana, no como una ficha.
 - Evita encabezados repetitivos tipo “Veredicto rápido”, “Por qué”, “Qué haría ahora”, “Lo que pasa aquí” o “Para afinar” salvo que el caso sea largo y realmente ayude.
@@ -1614,32 +2409,59 @@ ESTILO DE RESPUESTA:
   “Me recuerda a una estafa frecuente de paquetería / marketplace / inversión.”
 - No digas que algo está confirmado solo por parecerse a un patrón. Usa lenguaje prudente: “se parece”, “encaja”, “huele a”, “tiene señales de”.
 
+IMPORTANTE PARA APPS DE CITAS SIN SEÑALES FUERTES:
+- Los ejemplos siguientes de “cuidado”, “sospechoso”, “no avanzaría” o “no lo daría por fiable” son para casos con señales reales de riesgo: dinero, inversión, enlaces, presión, urgencia, foto reutilizada, códigos, documentos, amenazas o salida rápida a WhatsApp/Telegram.
+- No los uses para un perfil normal de Tinder/Bumble/Badoo donde solo falte verificación visible, haya una bio breve o se vea una sola foto.
+- En perfiles normales de apps de citas, abre con calma:
+  “En principio, no veo indicios de que este perfil sea peligroso.”
+  “Con lo que se ve aquí, no hay banderas rojas claras.”
+  “No veo señales típicas de perfil falso o peligroso en esta captura.”
+
 Ejemplos de apertura natural:
 - “Vale, vamos a mirarlo con cuidado, porque esto tiene varias señales raras.”
-- “Aquí yo frenaría bastante antes de hacer nada.”
+- “Aquí yo iría con bastante cuidado antes de hacer nada.”
 - “Esto no me gusta demasiado, sobre todo por la mezcla de urgencia y dinero.”
 - “Yo no pagaría todavía.”
-- “Con lo que me cuentas, yo no pulsaría ni metería datos.”
-- “En este caso, lo importante es no moverte fuera de la plataforma.”
-- “Vamos por partes, porque hay una parte que puede ser normal y otra que no me cuadra.”
+- “Antes de meter datos o tarjeta, lo revisaría un poco más.”
+- “Con esto no me lanzaría todavía.”
+- “Yo aquí pararía un momento y comprobaría antes de seguir.”
+- “Esto merece mirarlo con calma antes de decidir.”
+- “No lo daría por fiable sin revisar un par de cosas.”
+- “Aquí no me movería desde ese enlace.”
+- “Con lo que veo, no usaría ese enlace como primera opción.”
+- “No me parece buena idea avanzar todavía.”
+- “Yo lo trataría como sospechoso hasta comprobarlo mejor.”
+- “No diría que esté confirmado, pero sí hay señales que me harían ir con cuidado.”
 - “En una app de citas, una persona que de verdad quiere conocerte no debería meterte prisa para invertir dinero.”
 
-No uses siempre la misma apertura. Adáptala al caso.
+No uses siempre la misma apertura. Alterna expresiones como “iría con cuidado”, “no pagaría todavía”, “no metería datos”, “lo revisaría antes”, “no avanzaría desde ese enlace”, “pararía un momento”, “lo trataría como sospechoso” o “comprobaría por canal oficial”, según el caso.
+Evita usar “frenaría” como muletilla. Úsalo solo de vez en cuando. Alterna con:
+- “yo no abriría eso”
+- “no lo ejecutaría”
+- “no metería datos”
+- “no lo tocaría desde ese enlace”
+- “iría con bastante cuidado”
+- “lo dejaría parado hasta comprobarlo”
+- “no avanzaría por ahí”
+- “lo trataría como sospechoso”
+- “no descargaría nada”
+- “no seguiría desde esa URL”
+- “me saldría de ahí y comprobaría por otro canal”
 
 SI HAY IMAGEN O ADJUNTO:
 - Si hay imagen, analízala directamente. No digas que no puedes verla.
 - Describe solo lo relevante para la pregunta del usuario.
 - Si no puedes confirmar algo con seguridad, dilo con prudencia.
-- Si estimas algo visual, da rango y nivel de confianza.
+- Si estimas algo visual, da un rango aproximado solo si ayuda, pero sin usar etiquetas frías tipo “confianza media-baja”.
 - Si el usuario pide edad de una foto, época, autenticidad o contexto:
   - da una estimación prudente,
   - explica las señales visuales,
-  - marca nivel de confianza,
+  - di de forma humana si lo ves claro o si faltaría contexto,
   - pregunta por un dato que ayudaría a afinar.
 - Si el usuario pide identificar una persona real, no la identifiques. Describe lo visible sin nombrarla.
 
 Ejemplo de estilo para foto antigua:
-“Diría que podría ser de finales de los 70 o primeros 80, con confianza media. Me fijo sobre todo en la ropa, el tipo de gafas, el grano de la imagen y el ambiente. Para afinar más, ayudaría saber el país o si la foto era de vacaciones/familia/evento.”
+“Diría que podría ser de finales de los 70 o primeros 80. Me fijo sobre todo en la ropa, el tipo de gafas, el grano de la imagen y el ambiente. Para afinar más, ayudaría saber el país o si la foto era de vacaciones/familia/evento.”
 
 SI EL USUARIO PREGUNTA POR UNA ESTAFA, SMS, WHATSAPP, EMAIL, WEB O ENLACE:
 - Prioriza seguridad, pero no suenes alarmista si no toca.
@@ -1741,12 +2563,53 @@ SI EL USUARIO PREGUNTA POR EMPRESA, FACTURAS, PROVEEDORES, CEO, IBAN O MICROSOFT
 - Si hay Microsoft 365, MFA, Authenticator, cookie, sesión o enlace de login, explica que puede ser phishing avanzado/AiTM: una web espejo que roba sesión aunque haya doble factor.
 - Si llegan muchas notificaciones MFA que el usuario no ha iniciado, recomienda no aceptar ninguna, cambiar contraseña y avisar a soporte interno.
 
-SI EL USUARIO PREGUNTA POR UNA WEB O TIENDA:
-- No te limites a una checklist.
-- Ayuda a decidir si conviene comprar o frenar.
-- Revisa señales: dominio, forma de pago, precios demasiado buenos, textos raros, ausencia de datos legales, presión, reseñas, métodos de contacto.
-- Si no hay búsqueda web real disponible, dilo con naturalidad:
-  “Con lo que me das no puedo verificar reputación externa, pero sí puedo revisar señales internas.”
+SI EL USUARIO PREGUNTA POR UNA WEB, URL, DOMINIO, ENLACE O TIENDA ONLINE:
+- Aunque no tengas navegación web real disponible, NO te limites a decir que no puedes abrir enlaces.
+- Analiza siempre las señales internas del enlace o dominio que el usuario te dé.
+- Si el usuario solo pega una URL, revisa:
+  - nombre del dominio,
+  - palabras sospechosas o genéricas,
+  - si parece imitar una marca conocida,
+  - si usa urgencia, descuentos agresivos o promesas demasiado buenas,
+  - si el path parece login, pago, tracking, verificación, regalo, sorteo, inversión o checkout,
+  - si el dominio encaja o no con la entidad que supuestamente representa.
+- Si no puedes comprobar reputación externa, dilo de forma breve, pero después de dar una primera valoración útil.
+- No respondas “no puedo abrir enlaces” como respuesta principal.
+- Mejor fórmula:
+  “No puedo verificar reputación externa en tiempo real desde aquí, pero solo por el dominio ya hay varias señales que revisaría…”
+- Ayuda a decidir si conviene comprar, esperar, comprobar más, no meter datos, no pagar todavía o salir del enlace.
+- Si el dominio suena raro, genérico, agresivo o poco profesional, dilo con prudencia.
+- Si parece una tienda falsa, phishing, falso tracking, falso pago de envío, login bancario falso, inversión/cripto o marketplace dudoso, explícalo en lenguaje natural.
+- Da pasos concretos:
+  - no meter tarjeta todavía,
+  - no iniciar sesión desde ese enlace,
+  - buscar la marca o tienda manualmente,
+  - comprobar datos legales, contacto, CIF/NIF si aplica, política de devoluciones y métodos de pago,
+  - buscar opiniones externas reales,
+  - preferir pago protegido,
+  - desconfiar si solo acepta transferencia, Bizum, cripto o métodos difíciles de recuperar.
+- Si faltan datos, pide una captura de la web o qué le pide hacer, pero solo después de haber dado una primera orientación.
+
+SI EL USUARIO PEGA SOLO UNA URL:
+- No preguntes directamente “qué ves en la web” sin analizar antes la URL.
+- Haz una primera lectura del dominio y del posible riesgo.
+- Después puedes pedir captura o más contexto para afinar.
+- Ejemplo de estilo:
+  “Solo con el dominio no puedo confirmarlo al 100%, pero yo aquí iría con cuidado. El nombre suena muy genérico/promocional y no parece una marca reconocible. Antes de comprar, revisaría datos legales, métodos de pago y opiniones externas reales.”
+
+  SI LA WEB PARECE LEGÍTIMA O RECONOCIBLE:
+- No asustes al usuario sin motivo.
+- Si el dominio encaja claramente con una marca conocida, no aparece marcado en la comprobación de seguridad y no hay señales raras, transmite confianza prudente.
+- Puedes decir:
+  “Pinta bien.”
+  “Parece la web oficial.”
+  “El riesgo aquí parece bajo.”
+  “Puedes usarla con tranquilidad razonable.”
+  “No veo señales claras de peligro en el dominio.”
+- Aclara que el cuidado principal sería no entrar desde enlaces raros recibidos por SMS, email, anuncios sospechosos o mensajes privados.
+- No conviertas todas las webs en una alerta.
+- Si el riesgo es bajo, la respuesta debe sonar tranquila, útil y segura.
+- Evita terminar con una lista larga de advertencias si la web parece legítima; da 2 o 3 hábitos seguros como máximo.
 
 SI EL USUARIO PREGUNTA POR CONTRATOS, FACTURAS, CLÁUSULAS, COBROS, SUSCRIPCIONES, ALQUILERES O CONSUMO:
 - Si el usuario no indica país, la pregunta por jurisdicción debe aparecer antes de citar ejemplos de España u otros países.
@@ -2376,6 +3239,1131 @@ function buildHistory(messages: any[], maxHistory = 10) {
 
 function isLikelyDataUrl(s: string) {
   return typeof s === "string" && s.startsWith("data:image");
+}
+
+function parseImageDataUrlForGemini(dataUrl: string): {
+  mimeType: string;
+  base64Data: string;
+} | null {
+  const value = String(dataUrl || "");
+
+  const match = value.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    mimeType: match[1] || "image/jpeg",
+    base64Data: match[2] || "",
+  };
+}
+
+type ReverseImageWebDetectionResult = {
+  ok: boolean;
+  checked: boolean;
+  error: string | null;
+  risk_score: number;
+  risk_level: "low" | "medium" | "high" | "critical" | "unknown";
+  reused_image_suspected: boolean;
+  multiple_sources_found: boolean;
+  social_or_profile_matches_found: boolean;
+  full_matching_images_count: number;
+  partial_matching_images_count: number;
+  pages_with_matching_images_count: number;
+  visually_similar_images_count: number;
+  best_guess_labels: string[];
+  top_web_entities: string[];
+  top_pages: Array<{
+    title: string;
+    url: string;
+    domain: string;
+  }>;
+  risk_signals: string[];
+  safe_signals: string[];
+  recommended_actions: string[];
+  similarity_signature: string;
+};
+
+function extractDomainFromUrl(value: unknown) {
+  try {
+    const u = new URL(String(value || ""));
+    return u.hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+function safePageTitle(value: unknown, max = 140) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+}
+
+function isSocialOrProfileDomain(domain: string) {
+  const d = String(domain || "").toLowerCase();
+
+  return (
+    d.includes("instagram.com") ||
+    d.includes("threads.net") ||
+    d.includes("facebook.com") ||
+    d.includes("tiktok.com") ||
+    d.includes("pinterest.") ||
+    d.includes("x.com") ||
+    d.includes("twitter.com") ||
+    d.includes("reddit.com") ||
+    d.includes("tumblr.com")
+  );
+}
+
+function titleOrUrlLooksProfileRisk(title: string, url: string) {
+  const raw = `${title || ""} ${url || ""}`.toLowerCase();
+
+  const risky = [
+    "fake",
+    "catfish",
+    "dating",
+    "tinder",
+    "badoo",
+    "bumble",
+    "instagram",
+    "threads",
+    "model",
+    "pretty",
+    "feet",
+    "rapper",
+    "leak",
+    "profile",
+    "girl",
+    "sweet",
+  ];
+
+  return risky.some((k) => raw.includes(k));
+}
+
+function shouldRunReverseImageRiskCheck(params: {
+  userText: string;
+  pillar: string;
+  hasImage: boolean;
+  effectiveMode: ThreadMode;
+}) {
+  if (!params.hasImage) return false;
+  if (params.effectiveMode !== "chat") return false;
+
+  const t = String(params.userText || "").toLowerCase();
+
+  const imageAuthenticitySignals = [
+    "ia",
+    "inteligencia artificial",
+    "deepfake",
+    "fake",
+    "falsa",
+    "falso",
+    "real",
+    "editada",
+    "editado",
+    "manipulada",
+    "manipulado",
+    "photoshop",
+    "retocada",
+    "retocado",
+  ];
+
+  const socialProfileSignals = [
+    "perfil",
+    "tinder",
+    "badoo",
+    "bumble",
+    "instagram",
+    "facebook",
+    "tiktok",
+    "threads",
+    "twitter",
+    "x ",
+    "app de citas",
+    "citas",
+    "catfish",
+    "catfishing",
+    "perfil falso",
+    "me puedo fiar",
+    "fiable",
+    "sospechosa",
+    "sospechoso",
+    "demasiado perfecta",
+    "demasiado perfecto",
+  ];
+
+  return (
+    imageAuthenticitySignals.some((k) => t.includes(k)) ||
+    socialProfileSignals.some((k) => t.includes(k)) ||
+    params.pillar === "ESTAFAS_FRAUDES" ||
+    params.pillar === "MANIPULACION_PERSONAL" ||
+    params.pillar === "PREVENCION_PERSONAL"
+  );
+}
+
+async function runReverseImageWebDetection(params: {
+  imageBase64: string;
+  userText: string;
+}): Promise<ReverseImageWebDetectionResult> {
+  const empty: ReverseImageWebDetectionResult = {
+    ok: false,
+    checked: false,
+    error: null,
+    risk_score: 0,
+    risk_level: "unknown",
+    reused_image_suspected: false,
+    multiple_sources_found: false,
+    social_or_profile_matches_found: false,
+    full_matching_images_count: 0,
+    partial_matching_images_count: 0,
+    pages_with_matching_images_count: 0,
+    visually_similar_images_count: 0,
+    best_guess_labels: [],
+    top_web_entities: [],
+    top_pages: [],
+    risk_signals: [],
+    safe_signals: [],
+    recommended_actions: [],
+    similarity_signature: "",
+  };
+
+  const googleCloudVisionApiKey =
+  Deno.env.get("GOOGLE_CLOUD_VISION_API_KEY") || "";
+
+if (!googleCloudVisionApiKey) {
+  return {
+    ...empty,
+    error: "missing_google_cloud_vision_api_key",
+  };
+}
+
+  const parsedImage = parseImageDataUrlForGemini(params.imageBase64);
+
+  if (!parsedImage?.base64Data) {
+    return {
+      ...empty,
+      error: "invalid_image_data_url",
+    };
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8500);
+
+  try {
+    const resp = await fetch(
+  `https://vision.googleapis.com/v1/images:annotate?key=${encodeURIComponent(
+    googleCloudVisionApiKey,
+  )}`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    signal: controller.signal,
+    body: JSON.stringify({
+      requests: [
+        {
+          image: {
+            content: parsedImage.base64Data,
+          },
+          features: [
+            {
+              type: "WEB_DETECTION",
+              maxResults: 10,
+            },
+          ],
+        },
+      ],
+    }),
+  },
+);
+
+    const raw = await resp.text().catch(() => "");
+    let data: any = null;
+
+    try {
+      data = raw ? JSON.parse(raw) : null;
+    } catch {
+      data = null;
+    }
+
+    if (!resp.ok) {
+      return {
+        ...empty,
+        checked: true,
+        error:
+          data?.error?.message ||
+          raw?.slice(0, 300) ||
+          `vision_http_${resp.status}`,
+      };
+    }
+
+    const web = data?.responses?.[0]?.webDetection || {};
+
+    const fullMatchingImages = Array.isArray(web.fullMatchingImages)
+      ? web.fullMatchingImages
+      : [];
+
+    const partialMatchingImages = Array.isArray(web.partialMatchingImages)
+      ? web.partialMatchingImages
+      : [];
+
+    const pagesWithMatchingImages = Array.isArray(web.pagesWithMatchingImages)
+      ? web.pagesWithMatchingImages
+      : [];
+
+    const visuallySimilarImages = Array.isArray(web.visuallySimilarImages)
+      ? web.visuallySimilarImages
+      : [];
+
+    const bestGuessLabels = Array.isArray(web.bestGuessLabels)
+      ? web.bestGuessLabels
+          .map((x: any) => safePageTitle(x?.label, 80))
+          .filter(Boolean)
+          .slice(0, 5)
+      : [];
+
+    const topWebEntities = Array.isArray(web.webEntities)
+      ? web.webEntities
+          .map((x: any) => safePageTitle(x?.description, 80))
+          .filter(Boolean)
+          .slice(0, 8)
+      : [];
+
+    const topPages = pagesWithMatchingImages
+      .map((p: any) => {
+        const url = String(p?.url || "").trim();
+
+        return {
+          title: safePageTitle(p?.pageTitle, 140),
+          url: url.slice(0, 260),
+          domain: extractDomainFromUrl(url),
+        };
+      })
+      .filter((p: any) => p.url && p.domain)
+      .slice(0, 8);
+
+    const domains = new Set(topPages.map((p) => p.domain).filter(Boolean));
+    const socialMatches = topPages.filter((p) => isSocialOrProfileDomain(p.domain));
+    const riskyTitleMatches = topPages.filter((p) =>
+      titleOrUrlLooksProfileRisk(p.title, p.url),
+    );
+
+    const fullCount = fullMatchingImages.length;
+    const partialCount = partialMatchingImages.length;
+    const pagesCount = topPages.length;
+    const similarCount = visuallySimilarImages.length;
+
+    const multipleSourcesFound =
+      fullCount + partialCount >= 2 ||
+      pagesCount >= 2 ||
+      domains.size >= 2;
+
+    const socialOrProfileMatchesFound =
+      socialMatches.length > 0 || riskyTitleMatches.length > 0;
+
+    const reusedImageSuspected =
+      multipleSourcesFound || fullCount >= 1 || partialCount >= 2;
+
+    const riskSignals: string[] = [];
+    const safeSignals: string[] = [];
+
+    if (fullCount > 0) {
+      riskSignals.push(`La imagen tiene ${fullCount} coincidencia(s) completa(s) en la web.`);
+    }
+
+    if (partialCount > 0) {
+      riskSignals.push(`La imagen tiene ${partialCount} coincidencia(s) parcial(es) en la web.`);
+    }
+
+    if (pagesCount > 0) {
+      riskSignals.push(`Aparece en ${pagesCount} página(s) con imágenes coincidentes.`);
+    }
+
+    if (domains.size >= 2) {
+      riskSignals.push("Aparece asociada a varios dominios o fuentes distintas.");
+    }
+
+    if (socialMatches.length > 0) {
+      riskSignals.push("Hay coincidencias en redes sociales o plataformas con perfiles.");
+    }
+
+    if (riskyTitleMatches.length > 0) {
+      riskSignals.push("Algunos títulos o URLs sugieren uso en perfiles, redes, modelos o contenido reutilizado.");
+    }
+
+    if (!riskSignals.length) {
+      safeSignals.push("No se han encontrado coincidencias web claras en esta primera revisión.");
+    }
+
+    let riskScore = 0;
+
+    if (reusedImageSuspected) riskScore = Math.max(riskScore, 55);
+
+if (multipleSourcesFound) {
+  riskScore = Math.max(riskScore, 70);
+}
+
+if (socialOrProfileMatchesFound) {
+  riskScore = Math.max(riskScore, 75);
+}
+
+const hasStrongProfileReuseSignal =
+  multipleSourcesFound &&
+  socialOrProfileMatchesFound &&
+  (
+    riskyTitleMatches.length > 0 ||
+    socialMatches.length > 0 ||
+    topPages.some((p) =>
+      /tinder|badoo|bumble|instagram|threads|facebook|tiktok|catfish|fake|profile|dating|model|leak|pretty|feet/i.test(
+        `${p.title} ${p.url}`,
+      ),
+    )
+  );
+
+if (hasStrongProfileReuseSignal) {
+  riskScore = Math.max(riskScore, 85);
+}
+
+if (!riskSignals.length) {
+  riskScore = 5;
+}
+
+    const riskLevel =
+      riskScore >= 90
+        ? "critical"
+        : riskScore >= 70
+        ? "high"
+        : riskScore >= 40
+        ? "medium"
+        : riskScore > 0
+        ? "low"
+        : "unknown";
+
+    const recommendedActions = reusedImageSuspected
+  ? [
+      "No uses solo esta foto como prueba de identidad.",
+      "Si es Tinder, Bumble, Badoo o una app de citas, comprueba si tiene más fotos variadas, biografía coherente, verificación visible y conversación natural; si la conversación avanza, una videollamada corta puede ayudar a ganar confianza.",
+      "Si es Instagram, TikTok, Facebook, Threads u otra red social, revisa publicaciones antiguas, comentarios naturales, seguidores/seguidos coherentes, etiquetas, historias y actividad real.",
+      "No envíes dinero, códigos, documentos ni fotos íntimas si aparece presión, urgencia o excusas raras.",
+      "Si intenta mover rápido la conversación a WhatsApp o Telegram, trátalo como señal de precaución.",
+      "Si el perfil usa esta foto y no puede verificarse, valora bloquear o reportar.",
+    ]
+  : [
+      "Usa la búsqueda inversa solo como una señal más, no como prueba absoluta.",
+      "Si es Tinder o una app de citas, revisa más fotos, biografía, verificación visible y conversación natural; si procede más adelante, una videollamada corta puede ayudar a ganar confianza.",
+      "Si es una red social, revisa publicaciones, comentarios, seguidores/seguidos, etiquetas, historias y actividad real.",
+    ];
+
+    const similaritySignature = reusedImageSuspected
+      ? "reused_or_stolen_profile_photo_web_matches"
+      : "reverse_image_no_clear_web_match";
+
+    return {
+      ok: true,
+      checked: true,
+      error: null,
+      risk_score: riskScore,
+      risk_level: riskLevel,
+      reused_image_suspected: reusedImageSuspected,
+      multiple_sources_found: multipleSourcesFound,
+      social_or_profile_matches_found: socialOrProfileMatchesFound,
+      full_matching_images_count: fullCount,
+      partial_matching_images_count: partialCount,
+      pages_with_matching_images_count: pagesCount,
+      visually_similar_images_count: similarCount,
+      best_guess_labels: bestGuessLabels,
+      top_web_entities: topWebEntities,
+      top_pages: topPages,
+      risk_signals: riskSignals.slice(0, 8),
+      safe_signals: safeSignals.slice(0, 4),
+      recommended_actions: recommendedActions,
+      similarity_signature: similaritySignature,
+    };
+  } catch (error) {
+    return {
+      ...empty,
+      checked: false,
+      error: String(error),
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function buildReverseImageRiskContext(result: ReverseImageWebDetectionResult | null) {
+  if (!result?.ok || !result.checked) return "";
+
+  const compact = {
+    risk_score: result.risk_score,
+    risk_level: result.risk_level,
+    reused_image_suspected: result.reused_image_suspected,
+    multiple_sources_found: result.multiple_sources_found,
+    social_or_profile_matches_found: result.social_or_profile_matches_found,
+    full_matching_images_count: result.full_matching_images_count,
+    partial_matching_images_count: result.partial_matching_images_count,
+    pages_with_matching_images_count: result.pages_with_matching_images_count,
+    visually_similar_images_count: result.visually_similar_images_count,
+    best_guess_labels: result.best_guess_labels,
+    top_web_entities: result.top_web_entities,
+    top_pages: result.top_pages.slice(0, 5).map((p) => ({
+      title: p.title,
+      domain: p.domain,
+      url: p.url,
+    })),
+    risk_signals: result.risk_signals,
+    safe_signals: result.safe_signals,
+    recommended_actions: result.recommended_actions,
+    similarity_signature: result.similarity_signature,
+  };
+
+  return `
+CONTEXTO INTERNO DE BÚSQUEDA INVERSA DE IMAGEN:
+Se ha hecho una comprobación interna de coincidencias web de la imagen.
+
+IMPORTANTE:
+- No digas al usuario que se ha usado Google, Google Lens, Cloud Vision, proveedores externos ni herramientas internas, salvo que el usuario pregunte explícitamente.
+- No muestres URLs largas ni hagas una lista técnica de resultados.
+- Traduce el resultado a una conclusión útil, humana y accionable.
+- Una foto puede ser real y aun así estar robada, reutilizada, editada o usada en un perfil falso.
+- Si hay coincidencias web de la misma imagen en varios sitios, dominios o perfiles, eso pesa más que que la foto “parezca natural”.
+- Si reused_image_suspected es true, no respondas “parece real, todo bien”.
+- Si no hay coincidencias, no digas que está verificada; solo que no aparece reutilizada en esta primera comprobación.
+SI reverse_image_web_detection indica reused_image_suspected=true:
+- La señal de reutilización tiene prioridad sobre la apariencia visual.
+- El primer párrafo debe decirlo de forma clara y rápida.
+- No empieces diciendo “parece una foto real”, “parece natural” o “no hay señales claras”.
+- Si el usuario pregunta si es IA, separa desde el principio:
+  1. Puede no ser IA generada desde cero.
+  2. Pero aparece reutilizada/reciclada en varias fuentes.
+  3. Por tanto, baja la confianza en su origen o en el perfil que la usa.
+- Frases recomendadas:
+  “No parece IA pura, pero no la daría por fiable: aparece reutilizada en varias fuentes.”
+  “No diría que sea IA generada desde cero, pero ojo: esta foto aparece reutilizada en varias fuentes.”
+  “Puede ser una foto real o editada, pero no parece una imagen original de ese perfil.”
+- Si también hay anomalía visual, sombra rara o posible edición, menciónalo en el primer párrafo:
+  “No parece IA pura, pero no la daría por fiable: aparece reutilizada y hay una sombra rara.”
+- Si el usuario pregunta solo si es IA, no conviertas automáticamente el caso en estafa, pero sí menciona la reutilización arriba del todo si existe.
+
+REGLA ESPECIAL PARA APPS DE CITAS Y REDES:
+Diferencia siempre entre apps de citas y redes sociales. No las analices igual.
+
+SI ES TINDER / BUMBLE / BADOO / APP DE CITAS:
+- Responde en formato móvil: frases cortas, negritas útiles y viñetas accionables.
+- Empieza siempre con el veredicto práctico, no con la apariencia visual.
+- Primera frase recomendada si hay reutilización:
+  “Yo no me fiaría del todo.”
+  o
+  “Yo no confiaría en este perfil solo por esta foto.”
+- En la primera o segunda frase menciona la señal principal:
+  “Esta misma foto aparece reutilizada en varias fuentes.”
+- No empieces diciendo que “parece natural”, “parece humana”, “parece típica de Tinder” o “suma autenticidad visual”.
+- Si la foto visualmente parece real, dilo después del aviso principal:
+  “Aunque visualmente pueda parecer una selfie real, eso no confirma que el perfil sea auténtico.”
+- Si risk_level es high o risk_score >= 70, usa “precaución alta”.
+- Si no hay foto reutilizada, dinero, enlaces, presión, urgencia ni señales raras, transmite calma antes que sospecha.
+- Aperturas recomendadas:
+  “En principio, no se detectan señales por las que preocuparse.”
+  “Con lo que se ve aquí, no hay banderas rojas claras.”
+  “De entrada, no me da mala espina.”
+- Después matiza de forma natural:
+  “Aun así, en apps de citas es normal comprobar poco a poco que el perfil sea coherente.”
+- Evita abrir con “precaución moderada” cuando el riesgo práctico es bajo o normal.
+- En apps de citas revisa o recomienda revisar SOLO:
+  - verificación visible;
+  - más fotos variadas;
+  - biografía coherente;
+  - conversación natural;
+  - si intenta mover rápido a WhatsApp/Telegram;
+  - si evita videollamada;
+  - si aparece dinero, inversión, cripto, códigos, documentos o fotos íntimas.
+- No menciones publicaciones antiguas, comentarios, seguidores, seguidos, historias ni etiquetas si el usuario solo ha dicho Tinder/Bumble/Badoo y la captura no muestra esos elementos.
+- No des un porcentaje tipo “70% de que sea real o editada”.
+- Si das porcentaje, que sea sobre el riesgo práctico:
+  “La probabilidad de que esta foto no sea original de ese perfil me parece alta.”
+- Añade una mini educación final:
+  “Una foto bonita o natural no garantiza que la persona detrás sea real.”
+
+SI ES INSTAGRAM / TIKTOK / FACEBOOK / THREADS / RED SOCIAL:
+- Analiza si el perfil parece tener vida real.
+- Revisa o recomienda revisar:
+  - publicaciones antiguas y variadas;
+  - comentarios naturales de personas reales;
+  - seguidores y seguidos coherentes;
+  - etiquetas;
+  - historias;
+  - captions/textos coherentes;
+  - fotos variadas en distintos contextos;
+  - interacción real.
+- Si hay foto reutilizada, cuenta recién creada, pocas publicaciones, comentarios raros, seguidores incoherentes o presión por dinero/datos, sube la precaución.
+- Si hay verificación visible, di que suma confianza, pero no garantiza intenciones.
+
+Resultado normalizado:
+${JSON.stringify(compact, null, 2)}
+
+FORMATO OBLIGATORIO DE LA RESPUESTA FINAL:
+- La respuesta final al usuario debe usar Markdown visual.
+- El primer párrafo debe ir en negrita si contiene el veredicto principal.
+- Los apartados deben ir con negritas Markdown:
+  **Lo que me hace dudar:**
+  **Qué haría ahora:**
+  **Para quedarte con la idea:**
+- No uses títulos planos sin negrita.
+- Las listas deben usar guiones Markdown reales, no “•”.
+- Ejemplo correcto:
+  **No parece IA pura, pero no la daría por fiable: aparece reutilizada en varias fuentes.**
+
+  **Lo que me hace dudar:**
+  - La imagen aparece reutilizada.
+  - Hay una sombra que conviene mirar con cautela.
+
+  **Qué haría ahora:**
+  - No usaría esta foto como prueba de identidad.
+  - Revisaría el perfil completo.
+
+Cómo usarlo:
+- Si reused_image_suspected es true:
+  - di que la foto parece reutilizada, reciclada o posiblemente robada;
+  - si el contexto es Tinder/app de citas/red social, trata el perfil con precaución alta;
+  - explica que una foto real o bonita no demuestra identidad real;
+  - si además el análisis visual marca edición, exceso de perfección, sombra rara, retoque o anomalías, explica que podría ser foto real editada con IA/filtros fuertes o generación parcial;
+  - separa “foto real”, “foto editada/IA” y “perfil fiable”.
+- Si multiple_sources_found es true:
+  - di que aparece en varias fuentes y eso baja mucho la confianza.
+- Si social_or_profile_matches_found es true:
+  - explica que esa señal encaja con perfil reciclado/catfish, sin afirmar certeza absoluta.
+- Si risk_score >= 70:
+  - trata el caso como precaución alta aunque visualmente la imagen parezca real.
+- Si risk_score es bajo:
+  - transmite tranquilidad prudente, sin afirmar certeza absoluta.
+- Educa brevemente:
+  - “Una foto real no demuestra que el perfil sea real; lo importante es la procedencia y la coherencia del perfil.”
+  - “Una foto puede ser real, estar retocada con IA y aun así usarse en un perfil falso; no basta con que la cara o las manos parezcan naturales.”
+`.trim();
+}
+
+function safeJsonParseLoose(text: string): any | null {
+  const raw = String(text || "").trim();
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw);
+  } catch {}
+
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenced?.[1]) {
+    try {
+      return JSON.parse(fenced[1].trim());
+    } catch {}
+  }
+
+  const first = raw.indexOf("{");
+  const last = raw.lastIndexOf("}");
+
+  if (first >= 0 && last > first) {
+    try {
+      return JSON.parse(raw.slice(first, last + 1));
+    } catch {}
+  }
+
+  return null;
+}
+
+async function analyzeImageWithGemini(params: {
+  imageBase64: string;
+  userText: string;
+  pillar: string;
+}): Promise<{
+  ok: boolean;
+  model: string;
+  text: string | null;
+  json: any | null;
+  error: string | null;
+}> {
+  if (!GEMINI_API_KEY) {
+    return {
+      ok: false,
+      model: GEMINI_MODEL_IMAGE,
+      text: null,
+      json: null,
+      error: "missing_gemini_api_key",
+    };
+  }
+
+  const parsedImage = parseImageDataUrlForGemini(params.imageBase64);
+
+  if (!parsedImage?.base64Data) {
+    return {
+      ok: false,
+      model: GEMINI_MODEL_IMAGE,
+      text: null,
+      json: null,
+      error: "invalid_image_data_url",
+    };
+  }
+
+  const prompt = `
+Analiza esta imagen o captura como una capa interna de seguridad de VonuAI.
+
+
+IMPORTANTE:
+- No respondas al usuario final.
+- No menciones proveedores, modelos ni análisis separados.
+- Devuelve SOLO JSON válido.
+- No incluyas markdown.
+- No inventes certeza.
+- Prioriza seguridad práctica.
+
+Contexto del usuario:
+${params.userText || "El usuario ha enviado una imagen sin mucho texto."}
+
+Pilar detectado:
+${params.pillar || "unknown"}
+
+Devuelve exactamente esta forma JSON:
+{
+  "modality": "image",
+  "case_domain": "fraud" | "legal" | "personal_safety" | "health" | "general" | "unknown",
+  "risk_score": 0,
+  "risk_level": "low" | "medium" | "high" | "critical" | "unknown",
+  "ai_generated_probability": 0,
+  "edited_or_manipulated_probability": 0,
+  "scam_or_deception_probability": 0,
+  "fake_profile_probability": 0,
+  "most_likely_explanation": "",
+  "verification_visible": true,
+  "platform_or_app": null,
+  "impersonated_brand": null,
+  "money_or_data_request_visible": false,
+  "external_contact_push_visible": false,
+"visual_anomaly_score": 0,
+"shadow_or_lighting_anomaly_found": false,
+"shadow_or_lighting_anomaly_description": "",
+"reflection_or_geometry_anomaly_found": false,
+"reflection_or_geometry_anomaly_description": "",
+"contact_or_surface_anomaly_found": false,
+"contact_or_surface_anomaly_description": "",
+"profile_humanity_signals": [],
+"profile_humanity_missing_signals": [],
+"profile_context_recommendations": [],
+"key_signals": [],
+"safe_signals": [],
+"missing_context": [],
+  "recommended_actions": [],
+  "should_store_in_moat": false,
+  "moat_target": null,
+  "moat_summary": "",
+  "similarity_signature": ""
+}
+
+
+MUY IMPORTANTE SOBRE PORCENTAJES:
+- Todos los campos de probabilidad deben ir de 0 a 100.
+- No uses decimales tipo 0.1 para decir 10%.
+- Ejemplos correctos:
+  - 0 = 0%
+  - 5 = 5%
+  - 35 = 35%
+  - 70 = 70%
+  - 95 = 95%
+- risk_score también debe ir de 0 a 100.
+
+GUÍA DE ESCALA ORIENTATIVA:
+- risk_score 0-15:
+  imagen aparentemente normal, sin señales claras de manipulación, engaño o riesgo práctico.
+- risk_score 15-35:
+  leves dudas o falta de contexto, pero sin banderas rojas importantes.
+- risk_score 35-60:
+  precaución moderada; señales mixtas o algunas incoherencias, pero no caso claro.
+- risk_score 60-80:
+  riesgo alto; varias señales relevantes o contexto claramente sospechoso.
+- risk_score 80-100:
+  riesgo muy alto o crítico; señales fuertes de estafa, manipulación o engaño práctico.
+
+Regla específica para perfiles:
+- Perfil verificado + sin señales raras = riesgo bajo.
+- Perfil no verificado pero normal, sin dinero, inversión, enlaces, presión, urgencia, foto reutilizada ni salida rápida a WhatsApp/Telegram = riesgo bajo o como mucho leve incertidumbre.
+- No subas a riesgo medio solo por falta de verificación, bio breve, pocas fotos visibles o apodo/nombre poco común.
+- Perfil con dinero/cripto/presión/cambio rápido a WhatsApp/Telegram, enlaces, códigos, documentos, foto reutilizada o incoherencias fuertes = sube riesgo.
+
+GUÍA DE PRUDENCIA Y CALMA:
+- Si no ves señales claras de riesgo o manipulación, no infles el riesgo.
+- No marques como sospechosa una imagen solo porque sea bonita, cuidada o tenga buena luz.
+- Si la imagen parece normal y no hay banderas rojas claras, devuelve valores bajos y una explicación tranquilizadora.
+- Si el perfil está verificado o hay señales positivas, recógelas en safe_signals.
+- Si no hay verificación visible, eso por sí solo NO debe disparar fake_profile_probability ni scam_or_deception_probability.
+- Si solo se ve una foto suelta y no el perfil completo, no afirmes “el perfil no está verificado”.
+- Di mejor: “en esta captura/foto no se ve verificación visible” o “no puedo comprobar la verificación con esta imagen sola”.
+- Un perfil no verificado pero normal y sin señales de presión/dinero/contexto raro debería quedarse en riesgo bajo o moderado, no alto.
+- Solo sube claramente el riesgo si ves señales reales: dinero, inversión, cripto, urgencia, códigos, documentos, links raros, presión, incoherencias visuales fuertes o patrón de perfil falso.
+
+CHECKLIST VISUAL AVANZADA:
+- Revisa luz y sombras con mucho cuidado: dirección, coherencia, forma, contacto y proyección física.
+- Antes de marcar sombras como coherentes, imagina cómo debería proyectarse el cuerpo sobre el suelo o pared según postura, piernas, pies, brazos, cabeza, móvil, distancia y dirección probable de la luz.
+- Compara esa proyección esperable con la sombra/mancha visible.
+- Si aparece una sombra o mancha ovalada/redonda cerca del cuerpo que no corresponde claramente a la proyección esperable del cuerpo, a un objeto o a una fuente de luz explicable, cuenta eso como señal relevante.
+- No marques “shadows consistent” si hay una sombra visible difícil de explicar.
+- Una sombra rara no prueba IA por sí sola, pero debe subir visual_anomaly_score, edited_or_manipulated_probability o ai_generated_probability de forma prudente.
+- Si hay anomalía de proyección, evita probabilidades bajísimas como 5-10%.
+- Revisa contacto con el suelo/superficies: pies, manos, peso corporal y sombras de contacto.
+- Revisa espejos y reflejos: móvil, mano, cuerpo, fondo, marco y perspectiva.
+- Revisa anatomía fina: dedos, uñas, dientes, ojos, orejas, pelo, cuello, rodillas, tobillos.
+- Revisa accesorios y objetos: joyas, pulseras, anillos, pendientes, collares, móvil.
+- Revisa texturas y perfección: piel demasiado lisa, sonrisa demasiado perfecta, nitidez incoherente.
+- Revisa fondo y perspectiva: baldosas, paredes, muebles, cortinas, puertas, líneas rotas, objetos fundidos.
+- Si no encuentras señales claras, dilo y mantén probabilidades bajas.
+
+REGLA ESPECIAL CRÍTICA PARA CUERPO ENTERO / MODA / ESTUDIO:
+- Si la imagen muestra una persona de cuerpo entero, especialmente con estética de moda, editorial, catálogo, estudio, fondo neutro o ropa conceptual, debes hacer una auditoría negativa antes de marcarla como real.
+- No marques la imagen como “sin anomalías” solo porque la luz sea profesional, el fondo sea limpio o la piel parezca real.
+- Las imágenes IA de moda pueden parecer muy realistas y fallar solo en pies, calzado, suelas, apoyo, manos o proporciones.
+
+Debes revisar explícitamente:
+- pies;
+- dirección de los pies;
+- zapatillas o zapatos;
+- suelas;
+- cordones;
+- calcetines;
+- tobillos;
+- rodillas;
+- piernas;
+- manos;
+- dedos;
+- cintura;
+- caída de la ropa;
+- contacto real con el suelo;
+- sombra bajo los pies.
+
+Señales que deben subir el riesgo:
+- zapatos/zapatillas con perspectiva imposible;
+- suelas deformadas, aplastadas, fusionadas o incoherentes;
+- pies que no parecen apoyar con peso real;
+- un pie o zapato con forma incompatible respecto al otro;
+- tobillos mal conectados;
+- manos rígidas o con dedos raros;
+- ropa que corta o tapa el cuerpo de forma artificial;
+- postura de moda que parece posible a primera vista pero no encaja al mirar pies, rodillas, manos y apoyo.
+
+REGLA DE SALIDA JSON:
+- Si hay dudas en pies, calzado, suelas, apoyo o manos, añade esas dudas a key_signals.
+- Si hay dudas en pies/calzado/apoyo, visual_anomaly_score debe ser al menos 35.
+- Si hay dudas en pies/calzado/apoyo, ai_generated_probability o edited_or_manipulated_probability debe estar al menos entre 35 y 60.
+- Si la imagen es cuerpo entero de moda/estudio y no puedes inspeccionar bien pies/calzado por tamaño, calidad o recorte, NO devuelvas riesgo 0-15. Usa incertidumbre prudente.
+- No devuelvas “no anomalies” si no has revisado pies, calzado y apoyo.
+- No devuelvas “shadows consistent” como conclusión principal si no has revisado contacto y sombra bajo ambos pies.
+
+MODO LUPA PARA SUELO/SOMBRAS:
+Si la imagen muestra una persona sentada, agachada, de cuerpo entero o frente a un espejo:
+- Inspecciona especialmente la zona inferior de la imagen.
+- Revisa suelo alrededor de pies, piernas, rodillas y cuerpo.
+- Busca sombras/manchas redondas u ovaladas que no correspondan claramente a la proyección esperable del cuerpo.
+- Pregúntate si la sombra visible tendría sentido físico según la postura y la dirección de la luz.
+- Si hay una sombra/mancha difícil de explicar, marca shadow_or_lighting_anomaly_found como true.
+- No devuelvas “no anomalies” o “shadows consistent” si existe una mancha oscura u ovalada visible cerca del cuerpo que no has explicado.
+
+COMPROBACIÓN DE PERFIL HUMANO/COHERENTE:
+Si la imagen parece venir de una red social, app de citas o perfil, no evalúes solo si la foto parece real.
+
+Diferencia estrictamente entre app de citas y red social.
+
+SI ES TINDER / BUMBLE / BADOO / APP DE CITAS:
+Busca o recomienda revisar:
+- verificación visible;
+- más fotos variadas;
+- biografía coherente;
+- conversación natural;
+- si, cuando la conversación avance de forma natural, una videollamada corta podría ayudar a ganar confianza;
+- si intenta mover rápido a WhatsApp/Telegram;
+- si aparece dinero, inversión, cripto, códigos, documentos, regalos o presión.
+
+No incluyas como señales faltantes:
+- publicaciones antiguas;
+- comentarios naturales;
+- seguidores;
+- seguidos;
+- historias;
+- etiquetas.
+
+Salvo que la captura lo muestre claramente o el usuario mencione una red social.
+
+SI ES INSTAGRAM / TIKTOK / FACEBOOK / THREADS / RED SOCIAL:
+Busca o recomienda revisar:
+- verificación visible;
+- antigüedad del perfil;
+- publicaciones antiguas y variadas;
+- comentarios naturales;
+- seguidores y seguidos coherentes;
+- fotos con amigos, lugares, etiquetas o contexto real;
+- biografía no genérica;
+- actividad normal en historias/publicaciones;
+- captions/textos coherentes.
+
+Reglas:
+- Si ves señales humanas positivas, ponlas en profile_humanity_signals.
+- Si faltan señales importantes de contexto, ponlas en profile_humanity_missing_signals, pero adaptadas a la plataforma.
+- Recomienda acciones concretas en profile_context_recommendations.
+- Perfil verificado suma confianza, pero no garantiza intenciones.
+- Perfil no verificado no significa scam.
+- Una foto real puede estar robada.
+- En apps de citas, si no hay presión, dinero, enlaces, urgencia ni foto reutilizada, mantén riesgo bajo o moderado y transmite calma.
+- En esos casos, la apertura debe ser tranquilizadora:
+  “En principio, no se detectan señales por las que preocuparse.”
+  o
+  “Con lo que se ve aquí, no hay banderas rojas claras.”
+- No abras con tono de sospecha si no hay señales fuertes.
+- En apps de citas o redes, si aparece dinero/inversión/presión, sube mucho el riesgo práctico.
+
+AUDITORÍA VISUAL OBLIGATORIA ANTES DEL VEREDICTO:
+Antes de devolver probabilidades bajas, revisa de forma explícita si hay contradicciones físicas.
+
+Zonas a revisar especialmente:
+- suelo alrededor de pies, piernas y cuerpo,
+- sombras o manchas cerca del cuerpo,
+- sombra bajo pies, piernas, manos y objetos,
+- reflejo del espejo,
+- continuidad de baldosas y líneas del suelo,
+- cortina/fondo junto al cuerpo,
+- contacto realista del cuerpo con superficies.
+
+Reglas:
+- Si hay una sombra/mancha ovalada o redonda cerca del cuerpo que no se explica claramente por un objeto visible, marca shadow_or_lighting_anomaly_found como true.
+- Si marcas shadow_or_lighting_anomaly_found como true, explica la anomalía en shadow_or_lighting_anomaly_description.
+- Si existe una anomalía física visible, visual_anomaly_score no debe ser 0.
+- Si hay una anomalía física visible, no devuelvas ai_generated_probability ni edited_or_manipulated_probability por debajo de 20, salvo que puedas explicar claramente por qué no es relevante.
+- No respondas “shadows consistent” si has detectado una sombra o mancha difícil de explicar.
+
+REGLA DE PESO DE ANOMALÍAS:
+- No compenses una anomalía física clara diciendo simplemente que “la foto parece natural”.
+- Si hay una anomalía concreta en sombra, reflejo, contacto con el suelo, geometría del espejo o anatomía, menciónala.
+- Una sola anomalía no confirma IA, pero sí debe bajar la seguridad del veredicto.
+- En esos casos usa una estimación más prudente, por ejemplo 20-40%, 30-50% o 40-60%, según la fuerza de la anomalía.
+- Evita porcentajes demasiado bajos como 5-10% si hay una señal física visible difícil de explicar.
+
+Reglas:
+- En perfiles sociales/apps de citas, mira primero si hay verificación visible.
+- No verificación visible es solo precaución, no prueba de estafa.
+- Foto real no significa perfil fiable: puede ser robada.
+- Si hay dinero, inversión, cripto, códigos, documentos, tarjeta, QR, amenaza o presión, sube el riesgo práctico.
+- Si pregunta por IA, separa probabilidad de IA pura y probabilidad de edición/retoque.
+- Si no hay suficiente información, usa valores prudentes y añade missing_context.
+`.trim();
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 9000);
+
+  try {
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL_IMAGE}:generateContent?key=${encodeURIComponent(
+        GEMINI_API_KEY,
+      )}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                { text: prompt },
+                {
+                  inline_data: {
+                    mime_type: parsedImage.mimeType,
+                    data: parsedImage.base64Data,
+                  },
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 900,
+            responseMimeType: "application/json",
+          },
+        }),
+      },
+    );
+
+    const raw = await resp.text().catch(() => "");
+    let data: any = null;
+
+    try {
+      data = raw ? JSON.parse(raw) : null;
+    } catch {
+      data = null;
+    }
+
+    if (!resp.ok) {
+      return {
+        ok: false,
+        model: GEMINI_MODEL_IMAGE,
+        text: null,
+        json: null,
+        error:
+          data?.error?.message ||
+          raw?.slice(0, 300) ||
+          `gemini_http_${resp.status}`,
+      };
+    }
+
+    const text =
+      data?.candidates?.[0]?.content?.parts
+        ?.map((p: any) => (typeof p?.text === "string" ? p.text : ""))
+        ?.join("")
+        ?.trim() || "";
+
+    return {
+      ok: true,
+      model: GEMINI_MODEL_IMAGE,
+      text: text || null,
+      json: safeJsonParseLoose(text),
+      error: null,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      model: GEMINI_MODEL_IMAGE,
+      text: null,
+      json: null,
+      error: String(error),
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function normalizeGeminiPercent(value: unknown): number | null {
+  const n = Number(value);
+
+  if (!Number.isFinite(n)) return null;
+
+  // Por si el modelo devuelve 0.1 queriendo decir 10%.
+  if (n > 0 && n <= 1) {
+    return Math.max(0, Math.min(100, Math.round(n * 100)));
+  }
+
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+function stringArrayFromUnknown(value: unknown, max = 8): string[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((x) => String(x ?? "").trim())
+    .filter(Boolean)
+    .slice(0, max);
+}
+
+function buildAuxiliaryImageAnalysisContext(
+  analysis: {
+    ok: boolean;
+    model: string;
+    text: string | null;
+    json: any | null;
+    error: string | null;
+  } | null,
+) {
+  if (!analysis?.ok || !analysis.json || typeof analysis.json !== "object") {
+    return "";
+  }
+
+  const j = analysis.json;
+
+  const riskScore = normalizeGeminiPercent(j.risk_score);
+  const aiProbability = normalizeGeminiPercent(j.ai_generated_probability);
+  const editedProbability = normalizeGeminiPercent(j.edited_or_manipulated_probability);
+  const scamProbability = normalizeGeminiPercent(j.scam_or_deception_probability);
+  const fakeProfileProbability = normalizeGeminiPercent(j.fake_profile_probability);
+
+  const normalized = {
+    modality: String(j.modality || "image"),
+    case_domain: String(j.case_domain || "unknown"),
+    risk_score: riskScore,
+    risk_level: String(j.risk_level || "unknown"),
+    ai_generated_probability: aiProbability,
+    edited_or_manipulated_probability: editedProbability,
+    scam_or_deception_probability: scamProbability,
+    fake_profile_probability: fakeProfileProbability,
+    visual_anomaly_score: normalizeGeminiPercent(j.visual_anomaly_score),
+shadow_or_lighting_anomaly_found: Boolean(j.shadow_or_lighting_anomaly_found),
+shadow_or_lighting_anomaly_description: String(j.shadow_or_lighting_anomaly_description || "").slice(0, 400),
+reflection_or_geometry_anomaly_found: Boolean(j.reflection_or_geometry_anomaly_found),
+reflection_or_geometry_anomaly_description: String(j.reflection_or_geometry_anomaly_description || "").slice(0, 400),
+contact_or_surface_anomaly_found: Boolean(j.contact_or_surface_anomaly_found),
+contact_or_surface_anomaly_description: String(j.contact_or_surface_anomaly_description || "").slice(0, 400),
+profile_humanity_signals: stringArrayFromUnknown(j.profile_humanity_signals, 8),
+profile_humanity_missing_signals: stringArrayFromUnknown(j.profile_humanity_missing_signals, 8),
+profile_context_recommendations: stringArrayFromUnknown(j.profile_context_recommendations, 8),
+most_likely_explanation: String(j.most_likely_explanation || "").slice(0, 500),
+    verification_visible: Boolean(j.verification_visible),
+    platform_or_app: j.platform_or_app ? String(j.platform_or_app).slice(0, 80) : null,
+    impersonated_brand: j.impersonated_brand ? String(j.impersonated_brand).slice(0, 80) : null,
+    money_or_data_request_visible: Boolean(j.money_or_data_request_visible),
+    external_contact_push_visible: Boolean(j.external_contact_push_visible),
+    key_signals: stringArrayFromUnknown(j.key_signals, 8),
+    safe_signals: stringArrayFromUnknown(j.safe_signals, 8),
+    missing_context: stringArrayFromUnknown(j.missing_context, 8),
+    recommended_actions: stringArrayFromUnknown(j.recommended_actions, 8),
+    should_store_in_moat: Boolean(j.should_store_in_moat),
+    moat_target: j.moat_target ? String(j.moat_target).slice(0, 120) : null,
+    moat_summary: String(j.moat_summary || "").slice(0, 700),
+    similarity_signature: String(j.similarity_signature || "").slice(0, 240),
+  };
+
+  return `
+CONTEXTO VISUAL AUXILIAR INTERNO:
+Hay una segunda lectura interna de la imagen. Úsala solo para mejorar tu criterio final.
+
+IMPORTANTE:
+- No digas al usuario que hay una segunda lectura, otro análisis, otro modelo ni otro proveedor.
+- No menciones nombres de modelos, sistemas internos ni herramientas.
+- El usuario debe ver una única respuesta de Vonu: clara, humana, firme y prudente.
+- Usa este contexto como apoyo, no como verdad absoluta.
+- Si tu análisis visual y este contexto coinciden, puedes responder con más seguridad.
+- Si este contexto y tu lectura parecen discrepar, NO hables de discrepancia técnica. Tradúcelo como prudencia:
+  “con esta imagen sola no lo cerraría”
+  “faltaría contexto para darlo por fiable”
+  “yo lo trataría como dudoso hasta ver el perfil/conversación/origen”
+- No hagas una media ciega de porcentajes. Usa rangos prudentes cuando haya dudas.
+- Si la imagen parece real pero el contexto de uso puede ser peligroso, prioriza el riesgo práctico.
+- Recuerda: una foto real puede estar robada y formar parte de un perfil falso.
+
+Lectura interna normalizada:
+${JSON.stringify(normalized, null, 2)}
+
+FORMATO VISUAL:
+- Si la respuesta final usa apartados, escríbelos con negritas Markdown:
+  **Lo que veo:**
+  **Lo que me hace dudar:**
+  **Qué haría ahora:**
+  **Para quedarte con la idea:**
+- Usa listas Markdown con guiones:
+  - punto uno
+  - punto dos
+- No uses títulos planos ni el carácter “•”.
+
+Cómo usarlo:
+- Si risk_score es bajo y no hay señales de estafa/manipulación, no alarmes.
+- Si ai_generated_probability y edited_or_manipulated_probability son bajos, puedes transmitir tranquilidad prudente.
+- Si fake_profile_probability o scam_or_deception_probability suben, analiza el contexto del perfil/interacción antes de dar confianza.
+- Solo uses profile_humanity_missing_signals si el usuario ha dicho que la imagen viene de un perfil, red social, app de citas, Instagram, Tinder, Bumble, Badoo, Facebook, TikTok o similar, o si la captura muestra claramente una interfaz de perfil.
+- Si el usuario solo pregunta si la imagen es IA/real/editada, NO menciones verificación, perfil falso, seguidores, publicaciones ni redes sociales.
+- En ese caso, limita la falta de contexto a una frase breve: “Para afinar más ayudaría saber de dónde sale la imagen.”
+- Si la imagen sí viene de un perfil, recuerda que una foto real puede estar robada.
+- Si missing_context contiene elementos importantes, pide justo ese contexto al usuario.
+- Además de resolver el caso, educa brevemente al usuario para que aprenda a detectar señales parecidas en el futuro.
+- Si should_store_in_moat es true, el caso puede ser útil como patrón derivado, pero no lo menciones al usuario.
+- Si shadow_or_lighting_anomaly_found, reflection_or_geometry_anomaly_found o contact_or_surface_anomaly_found son true, NO des un veredicto demasiado tranquilizador.
+- En ese caso menciona la anomalía de forma natural, aunque el resto de la imagen parezca real.
+- Si hay una sombra/mancha rara en el suelo o pared, no digas que las sombras son coherentes.
+- Una anomalía física no confirma IA, pero debe convertir la respuesta en más prudente.
+- Si hay anomalía física visible, evita porcentajes bajísimos como 5-10%.
+`.trim();
 }
 
 // ------------------------- football fetch helpers -------------------------
@@ -3628,6 +5616,28 @@ function compactText(value: unknown, max = 900) {
 function maskSensitiveText(value: string) {
   let text = String(value || "");
 
+    // Mantener señal técnica útil sin guardar IP/puerto reales.
+  // Ejemplo:
+  // http://60.22.244.216:60093/bin.sh
+  // pasa a:
+  // http://[ip_oculta]:[puerto_oculto]/bin.sh
+  text = text.replace(
+    /\bhttps?:\/\/(?:\d{1,3}\.){3}\d{1,3}(?::\d{2,5})?\/[^\s<>"')]+/gi,
+    (url) => {
+      try {
+        const parsed = new URL(url);
+        const pathname = parsed.pathname || "";
+        const safePath = pathname
+          .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[email_oculto]")
+          .replace(/\b\d{5,}\b/g, "[codigo_oculto]");
+
+        return `http://[ip_oculta]${parsed.port ? ":[puerto_oculto]" : ""}${safePath}`;
+      } catch {
+        return "http://[ip_oculta]/[ruta_oculta]";
+      }
+    },
+  );
+
   // Emails
   text = text.replace(
     /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
@@ -3670,8 +5680,40 @@ function inferRiskLevelFromScore(score: number | null | undefined) {
   return "unknown";
 }
 
+function hasDirectMalwareLikeUrl(userText: string) {
+  const text = String(userText ?? "");
+
+  return (
+    /\bhttps?:\/\/(?:\d{1,3}\.){3}\d{1,3}(?::\d{2,5})?\/[^\s<>"')]*\.(?:sh|exe|apk|bat|cmd|ps1|scr|msi)\b/i.test(text) ||
+    /\.(?:sh|exe|apk|bat|cmd|ps1|scr|msi)\b/i.test(text)
+  );
+}
+
+function hasDirectIpUrl(userText: string) {
+  return /\bhttps?:\/\/(?:\d{1,3}\.){3}\d{1,3}(?::\d{2,5})?/i.test(String(userText ?? ""));
+}
+
+function inferMaliciousDomainPatternFromUserText(userText: string) {
+  const text = String(userText ?? "").toLowerCase();
+
+  if (hasDirectMalwareLikeUrl(text)) {
+    if (text.includes("mozi")) return "ip_direct_download_script_malware_mozi";
+    if (text.includes(".sh")) return "ip_direct_download_script_sh_malware";
+    if (text.includes(".apk")) return "direct_download_apk_malware";
+    if (text.includes(".exe")) return "direct_download_executable_malware";
+    return "direct_download_executable_or_script_malware";
+  }
+
+  if (hasDirectIpUrl(text)) {
+    return "direct_ip_url_suspicious";
+  }
+
+  return null;
+}
+
 function inferFraudBlockFromUserText(userText: string) {
   const t = (userText || "").toLowerCase();
+    if (hasDirectMalwareLikeUrl(userText)) return "malware_link";
 
   if (t.includes("wallapop") || t.includes("vinted") || t.includes("milanuncios") || t.includes("marketplace")) return "marketplace";
   if (t.includes("tinder") || t.includes("badoo") || t.includes("bumble") || t.includes("app de citas") || t.includes("instagram")) return "social_dating";
@@ -3687,6 +5729,16 @@ function inferFraudBlockFromUserText(userText: string) {
 
 function inferChannelFromUserText(userText: string) {
   const t = (userText || "").toLowerCase();
+    if (hasDirectIpUrl(userText) || hasDirectMalwareLikeUrl(userText)) return "direct_link";
+
+      if (
+    t.includes("qr") ||
+    t.includes("código qr") ||
+    t.includes("codigo qr") ||
+    t.includes("quishing")
+  ) {
+    return "qr";
+  }
 
   if (t.includes("sms")) return "sms";
   if (t.includes("whatsapp")) return "whatsapp";
@@ -3849,28 +5901,52 @@ function shouldCollectFraudChatReport(params: {
     "transferencia",
   ];
 
+    const hasStrongFraudSignal = strongFraudSignals.some((signal) => t.includes(signal));
+  const hasTechnicalUrlRisk = hasDirectMalwareLikeUrl(params.userText) || hasDirectIpUrl(params.userText);
+
   return (
     params.pillar === "ESTAFAS_FRAUDES" ||
-    params.fraudIntelMatches.length > 0 ||
-    strongFraudSignals.some((signal) => t.includes(signal))
+    hasStrongFraudSignal ||
+    hasTechnicalUrlRisk
   );
 }
 
-function buildSimilaritySignatureFromText(userText: string, topMatch: FraudIntelMatch | null) {
-  if (topMatch?.similarity_signature) return topMatch.similarity_signature;
+function buildSimilaritySignatureFromText(userText: string, _topMatch: FraudIntelMatch | null) {
+  const malwarePattern = inferMaliciousDomainPatternFromUserText(userText);
+  if (malwarePattern) return malwarePattern;
 
   const t = (userText || "")
     .toLowerCase()
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
-    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/https?:\/\/(?:\d{1,3}\.){3}\d{1,3}(?::\d{2,5})?/gi, " ip_directa ")
+    .replace(/[^a-z0-9\s.]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
   const useful = t
     .split(" ")
     .filter((w) => w.length >= 3)
-    .filter((w) => !["que", "para", "con", "por", "del", "una", "uno", "los", "las", "recibido", "dice", "dicen"].includes(w))
+    .filter(
+      (w) =>
+        ![
+          "que",
+          "para",
+          "con",
+          "por",
+          "del",
+          "una",
+          "uno",
+          "los",
+          "las",
+          "recibido",
+          "dice",
+          "dicen",
+          "pasado",
+          "enlace",
+          "fiable",
+        ].includes(w),
+    )
     .slice(0, 12);
 
   return useful.join(" ") || "unknown";
@@ -3884,7 +5960,6 @@ function buildFraudChatReportPayload(params: {
   pillar: string;
   fraudIntelMatches: FraudIntelMatch[];
 }) {
-    const top = params.fraudIntelMatches[0] ?? null;
   const maskedUserText = maskSensitiveText(params.userText);
   const maskedAssistantText = maskSensitiveText(params.assistantText);
   const amountInfo = extractAmountFromUserText(params.userText);
@@ -3894,32 +5969,42 @@ function buildFraudChatReportPayload(params: {
   const inferredPlatformOrApp = inferPlatformOrAppFromUserText(params.userText);
   const inferredBrand = inferBrandFromUserText(params.userText);
   const inferredPaymentMethod = inferPaymentMethodFromUserText(params.userText);
+  const inferredMaliciousDomainPattern = inferMaliciousDomainPatternFromUserText(params.userText);
 
-  const fraudBlock =
-    inferredFraudBlock && inferredFraudBlock !== "unknown"
-      ? inferredFraudBlock
-      : top?.fraud_block || "unknown";
+  const hasReliableInferredFraudBlock =
+    !!inferredFraudBlock && inferredFraudBlock !== "unknown";
 
-  const channel =
-    inferredChannel && inferredChannel !== "unknown"
-      ? inferredChannel
-      : top?.channel || "unknown";
+  const hasReliableInferredChannel =
+    !!inferredChannel && inferredChannel !== "unknown";
 
-  const impersonatedBrand =
-    inferredBrand || top?.impersonated_brand || null;
+  const fraudBlock = hasReliableInferredFraudBlock ? inferredFraudBlock : "unknown";
+  const channel = hasReliableInferredChannel ? inferredChannel : "unknown";
 
-  const paymentMethod =
-    inferredPaymentMethod || top?.payment_method_requested || null;
-  const riskScore = typeof top?.risk_score === "number" ? top.risk_score : params.fraudIntelMatches.length > 0 ? 75 : 60;
-  const riskLevel = top?.risk_level || inferRiskLevelFromScore(riskScore);
-  const similaritySignature = buildSimilaritySignatureFromText(params.userText, top);
+  // Importante:
+  // Los matches internos sirven como contexto, NO como clasificación automática.
+  // No copiamos marca, canal, categoría, score, importes ni acciones desde fraudIntelMatches.
+  const impersonatedBrand = inferredBrand || null;
+  const paymentMethod = inferredPaymentMethod || null;
+
+  const riskScore =
+    fraudBlock === "malware_link"
+      ? 95
+      : hasReliableInferredFraudBlock
+      ? 75
+      : 60;
+
+  const riskLevel = inferRiskLevelFromScore(riskScore);
+  const similaritySignature = buildSimilaritySignatureFromText(params.userText, null);
 
   const summaryParts = [
-    `Consulta de posible fraude detectada desde chat.`,
-    fraudBlock && fraudBlock !== "unknown" ? `Bloque: ${fraudBlock}.` : "",
-    channel && channel !== "unknown" ? `Canal: ${channel}.` : "",
-    impersonatedBrand ? `Marca o entidad mencionada: ${impersonatedBrand}.` : "",
-    top?.pattern_name ? `Patrón parecido: ${top.pattern_name}.` : "",
+    "Consulta de posible fraude detectada desde chat.",
+    fraudBlock && fraudBlock !== "unknown" ? `Bloque inferido: ${fraudBlock}.` : "",
+    channel && channel !== "unknown" ? `Canal inferido: ${channel}.` : "",
+    impersonatedBrand ? `Marca o entidad mencionada por el usuario: ${impersonatedBrand}.` : "",
+    inferredMaliciousDomainPattern ? `Patrón técnico inferido: ${inferredMaliciousDomainPattern}.` : "",
+    params.fraudIntelMatches.length > 0
+      ? "Hay patrones internos parecidos, pero no se usan como clasificación automática."
+      : "",
   ].filter(Boolean);
 
   return {
@@ -3928,12 +6013,14 @@ function buildFraudChatReportPayload(params: {
 
     // De momento no guardamos user_id para minimizar datos personales.
     user_id: null,
+
     conversation_id:
       typeof params.body?.threadId === "string"
         ? params.body.threadId
         : typeof params.body?.conversationId === "string"
         ? params.body.conversationId
         : null,
+
     message_id:
       typeof params.body?.messageId === "string"
         ? params.body.messageId
@@ -3942,7 +6029,7 @@ function buildFraudChatReportPayload(params: {
     user_text_excerpt: maskedUserText,
     anonymized_summary: compactText(summaryParts.join(" "), 900),
 
-        scam_category:
+    scam_category:
       fraudBlock === "delivery_customs"
         ? "delivery_scam"
         : fraudBlock === "marketplace"
@@ -3951,7 +6038,17 @@ function buildFraudChatReportPayload(params: {
         ? "romance_scam"
         : fraudBlock === "crypto_investment"
         ? "crypto_investment_scam"
-        : top?.scam_category || null,
+        : fraudBlock === "banking_payments"
+        ? "phishing"
+        : fraudBlock === "government_impersonation"
+        ? "government_impersonation"
+        : fraudBlock === "fake_jobs"
+        ? "job_scam"
+        : fraudBlock === "sextortion_blackmail"
+        ? "sextortion"
+        : fraudBlock === "malware_link"
+        ? "malware"
+        : null,
 
     scam_subcategory:
       fraudBlock === "delivery_customs"
@@ -3960,65 +6057,139 @@ function buildFraudChatReportPayload(params: {
         ? "fake_shipping_fee"
         : fraudBlock === "social_dating"
         ? "fake_romantic_investment_advice"
-        : top?.scam_subcategory || null,
-    fraud_block: fraudBlock && fraudBlock !== "unknown" ? fraudBlock : null,
-    channel: channel && channel !== "unknown" ? channel : null,
-           platform_or_app:
-      fraudBlock === "marketplace" || fraudBlock === "social_dating"
-        ? inferredPlatformOrApp || top?.platform_or_app || null
-        : inferredPlatformOrApp || null,
+        : fraudBlock === "crypto_investment"
+        ? "fake_investment_platform"
+        : fraudBlock === "banking_payments"
+        ? "credential_or_payment_phishing"
+        : fraudBlock === "government_impersonation"
+        ? "fake_official_notice"
+        : fraudBlock === "fake_jobs"
+        ? "task_or_job_scam"
+        : fraudBlock === "sextortion_blackmail"
+        ? "blackmail"
+        : fraudBlock === "malware_link"
+        ? "direct_script_download"
+        : null,
+
+    fraud_block: fraudBlock,
+    channel,
+
+    platform_or_app: inferredPlatformOrApp || null,
 
     marketplace:
       fraudBlock === "marketplace"
-        ? inferredPlatformOrApp || top?.marketplace || null
+        ? inferredPlatformOrApp || null
         : null,
+
     impersonated_brand: impersonatedBrand,
     payment_method_requested: paymentMethod,
 
-    amount_requested:
-      typeof top?.amount_requested === "number"
-        ? top.amount_requested
-        : amountInfo.amount,
-    currency: top?.currency || amountInfo.currency,
+    amount_requested: amountInfo.amount,
+    currency: amountInfo.currency,
 
     risk_level: riskLevel,
     risk_score: riskScore,
-    confidence_score:
-      typeof top?.confidence_score === "number"
-        ? top.confidence_score
-        : params.fraudIntelMatches.length > 0
-        ? 70
-        : 50,
+    confidence_score: params.fraudIntelMatches.length > 0 ? 60 : 50,
 
-    red_flags: top?.red_flags || null,
+    red_flags: null,
     emotional_pressure_signals: null,
     urgency_signals: null,
-    technical_signals: null,
-    recommended_action: top?.recommended_action || null,
-    prevention_tips: top?.prevention_tips || null,
+
+    technical_signals:
+      fraudBlock === "malware_link"
+        ? "IP directa, puerto no común o descarga directa de script/ejecutable detectada en el mensaje."
+        : null,
+
+    recommended_action: null,
+    prevention_tips: null,
 
     verified_level: "unverified",
     privacy_level: "anonymized_case",
 
     similarity_signature: similaritySignature,
-    keywords: top?.keywords || similaritySignature.replace(/\s+/g, ", "),
+    keywords: similaritySignature.replace(/\s+/g, ", "),
+
+    // Campos avanzados
+    attack_technique:
+      fraudBlock === "malware_link"
+        ? "direct_malware_download_link"
+        : null,
+
+    technical_complexity:
+      fraudBlock === "malware_link"
+        ? "medium"
+        : null,
+
+    threat_actor_type: null,
+    sector_targeted: null,
+
+    attack_vector:
+      channel !== "unknown"
+        ? channel
+        : fraudBlock === "malware_link"
+        ? "direct_link"
+        : null,
+
+    uses_ai_deception: false,
+    uses_deepfake: false,
+    uses_session_hijacking: false,
+    uses_remote_access_tool: false,
+    uses_crypto_wallet: fraudBlock === "crypto_investment",
+
+    remote_access_tool_name: null,
+    ai_impersonation_type: null,
+    deepfake_media_type: null,
+    business_process_targeted: null,
+    iban_change_detected: false,
+    blockchain_network: null,
+    smart_contract_method: null,
+    wallet_risk_type: null,
+    wallet_action_requested: null,
+    crypto_asset_targeted: null,
+
+    malicious_domain_pattern: inferredMaliciousDomainPattern,
+
+    qr_or_clipboard_risk:
+      channel === "qr" ||
+      similaritySignature.includes("qr") ||
+      similaritySignature.includes("quishing"),
+
+    advanced_notes:
+      params.fraudIntelMatches.length > 0
+        ? "Existen patrones internos parecidos, pero no se han usado para rellenar la clasificación principal del caso."
+        : null,
 
     raw_model_json: {
       source: "analyze_edge_function",
       pillar: params.pillar,
       assistant_excerpt: compactText(maskedAssistantText, 700),
+      inferred: {
+        fraud_block: fraudBlock,
+        channel,
+        platform_or_app: inferredPlatformOrApp || null,
+        impersonated_brand: impersonatedBrand,
+        payment_method_requested: paymentMethod,
+        malicious_domain_pattern: inferredMaliciousDomainPattern,
+        similarity_signature: similaritySignature,
+      },
       fraud_intel_matches: params.fraudIntelMatches.slice(0, 3).map((m) => ({
         case_id: m.case_id,
         pattern_name: m.pattern_name,
         scam_category: m.scam_category,
         scam_subcategory: m.scam_subcategory,
+        fraud_block: m.fraud_block,
+        channel: m.channel,
+        impersonated_brand: m.impersonated_brand,
         match_score: m.match_score,
         risk_score: m.risk_score,
         verified_level: m.verified_level,
       })),
+      note:
+        "fraud_intel_matches are context only and must not be treated as ground truth for this new report.",
     },
 
-    notes: "Caso recogido automáticamente desde chat. Pendiente de revisión antes de promover a fraud_reports.",
+    notes:
+      "Caso recogido automáticamente desde chat. Pendiente de revisión antes de promover a fraud_reports.",
   };
 }
 
@@ -5051,6 +7222,85 @@ async function saveLegalChatReportIfRelevant(
   }
 }
 
+function assistantConcludesLowRiskForFraudCollection(assistantText: string) {
+  const a = String(assistantText ?? "").toLowerCase();
+
+  if (!a.trim()) return false;
+
+  const safeSignals = [
+    "riesgo bajo",
+    "pinta bien",
+    "parece fiable",
+    "parece segura",
+    "parece seguro",
+    "parece oficial",
+    "web oficial",
+    "dominio oficial",
+    "dominio reconocido",
+    "marca conocida",
+    "parece legítima",
+    "parece legitima",
+    "puedes usarla con confianza",
+    "puedes usarlo con confianza",
+    "puedes usarla con tranquilidad",
+    "puedes usarlo con tranquilidad",
+    "tranquilidad razonable",
+    "confianza razonable",
+    "no aparece marcada",
+    "no aparece marcado",
+    "no aparece señalada",
+    "no aparece señalado",
+    "no aparece relacionada con malware",
+    "no aparece relacionado con malware",
+    "no aparece como peligrosa",
+    "no aparece como peligroso",
+    "buen indicio",
+    "no veo señales claras de peligro",
+    "no veo señales claras de riesgo",
+    "no veo señales claras",
+  ];
+
+  const actualRiskSignals = [
+    "riesgo alto",
+    "riesgo muy alto",
+    "peligro alto",
+    "peligro muy alto",
+    "crítico",
+    "critico",
+    "muy sospechoso",
+    "parece una estafa",
+    "parece phishing",
+    "parece smishing",
+    "huele a estafa",
+    "huele a phishing",
+    "intento de estafa",
+    "fraude claro",
+    "estafa confirmada",
+    "phishing confirmado",
+    "no lo abras",
+    "no lo descargues",
+    "no lo ejecutes",
+    "no pagues",
+    "no metas datos",
+    "no metería tarjeta",
+    "no introduciría datos",
+    "aparece relacionado con malware",
+    "aparece relacionada con malware",
+    "asociado a malware",
+    "asociada a malware",
+    "amenaza conocida",
+    "podría infectar",
+    "podria infectar",
+    "robar información",
+    "robar informacion",
+  ];
+
+  const safe = safeSignals.some((s) => a.includes(s));
+  const risky = actualRiskSignals.some((s) => a.includes(s));
+
+  return safe && !risky;
+}
+
 async function saveFraudChatReportIfRelevant(
   supabase: any,
   params: {
@@ -5064,6 +7314,10 @@ async function saveFraudChatReportIfRelevant(
     fraudIntelMatches: FraudIntelMatch[];
   },
 ) {
+  if (assistantConcludesLowRiskForFraudCollection(params.assistantText)) {
+    return { saved: false, reason: "assistant_low_risk" };
+  }
+
   if (
     !shouldCollectFraudChatReport({
       userText: params.userText,
@@ -5132,6 +7386,12 @@ const apikeyHeader = req.headers.get("apikey") ?? "";
 
 let user: any = null;
 let userId: string | null = null;
+
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
+const GEMINI_MODEL_IMAGE = Deno.env.get("GEMINI_MODEL_IMAGE") || "gemini-2.5-flash-lite";
+
+const GOOGLE_CLOUD_VISION_API_KEY =
+  Deno.env.get("GOOGLE_CLOUD_VISION_API_KEY") || "";
 
 const anonKey =
   Deno.env.get("SUPABASE_ANON_KEY") ||
@@ -5604,6 +7864,23 @@ if (effectiveMode === "tutor" && incompletePhysicsProblem.isIncomplete) {
     ? instructionsTutor(pillar, tutorLevel, userText)
     : instructionsChat(pillar, lowContext, studyMode);
 
+instructions += `\n\n${buildCurrentDateContext()}`;
+
+const externalWebRiskContext =
+  effectiveMode === "chat"
+    ? await buildExternalWebRiskContext(userText)
+    : "";
+
+if (externalWebRiskContext) {
+  instructions += `\n\n${externalWebRiskContext}`;
+}
+
+const visualRiskContext = buildVisualRiskContext(!!imageBase64, userText);
+
+if (effectiveMode === "chat" && visualRiskContext) {
+  instructions += `\n\n${visualRiskContext}`;
+}
+
 if (effectiveMode === "chat" && fraudIntelContext) {
   instructions += `\n\n${fraudIntelContext}`;
 }
@@ -5616,7 +7893,215 @@ if (effectiveMode === "chat" && personalSafetyIntelContext) {
   instructions += `\n\n${personalSafetyIntelContext}`;
 }
 
-    const input: any[] = [];
+let geminiImageAnalysis: {
+  ok: boolean;
+  model: string;
+  text: string | null;
+  json: any | null;
+  error: string | null;
+} | null = null;
+
+if (effectiveMode === "chat" && imageBase64 && GEMINI_API_KEY) {
+  geminiImageAnalysis = await analyzeImageWithGemini({
+    imageBase64,
+    userText,
+    pillar,
+  });
+
+  console.log(
+    "gemini_image_analysis_preview",
+    JSON.stringify({
+      ok: geminiImageAnalysis.ok,
+      model: geminiImageAnalysis.model,
+      error: geminiImageAnalysis.error,
+      json: geminiImageAnalysis.json,
+    }).slice(0, 3500),
+  );
+}
+
+let reverseImageRisk: ReverseImageWebDetectionResult | null = null;
+
+const hasGoogleCloudVisionApiKey =
+  Boolean(Deno.env.get("GOOGLE_CLOUD_VISION_API_KEY"));
+
+if (
+  hasGoogleCloudVisionApiKey &&
+  shouldRunReverseImageRiskCheck({
+    userText,
+    pillar,
+    hasImage: Boolean(imageBase64),
+    effectiveMode,
+  })
+) {
+  reverseImageRisk = await runReverseImageWebDetection({
+    imageBase64,
+    userText,
+  });
+
+  console.log(
+    "reverse_image_web_detection_preview",
+    JSON.stringify({
+      ok: reverseImageRisk.ok,
+      checked: reverseImageRisk.checked,
+      error: reverseImageRisk.error,
+      risk_score: reverseImageRisk.risk_score,
+      risk_level: reverseImageRisk.risk_level,
+      reused_image_suspected: reverseImageRisk.reused_image_suspected,
+      multiple_sources_found: reverseImageRisk.multiple_sources_found,
+      social_or_profile_matches_found: reverseImageRisk.social_or_profile_matches_found,
+      full_matching_images_count: reverseImageRisk.full_matching_images_count,
+      partial_matching_images_count: reverseImageRisk.partial_matching_images_count,
+      pages_with_matching_images_count: reverseImageRisk.pages_with_matching_images_count,
+      top_pages: reverseImageRisk.top_pages?.slice(0, 5),
+      risk_signals: reverseImageRisk.risk_signals,
+    }).slice(0, 5000),
+  );
+}
+
+const auxiliaryImageAnalysisContext =
+  effectiveMode === "chat"
+    ? buildAuxiliaryImageAnalysisContext(geminiImageAnalysis)
+    : "";
+
+if (auxiliaryImageAnalysisContext) {
+  instructions += `\n\n${auxiliaryImageAnalysisContext}`;
+}
+
+const reverseImageRiskContext =
+  effectiveMode === "chat"
+    ? buildReverseImageRiskContext(reverseImageRisk)
+    : "";
+
+if (reverseImageRiskContext) {
+  instructions += `\n\n${reverseImageRiskContext}`;
+}
+
+if (
+  effectiveMode === "chat" &&
+  reverseImageRisk?.ok &&
+  reverseImageRisk.checked &&
+  reverseImageRisk.reused_image_suspected
+) {
+  instructions += `
+
+REGLA FINAL PRIORITARIA PARA ESTA RESPUESTA:
+- En esta ejecución concreta, la búsqueda inversa indica que la imagen aparece reutilizada o tiene coincidencias web.
+- La primera frase de la respuesta final DEBE mencionar esa reutilización.
+- No empieces diciendo que la imagen parece real, natural o no generada por IA sin mencionar antes la reutilización.
+- Usa una apertura parecida a:
+  **No parece IA pura, pero no la daría por fiable: aparece reutilizada en varias fuentes.**
+- Si además hay duda visual de sombra, edición o anomalía, añade esa señal en el mismo primer párrafo.
+- Los apartados deben ir en negrita Markdown:
+  **Lo que me hace dudar:**
+  **Qué haría ahora:**
+  **Para quedarte con la idea:**
+- Las listas deben usar guiones Markdown reales, no “•”.
+`.trim();
+}
+
+const asksImageAuthenticity =
+  Boolean(imageBase64) &&
+  effectiveMode === "chat" &&
+  (
+    /(^|\s)(ia)(\s|$|\?|\!|\.|,)/i.test(userText || "") ||
+    /inteligencia artificial/i.test(userText || "") ||
+    /foto.*real/i.test(userText || "") ||
+    /imagen.*real/i.test(userText || "") ||
+    /puede ser ia/i.test(userText || "") ||
+    /es ia/i.test(userText || "") ||
+    /editad/i.test(userText || "") ||
+    /manipulad/i.test(userText || "")
+  );
+
+  const asksDatingProfileReliability =
+  Boolean(imageBase64) &&
+  effectiveMode === "chat" &&
+  (
+    /tinder/i.test(userText || "") ||
+    /bumble/i.test(userText || "") ||
+    /badoo/i.test(userText || "") ||
+    /app de citas/i.test(userText || "") ||
+    /perfil de citas/i.test(userText || "")
+  ) &&
+  (
+    /fiable/i.test(userText || "") ||
+    /me puedo fiar/i.test(userText || "") ||
+    /te parece fiable/i.test(userText || "") ||
+    /es seguro/i.test(userText || "") ||
+    /es segura/i.test(userText || "") ||
+    /peligroso/i.test(userText || "") ||
+    /peligrosa/i.test(userText || "")
+  );
+
+if (
+  asksDatingProfileReliability &&
+  !reverseImageRisk?.reused_image_suspected
+) {
+  instructions += `
+
+REGLA FINAL PRIORITARIA PARA PERFIL DE APP DE CITAS:
+- En esta respuesta el usuario está preguntando si un perfil de Tinder/Bumble/Badoo o app de citas es fiable.
+- Esta regla tiene prioridad sobre dudas genéricas como “solo se ve una foto”, “bio breve”, “foto sugerente”, “bikini”, “pose atractiva” o “falta más contexto”.
+- Si NO hay foto reutilizada, dinero, inversión, cripto, enlaces, códigos, documentos, presión, urgencia, amenaza ni intento claro de mover rápido a WhatsApp/Telegram, el tono debe ser de BAJO RIESGO.
+- Una foto sugerente, en bikini, bañador, ropa ajustada o cuerpo entero NO es una señal de peligro por sí sola.
+- Si aparece un check, insignia, símbolo o marca junto al nombre/edad, trátalo como señal positiva. No digas “no hay verificación visible”.
+- Si el check es pequeño o no puedes confirmarlo al 100%, usa esta fórmula:
+  “Parece haber una verificación visible junto al nombre, lo cual suma confianza, aunque no garantiza intenciones.”
+- No digas:
+  “no hay verificación visible”,
+  “yo no confiaría solo por esta foto”,
+  “la foto sugerente me hace dudar”,
+  “perfil sospechoso”,
+  “precaución moderada”,
+  “iría con bastante cuidado”,
+  salvo que haya señales reales: dinero, inversión, cripto, enlaces, presión, urgencia, códigos, documentos, foto reutilizada, evasión clara o intento rápido de salir de la app.
+- La primera frase debe sonar verde/tranquila. Usa una apertura parecida a:
+  **En principio, no veo señales claras de peligro en este perfil.**
+  o
+  **Con lo que se ve aquí, no hay banderas rojas claras.**
+- Si mencionas la foto sugerente, hazlo de forma neutra:
+  “La foto es sugerente, algo habitual en apps de citas, pero por sí sola no es una señal de peligro.”
+- Evita el apartado **Lo que me hace dudar:** si solo vas a mencionar cosas normales de Tinder como una foto sugerente, una bio breve o pocas fotos visibles.
+- Usa mejor:
+  **Lo que veo:**
+  **Qué comprobaría con calma:**
+  **Para quedarte con la idea:**
+- La respuesta debe ser compatible con puntos verdes, no con puntos naranjas.
+`.trim();
+}
+
+if (asksImageAuthenticity) {
+  instructions += `
+
+REGLA FINAL DE AUTENTICIDAD VISUAL:
+- En esta respuesta el usuario está preguntando si una imagen/foto es IA, real, editada o manipulada.
+- Esta regla tiene prioridad sobre señales genéricas como “iluminación profesional”, “fondo de estudio”, “foto de moda” o “parece editorial”.
+- Si la imagen muestra cuerpo entero, moda, editorial, estudio, fondo neutro, ropa conceptual o pose rara, debes revisar pies, calzado, suelas, apoyo, manos y proporciones antes de dar el veredicto.
+- No abras diciendo “no parece IA”, “parece una foto real” o “no hay señales claras” si no has mencionado explícitamente pies, calzado, suelas, apoyo o proporciones.
+- Si hay cualquier duda en pies, zapatos/zapatillas, suelas, apoyo, manos o proporciones, abre con prudencia:
+  “No la daría por una foto real sin más: hay detalles visuales que me hacen dudar.”
+- Si los pies, zapatillas o apoyo están deformados, raros, cortados, fusionados, con perspectiva extraña o no apoyan con peso real, trátalo como señal visual importante.
+- Si no puedes inspeccionar bien esos detalles, dilo como límite:
+  “Con esta calidad no puedo cerrarlo al 100%, pero revisaría especialmente pies, calzado y apoyo.”
+- No uses la estética de moda o estudio como señal suficiente de autenticidad.
+- En una imagen de cuerpo entero, los pies, calzado, apoyo y proporciones pesan más que la iluminación bonita.
+`.trim();
+}
+
+console.log(
+  "image_context_flags",
+  JSON.stringify({
+    hasGemini: Boolean(geminiImageAnalysis?.ok),
+    reverseOk: Boolean(reverseImageRisk?.ok),
+    reverseChecked: Boolean(reverseImageRisk?.checked),
+    reused: Boolean(reverseImageRisk?.reused_image_suspected),
+    reverseRiskScore: reverseImageRisk?.risk_score ?? null,
+    reverseRiskLevel: reverseImageRisk?.risk_level ?? null,
+    hasReverseContext: Boolean(reverseImageRiskContext),
+  }),
+);
+
+const input: any[] = [];
     for (const h of history) input.push({ role: h.role, content: h.content });
 
     const cleanText = (userText || "").trim();
@@ -5625,7 +8110,11 @@ if (effectiveMode === "chat" && personalSafetyIntelContext) {
 if (cleanText) {
   userContent.push({ type: "input_text", text: cleanText });
 } else if (imageBase64) {
-  userContent.push({ type: "input_text", text: "Analiza la imagen adjunta." });
+  userContent.push({
+    type: "input_text",
+    text:
+      "Analiza la imagen adjunta con criterio de seguridad práctica. Si es una captura, perfil, conversación, web, QR, documento, anuncio o imagen sospechosa, detecta posibles riesgos, señales de manipulación, estafa, IA/deepfake o engaño, y explica qué harías ahora.",
+  });
 } else {
   userContent.push({ type: "input_text", text: "Me gustaría tu ayuda con esto." });
 }
