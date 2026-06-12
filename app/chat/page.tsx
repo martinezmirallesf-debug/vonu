@@ -484,11 +484,68 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
 
   if (!t.trim()) return null;
 
-  const percentScore = extractRiskPercentFromAssistantText(t);
+  // ✅ OVERRIDE ULTRA PRIORITARIO:
+// Si la respuesta de Vonu dice que un perfil de citas no tiene banderas rojas
+// y además menciona verificación/confianza, debe ser VERDE antes de mirar porcentajes,
+// palabras sueltas como "inversión" en contexto negativo, o precaución normal.
+const hasUltraSafeDatingProfileVerdict =
+  (
+    t.includes("tinder") ||
+    t.includes("bumble") ||
+    t.includes("badoo") ||
+    t.includes("app de citas") ||
+    t.includes("perfil de citas")
+  ) &&
+  (
+    t.includes("no hay banderas rojas claras") ||
+    t.includes("no se detectan señales claras") ||
+    t.includes("no se detectan senales claras") ||
+    t.includes("no veo señales claras de peligro") ||
+    t.includes("no veo senales claras de peligro") ||
+    t.includes("no hay señales claras de peligro") ||
+    t.includes("no hay senales claras de peligro") ||
+    t.includes("no hay señales visibles de urgencia") ||
+    t.includes("no hay senales visibles de urgencia")
+  ) &&
+  (
+    t.includes("verificación visible") ||
+    t.includes("verificacion visible") ||
+    t.includes("muestra una verificación visible") ||
+    t.includes("muestra una verificacion visible") ||
+    t.includes("perfil tiene una verificación visible") ||
+    t.includes("perfil tiene una verificacion visible") ||
+    t.includes("suma confianza") ||
+    t.includes("buen indicio")
+  ) &&
+  !t.includes("aparece reutilizada") &&
+  !t.includes("foto reutilizada") &&
+  !t.includes("imagen reutilizada") &&
+  !t.includes("foto robada") &&
+  !t.includes("imagen robada") &&
+  !t.includes("perfil falso") &&
+  !t.includes("catfish") &&
+  !t.includes("catfishing") &&
+  !t.includes("pide dinero") &&
+  !t.includes("pedir dinero") &&
+  !t.includes("enviar dinero") &&
+  !t.includes("envíes dinero") &&
+  !t.includes("envies dinero") &&
+  !t.includes("enlace sospechoso") &&
+  !t.includes("enlaces sospechosos") &&
+  !t.includes("amenaza") &&
+  !t.includes("chantaje") &&
+  !t.includes("presión fuerte") &&
+  !t.includes("presion fuerte");
 
-  if (typeof percentScore === "number") {
-    return riskStatusFromScore(percentScore);
-  }
+if (hasUltraSafeDatingProfileVerdict) {
+  return "safe";
+}
+
+const percentScore = extractRiskPercentFromAssistantText(t);
+
+if (typeof percentScore === "number") {
+  return riskStatusFromScore(percentScore);
+}
 
   // ✅ OVERRIDE PRIORITARIO: perfil de citas tranquilo/verificado = verde.
 // Esto debe ir arriba del todo, antes de cualquier regla de "precaución".
