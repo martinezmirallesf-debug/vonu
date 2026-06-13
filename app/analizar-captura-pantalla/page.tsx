@@ -7,7 +7,7 @@ import ResourceSignup from "../components/ResourceSignup";
 const siteUrl = "https://vonuai.com";
 
 const screenshotExample =
-  "Voy a subir una captura de pantalla para que la revises. Puede ser un SMS, WhatsApp, perfil, factura, web o conversación, y quiero saber si hay señales de riesgo antes de actuar.";
+  "Voy a subir una captura de pantalla para que la revises. Puede ser un mensaje, perfil, factura, web o conversación, y quiero que me ayudes a entender qué debería comprobar antes de actuar.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
