@@ -378,73 +378,50 @@ export default function VonuAmbientAura() {
         }
 
         @media (max-width: 767px) {
-          .vonu-ambient-aura {
-            opacity: 1;
-            background:
-              radial-gradient(circle at 0% 12%, rgba(26, 115, 232, 0.16), transparent 34%),
-              radial-gradient(circle at 100% 12%, rgba(123, 92, 255, 0.14), transparent 35%),
-              radial-gradient(circle at 10% 88%, rgba(0, 201, 131, 0.13), transparent 36%),
-              radial-gradient(circle at 92% 82%, rgba(255, 138, 0, 0.12), transparent 36%);
-          }
+  .vonu-ambient-aura {
+    opacity: 0.78;
+    background:
+      radial-gradient(circle at 0% 8%, rgba(26, 115, 232, 0.13), transparent 36%),
+      radial-gradient(circle at 100% 10%, rgba(123, 92, 255, 0.1), transparent 34%),
+      radial-gradient(circle at 8% 92%, rgba(0, 201, 131, 0.09), transparent 36%),
+      radial-gradient(circle at 92% 88%, rgba(255, 138, 0, 0.08), transparent 36%);
+  }
 
-          .vonu-aura-wash {
-            inset: -24%;
-            opacity: 1;
-            filter: blur(26px) saturate(1.1);
-          }
+  .vonu-aura-wash,
+  .vonu-aura-ribbon,
+  .vonu-aura-edge,
+  .spark {
+    animation: none !important;
+  }
 
-          .vonu-aura-ribbon {
-            width: 150vw;
-            height: 95vh;
-            opacity: 0.34;
-            filter: blur(42px) saturate(1.2);
-          }
+  .vonu-aura-wash {
+    inset: -18%;
+    opacity: 0.62;
+    filter: blur(20px) saturate(1.04);
+  }
 
-          .ribbon-b {
-            width: 135vw;
-            height: 84vh;
-            opacity: 0.22;
-          }
+  .vonu-aura-ribbon {
+    display: none;
+  }
 
-          .edge-a {
-            left: -34%;
-            top: 10%;
-            width: 330px;
-            height: 330px;
-          }
+  .vonu-aura-edge {
+    display: none;
+  }
 
-          .edge-b {
-            right: -34%;
-            top: 14%;
-            width: 320px;
-            height: 320px;
-          }
+  .spark {
+    display: none;
+  }
 
-          .edge-c {
-            left: 18%;
-            bottom: -24%;
-            width: 420px;
-            height: 420px;
-          }
-
-          .spark {
-            width: 6px;
-            height: 6px;
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .vonu-aura-wash,
-          .vonu-aura-ribbon,
-          .vonu-aura-edge,
-          .spark {
-            animation: none !important;
-          }
-
-          .spark {
-            opacity: 0.32;
-          }
-        }
+  .vonu-aura-noise {
+    display: none;
+  }
+}
+  :global(.vonu-home-input-focus-mode) .vonu-ambient-aura,
+:global(.vonu-home-keyboard-open) .vonu-ambient-aura {
+  opacity: 0;
+  transform: translateZ(0) scale(0.98);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
       `}</style>
     </div>
   );
