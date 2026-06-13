@@ -80,6 +80,10 @@ export default function HomeFooter() {
 <Link href="/analizar-captura-pantalla" className="hover:text-zinc-950">
   Analizar captura de pantalla
 </Link>
+
+<Link href="/detectar-perfil-falso" className="hover:text-zinc-950">
+  Detectar perfil falso
+</Link>
           </div>
         </div>
 

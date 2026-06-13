@@ -78,6 +78,12 @@ const featuredResources = [
   text: "Sube una captura de SMS, WhatsApp, perfil, web, factura o conversación para revisar señales antes de actuar.",
   href: "/analizar-captura-pantalla",
 },
+{
+  title: "Cómo detectar un perfil falso",
+  category: "Apps de citas y redes",
+  text: "Revisa capturas de Tinder, Badoo, Bumble, Instagram o conversaciones para detectar catfishing, fotos reutilizadas o señales raras.",
+  href: "/detectar-perfil-falso",
+},
 ];
 
 const categories = [
