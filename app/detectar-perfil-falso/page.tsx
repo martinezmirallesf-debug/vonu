@@ -7,7 +7,7 @@ import ResourceSignup from "../components/ResourceSignup";
 const siteUrl = "https://vonuai.com";
 
 const profileExample =
-  "Voy a subir una captura para que la revises. Quiero que me ayudes a entender qué conviene comprobar antes de seguir hablando con esa persona.";
+  "Voy a subir una captura para que la revises. Te la envío ahora.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
