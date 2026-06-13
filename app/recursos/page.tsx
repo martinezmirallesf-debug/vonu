@@ -72,6 +72,12 @@ const featuredResources = [
   text: "Antes de pagar, revisa si la tienda muestra señales reales de confianza o posibles indicios de estafa.",
   href: "/comprobar-tienda-online",
 },
+{
+  title: "Analizar captura de pantalla online",
+  category: "Capturas",
+  text: "Sube una captura de SMS, WhatsApp, perfil, web, factura o conversación para revisar señales antes de actuar.",
+  href: "/analizar-captura-pantalla",
+},
 ];
 
 const categories = [
