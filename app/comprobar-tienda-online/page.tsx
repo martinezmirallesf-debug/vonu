@@ -11,14 +11,14 @@ const storeExample =
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Cómo comprobar si una tienda online es fiable — VonuAI",
+  title: "Cómo saber si una tienda online es fiable — Compruébala con VonuAI",
   description:
-    "Aprende a comprobar si una tienda online es fiable antes de comprar: datos legales, métodos de pago, precios sospechosos, reseñas, devoluciones y señales de alerta.",
+  "Aprende cómo saber si una tienda online es fiable o confiable antes de comprar: datos legales, métodos de pago, precios sospechosos, reseñas, devoluciones y señales de estafa.",
   alternates: {
     canonical: "/comprobar-tienda-online",
   },
   openGraph: {
-    title: "Cómo comprobar si una tienda online es fiable — VonuAI",
+    title: "Cómo saber si una tienda online es fiable — VonuAI",
     description:
       "Revisa una tienda online antes de pagar o introducir tus datos. Detecta señales de riesgo, precios sospechosos y métodos de pago poco seguros.",
     url: `${siteUrl}/comprobar-tienda-online`,
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cómo comprobar si una tienda online es fiable — VonuAI",
+    title: "Cómo saber si una tienda online es fiable — VonuAI",
     description:
       "Comprueba tiendas online sospechosas antes de comprar, pagar o compartir datos.",
   },
@@ -168,7 +168,7 @@ export default function ComprobarTiendaOnlinePage() {
         "@type": "WebPage",
         "@id": `${siteUrl}/comprobar-tienda-online#webpage`,
         url: `${siteUrl}/comprobar-tienda-online`,
-        name: "Cómo comprobar si una tienda online es fiable",
+        name: "Cómo saber si una tienda online es fiable",
         description:
           "Guía para revisar tiendas online antes de comprar: precios, datos legales, métodos de pago, reseñas, devoluciones y señales de alerta.",
         inLanguage: "es-ES",
@@ -211,13 +211,14 @@ export default function ComprobarTiendaOnlinePage() {
           <div className="mx-auto max-w-5xl text-center">
 
             <h1 className="mx-auto max-w-5xl text-[50px] font-semibold leading-[0.94] tracking-[-0.075em] text-zinc-950 sm:text-[76px] lg:text-[104px]">
-              Cómo comprobar si una tienda online es fiable.
+              Cómo saber si una tienda online es fiable.
             </h1>
 
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
               Antes de comprar en una tienda que no conoces, revisa precios,
-              datos legales, métodos de pago, reseñas, devoluciones y señales de
-              alerta.
+datos legales, métodos de pago, reseñas, devoluciones y señales de
+alerta. Esta guía te ayuda a comprobar la fiabilidad de una tienda
+online antes de meter tarjeta o compartir tus datos.
             </p>
 
             <div className="mt-8 flex justify-center">
