@@ -2694,183 +2694,6 @@ useEffect(() => {
   threadsRef.current = threads;
 }, [threads]);
 
-const syncedThreadsLoadedRef = useRef(false);
-const syncedSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-const skipNextSyncedSaveRef = useRef(false);
-
-async function getChatHistoryToken() {
-  try {
-    const { data } = await supabaseBrowser.auth.getSession();
-    return data?.session?.access_token ?? null;
-  } catch {
-    return null;
-  }
-}
-
-function hasThreadRealContent(thread: ChatThread) {
-  return (thread.messages ?? []).some((message) => {
-    if (message.role === "user") return true;
-
-    if (
-      message.role === "assistant" &&
-      message.id !== "init" &&
-      (message.text ?? "").trim()
-    ) {
-      return true;
-    }
-
-    return false;
-  });
-}
-
-function threadForSyncedHistory(thread: ChatThread) {
-  const safe = sanitizeThreadsForStorage([thread])[0] ?? thread;
-
-  return {
-    id: safe.id,
-    title: safe.title,
-    mode: safe.mode ?? "chat",
-    tutorProfile: safe.tutorProfile ?? { level: "adult" },
-    messages: (safe.messages ?? []).map((message, index) => ({
-      id: message.id,
-      role: message.role,
-      text: message.text ?? null,
-      imageThumb: message.imageThumb ?? null,
-      pizarra: message.pizarra ?? null,
-      sortOrder: index,
-    })),
-  };
-}
-
-async function loadSyncedThreadsFromSupabase() {
-  const token = await getChatHistoryToken();
-
-  if (!token) return false;
-
-  const res = await fetch("/api/chat-history", {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    cache: "no-store",
-  });
-
-  const data = await res.json().catch(() => null);
-
-  if (!res.ok || !data?.ok) {
-    console.warn("[Vonu] No se pudo cargar historial sincronizado:", data?.error);
-    return false;
-  }
-
-  const remoteThreads = Array.isArray(data?.threads) ? data.threads : [];
-
-  if (!remoteThreads.length) {
-    syncedThreadsLoadedRef.current = true;
-    return true;
-  }
-
-  const clean: ChatThread[] = remoteThreads
-    .filter((thread: any) => thread && typeof thread.id === "string")
-    .map((thread: any) => ({
-      id: String(thread.id),
-      title: typeof thread.title === "string" ? thread.title : "Consulta",
-      updatedAt:
-        typeof thread.updatedAt === "number" ? thread.updatedAt : Date.now(),
-      mode: thread?.mode === "tutor" ? "tutor" : "chat",
-      tutorProfile: {
-        level:
-          thread?.tutorProfile?.level === "kid" ||
-          thread?.tutorProfile?.level === "teen" ||
-          thread?.tutorProfile?.level === "adult" ||
-          thread?.tutorProfile?.level === "unknown"
-            ? thread.tutorProfile.level
-            : "adult",
-      },
-      messages:
-        Array.isArray(thread.messages) && thread.messages.length
-          ? thread.messages.map((message: any) => ({
-              id:
-                typeof message.id === "string" && message.id
-                  ? message.id
-                  : crypto.randomUUID(),
-              role: message.role === "assistant" ? "assistant" : "user",
-              text:
-                typeof message.text === "string"
-                  ? message.text
-                  : undefined,
-              imageThumb:
-                typeof message.imageThumb === "string"
-                  ? message.imageThumb
-                  : undefined,
-              streaming: false,
-              pizarra:
-                typeof message.pizarra === "string" ? message.pizarra : null,
-              boardImageB64: null,
-              boardImagePlacement: null,
-            }))
-          : [initialAssistantMessage()],
-    }));
-
-  if (clean.length) {
-    skipNextSyncedSaveRef.current = true;
-    setThreads(clean);
-    setActiveThreadId(clean[0].id);
-  }
-
-  syncedThreadsLoadedRef.current = true;
-  return true;
-}
-
-async function saveSyncedThreadToSupabase(thread: ChatThread) {
-  if (!authUserId) return;
-  if (!hasThreadRealContent(thread)) return;
-
-  const token = await getChatHistoryToken();
-  if (!token) return;
-
-  const payload = {
-    thread: threadForSyncedHistory(thread),
-  };
-
-  const res = await fetch("/api/chat-history", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    cache: "no-store",
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const data = await res.json().catch(() => null);
-    console.warn("[Vonu] No se pudo guardar historial sincronizado:", data?.error);
-  }
-}
-
-async function deleteSyncedThreadFromSupabase(threadId: string) {
-  if (!threadId) return;
-
-  const token = await getChatHistoryToken();
-  if (!token) return;
-
-  const res = await fetch(
-    `/api/chat-history?threadId=${encodeURIComponent(threadId)}`,
-    {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      cache: "no-store",
-    }
-  );
-
-  if (!res.ok) {
-    const data = await res.json().catch(() => null);
-    console.warn("[Vonu] No se pudo borrar historial sincronizado:", data?.error);
-  }
-}
-
 
   useEffect(() => {
     try {
@@ -2908,39 +2731,6 @@ async function deleteSyncedThreadFromSupabase(threadId: string) {
 
   useEffect(() => {
   if (!mounted) return;
-  if (authLoading) return;
-
-  // Si no hay login, seguimos usando solo localStorage.
-  if (!authUserId) {
-    syncedThreadsLoadedRef.current = false;
-    return;
-  }
-
-  let cancelled = false;
-
-  (async () => {
-    try {
-      const ok = await loadSyncedThreadsFromSupabase();
-
-      if (cancelled) return;
-
-      if (!ok) {
-        syncedThreadsLoadedRef.current = true;
-      }
-    } catch (error) {
-      console.warn("[Vonu] Error cargando historial sincronizado:", error);
-      syncedThreadsLoadedRef.current = true;
-    }
-  })();
-
-  return () => {
-    cancelled = true;
-  };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [mounted, authLoading, authUserId]);
-
-  useEffect(() => {
-  if (!mounted) return;
   if (typeof window === "undefined") return;
 
   try {
@@ -2963,38 +2753,6 @@ async function deleteSyncedThreadFromSupabase(threadId: string) {
     }
   }
 }, [threads, mounted]);
-
-useEffect(() => {
-  if (!mounted) return;
-  if (authLoading) return;
-  if (!authUserId) return;
-  if (!syncedThreadsLoadedRef.current) return;
-  if (!activeThreadId) return;
-
-  if (skipNextSyncedSaveRef.current) {
-    skipNextSyncedSaveRef.current = false;
-    return;
-  }
-
-  const threadToSave = threads.find((thread) => thread.id === activeThreadId);
-  if (!threadToSave) return;
-  if (!hasThreadRealContent(threadToSave)) return;
-
-  if (syncedSaveTimerRef.current) {
-    clearTimeout(syncedSaveTimerRef.current);
-  }
-
-  syncedSaveTimerRef.current = setTimeout(() => {
-    saveSyncedThreadToSupabase(threadToSave);
-  }, 700);
-
-  return () => {
-    if (syncedSaveTimerRef.current) {
-      clearTimeout(syncedSaveTimerRef.current);
-    }
-  };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [threads, activeThreadId, mounted, authLoading, authUserId]);
 
 // -------- UI --------
 const [input, setInput] = useState("");
@@ -5738,8 +5496,6 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
   function deleteActiveThread() {
     if (!activeThread) return;
 
-      void deleteSyncedThreadFromSupabase(activeThread.id);
-
     if (threads.length === 1) {
       const fresh = makeNewThread();
       setThreads([fresh]);
@@ -5778,8 +5534,6 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
 
   function deleteThreadById(threadId: string) {
   if (!threadId) return;
-
-    void deleteSyncedThreadFromSupabase(threadId);
 
   if (threads.length <= 1) {
     const fresh = makeNewThread();
