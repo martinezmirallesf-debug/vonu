@@ -17,6 +17,7 @@ import ChatInputBar from "@/app/components/ChatInputBar";
 import TopBar from "@/app/components/TopBar";
 import Sidebar from "@/app/components/Sidebar";
 import VonuThinking from "@/app/components/VonuThinking";
+import VonuAmbientAura from "@/app/components/VonuAmbientAura";
 import AssistantMessageActions from "@/app/components/AssistantMessageActions";
 import { analyzeAttachment } from "@/app/lib/analysis/analyzeAttachment";
 import FilePickerModal from "@/app/components/FilePickerModal";
@@ -7849,7 +7850,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   ].join(" ")}
   aria-hidden="true"
 >
-  <div className="vonu-home-soft-bg absolute inset-0" />
+  <VonuAmbientAura />
 </div>
 
     <div
