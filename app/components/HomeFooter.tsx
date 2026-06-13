@@ -66,6 +66,9 @@ export default function HomeFooter() {
             <Link href="/revisar-contrato" className="hover:text-zinc-950">
               Revisar contrato
             </Link>
+            <Link href="/revisar-contrato-alquiler" className="hover:text-zinc-950">
+  Revisar contrato de alquiler
+</Link>
             <Link href="/comprobar-factura" className="hover:text-zinc-950">
               Comprobar factura
             </Link>

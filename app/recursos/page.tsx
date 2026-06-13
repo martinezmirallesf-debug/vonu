@@ -84,6 +84,12 @@ const featuredResources = [
   text: "Revisa capturas de Tinder, Badoo, Bumble, Instagram o conversaciones para detectar catfishing, fotos reutilizadas o señales raras.",
   href: "/detectar-perfil-falso",
 },
+{
+  title: "Revisar contrato de alquiler online",
+  category: "Contratos",
+  text: "Comprueba fianza, duración, gastos, reparaciones, penalizaciones y cláusulas delicadas antes de firmar.",
+  href: "/revisar-contrato-alquiler",
+},
 ];
 
 const categories = [
