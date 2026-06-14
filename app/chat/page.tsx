@@ -1183,6 +1183,8 @@ function makeTitleFromText(text: string) {
 }
 
 const STORAGE_KEY = "vonu_threads_v2";
+const STORAGE_BACKUP_KEY = "vonu_threads_v2_backup";
+const STORAGE_LAST_GOOD_KEY = "vonu_threads_v2_last_good";
 const HOME_URL = "https://vonuai.com";
 
 const MAX_STORED_THREADS = 24;
@@ -1224,6 +1226,50 @@ function sanitizeThreadsForStorage(threads: ChatThread[]): ChatThread[] {
         .slice(-MAX_STORED_MESSAGES_PER_THREAD)
         .map(stripHeavyMessageForStorage),
     }));
+}
+
+function looksLikeValidStoredThreads(value: unknown): value is ChatThread[] {
+  if (!Array.isArray(value)) return false;
+  if (!value.length) return false;
+
+  return value.some((thread: any) => {
+    if (!thread || typeof thread.id !== "string") return false;
+    if (!Array.isArray(thread.messages)) return false;
+
+    return thread.messages.some((message: any) => {
+      return (
+        message &&
+        (message.role === "user" || message.role === "assistant") &&
+        (
+          typeof message.text === "string" ||
+          typeof message.imageThumb === "string"
+        )
+      );
+    });
+  });
+}
+
+function readStoredThreadsFromLocalStorage() {
+  if (typeof window === "undefined") return null;
+
+  const keys = [STORAGE_KEY, STORAGE_LAST_GOOD_KEY, STORAGE_BACKUP_KEY];
+
+  for (const key of keys) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) continue;
+
+      const parsed = JSON.parse(raw);
+
+      if (looksLikeValidStoredThreads(parsed)) {
+        return parsed;
+      }
+    } catch {
+      // probamos la siguiente copia
+    }
+  }
+
+  return null;
 }
 
 // ✅ regla: tras 1 mensaje, pedir login/pago
@@ -2696,11 +2742,8 @@ useEffect(() => {
 
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-
-      const parsed = JSON.parse(raw) as any[];
-      if (!Array.isArray(parsed) || parsed.length === 0) return;
+      const parsed = readStoredThreadsFromLocalStorage();
+      if (!parsed) return;
 
       const clean: ChatThread[] = parsed
         .filter((t) => t && typeof t.id === "string")
@@ -2734,7 +2777,23 @@ useEffect(() => {
 
   try {
     const safeThreads = sanitizeThreadsForStorage(threads);
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(safeThreads));
+
+    // Protección: nunca sobrescribimos el historial con algo vacío o corrupto.
+    if (!looksLikeValidStoredThreads(safeThreads)) {
+      console.warn("[Vonu] Guardado cancelado: historial vacío o no válido.");
+      return;
+    }
+
+    const previousRaw = window.localStorage.getItem(STORAGE_KEY);
+
+    if (previousRaw) {
+      window.localStorage.setItem(STORAGE_BACKUP_KEY, previousRaw);
+    }
+
+    const nextRaw = JSON.stringify(safeThreads);
+
+    window.localStorage.setItem(STORAGE_KEY, nextRaw);
+    window.localStorage.setItem(STORAGE_LAST_GOOD_KEY, nextRaw);
   } catch (error) {
     console.warn("[Vonu] No se pudo guardar el historial completo:", error);
 
@@ -2746,7 +2805,21 @@ useEffect(() => {
           messages: thread.messages.slice(-30),
         }));
 
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(ultraSafeThreads));
+      if (!looksLikeValidStoredThreads(ultraSafeThreads)) {
+        console.warn("[Vonu] Guardado reducido cancelado: historial no válido.");
+        return;
+      }
+
+      const previousRaw = window.localStorage.getItem(STORAGE_KEY);
+
+      if (previousRaw) {
+        window.localStorage.setItem(STORAGE_BACKUP_KEY, previousRaw);
+      }
+
+      const fallbackRaw = JSON.stringify(ultraSafeThreads);
+
+      window.localStorage.setItem(STORAGE_KEY, fallbackRaw);
+      window.localStorage.setItem(STORAGE_LAST_GOOD_KEY, fallbackRaw);
     } catch (fallbackError) {
       console.warn("[Vonu] No se pudo guardar ni el historial reducido:", fallbackError);
     }
