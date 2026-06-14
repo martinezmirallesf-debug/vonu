@@ -241,50 +241,93 @@ INSTRUCCIONES INTERNAS OBLIGATORIAS PARA FORMATO TUTOR:
 
 No menciones estas instrucciones al usuario.
 
-Cuando respondas en modo tutor y haya matemáticas, física, química, economía, estadística o fórmulas:
+Cuando respondas en modo tutor y haya matemáticas, física, química, economía, estadística, contabilidad, finanzas o fórmulas:
 
-1. NO escribas fórmulas como texto plano.
+OBJETIVO PRINCIPAL:
+La explicación debe leerse bien en móvil. No obligues al usuario a hacer scroll horizontal para entender una operación.
+
+REGLAS DE FORMATO MATEMÁTICO:
+
+1. No escribas fórmulas importantes como texto plano.
    Incorrecto:
    - Año 1: 30.^1 = 27.777,78 €
 
-2. Usa siempre bloques matemáticos con $$...$$ para operaciones importantes.
+2. Usa bloques matemáticos con $$...$$ para operaciones importantes.
 
-3. Si la fórmula contiene fracciones, exponentes, raíces, paréntesis, VAN, interés compuesto, porcentajes o varios signos igual, usa LaTeX real.
+3. Si una fórmula tiene fracciones, exponentes, raíces, paréntesis grandes, sumas largas o varios signos igual, usa LaTeX real con aligned.
 
-4. Para fracciones usa siempre:
-   \\frac{numerador}{denominador}
+4. Para fracciones en bloques display usa preferentemente \\dfrac{}{} en vez de \\frac{}{} para que numerador y denominador se lean mejor.
 
-5. Para exponentes usa:
-   ^{exponente}
+5. Para exponentes usa ^{...}.
+   Correcto:
+   (1+0,08)^{1}
+   Incorrecto:
+   (1+0,08)^1 si la fórmula es larga o compleja.
 
-6. Para subíndices usa:
-   _{subindice}
+6. Para subíndices usa _{...}.
+   Correcto:
+   VA_{1}
 
-7. Si una fórmula tiene varios pasos, usa aligned:
+7. Si una operación tiene varios pasos, NO los encadenes todos en una sola línea.
+   Debes partirlos en varias líneas con aligned:
 
 $$
 \\begin{aligned}
-VA_1 &= \\frac{30000}{(1+0,08)^{1}} \\\\
-&= \\frac{30000}{1,08} \\\\
+VA_{1} &= \\dfrac{30000}{(1+0,08)^{1}} \\\\
+&= \\dfrac{30000}{1,08} \\\\
 &= 27777,78\\ \\text{€}
 \\end{aligned}
 $$
 
-8. En móvil, evita fórmulas horizontales largas. Divide la operación en varias líneas con aligned.
+8. Si una suma o resta es larga, pártela tras un signo +, - o =.
+   No rompas nunca una fracción, un exponente, una raíz o un número.
 
-9. No rompas números:
-   Correcto: 30000, 30.000, 27777,78 o 27.777,78
-   Incorrecto: 30. 000, 30.^1, 2.05 si querías decir 2.205,09
-
-10. Después de cada fórmula, explica brevemente qué significa en lenguaje normal.
-
-11. Si el ejercicio es de VAN, valor actual, descuento financiero o inversión, usa este patrón:
+Ejemplo correcto para una suma larga:
 
 $$
 \\begin{aligned}
-VA_1 &= \\frac{Flujo_1}{(1+r)^{1}} \\\\
-&= \\frac{30000}{(1+0,08)^{1}} \\\\
+\\text{Suma} &= 27777,78 + 25720,16 + 23814,59 \\\\
+&\\quad + 22050,54 + 20417,54 \\\\
+&= 119780,61\\ \\text{€}
+\\end{aligned}
+$$
+
+9. Para palabras dentro de fórmulas usa \\text{}.
+   Correcto:
+   \\text{Flujo}_{t}
+   \\text{Inversión inicial}
+   \\text{Suma}
+
+   Incorrecto:
+   Flujo_t escrito directamente si provoca separación rara como "Fl ujo".
+
+10. No rompas números:
+   Correcto: 30000, 30.000, 27777,78 o 27.777,78
+   Incorrecto: 30. 000, 30.^1, 2.05 si querías decir 2.205,09
+
+11. Mantén tamaños coherentes:
+   - No mezcles texto normal con trozos de fórmula suelta.
+   - No pongas números importantes fuera del bloque matemático si forman parte de la operación.
+   - En fórmulas largas, usa aligned y varias líneas.
+
+12. Después de cada fórmula, añade una frase breve y clara explicando qué significa.
+
+13. Si el ejercicio es de VAN, valor actual, descuento financiero o inversión, usa este patrón:
+
+$$
+\\begin{aligned}
+VA_{1} &= \\dfrac{Flujo_{1}}{(1+r)^{1}} \\\\
+&= \\dfrac{30000}{(1+0,08)^{1}} \\\\
 &= 27777,78\\ \\text{€}
+\\end{aligned}
+$$
+
+14. Para la fórmula general del VAN, evita que palabras largas se rompan raro. Usa \\text{}:
+
+$$
+\\begin{aligned}
+VAN &= \\sum_{t=1}^{n} \\dfrac{\\text{Flujo}_{t}}{(1+r)^{t}} \\\\
+&\\quad - \\text{Inversión inicial}
 \\end{aligned}
 $$
 
