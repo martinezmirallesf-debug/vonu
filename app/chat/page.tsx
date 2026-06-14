@@ -1657,6 +1657,14 @@ function normalizeMathMarkdown(text: string) {
   // Normalizar saltos
   s = s.replace(/\r\n/g, "\n");
 
+    // Evita duplicados comunes de variables cuando el modelo mezcla inline math + texto:
+  // $C$C =  -> $C$ =
+  // $i$i =  -> $i$ =
+  // $VA$VA = -> $VA$ =
+  s = s.replace(/\$([A-Za-z]{1,4})\$\s*\1(?=\s*=)/g, (_match, variable) => {
+    return `$${variable}$`;
+  });
+
   // \[ ... \]  -> $$ ... $$
   s = s.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_match, expr) => {
     return `\n$$\n${String(expr).trim()}\n$$\n`;
@@ -7501,6 +7509,23 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 }
 
 /* ===== KaTeX bonito y controlado ===== */
+
+/* Evita duplicados visuales: KaTeX genera una capa MathML accesible y una capa HTML visible.
+   La capa MathML debe permanecer oculta en pantalla. */
+.katex .katex-mathml,
+.vonu-markdown .katex .katex-mathml,
+.prose .katex .katex-mathml {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+.katex .katex-html,
+.vonu-markdown .katex .katex-html,
+.prose .katex .katex-html {
+  display: inline-block !important;
+}
 
 .vonu-markdown {
   min-width: 0;
