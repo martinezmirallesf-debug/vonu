@@ -3911,7 +3911,8 @@ const [phoneDraft, setPhoneDraft] = useState("");
 
 
   const [renameOpen, setRenameOpen] = useState(false);
-  const [renameValue, setRenameValue] = useState("");
+const [renameValue, setRenameValue] = useState("");
+const [renameSavedPulse, setRenameSavedPulse] = useState(false);
 
   const [inputExpanded, setInputExpanded] = useState(false);
 
@@ -5628,20 +5629,37 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
 }
 
   function openRename() {
-    if (!activeThread) return;
-    setRenameValue(activeThread.title);
-    setRenameOpen(true);
-    setMenuOpen(false);
-  }
+  if (!activeThread) return;
+
+  setRenameSavedPulse(false);
+  setRenameValue(activeThread.title);
+  setRenameOpen(true);
+
+  // Importante:
+  // No cerramos el menú/historial al renombrar.
+  // Así, al terminar, el usuario sigue viendo la pantalla de historial.
+}
 
   function confirmRename() {
-    if (!activeThread) return;
-    const name = renameValue.trim() || "Consulta";
-    setThreads((prev) => prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t)));
-    setRenameOpen(false);
+  if (!activeThread || renameSavedPulse) return;
 
-    if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
-  }
+  const name = renameValue.trim() || "Consulta";
+
+  setThreads((prev) =>
+    prev.map((t) =>
+      t.id === activeThread.id
+        ? { ...t, title: name, updatedAt: Date.now() }
+        : t
+    )
+  );
+
+  setRenameSavedPulse(true);
+
+  window.setTimeout(() => {
+    setRenameOpen(false);
+    setRenameSavedPulse(false);
+  }, 420);
+}
 
   function deleteActiveThread() {
     if (!activeThread) return;
@@ -7656,56 +7674,103 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 )}
 
       {/* ===== RENAME MODAL ===== */}
-      {renameOpen && (
-        <div className="fixed inset-0 z-[85] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6" onClick={() => setRenameOpen(false)}>
-          <div
-            className="w-full max-w-[420px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-[16px] font-semibold text-zinc-900">Renombrar conversación</div>
-                <div className="text-[12.5px] text-zinc-500 mt-1">Ponle un nombre para encontrarla rápido.</div>
-              </div>
-
-              <button
-  onClick={() => setRenameOpen(false)}
-  className="grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition hover:bg-zinc-100 active:scale-95"
-  aria-label="Cerrar"
->
-  <span className="text-[24px] font-light leading-none relative top-[-1px]">×</span>
-</button>
+{renameOpen && (
+  <div
+    className="fixed inset-0 z-[85] overflow-y-auto bg-black/25 px-4 py-5 backdrop-blur-sm sm:px-6"
+    onClick={() => {
+      if (renameSavedPulse) return;
+      setRenameSavedPulse(false);
+      setRenameOpen(false);
+    }}
+  >
+    <div className="flex min-h-full items-start justify-center">
+      <div
+        className={`mt-[8dvh] mb-6 w-full max-w-[420px] rounded-[22px] border border-zinc-200 bg-white p-5 shadow-[0_30px_90px_rgba(0,0,0,0.18)] transition-all duration-200 ${
+          renameSavedPulse ? "scale-[0.985]" : "scale-100"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-[16px] font-semibold text-zinc-900">
+              Renombrar conversación
             </div>
-
-            <div className="mt-4">
-              <div className="text-[12px] text-zinc-600 mb-1">Nombre</div>
-              <input
-                value={renameValue}
-                onChange={(e) => setRenameValue(e.target.value)}
-                className="w-full h-11 rounded-[14px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
-                placeholder="Ej: Estafa Wallapop, Inglés vocabulario…"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") setRenameOpen(false);
-                  if (e.key === "Enter") confirmRename();
-                }}
-              />
-            </div>
-
-            <div className="mt-4 flex gap-2">
-              <button
-                onClick={() => setRenameOpen(false)}
-                className="flex-1 h-11 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm font-semibold transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button onClick={confirmRename} className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors cursor-pointer">
-                Guardar
-              </button>
+            <div className="mt-1 text-[12.5px] leading-5 text-zinc-500">
+              Ponle un nombre para encontrarla rápido.
             </div>
           </div>
+
+          <button
+            onClick={() => {
+              if (renameSavedPulse) return;
+              setRenameSavedPulse(false);
+              setRenameOpen(false);
+            }}
+            className="grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition hover:bg-zinc-100 active:scale-95"
+            aria-label="Cerrar"
+          >
+            <span className="relative top-[-1px] text-[24px] font-light leading-none">
+              ×
+            </span>
+          </button>
         </div>
-      )}
+
+        <div className="mt-4">
+          <div className="mb-1 text-[12px] text-zinc-600">Nombre</div>
+
+          <input
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            disabled={renameSavedPulse}
+            className="h-12 w-full rounded-[15px] border border-zinc-300 px-4 text-[15px] text-zinc-950 outline-none transition focus:border-zinc-500 disabled:bg-zinc-50 disabled:text-zinc-500"
+            placeholder="Ej: Estafa Wallapop, Inglés vocabulario…"
+            autoFocus={isDesktopPointer()}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+
+              if (e.key === "Escape") {
+                setRenameSavedPulse(false);
+                setRenameOpen(false);
+              }
+
+              if (e.key === "Enter") {
+                confirmRename();
+              }
+            }}
+          />
+        </div>
+
+        {renameSavedPulse ? (
+          <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[13px] font-semibold text-emerald-800">
+            Nombre actualizado ✓
+          </div>
+        ) : null}
+
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={() => {
+              if (renameSavedPulse) return;
+              setRenameSavedPulse(false);
+              setRenameOpen(false);
+            }}
+            disabled={renameSavedPulse}
+            className="h-11 flex-1 cursor-pointer rounded-full border border-zinc-200 text-sm font-semibold transition-colors hover:bg-zinc-50 disabled:cursor-default disabled:opacity-60"
+          >
+            Cancelar
+          </button>
+
+          <button
+            onClick={confirmRename}
+            disabled={renameSavedPulse}
+            className="h-11 flex-1 cursor-pointer rounded-full bg-zinc-950 text-sm font-semibold text-white transition-colors hover:bg-zinc-800 disabled:cursor-default disabled:bg-emerald-600"
+          >
+            {renameSavedPulse ? "Guardado ✓" : "Guardar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* ===== WHITEBOARD ===== */}
 <ManualWhiteboardModal
