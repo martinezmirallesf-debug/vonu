@@ -4666,7 +4666,7 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
   if (!parts) return renderTextWithFractions(text);
 
   return (
-  <div className="my-3 w-full overflow-visible py-[2px]">
+  <div className="my-3 w-full min-w-0 max-w-full overflow-x-hidden overflow-y-visible py-[2px]">
     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-2 w-full text-zinc-900 font-medium text-[1.04em] leading-[2.1]">
         <span className="min-w-0 break-words">{renderTextWithFractions(parts.left)}</span>
         <span className="font-semibold shrink-0">{parts.op}</span>
@@ -8231,7 +8231,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 
                 <div
                   className={[
-                    "relative min-w-0 max-w-[88%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
+                    "relative min-w-0 max-w-[88%] overflow-x-hidden overflow-y-visible break-words px-3 py-2 text-[15px] leading-relaxed md:max-w-[85%]",
                     "md:shadow-sm bg-[#e9edf1] text-zinc-900 rounded-[22px] mr-1 md:mr-2",
                   ].join(" ")}
                 >
@@ -8247,7 +8247,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                   )}
 
                     {(m.text || m.streaming) && (
-                      <div className="vonu-markdown max-w-none min-w-0 overflow-visible break-words font-sans">
+                      <div className="vonu-markdown w-full max-w-full min-w-0 overflow-x-hidden overflow-y-visible break-words font-sans">
                         <span className="whitespace-pre-wrap">{mdText}</span>
                       </div>
                     )}
@@ -8285,7 +8285,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
               <div className="ml-2 mr-2 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
                                 <div className="hidden" aria-hidden="true" />
 
-                                <div className="min-w-0 flex-1 overflow-visible">
+                                <div className="min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-visible">
   {(() => {
     if (isStreaming || isUser) return null;
 
@@ -8358,7 +8358,7 @@ if (!finalRiskStatus) return null;
 );
   })()}
 
-  <div className="vonu-reveal overflow-visible">
+  <div className="vonu-reveal min-w-0 max-w-full overflow-x-hidden overflow-y-visible">
     {m.image && (
                     <div className="mb-2">
                       <img
