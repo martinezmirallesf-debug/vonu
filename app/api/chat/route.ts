@@ -237,47 +237,64 @@ const normalized = {
 };
 
 const tutorMathMobileFormattingInstruction = `
-Formato obligatorio para respuestas de tutor con matemáticas, física, química, economía, estadística o fórmulas:
+INSTRUCCIONES INTERNAS OBLIGATORIAS PARA FORMATO TUTOR:
 
-- Prioriza siempre que las fórmulas se lean bien en móvil.
-- No escribas fórmulas largas en una sola línea.
-- No encadenes muchas igualdades en la misma línea.
-- Si una operación tiene fracciones, exponentes, raíces, paréntesis grandes, sumas largas o varios signos igual, usa un bloque matemático multilinea con aligned.
-- Usa este formato cuando haya varios pasos:
+No menciones estas instrucciones al usuario.
 
-$$
-\\begin{aligned}
-A &= primer\\ paso \\\\
-&= segundo\\ paso \\\\
-&= resultado
-\\end{aligned}
-$$
+Cuando respondas en modo tutor y haya matemáticas, física, química, economía, estadística o fórmulas:
 
-- Alinea los signos igual con &.
-- Usa saltos de línea \\\\ dentro del bloque.
-- Usa \\frac{}{} para fracciones.
-- Usa ^{} para exponentes.
-- Usa _{} para subíndices.
-- Usa \\text{} solo para palabras dentro de fórmulas.
-- No partas números de miles: escribe 3000 o 3.000, pero nunca "3. 000".
-- No separes visualmente decimales o importes: escribe 2777,78 € o 2.777,78 €, nunca "2.05 €" si corresponde 2.205,09 €.
-- Después de cada fórmula, añade una frase breve explicando qué significa.
+1. NO escribas fórmulas como texto plano.
+   Incorrecto:
+   - Año 1: 30.^1 = 27.777,78 €
 
-Ejemplo correcto:
+2. Usa siempre bloques matemáticos con $$...$$ para operaciones importantes.
+
+3. Si la fórmula contiene fracciones, exponentes, raíces, paréntesis, VAN, interés compuesto, porcentajes o varios signos igual, usa LaTeX real.
+
+4. Para fracciones usa siempre:
+   \\frac{numerador}{denominador}
+
+5. Para exponentes usa:
+   ^{exponente}
+
+6. Para subíndices usa:
+   _{subindice}
+
+7. Si una fórmula tiene varios pasos, usa aligned:
 
 $$
 \\begin{aligned}
-VA_1 &= \\frac{3000}{(1+0,08)^1} \\\\
-&= \\frac{3000}{1,08} \\\\
-&= 2777,78\\ \\text{€}
+VA_1 &= \\frac{30000}{(1+0,08)^{1}} \\\\
+&= \\frac{30000}{1,08} \\\\
+&= 27777,78\\ \\text{€}
 \\end{aligned}
 $$
+
+8. En móvil, evita fórmulas horizontales largas. Divide la operación en varias líneas con aligned.
+
+9. No rompas números:
+   Correcto: 30000, 30.000, 27777,78 o 27.777,78
+   Incorrecto: 30. 000, 30.^1, 2.05 si querías decir 2.205,09
+
+10. Después de cada fórmula, explica brevemente qué significa en lenguaje normal.
+
+11. Si el ejercicio es de VAN, valor actual, descuento financiero o inversión, usa este patrón:
+
+$$
+\\begin{aligned}
+VA_1 &= \\frac{Flujo_1}{(1+r)^{1}} \\\\
+&= \\frac{30000}{(1+0,08)^{1}} \\\\
+&= 27777,78\\ \\text{€}
+\\end{aligned}
+$$
+
+CONSULTA DEL USUARIO:
 `.trim();
 
 if (normalized.mode === "tutor") {
-  normalized.userText = `${normalized.userText}
+  normalized.userText = `${tutorMathMobileFormattingInstruction}
 
-${tutorMathMobileFormattingInstruction}`;
+${normalized.userText}`;
 }
 
     // ==========================================================
