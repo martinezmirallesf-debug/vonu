@@ -4869,11 +4869,10 @@ li({ children, ...props }: any) {
 if (cn.includes("katex-display")) {
   return (
     <div
-      className={`${className ?? ""} my-4 min-w-0 max-w-full rounded-2xl bg-white/45 px-2 py-2 text-left`}
+      className={`${className ?? ""} my-4 min-w-0 max-w-full rounded-2xl bg-white/45 px-2 py-2 text-center`}
       style={{
-        overflowX: "auto",
+        overflowX: "hidden",
         overflowY: "visible",
-        WebkitOverflowScrolling: "touch",
         maxWidth: "100%",
         width: "100%",
       }}
@@ -7476,105 +7475,105 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
   overflow-wrap: anywhere;
 }
 
-.vonu-markdown .katex-display {
-  max-width: 100% !important;
-  overflow-x: hidden !important;
-  overflow-y: visible !important;
-  -webkit-overflow-scrolling: touch;
-}
-
-.vonu-markdown .katex-display > .katex {
-  display: inline-block !important;
-  max-width: none !important;
-  width: auto !important;
-}
-
-.vonu-markdown pre {
-  max-width: 100%;
-  overflow-x: auto;
-}
-
+.vonu-markdown pre,
 .vonu-markdown code {
   max-width: 100%;
 }
 
-/* Fórmulas inline: un poco más grandes, pero sin tocar demasiado el flujo */
-.prose .katex {
-  font-size: 1.06em !important;
-  line-height: normal !important;
+.vonu-markdown pre {
+  overflow-x: auto;
 }
 
-/* Fórmulas en bloque: centradas, limpias y con espacio vertical suficiente */
+/* Fórmulas inline: legibles, sin crecer demasiado en móvil */
+.prose .katex {
+  font-size: 1.02em !important;
+  line-height: normal !important;
+  max-width: 100%;
+}
+
+/* Bloques matemáticos: no deben crear scroll horizontal visible */
+.vonu-markdown .katex-display,
 .prose .katex-display {
+  box-sizing: border-box !important;
   display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
   margin: 1rem 0 1.15rem !important;
-  padding: 0.28rem 0 0.38rem !important;
+  padding: 0.38rem 0.12rem 0.48rem !important;
   text-align: center !important;
   overflow-x: hidden !important;
   overflow-y: visible !important;
-  max-width: 100%;
 }
 
-/* No apretar KaTeX: dejamos respirar estructuras altas como fracciones anidadas */
+/* La fórmula debe intentar adaptarse al ancho disponible */
+.vonu-markdown .katex-display > .katex,
 .prose .katex-display > .katex {
   display: inline-block !important;
-  max-width: 100%;
-  font-size: 1.16em !important;
-  line-height: 1.52 !important;
+  max-width: 100% !important;
+  width: auto !important;
+  font-size: 1em !important;
+  line-height: 1.44 !important;
   white-space: normal !important;
   word-break: normal !important;
+  overflow-wrap: normal !important;
 }
 
-/* Un poco más de aire general para fórmulas de varios pisos */
+/* Aire para estructuras altas: fracciones, raíces, exponentes */
+.vonu-markdown .katex-display .vlist-t,
 .prose .katex-display .vlist-t {
-  line-height: 1.32 !important;
+  line-height: 1.26 !important;
 }
 
-/* Fracciones anidadas: más aire para que el numerador/denominador no toque la raya principal */
+/* Fracciones anidadas: un poco de aire sin hacerlas gigantes */
+.vonu-markdown .katex-display .mfrac .mfrac,
 .prose .katex-display .mfrac .mfrac {
-  padding-top: 0.28em !important;
-  padding-bottom: 0.28em !important;
+  padding-top: 0.16em !important;
+  padding-bottom: 0.16em !important;
 }
 
-/* Línea de fracción algo fina y limpia */
+/* Línea de fracción limpia */
+.vonu-markdown .katex .mfrac .frac-line,
 .prose .katex .mfrac .frac-line {
   border-bottom-width: 0.055em !important;
 }
 
 /* Separación entre texto y fórmula */
+.vonu-markdown .katex-display + p,
+.vonu-markdown p + .katex-display,
 .prose .katex-display + p,
 .prose p + .katex-display {
   margin-top: 0.8rem !important;
 }
 
-/* Móvil: mantener legible sin hacer la fórmula monstruosa */
+/* Móvil: más compacto para evitar scroll en fórmulas */
 @media (max-width: 767px) {
   .prose .katex {
-    font-size: 1.02em !important;
+    font-size: 0.94em !important;
     line-height: normal !important;
   }
 
+  .vonu-markdown .katex-display,
   .prose .katex-display {
-    margin: 0.85rem 0 1rem !important;
-    padding: 0.22rem 0 0.32rem !important;
-    text-align: center !important;
-    overflow-x: hidden !important;
-    overflow-y: visible !important;
+    margin: 0.8rem 0 0.95rem !important;
+    padding: 0.28rem 0.04rem 0.38rem !important;
   }
 
-.prose .katex-display > .katex {
-  font-size: 1.08em !important;
-  line-height: 1.46 !important;
-  white-space: normal !important;
-}
+  .vonu-markdown .katex-display > .katex,
+  .prose .katex-display > .katex {
+    font-size: 0.84em !important;
+    line-height: 1.34 !important;
+  }
 
+  .vonu-markdown .katex-display .vlist-t,
   .prose .katex-display .vlist-t {
-    line-height: 1.22 !important;
+    line-height: 1.16 !important;
   }
 
+  .vonu-markdown .katex-display .mfrac .mfrac,
   .prose .katex-display .mfrac .mfrac {
-    padding-top: 0.14em !important;
-    padding-bottom: 0.14em !important;
+    padding-top: 0.1em !important;
+    padding-bottom: 0.1em !important;
   }
 }
 
