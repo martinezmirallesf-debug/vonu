@@ -4742,12 +4742,12 @@ li({ children, ...props }: any) {
 
     // ✅ code block normal: SOLO para modo chat real (esto sí puede ser monospace)
     return (
-      <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
-        <code className="text-[12.5px]" {...props}>
-          {clean}
-        </code>
-      </pre>
-    );
+  <pre className="max-w-full rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto whitespace-pre-wrap break-words">
+    <code className="text-[12.5px] whitespace-pre-wrap break-words" {...props}>
+      {clean}
+    </code>
+  </pre>
+);
   },
 
   // ✅ Por si el Markdown mete <pre> directo (dependiendo del parser)
@@ -4792,11 +4792,13 @@ li({ children, ...props }: any) {
 if (cn.includes("katex-display")) {
   return (
     <div
-      className={`${className ?? ""} my-4 rounded-2xl bg-white/45 px-2 py-2 text-left`}
+      className={`${className ?? ""} my-4 min-w-0 max-w-full rounded-2xl bg-white/45 px-2 py-2 text-left`}
       style={{
-        overflow: "visible",
+        overflowX: "auto",
+        overflowY: "visible",
+        WebkitOverflowScrolling: "touch",
         maxWidth: "100%",
-        WebkitOverflowScrolling: "auto",
+        width: "100%",
       }}
       {...props}
     >
@@ -7374,6 +7376,34 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 
 /* ===== KaTeX bonito y controlado ===== */
 
+.vonu-markdown {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.vonu-markdown .katex-display {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.vonu-markdown .katex-display > .katex {
+  display: inline-block !important;
+  max-width: none !important;
+  width: max-content;
+}
+
+.vonu-markdown pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.vonu-markdown code {
+  max-width: 100%;
+}
+
 /* Fórmulas inline: un poco más grandes, pero sin tocar demasiado el flujo */
 .prose .katex {
   font-size: 1.06em !important;
@@ -8196,7 +8226,7 @@ if (!finalRiskStatus) return null;
                   )}
 
                   {(m.text || m.streaming) && (
-    <div className="vonu-markdown max-w-none min-w-0 overflow-visible break-words font-sans text-[18px] md:text-[19px] leading-8 md:leading-8">
+    <div className="vonu-markdown w-full max-w-full min-w-0 overflow-x-hidden overflow-y-visible break-words [overflow-wrap:anywhere] font-sans text-[18px] md:text-[19px] leading-8 md:leading-8">
     {mdText.includes('"elements"') || mdText.includes("```excalidraw") ? null : (
       <>
         <ReactMarkdown
