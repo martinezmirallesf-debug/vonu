@@ -1665,6 +1665,21 @@ function normalizeMathMarkdown(text: string) {
     return `$${variable}$`;
   });
 
+    // Corrige duplicados visuales/textuales en definiciones de variables:
+  // - VAVAVA = -> - VA =
+  // - VFVFVF = -> - VF =
+  // - CCC = -> - C =
+  // - iii = -> - i =
+  // - nnn = -> - n =
+  s = s.replace(/^(\s*[-*]\s*)(VA){2,}(?=\s*=)/gim, "$1VA");
+  s = s.replace(/^(\s*[-*]\s*)(VF){2,}(?=\s*=)/gim, "$1VF");
+  s = s.replace(/^(\s*[-*]\s*)([A-Za-z])\3{1,}(?=\s*=)/gm, "$1$2");
+
+  // Lo mismo si la definición viene sin viñeta.
+  s = s.replace(/^(\s*)(VA){2,}(?=\s*=)/gim, "$1VA");
+  s = s.replace(/^(\s*)(VF){2,}(?=\s*=)/gim, "$1VF");
+  s = s.replace(/^(\s*)([A-Za-z])\3{1,}(?=\s*=)/gm, "$1$2");
+
     // Evita que definiciones cortas de variables se rompan así:
   // - i =
   //   tipo de interés
