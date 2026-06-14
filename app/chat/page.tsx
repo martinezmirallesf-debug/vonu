@@ -7478,7 +7478,7 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 
 .vonu-markdown .katex-display {
   max-width: 100% !important;
-  overflow-x: auto !important;
+  overflow-x: hidden !important;
   overflow-y: visible !important;
   -webkit-overflow-scrolling: touch;
 }
@@ -7486,7 +7486,7 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 .vonu-markdown .katex-display > .katex {
   display: inline-block !important;
   max-width: none !important;
-  width: max-content;
+  width: auto !important;
 }
 
 .vonu-markdown pre {
@@ -7510,7 +7510,7 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
   margin: 1rem 0 1.15rem !important;
   padding: 0.28rem 0 0.38rem !important;
   text-align: center !important;
-  overflow-x: auto !important;
+  overflow-x: hidden !important;
   overflow-y: visible !important;
   max-width: 100%;
 }
@@ -7521,7 +7521,7 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
   max-width: 100%;
   font-size: 1.16em !important;
   line-height: 1.52 !important;
-  white-space: nowrap !important;
+  white-space: normal !important;
   word-break: normal !important;
 }
 
@@ -7558,14 +7558,14 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
     margin: 0.85rem 0 1rem !important;
     padding: 0.22rem 0 0.32rem !important;
     text-align: center !important;
-    overflow-x: auto !important;
+    overflow-x: hidden !important;
     overflow-y: visible !important;
   }
 
 .prose .katex-display > .katex {
   font-size: 1.08em !important;
   line-height: 1.46 !important;
-  white-space: nowrap !important;
+  white-space: normal !important;
 }
 
   .prose .katex-display .vlist-t {
