@@ -1153,6 +1153,82 @@ function inferRiskStatusFromUserText(text: string): "safe" | "warning" | "high" 
   return null;
 }
 
+function looksLikeNeutralIdentityLookupFromUserText(text: string): boolean {
+  const t = String(text ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  if (!t.trim()) return false;
+
+  const asksIdentity =
+    t.includes("quien es") ||
+    t.includes("quien era") ||
+    t.includes("como se llama") ||
+    t.includes("sabes quien") ||
+    t.includes("sabes quien es") ||
+    t.includes("cual es su nombre") ||
+    t.includes("cual es el nombre") ||
+    t.includes("identificar") ||
+    t.includes("identificame") ||
+    t.includes("nombre de esta persona") ||
+    t.includes("nombre de la chica") ||
+    t.includes("nombre de este chico");
+
+  const looksLikePersonContext =
+    t.includes("chica") ||
+    t.includes("chico") ||
+    t.includes("mujer") ||
+    t.includes("hombre") ||
+    t.includes("persona") ||
+    t.includes("famosa") ||
+    t.includes("famoso") ||
+    t.includes("actriz") ||
+    t.includes("actor") ||
+    t.includes("cantante") ||
+    t.includes("modelo") ||
+    t.includes("influencer") ||
+    t.includes("tiktoker") ||
+    t.includes("instagram") ||
+    t.includes("redes") ||
+    t.includes("redes sociales") ||
+    t.includes("estrella porno") ||
+    t.includes("porno");
+
+  const hasRealRiskContext =
+    t.includes("estafa") ||
+    t.includes("estaf") ||
+    t.includes("scam") ||
+    t.includes("fraude") ||
+    t.includes("perfil falso") ||
+    t.includes("fake") ||
+    t.includes("catfish") ||
+    t.includes("catfishing") ||
+    t.includes("me pide dinero") ||
+    t.includes("dinero") ||
+    t.includes("inversion") ||
+    t.includes("cripto") ||
+    t.includes("bitcoin") ||
+    t.includes("enlace") ||
+    t.includes("link") ||
+    t.includes("whatsapp") ||
+    t.includes("telegram") ||
+    t.includes("amenaza") ||
+    t.includes("chantaje") ||
+    t.includes("sextorsion") ||
+    t.includes("extorsion") ||
+    t.includes("menor") ||
+    t.includes("grooming") ||
+    t.includes("suplantacion") ||
+    t.includes("ia") ||
+    t.includes("generada por ia") ||
+    t.includes("manipulada") ||
+    t.includes("foto robada") ||
+    t.includes("foto reutilizada");
+
+  return asksIdentity && looksLikePersonContext && !hasRealRiskContext;
+}
+
 function initialAssistantMessage(): Message {
   return {
     id: "init",
@@ -8152,6 +8228,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 
 const assistantRiskStatus = inferRiskStatusFromAssistantText(m.text ?? "");
 const userRiskStatus = inferRiskStatusFromUserText(previousUserMessage?.text ?? "");
+const neutralIdentityLookup = looksLikeNeutralIdentityLookupFromUserText(previousUserMessage?.text ?? "");
 
 const assistantTextForDots = String(m.text ?? "").toLowerCase();
 
@@ -8195,9 +8272,11 @@ const assistantClearlyLowRiskDating =
   !assistantTextForDots.includes("amenaza") &&
   !assistantTextForDots.includes("chantaje");
 
-const finalRiskStatus = assistantClearlyLowRiskDating
+const finalRiskStatus = neutralIdentityLookup
   ? "safe"
-  : assistantRiskStatus ?? userRiskStatus;
+  : assistantClearlyLowRiskDating
+    ? "safe"
+    : assistantRiskStatus ?? userRiskStatus;
 
 if (!finalRiskStatus) return null;
 
