@@ -1453,9 +1453,42 @@ function renderChildrenWithFractions(children: ReactNode): ReactNode {
       return child;
     }
 
-    // ✅ Si es un elemento React con hijos, recorremos también sus hijos
+        // ✅ Si es un elemento React con hijos, recorremos también sus hijos
     if (React.isValidElement(child)) {
       const el = child as React.ReactElement<any>;
+
+      const className =
+        typeof el.props?.className === "string" ? el.props.className : "";
+
+      // ✅ MUY IMPORTANTE:
+      // No tocar nunca el árbol interno de KaTeX.
+      // Si renderChildrenWithFractions entra dentro de KaTeX,
+      // puede duplicar variables como VA, VF, i, n -> VAVAVA, VFVFVF, iii, nnn.
+      const isKatexInternalElement =
+        className.includes("katex") ||
+        className.includes("katex-mathml") ||
+        className.includes("katex-html") ||
+        className.includes("mord") ||
+        className.includes("mop") ||
+        className.includes("mbin") ||
+        className.includes("mrel") ||
+        className.includes("mopen") ||
+        className.includes("mclose") ||
+        className.includes("mpunct") ||
+        className.includes("mfrac") ||
+        className.includes("msupsub") ||
+        className.includes("sqrt") ||
+        className.includes("root") ||
+        className.includes("vlist") ||
+        className.includes("vlist-t") ||
+        className.includes("base") ||
+        className.includes("strut") ||
+        className.includes("pstrut") ||
+        className.includes("mspace");
+
+      if (isKatexInternalElement) {
+        return child;
+      }
 
       if (!el.props?.children) return child;
 
