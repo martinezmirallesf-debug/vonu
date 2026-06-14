@@ -236,6 +236,50 @@ const normalized = {
   ),
 };
 
+const tutorMathMobileFormattingInstruction = `
+Formato obligatorio para respuestas de tutor con matemáticas, física, química, economía, estadística o fórmulas:
+
+- Prioriza siempre que las fórmulas se lean bien en móvil.
+- No escribas fórmulas largas en una sola línea.
+- No encadenes muchas igualdades en la misma línea.
+- Si una operación tiene fracciones, exponentes, raíces, paréntesis grandes, sumas largas o varios signos igual, usa un bloque matemático multilinea con aligned.
+- Usa este formato cuando haya varios pasos:
+
+$$
+\\begin{aligned}
+A &= primer\\ paso \\\\
+&= segundo\\ paso \\\\
+&= resultado
+\\end{aligned}
+$$
+
+- Alinea los signos igual con &.
+- Usa saltos de línea \\\\ dentro del bloque.
+- Usa \\frac{}{} para fracciones.
+- Usa ^{} para exponentes.
+- Usa _{} para subíndices.
+- Usa \\text{} solo para palabras dentro de fórmulas.
+- No partas números de miles: escribe 3000 o 3.000, pero nunca "3. 000".
+- No separes visualmente decimales o importes: escribe 2777,78 € o 2.777,78 €, nunca "2.05 €" si corresponde 2.205,09 €.
+- Después de cada fórmula, añade una frase breve explicando qué significa.
+
+Ejemplo correcto:
+
+$$
+\\begin{aligned}
+VA_1 &= \\frac{3000}{(1+0,08)^1} \\\\
+&= \\frac{3000}{1,08} \\\\
+&= 2777,78\\ \\text{€}
+\\end{aligned}
+$$
+`.trim();
+
+if (normalized.mode === "tutor") {
+  normalized.userText = `${normalized.userText}
+
+${tutorMathMobileFormattingInstruction}`;
+}
+
     // ==========================================================
     // ✅ 1) INTERCEPTOR FÚTBOL (ANTES de Supabase Edge Function)
     // ==========================================================
