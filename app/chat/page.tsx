@@ -1665,6 +1665,17 @@ function normalizeMathMarkdown(text: string) {
     return `$${variable}$`;
   });
 
+    // Evita que definiciones cortas de variables se rompan así:
+  // - i =
+  //   tipo de interés
+  //
+  // y las deja como:
+  // - i = tipo de interés
+  s = s.replace(
+    /^(\s*[-*]\s*(?:\$[A-Za-z]{1,4}\$|[A-Za-z]{1,4})\s*=\s*)\n+\s+/gm,
+    "$1"
+  );
+
   // \[ ... \]  -> $$ ... $$
   s = s.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_match, expr) => {
     return `\n$$\n${String(expr).trim()}\n$$\n`;
@@ -7124,6 +7135,18 @@ return (
 .vonu-markdown .vonu-md-li::marker {
   color: #52525b !important;
   font-weight: 900 !important;
+}
+
+/* Si ReactMarkdown mete un <p> dentro de un <li>, evitamos que
+   definiciones cortas tipo "i = tipo de interés" bajen a otra línea. */
+.vonu-markdown .vonu-md-li > p {
+  display: inline !important;
+  margin: 0 !important;
+}
+
+.vonu-markdown .vonu-md-li > p + p {
+  display: block !important;
+  margin-top: 0.45rem !important;
 }
 
 @media (max-width: 767px) {
