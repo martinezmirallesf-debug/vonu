@@ -1657,7 +1657,7 @@ function normalizeMathMarkdown(text: string) {
   // Normalizar saltos
   s = s.replace(/\r\n/g, "\n");
 
-    // Evita duplicados comunes de variables cuando el modelo mezcla inline math + texto:
+  // Evita duplicados cuando el modelo mezcla inline math + texto:
   // $C$C =  -> $C$ =
   // $i$i =  -> $i$ =
   // $VA$VA = -> $VA$ =
@@ -1665,22 +1665,74 @@ function normalizeMathMarkdown(text: string) {
     return `$${variable}$`;
   });
 
-    // Corrige duplicados visuales/textuales en definiciones de variables:
+  // Corrige duplicados textuales en definiciones de variables:
   // - VAVAVA = -> - VA =
   // - VFVFVF = -> - VF =
+  // - RRR = -> - R =
   // - CCC = -> - C =
   // - iii = -> - i =
   // - nnn = -> - n =
-  s = s.replace(/^(\s*[-*]\s*)(VA){2,}(?=\s*=)/gim, "$1VA");
-  s = s.replace(/^(\s*[-*]\s*)(VF){2,}(?=\s*=)/gim, "$1VF");
-  s = s.replace(/^(\s*[-*]\s*)([A-Za-z])\3{1,}(?=\s*=)/gm, "$1$2");
+  // También cubre casos tipo $R$R = o $i$i =
+  const collapseRepeatedVariableLabel = (rawLabel: string) => {
+    const compact = String(rawLabel ?? "")
+      .replace(/\$/g, "")
+      .replace(/\s+/g, "")
+      .trim();
 
-  // Lo mismo si la definición viene sin viñeta.
-  s = s.replace(/^(\s*)(VA){2,}(?=\s*=)/gim, "$1VA");
-  s = s.replace(/^(\s*)(VF){2,}(?=\s*=)/gim, "$1VF");
-  s = s.replace(/^(\s*)([A-Za-z])\3{1,}(?=\s*=)/gm, "$1$2");
+    if (!compact) return String(rawLabel ?? "").trim();
 
-    // Evita que definiciones cortas de variables se rompan así:
+    const candidates = [
+      "VA",
+      "VF",
+      "CF",
+      "PV",
+      "FV",
+      "R",
+      "C",
+      "i",
+      "n",
+      "r",
+      "t",
+      "x",
+      "y",
+      "P",
+      "F",
+      "V",
+      "M",
+      "N",
+      "A",
+    ];
+
+    for (const variable of candidates) {
+      if (compact.length <= variable.length) continue;
+      if (compact.length % variable.length !== 0) continue;
+
+      const times = compact.length / variable.length;
+      if (times < 2) continue;
+
+      const repeated = variable.repeat(times);
+
+      if (compact.toLowerCase() === repeated.toLowerCase()) {
+        return compact.slice(0, variable.length);
+      }
+    }
+
+    return String(rawLabel ?? "").trim();
+  };
+
+  s = s.replace(
+    /^(\s*[-*]\s*)((?:\$?(?:VA|VF|CF|PV|FV|[A-Za-z])\$?\s*){2,})(?=\s*=)/gim,
+    (_match, prefix, rawLabel) =>
+      `${prefix}${collapseRepeatedVariableLabel(rawLabel)}`
+  );
+
+  s = s.replace(
+    /^(\s*)((?:\$?(?:VA|VF|CF|PV|FV|[A-Za-z])\$?\s*){2,})(?=\s*=)/gim,
+    (_match, prefix, rawLabel) =>
+      `${prefix}${collapseRepeatedVariableLabel(rawLabel)}`
+  );
+
+  // Evita que definiciones cortas de variables se rompan así:
   // - i =
   //   tipo de interés
   //
@@ -1691,7 +1743,15 @@ function normalizeMathMarkdown(text: string) {
     "$1"
   );
 
-  // \[ ... \]  -> $$ ... $$
+  // Lo mismo si viene sin viñeta:
+  // i =
+  // tipo de interés
+  s = s.replace(
+    /^(\s*(?:\$[A-Za-z]{1,4}\$|[A-Za-z]{1,4})\s*=\s*)\n+\s+/gm,
+    "$1"
+  );
+
+  // \[ ... \] -> $$ ... $$
   s = s.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_match, expr) => {
     return `\n$$\n${String(expr).trim()}\n$$\n`;
   });
@@ -1706,7 +1766,7 @@ function normalizeMathMarkdown(text: string) {
     return `$$${String(expr).trim()}$$`;
   });
 
-  // compactar saltos excesivos
+  // Compactar saltos excesivos
   s = s.replace(/\n{3,}/g, "\n\n");
 
   return s.trim();
