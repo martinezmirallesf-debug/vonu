@@ -1387,8 +1387,36 @@ function Fraction({ a, b }: { a: string; b: string }) {
   );
 }
 
+function normalizeRepeatedVariableText(text: string) {
+  let s = String(text ?? "");
+
+  // Variables de varias letras que a veces llegan repetidas:
+  // VFVFVFVF -> VF
+  // VPVPVPVP -> VP
+  // VAVAVA -> VA
+  // PVPVPV -> PV
+  const multiLetterVariables = ["VA", "VF", "VP", "PV", "CF", "FV"];
+
+  for (const variable of multiLetterVariables) {
+    const re = new RegExp(`\\b(?:${variable}){2,}\\b`, "gi");
+
+    s = s.replace(re, (match) => {
+      return match.slice(0, variable.length);
+    });
+  }
+
+  // Variables de una sola letra repetidas:
+  // iii -> i
+  // nnn -> n
+  // CCC -> C
+  // RRR -> R
+  s = s.replace(/\b([A-Za-z])\1{1,}\b/g, "$1");
+
+  return s;
+}
+
 function renderTextWithFractions(text: string) {
-  const s = String(text ?? "");
+  const s = normalizeRepeatedVariableText(String(text ?? ""));
   if (!s) return s;
 
   // ✅ SOLO convierte fracciones matemáticas reales:
@@ -1682,11 +1710,12 @@ function normalizeMathMarkdown(text: string) {
     if (!compact) return String(rawLabel ?? "").trim();
 
     const candidates = [
-      "VA",
-      "VF",
-      "CF",
-      "PV",
-      "FV",
+  "VA",
+  "VF",
+  "VP",
+  "CF",
+  "PV",
+  "FV",
       "R",
       "C",
       "i",
@@ -1721,13 +1750,13 @@ function normalizeMathMarkdown(text: string) {
   };
 
   s = s.replace(
-    /^(\s*[-*]\s*)((?:\$?(?:VA|VF|CF|PV|FV|[A-Za-z])\$?\s*){2,})(?=\s*=)/gim,
+    /^(\s*[-*]\s*)((?:\$?(?:VA|VF|VP|CF|PV|FV|[A-Za-z])\$?\s*){2,})(?=\s*=)/gim,
     (_match, prefix, rawLabel) =>
       `${prefix}${collapseRepeatedVariableLabel(rawLabel)}`
   );
 
   s = s.replace(
-    /^(\s*)((?:\$?(?:VA|VF|CF|PV|FV|[A-Za-z])\$?\s*){2,})(?=\s*=)/gim,
+    /^(\s*)((?:\$?(?:VA|VF|VP|CF|PV|FV|[A-Za-z])\$?\s*){2,})(?=\s*=)/gim,
     (_match, prefix, rawLabel) =>
       `${prefix}${collapseRepeatedVariableLabel(rawLabel)}`
   );
