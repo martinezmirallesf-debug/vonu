@@ -1685,6 +1685,38 @@ function normalizeMathMarkdown(text: string) {
   // Normalizar saltos
   s = s.replace(/\r\n/g, "\n");
 
+    // Corrige fórmulas trigonométricas que llegan como LaTeX suelto en viñetas:
+  //
+  // - \cos(\theta) =
+  //   \dfrac{...}{...}
+  //
+  // pasa a:
+  //
+  // $$
+  // \cos(\theta) = \dfrac{...}{...}
+  // $$
+  const trigFunctions = "sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan";
+
+  const bareTrigTwoLineRegex = new RegExp(
+    `^\\s*(?:[-*]|[•●])\\s*(\\\\(?:${trigFunctions})[^\\n]*?=\\s*)\\n+\\s*(\\\\(?:dfrac|frac)\\{[^\\n]+\\}\\{[^\\n]+\\})\\s*$`,
+    "gim"
+  );
+
+  s = s.replace(bareTrigTwoLineRegex, (_match, left, right) => {
+    return `\n$$\n${String(left).trim()}${String(right).trim()}\n$$\n`;
+  });
+
+  // También corrige si viene todo en una sola línea:
+  // - \cos(\theta) = \dfrac{...}{...}
+  const bareTrigOneLineRegex = new RegExp(
+    `^\\s*(?:[-*]|[•●])\\s*(\\\\(?:${trigFunctions})[^\\n]*?=\\s*\\\\(?:dfrac|frac)\\{[^\\n]+\\}\\{[^\\n]+\\})\\s*$`,
+    "gim"
+  );
+
+  s = s.replace(bareTrigOneLineRegex, (_match, formula) => {
+    return `\n$$\n${String(formula).trim()}\n$$\n`;
+  });
+
   // Convierte etiquetas matemáticas simples a texto legible.
   // Ejemplos:
   // VA -> VA
@@ -1941,6 +1973,9 @@ function normalizeMathMarkdown(text: string) {
 
 function normalizeBulletMarkdown(text: string) {
   let s = String(text ?? "");
+
+    // Elimina viñetas vacías que a veces aparecen cuando una fórmula se parte mal.
+  s = s.replace(/^\s*(?:[•●]|[-*])\s*$/gm, "");
 
   // Convierte viñetas tipo "• texto" o "● texto" a Markdown real.
   s = s.replace(/^\s*[•●]\s+/gm, "- ");
