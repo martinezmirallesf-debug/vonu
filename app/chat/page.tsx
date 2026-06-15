@@ -1685,37 +1685,57 @@ function normalizeMathMarkdown(text: string) {
   // Normalizar saltos
   s = s.replace(/\r\n/g, "\n");
 
+  // En listas de definiciones tipo:
+  // • \( VA \) = valor actual
+  // convertimos a:
+  // • **VA** = valor actual
+  //
+  // Así evitamos usar KaTeX para etiquetas simples en "Donde:",
+  // que es justo donde aparecían VAVAVA, VFVFVF, iii, nnn...
+  s = s.replace(
+    /^(\s*(?:[-*]|[•●])\s*)\\\(\s*([A-Za-z]{1,4}[0-9n]?)\s*\\\)\s*=/gm,
+    "$1**$2** ="
+  );
+
+  s = s.replace(
+    /^(\s*(?:[-*]|[•●])\s*)\$([A-Za-z]{1,4}[0-9n]?)\$\s*=/gm,
+    "$1**$2** ="
+  );
+
   // Evita duplicados cuando el modelo mezcla inline math + texto:
   // $C$C =  -> $C$ =
   // $i$i =  -> $i$ =
   // $VA$VA = -> $VA$ =
-  s = s.replace(/\$([A-Za-z]{1,4})\$\s*\1(?=\s*=)/g, (_match, variable) => {
+  s = s.replace(/\$([A-Za-z]{1,4}[0-9n]?)\$\s*\1(?=\s*=)/g, (_match, variable) => {
     return `$${variable}$`;
   });
 
   // Corrige duplicados textuales en definiciones de variables:
   // - VAVAVA = -> - VA =
   // - VFVFVF = -> - VF =
+  // - VPVPVPVP = -> - VP =
   // - RRR = -> - R =
   // - CCC = -> - C =
   // - iii = -> - i =
   // - nnn = -> - n =
-  // También cubre casos tipo $R$R = o $i$i =
   const collapseRepeatedVariableLabel = (rawLabel: string) => {
     const compact = String(rawLabel ?? "")
       .replace(/\$/g, "")
+      .replace(/\*/g, "")
       .replace(/\s+/g, "")
       .trim();
 
     if (!compact) return String(rawLabel ?? "").trim();
 
     const candidates = [
-  "VA",
-  "VF",
-  "VP",
-  "CF",
-  "PV",
-  "FV",
+      "VA",
+      "VF",
+      "VP",
+      "PV",
+      "CF",
+      "FV",
+      "C0",
+      "Cn",
       "R",
       "C",
       "i",
@@ -1750,13 +1770,13 @@ function normalizeMathMarkdown(text: string) {
   };
 
   s = s.replace(
-    /^(\s*[-*]\s*)((?:\$?(?:VA|VF|VP|CF|PV|FV|[A-Za-z])\$?\s*){2,})(?=\s*=)/gim,
+    /^(\s*[-*]\s*)((?:\$?(?:VA|VF|VP|PV|CF|FV|C0|Cn|[A-Za-z])\$?\s*){2,})(?=\s*=)/gim,
     (_match, prefix, rawLabel) =>
       `${prefix}${collapseRepeatedVariableLabel(rawLabel)}`
   );
 
   s = s.replace(
-    /^(\s*)((?:\$?(?:VA|VF|VP|CF|PV|FV|[A-Za-z])\$?\s*){2,})(?=\s*=)/gim,
+    /^(\s*)((?:\$?(?:VA|VF|VP|PV|CF|FV|C0|Cn|[A-Za-z])\$?\s*){2,})(?=\s*=)/gim,
     (_match, prefix, rawLabel) =>
       `${prefix}${collapseRepeatedVariableLabel(rawLabel)}`
   );
@@ -1768,7 +1788,7 @@ function normalizeMathMarkdown(text: string) {
   // y las deja como:
   // - i = tipo de interés
   s = s.replace(
-    /^(\s*[-*]\s*(?:\$[A-Za-z]{1,4}\$|[A-Za-z]{1,4})\s*=\s*)\n+\s+/gm,
+    /^(\s*(?:[-*]|[•●])\s*(?:\*\*[A-Za-z]{1,4}[0-9n]?\*\*|\$[A-Za-z]{1,4}[0-9n]?\$|[A-Za-z]{1,4}[0-9n]?)\s*=\s*)\n+\s+/gm,
     "$1"
   );
 
@@ -1776,7 +1796,7 @@ function normalizeMathMarkdown(text: string) {
   // i =
   // tipo de interés
   s = s.replace(
-    /^(\s*(?:\$[A-Za-z]{1,4}\$|[A-Za-z]{1,4})\s*=\s*)\n+\s+/gm,
+    /^(\s*(?:\*\*[A-Za-z]{1,4}[0-9n]?\*\*|\$[A-Za-z]{1,4}[0-9n]?\$|[A-Za-z]{1,4}[0-9n]?)\s*=\s*)\n+\s+/gm,
     "$1"
   );
 
