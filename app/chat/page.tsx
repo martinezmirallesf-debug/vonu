@@ -1685,21 +1685,130 @@ function normalizeMathMarkdown(text: string) {
   // Normalizar saltos
   s = s.replace(/\r\n/g, "\n");
 
-  // En listas de definiciones tipo:
-  // • \( VA \) = valor actual
-  // convertimos a:
-  // • **VA** = valor actual
+  // Convierte etiquetas matemáticas simples a texto legible.
+  // Ejemplos:
+  // VA -> VA
+  // \vec{a} -> Vector a
+  // \theta -> θ
+  // C_0 -> C_0
+  // a_x -> a_x
   //
-  // Así evitamos usar KaTeX para etiquetas simples en "Donde:",
-  // que es justo donde aparecían VAVAVA, VFVFVF, iii, nnn...
+  // Si detecta una fórmula real, devuelve null y NO la toca.
+  const simpleMathLabelToText = (rawLabel: string) => {
+    let label = String(rawLabel ?? "").trim();
+
+    if (!label || label.length > 60) return null;
+
+    // Si parece una fórmula real, no convertir.
+    const looksLikeRealFormula =
+      label.includes("=") ||
+      label.includes("+") ||
+      label.includes("-") ||
+      label.includes("*") ||
+      label.includes("/") ||
+      label.includes("\\frac") ||
+      label.includes("\\dfrac") ||
+      label.includes("\\sum") ||
+      label.includes("\\int") ||
+      label.includes("\\sqrt") ||
+      label.includes("\\lim");
+
+    if (looksLikeRealFormula) return null;
+
+    // Vectores
+    label = label.replace(/\\vec\s*\{\s*([A-Za-z])\s*\}/g, "Vector $1");
+    label = label.replace(/\\overrightarrow\s*\{\s*([A-Za-z])\s*\}/g, "Vector $1");
+    label = label.replace(/\\mathbf\s*\{\s*([A-Za-z])\s*\}/g, "Vector $1");
+
+    // Subíndices comunes: C_{0}, C_0, a_x...
+    label = label.replace(/([A-Za-z])_\{?([A-Za-z0-9]+)\}?/g, "$1_$2");
+
+    // Letras griegas más habituales en mates/física/estadística
+    const greek: Record<string, string> = {
+      alpha: "α",
+      beta: "β",
+      gamma: "γ",
+      delta: "δ",
+      Delta: "Δ",
+      epsilon: "ε",
+      theta: "θ",
+      lambda: "λ",
+      mu: "μ",
+      pi: "π",
+      rho: "ρ",
+      sigma: "σ",
+      Sigma: "Σ",
+      tau: "τ",
+      phi: "φ",
+      omega: "ω",
+      Omega: "Ω",
+    };
+
+    for (const [name, symbol] of Object.entries(greek)) {
+      label = label.replace(new RegExp(`\\\\${name}\\b`, "g"), symbol);
+    }
+
+    label = label
+      .replace(/\\,/g, " ")
+      .replace(/[{}]/g, "")
+      .replace(/\\/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (!label || label.length > 40) return null;
+
+    return label;
+  };
+
+  // Caso 1:
+  // • \( \vec{a} = (3, 4) \)
+  // -> • **Vector a** = (3, 4)
   s = s.replace(
-    /^(\s*(?:[-*]|[•●])\s*)\\\(\s*([A-Za-z]{1,4}[0-9n]?)\s*\\\)\s*=/gm,
-    "$1**$2** ="
+    /^(\s*(?:[-*]|[•●])\s*)\\\(\s*([^=\n]{1,60})\s*=\s*([^\n]+?)\s*\\\)\s*$/gm,
+    (_match, prefix, rawLabel, value) => {
+      const label = simpleMathLabelToText(rawLabel);
+      if (!label) return _match;
+      return `${prefix}**${label}** = ${String(value).trim()}`;
+    }
   );
 
+  // Caso 2:
+  // • $ \vec{a} = (3, 4) $
+  // -> • **Vector a** = (3, 4)
   s = s.replace(
-    /^(\s*(?:[-*]|[•●])\s*)\$([A-Za-z]{1,4}[0-9n]?)\$\s*=/gm,
-    "$1**$2** ="
+    /^(\s*(?:[-*]|[•●])\s*)\$\s*([^=$\n]{1,60})\s*=\s*([^$\n]+?)\s*\$\s*$/gm,
+    (_match, prefix, rawLabel, value) => {
+      const label = simpleMathLabelToText(rawLabel);
+      if (!label) return _match;
+      return `${prefix}**${label}** = ${String(value).trim()}`;
+    }
+  );
+
+  // Caso 3:
+  // • \( VA \) = valor actual
+  // -> • **VA** = valor actual
+  //
+  // • \( \theta \) = ángulo
+  // -> • **θ** = ángulo
+  s = s.replace(
+    /^(\s*(?:[-*]|[•●])\s*)\\\(\s*([^\n()]{1,60})\s*\\\)\s*=/gm,
+    (_match, prefix, rawLabel) => {
+      const label = simpleMathLabelToText(rawLabel);
+      if (!label) return _match;
+      return `${prefix}**${label}** =`;
+    }
+  );
+
+  // Caso 4:
+  // • $VA$ = valor actual
+  // -> • **VA** = valor actual
+  s = s.replace(
+    /^(\s*(?:[-*]|[•●])\s*)\$\s*([^$\n]{1,60})\s*\$\s*=/gm,
+    (_match, prefix, rawLabel) => {
+      const label = simpleMathLabelToText(rawLabel);
+      if (!label) return _match;
+      return `${prefix}**${label}** =`;
+    }
   );
 
   // Evita duplicados cuando el modelo mezcla inline math + texto:
@@ -1710,14 +1819,12 @@ function normalizeMathMarkdown(text: string) {
     return `$${variable}$`;
   });
 
-  // Corrige duplicados textuales en definiciones de variables:
-  // - VAVAVA = -> - VA =
-  // - VFVFVF = -> - VF =
-  // - VPVPVPVP = -> - VP =
-  // - RRR = -> - R =
-  // - CCC = -> - C =
-  // - iii = -> - i =
-  // - nnn = -> - n =
+  // Corrige duplicados textuales:
+  // VAVAVA -> VA
+  // VFVFVF -> VF
+  // VPVPVP -> VP
+  // iii -> i
+  // nnn -> n
   const collapseRepeatedVariableLabel = (rawLabel: string) => {
     const compact = String(rawLabel ?? "")
       .replace(/\$/g, "")
@@ -1734,6 +1841,9 @@ function normalizeMathMarkdown(text: string) {
       "PV",
       "CF",
       "FV",
+      "VAN",
+      "TIR",
+      "WACC",
       "C0",
       "Cn",
       "R",
@@ -1744,12 +1854,20 @@ function normalizeMathMarkdown(text: string) {
       "t",
       "x",
       "y",
+      "z",
       "P",
       "F",
       "V",
       "M",
       "N",
       "A",
+      "θ",
+      "α",
+      "β",
+      "γ",
+      "μ",
+      "σ",
+      "λ",
     ];
 
     for (const variable of candidates) {
@@ -1770,13 +1888,13 @@ function normalizeMathMarkdown(text: string) {
   };
 
   s = s.replace(
-    /^(\s*[-*]\s*)((?:\$?(?:VA|VF|VP|PV|CF|FV|C0|Cn|[A-Za-z])\$?\s*){2,})(?=\s*=)/gim,
+    /^(\s*[-*]\s*)((?:\$?(?:VA|VF|VP|PV|CF|FV|VAN|TIR|WACC|C0|Cn|[A-Za-z])\$?\s*){2,})(?=\s*=)/gim,
     (_match, prefix, rawLabel) =>
       `${prefix}${collapseRepeatedVariableLabel(rawLabel)}`
   );
 
   s = s.replace(
-    /^(\s*)((?:\$?(?:VA|VF|VP|PV|CF|FV|C0|Cn|[A-Za-z])\$?\s*){2,})(?=\s*=)/gim,
+    /^(\s*)((?:\$?(?:VA|VF|VP|PV|CF|FV|VAN|TIR|WACC|C0|Cn|[A-Za-z])\$?\s*){2,})(?=\s*=)/gim,
     (_match, prefix, rawLabel) =>
       `${prefix}${collapseRepeatedVariableLabel(rawLabel)}`
   );
@@ -1788,7 +1906,7 @@ function normalizeMathMarkdown(text: string) {
   // y las deja como:
   // - i = tipo de interés
   s = s.replace(
-    /^(\s*(?:[-*]|[•●])\s*(?:\*\*[A-Za-z]{1,4}[0-9n]?\*\*|\$[A-Za-z]{1,4}[0-9n]?\$|[A-Za-z]{1,4}[0-9n]?)\s*=\s*)\n+\s+/gm,
+    /^(\s*(?:[-*]|[•●])\s*(?:\*\*[^*\n]{1,40}\*\*|\$[A-Za-z]{1,8}\$|[A-Za-z]{1,8})\s*=\s*)\n+\s+/gm,
     "$1"
   );
 
@@ -1796,7 +1914,7 @@ function normalizeMathMarkdown(text: string) {
   // i =
   // tipo de interés
   s = s.replace(
-    /^(\s*(?:\*\*[A-Za-z]{1,4}[0-9n]?\*\*|\$[A-Za-z]{1,4}[0-9n]?\$|[A-Za-z]{1,4}[0-9n]?)\s*=\s*)\n+\s+/gm,
+    /^(\s*(?:\*\*[^*\n]{1,40}\*\*|\$[A-Za-z]{1,8}\$|[A-Za-z]{1,8})\s*=\s*)\n+\s+/gm,
     "$1"
   );
 
