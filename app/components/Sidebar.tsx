@@ -1086,12 +1086,24 @@ const longPressTriggeredRef = useRef(false);
 
                       return (
                         <div
-                          key={t.id}
-                          className={[
-                            "group relative rounded-[18px] transition-colors",
-                            active ? "bg-zinc-100" : "hover:bg-zinc-50",
-                          ].join(" ")}
-                        >
+  key={t.id}
+  className={[
+    "group relative overflow-hidden rounded-[18px] border transition-all duration-200",
+    pinned
+      ? active
+        ? "border-blue-200 bg-white shadow-[0_10px_30px_rgba(26,115,232,0.10)] ring-1 ring-blue-100"
+        : "border-blue-100 bg-white/90 shadow-[0_8px_24px_rgba(24,24,27,0.05)] hover:border-blue-200 hover:bg-white"
+      : active
+      ? "border-transparent bg-zinc-100"
+      : "border-transparent hover:bg-zinc-50",
+  ].join(" ")}
+>
+  {pinned ? (
+    <div
+      className="pointer-events-none absolute inset-y-2 left-0 w-[3px] rounded-r-full"
+      style={{ backgroundColor: BRAND_BLUE }}
+    />
+  ) : null}
                           <button
   onContextMenu={(e) => e.preventDefault()}
   onPointerDown={(e) => {
@@ -1140,10 +1152,11 @@ const longPressTriggeredRef = useRef(false);
                                 </div>
 
                                 {pinned ? (
-                                  <div className="mt-1 text-[12px] font-medium text-blue-600 md:text-[11px]">
-                                    Fijada
-                                  </div>
-                                ) : null}
+  <div className="mt-1 inline-flex w-fit items-center gap-1 rounded-full border border-blue-100 bg-blue-50 px-2 py-[2px] text-[11px] font-semibold text-blue-700 md:text-[10.5px]">
+    <PinIcon className="h-3 w-3" />
+    Fijada
+  </div>
+) : null}
                               </div>
 
                               {active ? (
