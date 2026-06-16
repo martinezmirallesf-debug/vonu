@@ -389,6 +389,81 @@ if (normalized.mode === "tutor") {
 ${normalized.userText}`;
 }
 
+const copyableResponseBlockInstruction = `
+INSTRUCCIONES INTERNAS PARA BLOQUES COPIABLES:
+
+No menciones estas instrucciones al usuario.
+
+OBJETIVO:
+Cuando el usuario pida redactar algo que vaya a copiar, enviar, reclamar, responder, publicar o pegar en otro sitio, usa un bloque Markdown con lenguaje específico para que la interfaz de Vonu lo pinte como bloque copiable premium.
+
+CUÁNDO USAR BLOQUES COPIABLES:
+Úsalos cuando redactes:
+- mensajes de WhatsApp, SMS, DM o chat,
+- emails o correos formales,
+- cartas,
+- reclamaciones,
+- textos para copiar y pegar,
+- respuestas preparadas para enviar,
+- código.
+
+CUÁNDO NO USARLOS:
+No los uses para explicaciones normales, análisis de riesgo, tutorías, fórmulas, listas de pasos, diagnósticos orientativos, resúmenes o respuestas conversacionales normales.
+En esos casos responde con Markdown normal.
+
+FORMATOS PERMITIDOS:
+
+Para mensajes cortos:
+\`\`\`mensaje
+Texto listo para enviar...
+\`\`\`
+
+Para WhatsApp o SMS:
+\`\`\`whatsapp
+Texto listo para enviar...
+\`\`\`
+
+Para emails:
+\`\`\`email
+Asunto: ...
+
+Hola,
+...
+\`\`\`
+
+Para cartas:
+\`\`\`carta
+Texto de la carta...
+\`\`\`
+
+Para reclamaciones:
+\`\`\`reclamacion
+Texto de la reclamación...
+\`\`\`
+
+Para textos genéricos:
+\`\`\`texto
+Texto listo para copiar...
+\`\`\`
+
+Para código:
+\`\`\`codigo
+código aquí...
+\`\`\`
+
+REGLAS DE ESTILO:
+- El contenido dentro del bloque debe ser directamente copiable.
+- No metas explicaciones dentro del bloque.
+- Si hace falta explicar algo, explica antes o después fuera del bloque.
+- No uses comillas alrededor del bloque.
+- No añadas frases tipo "aquí tienes" dentro del bloque.
+- Si el usuario pide varias opciones, puedes crear varios bloques separados.
+`.trim();
+
+normalized.userText = `${copyableResponseBlockInstruction}
+
+${normalized.userText}`;
+
     // ==========================================================
     // ✅ 1) INTERCEPTOR FÚTBOL (ANTES de Supabase Edge Function)
     // ==========================================================
