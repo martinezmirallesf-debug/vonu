@@ -13,10 +13,11 @@ type SidebarProps = {
   setMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   SIDEBAR_TOP: number;
   sortedThreads: Thread[];
-  activeThreadId: string | null;
+    activeThreadId: string | null;
+  recentlyRenamedThreadId?: string | null;
   activateThread: (id: string) => void;
   createThreadAndActivate: () => void;
-    openRename: () => void;
+  openRename: (threadId?: string) => void;
   deleteActiveThread: () => void;
   deleteThreadById?: (threadId: string) => void;
   mounted: boolean;
@@ -217,8 +218,9 @@ export default function Sidebar({
   menuOpen,
   setMenuOpen,
   SIDEBAR_TOP,
-  sortedThreads,
+    sortedThreads,
   activeThreadId,
+  recentlyRenamedThreadId,
   activateThread,
   createThreadAndActivate,
   openRename,
@@ -269,8 +271,13 @@ cancelSubscriptionFromHere,
   };
 }, [menuOpen, accountScreen]);
   const [pinnedIds, setPinnedIds] = useState<string[]>([]);
-  const longPressTimerRef = useRef<number | null>(null);
-  const longPressTriggeredRef = useRef(false);
+const [animatedRenameTitle, setAnimatedRenameTitle] = useState<{
+  id: string;
+  text: string;
+} | null>(null);
+
+const longPressTimerRef = useRef<number | null>(null);
+const longPressTriggeredRef = useRef(false);
 
   useEffect(() => {
     try {
@@ -283,11 +290,40 @@ cancelSubscriptionFromHere,
     } catch {}
   }, []);
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify(pinnedIds));
-    } catch {}
-  }, [pinnedIds]);
+    useEffect(() => {
+    if (!recentlyRenamedThreadId) {
+      setAnimatedRenameTitle(null);
+      return;
+    }
+
+    const thread = sortedThreads.find((t) => t.id === recentlyRenamedThreadId);
+    const finalTitle = thread?.title?.trim();
+
+    if (!finalTitle) {
+      setAnimatedRenameTitle(null);
+      return;
+    }
+
+    let index = 0;
+    setAnimatedRenameTitle({ id: recentlyRenamedThreadId, text: "" });
+
+    const timer = window.setInterval(() => {
+      index += 1;
+
+      setAnimatedRenameTitle({
+        id: recentlyRenamedThreadId,
+        text: finalTitle.slice(0, index),
+      });
+
+      if (index >= finalTitle.length) {
+        window.clearInterval(timer);
+      }
+    }, 24);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [recentlyRenamedThreadId, sortedThreads]);
 
   useEffect(() => {
     if (!menuOpen) {
@@ -344,16 +380,17 @@ cancelSubscriptionFromHere,
   }
 
   function handleRenameFromMenu() {
-    if (selectedThreadId && selectedThreadId !== activeThreadId) {
-      activateThread(selectedThreadId);
-      setTimeout(() => openRename(), 30);
-    } else {
-      openRename();
-    }
+  if (!selectedThreadId) return;
 
-    closeThreadActions();
-    setMenuOpen(false);
-  }
+  const idToRename = selectedThreadId;
+
+  closeThreadActions();
+  openRename(idToRename);
+
+  // Importante:
+  // No activamos la conversación y no cerramos el historial.
+  // El usuario se queda en el menú viendo sus chats.
+}
 
   function handleDeleteFromMenu() {
   if (!selectedThreadId) return;
@@ -1090,7 +1127,16 @@ cancelSubscriptionFromHere,
                                       : "font-semibold text-zinc-900 md:font-medium",
                                   ].join(" ")}
                                 >
-                                  {t.title}
+                                  {animatedRenameTitle?.id === t.id ? (
+  <span className="inline-flex min-w-0 max-w-full items-center">
+    <span className="truncate">
+      {animatedRenameTitle.text || " "}
+    </span>
+    <span className="ml-[2px] inline-block h-[1em] w-[2px] shrink-0 rounded-full bg-zinc-900 animate-pulse" />
+  </span>
+) : (
+  t.title
+)}
                                 </div>
 
                                 {pinned ? (

@@ -4239,9 +4239,11 @@ const [phoneDraft, setPhoneDraft] = useState("");
   }
 
 
-  const [renameOpen, setRenameOpen] = useState(false);
+ const [renameOpen, setRenameOpen] = useState(false);
 const [renameValue, setRenameValue] = useState("");
 const [renameSavedPulse, setRenameSavedPulse] = useState(false);
+const [renameThreadId, setRenameThreadId] = useState<string | null>(null);
+const [recentlyRenamedThreadId, setRecentlyRenamedThreadId] = useState<string | null>(null);
 
   const [inputExpanded, setInputExpanded] = useState(false);
 
@@ -5956,37 +5958,45 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
   if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 }
 
-  function openRename() {
-  if (!activeThread) return;
+  function openRename(threadId?: string) {
+  const targetThread =
+    threadId
+      ? threadsRef.current.find((t) => t.id === threadId)
+      : activeThread;
+
+  if (!targetThread) return;
 
   setRenameSavedPulse(false);
-  setRenameValue(activeThread.title);
+  setRenameThreadId(targetThread.id);
+  setRenameValue(targetThread.title);
   setRenameOpen(true);
-
-  // Importante:
-  // No cerramos el menú/historial al renombrar.
-  // Así, al terminar, el usuario sigue viendo la pantalla de historial.
 }
 
   function confirmRename() {
-  if (!activeThread || renameSavedPulse) return;
+  const targetThreadId = renameThreadId ?? activeThread?.id;
+  if (!targetThreadId || renameSavedPulse) return;
 
   const name = renameValue.trim() || "Consulta";
 
   setThreads((prev) =>
     prev.map((t) =>
-      t.id === activeThread.id
+      t.id === targetThreadId
         ? { ...t, title: name, updatedAt: Date.now() }
         : t
     )
   );
 
-  setRenameSavedPulse(true);
+  setRecentlyRenamedThreadId(targetThreadId);
 
   window.setTimeout(() => {
-    setRenameOpen(false);
-    setRenameSavedPulse(false);
-  }, 420);
+    setRecentlyRenamedThreadId((current) =>
+      current === targetThreadId ? null : current
+    );
+  }, 1600);
+
+  setRenameOpen(false);
+  setRenameSavedPulse(false);
+  setRenameThreadId(null);
 }
 
   function deleteActiveThread() {
@@ -8390,6 +8400,7 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
   sortedThreads={sortedThreads}
   activeThreadId={activeThreadId}
   activateThread={activateThread}
+    recentlyRenamedThreadId={recentlyRenamedThreadId}
   createThreadAndActivate={createThreadAndActivate}
   openRename={openRename}
   deleteActiveThread={deleteActiveThread}
