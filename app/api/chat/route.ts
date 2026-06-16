@@ -468,11 +468,22 @@ ${normalized.userText}`;
     // ✅ 1) INTERCEPTOR FÚTBOL (ANTES de Supabase Edge Function)
     // ==========================================================
     const userText = pickUserTextFromBody(body);
-    const isTutor = normalized.mode === "tutor";
-    const fraudOrPaymentSafetyIntent = looksLikeFraudOrPaymentSafetyIntent(userText);
+const isTutor = normalized.mode === "tutor";
+const fraudOrPaymentSafetyIntent = looksLikeFraudOrPaymentSafetyIntent(userText);
+
+const financeOrAcademicIntent =
+  /\b(valor actual|valor futuro|van|tir|wacc|mof|ade|finanzas?|matem[aá]ticas?|contabilidad|flujo|flujos|flujo de caja|flujos de caja|descuento|tasa de descuento|renta|anualidad|pr[eé]stamo|amortizaci[oó]n|inter[eé]s compuesto|capitalizaci[oó]n|universidad|carrera|asignatura|ejercicio|problema)\b/i.test(
+    userText
+  );
 
     // Solo si parece fútbol, no hay imagen, y no es tutor:
-    if (!fraudOrPaymentSafetyIntent && !isTutor && !normalized.imageBase64 && looksLikeFootballIntent(userText)) {
+    if (
+  !fraudOrPaymentSafetyIntent &&
+  !financeOrAcademicIntent &&
+  !isTutor &&
+  !normalized.imageBase64 &&
+  looksLikeFootballIntent(userText)
+) {
   // ✅ Si fútbol está desactivado: detectar pero NO analizar (respuesta bonita y 200 OK)
   if (FOOTBALL_DISABLED) {
     return json(

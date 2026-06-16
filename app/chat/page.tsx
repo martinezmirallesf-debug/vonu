@@ -7486,15 +7486,15 @@ return (
 }
 
 .vonu-markdown h2 {
-  margin: 1.35rem 0 0.55rem !important;
-  font-size: 1.22em !important;
-  line-height: 1.25 !important;
+  margin: 1.15rem 0 0.5rem !important;
+  font-size: 1.08em !important;
+  line-height: 1.32 !important;
 }
 
 .vonu-markdown h3 {
-  margin: 1.15rem 0 0.45rem !important;
-  font-size: 1.08em !important;
-  line-height: 1.3 !important;
+  margin: 1rem 0 0.42rem !important;
+  font-size: 1.02em !important;
+  line-height: 1.34 !important;
 }
 
 .vonu-markdown .vonu-md-list {
@@ -8714,7 +8714,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                   )}
 
                     {(m.text || m.streaming) && (
-                      <div className="vonu-markdown w-full max-w-full min-w-0 overflow-x-hidden overflow-y-visible break-words font-sans">
+                      <div className="vonu-markdown w-full max-w-full min-w-0 overflow-x-hidden overflow-y-visible break-words [overflow-wrap:anywhere] font-sans text-[18px] md:text-[18px] leading-[1.72] md:leading-[1.72]">
                         <span className="whitespace-pre-wrap">{mdText}</span>
                       </div>
                     )}
