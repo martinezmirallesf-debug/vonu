@@ -1415,6 +1415,72 @@ function normalizeRepeatedVariableText(text: string) {
   return s;
 }
 
+function getVonuCopyBlockLabel(kind: string) {
+  const k = String(kind ?? "").toLowerCase();
+
+  if (k === "email" || k === "correo") return "Email para copiar";
+  if (k === "mensaje" || k === "whatsapp" || k === "sms") return "Mensaje para copiar";
+  if (k === "carta") return "Carta para copiar";
+  if (k === "reclamacion" || k === "reclamación") return "Reclamación para copiar";
+  if (k === "codigo" || k === "code") return "Código";
+  if (k === "texto") return "Texto para copiar";
+
+  return "Texto para copiar";
+}
+
+function VonuCopyBlock({ kind, text }: { kind: string; text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const label = getVonuCopyBlockLabel(kind);
+  const cleanText = String(text ?? "").replace(/\n+$/g, "");
+
+  async function copyBlock() {
+    try {
+      await navigator.clipboard.writeText(cleanText);
+      setCopied(true);
+
+      window.setTimeout(() => {
+        setCopied(false);
+      }, 1200);
+    } catch (err) {
+      console.error("No se pudo copiar el bloque:", err);
+    }
+  }
+
+  return (
+    <div className="not-prose my-4 w-full max-w-full overflow-hidden rounded-[22px] border border-zinc-200 bg-[#fbfaf7] shadow-[0_12px_34px_rgba(24,24,27,0.06)]">
+      <div className="flex items-center justify-between gap-3 border-b border-zinc-200/70 bg-white/55 px-4 py-2.5">
+        <div className="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+          {label}
+        </div>
+
+        <button
+          type="button"
+          onClick={copyBlock}
+          className={[
+            "shrink-0 rounded-full border px-3 py-1 text-[12px] font-semibold transition active:scale-95",
+            copied
+              ? "border-zinc-900 bg-zinc-900 text-white"
+              : "border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50",
+          ].join(" ")}
+        >
+          {copied ? "Copiado" : "Copiar"}
+        </button>
+      </div>
+
+      <pre
+        className="m-0 max-w-full overflow-x-auto whitespace-pre-wrap break-words px-4 py-3.5 text-[13px] leading-[1.72] text-zinc-950 md:text-[13.5px]"
+        style={{
+          fontFamily:
+            'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+        }}
+      >
+        {cleanText}
+      </pre>
+    </div>
+  );
+}
+
 function renderTextWithFractions(text: string) {
   const s = normalizeRepeatedVariableText(String(text ?? ""));
   if (!s) return s;
@@ -5148,14 +5214,47 @@ li({ children, ...props }: any) {
     );
   }
 
-    // ✅ code block normal: SOLO para modo chat real (esto sí puede ser monospace)
+        // ✅ Bloques especiales copiables:
+    // ```mensaje
+    // ...
+    // ```
+    //
+    // ```email
+    // ...
+    // ```
+    //
+    // ```texto
+    // ...
+    // ```
+    const languageMatch = /language-([a-zA-Z0-9_-]+)/.exec(String(className ?? ""));
+    const language = languageMatch?.[1]?.toLowerCase() ?? "";
+
+    const copyBlockLanguages = new Set([
+      "mensaje",
+      "whatsapp",
+      "sms",
+      "email",
+      "correo",
+      "texto",
+      "carta",
+      "reclamacion",
+      "reclamación",
+      "codigo",
+      "code",
+    ]);
+
+    if (copyBlockLanguages.has(language)) {
+      return <VonuCopyBlock kind={language} text={clean} />;
+    }
+
+    // ✅ code block normal
     return (
-  <pre className="max-w-full rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto whitespace-pre-wrap break-words">
-    <code className="text-[12.5px] whitespace-pre-wrap break-words" {...props}>
-      {clean}
-    </code>
-  </pre>
-);
+      <pre className="max-w-full rounded-xl bg-zinc-900 p-3 text-white overflow-x-auto whitespace-pre-wrap break-words">
+        <code className="text-[12.5px] whitespace-pre-wrap break-words" {...props}>
+          {clean}
+        </code>
+      </pre>
+    );
   },
 
   // ✅ Por si el Markdown mete <pre> directo (dependiendo del parser)
