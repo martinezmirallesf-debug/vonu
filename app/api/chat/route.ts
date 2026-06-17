@@ -380,6 +380,23 @@ codigo
 
 23. Evita tablas con fórmulas largas dentro. En móvil, prefiere listas paso a paso y bloques matemáticos debajo.
 
+24. No pongas fórmulas importantes dentro de viñetas o listas.
+Incorrecto:
+- VA = \dfrac{C}{(1+r)^t}
+
+Correcto:
+Primero usamos la fórmula:
+
+$$
+VA = \dfrac{C}{(1+r)^t}
+$$
+
+Después explica debajo qué significa cada variable en texto normal:
+- **VA** = valor actual
+- **C** = cantidad futura
+- **r** = tasa de descuento
+- **t** = periodo
+
 CONSULTA DEL USUARIO:
 `.trim();
 

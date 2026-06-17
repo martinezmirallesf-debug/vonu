@@ -1448,7 +1448,10 @@ function VonuCopyBlock({ kind, text }: { kind: string; text: string }) {
   }
 
   return (
-    <div className="not-prose my-4 w-full max-w-full overflow-hidden rounded-[22px] border border-zinc-200 bg-[#fbfaf7] shadow-[0_12px_34px_rgba(24,24,27,0.06)]">
+    <div
+  className="not-prose my-4 box-border w-full min-w-0 max-w-full overflow-hidden rounded-[22px] border border-zinc-200 bg-[#fbfaf7]"
+  style={{ boxShadow: "none" }}
+>
       <div className="flex items-center justify-between gap-3 border-b border-zinc-200/70 bg-white/55 px-4 py-2.5">
         <div className="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
           {label}
@@ -1469,7 +1472,7 @@ function VonuCopyBlock({ kind, text }: { kind: string; text: string }) {
       </div>
 
       <pre
-        className="m-0 max-w-full overflow-x-auto whitespace-pre-wrap break-words px-4 py-3.5 text-[13px] leading-[1.72] text-zinc-950 md:text-[13.5px]"
+  className="m-0 box-border w-full min-w-0 max-w-full overflow-x-hidden whitespace-pre-wrap break-words px-4 py-3.5 text-[13px] leading-[1.72] text-zinc-950 [overflow-wrap:anywhere] md:text-[13.5px]"
         style={{
           fontFamily:
             'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
@@ -5079,7 +5082,7 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
       ol({ children, ...props }: any) {
   return (
     <ol className="vonu-md-list vonu-md-ol" {...props}>
-      {renderChildrenWithFractions(children)}
+      {children}
     </ol>
   );
 },
@@ -5087,7 +5090,7 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
 ul({ children, ...props }: any) {
   return (
     <ul className="vonu-md-list vonu-md-ul" {...props}>
-      {renderChildrenWithFractions(children)}
+      {children}
     </ul>
   );
 },
@@ -5095,7 +5098,7 @@ ul({ children, ...props }: any) {
 li({ children, ...props }: any) {
   return (
     <li className="vonu-md-li" {...props}>
-      {renderChildrenWithFractions(children)}
+      {children}
     </li>
   );
 },
@@ -8714,7 +8717,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                   )}
 
                     {(m.text || m.streaming) && (
-                      <div className="vonu-markdown w-full max-w-full min-w-0 overflow-x-hidden overflow-y-visible break-words [overflow-wrap:anywhere] font-sans text-[18px] md:text-[18px] leading-[1.72] md:leading-[1.72]">
+                      <div className="vonu-markdown w-full max-w-full min-w-0 overflow-x-hidden overflow-y-visible break-words [overflow-wrap:anywhere] font-sans text-[17.5px] md:text-[18px] leading-[1.72] md:leading-[1.72]">
                         <span className="whitespace-pre-wrap">{mdText}</span>
                       </div>
                     )}
