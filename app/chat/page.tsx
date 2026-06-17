@@ -1449,7 +1449,7 @@ function VonuCopyBlock({ kind, text }: { kind: string; text: string }) {
 
   return (
     <div
-  className="not-prose my-4 box-border w-full min-w-0 max-w-full overflow-hidden rounded-[22px] border border-zinc-200 bg-[#fbfaf7]"
+  className="not-prose my-4 mx-px box-border w-[calc(100%-2px)] min-w-0 max-w-full overflow-hidden rounded-[22px] border border-transparent bg-[#fbfaf7] outline outline-1 -outline-offset-1 outline-zinc-200"
   style={{ boxShadow: "none" }}
 >
       <div className="flex items-center justify-between gap-3 border-b border-zinc-200/70 bg-white/55 px-4 py-2.5">
@@ -1512,8 +1512,26 @@ function renderTextWithFractions(text: string) {
 
     if (start > last) parts.push(s.slice(last, start));
 
-    const a = String(m[1] ?? "").trim();
+        const a = String(m[1] ?? "").trim();
     const b = String(m[2] ?? "").trim();
+
+    const before = start > 0 ? s[start - 1] : "";
+    const after = end < s.length ? s[end] : "";
+
+    // Evita romper números con separador de miles o decimal:
+    // 4.000/1,10
+    // 12.000/1,1664
+    // 10,5/2,3
+    //
+    // Antes estaba cogiendo "000/1" dentro de "4.000/1,10".
+    const isInsideDecimalOrThousandsNumber =
+      /[A-Za-z0-9.,]/.test(before) || /[A-Za-z0-9.,]/.test(after);
+
+    if (isInsideDecimalOrThousandsNumber) {
+      parts.push(s.slice(start, end));
+      last = end;
+      continue;
+    }
 
     const isPureNumericOrParen =
       (/^\d+$/.test(a) || /^\([^()\n]+\)$/.test(a)) &&
@@ -5107,7 +5125,7 @@ li({ children, ...props }: any) {
     h1({ children, ...props }: any) {
     return (
       <h1
-        className="mt-4 mb-2 text-[24px] md:text-[28px] leading-tight font-extrabold tracking-tight text-zinc-900"
+        className="mt-4 mb-2 text-[21px] md:text-[22px] leading-tight font-extrabold tracking-tight text-zinc-900"
         {...props}
       >
         {renderChildrenWithFractions(children)}
@@ -5118,7 +5136,7 @@ li({ children, ...props }: any) {
   h2({ children, ...props }: any) {
     return (
       <h2
-        className="mt-5 mb-2 text-[20px] md:text-[22px] leading-tight font-extrabold tracking-tight text-zinc-950"
+        className="mt-4 mb-2 text-[18.5px] md:text-[19px] leading-snug font-extrabold tracking-tight text-zinc-950"
         {...props}
       >
         {renderChildrenWithFractions(children)}
@@ -5129,7 +5147,7 @@ li({ children, ...props }: any) {
   h3({ children, ...props }: any) {
     return (
       <h3
-        className="mt-4 mb-2 text-[18px] md:text-[19px] leading-snug font-extrabold text-zinc-950"
+        className="mt-3 mb-2 text-[17.5px] md:text-[18px] leading-snug font-extrabold text-zinc-950"
         {...props}
       >
         {renderChildrenWithFractions(children)}

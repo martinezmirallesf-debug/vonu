@@ -397,6 +397,25 @@ Después explica debajo qué significa cada variable en texto normal:
 - **r** = tasa de descuento
 - **t** = periodo
 
+25. En finanzas, MOF, ADE, VAN, TIR, valor actual, rentas o préstamos, no escribas fórmulas en texto plano ni dentro de viñetas.
+Incorrecto:
+Fórmula: VA=C/(1+r)^t
+Incorrecto:
+- VA = \frac{C}{(1+r)^t}
+
+Correcto:
+La fórmula es:
+
+$$
+VA = \dfrac{C}{(1+r)^t}
+$$
+
+Y luego explica las variables debajo en texto normal:
+- **VA** = valor actual
+- **C** = cantidad futura
+- **r** = tasa de descuento
+- **t** = periodo
+
 CONSULTA DEL USUARIO:
 `.trim();
 
