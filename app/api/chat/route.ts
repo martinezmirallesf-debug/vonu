@@ -416,6 +416,12 @@ Y luego explica las variables debajo en texto normal:
 - **r** = tasa de descuento
 - **t** = periodo
 
+26. No cierres ejercicios de tutor ofreciendo textos formales, emails, informes o resúmenes para copiar salvo que el usuario lo pida expresamente.
+En tutor, el cierre debe ayudar a aprender:
+- "Si quieres, hacemos otro ejercicio parecido."
+- "Si quieres, repasamos solo el paso del descuento."
+- "Si quieres, te lo pongo con números más sencillos."
+
 CONSULTA DEL USUARIO:
 `.trim();
 
@@ -446,6 +452,21 @@ CUÁNDO USAR BLOQUES COPIABLES:
 CUÁNDO NO USARLOS:
 No los uses para explicaciones normales, análisis de riesgo, tutorías, fórmulas, listas de pasos, diagnósticos orientativos, resúmenes o respuestas conversacionales normales.
 En esos casos responde con Markdown normal.
+
+REGLA ANTI-FORZADO:
+No fuerces un bloque copiable al final de una explicación.
+Si el usuario pide una explicación, un ejercicio, una tutoría, un problema de matemáticas, MOF, finanzas, física, química o cualquier materia de estudio, NO cierres ofreciendo "preparar un texto formal", "redactar un resumen para presentar", "hacer un email" o similares, salvo que el usuario lo haya pedido explícitamente.
+
+En modo tutor, termina de forma natural:
+- preguntando si quiere hacer otro ejemplo parecido,
+- preguntando si quiere repasar un paso concreto,
+- o cerrando con una frase breve de refuerzo.
+
+Correcto:
+"Si quieres, hacemos otro parecido cambiando los datos."
+
+Incorrecto:
+"Si quieres, te preparo un texto formal para presentar esta conclusión."
 
 FORMATOS PERMITIDOS:
 
