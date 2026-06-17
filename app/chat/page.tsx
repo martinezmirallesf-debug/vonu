@@ -9,6 +9,7 @@ import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
+import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 
 import PaywallModal from "@/app/components/PaywallModal";
@@ -5096,6 +5097,61 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
 
   return {
 
+      // ✅ Tablas Markdown bien renderizadas
+  // Si el modelo genera una tabla, no la dejamos como texto roto con pipes.
+  table({ children, ...props }: any) {
+    return (
+      <div className="not-prose my-4 w-full max-w-full overflow-x-auto rounded-2xl border border-zinc-200 bg-white [scrollbar-width:thin]">
+        <table
+          className="w-full min-w-[520px] border-collapse text-left text-[13px] leading-relaxed text-zinc-900 md:text-[14px]"
+          {...props}
+        >
+          {children}
+        </table>
+      </div>
+    );
+  },
+
+  thead({ children, ...props }: any) {
+    return (
+      <thead className="bg-zinc-50 text-[12px] font-bold uppercase tracking-[0.08em] text-zinc-500" {...props}>
+        {children}
+      </thead>
+    );
+  },
+
+  tbody({ children, ...props }: any) {
+    return (
+      <tbody className="divide-y divide-zinc-100" {...props}>
+        {children}
+      </tbody>
+    );
+  },
+
+  tr({ children, ...props }: any) {
+    return (
+      <tr className="border-b border-zinc-100 last:border-b-0" {...props}>
+        {children}
+      </tr>
+    );
+  },
+
+  th({ children, ...props }: any) {
+    return (
+      <th className="whitespace-nowrap px-3 py-2.5 font-bold text-zinc-600" {...props}>
+        {children}
+      </th>
+    );
+  },
+
+  td({ children, ...props }: any) {
+    return (
+      <td className="px-3 py-2.5 align-top font-medium text-zinc-900" {...props}>
+        {children}
+      </td>
+    );
+  },
+
   // ✅ Lista ordenada con contador “badge” (como tu captura)
       ol({ children, ...props }: any) {
   return (
@@ -8862,8 +8918,8 @@ if (!finalRiskStatus) return null;
     {mdText.includes('"elements"') || mdText.includes("```excalidraw") ? null : (
       <>
         <ReactMarkdown
-          remarkPlugins={[remarkMath]}
-          rehypePlugins={[rehypeKatex]}
+  remarkPlugins={[remarkGfm, remarkMath]}
+  rehypePlugins={[rehypeKatex]}
           components={makeMdComponents(
             m.boardImageB64,
             m.boardImagePlacement,
