@@ -3271,6 +3271,7 @@ const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
 const threadsRef = useRef<ChatThread[]>([]);
 const [activeThreadId, setActiveThreadId] = useState<string>("");
 const activeThreadIdRef = useRef<string>("");
+const lastCloudSavedAssistantKeyRef = useRef<string>("");
 
 useEffect(() => {
   threadsRef.current = threads;
@@ -5886,6 +5887,51 @@ const activeThread = useMemo(() => {
 }, [threads, activeThreadId]);
 
 const messages = activeThread?.messages ?? [];
+
+// =======================
+// ☁️ HISTORIAL REMOTO — guardado al terminar respuesta
+// No es autosync general: solo guarda cuando la última respuesta assistant ya está cerrada.
+// =======================
+useEffect(() => {
+  if (!mounted) return;
+  if (authLoading) return;
+  if (!isLoggedIn) return;
+  if (!activeThread) return;
+  if (isTyping) return;
+
+  const thread = activeThread;
+  const threadMessages = thread.messages ?? [];
+
+  const hasUserMessage = threadMessages.some((m) => m.role === "user");
+  if (!hasUserMessage) return;
+
+  const lastMessage = threadMessages[threadMessages.length - 1];
+
+  if (!lastMessage) return;
+  if (lastMessage.role !== "assistant") return;
+  if (lastMessage.streaming) return;
+
+  const saveKey = `${thread.id}:${lastMessage.id}:${threadMessages.length}:${thread.updatedAt}`;
+
+  if (lastCloudSavedAssistantKeyRef.current === saveKey) return;
+  lastCloudSavedAssistantKeyRef.current = saveKey;
+
+  const timer = window.setTimeout(() => {
+    const latestThread = threadsRef.current.find((t) => t.id === thread.id);
+    saveThreadToCloud(latestThread);
+  }, 800);
+
+  return () => window.clearTimeout(timer);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [
+  mounted,
+  authLoading,
+  isLoggedIn,
+  isTyping,
+  activeThread?.id,
+  messages.length,
+]);
 
 useEffect(() => {
   if (!activeThread) {
