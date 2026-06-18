@@ -3313,6 +3313,19 @@ async function saveThreadToCloud(thread?: ChatThread | null) {
     const hasUserMessage = safeThread.messages.some((m) => m.role === "user");
     if (!hasUserMessage) return;
 
+    const firstUserTextForTitle =
+  safeThread.messages.find(
+    (m) => m.role === "user" && typeof m.text === "string" && m.text.trim()
+  )?.text ?? "";
+
+const threadForCloud = {
+  ...safeThread,
+  title:
+    shouldAutoTitleThread(safeThread.title) && firstUserTextForTitle.trim()
+      ? makeSmartThreadTitle(firstUserTextForTitle)
+      : safeThread.title,
+};
+
     const token = await getHistoryAccessToken();
     if (!token) {
   console.log("[Vonu history] cancelado: sin token");
@@ -3327,8 +3340,8 @@ async function saveThreadToCloud(thread?: ChatThread | null) {
       },
       cache: "no-store",
       body: JSON.stringify({
-        thread: safeThread,
-      }),
+  thread: threadForCloud,
+}),
     });
 
     console.log("[Vonu history] POST /api/chat-history", {
@@ -5887,6 +5900,40 @@ const activeThread = useMemo(() => {
 }, [threads, activeThreadId]);
 
 const messages = activeThread?.messages ?? [];
+
+// =======================
+// 🏷️ TÍTULO AUTOMÁTICO
+// Si el chat sigue como "Nueva consulta", usamos el primer mensaje real del usuario.
+// Funciona para envío normal, quick prompts y voz.
+// =======================
+useEffect(() => {
+  if (!activeThread) return;
+  if (!shouldAutoTitleThread(activeThread.title)) return;
+
+  const firstUserMessage = activeThread.messages.find(
+    (m) => m.role === "user" && typeof m.text === "string" && m.text.trim()
+  );
+
+  const sourceText = firstUserMessage?.text?.trim();
+  if (!sourceText) return;
+
+  const nextTitle = makeSmartThreadTitle(sourceText);
+  if (!nextTitle || nextTitle === activeThread.title) return;
+
+  setThreads((prev) =>
+    prev.map((t) =>
+      t.id === activeThread.id
+        ? {
+            ...t,
+            title: nextTitle,
+            updatedAt: Date.now(),
+          }
+        : t
+    )
+  );
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [activeThread?.id, activeThread?.title, messages.length]);
 
 // =======================
 // ☁️ HISTORIAL REMOTO — guardado al terminar respuesta
