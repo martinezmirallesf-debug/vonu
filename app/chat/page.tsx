@@ -3232,6 +3232,93 @@ useEffect(() => {
   threadsRef.current = threads;
 }, [threads]);
 
+// =======================
+// ☁️ HISTORIAL REMOTO — fase 2A
+// Guardamos solo en eventos concretos.
+// NO autosync general sobre threads.
+// =======================
+
+async function getHistoryAccessToken() {
+  try {
+    const { data } = await supabaseBrowser.auth.getSession();
+    return data?.session?.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function saveThreadToCloud(thread?: ChatThread | null) {
+  try {
+    if (!thread) return;
+    if (!isLoggedIn) return;
+
+    const safeThread = sanitizeThreadsForStorage([thread])[0];
+    if (!safeThread) return;
+
+    const hasUserMessage = safeThread.messages.some((m) => m.role === "user");
+    if (!hasUserMessage) return;
+
+    const token = await getHistoryAccessToken();
+    if (!token) return;
+
+    const res = await fetch("/api/chat-history", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+      body: JSON.stringify({
+        thread: safeThread,
+      }),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      console.warn("[Vonu] No se pudo guardar historial remoto:", txt);
+    }
+  } catch (error) {
+    console.warn("[Vonu] Error guardando historial remoto:", error);
+  }
+}
+
+function queueSaveThreadToCloud(threadId: string, delay = 700) {
+  if (!threadId) return;
+
+  window.setTimeout(() => {
+    const thread = threadsRef.current.find((t) => t.id === threadId);
+    saveThreadToCloud(thread);
+  }, delay);
+}
+
+async function deleteThreadFromCloud(threadId: string) {
+  try {
+    if (!threadId) return;
+    if (!isLoggedIn) return;
+
+    const token = await getHistoryAccessToken();
+    if (!token) return;
+
+    const res = await fetch("/api/chat-history", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+      body: JSON.stringify({
+        threadId,
+      }),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      console.warn("[Vonu] No se pudo borrar historial remoto:", txt);
+    }
+  } catch (error) {
+    console.warn("[Vonu] Error borrando historial remoto:", error);
+  }
+}
 
   useEffect(() => {
     try {
@@ -6171,12 +6258,16 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
   }, 1600);
 
   setRenameOpen(false);
-  setRenameSavedPulse(false);
-  setRenameThreadId(null);
+setRenameSavedPulse(false);
+setRenameThreadId(null);
+
+queueSaveThreadToCloud(targetThreadId, 350);
 }
 
   function deleteActiveThread() {
-    if (!activeThread) return;
+  if (!activeThread) return;
+
+  deleteThreadFromCloud(activeThread.id);
 
     if (threads.length === 1) {
       const fresh = makeNewThread();
@@ -6216,6 +6307,8 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
 
   function deleteThreadById(threadId: string) {
   if (!threadId) return;
+
+  deleteThreadFromCloud(threadId);
 
   if (threads.length <= 1) {
     const fresh = makeNewThread();
@@ -6539,6 +6632,8 @@ body: JSON.stringify({
 if (!voiceModeRef.current) {
   speakTTS(fullText);
 }
+
+queueSaveThreadToCloud(targetThreadId, 700);
 
 if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
