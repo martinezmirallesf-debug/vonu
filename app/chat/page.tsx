@@ -1259,6 +1259,50 @@ function makeTitleFromText(text: string) {
   return t.length > 34 ? t.slice(0, 34) + "…" : t;
 }
 
+function makeSmartThreadTitle(text: string) {
+  let t = String(text ?? "")
+    .trim()
+    .replace(/\s+/g, " ");
+
+  if (!t) return "Nueva consulta";
+
+  // Limpieza suave para que no empiece con frases demasiado genéricas.
+  t = t
+    .replace(/^hola[,!\s]*/i, "")
+    .replace(/^buenas[,!\s]*/i, "")
+    .replace(/^oye[,!\s]*/i, "")
+    .replace(/^vale[,!\s]*/i, "")
+    .replace(/^puedes\s+/i, "")
+    .replace(/^me puedes\s+/i, "")
+    .replace(/^podrías\s+/i, "")
+    .replace(/^podrias\s+/i, "")
+    .replace(/^quiero\s+/i, "")
+    .replace(/^necesito\s+/i, "")
+    .trim();
+
+  if (!t) return makeTitleFromText(text);
+
+  // Quitar dos puntos finales típicos de prompts:
+  t = t.replace(/[:：]\s*$/g, "").trim();
+
+  // Primera letra en mayúscula si procede.
+  t = t.charAt(0).toUpperCase() + t.slice(1);
+
+  return t.length > 44 ? t.slice(0, 44).trim() + "…" : t;
+}
+
+function shouldAutoTitleThread(title: string) {
+  const t = String(title ?? "").trim().toLowerCase();
+
+  return (
+    !t ||
+    t === "nueva consulta" ||
+    t === "consulta" ||
+    t === "nuevo chat" ||
+    t === "chat nuevo"
+  );
+}
+
 const STORAGE_KEY = "vonu_threads_v2";
 const STORAGE_BACKUP_KEY = "vonu_threads_v2_backup";
 const STORAGE_LAST_GOOD_KEY = "vonu_threads_v2_last_good";
@@ -6431,17 +6475,20 @@ if (voiceModeRef.current) {
 
     // ✅ Guardamos modo en el thread (así el backend recibe el modo correcto)
     setThreads((prev) =>
-      prev.map((t) =>
-        t.id === targetThreadId
-          ? {
-              ...t,
-              updatedAt: Date.now(),
-              mode: modePreset,
-              tutorProfile: t.tutorProfile ?? { level: "adult" },
-            }
-          : t
-      )
-    );
+  prev.map((t) => {
+    if (t.id !== targetThreadId) return t;
+
+    const shouldAutoTitle = shouldAutoTitleThread(t.title);
+
+    return {
+      ...t,
+      title: shouldAutoTitle ? makeSmartThreadTitle(userText) : t.title,
+      updatedAt: Date.now(),
+      mode: modePreset,
+      tutorProfile: t.tutorProfile ?? { level: "adult" },
+    };
+  })
+);
 
     const userMsg: Message = {
   id: crypto.randomUUID(),
@@ -6484,8 +6531,13 @@ const assistantMsg: Message = {
     setThreads((prev) =>
   prev.map((t) => {
     if (t.id !== targetThreadId) return t;
+
+    const shouldAutoTitle = shouldAutoTitleThread(t.title);
+    const titleSource = userMsg.text || userText;
+
     return {
       ...t,
+      title: shouldAutoTitle ? makeSmartThreadTitle(titleSource) : t.title,
       updatedAt: Date.now(),
       messages: [...t.messages, userMsg],
     };
