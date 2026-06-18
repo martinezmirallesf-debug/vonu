@@ -3293,8 +3293,18 @@ async function getHistoryAccessToken() {
 
 async function saveThreadToCloud(thread?: ChatThread | null) {
   try {
+    console.log("[Vonu history] saveThreadToCloud START", {
+      hasThread: !!thread,
+      isLoggedIn,
+      threadId: thread?.id,
+      title: thread?.title,
+      messages: thread?.messages?.length,
+    });
     if (!thread) return;
-    if (!isLoggedIn) return;
+    if (!isLoggedIn) {
+  console.log("[Vonu history] cancelado: usuario no logueado");
+  return;
+}
 
     const safeThread = sanitizeThreadsForStorage([thread])[0];
     if (!safeThread) return;
@@ -3303,7 +3313,10 @@ async function saveThreadToCloud(thread?: ChatThread | null) {
     if (!hasUserMessage) return;
 
     const token = await getHistoryAccessToken();
-    if (!token) return;
+    if (!token) {
+  console.log("[Vonu history] cancelado: sin token");
+  return;
+}
 
     const res = await fetch("/api/chat-history", {
       method: "POST",
@@ -3317,6 +3330,14 @@ async function saveThreadToCloud(thread?: ChatThread | null) {
       }),
     });
 
+    console.log("[Vonu history] POST /api/chat-history", {
+  status: res.status,
+  ok: res.ok,
+  threadId: safeThread.id,
+  title: safeThread.title,
+  messages: safeThread.messages.length,
+});
+
     if (!res.ok) {
       const txt = await res.text().catch(() => "");
       console.warn("[Vonu] No se pudo guardar historial remoto:", txt);
@@ -3327,10 +3348,27 @@ async function saveThreadToCloud(thread?: ChatThread | null) {
 }
 
 function queueSaveThreadToCloud(threadId: string, delay = 700) {
-  if (!threadId) return;
+  if (!threadId) {
+    console.log("[Vonu history] queue cancelada: sin threadId");
+    return;
+  }
+
+  console.log("[Vonu history] queue save", {
+    threadId,
+    delay,
+  });
 
   window.setTimeout(() => {
     const thread = threadsRef.current.find((t) => t.id === threadId);
+
+    console.log("[Vonu history] queue fired", {
+      threadId,
+      found: !!thread,
+      title: thread?.title,
+      messages: thread?.messages?.length,
+      hasUserMessage: thread?.messages?.some((m) => m.role === "user"),
+    });
+
     saveThreadToCloud(thread);
   }, delay);
 }
