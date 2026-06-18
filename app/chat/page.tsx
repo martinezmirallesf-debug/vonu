@@ -8982,6 +8982,25 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 
     const previousUserMessage = getPreviousUserMessage(messages, i);
 
+    const previousUserTextForDots = previousUserMessage?.text ?? "";
+
+const isAcademicFinanceContextForDots =
+  /\b(mof|ade|van|tir|valor actual|valor actual neto|finanzas|financiera|financieras|matemáticas financieras|matematicas financieras|coste de capital|costo de capital|tasa de descuento|flujo de caja|flujos de caja|proyecto de inversión|proyecto de inversion|renta financiera|amortización|amortizacion)\b/i.test(
+    previousUserTextForDots
+  );
+
+const hasPracticalRiskIntentForDots =
+  /\b(estafa|fraude|phishing|smishing|sms|whatsapp|telegram|enlace|link|url|web sospechosa|tienda online|banco|tarjeta|bizum|transferencia|contrato|cláusula|clausula|factura|cobro|suscripción|suscripcion|tinder|badoo|bumble|instagram|perfil falso|catfish|ia|deepfake|manipulada|manipulado|amenaza|chantaje|sextorsión|sextorsion|me manipula|me presiona|salud|dolor|síntoma|sintoma|urgencias)\b/i.test(
+    previousUserTextForDots
+  );
+
+const shouldHideRiskDotsForTutorOrAcademic =
+  activeThread?.mode === "tutor" ||
+  isAcademicFinanceContextForDots ||
+  (looksLikeTutorIntent(previousUserTextForDots) && !hasPracticalRiskIntentForDots);
+
+if (shouldHideRiskDotsForTutorOrAcademic) return null;
+
 const assistantRiskStatus = inferRiskStatusFromAssistantText(m.text ?? "");
 const userRiskStatus = inferRiskStatusFromUserText(previousUserMessage?.text ?? "");
 const neutralIdentityLookup = looksLikeNeutralIdentityLookupFromUserText(previousUserMessage?.text ?? "");
