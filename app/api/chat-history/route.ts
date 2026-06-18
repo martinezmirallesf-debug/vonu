@@ -1,435 +1,403 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "crypto";
 
-export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-type ThreadMode = "chat" | "tutor";
-type TutorLevel = "kid" | "teen" | "adult" | "unknown";
+type ChatRole = "user" | "assistant";
+type ChatMode = "chat" | "tutor";
 
 type IncomingMessage = {
   id?: string;
-  role?: "user" | "assistant";
-  text?: string | null;
-  imageThumb?: string | null;
+  role?: ChatRole;
+  text?: string;
+  imageThumb?: string;
+  image?: string;
+  streaming?: boolean;
   pizarra?: string | null;
-  createdAt?: string | number | null;
-  sortOrder?: number | null;
+  boardImageB64?: string | null;
+  boardImagePlacement?: unknown;
+  revealMs?: number;
 };
 
 type IncomingThread = {
   id?: string;
-  title?: string | null;
-  mode?: ThreadMode | null;
-  tutorProfile?: {
-    level?: TutorLevel | null;
-  } | null;
+  title?: string;
+  updatedAt?: number;
+  mode?: ChatMode;
+  tutorProfile?: unknown;
   messages?: IncomingMessage[];
 };
 
-function json(data: unknown, status = 200) {
-  return NextResponse.json(data, { status });
-}
-
-function getEnv() {
+function getSupabaseEnv() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error(
-      "Faltan NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY."
-    );
+  if (!supabaseUrl || !anonKey || !serviceRoleKey) {
+    throw new Error("Faltan variables de Supabase para chat-history.");
   }
 
-  return { supabaseUrl, supabaseAnonKey };
+  return { supabaseUrl, anonKey, serviceRoleKey };
 }
 
-function getSupabaseForRequest(req: NextRequest) {
-  const { supabaseUrl, supabaseAnonKey } = getEnv();
+function getBearerToken(req: NextRequest) {
+  const header = req.headers.get("authorization") || "";
+  const match = header.match(/^Bearer\s+(.+)$/i);
+  return match?.[1]?.trim() || null;
+}
 
-  const authorization = req.headers.get("authorization") || "";
+async function getUserFromRequest(req: NextRequest) {
+  const token = getBearerToken(req);
 
-  return createClient(supabaseUrl, supabaseAnonKey, {
+  if (!token) {
+    return {
+      user: null,
+      error: "No autorizado.",
+    };
+  }
+
+  const { supabaseUrl, anonKey } = getSupabaseEnv();
+
+  const authClient = createClient(supabaseUrl, anonKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
-      detectSessionInUrl: false,
     },
-    global: {
-      headers: authorization
-        ? {
-            Authorization: authorization,
-          }
-        : {},
+  });
+
+  const { data, error } = await authClient.auth.getUser(token);
+
+  if (error || !data?.user?.id) {
+    return {
+      user: null,
+      error: "Sesión no válida.",
+    };
+  }
+
+  return {
+    user: data.user,
+    error: null,
+  };
+}
+
+function getServiceClient() {
+  const { supabaseUrl, serviceRoleKey } = getSupabaseEnv();
+
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
     },
   });
 }
 
-async function getUserOr401(req: NextRequest) {
-  const supabase = getSupabaseForRequest(req);
+function safeClientUpdatedAt(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const d = new Date(value);
 
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    return {
-      supabase,
-      user: null,
-      response: json(
-        {
-          ok: false,
-          error: "No autorizado. Inicia sesión para sincronizar el historial.",
-        },
-        401
-      ),
-    };
-  }
-
-  return { supabase, user, response: null };
-}
-
-function cleanTitle(title: unknown) {
-  const t = String(title ?? "").trim();
-
-  if (!t) return "Nueva consulta";
-
-  return t.length > 80 ? `${t.slice(0, 80)}…` : t;
-}
-
-function cleanMode(mode: unknown): ThreadMode {
-  return mode === "tutor" ? "tutor" : "chat";
-}
-
-function cleanTutorLevel(level: unknown): TutorLevel {
-  if (
-    level === "kid" ||
-    level === "teen" ||
-    level === "adult" ||
-    level === "unknown"
-  ) {
-    return level;
-  }
-
-  return "adult";
-}
-
-function cleanText(text: unknown) {
-  const t = typeof text === "string" ? text : "";
-
-  return t.trim() ? t : null;
-}
-
-function cleanImageThumb(imageThumb: unknown) {
-  const t = typeof imageThumb === "string" ? imageThumb : "";
-
-  if (!t.trim()) return null;
-
-  // Evitamos guardar miniaturas enormes en Supabase.
-  if (t.length > 260_000) return null;
-
-  return t;
-}
-
-function normalizeDate(input: unknown) {
-  if (!input) return new Date().toISOString();
-
-  try {
-    const d = new Date(input as any);
-
-    if (Number.isNaN(d.getTime())) {
-      return new Date().toISOString();
+    if (!Number.isNaN(d.getTime())) {
+      return d.toISOString();
     }
-
-    return d.toISOString();
-  } catch {
-    return new Date().toISOString();
   }
+
+  return new Date().toISOString();
+}
+
+function sanitizeTutorProfile(value: unknown) {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value;
+  }
+
+  return { level: "adult" };
+}
+
+function sanitizeMessage(message: IncomingMessage) {
+  const role: ChatRole =
+    message?.role === "user" || message?.role === "assistant"
+      ? message.role
+      : "assistant";
+
+  const clean: Record<string, unknown> = {
+    id: typeof message?.id === "string" && message.id.trim()
+      ? message.id.trim()
+      : randomUUID(),
+    role,
+    text: typeof message?.text === "string" ? message.text : "",
+    streaming: false,
+    pizarra: typeof message?.pizarra === "string" ? message.pizarra : null,
+    boardImageB64: null,
+    boardImagePlacement: null,
+  };
+
+  if (typeof message?.revealMs === "number" && Number.isFinite(message.revealMs)) {
+    clean.revealMs = message.revealMs;
+  }
+
+  // Guardamos solo miniaturas ligeras, nunca la imagen completa.
+  if (
+    typeof message?.imageThumb === "string" &&
+    message.imageThumb.startsWith("data:image") &&
+    message.imageThumb.length <= 220_000
+  ) {
+    clean.imageThumb = message.imageThumb;
+  }
+
+  return clean;
+}
+
+function sanitizeThread(rawThread: IncomingThread) {
+  const threadId =
+    typeof rawThread?.id === "string" && rawThread.id.trim()
+      ? rawThread.id.trim()
+      : randomUUID();
+
+  const title =
+    typeof rawThread?.title === "string" && rawThread.title.trim()
+      ? rawThread.title.trim().slice(0, 120)
+      : "Consulta";
+
+  const mode: ChatMode = rawThread?.mode === "tutor" ? "tutor" : "chat";
+
+  const messages = Array.isArray(rawThread?.messages)
+    ? rawThread.messages
+        .slice(-80)
+        .map(sanitizeMessage)
+        .filter((message: any) => {
+          const hasRole = message.role === "user" || message.role === "assistant";
+          const hasText =
+            typeof message.text === "string" && message.text.trim().length > 0;
+          const hasThumb =
+            typeof message.imageThumb === "string" && message.imageThumb.length > 0;
+
+          return hasRole && (hasText || hasThumb);
+        })
+    : [];
+
+  return {
+    threadId,
+    title,
+    mode,
+    tutorProfile: sanitizeTutorProfile(rawThread?.tutorProfile),
+    messages,
+    clientUpdatedAt: safeClientUpdatedAt(rawThread?.updatedAt),
+  };
 }
 
 export async function GET(req: NextRequest) {
   try {
-    const { supabase, user, response } = await getUserOr401(req);
+    const { user, error: authError } = await getUserFromRequest(req);
 
-    if (response || !user) return response;
+    if (!user) {
+      return NextResponse.json(
+        { ok: false, error: authError || "No autorizado." },
+        { status: 401 }
+      );
+    }
 
-    const { data: threads, error: threadsError } = await supabase
+    const serviceClient = getServiceClient();
+
+    const { data, error } = await serviceClient
       .from("chat_threads")
-      .select("id,title,mode,tutor_level,created_at,updated_at,archived_at")
+      .select(
+        "thread_id,title,mode,tutor_profile,messages,client_updated_at,updated_at"
+      )
       .eq("user_id", user.id)
-      .is("archived_at", null)
-      .order("updated_at", { ascending: false })
-      .limit(24);
+      .is("deleted_at", null)
+      .order("client_updated_at", { ascending: false })
+      .limit(50);
 
-    if (threadsError) {
-      return json(
-        {
-          ok: false,
-          error: threadsError.message,
-        },
-        500
+    if (error) {
+      return NextResponse.json(
+        { ok: false, error: error.message },
+        { status: 500 }
       );
     }
 
-    const threadIds = (threads ?? []).map((thread: any) => thread.id);
+    const threads = (data || []).map((row: any) => ({
+      id: row.thread_id,
+      title: row.title || "Consulta",
+      mode: row.mode === "tutor" ? "tutor" : "chat",
+      tutorProfile: row.tutor_profile || { level: "adult" },
+      messages: Array.isArray(row.messages) ? row.messages : [],
+      updatedAt: row.client_updated_at
+        ? new Date(row.client_updated_at).getTime()
+        : Date.now(),
+    }));
 
-    if (!threadIds.length) {
-      return json({
-        ok: true,
-        threads: [],
-      });
-    }
-
-    const { data: messages, error: messagesError } = await supabase
-      .from("chat_messages")
-      .select("id,thread_id,role,text,image_thumb,pizarra,created_at,sort_order")
-      .eq("user_id", user.id)
-      .in("thread_id", threadIds)
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true });
-
-    if (messagesError) {
-      return json(
-        {
-          ok: false,
-          error: messagesError.message,
-        },
-        500
-      );
-    }
-
-    const messagesByThread = new Map<string, any[]>();
-
-    for (const message of messages ?? []) {
-      const threadId = String((message as any).thread_id);
-      const current = messagesByThread.get(threadId) ?? [];
-
-      current.push(message);
-      messagesByThread.set(threadId, current);
-    }
-
-    const normalizedThreads = (threads ?? []).map((thread: any) => {
-      const threadMessages = messagesByThread.get(thread.id) ?? [];
-
-      return {
-        id: thread.id,
-        title: thread.title || "Nueva consulta",
-        updatedAt: new Date(thread.updated_at).getTime(),
-        mode: thread.mode === "tutor" ? "tutor" : "chat",
-        tutorProfile: {
-          level: thread.tutor_level || "adult",
-        },
-        messages: threadMessages.map((message: any) => ({
-          id: message.id,
-          role: message.role,
-          text: message.text ?? undefined,
-          imageThumb: message.image_thumb ?? undefined,
-          pizarra: message.pizarra ?? null,
-          streaming: false,
-        })),
-      };
-    });
-
-    return json({
+    return NextResponse.json({
       ok: true,
-      threads: normalizedThreads,
+      threads,
     });
   } catch (error: any) {
-    return json(
+    return NextResponse.json(
       {
         ok: false,
-        error: error?.message || "Error cargando historial.",
+        error: error?.message || "Error leyendo historial.",
       },
-      500
+      { status: 500 }
     );
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { supabase, user, response } = await getUserOr401(req);
+    const { user, error: authError } = await getUserFromRequest(req);
 
-    if (response || !user) return response;
-
-    const body = (await req.json().catch(() => ({}))) as {
-      thread?: IncomingThread;
-    };
-
-    const incomingThread = body?.thread;
-
-    if (!incomingThread) {
-      return json(
-        {
-          ok: false,
-          error: "Falta thread.",
-        },
-        400
+    if (!user) {
+      return NextResponse.json(
+        { ok: false, error: authError || "No autorizado." },
+        { status: 401 }
       );
     }
 
-    const threadId =
-      typeof incomingThread.id === "string" && incomingThread.id.trim()
-        ? incomingThread.id.trim()
-        : crypto.randomUUID();
+    const body = await req.json().catch(() => null);
+    const rawThread = body?.thread as IncomingThread | undefined;
 
-    const title = cleanTitle(incomingThread.title);
-    const mode = cleanMode(incomingThread.mode);
-    const tutorLevel = cleanTutorLevel(incomingThread.tutorProfile?.level);
+    if (!rawThread) {
+      return NextResponse.json(
+        { ok: false, error: "Falta thread." },
+        { status: 400 }
+      );
+    }
 
-    const messages = Array.isArray(incomingThread.messages)
-      ? incomingThread.messages.slice(-80)
-      : [];
+    const thread = sanitizeThread(rawThread);
 
-    const { error: upsertThreadError } = await supabase
+    if (!thread.messages.length) {
+      return NextResponse.json(
+        { ok: false, error: "No se guarda una conversación vacía." },
+        { status: 400 }
+      );
+    }
+
+    const serviceClient = getServiceClient();
+
+    const { data: existing, error: existingError } = await serviceClient
       .from("chat_threads")
-      .upsert(
-        {
-          id: threadId,
-          user_id: user.id,
-          title,
-          mode,
-          tutor_level: tutorLevel,
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("thread_id", thread.threadId)
+      .maybeSingle();
+
+    if (existingError) {
+      return NextResponse.json(
+        { ok: false, error: existingError.message },
+        { status: 500 }
+      );
+    }
+
+    if (existing?.id) {
+      const { error: updateError } = await serviceClient
+        .from("chat_threads")
+        .update({
+          title: thread.title,
+          mode: thread.mode,
+          tutor_profile: thread.tutorProfile,
+          messages: thread.messages,
+          client_updated_at: thread.clientUpdatedAt,
+          deleted_at: null,
           updated_at: new Date().toISOString(),
-          archived_at: null,
-        },
-        {
-          onConflict: "id",
-        }
-      );
+        })
+        .eq("user_id", user.id)
+        .eq("thread_id", thread.threadId);
 
-    if (upsertThreadError) {
-      return json(
-        {
-          ok: false,
-          error: upsertThreadError.message,
-        },
-        500
-      );
-    }
+      if (updateError) {
+        return NextResponse.json(
+          { ok: false, error: updateError.message },
+          { status: 500 }
+        );
+      }
+    } else {
+      const { error: insertError } = await serviceClient
+        .from("chat_threads")
+        .insert({
+          id: randomUUID(),
+          user_id: user.id,
+          thread_id: thread.threadId,
+          title: thread.title,
+          mode: thread.mode,
+          tutor_profile: thread.tutorProfile,
+          messages: thread.messages,
+          client_updated_at: thread.clientUpdatedAt,
+          deleted_at: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
 
-    // Primera versión simple:
-    // guardamos el estado completo de la conversación.
-    // Borramos mensajes previos de ese hilo y metemos los actuales.
-    const { error: deleteMessagesError } = await supabase
-      .from("chat_messages")
-      .delete()
-      .eq("thread_id", threadId)
-      .eq("user_id", user.id);
-
-    if (deleteMessagesError) {
-      return json(
-        {
-          ok: false,
-          error: deleteMessagesError.message,
-        },
-        500
-      );
-    }
-
-    const rows = messages
-      .filter(
-        (message) =>
-          message?.role === "user" || message?.role === "assistant"
-      )
-      .map((message, index) => ({
-        id:
-          typeof message.id === "string" && message.id.trim()
-            ? message.id.trim()
-            : crypto.randomUUID(),
-
-        thread_id: threadId,
-        user_id: user.id,
-
-        role: message.role,
-        text: cleanText(message.text),
-        image_thumb: cleanImageThumb(message.imageThumb),
-        pizarra: cleanText(message.pizarra),
-
-        sort_order:
-          typeof message.sortOrder === "number" &&
-          Number.isFinite(message.sortOrder)
-            ? message.sortOrder
-            : index,
-
-        created_at: normalizeDate(message.createdAt),
-      }));
-
-    if (rows.length) {
-      const { error: insertMessagesError } = await supabase
-        .from("chat_messages")
-        .insert(rows);
-
-      if (insertMessagesError) {
-        return json(
-          {
-            ok: false,
-            error: insertMessagesError.message,
-          },
-          500
+      if (insertError) {
+        return NextResponse.json(
+          { ok: false, error: insertError.message },
+          { status: 500 }
         );
       }
     }
 
-    return json({
+    return NextResponse.json({
       ok: true,
-      threadId,
+      threadId: thread.threadId,
     });
   } catch (error: any) {
-    return json(
+    return NextResponse.json(
       {
         ok: false,
         error: error?.message || "Error guardando historial.",
       },
-      500
+      { status: 500 }
     );
   }
 }
 
 export async function DELETE(req: NextRequest) {
   try {
-    const { supabase, user, response } = await getUserOr401(req);
+    const { user, error: authError } = await getUserFromRequest(req);
 
-    if (response || !user) return response;
+    if (!user) {
+      return NextResponse.json(
+        { ok: false, error: authError || "No autorizado." },
+        { status: 401 }
+      );
+    }
 
-    const url = new URL(req.url);
-    const threadId = url.searchParams.get("threadId");
+    const body = await req.json().catch(() => null);
+    const threadId = typeof body?.threadId === "string" ? body.threadId.trim() : "";
 
     if (!threadId) {
-      return json(
-        {
-          ok: false,
-          error: "Falta threadId.",
-        },
-        400
+      return NextResponse.json(
+        { ok: false, error: "Falta threadId." },
+        { status: 400 }
       );
     }
 
-    const { error } = await supabase
+    const serviceClient = getServiceClient();
+
+    const { error } = await serviceClient
       .from("chat_threads")
-      .delete()
-      .eq("id", threadId)
-      .eq("user_id", user.id);
+      .update({
+        deleted_at: new Date().toISOString(),
+        archived_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id)
+      .eq("thread_id", threadId);
 
     if (error) {
-      return json(
-        {
-          ok: false,
-          error: error.message,
-        },
-        500
+      return NextResponse.json(
+        { ok: false, error: error.message },
+        { status: 500 }
       );
     }
 
-    return json({
+    return NextResponse.json({
       ok: true,
+      threadId,
     });
   } catch (error: any) {
-    return json(
+    return NextResponse.json(
       {
         ok: false,
-        error: error?.message || "Error borrando conversación.",
+        error: error?.message || "Error borrando historial.",
       },
-      500
+      { status: 500 }
     );
   }
 }
