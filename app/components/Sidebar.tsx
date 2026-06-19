@@ -256,6 +256,18 @@ cancelSubscriptionFromHere,
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [threadMenuOpen, setThreadMenuOpen] = useState(false);
   const [accountScreen, setAccountScreen] = useState<"main" | "account" | "plans" | "subscription">("main");
+  const visibleThreads = useMemo(() => {
+  if (!isLoggedIn) return [];
+  return sortedThreads;
+}, [isLoggedIn, sortedThreads]);
+useEffect(() => {
+  if (isLoggedIn) return;
+
+  setQuery("");
+  setSelectedThreadId(null);
+  setThreadMenuOpen(false);
+  setAccountScreen("main");
+}, [isLoggedIn]);
   useEffect(() => {
   if (typeof document === "undefined") return;
 
@@ -296,7 +308,7 @@ const longPressTriggeredRef = useRef(false);
       return;
     }
 
-    const thread = sortedThreads.find((t) => t.id === recentlyRenamedThreadId);
+    const thread = visibleThreads.find((t) => t.id === recentlyRenamedThreadId);
     const finalTitle = thread?.title?.trim();
 
     if (!finalTitle) {
@@ -323,7 +335,7 @@ const longPressTriggeredRef = useRef(false);
     return () => {
       window.clearInterval(timer);
     };
-  }, [recentlyRenamedThreadId, sortedThreads]);
+  }, [recentlyRenamedThreadId, visibleThreads]);
 
   useEffect(() => {
     if (!menuOpen) {
@@ -335,21 +347,21 @@ const longPressTriggeredRef = useRef(false);
   }, [menuOpen]);
 
   const filteredThreads = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const base = !q
-      ? sortedThreads
-      : sortedThreads.filter((t) => t.title.toLowerCase().includes(q));
+  const q = query.trim().toLowerCase();
+  const base = !q
+    ? visibleThreads
+    : visibleThreads.filter((t) => t.title.toLowerCase().includes(q));
 
-    const pinned = base.filter((t) => pinnedIds.includes(t.id));
-    const normal = base.filter((t) => !pinnedIds.includes(t.id));
+  const pinned = base.filter((t) => pinnedIds.includes(t.id));
+  const normal = base.filter((t) => !pinnedIds.includes(t.id));
 
-    return [...pinned, ...normal];
-  }, [sortedThreads, query, pinnedIds]);
+  return [...pinned, ...normal];
+}, [visibleThreads, query, pinnedIds]);
 
   const currentThread = useMemo(
-    () => sortedThreads.find((t) => t.id === (selectedThreadId ?? activeThreadId)) ?? null,
-    [sortedThreads, selectedThreadId, activeThreadId]
-  );
+  () => visibleThreads.find((t) => t.id === (selectedThreadId ?? activeThreadId)) ?? null,
+  [visibleThreads, selectedThreadId, activeThreadId]
+);
 
   const userLabel = authUserName?.trim() || authUserEmail?.trim() || "Tu cuenta";
   const userInitial = userLabel.charAt(0).toUpperCase() || "U";
