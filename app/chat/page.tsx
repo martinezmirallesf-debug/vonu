@@ -3024,12 +3024,13 @@ await refreshUsageInfo();
         setAuthLoading(false);
 
         if (!u) {
-          setAuthUserEmail(null);
-          setAuthUserId(null);
-          setAuthUserName(null);
-          setIsPro(false);
-          return;
-        }
+  setAuthUserEmail(null);
+  setAuthUserId(null);
+  setAuthUserName(null);
+  setIsPro(false);
+  resetVisibleHistoryForLoggedOut();
+  return;
+}
 
         await persistNameIfMissing(u);
 
@@ -3408,6 +3409,7 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
   async function logout() {
   try {
     await supabaseBrowser.auth.signOut();
+
     setAuthUserEmail(null);
     setAuthUserId(null);
     setAuthUserName(null);
@@ -3415,7 +3417,11 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
     setPaywallOpen(false);
     setPendingCheckout(null);
     setAuthLoading(false);
-  } catch {}
+
+    resetVisibleHistoryForLoggedOut();
+  } catch {
+    resetVisibleHistoryForLoggedOut();
+  }
 }
 
   // -------- Persistencia local --------
@@ -3429,6 +3435,18 @@ const cloudHistoryLoadedForUserRef = useRef<string | null>(null);
 useEffect(() => {
   threadsRef.current = threads;
 }, [threads]);
+
+// ✅ Seguridad: si no hay sesión, no debe quedar visible historial anterior.
+// Esto evita que el historial local aparezca después de cerrar sesión.
+useEffect(() => {
+  if (!mounted) return;
+  if (authLoading) return;
+  if (isLoggedIn) return;
+
+  resetVisibleHistoryForLoggedOut();
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted, authLoading, isLoggedIn]);
 
 useEffect(() => {
   if (authLoading) return;
@@ -3583,6 +3601,32 @@ async function deleteThreadFromCloud(threadId: string) {
   }
 }
 
+function resetVisibleHistoryForLoggedOut() {
+  const fresh = makeNewThread();
+
+  cloudHistoryLoadedForUserRef.current = null;
+  lastCloudSavedAssistantKeyRef.current = "";
+
+  setThreads([fresh]);
+  setActiveThreadId(fresh.id);
+  setMenuOpen(false);
+  setUiError(null);
+  setInput("");
+  setImagePreview(null);
+  setPdfPreview(null);
+
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem(STORAGE_BACKUP_KEY);
+    window.localStorage.removeItem(STORAGE_LAST_GOOD_KEY);
+  } catch {}
+
+  requestAnimationFrame(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    shouldStickToBottomRef.current = false;
+  });
+}
+
 async function loadCloudThreadsOnce() {
   try {
     if (!isLoggedIn) return;
@@ -3647,6 +3691,13 @@ async function loadCloudThreadsOnce() {
 }
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!isLoggedIn) {
+      resetVisibleHistoryForLoggedOut();
+      return;
+    }
+
     try {
       const parsed = readStoredThreadsFromLocalStorage();
       if (!parsed) return;
@@ -3675,7 +3726,7 @@ async function loadCloudThreadsOnce() {
         setActiveThreadId(clean[0].id);
       }
     } catch {}
-  }, []);
+  }, [authLoading, isLoggedIn]);
 
   useEffect(() => {
   if (!mounted) return;
@@ -5513,17 +5564,17 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
       // ✅ Tablas Markdown bien renderizadas
   // Si el modelo genera una tabla, no la dejamos como texto roto con pipes.
   table({ children, ...props }: any) {
-    return (
-      <div className="not-prose my-4 w-full max-w-full overflow-x-auto rounded-2xl border border-zinc-200 bg-white [scrollbar-width:thin]">
-        <table
-          className="w-full min-w-[520px] border-collapse text-left text-[13px] leading-relaxed text-zinc-900 md:text-[14px]"
-          {...props}
-        >
-          {children}
-        </table>
-      </div>
-    );
-  },
+  return (
+    <div className="not-prose my-4 box-border w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain rounded-2xl border border-zinc-200 bg-white [scrollbar-width:thin]">
+      <table
+        className="w-max min-w-full max-w-none border-collapse text-left text-[12.5px] leading-relaxed text-zinc-900 md:text-[14px]"
+        {...props}
+      >
+        {children}
+      </table>
+    </div>
+  );
+},
 
   thead({ children, ...props }: any) {
     return (
@@ -5550,25 +5601,34 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
   },
 
   th({ children, ...props }: any) {
-    return (
-      <th className="whitespace-nowrap px-3 py-2.5 font-bold text-zinc-600" {...props}>
-        {children}
-      </th>
-    );
-  },
+  return (
+    <th
+      className="border-b border-zinc-200 bg-zinc-50 px-3 py-2.5 align-top text-[12px] font-semibold text-zinc-800 md:text-[13px]"
+      {...props}
+    >
+      {children}
+    </th>
+  );
+},
 
-  td({ children, ...props }: any) {
-    return (
-      <td className="px-3 py-2.5 align-top font-medium text-zinc-900" {...props}>
-        {children}
-      </td>
-    );
-  },
+td({ children, ...props }: any) {
+  return (
+    <td
+      className="border-b border-zinc-100 px-3 py-2.5 align-top text-[12px] text-zinc-800 md:text-[13px]"
+      {...props}
+    >
+      {children}
+    </td>
+  );
+},
 
   // ✅ Lista ordenada con contador “badge” (como tu captura)
       ol({ children, ...props }: any) {
   return (
-    <ol className="vonu-md-list vonu-md-ol" {...props}>
+    <ol
+      className="my-3 box-border list-decimal space-y-1.5 pl-8 pr-1 text-[15px] leading-[1.7] text-zinc-900 marker:text-zinc-500"
+      {...props}
+    >
       {children}
     </ol>
   );
@@ -5576,7 +5636,10 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
 
 ul({ children, ...props }: any) {
   return (
-    <ul className="vonu-md-list vonu-md-ul" {...props}>
+    <ul
+      className="my-3 box-border list-disc space-y-1.5 pl-7 pr-1 text-[15px] leading-[1.7] text-zinc-900 marker:text-zinc-500"
+      {...props}
+    >
       {children}
     </ul>
   );
@@ -5584,7 +5647,10 @@ ul({ children, ...props }: any) {
 
 li({ children, ...props }: any) {
   return (
-    <li className="vonu-md-li" {...props}>
+    <li
+      className="min-w-0 pl-1 [overflow-wrap:anywhere]"
+      {...props}
+    >
       {children}
     </li>
   );
@@ -6303,6 +6369,11 @@ const showHardLimitWarning =
   const sortedThreads = useMemo(() => {
     return [...threads].sort((a, b) => b.updatedAt - a.updatedAt);
   }, [threads]);
+
+  const visibleSortedThreads = useMemo(() => {
+  if (!isLoggedIn) return [];
+  return sortedThreads;
+}, [isLoggedIn, sortedThreads]);
 
   const userMsgCountInThread = useMemo(() => messages.filter((m) => m.role === "user").length, [messages]);
 
