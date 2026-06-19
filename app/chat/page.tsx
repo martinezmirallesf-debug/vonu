@@ -1393,6 +1393,158 @@ function readStoredThreadsFromLocalStorage() {
   return null;
 }
 
+function normalizeRemoteThreadForClient(raw: any): ChatThread | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const id =
+    typeof raw.id === "string" && raw.id.trim()
+      ? raw.id.trim()
+      : null;
+
+  if (!id) return null;
+
+  const rawMessages = Array.isArray(raw.messages) ? raw.messages : [];
+
+  const messages: Message[] = rawMessages
+    .map((m: any) => {
+      const role =
+        m?.role === "user" || m?.role === "assistant"
+          ? m.role
+          : null;
+
+      if (!role) return null;
+
+      const text =
+        typeof m?.text === "string"
+          ? m.text
+          : typeof m?.content === "string"
+            ? m.content
+            : "";
+
+      const imageThumb =
+        typeof m?.imageThumb === "string" && m.imageThumb.startsWith("data:image")
+          ? m.imageThumb
+          : undefined;
+
+      if (!text.trim() && !imageThumb) return null;
+
+      const msg: Message = {
+        id:
+          typeof m?.id === "string" && m.id.trim()
+            ? m.id.trim()
+            : crypto.randomUUID(),
+        role,
+        text,
+        imageThumb,
+        streaming: false,
+        pizarra: typeof m?.pizarra === "string" ? m.pizarra : null,
+        boardImageB64: null,
+        boardImagePlacement: null,
+      };
+
+      if (typeof m?.revealMs === "number" && Number.isFinite(m.revealMs)) {
+        msg.revealMs = m.revealMs;
+      }
+
+      return msg;
+    })
+    .filter(Boolean) as Message[];
+
+  if (!messages.length) return null;
+
+  const rawTitle =
+    typeof raw.title === "string" && raw.title.trim()
+      ? raw.title.trim()
+      : "Nueva consulta";
+
+  const firstUserText =
+    messages.find((m) => m.role === "user" && typeof m.text === "string" && m.text.trim())
+      ?.text ?? "";
+
+  const title =
+    shouldAutoTitleThread(rawTitle) && firstUserText.trim()
+      ? makeSmartThreadTitle(firstUserText)
+      : rawTitle;
+
+  const updatedAt =
+    typeof raw.updatedAt === "number" && Number.isFinite(raw.updatedAt)
+      ? raw.updatedAt
+      : Date.now();
+
+  const mode: ThreadMode = raw.mode === "tutor" ? "tutor" : "chat";
+
+  const level =
+    raw?.tutorProfile?.level === "kid" ||
+    raw?.tutorProfile?.level === "teen" ||
+    raw?.tutorProfile?.level === "adult"
+      ? raw.tutorProfile.level
+      : "adult";
+
+  return {
+    id,
+    title,
+    updatedAt,
+    mode,
+    tutorProfile: { level },
+    messages,
+  };
+}
+
+function pickBetterThread(localThread: ChatThread, cloudThread: ChatThread) {
+  const localCount = localThread.messages?.length ?? 0;
+  const cloudCount = cloudThread.messages?.length ?? 0;
+
+  // Si uno tiene más mensajes, suele ser el más completo.
+  if (cloudCount > localCount) return cloudThread;
+  if (localCount > cloudCount) return localThread;
+
+  const localTitleIsGeneric = shouldAutoTitleThread(localThread.title);
+  const cloudTitleIsGeneric = shouldAutoTitleThread(cloudThread.title);
+
+  // Si el remoto tiene buen título y local sigue genérico, gana remoto.
+  if (localTitleIsGeneric && !cloudTitleIsGeneric) return cloudThread;
+
+  // Si local tiene buen título y remoto sigue genérico, gana local.
+  if (!localTitleIsGeneric && cloudTitleIsGeneric) return localThread;
+
+  // Si tienen lo mismo, gana el más reciente.
+  return cloudThread.updatedAt > localThread.updatedAt
+    ? cloudThread
+    : localThread;
+}
+
+function mergeLocalAndCloudThreads(
+  localThreads: ChatThread[],
+  cloudThreads: ChatThread[]
+) {
+  const byId = new Map<string, ChatThread>();
+
+  for (const thread of localThreads) {
+    if (!thread?.id) continue;
+    byId.set(thread.id, thread);
+  }
+
+  for (const cloudThread of cloudThreads) {
+    if (!cloudThread?.id) continue;
+
+    const localThread = byId.get(cloudThread.id);
+
+    if (!localThread) {
+      byId.set(cloudThread.id, cloudThread);
+      continue;
+    }
+
+    byId.set(
+      cloudThread.id,
+      pickBetterThread(localThread, cloudThread)
+    );
+  }
+
+  return Array.from(byId.values())
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, MAX_STORED_THREADS);
+}
+
 // ✅ regla: tras 1 mensaje, pedir login/pago
 const GUEST_MESSAGE_LIMIT = 1;
 
@@ -3272,10 +3424,25 @@ const threadsRef = useRef<ChatThread[]>([]);
 const [activeThreadId, setActiveThreadId] = useState<string>("");
 const activeThreadIdRef = useRef<string>("");
 const lastCloudSavedAssistantKeyRef = useRef<string>("");
+const cloudHistoryLoadedForUserRef = useRef<string | null>(null);
 
 useEffect(() => {
   threadsRef.current = threads;
 }, [threads]);
+
+useEffect(() => {
+  if (authLoading) return;
+  if (!isLoggedIn) return;
+  if (!authUserId) return;
+
+  const timer = window.setTimeout(() => {
+    loadCloudThreadsOnce();
+  }, 450);
+
+  return () => window.clearTimeout(timer);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [authLoading, isLoggedIn, authUserId]);
 
 // =======================
 // ☁️ HISTORIAL REMOTO — fase 2A
@@ -3413,6 +3580,69 @@ async function deleteThreadFromCloud(threadId: string) {
     }
   } catch (error) {
     console.warn("[Vonu] Error borrando historial remoto:", error);
+  }
+}
+
+async function loadCloudThreadsOnce() {
+  try {
+    if (!isLoggedIn) return;
+    if (!authUserId) return;
+
+    if (cloudHistoryLoadedForUserRef.current === authUserId) {
+      return;
+    }
+
+    cloudHistoryLoadedForUserRef.current = authUserId;
+
+    const token = await getHistoryAccessToken();
+
+    if (!token) {
+      cloudHistoryLoadedForUserRef.current = null;
+      return;
+    }
+
+    const res = await fetch("/api/chat-history", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
+
+    const json = await res.json().catch(() => null);
+
+    if (!res.ok || !json?.ok) {
+      console.warn("[Vonu] No se pudo cargar historial remoto:", json);
+      cloudHistoryLoadedForUserRef.current = null;
+      return;
+    }
+
+    const remoteThreads = Array.isArray(json.threads)
+      ? json.threads.map(normalizeRemoteThreadForClient).filter(Boolean) as ChatThread[]
+      : [];
+
+    if (!remoteThreads.length) return;
+
+    let nextActiveId = activeThreadIdRef.current;
+
+    setThreads((prev) => {
+      const merged = mergeLocalAndCloudThreads(prev, remoteThreads);
+
+      if (!merged.some((t) => t.id === nextActiveId)) {
+        nextActiveId = merged[0]?.id ?? "";
+      }
+
+      return merged;
+    });
+
+    window.setTimeout(() => {
+      if (nextActiveId) {
+        setActiveThreadId(nextActiveId);
+      }
+    }, 0);
+  } catch (error) {
+    console.warn("[Vonu] Error cargando historial remoto:", error);
+    cloudHistoryLoadedForUserRef.current = null;
   }
 }
 
