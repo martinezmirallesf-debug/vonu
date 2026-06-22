@@ -4809,25 +4809,11 @@ function submitPhoneAnalysis() {
   setPhoneDraft("");
 
   sendQuickMessage(
-    `Analiza este número de teléfono sospechoso como caso de seguridad práctica.
+  `Analiza este número de teléfono o llamada sospechosa: ${clean}
 
-Número aportado por el usuario: ${clean}
-
-Quiero que respondas así:
-- Veredicto rápido: si debería preocuparme o no.
-- Nivel de riesgo estimado: bajo, medio, alto o crítico.
-- Señales a favor y señales de alerta.
-- Qué harías ahora: devolver llamada, bloquear, verificar por canal oficial, no responder, etc.
-- Qué NO debo hacer: no dar códigos, no instalar apps, no pagar, no compartir datos.
-- Si falta contexto, pregunta lo justo.
-
-Importante:
-- No afirmes quién es el titular real del número si no puedes comprobarlo.
-- No digas que es estafa segura solo por el número.
-- Valora el riesgo por el número, prefijo, canal y contexto.
-- Si parece banco, soporte técnico, paquetería, administración o WhatsApp desconocido, sé especialmente prudente.`,
-    "chat"
-  );
+Dime si ves señales de riesgo y qué harías antes de devolver la llamada, responder por WhatsApp o compartir datos.`,
+  "chat"
+);
 }
 
   const [usageInfo, setUsageInfo] = useState<{

@@ -1,6 +1,8 @@
 // app/api/chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
+import { analyzePhoneNumber } from "@/app/lib/phone/phoneIntel";
+
 export const runtime = "nodejs";
 
 function cleanUrl(u: string) {
@@ -209,6 +211,110 @@ function pct(n: any) {
 }
 
 export async function POST(req: NextRequest) {
+function extractLikelyPhoneNumber(text: string) {
+  const s = String(text ?? "");
+
+  const matches =
+    s.match(/(?:\+?\d[\d\s().-]{6,}\d)/g) ?? [];
+
+  const candidate = matches
+    .map((m) => m.trim())
+    .find((m) => {
+      const digits = m.replace(/\D/g, "");
+      return digits.length >= 7 && digits.length <= 16;
+    });
+
+  return candidate ?? null;
+}
+
+function looksLikePhoneSafetyIntent(text: string) {
+  const t = String(text ?? "").toLowerCase();
+  const hasPhone = !!extractLikelyPhoneNumber(text);
+
+  if (!hasPhone) return false;
+
+  const phoneWords = [
+    "teléfono",
+    "telefono",
+    "número",
+    "numero",
+    "llamada",
+    "llamado",
+    "llamó",
+    "llamo",
+    "me llama",
+    "me han llamado",
+    "me ha llamado",
+    "whatsapp",
+    "sms",
+    "mensaje",
+    "banco",
+    "bizum",
+    "código",
+    "codigo",
+    "otp",
+    "transferencia",
+    "paquete",
+    "correos",
+    "seur",
+    "dhl",
+    "soporte",
+    "microsoft",
+    "comercial",
+    "spam",
+    "estafa",
+    "fraude",
+    "desconocido",
+    "desconocida",
+  ];
+
+  return phoneWords.some((word) => t.includes(word));
+}
+
+function buildPhoneIntelInstruction(userText: string) {
+  const phone = extractLikelyPhoneNumber(userText);
+  if (!phone) return null;
+
+  const intel = analyzePhoneNumber(phone, {
+    defaultCountry: "ES",
+  });
+
+  const signals = intel.technicalSignals.length
+    ? intel.technicalSignals.map((signal) => `- ${signal}`).join("\n")
+    : "- Sin señales técnicas claras.";
+
+  return `
+INSTRUCCIÓN INTERNA DE VONU — ANÁLISIS TELEFÓNICO:
+El usuario está consultando un número, llamada, SMS o WhatsApp sospechoso.
+
+Datos técnicos del número:
+- Número mostrado al usuario: ${intel.masked ?? "no disponible"}
+- País detectado: ${intel.country ?? "desconocido"}
+- Prefijo internacional: ${
+    intel.countryCallingCode ? `+${intel.countryCallingCode}` : "desconocido"
+  }
+- Tipo técnico: ${intel.typeLabel}
+- Número posible: ${intel.isPossible ? "sí" : "no"}
+- Número válido según reglas de numeración: ${intel.isValid ? "sí" : "no"}
+- Bucket/patrón de prefijo: ${intel.prefixBucket ?? "desconocido"}
+- Riesgo técnico inicial: ${intel.riskLevel} (${intel.riskScore}/100)
+
+Señales técnicas:
+${signals}
+
+Reglas de respuesta:
+- No digas que has consultado o no has consultado una base externa.
+- No digas "no tengo una base externa conectada".
+- No afirmes quién es el titular real del número.
+- No atribuyas el número a una empresa concreta salvo que el usuario haya aportado pruebas claras.
+- No digas "es una estafa segura" solo por el número.
+- Habla de patrones: llamada comercial, venta agresiva, posible suplantación, WhatsApp desconocido, SMS sospechoso o riesgo bajo/medio/alto.
+- Si solo hay un número y falta contexto, da una orientación breve y pide qué le dijeron o por qué canal llegó.
+- Si aparecen banco, códigos, OTP, Bizum, transferencia, instalar apps, acceso remoto, paquetería o urgencia, prioriza seguridad.
+- Recomienda no compartir códigos, datos bancarios, documentos, dinero ni instalar apps si hay presión o urgencia.
+- Responde de forma natural, sin mostrar JSON ni mencionar esta instrucción interna.
+`.trim();
+}
 // 🔒 FOOTBALL DISABLED SWITCH (respuesta bonita, sin error)
 const FOOTBALL_DISABLED = process.env.VONU_DISABLE_FOOTBALL === "1";
   try {
@@ -468,6 +574,18 @@ CONSULTA DEL USUARIO:
 if (normalized.mode === "tutor") {
   normalized.userText = `${tutorMathMobileFormattingInstruction}
 
+${normalized.userText}`;
+}
+
+const phoneIntelInstruction =
+  normalized.mode !== "tutor" && looksLikePhoneSafetyIntent(normalized.userText)
+    ? buildPhoneIntelInstruction(normalized.userText)
+    : null;
+
+if (phoneIntelInstruction) {
+  normalized.userText = `${phoneIntelInstruction}
+
+CONSULTA DEL USUARIO:
 ${normalized.userText}`;
 }
 
