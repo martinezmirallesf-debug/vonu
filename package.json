@@ -13,6 +13,7 @@
     "@supabase/supabase-js": "^2.89.0",
     "framer-motion": "^12.29.0",
     "katex": "^0.16.38",
+    "libphonenumber-js": "^1.13.7",
     "next": "^15.5.9",
     "openai": "^6.15.0",
     "react": "^19.2.3",
