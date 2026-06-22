@@ -9575,6 +9575,61 @@ const neutralIdentityLookup = looksLikeNeutralIdentityLookupFromUserText(previou
 
 const assistantTextForDots = String(m.text ?? "").toLowerCase();
 
+const previousUserTextForDotsLower = String(previousUserMessage?.text ?? "").toLowerCase();
+
+const isPhoneAnalysisPromptForDots =
+  (
+    previousUserTextForDotsLower.includes("número de teléfono") ||
+    previousUserTextForDotsLower.includes("numero de telefono") ||
+    previousUserTextForDotsLower.includes("llamada sospechosa") ||
+    previousUserTextForDotsLower.includes("teléfono o llamada") ||
+    previousUserTextForDotsLower.includes("telefono o llamada")
+  ) &&
+  /(?:\+?\d[\d\s().-]{6,}\d)/.test(previousUserTextForDotsLower);
+
+const assistantClearlyLowRiskPhone =
+  isPhoneAnalysisPromptForDots &&
+  (
+    assistantTextForDots.includes("móvil español válido") ||
+    assistantTextForDots.includes("movil espanol valido") ||
+    assistantTextForDots.includes("móvil válido en españa") ||
+    assistantTextForDots.includes("movil valido en espana") ||
+    assistantTextForDots.includes("número válido") ||
+    assistantTextForDots.includes("numero valido")
+  ) &&
+  (
+    assistantTextForDots.includes("no muestra señales técnicas claras") ||
+    assistantTextForDots.includes("no muestra senales tecnicas claras") ||
+    assistantTextForDots.includes("no veo señales técnicas claras") ||
+    assistantTextForDots.includes("no veo senales tecnicas claras") ||
+    assistantTextForDots.includes("por sí solo") ||
+    assistantTextForDots.includes("por si solo") ||
+    assistantTextForDots.includes("sin más contexto") ||
+    assistantTextForDots.includes("sin mas contexto") ||
+    assistantTextForDots.includes("solo por el número") ||
+    assistantTextForDots.includes("solo por el numero")
+  );
+
+const hasHardPhoneDangerInUserPrompt =
+  previousUserTextForDotsLower.includes("banco") ||
+  previousUserTextForDotsLower.includes("bizum") ||
+  previousUserTextForDotsLower.includes("transferencia") ||
+  previousUserTextForDotsLower.includes("código sms") ||
+  previousUserTextForDotsLower.includes("codigo sms") ||
+  previousUserTextForDotsLower.includes("otp") ||
+  previousUserTextForDotsLower.includes("cargo") ||
+  previousUserTextForDotsLower.includes("tarjeta") ||
+  previousUserTextForDotsLower.includes("instalar") ||
+  previousUserTextForDotsLower.includes("anydesk") ||
+  previousUserTextForDotsLower.includes("teamviewer") ||
+  previousUserTextForDotsLower.includes("acceso remoto") ||
+  previousUserTextForDotsLower.includes("dni") ||
+  previousUserTextForDotsLower.includes("contraseña") ||
+  previousUserTextForDotsLower.includes("contrasena");
+
+const assistantClearlyLowRiskPhoneForDots =
+  assistantClearlyLowRiskPhone && !hasHardPhoneDangerInUserPrompt;
+
 const assistantClearlyLowRiskDating =
   (
     assistantTextForDots.includes("tinder") ||
@@ -9619,7 +9674,9 @@ const finalRiskStatus = neutralIdentityLookup
   ? "safe"
   : assistantClearlyLowRiskDating
     ? "safe"
-    : assistantRiskStatus ?? userRiskStatus;
+    : assistantClearlyLowRiskPhoneForDots
+      ? "safe"
+      : assistantRiskStatus ?? userRiskStatus;
 
 if (!finalRiskStatus) return null;
 
