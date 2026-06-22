@@ -1681,6 +1681,53 @@ function VonuCopyBlock({ kind, text }: { kind: string; text: string }) {
   );
 }
 
+function renderTextWithInlineExponents(text: string, keyPrefix = "exp") {
+  const s = String(text ?? "");
+  if (!s) return s;
+
+  // Convierte texto normal tipo:
+  // (1+0,08)^2  -> (1+0,08)² visualmente como <sup>2</sup>
+  // x^n         -> xⁿ visualmente como <sup>n</sup>
+  // NO toca KaTeX porque renderChildrenWithFractions ya evita entrar en elementos .katex.
+  const re = /\^(?:\{([^}\n]{1,12})\}|([A-Za-z0-9]{1,6}))/g;
+
+  const parts: ReactNode[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let count = 0;
+
+  while ((m = re.exec(s)) !== null) {
+    const start = m.index;
+    const end = re.lastIndex;
+
+    if (start > last) {
+      parts.push(s.slice(last, start));
+    }
+
+    const exp = String(m[1] ?? m[2] ?? "").trim();
+
+    parts.push(
+      <sup
+        key={`${keyPrefix}-sup-${count}`}
+        className="ml-[1px] align-super text-[0.72em] font-semibold leading-none"
+      >
+        {exp}
+      </sup>
+    );
+
+    last = end;
+    count++;
+  }
+
+  if (!parts.length) return s;
+
+  if (last < s.length) {
+    parts.push(s.slice(last));
+  }
+
+  return parts;
+}
+
 function renderTextWithFractions(text: string) {
   const s = normalizeRepeatedVariableText(String(text ?? ""));
   if (!s) return s;
@@ -1696,9 +1743,14 @@ function renderTextWithFractions(text: string) {
   // - m/s
   // - kg/m3
   // - N/m
+  //
+  // Además, si detecta algo tipo 30.000/(1+0,08), no fuerza fracción rara.
   const re = /(\([^()\n]+\)|\d+)\s*\/\s*(\([^()\n]+\)|\d+)/g;
 
-  const parts: Array<string | { a: string; b: string }> = [];
+  const parts: Array<
+    | { type: "text"; value: string }
+    | { type: "frac"; a: string; b: string }
+  > = [];
 
   let last = 0;
   let m: RegExpExecArray | null;
@@ -1707,47 +1759,59 @@ function renderTextWithFractions(text: string) {
     const start = m.index;
     const end = re.lastIndex;
 
-    if (start > last) parts.push(s.slice(last, start));
+    const before = s[start - 1] ?? "";
+    const after = s[end] ?? "";
 
-        const a = String(m[1] ?? "").trim();
-    const b = String(m[2] ?? "").trim();
-
-    const before = start > 0 ? s[start - 1] : "";
-    const after = end < s.length ? s[end] : "";
-
-    // Evita romper números con separador de miles o decimal:
-    // 4.000/1,10
-    // 12.000/1,1664
-    // 10,5/2,3
-    //
-    // Antes estaba cogiendo "000/1" dentro de "4.000/1,10".
     const isInsideDecimalOrThousandsNumber =
       /[A-Za-z0-9.,]/.test(before) || /[A-Za-z0-9.,]/.test(after);
 
     if (isInsideDecimalOrThousandsNumber) {
-      parts.push(s.slice(start, end));
-      last = end;
       continue;
     }
 
-    const isPureNumericOrParen =
-      (/^\d+$/.test(a) || /^\([^()\n]+\)$/.test(a)) &&
-      (/^\d+$/.test(b) || /^\([^()\n]+\)$/.test(b));
-
-    if (isPureNumericOrParen) {
-      parts.push({ a, b });
-    } else {
-      parts.push(s.slice(start, end));
+    if (start > last) {
+      parts.push({ type: "text", value: s.slice(last, start) });
     }
+
+    parts.push({
+      type: "frac",
+      a: String(m[1] ?? "").trim(),
+      b: String(m[2] ?? "").trim(),
+    });
 
     last = end;
   }
 
-  if (last < s.length) parts.push(s.slice(last));
+  if (last < s.length) {
+    parts.push({ type: "text", value: s.slice(last) });
+  }
 
-  return parts.map((p, i) => {
-    if (typeof p === "string") return <span key={i}>{p}</span>;
-    return <Fraction key={i} a={p.a} b={p.b} />;
+  if (!parts.length) {
+    return renderTextWithInlineExponents(s, "plain");
+  }
+
+  return parts.map((part, index) => {
+    if (part.type === "text") {
+      return (
+        <Fragment key={`txt-${index}`}>
+          {renderTextWithInlineExponents(part.value, `txt-${index}`)}
+        </Fragment>
+      );
+    }
+
+    return (
+      <span
+        key={`frac-${index}`}
+        className="mx-[2px] inline-flex translate-y-[0.06em] flex-col items-center align-middle text-[0.92em] leading-none"
+      >
+        <span className="border-b border-zinc-700 px-[2px] pb-[1px]">
+          {renderTextWithInlineExponents(part.a, `frac-${index}-a`)}
+        </span>
+        <span className="px-[2px] pt-[1px]">
+          {renderTextWithInlineExponents(part.b, `frac-${index}-b`)}
+        </span>
+      </span>
+    );
   });
 }
 
