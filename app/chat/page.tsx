@@ -4801,6 +4801,34 @@ const [urlInputOpen, setUrlInputOpen] = useState(false);
 const [urlDraft, setUrlDraft] = useState("");
 const [phoneInputOpen, setPhoneInputOpen] = useState(false);
 const [phoneDraft, setPhoneDraft] = useState("");
+function submitPhoneAnalysis() {
+  const clean = phoneDraft.trim();
+  if (!clean) return;
+
+  setPhoneInputOpen(false);
+  setPhoneDraft("");
+
+  sendQuickMessage(
+    `Analiza este número de teléfono sospechoso como caso de seguridad práctica.
+
+Número aportado por el usuario: ${clean}
+
+Quiero que respondas así:
+- Veredicto rápido: si debería preocuparme o no.
+- Nivel de riesgo estimado: bajo, medio, alto o crítico.
+- Señales a favor y señales de alerta.
+- Qué harías ahora: devolver llamada, bloquear, verificar por canal oficial, no responder, etc.
+- Qué NO debo hacer: no dar códigos, no instalar apps, no pagar, no compartir datos.
+- Si falta contexto, pregunta lo justo.
+
+Importante:
+- No afirmes quién es el titular real del número si no puedes comprobarlo.
+- No digas que es estafa segura solo por el número.
+- Valora el riesgo por el número, prefijo, canal y contexto.
+- Si parece banco, soporte técnico, paquetería, administración o WhatsApp desconocido, sé especialmente prudente.`,
+    "chat"
+  );
+}
 
   const [usageInfo, setUsageInfo] = useState<{
   plan_id: string;
@@ -9132,9 +9160,15 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 
         <div className="p-4">
           <input
-            value={phoneDraft}
-            onChange={(e) => setPhoneDraft(e.target.value)}
-            placeholder="+34 600 000 000"
+  value={phoneDraft}
+  onChange={(e) => setPhoneDraft(e.target.value)}
+  onKeyDown={(e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      submitPhoneAnalysis();
+    }
+  }}
+  placeholder="+34 600 000 000"
             className="w-full h-12 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-[16px] text-zinc-900 placeholder:text-zinc-500 outline-none focus:border-zinc-300"
             autoFocus
             inputMode="tel"
@@ -9154,19 +9188,8 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
           </button>
 
           <button
-            type="button"
-            onClick={() => {
-              const clean = phoneDraft.trim();
-              if (!clean) return;
-
-              setPhoneInputOpen(false);
-              setPhoneDraft("");
-
-              sendQuickMessage(
-                `Quiero que analices este número de teléfono y me digas si ves señales de riesgo, fraude o algo importante: ${clean}`,
-                activeThread?.mode ?? "chat"
-              );
-            }}
+  type="button"
+  onClick={submitPhoneAnalysis}
             className="flex-1 h-11 rounded-full bg-[#1a73e8] hover:bg-[#1669c1] text-white text-[14px] font-semibold transition-colors cursor-pointer"
           >
             Analizar
