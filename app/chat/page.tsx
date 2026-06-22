@@ -548,6 +548,69 @@ if (typeof percentScore === "number") {
   return riskStatusFromScore(percentScore);
 }
 
+// ✅ TELÉFONO: solo número válido + sin señal fuerte = verde/neutro.
+// Evita puntos naranjas cuando Vonu solo dice prudencia normal
+// ante un número de teléfono sin contexto peligroso.
+const looksLikeLowRiskPhoneOnlyAnswer =
+  (
+    t.includes("número de teléfono") ||
+    t.includes("numero de telefono") ||
+    t.includes("llamada sospechosa") ||
+    t.includes("móvil válido") ||
+    t.includes("movil valido") ||
+    t.includes("móvil español válido") ||
+    t.includes("movil espanol valido") ||
+    t.includes("móvil en españa") ||
+    t.includes("movil en espana")
+  ) &&
+  (
+    t.includes("solo por el número") ||
+    t.includes("solo por el numero") ||
+    t.includes("por sí solo") ||
+    t.includes("por si solo") ||
+    t.includes("no veo una señal técnica fuerte") ||
+    t.includes("no veo una senal tecnica fuerte") ||
+    t.includes("no se ve una señal técnica fuerte") ||
+    t.includes("no se ve una senal tecnica fuerte") ||
+    t.includes("no muestra señales claras") ||
+    t.includes("no muestra senales claras") ||
+    t.includes("no demuestra estafa") ||
+    t.includes("no prueba una estafa") ||
+    t.includes("riesgo bajo")
+  );
+
+const hasRealPhoneDangerContext =
+  t.includes("riesgo alto") ||
+  t.includes("riesgo muy alto") ||
+  t.includes("riesgo crítico") ||
+  t.includes("riesgo critico") ||
+  t.includes("estafa clara") ||
+  t.includes("intento de estafa") ||
+  t.includes("suplantación clara") ||
+  t.includes("suplantacion clara") ||
+  t.includes("parece phishing") ||
+  t.includes("parece vishing") ||
+  t.includes("no des el código") ||
+  t.includes("no des el codigo") ||
+  t.includes("no compartas el código") ||
+  t.includes("no compartas el codigo") ||
+  t.includes("código sms") ||
+  t.includes("codigo sms") ||
+  t.includes("otp") ||
+  t.includes("bizum") ||
+  t.includes("transferencia") ||
+  t.includes("datos bancarios") ||
+  t.includes("instalar una app") ||
+  t.includes("acceso remoto") ||
+  t.includes("diciendo que era tu banco") ||
+  t.includes("diciendo que era mi banco") ||
+  t.includes("bloquear un cargo") ||
+  t.includes("cargo no reconocido");
+
+if (looksLikeLowRiskPhoneOnlyAnswer && !hasRealPhoneDangerContext) {
+  return "safe";
+}
+
   // ✅ OVERRIDE PRIORITARIO: perfil de citas tranquilo/verificado = verde.
 // Esto debe ir arriba del todo, antes de cualquier regla de "precaución".
 const hasLowRiskDatingProfileVerdict =
@@ -5704,7 +5767,7 @@ td({ children, ...props }: any) {
       ol({ children, ...props }: any) {
   return (
     <ol
-      className="my-3 box-border list-decimal space-y-1.5 pl-8 pr-1 text-[15px] leading-[1.7] text-zinc-900 marker:text-zinc-500"
+      className="my-3 box-border list-decimal space-y-1.5 pl-8 pr-1 text-[16px] leading-8 text-zinc-900 marker:text-zinc-500"
       {...props}
     >
       {children}
@@ -5715,7 +5778,7 @@ td({ children, ...props }: any) {
 ul({ children, ...props }: any) {
   return (
     <ul
-      className="my-3 box-border list-disc space-y-1.5 pl-7 pr-1 text-[15px] leading-[1.7] text-zinc-900 marker:text-zinc-500"
+      className="my-3 box-border list-disc space-y-1.5 pl-7 pr-1 text-[16px] leading-8 text-zinc-900 marker:text-zinc-500"
       {...props}
     >
       {children}
