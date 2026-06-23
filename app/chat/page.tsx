@@ -9630,6 +9630,25 @@ const hasHardPhoneDangerInUserPrompt =
 const assistantClearlyLowRiskPhoneForDots =
   assistantClearlyLowRiskPhone && !hasHardPhoneDangerInUserPrompt;
 
+  const hasStrongPhoneFraudContextForDots =
+  isPhoneAnalysisPromptForDots &&
+  (
+    hasHardPhoneDangerInUserPrompt ||
+    assistantTextForDots.includes("no des ningún código") ||
+    assistantTextForDots.includes("no des ningun codigo") ||
+    assistantTextForDots.includes("no facilites ningún código") ||
+    assistantTextForDots.includes("no facilites ningun codigo") ||
+    assistantTextForDots.includes("intento de fraude") ||
+    assistantTextForDots.includes("robarte el código") ||
+    assistantTextForDots.includes("robarte el codigo") ||
+    assistantTextForDots.includes("vaciar tu cuenta") ||
+    assistantTextForDots.includes("los bancos nunca piden códigos") ||
+    assistantTextForDots.includes("los bancos nunca piden codigos") ||
+    assistantTextForDots.includes("contacta directamente con tu banco") ||
+    assistantTextForDots.includes("teléfono oficial de tu banco") ||
+    assistantTextForDots.includes("telefono oficial de tu banco")
+  );
+
 const assistantClearlyLowRiskDating =
   (
     assistantTextForDots.includes("tinder") ||
@@ -9670,13 +9689,15 @@ const assistantClearlyLowRiskDating =
   !assistantTextForDots.includes("amenaza") &&
   !assistantTextForDots.includes("chantaje");
 
-const finalRiskStatus = neutralIdentityLookup
-  ? "safe"
-  : assistantClearlyLowRiskDating
+const finalRiskStatus = hasStrongPhoneFraudContextForDots
+  ? "high"
+  : neutralIdentityLookup
     ? "safe"
-    : assistantClearlyLowRiskPhoneForDots
+    : assistantClearlyLowRiskDating
       ? "safe"
-      : assistantRiskStatus ?? userRiskStatus;
+      : assistantClearlyLowRiskPhoneForDots
+        ? "safe"
+        : assistantRiskStatus ?? userRiskStatus;
 
 if (!finalRiskStatus) return null;
 
