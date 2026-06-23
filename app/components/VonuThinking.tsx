@@ -21,15 +21,15 @@ export default function VonuThinking({
   active = true,
 }: VonuThinkingProps) {
   const palette =
-    status === "danger"
-      ? ["#ff3b30", "#ff3b30", "#ff3b30"]
-      : status === "high"
-      ? ["#ff5a5f", "#ff5a5f", "#ff8a00"]
-      : status === "warning"
-      ? ["#ff8a00", "#ffb000", "#ff8a00"]
-      : status === "safe"
-      ? ["#00c983", "#00c983", "#00c983"]
-      : ["#ff5a5f", "#ffb000", "#00c983"];
+  status === "danger"
+    ? ["#ff3b30", "#ff3b30", "#ff3b30"]
+    : status === "high"
+    ? ["#ff5a5f", "#ff5a5f", "#ff5a5f"]
+    : status === "warning"
+    ? ["#ff8a00", "#ff8a00", "#ff8a00"]
+    : status === "safe"
+    ? ["#00c983", "#00c983", "#00c983"]
+    : ["#ff5a5f", "#ffb000", "#00c983"];
 
   return (
     <span
