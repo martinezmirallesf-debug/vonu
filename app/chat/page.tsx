@@ -5767,7 +5767,7 @@ td({ children, ...props }: any) {
       ol({ children, ...props }: any) {
   return (
     <ol
-      className="my-3 box-border list-decimal space-y-1.5 pl-8 pr-1 text-[16px] leading-8 text-zinc-900 marker:text-zinc-500"
+      className="my-3 box-border list-decimal space-y-1.5 pl-8 pr-1 text-[16.5px] leading-8 text-zinc-900 marker:text-zinc-500 md:text-[17px]"
       {...props}
     >
       {children}
@@ -5778,7 +5778,7 @@ td({ children, ...props }: any) {
 ul({ children, ...props }: any) {
   return (
     <ul
-      className="my-3 box-border list-disc space-y-1.5 pl-7 pr-1 text-[16px] leading-8 text-zinc-900 marker:text-zinc-500"
+      className="my-3 box-border list-disc space-y-1.5 pl-7 pr-1 text-[16.5px] leading-8 text-zinc-900 marker:text-zinc-500 md:text-[17px]"
       {...props}
     >
       {children}
@@ -5851,8 +5851,8 @@ li({ children, ...props }: any) {
   <p
     className={
       looksMathLine
-        ? "my-4 leading-8 text-zinc-900 font-medium"
-        : "my-3 leading-8 text-zinc-900"
+        ? "my-4 text-[16.5px] leading-8 text-zinc-900 font-medium md:text-[17px]"
+        : "my-3 text-[16.5px] leading-8 text-zinc-900 md:text-[17px]"
     }
     {...props}
   >
