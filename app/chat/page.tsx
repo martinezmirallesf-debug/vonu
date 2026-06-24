@@ -548,6 +548,88 @@ if (typeof percentScore === "number") {
   return riskStatusFromScore(percentScore);
 }
 
+// ✅ BANCO + LLAMADA + CÓDIGO SMS/OTP = riesgo alto.
+// Este patrón debe ganar antes que las reglas suaves de teléfono.
+// Es vishing: phishing por llamada, normalmente usando códigos SMS/OTP.
+const hasBankPhoneCodeFraud =
+  (
+    t.includes("vishing") ||
+    t.includes("phishing por llamada") ||
+    t.includes("phishing por voz") ||
+    t.includes("llamada falsa") ||
+    t.includes("llamada de banco") ||
+    t.includes("llamada del banco") ||
+    t.includes("diciendo que era del banco") ||
+    t.includes("diciendo que era tu banco") ||
+    t.includes("diciendo que era mi banco") ||
+    t.includes("supuesto banco") ||
+    t.includes("banco")
+  ) &&
+  (
+    t.includes("código sms") ||
+    t.includes("codigo sms") ||
+    t.includes("código de verificación") ||
+    t.includes("codigo de verificacion") ||
+    t.includes("código de seguridad") ||
+    t.includes("codigo de seguridad") ||
+    t.includes("otp") ||
+    t.includes("clave de un solo uso") ||
+    t.includes("clave temporal") ||
+    t.includes("no des ningún código") ||
+    t.includes("no des ningun codigo") ||
+    t.includes("no compartas el código") ||
+    t.includes("no compartas el codigo") ||
+    t.includes("no dar ningún código") ||
+    t.includes("no dar ningun codigo")
+  );
+
+const hasCrossChannelPhoneFraud =
+  (
+    t.includes("vishing") ||
+    t.includes("phishing por llamada") ||
+    t.includes("llamada falsa") ||
+    t.includes("llamada") ||
+    t.includes("por teléfono") ||
+    t.includes("por telefono")
+  ) &&
+  (
+    t.includes("whatsapp") ||
+    t.includes("seguir por whatsapp") ||
+    t.includes("continuar por whatsapp") ||
+    t.includes("llevarte a whatsapp") ||
+    t.includes("sacarte del canal oficial")
+  ) &&
+  (
+    t.includes("banco") ||
+    t.includes("cargo") ||
+    t.includes("operación") ||
+    t.includes("operacion") ||
+    t.includes("cuenta") ||
+    t.includes("tarjeta")
+  );
+
+const hasStrongOtpFraudLanguage =
+  (
+    t.includes("riesgo alto") ||
+    t.includes("intento de fraude") ||
+    t.includes("intento de estafa") ||
+    t.includes("señales claras de intento de fraude") ||
+    t.includes("senales claras de intento de fraude") ||
+    t.includes("señales claras de fraude") ||
+    t.includes("senales claras de fraude")
+  ) &&
+  (
+    t.includes("código sms") ||
+    t.includes("codigo sms") ||
+    t.includes("otp") ||
+    t.includes("código de verificación") ||
+    t.includes("codigo de verificacion")
+  );
+
+if (hasBankPhoneCodeFraud || hasCrossChannelPhoneFraud || hasStrongOtpFraudLanguage) {
+  return "high";
+}
+
 // ✅ TELÉFONO: solo número válido + sin señal fuerte = verde/neutro.
 // Evita puntos naranjas cuando Vonu solo dice prudencia normal
 // ante un número de teléfono sin contexto peligroso.
@@ -978,6 +1060,11 @@ if (hasLowRiskDatingProfileVerdict && !hasRealDatingDangerInVerdict) {
     "script malicioso",
     "archivo .sh",
     "ip directa",
+    "vishing confirmado",
+"robo de cuenta bancaria",
+"autorizar operaciones",
+"autorizar una operación",
+"autorizar una operacion",
   ];
 
   if (dangerSignals.some((s) => t.includes(s))) {
@@ -1026,6 +1113,28 @@ if (hasLowRiskDatingProfileVerdict && !hasRealDatingDangerInVerdict) {
     "enlace malicioso",
     "script para sistemas tipo linux",
     "puerto raro",
+    "vishing",
+"phishing por llamada",
+"phishing por voz",
+"llamada falsa",
+"código sms",
+"codigo sms",
+"código de verificación",
+"codigo de verificacion",
+"otp",
+"intento de fraude",
+"señales claras de intento de fraude",
+"senales claras de intento de fraude",
+"no des ningún código",
+"no des ningun codigo",
+"no dar ningún código",
+"no dar ningun codigo",
+"no compartas el código",
+"no compartas el codigo",
+"supuesto banco",
+"sacarte del canal oficial",
+"seguir por whatsapp",
+"continuar por whatsapp",
   ];
 
   if (highSignals.some((s) => t.includes(s))) {
