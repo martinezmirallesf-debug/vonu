@@ -4059,6 +4059,9 @@ const [realtimeStatus, setRealtimeStatus] = useState<RealtimeVoiceStatus>("idle"
 const realtimeConnRef = useRef<RealtimeVoiceConnection | null>(null);
 const realtimeLastUserTextRef = useRef<string>("");
 const realtimeWriteBusyRef = useRef(false);
+const realtimeLimitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+const realtimeWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+const realtimeStoppedByLimitRef = useRef(false);
 const voiceWriteGuardRef = useRef(makeVoiceWriteGuard());
 const realtimeManualCloseRef = useRef(false);
 
@@ -4319,8 +4322,70 @@ function sendTextToRealtime(text: string) {
   }
 }
 
+function clearRealtimeLimitTimers() {
+  try {
+    if (realtimeLimitTimerRef.current) {
+      clearTimeout(realtimeLimitTimerRef.current);
+    }
+
+    if (realtimeWarningTimerRef.current) {
+      clearTimeout(realtimeWarningTimerRef.current);
+    }
+  } catch {}
+
+  realtimeLimitTimerRef.current = null;
+  realtimeWarningTimerRef.current = null;
+}
+
+function openVoiceTopupModal() {
+  setPayMsg(
+    "Se han agotado tus minutos de voz. Puedes seguir usando el chat escrito, o hacer una recarga para continuar hablando con Vonu."
+  );
+
+  setBilling("topup");
+  setPlan("free");
+  setPaywallOpen(true);
+}
+
+function armRealtimeVoiceLimit(secondsLeft: number) {
+  clearRealtimeLimitTimers();
+
+  const safeSecondsLeft = Math.max(0, Math.floor(Number(secondsLeft || 0)));
+
+  if (safeSecondsLeft <= 0) {
+    realtimeStoppedByLimitRef.current = true;
+    setVoiceModeOff();
+    openVoiceTopupModal();
+    return;
+  }
+
+  // Aviso suave cuando queda menos de 1 minuto.
+  if (safeSecondsLeft > 30) {
+    realtimeWarningTimerRef.current = setTimeout(() => {
+      setMicMsg("Te queda menos de 1 minuto de voz.");
+      setTimeout(() => setMicMsg(null), 3500);
+    }, Math.max(0, (safeSecondsLeft - 30) * 1000));
+  }
+
+  // Corte automático al agotar minutos.
+  realtimeLimitTimerRef.current = setTimeout(() => {
+    realtimeStoppedByLimitRef.current = true;
+
+    setMicMsg("Se han agotado tus minutos de voz.");
+    setTimeout(() => setMicMsg(null), 2500);
+
+    setVoiceModeOff();
+
+    // Damos un pequeño margen para que se registre el consumo realtime.
+    setTimeout(() => {
+      refreshUsageInfo();
+      openVoiceTopupModal();
+    }, 900);
+  }, safeSecondsLeft * 1000);
+}
 
 function setVoiceModeOff() {
+    clearRealtimeLimitTimers();
   voiceModeRef.current = false;
   setVoiceMode(false);
   setRealtimeStatus("closed");
@@ -4377,6 +4442,8 @@ function toggleDictation() {
   }
   // ✅ Si estás en modo conversación, el dictado no se usa (evita conflicto)
   if (voiceModeRef.current) {
+        clearRealtimeLimitTimers();
+    realtimeStoppedByLimitRef.current = false;
     setMicMsg("Apaga el modo conversación para usar dictado.");
     setTimeout(() => setMicMsg(null), 2200);
     return;
@@ -4458,6 +4525,10 @@ async function toggleConversation() {
   setRealtimeStatus("connecting");
 
   try {
+    const realtimeSecondsLeftBeforeStart = Math.max(
+  0,
+  Number(usageInfo?.realtime_seconds_left ?? 0)
+);
     const conn = await startRealtimeVoice({
       onStatus: (status) => {
         setRealtimeStatus(status);
@@ -4481,9 +4552,14 @@ async function toggleConversation() {
         }
       },
 
-            onUsageTracked: () => {
-        refreshUsageInfo();
-      },
+        onUsageTracked: () => {
+  refreshUsageInfo();
+
+  if (realtimeStoppedByLimitRef.current) {
+    realtimeStoppedByLimitRef.current = false;
+    openVoiceTopupModal();
+  }
+},
 
       onError: (message) => {
         realtimeManualCloseRef.current = false;
@@ -4524,6 +4600,8 @@ async function toggleConversation() {
     setVoiceMode(true);
     setTtsEnabled(false);
     setMicMsg("✅ Conectando modo conversación…");
+
+    armRealtimeVoiceLimit(realtimeSecondsLeftBeforeStart);
   } catch (e: any) {
     try {
       realtimeConnRef.current?.stop();
