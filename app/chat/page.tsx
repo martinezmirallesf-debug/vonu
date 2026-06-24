@@ -1720,6 +1720,28 @@ function mergeLocalAndCloudThreads(
 // ✅ regla: tras 1 mensaje, pedir login/pago
 const GUEST_MESSAGE_LIMIT = 1;
 
+const GUEST_FREE_MESSAGE_USED_KEY = "vonu_guest_free_message_used_v1";
+
+function hasGuestFreeMessageBeenUsed() {
+  if (typeof window === "undefined") return false;
+
+  try {
+    return window.localStorage.getItem(GUEST_FREE_MESSAGE_USED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markGuestFreeMessageAsUsed() {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(GUEST_FREE_MESSAGE_USED_KEY, "1");
+  } catch {
+    // No rompemos el envío si localStorage falla.
+  }
+}
+
 function isDesktopPointer() {
   if (typeof window === "undefined") return true;
   return window.matchMedia?.("(pointer: fine)")?.matches ?? true;
@@ -6904,21 +6926,45 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
 }
 
   function createThreadAndActivate() {
-    const t = makeNewThread();
-    setThreads((prev) => [t, ...prev]);
-    setActiveThreadId(t.id);
-    setMenuOpen(false);
-    setUiError(null);
-    setInput("");
-    setImagePreview(null);
-
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-      shouldStickToBottomRef.current = false;
-    });
-
-    if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+  // ✅ Nueva consulta pasa a ser feature de cuenta/plan.
+  // Invitado: no puede reiniciar el contador creando hilos nuevos.
+  if (!isLoggedIn) {
+    setLoginMsg(
+      "Para abrir nuevas consultas y guardar tu historial, inicia sesión."
+    );
+    openLoginModal("signin");
+    return;
   }
+
+  // ✅ Usuario registrado sin plan activo:
+  // puede seguir dentro de su consulta/límite, pero no crear consultas infinitas.
+  if (!isPro) {
+    setPayMsg(
+      "Nueva consulta es una función de los planes de Vonu. Puedes seguir en tu consulta actual o mejorar tu plan."
+    );
+    openPlansModal();
+    return;
+  }
+
+  const t = makeNewThread();
+
+  setThreads((prev) => [t, ...prev]);
+  setActiveThreadId(t.id);
+  setMenuOpen(false);
+  setUiError(null);
+  setInput("");
+  setImagePreview(null);
+  setPdfPreview(null);
+  setShowContextualFileCard(false);
+  setContextualFilePrompt("");
+
+  requestAnimationFrame(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    shouldStickToBottomRef.current = false;
+  });
+
+  if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+}
 
  function activateThread(id: string) {
   setActiveThreadId(id);
@@ -7096,16 +7142,24 @@ queueSaveThreadToCloud(targetThreadId, 350);
   function enforceLimitIfNeeded(): boolean {
   const nextUserCount = userMsgCountInThread + 1;
 
-  // ✅ Invitado: solo 1 mensaje de prueba
+  // ✅ Invitado: solo 1 mensaje gratuito total por navegador.
+  // No depende solo del hilo actual, para evitar el bypass de abrir "Nueva consulta".
   if (!isLoggedIn) {
-    if (nextUserCount <= GUEST_MESSAGE_LIMIT) return false;
+    const guestFreeAlreadyUsed = hasGuestFreeMessageBeenUsed();
 
-    setLoginMsg("Puedes probar Vonu con 1 mensaje. Para seguir, inicia sesión.");
-    openLoginModal("signin");
-    return true;
+    if (guestFreeAlreadyUsed || nextUserCount > GUEST_MESSAGE_LIMIT) {
+      setLoginMsg(
+        "Puedes probar Vonu con 1 mensaje gratuito. Para seguir, inicia sesión."
+      );
+      openLoginModal("signin");
+      return true;
+    }
+
+    markGuestFreeMessageAsUsed();
+    return false;
   }
 
-  // ✅ Usuario loggeado: el límite real lo controla Supabase / analyze.ts
+  // ✅ Usuario logueado: el límite real lo controla Supabase / usage.
   return false;
 }
 
