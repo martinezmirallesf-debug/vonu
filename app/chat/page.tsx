@@ -10094,7 +10094,7 @@ if (!finalRiskStatus) return null;
 </div>
 
 {isDraggingFile && !paywallOpen ? (
-  <div className="fixed inset-0 z-[120] pointer-events-none">
+  <div className="fixed inset-0 z-[9999] pointer-events-none">
     <div className="absolute inset-0 bg-white/42 backdrop-blur-[6px]" />
 
     <div className="absolute inset-0 flex items-center justify-center px-6">
