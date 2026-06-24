@@ -3286,6 +3286,12 @@ await refreshUsageInfo();
   setAuthUserId(null);
   setAuthUserName(null);
   setIsPro(false);
+  setUsageInfo(null);
+  setPayMsg(null);
+  setToastMsg(null);
+  setPendingCheckout(null);
+  setPlan("free");
+  setBilling("monthly");
   resetVisibleHistoryForLoggedOut();
   return;
 }
@@ -3675,7 +3681,11 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
     setPaywallOpen(false);
     setPendingCheckout(null);
     setAuthLoading(false);
-
+setUsageInfo(null);
+setPayMsg(null);
+setToastMsg(null);
+setPlan("free");
+setBilling("monthly");
     resetVisibleHistoryForLoggedOut();
   } catch {
     resetVisibleHistoryForLoggedOut();
