@@ -4418,6 +4418,16 @@ function openVoiceTopupModal() {
   setPaywallOpen(true);
 }
 
+function openMessageLimitTopupModal() {
+  setPayMsg(
+    "Has llegado al límite de mensajes de este mes. Puedes esperar a la renovación mensual o hacer una recarga para seguir usando Vonu ahora."
+  );
+
+  setBilling("topup");
+  setPlan("free");
+  setPaywallOpen(true);
+}
+
 function armRealtimeVoiceLimit(secondsLeft: number) {
   clearRealtimeLimitTimers();
 
@@ -5172,6 +5182,23 @@ Dime si ves señales de riesgo y qué harías antes de devolver la llamada, resp
   realtime_seconds_limit: number;
   realtime_seconds_left: number;
 } | null>(null);
+
+function hasNoMessagesLeft() {
+  if (!isLoggedIn) return false;
+  if (!usageInfo) return false;
+
+  return Number(usageInfo.messages_left ?? 0) <= 0;
+}
+
+function blockSendBecauseMessageLimitReached() {
+  setIsTyping(false);
+  sendGuardRef.current.busy = false;
+
+  setMicMsg("Has llegado al límite de mensajes de este mes.");
+  setTimeout(() => setMicMsg(null), 2200);
+
+  openMessageLimitTopupModal();
+}
 
   // =========================
   // ✅ ANTI-DUPLICADO / SEND LOCK
@@ -7323,6 +7350,10 @@ queueSaveThreadToCloud(targetThreadId, 350);
 ) {
 
   if (authLoading) return;
+  if (hasNoMessagesLeft()) {
+  blockSendBecauseMessageLimitReached();
+  return;
+}
 
     if (enforceLimitIfNeeded()) return;
 
@@ -7515,14 +7546,57 @@ body: JSON.stringify({
 
       const data = await res.json().catch(() => ({} as any));
 
-      if (data?.usage) {
+if (data?.usage) {
   setUsageInfo(data.usage);
 }
 
-      const fullText =
-        typeof data?.text === "string" && data.text.trim()
-          ? data.text
-          : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
+const isUsageLimitGuard =
+  data?.model === "usage-limit-guard" ||
+  String(data?.text ?? "").toLowerCase().includes("límite alcanzado") ||
+  String(data?.text ?? "").toLowerCase().includes("limite alcanzado");
+
+const fullText =
+  typeof data?.text === "string" && data.text.trim()
+    ? data.text
+    : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
+
+if (isUsageLimitGuard) {
+  setThreads((prev) =>
+    prev.map((t) => {
+      if (t.id !== targetThreadId) return t;
+
+      return {
+        ...t,
+        updatedAt: Date.now(),
+        messages: t.messages.map((m) =>
+          m.id === assistantId
+            ? {
+                ...m,
+                text: fullText,
+                streaming: false,
+                pizarra: null,
+                boardImageB64: null,
+                boardImagePlacement: null,
+              }
+            : m
+        ),
+      };
+    })
+  );
+
+  setIsTyping(false);
+  sendGuardRef.current.busy = false;
+
+  openMessageLimitTopupModal();
+
+  queueSaveThreadToCloud(targetThreadId, 700);
+
+  if (isDesktopPointer()) {
+    setTimeout(() => textareaRef.current?.focus(), 60);
+  }
+
+  return;
+}
 
       const boardImageB64 = typeof data?.boardImageB64 === "string" && data.boardImageB64 ? data.boardImageB64 : null;
 
@@ -7715,15 +7789,20 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   async function sendMessage() {
   if (authLoading) return;
 
-    if (enforceLimitIfNeeded()) return;
+  if (hasNoMessagesLeft()) {
+    blockSendBecauseMessageLimitReached();
+    return;
+  }
 
-    if (isBlockedByPaywall) {
-      openPlansModal();
-      return;
-    }
+  if (enforceLimitIfNeeded()) return;
 
-    if (!canSend) return;
-if (!activeThread) return;
+  if (isBlockedByPaywall) {
+    openPlansModal();
+    return;
+  }
+
+  if (!canSend) return;
+  if (!activeThread) return;
 
 // ✅ SEND LOCK (anti doble click / Enter repetido / carreras)
 if (sendGuardRef.current.busy) return;
@@ -9732,12 +9811,21 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
         Has llegado al límite de mensajes de este mes
       </div>
       <div className="mt-1 text-[13px] text-zinc-700 leading-6">
-        Puedes seguir usando Vonu mejorando tu plan y, más adelante, también podrás añadir mensajes extra si lo necesitas.
+        Puedes esperar a la renovación mensual o añadir una recarga para seguir usando Vonu ahora.
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <button
+          type="button"
+          onClick={openMessageLimitTopupModal}
+          className="h-9 px-4 rounded-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-[12px] font-semibold transition"
+        >
+          Ver recargas
+        </button>
+
+        <button
+          type="button"
           onClick={handleOpenPlansCTA}
-          className="h-9 px-4 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold"
+          className="h-9 px-4 rounded-full bg-white hover:bg-zinc-50 active:scale-95 text-zinc-900 border border-blue-200 text-[12px] font-semibold transition"
         >
           Ver planes
         </button>
