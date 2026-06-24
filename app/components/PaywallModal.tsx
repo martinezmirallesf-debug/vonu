@@ -50,18 +50,21 @@ export default function PaywallModal({
   if (!paywallOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[70]">
+  <div
+    className="fixed inset-0 isolate overflow-hidden"
+    style={{ zIndex: 2147483647 }}
+  >
       <div
-        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-        onClick={closePaywall}
-        aria-hidden="true"
-      />
+  className="absolute inset-0 z-0 bg-black/30 backdrop-blur-sm"
+  onClick={closePaywall}
+  aria-hidden="true"
+/>
 
       <div
-        className="relative h-full w-full flex items-center justify-center px-3 py-3"
-        onClick={(e) => e.stopPropagation()}
-        style={{ fontFamily: "var(--font-poppins), ui-sans-serif, system-ui" }}
-      >
+  className="relative z-10 h-full w-full flex items-center justify-center px-3 py-3"
+  onClick={(e) => e.stopPropagation()}
+  style={{ fontFamily: "var(--font-poppins), ui-sans-serif, system-ui" }}
+>
         <div
           className="w-full max-w-[980px] rounded-[28px] bg-white shadow-[0_30px_100px_rgba(0,0,0,0.22)] border border-zinc-200 overflow-hidden"
           style={{ height: "min(760px, calc(var(--vvh, 100dvh) - 24px))" }}
