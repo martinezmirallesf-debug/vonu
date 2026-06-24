@@ -4481,6 +4481,10 @@ async function toggleConversation() {
         }
       },
 
+            onUsageTracked: () => {
+        refreshUsageInfo();
+      },
+
       onError: (message) => {
         realtimeManualCloseRef.current = false;
         setMicMsg(message || "Error en el modo conversación.");

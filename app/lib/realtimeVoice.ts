@@ -1,3 +1,5 @@
+import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
+
 export type RealtimeVoiceStatus =
   | "idle"
   | "connecting"
@@ -13,6 +15,7 @@ type RealtimeVoiceOptions = {
   onEvent?: (event: any) => void;
   onAssistantFinalText?: (text: string) => void;
   onUserFinalTranscript?: (text: string) => void;
+  onUsageTracked?: () => void;
 };
 
 export type RealtimeVoiceConnection = {
@@ -139,18 +142,21 @@ function extractAssistantTranscriptFromEvent(
 export async function startRealtimeVoice(
   options: RealtimeVoiceOptions = {}
 ): Promise<RealtimeVoiceConnection> {
-  const {
+    const {
     onStatus,
     onError,
     onEvent,
     onAssistantFinalText,
     onUserFinalTranscript,
+    onUsageTracked,
   } = options;
 
-  let lastDeliveredUserTranscript = "";
+    let lastDeliveredUserTranscript = "";
   let lastDeliveredAssistantTranscript = "";
   let assistantTextBuffer = "";
   let stopped = false;
+  let realtimeStartedAt = 0;
+  let realtimeUsageTracked = false;
 
   const setStatus = (status: RealtimeVoiceStatus) => {
     try {
@@ -158,14 +164,60 @@ export async function startRealtimeVoice(
     } catch {}
   };
 
+    async function trackRealtimeUsage() {
+    if (realtimeUsageTracked) return;
+    realtimeUsageTracked = true;
+
+    if (!realtimeStartedAt) return;
+
+    const seconds = Math.max(
+      1,
+      Math.ceil((Date.now() - realtimeStartedAt) / 1000)
+    );
+
+    try {
+      const { data } = await supabaseBrowser.auth.getSession();
+      const token = data?.session?.access_token;
+
+      if (!token) return;
+
+      const res = await fetch("/api/usage/realtime", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+        body: JSON.stringify({ seconds }),
+      });
+
+      if (res.ok) {
+        try {
+          onUsageTracked?.();
+        } catch {}
+      }
+    } catch (error) {
+      console.warn("[Realtime usage] No se pudo registrar consumo:", error);
+    }
+  }
+
   try {
     setStatus("connecting");
+
+        const { data: sessionData } = await supabaseBrowser.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+
+    if (!accessToken) {
+      throw new Error("Para usar el modo conversación necesitas iniciar sesión.");
+    }
 
     const tokenRes = await fetch("/api/realtime/session", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
       },
+      cache: "no-store",
       body: JSON.stringify({}),
     });
 
@@ -364,6 +416,8 @@ export async function startRealtimeVoice(
       sdp: answerSdp,
     });
 
+        realtimeStartedAt = Date.now();
+
     const stop = () => {
   if (stopped) return;
   stopped = true;
@@ -403,7 +457,9 @@ export async function startRealtimeVoice(
     }
   } catch {}
 
-  setStatus("closed");
+    setStatus("closed");
+
+  void trackRealtimeUsage();
 };
 
 const sendText = (text: string) => {
