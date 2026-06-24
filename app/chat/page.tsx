@@ -8236,10 +8236,30 @@ const topPlanLabel =
   const BEST_VALUE_BADGE = "Mejor valor";
 
   function closePaywall() {
-    if (payLoading) return;
-    setPaywallOpen(false);
-    setPayMsg(null);
-  }
+  if (payLoading) return;
+
+  setPaywallOpen(false);
+  setPayMsg(null);
+
+  // Evita que el input se quede visualmente más alto tras cerrar el modal.
+  setInputExpanded(false);
+
+  requestAnimationFrame(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "auto";
+
+    // Si no hay texto, lo dejamos completamente compacto.
+    if (!input.trim()) {
+      textarea.style.height = "";
+      return;
+    }
+
+    // Si hay texto, recalculamos la altura real sin esperar al siguiente onChange.
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  });
+}
 
   // ESC para cerrar paywall / board / rename
   useEffect(() => {
