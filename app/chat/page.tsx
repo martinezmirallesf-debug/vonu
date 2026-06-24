@@ -3102,31 +3102,70 @@ const [pendingCheckout, setPendingCheckout] = useState<{
     }
   }
 
+  async function ensureProfileExists(_u: any) {
+  try {
+    const { data } = await supabaseBrowser.auth.getSession();
+    const token = data?.session?.access_token;
+
+    if (!token) return;
+
+    const res = await fetch("/api/profile/ensure", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+      body: JSON.stringify({}),
+    });
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      console.warn(
+        "[Vonu] No se pudo asegurar profile:",
+        json?.error || res.status
+      );
+    }
+  } catch (error) {
+    console.warn("[Vonu] Error asegurando profile:", error);
+  }
+}
+
   async function refreshAuthSession() {
-    try {
-      const { data } = await supabaseBrowser.auth.getSession();
-      const u = data?.session?.user;
+  try {
+    const { data } = await supabaseBrowser.auth.getSession();
+    const u = data?.session?.user;
 
-      if (!u) {
-        setAuthUserEmail(null);
-        setAuthUserId(null);
-        setAuthUserName(null);
-        return;
-      }
-
-      const profile = computeProfileFromUser(u);
-
-      setAuthUserEmail(profile.email);
-      setAuthUserId(profile.id);
-      setAuthUserName(profile.name);
-    } catch {
+    if (!u) {
       setAuthUserEmail(null);
       setAuthUserId(null);
       setAuthUserName(null);
-    } finally {
-      setAuthLoading(false);
+      setIsPro(false);
+      setUsageInfo(null);
+      setPayMsg(null);
+      setPendingCheckout(null);
+      setPlan("free");
+      setBilling("monthly");
+      return;
     }
+
+    await ensureProfileExists(u);
+
+    const profile = computeProfileFromUser(u);
+
+    setAuthUserEmail(profile.email);
+    setAuthUserId(profile.id);
+    setAuthUserName(profile.name);
+  } catch {
+    setAuthUserEmail(null);
+    setAuthUserId(null);
+    setAuthUserName(null);
+    setIsPro(false);
+    setUsageInfo(null);
+  } finally {
+    setAuthLoading(false);
   }
+}
 
   function decodeMaybe(x: string) {
     try {
@@ -3238,9 +3277,11 @@ const [pendingCheckout, setPendingCheckout] = useState<{
       }
 
       await persistNameIfMissing(after.session.user);
+await ensureProfileExists(after.session.user);
 
-      await refreshAuthSession();
-      await refreshProStatus();
+await refreshAuthSession();
+await refreshProStatus();
+await refreshUsageInfo();
 
       setLoginOpen(false);
       setLoginMsg(null);
@@ -3273,7 +3314,6 @@ const [pendingCheckout, setPendingCheckout] = useState<{
 await refreshAuthSession();
 await refreshProStatus();
 await refreshUsageInfo();
-await refreshUsageInfo();
 
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
         const u = session?.user;
@@ -3297,8 +3337,9 @@ await refreshUsageInfo();
 }
 
         await persistNameIfMissing(u);
+await ensureProfileExists(u);
 
-        const profile = computeProfileFromUser(u);
+const profile = computeProfileFromUser(u);
 
         setAuthUserEmail(profile.email);
         setAuthUserId(profile.id);
@@ -3626,12 +3667,14 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
       }
 
       setLoginOpen(false);
-      setLoginPassword("");
-      setLoginMsg(null);
+setLoginPassword("");
+setLoginMsg(null);
 
-      setTimeout(() => {
-        refreshProStatus();
-      }, 300);
+setTimeout(() => {
+  refreshAuthSession();
+  refreshProStatus();
+  refreshUsageInfo();
+}, 300);
     } catch (e: any) {
       setLoginMsg(e?.message ?? "Error iniciando sesión con contraseña.");
     } finally {
@@ -3677,17 +3720,35 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
     setAuthUserEmail(null);
     setAuthUserId(null);
     setAuthUserName(null);
+
     setIsPro(false);
+    setProLoading(false);
+
+    setUsageInfo(null);
+
     setPaywallOpen(false);
+    setPayLoading(false);
+    setPayMsg(null);
+    setToastMsg(null);
     setPendingCheckout(null);
+    setPlan("free");
+    setBilling("monthly");
+
     setAuthLoading(false);
-setUsageInfo(null);
-setPayMsg(null);
-setToastMsg(null);
-setPlan("free");
-setBilling("monthly");
+
     resetVisibleHistoryForLoggedOut();
   } catch {
+    setAuthUserEmail(null);
+    setAuthUserId(null);
+    setAuthUserName(null);
+    setIsPro(false);
+    setUsageInfo(null);
+    setPayMsg(null);
+    setToastMsg(null);
+    setPendingCheckout(null);
+    setPlan("free");
+    setBilling("monthly");
+
     resetVisibleHistoryForLoggedOut();
   }
 }
