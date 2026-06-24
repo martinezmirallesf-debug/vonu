@@ -1172,15 +1172,25 @@ const longPressTriggeredRef = useRef(false);
                           </button>
 
                           {desktop ? (
-                            <button
-                              onClick={() => openThreadActions(t.id)}
-                              className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-transparent text-zinc-500 opacity-0 transition-all hover:border-zinc-200 hover:bg-white group-hover:opacity-100"
-                              aria-label="Acciones"
-                              title="Acciones"
-                            >
-                              <DotsIcon className="h-[17px] w-[17px]" />
-                            </button>
-                          ) : null}
+  <button
+    onClick={(event) => {
+      event.stopPropagation();
+      openThreadActions(t.id);
+    }}
+    className={[
+      "absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full",
+      "bg-white text-zinc-500 opacity-0 shadow-sm shadow-zinc-950/[0.06]",
+      "transition-all duration-150",
+      "group-hover:opacity-100",
+      "hover:bg-white hover:text-zinc-700 hover:shadow-md hover:shadow-zinc-950/[0.08]",
+      "focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300",
+    ].join(" ")}
+    aria-label="Acciones"
+    title="Acciones"
+  >
+    <DotsIcon className="h-[17px] w-[17px]" />
+  </button>
+) : null}
                         </div>
                       );
                     })}
