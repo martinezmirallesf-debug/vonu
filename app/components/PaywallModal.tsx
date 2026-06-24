@@ -85,24 +85,22 @@ export default function PaywallModal({
 </div>
 
   <button
-    onClick={closePaywall}
-    className="h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 cursor-pointer shrink-0 p-0 grid place-items-center"
-    aria-label="Cerrar"
-  >
-    <svg
-      viewBox="0 0 24 24"
-      className="h-[18px] w-[18px]"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M6 6l12 12M18 6L6 18"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
-    </svg>
-  </button>
+  type="button"
+  onClick={closePaywall}
+  className={[
+    "grid h-10 w-10 shrink-0 place-items-center rounded-full",
+    "text-zinc-950 transition",
+    "hover:bg-zinc-100 active:bg-zinc-200 active:scale-95",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300",
+  ].join(" ")}
+  aria-label="Cerrar"
+  title="Cerrar"
+>
+  <span className="relative block h-5 w-5" aria-hidden="true">
+    <span className="absolute left-1/2 top-1/2 h-[2.4px] w-5 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-current" />
+    <span className="absolute left-1/2 top-1/2 h-[2.4px] w-5 -translate-x-1/2 -translate-y-1/2 -rotate-45 rounded-full bg-current" />
+  </span>
+</button>
 </div>
 
             {/* CONTENIDO FIJO CON SCROLL INTERNO */}
