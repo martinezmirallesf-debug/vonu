@@ -80,6 +80,19 @@ export async function POST(req: Request) {
 
     // Si tu versión de types no expone current_period_end, lo leemos “seguro”
     const currentPeriodEnd = (updated as any)?.current_period_end ?? null;
+    const currentPeriodEndIso = currentPeriodEnd
+  ? new Date(currentPeriodEnd * 1000).toISOString()
+  : null;
+
+await supabase
+  .from("subscriptions")
+  .update({
+    status: updated.status,
+    cancel_at_period_end: !!updated.cancel_at_period_end,
+    current_period_end: currentPeriodEndIso,
+    updated_at: new Date().toISOString(),
+  })
+  .eq("stripe_subscription_id", updated.id);
 
     return NextResponse.json(
       {

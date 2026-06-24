@@ -124,6 +124,14 @@ cancel_url: `${appUrl}/chat?checkout=cancel`,
   billing_cycle: billing,
   app_plan: plan,
 },
+
+subscription_data: {
+  metadata: {
+    supabase_user_id: user.id,
+    billing_cycle: billing,
+    app_plan: plan,
+  },
+},
     });
 
     return NextResponse.json({ url: session.url }, { status: 200 });

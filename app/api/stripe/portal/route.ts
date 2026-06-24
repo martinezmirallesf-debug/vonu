@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
     const portal = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${siteUrl}/`,
+      return_url: `${siteUrl.replace(/\/$/, "")}/chat`,
     });
 
     return NextResponse.json({ url: portal.url }, { status: 200 });

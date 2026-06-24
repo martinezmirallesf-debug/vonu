@@ -108,42 +108,45 @@ export async function POST(req: Request) {
     }
 
     async function upsertSubscriptionRow(params: {
-      userId: string | null;
-      stripeCustomerId: string | null;
-      stripeSubscriptionId: string;
-      status: string | null;
-      currentPeriodEndIso: string | null;
-      priceId: string | null;
-    }) {
-      let userId = params.userId;
+  userId: string | null;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string;
+  status: string | null;
+  currentPeriodEndIso: string | null;
+  priceId: string | null;
+  cancelAtPeriodEnd?: boolean | null;
+}) {
+  let userId = params.userId;
 
-      if (!userId) {
-        userId = await resolveUserIdFromCustomer(params.stripeCustomerId);
-      }
-      if (!userId) {
-        userId = await getExistingUserIdBySubscription(
-          params.stripeSubscriptionId
-        );
-      }
+  if (!userId) {
+    userId = await resolveUserIdFromCustomer(params.stripeCustomerId);
+  }
+  if (!userId) {
+    userId = await getExistingUserIdBySubscription(
+      params.stripeSubscriptionId
+    );
+  }
 
-      const { error } = await supabaseAdmin
-        .from("subscriptions")
-        .upsert(
-          {
-            user_id: userId,
-            stripe_customer_id: params.stripeCustomerId,
-            stripe_subscription_id: params.stripeSubscriptionId,
-            status: params.status,
-            current_period_end: params.currentPeriodEndIso,
-            price_id: params.priceId,
-          },
-          { onConflict: "stripe_subscription_id" }
-        );
+  const { error } = await supabaseAdmin
+    .from("subscriptions")
+    .upsert(
+      {
+        user_id: userId,
+        stripe_customer_id: params.stripeCustomerId,
+        stripe_subscription_id: params.stripeSubscriptionId,
+        status: params.status,
+        current_period_end: params.currentPeriodEndIso,
+        price_id: params.priceId,
+        cancel_at_period_end: !!params.cancelAtPeriodEnd,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "stripe_subscription_id" }
+    );
 
-      if (error) throw new Error(error.message);
+  if (error) throw new Error(error.message);
 
-      return userId;
-    }
+  return userId;
+}
 
     async function syncProfilePlan(params: {
       userId: string | null;
@@ -192,26 +195,40 @@ export async function POST(req: Request) {
     }
 
     async function insertTopup(params: {
-      userId: string;
-      pack: string | null;
-      stripeSessionId: string | null;
-    }) {
-      const values = getTopupValues(params.pack);
-      if (!values) return;
+  userId: string;
+  pack: string | null;
+  stripeSessionId: string | null;
+}) {
+  const values = getTopupValues(params.pack);
+  if (!values) return;
 
-      const month = getCurrentMonth();
+  if (params.stripeSessionId) {
+    const { data: existing, error: existingError } = await supabaseAdmin
+      .from("usage_topups")
+      .select("id")
+      .eq("stripe_checkout_session_id", params.stripeSessionId)
+      .maybeSingle();
 
-      const { error } = await supabaseAdmin.from("usage_topups").insert({
-        user_id: params.userId,
-        month,
-        extra_messages: values.messages,
-        extra_realtime_seconds: values.seconds,
-        source: "stripe",
-        stripe_checkout_session_id: params.stripeSessionId,
-      });
+    if (existingError) throw new Error(existingError.message);
 
-      if (error) throw new Error(error.message);
+    if (existing?.id) {
+      return;
     }
+  }
+
+  const month = getCurrentMonth();
+
+  const { error } = await supabaseAdmin.from("usage_topups").insert({
+    user_id: params.userId,
+    month,
+    extra_messages: values.messages,
+    extra_realtime_seconds: values.seconds,
+    source: "stripe",
+    stripe_checkout_session_id: params.stripeSessionId,
+  });
+
+  if (error) throw new Error(error.message);
+}
 
     // -------------------------
     // EVENTOS
@@ -277,13 +294,14 @@ export async function POST(req: Request) {
         const appPlan = getAppPlanFromPriceId(priceId);
 
         const resolvedUserId = await upsertSubscriptionRow({
-          userId,
-          stripeCustomerId,
-          stripeSubscriptionId: subscriptionId,
-          status: sub.status ?? null,
-          currentPeriodEndIso,
-          priceId,
-        });
+  userId,
+  stripeCustomerId,
+  stripeSubscriptionId: subscriptionId,
+  status: sub.status ?? null,
+  currentPeriodEndIso,
+  priceId,
+  cancelAtPeriodEnd: !!sub.cancel_at_period_end,
+});
 
         await syncProfilePlan({
           userId: resolvedUserId,
@@ -315,13 +333,14 @@ export async function POST(req: Request) {
         const appPlan = getAppPlanFromPriceId(priceId);
 
         const resolvedUserId = await upsertSubscriptionRow({
-          userId: null,
-          stripeCustomerId,
-          stripeSubscriptionId,
-          status: sub.status ?? null,
-          currentPeriodEndIso,
-          priceId,
-        });
+  userId: null,
+  stripeCustomerId,
+  stripeSubscriptionId,
+  status: sub.status ?? null,
+  currentPeriodEndIso,
+  priceId,
+  cancelAtPeriodEnd: !!sub.cancel_at_period_end,
+});
 
         await syncProfilePlan({
           userId: resolvedUserId,
