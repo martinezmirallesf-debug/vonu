@@ -9319,9 +9319,9 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 
       {/* TOAST */}
 {toastMsg && (
-  <div className="pointer-events-none fixed left-0 right-0 top-[calc(env(safe-area-inset-top,0px)+92px)] z-[120] flex justify-center px-4 md:top-4">
-    <div className="pointer-events-auto flex w-full max-w-[540px] items-start gap-3 rounded-[28px] border border-zinc-200/80 bg-white/95 px-4 py-3 shadow-[0_18px_60px_rgba(15,23,42,0.14)] backdrop-blur-xl">
-      <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-zinc-950 text-[13px] font-semibold text-white">
+  <div className="pointer-events-none fixed left-0 right-0 top-[calc(env(safe-area-inset-top,0px)+82px)] z-[120] flex justify-center px-4 md:top-4">
+    <div className="pointer-events-auto flex w-full max-w-[540px] items-center gap-3 rounded-[28px] border border-zinc-200/80 bg-white/95 px-4 py-3 shadow-[0_18px_60px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-zinc-950 text-[13px] font-semibold text-white">
         ✓
       </div>
 
