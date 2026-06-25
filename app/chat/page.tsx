@@ -3323,20 +3323,6 @@ async function hydrateAuthAndAccountFromBrowserSession() {
 await ensureProfileExists(after.session.user);
 
 await refreshAuthSession();
-async function hydrateAuthAndAccountFromBrowserSession() {
-  const hasSession = await refreshAuthSession();
-
-  if (!hasSession) {
-    return false;
-  }
-
-  await Promise.all([
-    refreshProStatus(),
-    refreshUsageInfo(),
-  ]);
-
-  return true;
-}
 await refreshProStatus();
 await refreshUsageInfo();
 
@@ -3364,65 +3350,15 @@ await refreshUsageInfo();
 
   // Cargar sesión + escuchar cambios
   useEffect(() => {
-    let unsub: (() => void) | null = null;
+  let unsub: (() => void) | null = null;
 
-    (async () => {
-      // ✅ Sincronizar login/logout entre pestañas del mismo dominio
-useEffect(() => {
-  if (typeof window === "undefined") return;
+  (async () => {
+    await handleOAuthReturnIfPresent();
+    await refreshAuthSession();
+    await refreshProStatus();
+    await refreshUsageInfo();
 
-  let timer: number | null = null;
-
-  const scheduleHydrate = () => {
-    if (timer) window.clearTimeout(timer);
-
-    timer = window.setTimeout(() => {
-      hydrateAuthAndAccountFromBrowserSession();
-    }, 120);
-  };
-
-  const onStorage = (event: StorageEvent) => {
-    const key = String(event.key ?? "");
-
-    const looksLikeSupabaseAuthChange =
-      !key ||
-      key.startsWith("sb-") ||
-      key.toLowerCase().includes("supabase") ||
-      key.toLowerCase().includes("auth-token");
-
-    if (!looksLikeSupabaseAuthChange) return;
-
-    scheduleHydrate();
-  };
-
-  const onFocus = () => scheduleHydrate();
-
-  const onVisibilityChange = () => {
-    if (document.visibilityState === "visible") {
-      scheduleHydrate();
-    }
-  };
-
-  const onPageShow = () => scheduleHydrate();
-
-  window.addEventListener("storage", onStorage);
-  window.addEventListener("focus", onFocus);
-  window.addEventListener("pageshow", onPageShow);
-  document.addEventListener("visibilitychange", onVisibilityChange);
-
-  return () => {
-    if (timer) window.clearTimeout(timer);
-
-    window.removeEventListener("storage", onStorage);
-    window.removeEventListener("focus", onFocus);
-    window.removeEventListener("pageshow", onPageShow);
-    document.removeEventListener("visibilitychange", onVisibilityChange);
-  };
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, []);
-
-      const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
+    const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
         const u = session?.user;
 
         // ✅ FIX: aseguramos que authLoading se apaga también aquí (evita estados “colgados” tras OAuth)
@@ -3655,17 +3591,11 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
   function openLoginModal(mode: AuthCardMode = "signin") {
   setLoginMsg(null);
   setAuthMode(mode);
+  setLoginOpen(true);
 
-  window.setTimeout(async () => {
-    const hasSession = await hydrateAuthAndAccountFromBrowserSession();
-
-    if (hasSession) {
-      setLoginOpen(false);
-      return;
-    }
-
-    setLoginOpen(true);
-  }, 0);
+  if (isLoggedIn) {
+    refreshUsageInfo();
+  }
 }
 
   function openPlansModal() {
@@ -3886,6 +3816,7 @@ setTimeout(() => {
   async function logout() {
   try {
     await supabaseBrowser.auth.signOut();
+    authUserIdRef.current = null;
 
     setAuthUserEmail(null);
     setAuthUserId(null);
@@ -3909,6 +3840,7 @@ setTimeout(() => {
 
     resetVisibleHistoryForLoggedOut();
   } catch {
+    authUserIdRef.current = null;
     setAuthUserEmail(null);
     setAuthUserId(null);
     setAuthUserName(null);
