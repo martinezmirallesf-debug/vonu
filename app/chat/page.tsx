@@ -7853,12 +7853,24 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       }`
     );
 
+    const guestAlreadyUsedFreeMessage =
+      !isLoggedIn && hasGuestFreeMessageBeenUsed();
+
+    if (guestAlreadyUsedFreeMessage) {
+      setInput(cleanExample);
+      setLoginMsg(
+        "Puedes probar Vonu con 1 mensaje gratuito. Para revisar esto, inicia sesión."
+      );
+      openLoginModal("signin");
+      return;
+    }
+
     setTimeout(() => {
       sendQuickMessage(cleanExample, "chat");
-    }, 120);
+    }, 160);
   } catch {}
   // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [mounted, authLoading, activeThread?.id]);
+}, [mounted, authLoading, activeThread?.id, isLoggedIn]);
 
   async function sendMessage() {
   if (authLoading) return;
