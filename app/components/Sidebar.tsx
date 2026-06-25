@@ -208,26 +208,7 @@ function BackIcon({ className }: { className?: string }) {
 }
 
 function formatVoiceSeconds(seconds?: number | null) {
-  function formatPeriodEndDate(iso?: string | null) {
-  if (!iso) return null;
-
-  try {
-    return new Intl.DateTimeFormat("es-ES", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(new Date(iso));
-  } catch {
-    return null;
-  }
-}
   if (typeof seconds !== "number" || Number.isNaN(seconds)) return "—";
-  const minutes = Math.max(0, Math.floor(seconds / 60));
-  const rest = Math.max(0, seconds % 60);
-
-  if (minutes <= 0) return `${rest}s`;
-  if (rest <= 0) return `${minutes} min`;
-  return `${minutes} min ${rest}s`;
 }
 
 function formatPeriodEndDate(iso?: string | null) {
@@ -1288,7 +1269,18 @@ const planIsCanceledAtPeriodEnd =
                   </div>
 
                   <button
-                    onClick={() => setAccountScreen("account")}
+                    onClick={() => {
+  if (authLoading) return;
+
+  if (!isLoggedIn) {
+    setAccountScreen("main");
+    setMenuOpen(false);
+    openLoginModal("signin");
+    return;
+  }
+
+  setAccountScreen("account");
+}}
                     disabled={authLoading}
                     className={[
                       "flex w-full items-center justify-between rounded-full border border-zinc-200 bg-white px-4 py-3 shadow-sm transition active:scale-[0.99]",

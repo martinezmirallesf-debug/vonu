@@ -3346,6 +3346,7 @@ await refreshUsageInfo();
   setPlan("free");
   setBilling("monthly");
   resetVisibleHistoryForLoggedOut();
+  setSubscriptionInfo(null);
   return;
 }
 
@@ -3408,6 +3409,58 @@ await refreshUsageInfo();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ✅ Sync entre pestañas: login/logout/refresh de sesión en otra pestaña
+useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  let busy = false;
+
+  const refreshAllFromAnotherTab = async () => {
+    if (busy) return;
+    busy = true;
+
+    try {
+      await refreshAuthSession();
+      await refreshProStatus();
+      await refreshUsageInfo();
+    } finally {
+      busy = false;
+    }
+  };
+
+  const onStorage = (event: StorageEvent) => {
+    const key = String(event.key ?? "");
+
+    // Supabase guarda sesión en localStorage con keys tipo sb-...-auth-token.
+    // Si cambia eso en otra pestaña, refrescamos esta.
+    const looksLikeSupabaseAuthChange =
+      !key ||
+      key.startsWith("sb-") ||
+      key.toLowerCase().includes("supabase") ||
+      key.toLowerCase().includes("auth-token");
+
+    if (!looksLikeSupabaseAuthChange) return;
+
+    window.setTimeout(() => {
+      refreshAllFromAnotherTab();
+    }, 80);
+  };
+
+  const onPageShow = () => {
+    refreshAllFromAnotherTab();
+  };
+
+  window.addEventListener("storage", onStorage);
+  window.addEventListener("pageshow", onPageShow);
+
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener("pageshow", onPageShow);
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
 
   // Refrescar pro al cambiar user
   useEffect(() => {
