@@ -831,12 +831,28 @@ const planIsCanceledAtPeriodEnd =
               <div className="flex min-h-0 flex-1 flex-col">
                 <div className="shrink-0">
                   <button
-                    type="button"
-                    onClick={() => setAccountScreen("account")}
-                    className="-ml-2 mb-4 grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition hover:bg-zinc-100 active:scale-95"
-                    aria-label="Volver al usuario"
-                    title="Volver"
-                  >
+  type="button"
+  onClick={() => {
+    if (!isLoggedIn) {
+      setAccountScreen("main");
+      setMenuOpen(false);
+
+      window.setTimeout(() => {
+        openLoginModal("signin");
+      }, 0);
+
+      return;
+    }
+
+    if (authLoading) return;
+
+    setAccountScreen("account");
+  }}
+  className={[
+    "flex w-full items-center justify-between rounded-full border border-zinc-200 bg-white px-4 py-3 shadow-sm transition active:scale-[0.99]",
+    authLoading ? "opacity-60" : "hover:bg-zinc-50",
+  ].join(" ")}
+>
                     <BackIcon className="h-6 w-6" />
                   </button>
 

@@ -2910,11 +2910,6 @@ const [pendingCheckout, setPendingCheckout] = useState<{
   const isLoggedIn = !authLoading && !!authUserId;
   const isBlockedByPaywall = false;
 
-  function shouldPromptLoginForGuestNow() {
-  if (typeof window === "undefined") return false;
-  return !isLoggedIn && hasGuestFreeMessageBeenUsed();
-}
-
   // ===== Copy marketing (visible) =====
   const PLUS_TEXT = "Plus+";
   const PLUS_NODE = (
@@ -6908,8 +6903,11 @@ const showHardLimitWarning =
   return basicReady;
 }, [isTyping, input, imagePreview, pdfPreview, isBlockedByPaywall]);
 
+const hasDraftToSend =
+  input.trim().length > 0 || !!imagePreview || !!pdfPreview;
+
 const canSendForInput =
-  canSend || shouldPromptLoginForGuestNow();
+  canSend || (!authLoading && !isLoggedIn && hasDraftToSend);
 
 const voiceUiState = useMemo<"idle" | "listening" | "speaking">(() => {
   if (!voiceMode) return "idle";
@@ -7865,6 +7863,17 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   async function sendMessage() {
   if (authLoading) return;
 
+  const hasDraftToSendNow =
+    input.trim().length > 0 || !!imagePreview || !!pdfPreview;
+
+  if (!isLoggedIn && hasDraftToSendNow && hasGuestFreeMessageBeenUsed()) {
+    setLoginMsg(
+      "Puedes probar Vonu con 1 mensaje gratuito. Para seguir, inicia sesión."
+    );
+    openLoginModal("signin");
+    return;
+  }
+
   if (hasNoMessagesLeft()) {
     blockSendBecauseMessageLimitReached();
     return;
@@ -8497,7 +8506,7 @@ function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
 
-    if (!canSend && !shouldPromptLoginForGuestNow()) return;
+    if (!canSendForInput) return;
 
     sendMessage();
   }
