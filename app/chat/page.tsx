@@ -3462,15 +3462,15 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
       if (!checkout) return;
 
       if (checkout === "success") {
-        setToastMsg(`✅ Pago completado. Activando tu cuenta ${PLUS_TEXT}…`);
-        url.searchParams.delete("checkout");
-        window.history.replaceState({}, "", url.toString());
+  setToastMsg("✅ Pago completado. Actualizando tu cuenta…");
+  url.searchParams.delete("checkout");
+  window.history.replaceState({}, "", url.toString());
 
-        refreshProStatus().finally(() => {
-          setToastMsg(`✅ Listo. Ya tienes ${PLUS_TEXT} activo.`);
-          setTimeout(() => setToastMsg(null), 3500);
-        });
-      } else if (checkout === "cancel") {
+  Promise.all([refreshProStatus(), refreshUsageInfo()]).finally(() => {
+    setToastMsg("✅ Listo. Tu cuenta se ha actualizado.");
+    setTimeout(() => setToastMsg(null), 3500);
+  });
+} else if (checkout === "cancel") {
         setToastMsg("Pago cancelado. Puedes intentarlo cuando quieras.");
         url.searchParams.delete("checkout");
         window.history.replaceState({}, "", url.toString());
@@ -9319,7 +9319,7 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 
       {/* TOAST */}
 {toastMsg && (
-  <div className="pointer-events-none fixed left-0 right-0 top-4 z-[90] flex justify-center px-4">
+  <div className="pointer-events-none fixed left-0 right-0 top-[calc(env(safe-area-inset-top,0px)+92px)] z-[120] flex justify-center px-4 md:top-4">
     <div className="pointer-events-auto flex w-full max-w-[540px] items-start gap-3 rounded-[28px] border border-zinc-200/80 bg-white/95 px-4 py-3 shadow-[0_18px_60px_rgba(15,23,42,0.14)] backdrop-blur-xl">
       <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-zinc-950 text-[13px] font-semibold text-white">
         ✓
@@ -9330,8 +9330,7 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
           {toastMsg.replace(/^✅\s*/, "")}
         </div>
 
-        {toastMsg.toLowerCase().includes("suscripción") ||
-        toastMsg.toLowerCase().includes("plan") ? (
+        {toastMsg.toLowerCase().includes("cancelado") ? (
           <div className="mt-0.5 text-[12.5px] leading-5 text-zinc-500">
             Puedes seguir usando VonuAI hasta que termine el periodo pagado.
           </div>
@@ -9341,7 +9340,7 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
       <button
         type="button"
         onClick={() => setToastMsg(null)}
-        className="-mr-1 grid h-8 w-8 shrink-0 place-items-center rounded-full text-[18px] leading-none text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
+        className="-mr-1 grid h-8 w-8 shrink-0 place-items-center rounded-full text-[18px] leading-none text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 active:scale-95"
         aria-label="Cerrar aviso"
         title="Cerrar"
       >
@@ -9806,10 +9805,10 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 
 {showHardLimitWarning ? (
   <div className="flex justify-start">
-    <div className="max-w-[92%] md:max-w-[85%] rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-zinc-900 shadow-sm">
-      <div className="text-[15px] font-semibold">
-        Has llegado al límite de mensajes de este mes
-      </div>
+    <div className="max-w-[92%] md:max-w-[85%] rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 md:px-4 md:py-3 text-zinc-900 shadow-sm">
+      <div className="mt-1 hidden text-[13px] leading-6 text-zinc-700 md:block">
+  Puedes esperar a la renovación mensual o añadir una recarga para seguir usando Vonu ahora.
+</div>
       <div className="mt-1 text-[13px] text-zinc-700 leading-6">
         Puedes esperar a la renovación mensual o añadir una recarga para seguir usando Vonu ahora.
       </div>
