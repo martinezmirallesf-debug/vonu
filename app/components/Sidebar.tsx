@@ -35,6 +35,9 @@ type SidebarProps = {
   currentPlanId: string | null;
 messagesLeft?: number | null;
 realtimeSecondsLeft?: number | null;
+subscriptionStatus?: string | null;
+subscriptionCurrentPeriodEnd?: string | null;
+subscriptionCancelAtPeriodEnd?: boolean;
 
 billing: "monthly" | "yearly" | "topup";
 setBilling: React.Dispatch<React.SetStateAction<"monthly" | "yearly" | "topup">>;
@@ -205,6 +208,19 @@ function BackIcon({ className }: { className?: string }) {
 }
 
 function formatVoiceSeconds(seconds?: number | null) {
+  function formatPeriodEndDate(iso?: string | null) {
+  if (!iso) return null;
+
+  try {
+    return new Intl.DateTimeFormat("es-ES", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(new Date(iso));
+  } catch {
+    return null;
+  }
+}
   if (typeof seconds !== "number" || Number.isNaN(seconds)) return "—";
   const minutes = Math.max(0, Math.floor(seconds / 60));
   const rest = Math.max(0, seconds % 60);
@@ -212,6 +228,20 @@ function formatVoiceSeconds(seconds?: number | null) {
   if (minutes <= 0) return `${rest}s`;
   if (rest <= 0) return `${minutes} min`;
   return `${minutes} min ${rest}s`;
+}
+
+function formatPeriodEndDate(iso?: string | null) {
+  if (!iso) return null;
+
+  try {
+    return new Intl.DateTimeFormat("es-ES", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(new Date(iso));
+  } catch {
+    return null;
+  }
 }
 
 export default function Sidebar({
@@ -241,6 +271,9 @@ export default function Sidebar({
   currentPlanId,
 messagesLeft = null,
 realtimeSecondsLeft = null,
+subscriptionStatus = null,
+subscriptionCurrentPeriodEnd = null,
+subscriptionCancelAtPeriodEnd = false,
 billing,
 setBilling,
 plan,
@@ -380,6 +413,13 @@ const longPressTriggeredRef = useRef(false);
       : "Gratis";
 
   const selectedIsPinned = !!selectedThreadId && pinnedIds.includes(selectedThreadId);
+
+  const subscriptionEndsAtLabel = formatPeriodEndDate(subscriptionCurrentPeriodEnd);
+
+const planIsCanceledAtPeriodEnd =
+  !!subscriptionCancelAtPeriodEnd &&
+  currentPlanLabel !== "Gratis" &&
+  (subscriptionStatus === "active" || subscriptionStatus === "trialing");
 
   function openThreadActions(threadId: string) {
     setSelectedThreadId(threadId);
@@ -730,31 +770,61 @@ const longPressTriggeredRef = useRef(false);
         </div>
       </div>
 
-      <div className="mt-5 rounded-[28px] border border-red-100 bg-red-50 p-4">
-        <div className="text-[15px] font-semibold text-red-700">
-          Cancelar plan
-        </div>
+      {planIsCanceledAtPeriodEnd ? (
+  <div className="mt-5 rounded-[28px] border border-emerald-100 bg-emerald-50 p-4">
+    <div className="text-[15px] font-semibold text-emerald-800">
+      Plan cancelado
+    </div>
 
-        <p className="mt-2 text-[13px] leading-6 text-red-700/80">
-          Si cancelas, mantendrás tu acceso hasta el final del periodo ya pagado.
-          Después pasarás automáticamente al plan gratis.
-        </p>
+    <p className="mt-2 text-[13px] leading-6 text-emerald-900/75">
+      Mantienes tu acceso a {currentPlanLabel}
+      {subscriptionEndsAtLabel ? ` hasta el ${subscriptionEndsAtLabel}` : " hasta que termine el periodo pagado"}.
+      Después pasarás automáticamente al plan gratis.
+    </p>
 
-        <button
-          type="button"
-          onClick={() => cancelSubscriptionFromHere()}
-          disabled={payLoading || currentPlanLabel === "Gratis"}
-          className="mt-4 w-full rounded-full bg-red-600 px-5 py-3 text-[14px] font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {payLoading ? "Cancelando..." : "Cancelar plan"}
-        </button>
+    {payMsg ? (
+      <p className="mt-3 rounded-2xl bg-white/80 px-4 py-3 text-[13px] leading-5 text-zinc-700">
+        {payMsg}
+      </p>
+    ) : null}
+  </div>
+) : currentPlanLabel !== "Gratis" ? (
+  <div className="mt-5 rounded-[28px] border border-red-100 bg-red-50 p-4">
+    <div className="text-[15px] font-semibold text-red-700">
+      Cancelar plan
+    </div>
 
-        {payMsg ? (
-          <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-[13px] leading-5 text-zinc-700">
-            {payMsg}
-          </p>
-        ) : null}
-      </div>
+    <p className="mt-2 text-[13px] leading-6 text-red-700/80">
+      Si cancelas, mantendrás tu acceso hasta el final del periodo ya pagado.
+      Después pasarás automáticamente al plan gratis.
+    </p>
+
+    <button
+      type="button"
+      onClick={() => cancelSubscriptionFromHere()}
+      disabled={payLoading}
+      className="mt-4 w-full rounded-full bg-red-600 px-5 py-3 text-[14px] font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {payLoading ? "Cancelando..." : "Cancelar plan"}
+    </button>
+
+    {payMsg ? (
+      <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-[13px] leading-5 text-zinc-700">
+        {payMsg}
+      </p>
+    ) : null}
+  </div>
+) : (
+  <div className="mt-5 rounded-[28px] border border-zinc-200 bg-zinc-50 p-4">
+    <div className="text-[15px] font-semibold text-zinc-900">
+      Plan gratuito
+    </div>
+
+    <p className="mt-2 text-[13px] leading-6 text-zinc-600">
+      Ahora estás en el plan gratis. Puedes mejorar tu plan o añadir recargas cuando lo necesites.
+    </p>
+  </div>
+)}
 
       <button
         type="button"

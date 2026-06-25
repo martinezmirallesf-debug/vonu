@@ -2892,6 +2892,11 @@ const [billing, setBilling] = useState<"monthly" | "yearly" | "topup">("monthly"
 const [plan, setPlan] = useState<"plus" | "max" | "free">("plus");
 const [payLoading, setPayLoading] = useState(false);
 const [payMsg, setPayMsg] = useState<string | null>(null);
+const [subscriptionInfo, setSubscriptionInfo] = useState<{
+  subscription_status: string | null;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+} | null>(null);
 
 // ✅ Si el usuario intenta pagar estando logout, guardamos plan + billing y tras login lanzamos checkout
 const [pendingCheckout, setPendingCheckout] = useState<{
@@ -3006,9 +3011,10 @@ const [pendingCheckout, setPendingCheckout] = useState<{
       const token = data?.session?.access_token;
 
       if (!token) {
-        setIsPro(false);
-        return;
-      }
+  setIsPro(false);
+  setSubscriptionInfo(null);
+  return;
+}
 
       const res = await fetch("/api/subscription/status", {
         method: "GET",
@@ -3017,9 +3023,16 @@ const [pendingCheckout, setPendingCheckout] = useState<{
       });
 
       const json = await res.json().catch(() => ({}));
-      setIsPro(!!json?.active);
+
+setIsPro(!!json?.active);
+setSubscriptionInfo({
+  subscription_status: json?.subscription_status ?? null,
+  current_period_end: json?.current_period_end ?? null,
+  cancel_at_period_end: !!json?.cancel_at_period_end,
+});
     } catch {
       setIsPro(false);
+setSubscriptionInfo(null);
     } finally {
       setProLoading(false);
     }
@@ -9725,6 +9738,9 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
   currentPlanId={usageInfo?.plan_id ?? null}
   messagesLeft={usageInfo?.messages_left ?? null}
 realtimeSecondsLeft={usageInfo?.realtime_seconds_left ?? null}
+subscriptionStatus={subscriptionInfo?.subscription_status ?? null}
+subscriptionCurrentPeriodEnd={subscriptionInfo?.current_period_end ?? null}
+subscriptionCancelAtPeriodEnd={!!subscriptionInfo?.cancel_at_period_end}
 billing={billing}
 setBilling={setBilling}
 plan={plan}
