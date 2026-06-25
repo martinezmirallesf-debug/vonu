@@ -207,18 +207,28 @@ export default function LoginModal({
               </div>
 
               <button
-                onClick={() => {
-                  setLoginOpen(false);
-                  setLoginMsg(null);
-                }}
-                className="h-9 w-9 aspect-square rounded-full border border-zinc-200 hover:bg-zinc-50 text-zinc-700 grid place-items-center cursor-pointer p-0"
-                aria-label="Cerrar"
-                disabled={!!loginSending}
-              >
-                <span className="text-[18px] leading-none relative top-[-0.5px]">
-                  ×
-                </span>
-              </button>
+  type="button"
+  onClick={() => {
+    if (loginSending) return;
+    setLoginOpen(false);
+    setLoginMsg(null);
+  }}
+  disabled={!!loginSending}
+  className={[
+    "grid h-10 w-10 shrink-0 place-items-center rounded-full",
+    "text-zinc-950 transition",
+    "hover:bg-zinc-100 active:bg-zinc-200 active:scale-95",
+    "disabled:pointer-events-none disabled:opacity-40",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300",
+  ].join(" ")}
+  aria-label="Cerrar"
+  title="Cerrar"
+>
+  <span className="relative block h-5 w-5" aria-hidden="true">
+    <span className="absolute left-1/2 top-1/2 h-[2.4px] w-5 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-current" />
+    <span className="absolute left-1/2 top-1/2 h-[2.4px] w-5 -translate-x-1/2 -translate-y-1/2 -rotate-45 rounded-full bg-current" />
+  </span>
+</button>
             </div>
 
             <div className="mt-5 space-y-3">

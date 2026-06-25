@@ -698,7 +698,18 @@ const planIsCanceledAtPeriodEnd =
     <div className="shrink-0">
       <button
         type="button"
-        onClick={() => setAccountScreen("account")}
+        onClick={() => {
+  if (authLoading) return;
+
+  if (!isLoggedIn) {
+    setAccountScreen("main");
+    setMenuOpen(false);
+    openLoginModal("signin");
+    return;
+  }
+
+  setAccountScreen("account");
+}}
         className="-ml-2 mb-4 grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition hover:bg-zinc-100 active:scale-95"
         aria-label="Volver a tu cuenta"
         title="Volver"

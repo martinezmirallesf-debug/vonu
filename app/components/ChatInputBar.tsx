@@ -234,6 +234,11 @@ function handleMainButtonClick(e: React.MouseEvent<HTMLButtonElement>) {
   }
 
   if (mainButtonIsSend) {
+    if (!canSend) {
+      e.preventDefault();
+      return;
+    }
+
     sendMessage();
     return;
   }

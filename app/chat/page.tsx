@@ -2910,6 +2910,11 @@ const [pendingCheckout, setPendingCheckout] = useState<{
   const isLoggedIn = !authLoading && !!authUserId;
   const isBlockedByPaywall = false;
 
+  function shouldPromptLoginForGuestNow() {
+  if (typeof window === "undefined") return false;
+  return !isLoggedIn && hasGuestFreeMessageBeenUsed();
+}
+
   // ===== Copy marketing (visible) =====
   const PLUS_TEXT = "Plus+";
   const PLUS_NODE = (
@@ -3789,6 +3794,7 @@ setTimeout(() => {
 
     setIsPro(false);
     setProLoading(false);
+    setSubscriptionInfo(null);
 
     setUsageInfo(null);
 
@@ -3808,6 +3814,7 @@ setTimeout(() => {
     setAuthUserId(null);
     setAuthUserName(null);
     setIsPro(false);
+    setSubscriptionInfo(null);
     setUsageInfo(null);
     setPayMsg(null);
     setToastMsg(null);
@@ -6901,6 +6908,9 @@ const showHardLimitWarning =
   return basicReady;
 }, [isTyping, input, imagePreview, pdfPreview, isBlockedByPaywall]);
 
+const canSendForInput =
+  canSend || shouldPromptLoginForGuestNow();
+
 const voiceUiState = useMemo<"idle" | "listening" | "speaking">(() => {
   if (!voiceMode) return "idle";
   if (realtimeStatus === "listening") return "listening";
@@ -8486,7 +8496,9 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
 function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
-    if (!canSend) return;
+
+    if (!canSend && !shouldPromptLoginForGuestNow()) return;
+
     sendMessage();
   }
 }
@@ -10359,7 +10371,7 @@ onHomeInputBlur={() => {
     textareaRef={textareaRef}
     handleKeyDown={handleKeyDown}
     handlePaste={handlePasteIntoChat}
-    canSend={canSend}
+    canSend={canSendForInput}
     sendMessage={sendMessage}
     voiceMode={voiceMode}
     realtimeStatus={realtimeStatus}
