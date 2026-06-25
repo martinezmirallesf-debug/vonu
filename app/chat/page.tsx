@@ -2868,9 +2868,11 @@ const [contextualFilePrompt, setContextualFilePrompt] = useState("");
 
   // ===== AUTH =====
   const [authLoading, setAuthLoading] = useState(true);
-  const [authUserEmail, setAuthUserEmail] = useState<string | null>(null);
-  const [authUserId, setAuthUserId] = useState<string | null>(null);
-  const [authUserName, setAuthUserName] = useState<string | null>(null);
+const [authUserEmail, setAuthUserEmail] = useState<string | null>(null);
+const [authUserId, setAuthUserId] = useState<string | null>(null);
+const [authUserName, setAuthUserName] = useState<string | null>(null);
+
+const authUserIdRef = useRef<string | null>(null);
 
   const [loginOpen, setLoginOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthCardMode>("signin");
@@ -3144,40 +3146,68 @@ setSubscriptionInfo(null);
   }
 }
 
-  async function refreshAuthSession() {
+  async function refreshAuthSession(): Promise<boolean> {
   try {
     const { data } = await supabaseBrowser.auth.getSession();
     const u = data?.session?.user;
 
     if (!u) {
+      authUserIdRef.current = null;
+
       setAuthUserEmail(null);
       setAuthUserId(null);
       setAuthUserName(null);
       setIsPro(false);
+      setSubscriptionInfo(null);
       setUsageInfo(null);
       setPayMsg(null);
       setPendingCheckout(null);
       setPlan("free");
       setBilling("monthly");
-      return;
+
+      return false;
     }
 
     await ensureProfileExists(u);
 
     const profile = computeProfileFromUser(u);
 
+    authUserIdRef.current = profile.id;
+
     setAuthUserEmail(profile.email);
     setAuthUserId(profile.id);
     setAuthUserName(profile.name);
+
+    return true;
   } catch {
+    authUserIdRef.current = null;
+
     setAuthUserEmail(null);
     setAuthUserId(null);
     setAuthUserName(null);
     setIsPro(false);
+    setSubscriptionInfo(null);
     setUsageInfo(null);
+
+    return false;
   } finally {
     setAuthLoading(false);
   }
+}
+
+async function hydrateAuthAndAccountFromBrowserSession() {
+  const hasSession = await refreshAuthSession();
+
+  if (!hasSession) {
+    return false;
+  }
+
+  await Promise.all([
+    refreshProStatus(),
+    refreshUsageInfo(),
+  ]);
+
+  return true;
 }
 
   function decodeMaybe(x: string) {
@@ -3293,6 +3323,20 @@ setSubscriptionInfo(null);
 await ensureProfileExists(after.session.user);
 
 await refreshAuthSession();
+async function hydrateAuthAndAccountFromBrowserSession() {
+  const hasSession = await refreshAuthSession();
+
+  if (!hasSession) {
+    return false;
+  }
+
+  await Promise.all([
+    refreshProStatus(),
+    refreshUsageInfo(),
+  ]);
+
+  return true;
+}
 await refreshProStatus();
 await refreshUsageInfo();
 
@@ -3323,10 +3367,60 @@ await refreshUsageInfo();
     let unsub: (() => void) | null = null;
 
     (async () => {
-      await handleOAuthReturnIfPresent();
-await refreshAuthSession();
-await refreshProStatus();
-await refreshUsageInfo();
+      // ✅ Sincronizar login/logout entre pestañas del mismo dominio
+useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  let timer: number | null = null;
+
+  const scheduleHydrate = () => {
+    if (timer) window.clearTimeout(timer);
+
+    timer = window.setTimeout(() => {
+      hydrateAuthAndAccountFromBrowserSession();
+    }, 120);
+  };
+
+  const onStorage = (event: StorageEvent) => {
+    const key = String(event.key ?? "");
+
+    const looksLikeSupabaseAuthChange =
+      !key ||
+      key.startsWith("sb-") ||
+      key.toLowerCase().includes("supabase") ||
+      key.toLowerCase().includes("auth-token");
+
+    if (!looksLikeSupabaseAuthChange) return;
+
+    scheduleHydrate();
+  };
+
+  const onFocus = () => scheduleHydrate();
+
+  const onVisibilityChange = () => {
+    if (document.visibilityState === "visible") {
+      scheduleHydrate();
+    }
+  };
+
+  const onPageShow = () => scheduleHydrate();
+
+  window.addEventListener("storage", onStorage);
+  window.addEventListener("focus", onFocus);
+  window.addEventListener("pageshow", onPageShow);
+  document.addEventListener("visibilitychange", onVisibilityChange);
+
+  return () => {
+    if (timer) window.clearTimeout(timer);
+
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener("focus", onFocus);
+    window.removeEventListener("pageshow", onPageShow);
+    document.removeEventListener("visibilitychange", onVisibilityChange);
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
 
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
         const u = session?.user;
@@ -3335,6 +3429,8 @@ await refreshUsageInfo();
         setAuthLoading(false);
 
         if (!u) {
+  authUserIdRef.current = null;
+
   setAuthUserEmail(null);
   setAuthUserId(null);
   setAuthUserName(null);
@@ -3355,9 +3451,11 @@ await ensureProfileExists(u);
 
 const profile = computeProfileFromUser(u);
 
-        setAuthUserEmail(profile.email);
-        setAuthUserId(profile.id);
-        setAuthUserName(profile.name);
+authUserIdRef.current = profile.id;
+
+setAuthUserEmail(profile.email);
+setAuthUserId(profile.id);
+setAuthUserName(profile.name);
 
         setTimeout(() => {
   refreshProStatus();
@@ -3557,11 +3655,17 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
   function openLoginModal(mode: AuthCardMode = "signin") {
   setLoginMsg(null);
   setAuthMode(mode);
-  setLoginOpen(true);
 
-  if (isLoggedIn) {
-    refreshUsageInfo();
-  }
+  window.setTimeout(async () => {
+    const hasSession = await hydrateAuthAndAccountFromBrowserSession();
+
+    if (hasSession) {
+      setLoginOpen(false);
+      return;
+    }
+
+    setLoginOpen(true);
+  }, 0);
 }
 
   function openPlansModal() {
@@ -7883,7 +7987,13 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 }, [mounted, authLoading, activeThread?.id, isLoggedIn]);
 
   async function sendMessage() {
-  if (authLoading) return;
+  if (authLoading) {
+    const hasSession = await hydrateAuthAndAccountFromBrowserSession();
+
+    if (!hasSession) {
+      setAuthLoading(false);
+    }
+  }
 
   const hasDraftToSendNow =
     input.trim().length > 0 || !!imagePreview || !!pdfPreview;
