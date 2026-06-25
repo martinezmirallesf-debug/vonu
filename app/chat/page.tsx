@@ -7429,7 +7429,11 @@ queueSaveThreadToCloud(targetThreadId, 350);
   return;
 }
 
-    if (enforceLimitIfNeeded()) return;
+    if (enforceLimitIfNeeded()) {
+  setIsTyping(false);
+  sendGuardRef.current.busy = false;
+  return;
+}
 
     if (isBlockedByPaywall) {
       openPlansModal();
@@ -7858,6 +7862,9 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
     if (guestAlreadyUsedFreeMessage) {
       setInput(cleanExample);
+      setIsTyping(false);
+      sendGuardRef.current.busy = false;
+
       setLoginMsg(
         "Puedes probar Vonu con 1 mensaje gratuito. Para revisar esto, inicia sesión."
       );
@@ -7867,8 +7874,11 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
     setTimeout(() => {
       sendQuickMessage(cleanExample, "chat");
-    }, 160);
-  } catch {}
+    }, 180);
+  } catch {
+    setIsTyping(false);
+    sendGuardRef.current.busy = false;
+  }
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [mounted, authLoading, activeThread?.id, isLoggedIn]);
 
@@ -7891,7 +7901,11 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
     return;
   }
 
-  if (enforceLimitIfNeeded()) return;
+  if (enforceLimitIfNeeded()) {
+  setIsTyping(false);
+  sendGuardRef.current.busy = false;
+  return;
+}
 
   if (isBlockedByPaywall) {
     openPlansModal();
