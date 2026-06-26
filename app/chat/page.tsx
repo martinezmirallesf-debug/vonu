@@ -178,6 +178,27 @@ function shouldAutoGenerateSupportVisual(text: string) {
   if (!value) return false;
   if (value.length < 220) return false;
 
+  const looksLikeExactMathOperation =
+  /\b\d+\s*[:÷/]\s*\d+\b/.test(value) ||
+  /\b\d+\s*[+\-*x×]\s*\d+\b/.test(value) ||
+  value.includes("división") ||
+  value.includes("division") ||
+  value.includes("dividir") ||
+  value.includes("cociente") ||
+  value.includes("resto") ||
+  value.includes("ecuación") ||
+  value.includes("ecuacion") ||
+  value.includes("despejar") ||
+  value.includes("fracción") ||
+  value.includes("fraccion") ||
+  value.includes("katex") ||
+  value.includes("fórmula") ||
+  value.includes("formula");
+
+if (looksLikeExactMathOperation) {
+  return false;
+}
+
   if (
     value.includes("límite alcanzado") ||
     value.includes("limite alcanzado") ||
