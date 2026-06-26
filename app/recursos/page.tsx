@@ -54,6 +54,24 @@ const featuredResources = [
     text: "Puntos básicos para detectar cláusulas confusas, obligaciones, permanencias, penalizaciones y riesgos.",
     href: "/revisar-contrato",
   },
+    {
+    title: "Me llama el banco y me pide un código SMS",
+    category: "Llamadas sospechosas",
+    text: "Señales de vishing, llamadas falsas del banco y pasos prudentes antes de dar códigos, claves o datos.",
+    href: "/llamada-banco-codigo-sms",
+  },
+  {
+    title: "Estafas con criptomonedas",
+    category: "Crypto",
+    text: "Cómo detectar promesas de inversión, plataformas falsas, contactos por Telegram o supuestos expertos en trading.",
+    href: "/estafas-criptomonedas",
+  },
+  {
+    title: "Email sospechoso o phishing",
+    category: "Email",
+    text: "Revisa correos que imitan bancos, empresas, pagos, facturas, avisos urgentes o enlaces que piden datos.",
+    href: "/email-sospechoso-estafa",
+  },
   {
   title: "Cómo comprobar si una factura está bien",
   category: "Facturas",
