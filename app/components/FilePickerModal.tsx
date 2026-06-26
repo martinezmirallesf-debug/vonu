@@ -139,34 +139,6 @@ function BoardIcon({ className }: { className?: string }) {
   );
 }
 
-function SparkIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className ?? "h-6 w-6"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M12 3.5 13.8 9l5.7 1.8-5.7 1.8L12 18.5l-1.8-5.9-5.7-1.8L10.2 9 12 3.5Z"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function GlobeIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className ?? "h-6 w-6"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.9" />
-      <path d="M3.8 12h16.4" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-      <path
-        d="M12 3.5c2.2 2.4 3.2 5.1 3.2 8.5s-1 6.1-3.2 8.5c-2.2-2.4-3.2-5.1-3.2-8.5s1-6.1 3.2-8.5Z"
-        stroke="currentColor"
-        strokeWidth="1.9"
-      />
-    </svg>
-  );
-}
-
 function OptionRow({
   icon,
   label,
@@ -300,21 +272,6 @@ export default function FilePickerModal({
   badge="Próximamente"
 />
 
-<div className="my-2 border-t border-zinc-100" />
-
-<OptionRow
-  icon={<SparkIcon />}
-  label="Crear imagen"
-  onClick={() => {}}
-  disabled
-/>
-
-<OptionRow
-  icon={<GlobeIcon />}
-  label="Búsqueda en Internet"
-  onClick={() => {}}
-  disabled
-/>
           </div>
         </div>
       </div>
