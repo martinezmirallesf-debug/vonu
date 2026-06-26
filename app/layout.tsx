@@ -3,6 +3,8 @@ import "./globals.css";
 import "katex/dist/katex.min.css";
 import type { Metadata, Viewport } from "next";
 import { Inter, Space_Mono, Playfair_Display } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const BASE_URL = "https://vonuai.com";
 
@@ -158,7 +160,9 @@ export default function RootLayout({
             __html: JSON.stringify(websiteJsonLd),
           }}
         />
-        {children}
+               {children}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
