@@ -172,33 +172,40 @@ function getAdaptiveRevealTimings(text: string) {
   return { thinkMs, revealMs };
 }
 
-function shouldAutoGenerateSupportVisual(text: string) {
+function shouldAutoGenerateSupportVisual(text: string, mode?: ThreadMode) {
   const value = String(text || "").trim().toLowerCase();
 
   if (!value) return false;
-  if (value.length < 220) return false;
 
+  // ✅ De momento, solo en modo tutor.
+  // Evita que fraude, contratos, emails, webs o análisis normales se ralenticen.
+  if (mode !== "tutor") return false;
+
+  // ✅ No generar en respuestas cortas.
+  if (value.length < 260) return false;
+
+  // ✅ No generar en matemáticas exactas: mejor KaTeX/HTML/SVG.
   const looksLikeExactMathOperation =
-  /\b\d+\s*[:÷/]\s*\d+\b/.test(value) ||
-  /\b\d+\s*[+\-*x×]\s*\d+\b/.test(value) ||
-  value.includes("división") ||
-  value.includes("division") ||
-  value.includes("dividir") ||
-  value.includes("cociente") ||
-  value.includes("resto") ||
-  value.includes("ecuación") ||
-  value.includes("ecuacion") ||
-  value.includes("despejar") ||
-  value.includes("fracción") ||
-  value.includes("fraccion") ||
-  value.includes("katex") ||
-  value.includes("fórmula") ||
-  value.includes("formula");
+    /\b\d+\s*[:÷/]\s*\d+\b/.test(value) ||
+    /\b\d+\s*[+\-*x×]\s*\d+\b/.test(value) ||
+    value.includes("división") ||
+    value.includes("division") ||
+    value.includes("dividir") ||
+    value.includes("cociente") ||
+    value.includes("resto") ||
+    value.includes("ecuación") ||
+    value.includes("ecuacion") ||
+    value.includes("despejar") ||
+    value.includes("fracción") ||
+    value.includes("fraccion") ||
+    value.includes("fórmula") ||
+    value.includes("formula");
 
-if (looksLikeExactMathOperation) {
-  return false;
-}
+  if (looksLikeExactMathOperation) {
+    return false;
+  }
 
+  // ✅ No generar en mensajes de cuenta, límites, pagos o errores.
   if (
     value.includes("límite alcanzado") ||
     value.includes("limite alcanzado") ||
@@ -206,10 +213,44 @@ if (looksLikeExactMathOperation) {
     value.includes("iniciar sesión") ||
     value.includes("suscripción") ||
     value.includes("recarga") ||
-    value.includes("he recibido una respuesta vacía")
+    value.includes("he recibido una respuesta vacía") ||
+    value.includes("plan") ||
+    value.includes("pago")
   ) {
     return false;
   }
+
+  // ✅ Solo temas claramente didácticos.
+  const looksEducational =
+    value.includes("explica") ||
+    value.includes("explicación") ||
+    value.includes("explicacion") ||
+    value.includes("paso a paso") ||
+    value.includes("niño") ||
+    value.includes("niña") ||
+    value.includes("11 años") ||
+    value.includes("colegio") ||
+    value.includes("cole") ||
+    value.includes("fotosíntesis") ||
+    value.includes("fotosintesis") ||
+    value.includes("ciclo del agua") ||
+    value.includes("sistema solar") ||
+    value.includes("ciencias") ||
+    value.includes("biología") ||
+    value.includes("biologia") ||
+    value.includes("física") ||
+    value.includes("fisica") ||
+    value.includes("química") ||
+    value.includes("quimica") ||
+    value.includes("historia") ||
+    value.includes("geografía") ||
+    value.includes("geografia") ||
+    value.includes("fútbol") ||
+    value.includes("futbol") ||
+    value.includes("desmarcarse") ||
+    value.includes("desmarque");
+
+  if (!looksEducational) return false;
 
   const hasStructure =
     value.includes("\n") ||
@@ -3344,7 +3385,7 @@ function maybeGenerateSupportVisualForAssistantMessage(
   title?: string
 ) {
   if (!messageId) return;
-  if (!shouldAutoGenerateSupportVisual(text)) return;
+  if (!shouldAutoGenerateSupportVisual(text, activeThread?.mode)) return;
 
   window.setTimeout(() => {
     void generateSupportVisual(messageId, text, title);
