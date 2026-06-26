@@ -3380,17 +3380,14 @@ async function generateSupportVisual(messageId: string, text: string, title?: st
 }
 
 function maybeGenerateSupportVisualForAssistantMessage(
-  messageId: string,
-  text: string,
-  mode: ThreadMode,
-  title?: string
+  _messageId: string,
+  _text: string,
+  _mode: ThreadMode,
+  _title?: string
 ) {
-  if (!messageId) return;
-  if (!shouldAutoGenerateSupportVisual(text, mode)) return;
-
-  window.setTimeout(() => {
-    void generateSupportVisual(messageId, text, title);
-  }, 450);
+  // Desactivado temporalmente para estabilizar el chat.
+  // Las imágenes de apoyo quedan preparadas, pero no se generan automáticamente.
+  return;
 }
 
 async function hydrateAuthAndAccountFromBrowserSession() {
@@ -7921,18 +7918,9 @@ if (isUsageLimitGuard) {
   return;
 }
 
-      const boardImageB64 = typeof data?.boardImageB64 === "string" && data.boardImageB64 ? data.boardImageB64 : null;
-
-      const boardImagePlacement =
-        data?.boardImagePlacement &&
-        typeof data.boardImagePlacement?.x === "number" &&
-        typeof data.boardImagePlacement?.y === "number" &&
-        typeof data.boardImagePlacement?.w === "number" &&
-        typeof data.boardImagePlacement?.h === "number"
-          ? (data.boardImagePlacement as { x: number; y: number; w: number; h: number })
-          : null;
-
-      const pizarraJson = typeof data?.pizarra === "string" && data.pizarra.trim() ? data.pizarra : null;
+const boardImageB64 = null;
+const boardImagePlacement = null;
+const pizarraJson = null;
 
       await sleep(90);
 
