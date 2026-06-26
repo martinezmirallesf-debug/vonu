@@ -253,18 +253,38 @@ export default function FilePickerModal({
 
           <div className="max-h-[min(68dvh,620px)] overflow-y-auto px-2 pb-3 [scrollbar-width:thin]">
             <OptionRow
-              icon={<ImageIcon />}
-              label="Imagen"
-              onClick={() => onPickType("image")}
-            />
+  icon={<ImageIcon />}
+  label="Imagen"
+  onClick={() => onPickType("image")}
+/>
 
-            <OptionRow
-              icon={<PdfIcon />}
-              label="PDF o documento"
-              onClick={() => onPickType("pdf")}
-            />
+<OptionRow
+  icon={<PdfIcon />}
+  label="PDF o documento"
+  onClick={() => onPickType("pdf")}
+/>
 
-            <OptionRow
+<OptionRow
+  icon={<LinkIcon />}
+  label="Enlace"
+  onClick={() => onPickType("url")}
+/>
+
+<OptionRow
+  icon={<PhoneIcon />}
+  label="Nº teléfono"
+  onClick={() => onPickType("phone")}
+/>
+
+<OptionRow
+  icon={<BoardIcon />}
+  label="Pizarra / ayuda visual"
+  onClick={() => onPickType("board")}
+/>
+
+<div className="my-2 border-t border-zinc-100" />
+
+<OptionRow
   icon={<AudioIcon />}
   label="Audio"
   onClick={() => {}}
@@ -272,7 +292,7 @@ export default function FilePickerModal({
   badge="Próximamente"
 />
 
-            <OptionRow
+<OptionRow
   icon={<VideoIcon />}
   label="Vídeo"
   onClick={() => {}}
@@ -280,39 +300,21 @@ export default function FilePickerModal({
   badge="Próximamente"
 />
 
-            <OptionRow
-              icon={<LinkIcon />}
-              label="Enlace"
-              onClick={() => onPickType("url")}
-            />
+<div className="my-2 border-t border-zinc-100" />
 
-            <OptionRow
-              icon={<PhoneIcon />}
-              label="Nº teléfono"
-              onClick={() => onPickType("phone")}
-            />
+<OptionRow
+  icon={<SparkIcon />}
+  label="Crear imagen"
+  onClick={() => {}}
+  disabled
+/>
 
-            <OptionRow
-              icon={<BoardIcon />}
-              label="Pizarra / ayuda visual"
-              onClick={() => onPickType("board")}
-            />
-
-            <div className="my-2 border-t border-zinc-100" />
-
-            <OptionRow
-              icon={<SparkIcon />}
-              label="Crear imagen"
-              onClick={() => {}}
-              disabled
-            />
-
-            <OptionRow
-              icon={<GlobeIcon />}
-              label="Búsqueda en Internet"
-              onClick={() => {}}
-              disabled
-            />
+<OptionRow
+  icon={<GlobeIcon />}
+  label="Búsqueda en Internet"
+  onClick={() => {}}
+  disabled
+/>
           </div>
         </div>
       </div>
