@@ -3380,13 +3380,17 @@ async function generateSupportVisual(messageId: string, text: string, title?: st
 }
 
 function maybeGenerateSupportVisualForAssistantMessage(
-  _messageId: string,
-  _text: string,
-  _title?: string
+  messageId: string,
+  text: string,
+  mode: ThreadMode,
+  title?: string
 ) {
-  // Desactivado de momento:
-  // No generamos imágenes automáticamente para no ralentizar la respuesta principal.
-  return;
+  if (!messageId) return;
+  if (!shouldAutoGenerateSupportVisual(text, mode)) return;
+
+  window.setTimeout(() => {
+    void generateSupportVisual(messageId, text, title);
+  }, 450);
 }
 
 async function hydrateAuthAndAccountFromBrowserSession() {
@@ -7966,6 +7970,7 @@ if (isUsageLimitGuard) {
 maybeGenerateSupportVisualForAssistantMessage(
   assistantId,
   fullText,
+  modePreset,
   "Apoyo visual de Vonu"
 );
 
@@ -8042,6 +8047,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   maybeGenerateSupportVisualForAssistantMessage(
   assistantId,
   fullText,
+  modePreset,
   "Apoyo visual de Vonu"
 );
   if (!voiceModeRef.current) {
@@ -8519,6 +8525,7 @@ sendGuardRef.current.busy = false;
 maybeGenerateSupportVisualForAssistantMessage(
   assistantId,
   fullText,
+  nextMode,
   "Apoyo visual de Vonu"
 );
 if (!voiceModeRef.current) {
@@ -8592,14 +8599,10 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   setIsTyping(false);
   sendGuardRef.current.busy = false;
 
-  maybeGenerateSupportVisualForAssistantMessage(
-  assistantId,
-  fullText,
-  "Apoyo visual de Vonu"
-);
 maybeGenerateSupportVisualForAssistantMessage(
   assistantId,
   fullText,
+  nextMode,
   "Apoyo visual de Vonu"
 );
   if (!voiceModeRef.current) {
@@ -10563,34 +10566,8 @@ if (!finalRiskStatus) return null;
   </div>
 )}
 
-{m.role === "assistant" && !isStreaming ? (
-  <>
-    {activeThread?.mode === "tutor" &&
-    !supportVisuals[m.id] &&
-    shouldAutoGenerateSupportVisual(m.text ?? "", "tutor") ? (
-      <div className="mt-3 rounded-[22px] border border-zinc-200 bg-white px-4 py-3 shadow-sm">
-        <div className="text-[14px] font-medium text-zinc-700">
-          ¿Quieres que te haga una imagen sencilla para verlo mejor?
-        </div>
-
-        <button
-          type="button"
-          onClick={() =>
-            generateSupportVisual(
-              m.id,
-              m.text ?? "",
-              "Imagen sencilla para entender la explicación"
-            )
-          }
-          className="mt-3 inline-flex rounded-full bg-zinc-950 px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-zinc-800 active:scale-[0.98]"
-        >
-          Hacer imagen
-        </button>
-      </div>
-    ) : null}
-
-    <SupportVisualCard visual={supportVisuals[m.id]} />
-  </>
+{m.role === "assistant" ? (
+  <SupportVisualCard visual={supportVisuals[m.id]} />
 ) : null}
 
                                     {activeThread?.mode === "tutor" && m.boardImageB64 ? (
