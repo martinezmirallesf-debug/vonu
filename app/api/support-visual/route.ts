@@ -47,7 +47,7 @@ Genera una única imagen de apoyo visual que ayude a entender esta explicación 
     const result = await client.images.generate({
   model: "gpt-image-1",
   prompt,
-  size: "512x512",
+  size: "1024x1024",
 });
 
     const imageBase64 = result.data?.[0]?.b64_json;
