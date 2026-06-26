@@ -8044,7 +8044,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   setIsTyping(false);
   sendGuardRef.current.busy = false;
 
-  maybeGenerateSupportVisualForAssistantMessage(
+maybeGenerateSupportVisualForAssistantMessage(
   assistantId,
   fullText,
   modePreset,
@@ -10566,7 +10566,7 @@ if (!finalRiskStatus) return null;
   </div>
 )}
 
-{m.role === "assistant" ? (
+{m.role === "assistant" && !isStreaming ? (
   <SupportVisualCard visual={supportVisuals[m.id]} />
 ) : null}
 
