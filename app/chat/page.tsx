@@ -172,6 +172,36 @@ function getAdaptiveRevealTimings(text: string) {
   return { thinkMs, revealMs };
 }
 
+function shouldAutoGenerateSupportVisual(text: string) {
+  const value = String(text || "").trim().toLowerCase();
+
+  if (!value) return false;
+  if (value.length < 220) return false;
+
+  if (
+    value.includes("límite alcanzado") ||
+    value.includes("limite alcanzado") ||
+    value.includes("inicia sesión") ||
+    value.includes("iniciar sesión") ||
+    value.includes("suscripción") ||
+    value.includes("recarga") ||
+    value.includes("he recibido una respuesta vacía")
+  ) {
+    return false;
+  }
+
+  const hasStructure =
+    value.includes("\n") ||
+    value.includes("1.") ||
+    value.includes("2.") ||
+    value.includes("•") ||
+    value.includes(":");
+
+  return hasStructure;
+}
+
+
+
 function splitTextForProgressiveReveal(text: string) {
   const clean = normalizeAssistantText(text || "").trim();
   if (!clean) return [];
@@ -2123,6 +2153,50 @@ function TypingDots() {
   );
 }
 
+function SupportVisualCard({
+  visual,
+}: {
+  visual?: {
+    loading: boolean;
+    imageUrl?: string;
+    error?: string;
+  };
+}) {
+  if (!visual) return null;
+
+  if (visual.loading) {
+    return (
+      <div className="mt-3 rounded-[22px] border border-zinc-200 bg-white px-4 py-3 text-[14px] font-medium text-zinc-500 shadow-sm">
+        Generando apoyo visual…
+      </div>
+    );
+  }
+
+  if (visual.error) {
+    return (
+      <div className="mt-3 rounded-[22px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] font-medium text-red-700">
+        No se ha podido generar el apoyo visual.
+      </div>
+    );
+  }
+
+  if (!visual.imageUrl) return null;
+
+  return (
+    <div className="mt-3 overflow-hidden rounded-[26px] border border-zinc-200 bg-white p-3 shadow-sm">
+      <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+        Apoyo visual
+      </div>
+
+      <img
+        src={visual.imageUrl}
+        alt="Apoyo visual generado por Vonu"
+        className="w-full rounded-[20px] border border-zinc-100 bg-white"
+      />
+    </div>
+  );
+}
+
 // ✅ Indicador "escribiendo": cursor fijo (SIN parpadeo) para que no “titile”
 function TypingCaret() {
   return (
@@ -3195,6 +3269,67 @@ setSubscriptionInfo(null);
   }
 }
 
+async function generateSupportVisual(messageId: string, text: string, title?: string) {
+  if (!messageId || !text?.trim()) return;
+
+  setSupportVisuals((prev) => ({
+    ...prev,
+    [messageId]: {
+      ...prev[messageId],
+      loading: true,
+      error: undefined,
+    },
+  }));
+
+  try {
+    const res = await fetch("/api/support-visual", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text,
+        title,
+      }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data?.error || "No se pudo generar la imagen.");
+    }
+
+    setSupportVisuals((prev) => ({
+      ...prev,
+      [messageId]: {
+        loading: false,
+        imageUrl: data?.imageUrl,
+      },
+    }));
+  } catch (e: any) {
+    setSupportVisuals((prev) => ({
+      ...prev,
+      [messageId]: {
+        loading: false,
+        error: e?.message || "Error generando apoyo visual.",
+      },
+    }));
+  }
+}
+
+function maybeGenerateSupportVisualForAssistantMessage(
+  messageId: string,
+  text: string,
+  title?: string
+) {
+  if (!messageId) return;
+  if (!shouldAutoGenerateSupportVisual(text)) return;
+
+  window.setTimeout(() => {
+    void generateSupportVisual(messageId, text, title);
+  }, 450);
+}
+
 async function hydrateAuthAndAccountFromBrowserSession() {
   const hasSession = await refreshAuthSession();
 
@@ -4215,6 +4350,17 @@ async function loadCloudThreadsOnce() {
     }
   }
 }, [threads, mounted]);
+
+const [supportVisuals, setSupportVisuals] = useState<
+  Record<
+    string,
+    {
+      loading: boolean;
+      imageUrl?: string;
+      error?: string;
+    }
+  >
+>({});
 
 // -------- UI --------
 const [input, setInput] = useState("");
@@ -7758,9 +7904,11 @@ if (isUsageLimitGuard) {
         sendGuardRef.current.busy = false;
 
 // ✅ Solo usamos la voz del navegador fuera del modo conversación
-if (!voiceModeRef.current) {
-  speakTTS(fullText);
-}
+maybeGenerateSupportVisualForAssistantMessage(
+  assistantId,
+  fullText,
+  "Apoyo visual de Vonu"
+);
 
 queueSaveThreadToCloud(targetThreadId, 700);
 
@@ -7832,6 +7980,11 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   setIsTyping(false);
   sendGuardRef.current.busy = false;
 
+  maybeGenerateSupportVisualForAssistantMessage(
+  assistantId,
+  fullText,
+  "Apoyo visual de Vonu"
+);
   if (!voiceModeRef.current) {
     speakTTS(fullText);
   }
@@ -8304,6 +8457,11 @@ const boardImageB64 = typeof data?.boardImageB64 === "string" && data.boardImage
         setIsTyping(false);
 sendGuardRef.current.busy = false;
 
+maybeGenerateSupportVisualForAssistantMessage(
+  assistantId,
+  fullText,
+  "Apoyo visual de Vonu"
+);
 if (!voiceModeRef.current) {
   speakTTS(fullText);
 }
@@ -8375,6 +8533,16 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   setIsTyping(false);
   sendGuardRef.current.busy = false;
 
+  maybeGenerateSupportVisualForAssistantMessage(
+  assistantId,
+  fullText,
+  "Apoyo visual de Vonu"
+);
+maybeGenerateSupportVisualForAssistantMessage(
+  assistantId,
+  fullText,
+  "Apoyo visual de Vonu"
+);
   if (!voiceModeRef.current) {
     speakTTS(fullText);
   }
@@ -10335,6 +10503,10 @@ if (!finalRiskStatus) return null;
     )}
   </div>
 )}
+
+{m.role === "assistant" ? (
+  <SupportVisualCard visual={supportVisuals[m.id]} />
+) : null}
 
                                     {activeThread?.mode === "tutor" && m.boardImageB64 ? (
                     <div className="mt-3">
