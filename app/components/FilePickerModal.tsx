@@ -172,16 +172,21 @@ function OptionRow({
   label,
   onClick,
   disabled = false,
+  badge = null,
 }: {
   icon: React.ReactNode;
   label: string;
   onClick: () => void;
   disabled?: boolean;
+  badge?: string | null;
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={() => {
+        if (disabled) return;
+        onClick();
+      }}
       disabled={disabled}
       className={[
         "group flex w-full items-center gap-4 rounded-[22px] px-3 py-2.5 text-left",
@@ -196,10 +201,16 @@ function OptionRow({
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="block text-[17px] font-semibold tracking-[-0.025em] text-zinc-950">
+        <span className="block truncate text-[17px] font-semibold tracking-[-0.025em] text-zinc-950">
           {label}
         </span>
       </span>
+
+      {badge ? (
+        <span className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-500">
+          {badge}
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -254,16 +265,20 @@ export default function FilePickerModal({
             />
 
             <OptionRow
-              icon={<AudioIcon />}
-              label="Audio"
-              onClick={() => onPickType("audio")}
-            />
+  icon={<AudioIcon />}
+  label="Audio"
+  onClick={() => {}}
+  disabled
+  badge="Próximamente"
+/>
 
             <OptionRow
-              icon={<VideoIcon />}
-              label="Vídeo"
-              onClick={() => onPickType("video")}
-            />
+  icon={<VideoIcon />}
+  label="Vídeo"
+  onClick={() => {}}
+  disabled
+  badge="Próximamente"
+/>
 
             <OptionRow
               icon={<LinkIcon />}
