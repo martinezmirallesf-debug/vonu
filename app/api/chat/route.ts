@@ -576,6 +576,32 @@ Evita enunciados con demasiados escenarios, probabilidades y columnas si el usua
 CONSULTA DEL USUARIO:
 `.trim();
 
+const originalUserTextForMode =
+  pickUserTextFromBody(body) || normalized.userText || "";
+
+const shouldForceTutorModeFromText =
+  normalized.mode !== "tutor" &&
+  !normalized.imageBase64 &&
+  !looksLikeFraudOrPaymentSafetyIntent(originalUserTextForMode) &&
+  !looksLikeFootballIntent(originalUserTextForMode) &&
+  /\b(explícame|explicame|explícale|explicale|explícaselo|explicaselo|explícalo|explicalo|enséñame|ensename|paso a paso|para un niño|para una niña|niño de|niña de|11 años|10 años|12 años|fotosíntesis|fotosintesis|biología|biologia|ciencias)\b/i.test(
+    originalUserTextForMode
+  );
+
+if (shouldForceTutorModeFromText) {
+  normalized.mode = "tutor";
+
+  if (
+    originalUserTextForMode.toLowerCase().includes("niño") ||
+    originalUserTextForMode.toLowerCase().includes("niña") ||
+    originalUserTextForMode.toLowerCase().includes("11 años") ||
+    originalUserTextForMode.toLowerCase().includes("10 años") ||
+    originalUserTextForMode.toLowerCase().includes("12 años")
+  ) {
+    normalized.tutorLevel = "kid";
+  }
+}
+
 if (normalized.mode === "tutor") {
   normalized.userText = `${tutorMathMobileFormattingInstruction}
 

@@ -572,10 +572,130 @@ if (bestReverseSingle !== null) return bestReverseSingle;
   return bestSingle;
 }
 
+function normalizeRiskText(text: string) {
+  return String(text ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\bhttps?:\/\/www\./g, "https://")
+    .replace(/\bwww\./g, "")
+    .replace(/\/+(\s|$)/g, "$1");
+}
+
+function looksLikeSafeOfficialWebsiteAssistantVerdict(text: string) {
+  const t = normalizeRiskText(text);
+
+  const safe =
+    t.includes("puedes fiarte") ||
+    t.includes("puedes usarla con tranquilidad") ||
+    t.includes("puedes usarlo con tranquilidad") ||
+    t.includes("tranquilidad razonable") ||
+    t.includes("parece fiable") ||
+    t.includes("parece legitima") ||
+    t.includes("parece legitimo") ||
+    t.includes("parece segura") ||
+    t.includes("parece seguro") ||
+    t.includes("parece oficial") ||
+    t.includes("pinta bien") ||
+    t.includes("riesgo bajo") ||
+    t.includes("bajo riesgo") ||
+    t.includes("web oficial") ||
+    t.includes("dominio oficial") ||
+    t.includes("dominio reconocido") ||
+    t.includes("marca conocida") ||
+    t.includes("marca reconocida") ||
+    t.includes("coherente con la marca") ||
+    t.includes("coherente con la marca reconocida") ||
+    t.includes("corresponde claramente a la marca") ||
+    t.includes("coincide con la marca oficial") ||
+    t.includes("no aparece marcado") ||
+    t.includes("no aparece marcada") ||
+    t.includes("no aparece senalado") ||
+    t.includes("no aparece senalada") ||
+    t.includes("no aparece en listas de sitios maliciosos") ||
+    t.includes("no aparece relacionada con malware") ||
+    t.includes("no aparece relacionado con malware") ||
+    t.includes("no aparece como peligrosa") ||
+    t.includes("no aparece como peligroso") ||
+    t.includes("no hay senales de phishing") ||
+    t.includes("no hay senales de malware") ||
+    t.includes("no hay senales tipicas de phishing") ||
+    t.includes("no hay senales tipicas de estafa") ||
+    t.includes("no parece una estafa") ||
+    t.includes("no parece phishing") ||
+    t.includes("no veo senales claras de peligro") ||
+    t.includes("no veo senales claras de riesgo");
+
+  const danger =
+    t.includes("riesgo alto") ||
+    t.includes("riesgo muy alto") ||
+    t.includes("riesgo critico") ||
+    t.includes("estafa clara") ||
+    t.includes("estafa confirmada") ||
+    t.includes("fraude confirmado") ||
+    t.includes("phishing confirmado") ||
+    t.includes("smishing confirmado") ||
+    t.includes("malware confirmado") ||
+    t.includes("relacionado con malware") ||
+    t.includes("asociado a malware") ||
+    t.includes("amenaza conocida") ||
+    t.includes("no pulses") ||
+    t.includes("no abras el enlace") ||
+    t.includes("no pagues") ||
+    t.includes("no introduzcas datos") ||
+    t.includes("no metas datos") ||
+    t.includes("no descargues") ||
+    t.includes("no lo abras") ||
+    t.includes("no lo ejecutes");
+
+  return safe && !danger;
+}
+
+function looksLikeNeutralWebsiteCheckFromUserText(text: string) {
+  const t = normalizeRiskText(text);
+
+  const asksWebsiteCheck =
+    t.includes("me puedo fiar de") ||
+    t.includes("puedo fiarme de") ||
+    t.includes("esta web es fiable") ||
+    t.includes("la web es fiable") ||
+    t.includes("web fiable") ||
+    t.includes("es fiable") ||
+    t.includes("parece fiable");
+
+  if (!asksWebsiteCheck) return false;
+
+  const hasRealDangerContext =
+    t.includes("sms") ||
+    t.includes("whatsapp") ||
+    t.includes("telegram") ||
+    t.includes("me pide pagar") ||
+    t.includes("me pide tarjeta") ||
+    t.includes("me pide datos") ||
+    t.includes("he pagado") ||
+    t.includes("he enviado dinero") ||
+    t.includes("me han cobrado") ||
+    t.includes("urgente") ||
+    t.includes("codigo") ||
+    t.includes("banco") ||
+    t.includes("bizum") ||
+    t.includes("transferencia") ||
+    t.includes("descargar") ||
+    t.includes(".sh") ||
+    t.includes(".exe") ||
+    t.includes(".apk");
+
+  return !hasRealDangerContext;
+}
+
 function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
   const t = String(text ?? "").toLowerCase();
 
   if (!t.trim()) return null;
+
+  if (looksLikeSafeOfficialWebsiteAssistantVerdict(t)) {
+    return "safe";
+  }
 
   // ✅ OVERRIDE ULTRA PRIORITARIO:
 // Si la respuesta de Vonu dice que un perfil de citas no tiene banderas rojas
@@ -1350,6 +1470,10 @@ function inferRiskStatusFromUserText(text: string): "safe" | "warning" | "high" 
   const t = String(text ?? "").toLowerCase();
 
   if (!t.trim()) return null;
+
+  if (looksLikeNeutralWebsiteCheckFromUserText(t)) {
+    return null;
+  }
 
   const veryHighRisk = [
     "sms",
