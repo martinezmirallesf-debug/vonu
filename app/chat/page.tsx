@@ -9474,13 +9474,13 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 
       {/* TOAST */}
 {toastMsg && (
-  <div className="pointer-events-none fixed left-0 right-0 top-[calc(env(safe-area-inset-top,0px)+82px)] z-[120] flex justify-center px-4 md:top-4">
-    <div className="pointer-events-auto flex w-full max-w-[540px] items-center gap-3 rounded-[28px] border border-zinc-200/80 bg-white/95 px-4 py-3 shadow-[0_18px_60px_rgba(15,23,42,0.14)] backdrop-blur-xl">
-      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-zinc-950 text-[13px] font-semibold text-white">
+  <div className="pointer-events-none fixed left-0 right-0 top-[calc(env(safe-area-inset-top,0px)+96px)] z-[120] flex justify-center px-4 md:top-5">
+    <div className="pointer-events-auto flex w-full max-w-[560px] items-center justify-center gap-3 rounded-[28px] border border-zinc-200/80 bg-white/95 px-4 py-3 shadow-[0_18px_60px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-950 text-[14px] font-semibold text-white">
         ✓
       </div>
 
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 self-center">
         <div className="text-[14px] font-semibold leading-5 tracking-[-0.02em] text-zinc-950">
           {toastMsg.replace(/^✅\s*/, "")}
         </div>
@@ -9495,11 +9495,19 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
       <button
         type="button"
         onClick={() => setToastMsg(null)}
-        className="-mr-1 grid h-8 w-8 shrink-0 place-items-center rounded-full text-[18px] leading-none text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 active:scale-95"
+        className={[
+          "-mr-1 grid h-10 w-10 shrink-0 place-items-center rounded-full",
+          "text-zinc-950 transition",
+          "hover:bg-zinc-100 active:bg-zinc-200 active:scale-95",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300",
+        ].join(" ")}
         aria-label="Cerrar aviso"
         title="Cerrar"
       >
-        ×
+        <span className="relative block h-5 w-5" aria-hidden="true">
+          <span className="absolute left-1/2 top-1/2 h-[2.4px] w-5 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-current" />
+          <span className="absolute left-1/2 top-1/2 h-[2.4px] w-5 -translate-x-1/2 -translate-y-1/2 -rotate-45 rounded-full bg-current" />
+        </span>
       </button>
     </div>
   </div>
