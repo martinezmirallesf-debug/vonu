@@ -152,6 +152,15 @@ function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function isBrowserTabVisible() {
+  if (typeof document === "undefined") return true;
+  return document.visibilityState === "visible";
+}
+
+function shouldUseProgressiveReveal() {
+  return isBrowserTabVisible();
+}
+
 async function fetchJsonWithTimeout(
   url: string,
   options: RequestInit,
@@ -8115,9 +8124,66 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
       } else {
   const { thinkMs, revealMs } = getAdaptiveRevealTimings(fullText);
+
+  const finishAssistantImmediately = () => {
+    setThreads((prev) =>
+      prev.map((t) => {
+        if (t.id !== targetThreadId) return t;
+
+        return {
+          ...t,
+          updatedAt: Date.now(),
+          messages: t.messages.map((m) =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  text: fullText,
+                  streaming: false,
+                  pizarra: pizarraJson,
+                  boardImageB64,
+                  boardImagePlacement,
+                  revealMs,
+                }
+              : m
+          ),
+        };
+      })
+    );
+
+    setIsTyping(false);
+    sendGuardRef.current.busy = false;
+
+    maybeGenerateSupportVisualForAssistantMessage(
+      assistantId,
+      fullText,
+      modePreset,
+      "Apoyo visual de Vonu"
+    );
+
+    queueSaveThreadToCloud(targetThreadId, 700);
+
+    if (!voiceModeRef.current) {
+      speakTTS(fullText);
+    }
+
+    if (isDesktopPointer()) {
+      setTimeout(() => textareaRef.current?.focus(), 60);
+    }
+  };
+
+  if (!shouldUseProgressiveReveal()) {
+    finishAssistantImmediately();
+    return;
+  }
+
   const chunks = splitTextForProgressiveReveal(fullText);
 
   await sleep(thinkMs);
+
+  if (!shouldUseProgressiveReveal()) {
+    finishAssistantImmediately();
+    return;
+  }
 
   let built = "";
 
@@ -8128,6 +8194,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
     setThreads((prev) =>
       prev.map((t) => {
         if (t.id !== targetThreadId) return t;
+
         return {
           ...t,
           updatedAt: Date.now(),
@@ -8148,6 +8215,11 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       })
     );
 
+    if (!shouldUseProgressiveReveal()) {
+      finishAssistantImmediately();
+      return;
+    }
+
     if (i < chunks.length - 1) {
       await sleep(getProgressiveChunkDelay(i + 1, chunks.length));
     }
@@ -8156,6 +8228,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   setThreads((prev) =>
     prev.map((t) => {
       if (t.id !== targetThreadId) return t;
+
       return {
         ...t,
         updatedAt: Date.now(),
@@ -8179,17 +8252,22 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   setIsTyping(false);
   sendGuardRef.current.busy = false;
 
-maybeGenerateSupportVisualForAssistantMessage(
-  assistantId,
-  fullText,
-  modePreset,
-  "Apoyo visual de Vonu"
-);
+  maybeGenerateSupportVisualForAssistantMessage(
+    assistantId,
+    fullText,
+    modePreset,
+    "Apoyo visual de Vonu"
+  );
+
+  queueSaveThreadToCloud(targetThreadId, 700);
+
   if (!voiceModeRef.current) {
     speakTTS(fullText);
   }
 
-  if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+  if (isDesktopPointer()) {
+    setTimeout(() => textareaRef.current?.focus(), 60);
+  }
 }
     } catch (err: any) {
       const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
@@ -8670,9 +8748,66 @@ if (!voiceModeRef.current) {
 if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       } else {
   const { thinkMs, revealMs } = getAdaptiveRevealTimings(fullText);
+
+  const finishAssistantImmediately = () => {
+    setThreads((prev) =>
+      prev.map((t) => {
+        if (t.id !== targetThreadId) return t;
+
+        return {
+          ...t,
+          updatedAt: Date.now(),
+          messages: t.messages.map((m) =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  text: fullText,
+                  streaming: false,
+                  pizarra: pizarraJson,
+                  boardImageB64,
+                  boardImagePlacement,
+                  revealMs,
+                }
+              : m
+          ),
+        };
+      })
+    );
+
+    setIsTyping(false);
+    sendGuardRef.current.busy = false;
+
+    maybeGenerateSupportVisualForAssistantMessage(
+      assistantId,
+      fullText,
+      nextMode,
+      "Apoyo visual de Vonu"
+    );
+
+    queueSaveThreadToCloud(targetThreadId, 700);
+
+    if (!voiceModeRef.current) {
+      speakTTS(fullText);
+    }
+
+    if (isDesktopPointer()) {
+      setTimeout(() => textareaRef.current?.focus(), 60);
+    }
+  };
+
+  if (!shouldUseProgressiveReveal()) {
+    finishAssistantImmediately();
+    return;
+  }
+
   const chunks = splitTextForProgressiveReveal(fullText);
 
   await sleep(thinkMs);
+
+  if (!shouldUseProgressiveReveal()) {
+    finishAssistantImmediately();
+    return;
+  }
 
   let built = "";
 
@@ -8683,25 +8818,31 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
     setThreads((prev) =>
       prev.map((t) => {
         if (t.id !== targetThreadId) return t;
+
         return {
           ...t,
           updatedAt: Date.now(),
           messages: t.messages.map((m) =>
-  m.id === assistantId
-    ? {
-        ...m,
-        text: built,
-        streaming: false,
-        pizarra: pizarraJson,
-        boardImageB64,
-        boardImagePlacement,
-        revealMs,
-      }
-    : m
-),
+            m.id === assistantId
+              ? {
+                  ...m,
+                  text: built,
+                  streaming: i < chunks.length - 1,
+                  pizarra: pizarraJson,
+                  boardImageB64,
+                  boardImagePlacement,
+                  revealMs,
+                }
+              : m
+          ),
         };
       })
     );
+
+    if (!shouldUseProgressiveReveal()) {
+      finishAssistantImmediately();
+      return;
+    }
 
     if (i < chunks.length - 1) {
       await sleep(getProgressiveChunkDelay(i + 1, chunks.length));
@@ -8711,6 +8852,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   setThreads((prev) =>
     prev.map((t) => {
       if (t.id !== targetThreadId) return t;
+
       return {
         ...t,
         updatedAt: Date.now(),
@@ -8734,17 +8876,22 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   setIsTyping(false);
   sendGuardRef.current.busy = false;
 
-maybeGenerateSupportVisualForAssistantMessage(
-  assistantId,
-  fullText,
-  nextMode,
-  "Apoyo visual de Vonu"
-);
+  maybeGenerateSupportVisualForAssistantMessage(
+    assistantId,
+    fullText,
+    nextMode,
+    "Apoyo visual de Vonu"
+  );
+
+  queueSaveThreadToCloud(targetThreadId, 700);
+
   if (!voiceModeRef.current) {
     speakTTS(fullText);
   }
 
-  if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+  if (isDesktopPointer()) {
+    setTimeout(() => textareaRef.current?.focus(), 60);
+  }
 }
     } catch (err: any) {
       const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
