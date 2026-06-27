@@ -204,98 +204,6 @@ function getAdaptiveRevealTimings(text: string) {
   return { thinkMs, revealMs };
 }
 
-function shouldAutoGenerateSupportVisual(text: string, mode?: ThreadMode) {
-  const value = String(text || "").trim().toLowerCase();
-
-  if (!value) return false;
-
-  // ✅ De momento, solo en modo tutor.
-  // Evita que fraude, contratos, emails, webs o análisis normales se ralenticen.
-  if (mode !== "tutor") return false;
-
-  // ✅ No generar en respuestas cortas.
-  if (value.length < 260) return false;
-
-  // ✅ No generar en matemáticas exactas: mejor KaTeX/HTML/SVG.
-  const looksLikeExactMathOperation =
-    /\b\d+\s*[:÷/]\s*\d+\b/.test(value) ||
-    /\b\d+\s*[+\-*x×]\s*\d+\b/.test(value) ||
-    value.includes("división") ||
-    value.includes("division") ||
-    value.includes("dividir") ||
-    value.includes("cociente") ||
-    value.includes("resto") ||
-    value.includes("ecuación") ||
-    value.includes("ecuacion") ||
-    value.includes("despejar") ||
-    value.includes("fracción") ||
-    value.includes("fraccion") ||
-    value.includes("fórmula") ||
-    value.includes("formula");
-
-  if (looksLikeExactMathOperation) {
-    return false;
-  }
-
-  // ✅ No generar en mensajes de cuenta, límites, pagos o errores.
-  if (
-    value.includes("límite alcanzado") ||
-    value.includes("limite alcanzado") ||
-    value.includes("inicia sesión") ||
-    value.includes("iniciar sesión") ||
-    value.includes("suscripción") ||
-    value.includes("recarga") ||
-    value.includes("he recibido una respuesta vacía") ||
-    value.includes("plan") ||
-    value.includes("pago")
-  ) {
-    return false;
-  }
-
-  // ✅ Solo temas claramente didácticos.
-  const looksEducational =
-    value.includes("explica") ||
-    value.includes("explicación") ||
-    value.includes("explicacion") ||
-    value.includes("paso a paso") ||
-    value.includes("niño") ||
-    value.includes("niña") ||
-    value.includes("11 años") ||
-    value.includes("colegio") ||
-    value.includes("cole") ||
-    value.includes("fotosíntesis") ||
-    value.includes("fotosintesis") ||
-    value.includes("ciclo del agua") ||
-    value.includes("sistema solar") ||
-    value.includes("ciencias") ||
-    value.includes("biología") ||
-    value.includes("biologia") ||
-    value.includes("física") ||
-    value.includes("fisica") ||
-    value.includes("química") ||
-    value.includes("quimica") ||
-    value.includes("historia") ||
-    value.includes("geografía") ||
-    value.includes("geografia") ||
-    value.includes("fútbol") ||
-    value.includes("futbol") ||
-    value.includes("desmarcarse") ||
-    value.includes("desmarque");
-
-  if (!looksEducational) return false;
-
-  const hasStructure =
-    value.includes("\n") ||
-    value.includes("1.") ||
-    value.includes("2.") ||
-    value.includes("•") ||
-    value.includes(":");
-
-  return hasStructure;
-}
-
-
-
 function splitTextForProgressiveReveal(text: string) {
   const clean = normalizeAssistantText(text || "").trim();
   if (!clean) return [];
@@ -2371,50 +2279,6 @@ function TypingDots() {
   );
 }
 
-function SupportVisualCard({
-  visual,
-}: {
-  visual?: {
-    loading: boolean;
-    imageUrl?: string;
-    error?: string;
-  };
-}) {
-  if (!visual) return null;
-
-  if (visual.loading) {
-    return (
-      <div className="mt-3 rounded-[22px] border border-zinc-200 bg-white px-4 py-3 text-[14px] font-medium text-zinc-500 shadow-sm">
-        Generando apoyo visual…
-      </div>
-    );
-  }
-
-  if (visual.error) {
-    return (
-      <div className="mt-3 rounded-[22px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] font-medium text-red-700">
-        No se ha podido generar el apoyo visual.
-      </div>
-    );
-  }
-
-  if (!visual.imageUrl) return null;
-
-  return (
-    <div className="mt-3 overflow-hidden rounded-[26px] border border-zinc-200 bg-white p-3 shadow-sm">
-      <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
-        Apoyo visual
-      </div>
-
-      <img
-        src={visual.imageUrl}
-        alt="Apoyo visual generado por Vonu"
-        className="w-full rounded-[20px] border border-zinc-100 bg-white"
-      />
-    </div>
-  );
-}
-
 // ✅ Indicador "escribiendo": cursor fijo (SIN parpadeo) para que no “titile”
 function TypingCaret() {
   return (
@@ -3487,65 +3351,6 @@ setSubscriptionInfo(null);
   }
 }
 
-async function generateSupportVisual(messageId: string, text: string, title?: string) {
-  if (!messageId || !text?.trim()) return;
-
-  setSupportVisuals((prev) => ({
-    ...prev,
-    [messageId]: {
-      ...prev[messageId],
-      loading: true,
-      error: undefined,
-    },
-  }));
-
-  try {
-    const res = await fetch("/api/support-visual", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text,
-        title,
-      }),
-    });
-
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      throw new Error(data?.error || "No se pudo generar la imagen.");
-    }
-
-    setSupportVisuals((prev) => ({
-      ...prev,
-      [messageId]: {
-        loading: false,
-        imageUrl: data?.imageUrl,
-      },
-    }));
-  } catch (e: any) {
-    setSupportVisuals((prev) => ({
-      ...prev,
-      [messageId]: {
-        loading: false,
-        error: e?.message || "Error generando apoyo visual.",
-      },
-    }));
-  }
-}
-
-function maybeGenerateSupportVisualForAssistantMessage(
-  _messageId: string,
-  _text: string,
-  _mode: ThreadMode,
-  _title?: string
-) {
-  // Desactivado temporalmente para estabilizar el chat.
-  // Las imágenes de apoyo quedan preparadas, pero no se generan automáticamente.
-  return;
-}
-
 async function hydrateAuthAndAccountFromBrowserSession() {
   const hasSession = await refreshAuthSession();
 
@@ -4566,17 +4371,6 @@ async function loadCloudThreadsOnce() {
     }
   }
 }, [threads, mounted]);
-
-const [supportVisuals, setSupportVisuals] = useState<
-  Record<
-    string,
-    {
-      loading: boolean;
-      imageUrl?: string;
-      error?: string;
-    }
-  >
->({});
 
 // -------- UI --------
 const [input, setInput] = useState("");
@@ -8052,6 +7846,7 @@ if (!isDesktopPointer()) {
       const { data: sessionData } = await supabaseBrowser.auth.getSession();
 const accessToken = sessionData?.session?.access_token ?? null;
 
+
 const res = await fetchJsonWithTimeout("/api/chat", {
   method: "POST",
   headers: {
@@ -8165,12 +7960,7 @@ const pizarraJson = null;
         sendGuardRef.current.busy = false;
 
 // ✅ Solo usamos la voz del navegador fuera del modo conversación
-maybeGenerateSupportVisualForAssistantMessage(
-  assistantId,
-  fullText,
-  modePreset,
-  "Apoyo visual de Vonu"
-);
+
 
 queueSaveThreadToCloud(targetThreadId, 700);
 
@@ -8206,13 +7996,6 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
     setIsTyping(false);
     sendGuardRef.current.busy = false;
-
-    maybeGenerateSupportVisualForAssistantMessage(
-      assistantId,
-      fullText,
-      modePreset,
-      "Apoyo visual de Vonu"
-    );
 
     queueSaveThreadToCloud(targetThreadId, 700);
 
@@ -8305,13 +8088,6 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
   setIsTyping(false);
   sendGuardRef.current.busy = false;
-
-  maybeGenerateSupportVisualForAssistantMessage(
-    assistantId,
-    fullText,
-    modePreset,
-    "Apoyo visual de Vonu"
-  );
 
   queueSaveThreadToCloud(targetThreadId, 700);
 
@@ -8572,7 +8348,7 @@ if (voiceModeRef.current && imageBase64) {
     const { data: sessionData } = await supabaseBrowser.auth.getSession();
     const accessToken = sessionData?.session?.access_token ?? null;
 
-    const res = await fetch("/api/chat", {
+    const res = await fetchJsonWithTimeout("/api/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -8697,7 +8473,7 @@ return;
       const { data: sessionData } = await supabaseBrowser.auth.getSession();
 const accessToken = sessionData?.session?.access_token ?? null;
 
-const res = await fetch("/api/chat", {
+const res = await fetchJsonWithTimeout("/api/chat", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -8789,12 +8565,6 @@ const boardImageB64 = typeof data?.boardImageB64 === "string" && data.boardImage
         setIsTyping(false);
 sendGuardRef.current.busy = false;
 
-maybeGenerateSupportVisualForAssistantMessage(
-  assistantId,
-  fullText,
-  nextMode,
-  "Apoyo visual de Vonu"
-);
 if (!voiceModeRef.current) {
   speakTTS(fullText);
 }
@@ -8831,12 +8601,6 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
     setIsTyping(false);
     sendGuardRef.current.busy = false;
 
-    maybeGenerateSupportVisualForAssistantMessage(
-      assistantId,
-      fullText,
-      nextMode,
-      "Apoyo visual de Vonu"
-    );
 
     queueSaveThreadToCloud(targetThreadId, 700);
 
@@ -8929,13 +8693,6 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
   setIsTyping(false);
   sendGuardRef.current.busy = false;
-
-  maybeGenerateSupportVisualForAssistantMessage(
-    assistantId,
-    fullText,
-    nextMode,
-    "Apoyo visual de Vonu"
-  );
 
   queueSaveThreadToCloud(targetThreadId, 700);
 
@@ -10902,9 +10659,6 @@ if (!finalRiskStatus) return null;
   </div>
 )}
 
-{m.role === "assistant" && !isStreaming ? (
-  <SupportVisualCard visual={supportVisuals[m.id]} />
-) : null}
 
                                     {activeThread?.mode === "tutor" && m.boardImageB64 ? (
                     <div className="mt-3">
