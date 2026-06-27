@@ -19,7 +19,6 @@ import TopBar from "@/app/components/TopBar";
 import Sidebar from "@/app/components/Sidebar";
 import VonuThinking from "@/app/components/VonuThinking";
 import AssistantMessageActions from "@/app/components/AssistantMessageActions";
-import { analyzeAttachment } from "@/app/lib/analysis/analyzeAttachment";
 import FilePickerModal from "@/app/components/FilePickerModal";
 import ChatFileDropCard from "@/app/components/ChatFileDropCard";
 import ManualWhiteboardModal from "@/app/components/ManualWhiteboardModal";
@@ -8254,28 +8253,6 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
 // ✅ Ya NO forzamos modo tutor por intención.
 // El modo lo decide el usuario (UI) y se guarda en el thread.
 // nextMode y nextTutorLevel quedan como están.
-
-const conversationText = messages
-  .filter((m) => (m.text ?? "").trim())
-  .map((m) => `${m.role === "user" ? "Usuario" : "Vonu"}: ${m.text ?? ""}`)
-  .join("\n\n");
-
-if (imageBase64) {
-  try {
-    const attachmentPreviewResult = await analyzeAttachment({
-      kind: "image",
-      imageBase64,
-      userMessage: userText,
-      conversationText,
-      mode: voiceModeRef.current ? "realtime" : nextMode,
-    });
-
-    console.log("[Attachment analysis preview]", attachmentPreviewResult);
-  } catch (error) {
-    console.error("Error preparando análisis de adjunto:", error);
-  }
-}
-
 
 const userMsg: Message = {
   id: crypto.randomUUID(),
