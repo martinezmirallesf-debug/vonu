@@ -188,18 +188,18 @@ function getAdaptiveRevealTimings(text: string) {
   const len = (text || "").trim().length;
 
   const thinkMs =
-    len < 120 ? 420 :
-    len < 280 ? 650 :
-    len < 600 ? 950 :
-    len < 1100 ? 1300 :
-    1700;
+    len < 120 ? 80 :
+    len < 280 ? 120 :
+    len < 600 ? 160 :
+    len < 1100 ? 220 :
+    280;
 
   const revealMs =
-    len < 120 ? 260 :
-    len < 280 ? 420 :
-    len < 600 ? 700 :
-    len < 1100 ? 1000 :
-    1400;
+    len < 120 ? 120 :
+    len < 280 ? 180 :
+    len < 600 ? 240 :
+    len < 1100 ? 320 :
+    420;
 
   return { thinkMs, revealMs };
 }
@@ -8078,12 +8078,12 @@ const boardImageB64 = null;
 const boardImagePlacement = null;
 const pizarraJson = null;
 
-      await sleep(90);
+      await sleep(20);
 
       const isTutor = modePreset === "tutor";
 
       if (isTutor) {
-        await sleep(220);
+        await sleep(60);
 
         setThreads((prev) =>
           prev.map((t) => {
@@ -8503,7 +8503,7 @@ if (!isDesktopPointer()) {
 
 if (voiceModeRef.current && imageBase64) {
   try {
-    await sleep(220);
+    await sleep(60);
 
     const threadNow =
       threadsRef.current.find((x) => x.id === targetThreadId) ?? activeThread;
@@ -8629,7 +8629,7 @@ return;
 }
 
     try {
-      await sleep(220);
+      await sleep(60);
 
       const threadNow = threadsRef.current.find((x) => x.id === targetThreadId) ?? activeThread;
 
@@ -8702,13 +8702,13 @@ const boardImageB64 = typeof data?.boardImageB64 === "string" && data.boardImage
       // ✅ NUEVO: JSON de pizarra (si viene)
       const pizarraJson = typeof data?.pizarra === "string" && data.pizarra.trim() ? data.pizarra : null;
 
-      await sleep(90);
+      await sleep(20);
 
       const isTutor = nextMode === "tutor";
 
       if (isTutor) {
         // ✅ Tutor: estable (no streaming letra a letra). Mostramos dots y luego el bloque completo.
-        await sleep(220);
+        await sleep(60);
 
         setThreads((prev) =>
           prev.map((t) => {
