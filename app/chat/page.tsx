@@ -183,69 +183,17 @@ async function fetchJsonWithTimeout(
   }
 }
 
-function getAdaptiveRevealTimings(text: string) {
-  const len = (text || "").trim().length;
-
-  const thinkMs =
-    len < 120 ? 80 :
-    len < 280 ? 120 :
-    len < 600 ? 160 :
-    len < 1100 ? 220 :
-    280;
-
-  const revealMs =
-    len < 120 ? 120 :
-    len < 280 ? 180 :
-    len < 600 ? 240 :
-    len < 1100 ? 320 :
-    420;
-
-  return { thinkMs, revealMs };
+function getAdaptiveRevealTimings(_text: string) {
+  return { thinkMs: 0, revealMs: 0 };
 }
 
 function splitTextForProgressiveReveal(text: string) {
   const clean = normalizeAssistantText(text || "").trim();
-  if (!clean) return [];
-
-  const blocks = clean
-    .split(/\n\s*\n/g)
-    .map((b) => b.trim())
-    .filter(Boolean);
-
-  if (blocks.length >= 2) return blocks;
-
-  // fallback: si no hay párrafos claros, partir por frases
-  const sentences = clean
-    .split(/(?<=[\.\?\!])\s+/g)
-    .map((s) => s.trim())
-    .filter(Boolean);
-
-  if (sentences.length <= 1) return [clean];
-
-  const chunks: string[] = [];
-  let buf = "";
-
-  for (const s of sentences) {
-    const next = buf ? `${buf} ${s}` : s;
-    if (next.length < 220) {
-      buf = next;
-    } else {
-      if (buf) chunks.push(buf);
-      buf = s;
-    }
-  }
-
-  if (buf) chunks.push(buf);
-
-  return chunks.length ? chunks : [clean];
+  return clean ? [clean] : [];
 }
 
-function getProgressiveChunkDelay(index: number, total: number) {
-  if (total <= 1) return 0;
-  if (index === 0) return 0;
-  if (index === 1) return 220;
-  if (index === 2) return 300;
-  return 360;
+function getProgressiveChunkDelay(_index: number, _total: number) {
+  return 0;
 }
 
 function looksLikeRiskAnalysis(text: string) {
