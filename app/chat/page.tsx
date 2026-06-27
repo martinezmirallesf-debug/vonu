@@ -4932,7 +4932,8 @@ function armRealtimeVoiceLimit(secondsLeft: number) {
 }
 
 function setVoiceModeOff() {
-    clearRealtimeLimitTimers();
+  unlockChatUi("setVoiceModeOff");
+
   voiceModeRef.current = false;
   setVoiceMode(false);
   setRealtimeStatus("closed");
@@ -4955,6 +4956,10 @@ function setVoiceModeOff() {
 
 function stopConversationModeBeforeTypedSend() {
   if (!voiceModeRef.current) return;
+
+  unlockChatUi("stopConversationModeBeforeTypedSend");
+
+  realtimeManualCloseRef.current = true;
 
   realtimeManualCloseRef.current = true;
 
@@ -5013,6 +5018,7 @@ async function toggleConversation() {
 
   // ✅ SI YA ESTÁ ACTIVO, PRIMERO APAGAR SIEMPRE
   if (voiceModeRef.current) {
+        unlockChatUi("toggleConversationOff");
     realtimeManualCloseRef.current = true;
 
     try {
@@ -5615,6 +5621,34 @@ const [pdfPreview, setPdfPreview] = useState<{
 } | null>(null);
 
 const [isTyping, setIsTyping] = useState(false);
+const typingStartedAtRef = useRef<number | null>(null);
+
+useEffect(() => {
+  if (!isTyping) {
+    typingStartedAtRef.current = null;
+    return;
+  }
+
+  typingStartedAtRef.current = Date.now();
+
+  const timer = window.setTimeout(() => {
+    const startedAt = typingStartedAtRef.current;
+    if (!startedAt) return;
+
+    const elapsed = Date.now() - startedAt;
+
+    if (elapsed < 55_000) return;
+
+    unlockChatUi("typing-watchdog-timeout");
+
+    setUiError(
+      "La respuesta está tardando demasiado y he desbloqueado el chat. Prueba de nuevo; si era un análisis con imagen o web, puede que una comprobación externa haya tardado demasiado."
+    );
+  }, 56_000);
+
+  return () => window.clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [isTyping]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
 
@@ -5707,6 +5741,26 @@ function blockSendBecauseMessageLimitReached() {
     sendGuardRef.current.last = { threadId, text, ts: now };
     return false;
   }
+
+  function unlockChatUi(reason?: string) {
+  console.log("[Vonu unlockChatUi]", reason ?? "unknown");
+
+  setIsTyping(false);
+  sendGuardRef.current.busy = false;
+  pendingScrollToBottomRef.current = false;
+
+  try {
+    stopTTS();
+  } catch {}
+
+  try {
+    clearRealtimeLimitTimers();
+  } catch {}
+
+  try {
+    clearSilenceTimer();
+  } catch {}
+}
 
 
  const [renameOpen, setRenameOpen] = useState(false);
