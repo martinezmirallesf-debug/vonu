@@ -164,7 +164,7 @@ function shouldUseProgressiveReveal() {
 async function fetchJsonWithTimeout(
   url: string,
   options: RequestInit,
-  timeoutMs = 22000
+  timeoutMs = 30000
 ) {
   const controller = new AbortController();
 
@@ -8270,12 +8270,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   }
 }
     } catch (err: any) {
-      const msg =
-  err?.name === "AbortError"
-    ? "La respuesta ha tardado demasiado y se ha cortado para que el chat no se quede bloqueado. Prueba de nuevo o divide el análisis en una consulta más pequeña."
-    : typeof err?.message === "string"
-      ? err.message
-      : "Error desconocido conectando con la IA.";
+      const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
 
       setThreads((prev) =>
         prev.map((t) => {
@@ -8523,7 +8518,7 @@ if (voiceModeRef.current && imageBase64) {
     const { data: sessionData } = await supabaseBrowser.auth.getSession();
     const accessToken = sessionData?.session?.access_token ?? null;
 
-    const res = await fetchJsonWithTimeout("/api/chat", {
+    const res = await fetch("/api/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -8648,7 +8643,7 @@ return;
       const { data: sessionData } = await supabaseBrowser.auth.getSession();
 const accessToken = sessionData?.session?.access_token ?? null;
 
-const res = await fetchJsonWithTimeout("/api/chat", {
+const res = await fetch("/api/chat", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
