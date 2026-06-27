@@ -152,6 +152,29 @@ function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+async function fetchJsonWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeoutMs = 30000
+) {
+  const controller = new AbortController();
+
+  const timeout = window.setTimeout(() => {
+    controller.abort();
+  }, timeoutMs);
+
+  try {
+    const res = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+
+    return res;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 function getAdaptiveRevealTimings(text: string) {
   const len = (text || "").trim().length;
 
@@ -7966,7 +7989,7 @@ if (!isDesktopPointer()) {
       const { data: sessionData } = await supabaseBrowser.auth.getSession();
 const accessToken = sessionData?.session?.access_token ?? null;
 
-const res = await fetch("/api/chat", {
+const res = await fetchJsonWithTimeout("/api/chat", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
