@@ -164,7 +164,7 @@ function shouldUseProgressiveReveal() {
 async function fetchJsonWithTimeout(
   url: string,
   options: RequestInit,
-  timeoutMs = 30000
+  timeoutMs = 75000
 ) {
   const controller = new AbortController();
 
@@ -5431,14 +5431,14 @@ useEffect(() => {
 
     const elapsed = Date.now() - startedAt;
 
-    if (elapsed < 55_000) return;
+    if (elapsed < 80_000) return;
 
     unlockChatUi("typing-watchdog-timeout");
 
     setUiError(
       "La respuesta está tardando demasiado y he desbloqueado el chat. Prueba de nuevo; si era un análisis con imagen o web, puede que una comprobación externa haya tardado demasiado."
     );
-  }, 56_000);
+  }, 81_000);
 
   return () => window.clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
