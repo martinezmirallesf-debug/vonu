@@ -1618,6 +1618,7 @@ function shouldAutoTitleThread(title: string) {
 const STORAGE_KEY = "vonu_threads_v2";
 const STORAGE_BACKUP_KEY = "vonu_threads_v2_backup";
 const STORAGE_LAST_GOOD_KEY = "vonu_threads_v2_last_good";
+const CHECKOUT_RETURN_THREAD_KEY = "vonu_checkout_return_thread_id_v1";
 const HOME_URL = "https://vonuai.com";
 
 const MAX_STORED_THREADS = 24;
@@ -3678,10 +3679,7 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
     try {
       const currentThreadId = activeThreadIdRef.current || activeThreadId;
       if (currentThreadId) {
-        window.localStorage.setItem(
-          "vonu_checkout_return_thread_id_v1",
-          currentThreadId
-        );
+        window.localStorage.setItem(CHECKOUT_RETURN_THREAD_KEY, currentThreadId);
 
         const currentThread = threadsRef.current.find(
           (thread) => thread.id === currentThreadId
@@ -3738,7 +3736,6 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
       if (checkout === "success") {
   setToastMsg("✅ Pago completado. Actualizando tu cuenta…");
 
-  // Al volver de Stripe, quitamos cualquier bloqueo visual de pago.
   setPayLoading(false);
   setPaywallOpen(false);
   setPayMsg(null);
@@ -3746,55 +3743,45 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
   url.searchParams.delete("checkout");
   window.history.replaceState({}, "", url.toString());
 
-  const restoreThreadAfterCheckout = () => {
+  const restoreCheckoutThread = () => {
     try {
-      const returnThreadId = window.localStorage.getItem(
-        "vonu_checkout_return_thread_id_v1"
-      );
+      const returnThreadId = window.localStorage.getItem(CHECKOUT_RETURN_THREAD_KEY);
+      if (!returnThreadId) return false;
 
-      if (!returnThreadId) return;
+      const exists = threadsRef.current.some((thread) => thread.id === returnThreadId);
 
-      const exists = threadsRef.current.some(
-        (thread) => thread.id === returnThreadId
-      );
+      if (!exists) return false;
 
-      if (exists) {
-        activeThreadIdRef.current = returnThreadId;
-        setActiveThreadId(returnThreadId);
+      activeThreadIdRef.current = returnThreadId;
+      setActiveThreadId(returnThreadId);
 
-        requestAnimationFrame(() => {
-          pendingScrollToBottomRef.current = true;
-          shouldStickToBottomRef.current = true;
-        });
-      }
+      requestAnimationFrame(() => {
+        shouldStickToBottomRef.current = true;
+        pendingScrollToBottomRef.current = true;
+      });
 
-      window.localStorage.removeItem("vonu_checkout_return_thread_id_v1");
-    } catch {}
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   const refreshAfterCheckout = async () => {
-    // Primero intentamos volver al hilo donde estabas.
-    restoreThreadAfterCheckout();
+    restoreCheckoutThread();
 
     await refreshProStatus();
 
-    let latestUsage: any = null;
-
-    // Stripe puede tardar unos segundos en confirmar el webhook.
-    // Reintentamos para que las recargas de voz aparezcan sin recargar página.
     for (let i = 0; i < 6; i += 1) {
-      latestUsage = await refreshUsageInfo();
-
-      if (Number(latestUsage?.realtime_seconds_left ?? 0) > 0) {
-        break;
-      }
-
+      await refreshUsageInfo();
+      restoreCheckoutThread();
       await sleep(900);
     }
 
-    // Por si la carga del historial remoto pisa el hilo activo unos ms después,
-    // lo reintentamos al final.
-    restoreThreadAfterCheckout();
+    restoreCheckoutThread();
+
+    try {
+      window.localStorage.removeItem(CHECKOUT_RETURN_THREAD_KEY);
+    } catch {}
 
     setPayLoading(false);
     setToastMsg("✅ Listo. Tu cuenta se ha actualizado.");
@@ -4334,6 +4321,14 @@ async function loadCloudThreadsOnce() {
 
     let nextActiveId = activeThreadIdRef.current;
 
+try {
+  const returnThreadId = window.localStorage.getItem(CHECKOUT_RETURN_THREAD_KEY);
+
+  if (returnThreadId) {
+    nextActiveId = returnThreadId;
+  }
+} catch {}
+
     setThreads((prev) => {
       const merged = mergeLocalAndCloudThreads(prev, remoteThreads);
 
@@ -4345,10 +4340,11 @@ async function loadCloudThreadsOnce() {
     });
 
     window.setTimeout(() => {
-      if (nextActiveId) {
-        setActiveThreadId(nextActiveId);
-      }
-    }, 0);
+  if (nextActiveId) {
+    activeThreadIdRef.current = nextActiveId;
+    setActiveThreadId(nextActiveId);
+  }
+}, 0);
   } catch (error) {
     console.warn("[Vonu] Error cargando historial remoto:", error);
     cloudHistoryLoadedForUserRef.current = null;
@@ -4387,9 +4383,20 @@ async function loadCloudThreadsOnce() {
         }));
 
       if (clean.length) {
-        setThreads(clean);
-        setActiveThreadId(clean[0].id);
-      }
+  let nextActiveId = clean[0].id;
+
+  try {
+    const returnThreadId = window.localStorage.getItem(CHECKOUT_RETURN_THREAD_KEY);
+
+    if (returnThreadId && clean.some((t) => t.id === returnThreadId)) {
+      nextActiveId = returnThreadId;
+    }
+  } catch {}
+
+  activeThreadIdRef.current = nextActiveId;
+  setThreads(clean);
+  setActiveThreadId(nextActiveId);
+}
     } catch {}
   }, [authLoading, isLoggedIn]);
 
@@ -9957,8 +9964,8 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 
       {/* TOAST */}
 {toastMsg && (
-  <div className="pointer-events-none fixed left-0 right-0 top-[calc(env(safe-area-inset-top,0px)+96px)] z-[120] flex justify-center px-4 md:top-5">
-    <div className="pointer-events-auto flex w-full max-w-[560px] items-center justify-center gap-3 rounded-[28px] border border-zinc-200/80 bg-white/95 px-4 py-3 shadow-[0_18px_60px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+  <div className="pointer-events-none fixed inset-0 z-[120] flex items-center justify-center px-4 py-6 md:left-[304px]">
+    <div className="pointer-events-auto flex w-full max-w-[520px] items-center justify-center gap-3 rounded-[28px] border border-zinc-200/80 bg-white/95 px-4 py-4 text-center shadow-[0_18px_60px_rgba(15,23,42,0.14)] backdrop-blur-xl">
       <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-950 text-[14px] font-semibold text-white">
         ✓
       </div>
