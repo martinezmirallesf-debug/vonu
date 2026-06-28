@@ -209,6 +209,20 @@ function BackIcon({ className }: { className?: string }) {
 
 function formatVoiceSeconds(seconds?: number | null) {
   if (typeof seconds !== "number" || Number.isNaN(seconds)) return "—";
+
+  const total = Math.max(0, Math.floor(seconds));
+  const minutes = Math.floor(total / 60);
+  const remainingSeconds = total % 60;
+
+  if (minutes <= 0) {
+    return `${remainingSeconds}s`;
+  }
+
+  if (remainingSeconds === 0) {
+    return `${minutes} min`;
+  }
+
+  return `${minutes}m ${remainingSeconds}s`;
 }
 
 function formatPeriodEndDate(iso?: string | null) {

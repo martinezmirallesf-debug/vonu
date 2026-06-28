@@ -9965,7 +9965,7 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
       {/* TOAST */}
 {toastMsg && (
   <div className="pointer-events-none fixed inset-0 z-[120] flex items-center justify-center px-4 py-6 md:left-[304px]">
-    <div className="pointer-events-auto flex w-full max-w-[520px] items-center justify-center gap-3 rounded-[28px] border border-zinc-200/80 bg-white/95 px-4 py-4 text-center shadow-[0_18px_60px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+    <div className="pointer-events-auto flex w-full max-w-[520px] items-center justify-center gap-3 rounded-full border border-zinc-200/80 bg-white/95 px-4 py-4 text-center shadow-[0_18px_60px_rgba(15,23,42,0.14)] backdrop-blur-xl">
       <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-950 text-[14px] font-semibold text-white">
         ✓
       </div>
