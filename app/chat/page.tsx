@@ -6638,15 +6638,25 @@ li({ children, ...props }: any) {
 },
 
   // ✅ Bloques de código
-  code({ inline, className, children, ...props }: any) {
-    const isInline = !!inline;
+code({ inline, className, children, ...props }: any) {
+  const cn = typeof className === "string" ? className : "";
+  const match = cn.match(/language-([a-zA-Z0-9_-]+)/);
+  const lang = (match?.[1] || "").toLowerCase();
 
-    const cn = typeof className === "string" ? className : "";
-    const match = cn.match(/language-([a-zA-Z0-9_-]+)/);
-    const lang = (match?.[1] || "").toLowerCase();
+  const contentFromChildren = extractPlainText(children);
+  const content =
+    contentFromChildren ||
+    (Array.isArray(children)
+      ? children.map(extractPlainText).join("")
+      : String(children ?? ""));
 
-    const content = Array.isArray(children) ? children.join("") : String(children ?? "");
-    const clean = content.replace(/\n$/, "");
+  const clean = content.replace(/\n$/, "");
+
+  // En versiones actuales de react-markdown, `inline` puede venir vacío.
+  // Si no hay lenguaje y no hay saltos de línea, lo tratamos como código inline:
+  // `.sh`, `crocs.es`, `npm run dev`, etc.
+  const isInline =
+    Boolean(inline) || (!lang && !clean.includes("\n"));
 
     // ✅ PIZARRA: si viene ```pizarra``` o ```whiteboard``` => texto "cuaderno", NO código
     if (!isInline && (lang === "pizarra" || lang === "whiteboard")) {
