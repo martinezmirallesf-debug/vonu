@@ -92,6 +92,24 @@ function getServiceClient() {
   });
 }
 
+function supabaseErrorPayload(label: string, error: any) {
+  console.error(`[chat-history] ${label}`, {
+    message: error?.message,
+    code: error?.code,
+    details: error?.details,
+    hint: error?.hint,
+  });
+
+  return {
+    ok: false,
+    where: label,
+    error: error?.message || "Error de Supabase.",
+    code: error?.code || null,
+    details: error?.details || null,
+    hint: error?.hint || null,
+  };
+}
+
 function safeClientUpdatedAt(value: unknown) {
   if (typeof value === "number" && Number.isFinite(value)) {
     const d = new Date(value);
@@ -280,11 +298,11 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (existingError) {
-      return NextResponse.json(
-        { ok: false, error: existingError.message },
-        { status: 500 }
-      );
-    }
+  return NextResponse.json(
+    supabaseErrorPayload("existing-check", existingError),
+    { status: 500 }
+  );
+}
 
     if (existing?.id) {
       const { error: updateError } = await serviceClient
@@ -302,11 +320,11 @@ export async function POST(req: NextRequest) {
         .eq("thread_id", thread.threadId);
 
       if (updateError) {
-        return NextResponse.json(
-          { ok: false, error: updateError.message },
-          { status: 500 }
-        );
-      }
+  return NextResponse.json(
+    supabaseErrorPayload("update-thread", updateError),
+    { status: 500 }
+  );
+}
     } else {
       const { error: insertError } = await serviceClient
         .from("chat_threads")
@@ -325,11 +343,11 @@ export async function POST(req: NextRequest) {
         });
 
       if (insertError) {
-        return NextResponse.json(
-          { ok: false, error: insertError.message },
-          { status: 500 }
-        );
-      }
+  return NextResponse.json(
+    supabaseErrorPayload("insert-thread", insertError),
+    { status: 500 }
+  );
+}
     }
 
     return NextResponse.json({
@@ -381,11 +399,11 @@ export async function DELETE(req: NextRequest) {
       .eq("thread_id", threadId);
 
     if (error) {
-      return NextResponse.json(
-        { ok: false, error: error.message },
-        { status: 500 }
-      );
-    }
+  return NextResponse.json(
+    supabaseErrorPayload("get-threads", error),
+    { status: 500 }
+  );
+}
 
     return NextResponse.json({
       ok: true,
