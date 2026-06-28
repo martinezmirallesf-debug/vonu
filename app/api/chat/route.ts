@@ -706,9 +706,13 @@ REGLAS DE ESTILO:
 - Si el usuario pide varias opciones, puedes crear varios bloques separados.
 `.trim();
 
-normalized.userText = `${copyableResponseBlockInstruction}
-
-${normalized.userText}`;
+// IMPORTANTE:
+// No contaminamos userText con instrucciones internas.
+// quick-service necesita userText limpio para fast paths, intención, URL, teléfono, moat y seguridad.
+const edgePayload = {
+  ...normalized,
+  extraInstructions: copyableResponseBlockInstruction,
+};
 
     // ==========================================================
     // ✅ 1) INTERCEPTOR FÚTBOL (ANTES de Supabase Edge Function)
@@ -917,7 +921,7 @@ console.log("[api/chat] quick-service dispatch", {
 const resp = await fetch(edgeUrl, {
   method: "POST",
   headers,
-  body: JSON.stringify(normalized),
+  body: JSON.stringify(edgePayload),
   cache: "no-store",
 });
 
