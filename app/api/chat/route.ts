@@ -842,56 +842,22 @@ const financeOrAcademicIntent =
       );
     }
 
-    // ==========================================================
-// ✅ FAST PATH LOCAL DE RESCATE
-// Evita pasar por Supabase Edge para saludos simples.
 // ==========================================================
-const fastPathText = pickUserTextFromBody(body)
+// ✅ TRACE DE LATENCIA — sin respuesta prefabricada
+// Vonu debe pensar siempre. Este bloque solo mide.
+// ==========================================================
+const routeStartedAt = Date.now();
+
+const cleanUserTextForTrace = pickUserTextFromBody(body)
   .trim()
-  .toLowerCase();
+  .slice(0, 120);
 
-const fastPathMode =
-  body?.mode === "tutor" ? "tutor" : "chat";
-
-const fastPathHasImage = Boolean(body?.imageBase64);
-const fastPathHasPdf = Boolean(body?.pdfText);
-
-const isFastPathGreeting =
-  fastPathText.length <= 20 &&
-  /^(hola|buenas|ok|vale|gracias|adios|adiós|saludos|buenos dias|buenos días|buenas noches|buenas tardes|hey|hi|hello)$/i.test(
-    fastPathText
-  );
-
-  console.log("[api/chat] fast-path-check", {
-  fastPathText,
-  fastPathMode,
-  fastPathHasImage,
-  fastPathHasPdf,
+console.log("[api/chat] start", {
+  mode: normalized.mode,
+  hasImage: Boolean(normalized.imageBase64),
+  hasPdf: Boolean(normalized.pdfText),
+  userTextPreview: cleanUserTextForTrace,
 });
-
-if (
-  fastPathMode === "chat" &&
-  !fastPathHasImage &&
-  !fastPathHasPdf &&
-  isFastPathGreeting
-) {
-console.log("[api/chat] route-fast-path HIT", {
-  text: fastPathText,
-});
-
-  return json(
-    {
-      text: "Hola 👋 Dime qué quieres revisar y lo miramos con calma.",
-      model: "route-fast-path",
-      pillar: "CONVERSACION_GENERAL",
-      mode: "chat",
-      tutorLevel: null,
-      studyMode: null,
-      fastPath: "route_greeting",
-    },
-    200
-  );
-}
 
     // ==========================================================
     // ✅ 2) SI NO ES FÚTBOL: tu flujo original con Supabase Edge
@@ -936,12 +902,30 @@ const headers: Record<string, string> = {
     : `Bearer ${supabaseAnonKey}`,
 };
 
-    const resp = await fetch(edgeUrl, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(normalized),
-      cache: "no-store",
-    });
+    const edgeStartedAt = Date.now();
+
+console.log("[api/chat] quick-service dispatch", {
+  edgeUrlHost: (() => {
+    try {
+      return new URL(edgeUrl).host;
+    } catch {
+      return "invalid-edge-url";
+    }
+  })(),
+});
+
+const resp = await fetch(edgeUrl, {
+  method: "POST",
+  headers,
+  body: JSON.stringify(normalized),
+  cache: "no-store",
+});
+
+console.log("[api/chat] quick-service end", {
+  status: resp.status,
+  edgeMs: Date.now() - edgeStartedAt,
+  totalMs: Date.now() - routeStartedAt,
+});
 
     const raw = await resp.text().catch(() => "");
     let data: any = null;
