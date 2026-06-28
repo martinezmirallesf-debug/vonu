@@ -843,6 +843,57 @@ const financeOrAcademicIntent =
     }
 
     // ==========================================================
+// ✅ FAST PATH LOCAL DE RESCATE
+// Evita pasar por Supabase Edge para saludos simples.
+// ==========================================================
+const fastPathText = pickUserTextFromBody(body)
+  .trim()
+  .toLowerCase();
+
+const fastPathMode =
+  body?.mode === "tutor" ? "tutor" : "chat";
+
+const fastPathHasImage = Boolean(body?.imageBase64);
+const fastPathHasPdf = Boolean(body?.pdfText);
+
+const isFastPathGreeting =
+  fastPathText.length <= 20 &&
+  /^(hola|buenas|ok|vale|gracias|adios|adiós|saludos|buenos dias|buenos días|buenas noches|buenas tardes|hey|hi|hello)$/i.test(
+    fastPathText
+  );
+
+  console.log("[api/chat] fast-path-check", {
+  fastPathText,
+  fastPathMode,
+  fastPathHasImage,
+  fastPathHasPdf,
+});
+
+if (
+  fastPathMode === "chat" &&
+  !fastPathHasImage &&
+  !fastPathHasPdf &&
+  isFastPathGreeting
+) {
+console.log("[api/chat] route-fast-path HIT", {
+  text: fastPathText,
+});
+
+  return json(
+    {
+      text: "Hola 👋 Dime qué quieres revisar y lo miramos con calma.",
+      model: "route-fast-path",
+      pillar: "CONVERSACION_GENERAL",
+      mode: "chat",
+      tutorLevel: null,
+      studyMode: null,
+      fastPath: "route_greeting",
+    },
+    200
+  );
+}
+
+    // ==========================================================
     // ✅ 2) SI NO ES FÚTBOL: tu flujo original con Supabase Edge
     // ==========================================================
     const supabaseUrl = cleanUrl(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "");
