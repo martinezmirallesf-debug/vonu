@@ -3667,11 +3667,36 @@ useEffect(() => {
 }, [authLoading, isLoggedIn, pendingCheckout]);
 
 async function startTopupCheckout(pack: "basic" | "medium" | "large") {
-  try {
-    const { data } = await supabaseBrowser.auth.getSession();
-    const token = data?.session?.access_token;
+  if (payLoading) return;
 
-    if (!token) {
+  setPayLoading(true);
+  setPayMsg(null);
+
+  try {
+    // Guardamos el hilo activo antes de salir a Stripe.
+    // Así, al volver, podemos intentar restaurarlo.
+    try {
+      const currentThreadId = activeThreadIdRef.current || activeThreadId;
+      if (currentThreadId) {
+        window.localStorage.setItem(
+          "vonu_checkout_return_thread_id_v1",
+          currentThreadId
+        );
+
+        const currentThread = threadsRef.current.find(
+          (thread) => thread.id === currentThreadId
+        );
+
+        if (currentThread) {
+          saveThreadToCloud(currentThread);
+        }
+      }
+    } catch {}
+
+    const accessToken = await getChatAccessTokenWithTimeout(1500);
+
+    if (!accessToken) {
+      setPayLoading(false);
       setPayMsg("Para comprar una recarga, inicia sesión.");
       openLoginModal("signin");
       return;
@@ -3681,7 +3706,7 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       cache: "no-store",
       body: JSON.stringify({ pack }),
@@ -3690,11 +3715,14 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
     const json = await res.json().catch(() => ({}));
 
     if (!res.ok || !json?.url) {
-      throw new Error(json?.error || "No se pudo iniciar la recarga.");
+      setPayLoading(false);
+      setPayMsg(json?.error || "No se pudo iniciar la recarga.");
+      return;
     }
 
     window.location.href = json.url;
   } catch (e: any) {
+    setPayLoading(false);
     setPayMsg(e?.message ?? "No se pudo iniciar la recarga.");
   }
 }
@@ -3709,29 +3737,49 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
 
       if (checkout === "success") {
   setToastMsg("✅ Pago completado. Actualizando tu cuenta…");
+
+  // Desbloqueamos cualquier estado viejo de pago/paywall al volver de Stripe.
+  setPayLoading(false);
   setPaywallOpen(false);
   setPayMsg(null);
 
   url.searchParams.delete("checkout");
   window.history.replaceState({}, "", url.toString());
 
-  const refreshAfterCheckout = async () => {
-    await refreshProStatus();
+  const restoreThreadAfterCheckout = () => {
+    try {
+      const returnThreadId = window.localStorage.getItem(
+        "vonu_checkout_return_thread_id_v1"
+      );
 
-    let latestUsage: any = null;
+      if (!returnThreadId) return;
 
-    // Stripe puede tardar unos segundos en confirmar el webhook.
-    // Reintentamos para que las recargas de voz aparezcan sin recargar página.
-    for (let i = 0; i < 6; i += 1) {
-      latestUsage = await refreshUsageInfo();
+      const exists = threadsRef.current.some(
+        (thread) => thread.id === returnThreadId
+      );
 
-      if (Number(latestUsage?.realtime_seconds_left ?? 0) > 0) {
-        break;
+      if (exists) {
+        activeThreadIdRef.current = returnThreadId;
+        setActiveThreadId(returnThreadId);
       }
 
+      window.localStorage.removeItem("vonu_checkout_return_thread_id_v1");
+    } catch {}
+  };
+
+  const refreshAfterCheckout = async () => {
+    restoreThreadAfterCheckout();
+
+    await refreshProStatus();
+
+    // Stripe/webhook puede tardar unos segundos en reflejar la recarga.
+    // Por eso refrescamos usage varias veces sin obligar a recargar página.
+    for (let i = 0; i < 6; i += 1) {
+      await refreshUsageInfo();
       await sleep(900);
     }
 
+    setPayLoading(false);
     setToastMsg("✅ Listo. Tu cuenta se ha actualizado.");
     setTimeout(() => setToastMsg(null), 3500);
   };
@@ -4681,14 +4729,35 @@ function clearRealtimeLimitTimers() {
 
 function openVoiceTopupModal() {
   realtimeStoppedByLimitRef.current = false;
+  realtimeManualCloseRef.current = false;
 
   try {
     clearRealtimeLimitTimers();
   } catch {}
 
-  setRealtimeStatus("closed");
+  try {
+    realtimeConnRef.current?.stop();
+  } catch {}
+
+  realtimeConnRef.current = null;
+
+  try {
+    stopMic();
+  } catch {}
+
+  try {
+    stopTTS();
+  } catch {}
+
+  try {
+    clearSilenceTimer();
+  } catch {}
+
   voiceModeRef.current = false;
   setVoiceMode(false);
+  setRealtimeStatus("closed");
+
+  setPayLoading(false);
 
   setPayMsg(
     "Se han agotado tus minutos de voz. Puedes seguir usando el chat escrito, o hacer una recarga para continuar hablando con Vonu."
