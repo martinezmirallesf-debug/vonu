@@ -183,6 +183,43 @@ async function fetchJsonWithTimeout(
   }
 }
 
+async function getChatAccessTokenWithTimeout(
+  timeoutMs = 1200
+): Promise<string | null> {
+  let timeoutId: number | null = null;
+
+  try {
+    const timeoutPromise = new Promise<null>((resolve) => {
+      timeoutId = window.setTimeout(() => resolve(null), timeoutMs);
+    });
+
+    const result = await Promise.race([
+      supabaseBrowser.auth.getSession(),
+      timeoutPromise,
+    ]);
+
+    if (
+      result &&
+      typeof result === "object" &&
+      "data" in result
+    ) {
+      return result.data?.session?.access_token ?? null;
+    }
+
+    return null;
+  } catch (error) {
+    console.warn(
+      "[Vonu chat] getSession timeout/error, continuing without token",
+      error
+    );
+    return null;
+  } finally {
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId);
+    }
+  }
+}
+
 function getAdaptiveRevealTimings(_text: string) {
   return { thinkMs: 0, revealMs: 0 };
 }
