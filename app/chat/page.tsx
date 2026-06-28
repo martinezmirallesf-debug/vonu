@@ -163,7 +163,7 @@ function shouldUseProgressiveReveal() {
 async function fetchJsonWithTimeout(
   url: string,
   options: RequestInit,
-  timeoutMs = 75000
+  timeoutMs = 25000
 ) {
   const controller = new AbortController();
 
@@ -5378,14 +5378,14 @@ useEffect(() => {
 
     const elapsed = Date.now() - startedAt;
 
-    if (elapsed < 80_000) return;
+    if (elapsed < 28_000) return;
 
-    unlockChatUi("typing-watchdog-timeout");
+unlockWrittenChatUi("typing-watchdog-timeout");
 
     setUiError(
       "La respuesta está tardando demasiado y he desbloqueado el chat. Prueba de nuevo; si era un análisis con imagen o web, puede que una comprobación externa haya tardado demasiado."
     );
-  }, 81_000);
+  }, 30_000);
 
   return () => window.clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -5501,6 +5501,14 @@ function blockSendBecauseMessageLimitReached() {
   try {
     clearSilenceTimer();
   } catch {}
+}
+
+function unlockWrittenChatUi(reason?: string) {
+  console.log("[Vonu unlockWrittenChatUi]", reason ?? "unknown");
+
+  setIsTyping(false);
+  sendGuardRef.current.busy = false;
+  pendingScrollToBottomRef.current = false;
 }
 
 
@@ -7373,6 +7381,8 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
 }
 
   function createThreadAndActivate() {
+  unlockWrittenChatUi("create-thread-reset");
+
   // ✅ Nueva consulta pasa a ser feature de cuenta/plan.
   // Invitado: no puede reiniciar el contador creando hilos nuevos.
   if (!isLoggedIn) {
@@ -7414,6 +7424,8 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
 }
 
  function activateThread(id: string) {
+  unlockWrittenChatUi("activate-thread-reset");
+
   setActiveThreadId(id);
   setMenuOpen(false);
   setUiError(null);
@@ -8069,9 +8081,11 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       );
 
       setUiError(msg);
-      setIsTyping(false);
-      sendGuardRef.current.busy = false;
-      if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+unlockWrittenChatUi("sendQuickMessage-catch");
+
+if (isDesktopPointer()) {
+  setTimeout(() => textareaRef.current?.focus(), 60);
+}
     }
   }
 
@@ -8377,9 +8391,8 @@ return;
   );
 
     setUiError(msg);
-    setIsTyping(false);
-    sendGuardRef.current.busy = false;
-    return;
+unlockWrittenChatUi("sendMessage-image-realtime-catch");
+return;
   }
 }
 
@@ -8652,9 +8665,11 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       );
 
       setUiError(msg);
-      setIsTyping(false);
-      sendGuardRef.current.busy = false;
-      if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+unlockWrittenChatUi("sendMessage-catch");
+
+if (isDesktopPointer()) {
+  setTimeout(() => textareaRef.current?.focus(), 60);
+}
     }
   }
 

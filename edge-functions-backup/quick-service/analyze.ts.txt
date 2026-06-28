@@ -12,6 +12,17 @@ const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
 const GEMINI_MODEL_IMAGE =
   Deno.env.get("GEMINI_MODEL_IMAGE") || "gemini-2.5-flash-lite";
 
+// MODO RESCATE:
+// Por defecto apagamos capas pesadas.
+// Para reactivarlas después, crear secrets en Supabase:
+// ENABLE_IMAGE_AUX_CHECKS=true
+// ENABLE_REPORT_SAVES=true
+const ENABLE_IMAGE_AUX_CHECKS =
+  Deno.env.get("ENABLE_IMAGE_AUX_CHECKS") === "true";
+
+const ENABLE_REPORT_SAVES =
+  Deno.env.get("ENABLE_REPORT_SAVES") === "true";
+
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -2550,6 +2561,38 @@ SI EL USUARIO PREGUNTA POR SOPORTE REMOTO, ANYDESK, RUSTDESK, TEAMVIEWER O SOPOR
 - Recomienda cortar la llamada, no dar códigos, no abrir apps bancarias/crypto delante del supuesto soporte y entrar solo desde la app oficial.
 - Si ya instaló la app, recomienda desinstalarla, revocar permisos, cambiar contraseñas desde otro dispositivo seguro y contactar con banco/exchange oficial.
 
+SI EL USUARIO PREGUNTA POR LLAMADAS DE BANCO, SOPORTE, CÓDIGOS SMS, OTP O CARGOS:
+- Si el caso empieza por llamada y pide un código SMS/OTP, llámalo "vishing", no "smishing".
+- Si el caso empieza por SMS fraudulento, llámalo "smishing".
+- Si el caso empieza por email, web falsa o enlace falso, llámalo "phishing".
+- Si mezcla canales, sé muy preciso:
+  "**Vishing**: llamada fraudulenta."
+  "**SMS/OTP**: código que puede autorizar accesos, pagos u operaciones."
+  "**WhatsApp**: canal al que intentan moverte para sacarte del entorno oficial."
+- En banco + llamada + código SMS/OTP, usa una definición clara con negritas:
+  "Esto encaja con **vishing**: una llamada fraudulenta que intenta usar un **código SMS/OTP** para robar acceso, autorizar una operación o sacarte del canal oficial."
+- Evita decir solo "llamada falsa" si puedes decir "vishing" con una explicación corta.
+- No digas que es "smishing" si el canal principal fue una llamada, aunque aparezca un SMS/OTP dentro del intento. SMS, OTP, código de verificación, clave, acceso remoto o datos bancarios, trátalo como riesgo alto.
+- En llamadas telefónicas, usa el término "vishing" cuando encaje: explica que es phishing por voz o por llamada.
+- Si además aparece SMS/OTP/código de verificación, explica que es una señal especialmente delicada porque ese código puede autorizar operaciones, iniciar sesión o confirmar pagos.
+- Si el intento empieza por SMS, usa "smishing".
+- Si es por email o web falsa, usa "phishing".
+- Si mezcla canales, explica la combinación de forma natural:
+  "Esto encaja con vishing: una llamada falsa que usa un código SMS para intentar robar acceso o autorizar una operación."
+  "También hay una señal de canal cruzado: intenta llevarte de la llamada a WhatsApp, algo típico para sacarte del canal oficial."
+- No uses tecnicismos sin explicar. Primero da el veredicto práctico y luego el nombre del fraude.
+- Para banco + código SMS/OTP, la primera frase debe ser firme:
+  "Esto lo trataría como riesgo alto."
+  "Yo no daría ningún código."
+  "Esto encaja con vishing."
+- Acciones recomendadas:
+  - colgar;
+  - no dar códigos;
+  - no seguir por WhatsApp;
+  - no llamar al número que te haya dado la persona;
+  - entrar en la app oficial del banco o llamar al número oficial de la tarjeta/web;
+  - si ya dio el código, contactar con el banco de inmediato y bloquear operaciones si procede.
+
 SI EL USUARIO PREGUNTA POR AUDIOS, LLAMADAS, DEEPFAKES O FAMILIARES PIDIENDO DINERO:
 - Considera posible clonación de voz o vishing si viene de un número desconocido, hay urgencia, accidente, secuestro, hospital, multa o transferencia inmediata.
 - No digas que seguro es deepfake, salvo evidencia clara. Di “podría ser clonación de voz” o “encaja con ese patrón”.
@@ -3481,7 +3524,8 @@ if (!googleCloudVisionApiKey) {
 );
 
     const raw = await resp.text().catch(() => "");
-    let data: any = null;
+clearTimeout(timeout);
+let data: any = null;
 
     try {
       data = raw ? JSON.parse(raw) : null;
@@ -7358,6 +7402,592 @@ async function saveFraudChatReportIfRelevant(
   }
 }
 
+// ---------- phone moat collection ----------
+function extractPhoneForMoat(text: string) {
+  const raw = String(text ?? "");
+  const matches = raw.match(/(?:\+?\d[\d\s().-]{6,}\d)/g) ?? [];
+
+  return (
+    matches
+      .map((m) => m.trim())
+      .find((m) => {
+        const digits = m.replace(/\D/g, "");
+        return digits.length >= 7 && digits.length <= 16;
+      }) ?? null
+  );
+}
+
+function phoneDigits(value: string | null) {
+  return String(value ?? "").replace(/\D/g, "");
+}
+
+function maskPhoneForMoat(rawPhone: string | null) {
+  if (!rawPhone) return null;
+
+  const digits = phoneDigits(rawPhone);
+  if (!digits) return null;
+
+  const last = digits.slice(-3);
+
+  if (digits.startsWith("34") && digits.length >= 11) {
+    return `+34 *** *** ${last}`;
+  }
+
+  if (digits.length >= 10) {
+    return `+${digits.slice(0, 2)} *** *** ${last}`;
+  }
+
+  return `*** *** ${last}`;
+}
+
+function inferCountryCallingCodeForPhone(rawPhone: string | null) {
+  const digits = phoneDigits(rawPhone);
+  if (!digits) return null;
+
+  if (digits.startsWith("34")) return "34";
+  if (String(rawPhone ?? "").trim().startsWith("+")) {
+    return digits.slice(0, Math.min(3, digits.length));
+  }
+
+  return "34";
+}
+
+function inferCountryForPhone(rawPhone: string | null) {
+  const code = inferCountryCallingCodeForPhone(rawPhone);
+  if (code === "34") return "ES";
+  return "unknown";
+}
+
+function inferPrefixBucketForPhone(rawPhone: string | null) {
+  const digits = phoneDigits(rawPhone);
+  if (!digits) return null;
+
+  if (digits.startsWith("34")) {
+    const after = digits.slice(2);
+    if (after.startsWith("6") || after.startsWith("7")) return `+34${after.slice(0, 1)}`;
+    if (after.startsWith("8") || after.startsWith("9")) return `+34${after.slice(0, 2)}`;
+    return `+34${after.slice(0, 1)}`;
+  }
+
+  return `+${digits.slice(0, Math.min(4, digits.length))}`;
+}
+
+function inferLineTypeForPhone(rawPhone: string | null) {
+  const digits = phoneDigits(rawPhone);
+
+  const local = digits.startsWith("34") ? digits.slice(2) : digits;
+
+  if (local.startsWith("6") || local.startsWith("7")) return "móvil";
+  if (local.startsWith("8") || local.startsWith("9")) return "fijo_o_especial";
+  if (local.startsWith("803") || local.startsWith("806") || local.startsWith("807")) return "premium";
+  if (local.startsWith("900") || local.startsWith("800")) return "gratuito";
+
+  return "unknown";
+}
+
+function normalizePhoneMoatText(value: unknown) {
+  return String(value ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function inferPhoneChannelForMoat(text: string) {
+  const t = normalizePhoneMoatText(text);
+
+  const strongPhoneCallSignals = [
+    "me ha llamado",
+    "me han llamado",
+    "me llamo",
+    "me llamó",
+    "me llamaron",
+    "han llamado",
+    "ha llamado",
+    "llamada",
+    "llamadas",
+    "llamada perdida",
+    "llamada sospechosa",
+    "he recibido una llamada",
+    "recibi una llamada",
+    "recibí una llamada",
+    "me llama",
+    "me llaman",
+    "colgar",
+    "colgue",
+    "colgué",
+    "descolgue",
+    "descolgué",
+  ];
+
+  const smsSignals = [
+    "sms",
+    "mensaje sms",
+    "codigo sms",
+    "código sms",
+    "me ha llegado un sms",
+    "me llego un sms",
+    "me llegó un sms",
+    "he recibido un sms",
+    "recibi un sms",
+    "recibí un sms",
+  ];
+
+  const whatsappSignals = [
+    "whatsapp",
+    "wasap",
+    "guasap",
+    "mensaje de whatsapp",
+    "me ha escrito por whatsapp",
+    "me escribio por whatsapp",
+    "me escribió por whatsapp",
+  ];
+
+  // Prioridad importante:
+  // Si el caso empezó como llamada, guardamos phone_call aunque luego se mencione WhatsApp
+  // en la respuesta o como canal alternativo.
+  if (strongPhoneCallSignals.some((signal) => t.includes(signal))) {
+    return "phone_call";
+  }
+
+  if (smsSignals.some((signal) => t.includes(signal))) {
+    return "sms";
+  }
+
+  if (whatsappSignals.some((signal) => t.includes(signal))) {
+    return "whatsapp";
+  }
+
+  // Señales débiles: solo "número/teléfono" no demuestra que haya sido una llamada.
+  if (
+    t.includes("telefono") ||
+    t.includes("teléfono") ||
+    t.includes("numero") ||
+    t.includes("número")
+  ) {
+    return "unknown";
+  }
+
+  return "unknown";
+}
+
+function inferClaimedEntityTypeForPhoneMoat(text: string) {
+  const t = normalizePhoneMoatText(text);
+
+  if (
+    t.includes("banco") ||
+    t.includes("tarjeta") ||
+    t.includes("cargo") ||
+    t.includes("cuenta bancaria") ||
+    t.includes("bizum")
+  ) {
+    return "bank";
+  }
+
+  if (
+    t.includes("paquete") ||
+    t.includes("envio") ||
+    t.includes("correos") ||
+    t.includes("seur") ||
+    t.includes("dhl") ||
+    t.includes("aduanas")
+  ) {
+    return "delivery";
+  }
+
+  if (
+    t.includes("soporte") ||
+    t.includes("microsoft") ||
+    t.includes("windows") ||
+    t.includes("ordenador") ||
+    t.includes("pc") ||
+    t.includes("anydesk") ||
+    t.includes("teamviewer") ||
+    t.includes("acceso remoto")
+  ) {
+    return "tech_support";
+  }
+
+  if (
+    t.includes("hacienda") ||
+    t.includes("agencia tributaria") ||
+    t.includes("policia") ||
+    t.includes("dgt") ||
+    t.includes("seguridad social")
+  ) {
+    return "government";
+  }
+
+  if (
+    t.includes("comercial") ||
+    t.includes("telemarketing") ||
+    t.includes("oferta") ||
+    t.includes("tarifa") ||
+    t.includes("venta")
+  ) {
+    return "sales";
+  }
+
+  return "unknown";
+}
+
+function inferPhoneRiskPatternForMoat(text: string) {
+  const t = normalizePhoneMoatText(text);
+
+  if (
+    (t.includes("banco") || t.includes("tarjeta") || t.includes("cargo")) &&
+    (t.includes("codigo") || t.includes("sms") || t.includes("otp") || t.includes("clave") || t.includes("bloquear"))
+  ) {
+    return "bank_code_request";
+  }
+
+  if (
+    (t.includes("paquete") || t.includes("envio") || t.includes("correos") || t.includes("seur") || t.includes("dhl")) &&
+    (t.includes("datos") || t.includes("pago") || t.includes("direccion") || t.includes("aduanas") || t.includes("entrega"))
+  ) {
+    return "fake_delivery_contact";
+  }
+
+  if (
+    (t.includes("soporte") || t.includes("microsoft") || t.includes("windows") || t.includes("ordenador") || t.includes("pc")) &&
+    (t.includes("instalar") || t.includes("anydesk") || t.includes("teamviewer") || t.includes("acceso remoto") || t.includes("control remoto"))
+  ) {
+    return "remote_access_support_scam";
+  }
+
+  if (
+    t.includes("whatsapp") &&
+    (t.includes("datos") || t.includes("dinero") || t.includes("codigo") || t.includes("enlace") || t.includes("link"))
+  ) {
+    return "whatsapp_unknown_request";
+  }
+
+  if (
+    t.includes("bizum") ||
+    t.includes("transferencia") ||
+    t.includes("dinero") ||
+    t.includes("pago") ||
+    t.includes("pagar")
+  ) {
+    return "money_request";
+  }
+
+  if (
+    t.includes("comercial") ||
+    t.includes("telemarketing") ||
+    t.includes("me llama muchas veces") ||
+    t.includes("llama muchas veces") ||
+    t.includes("insiste") ||
+    t.includes("llamadas repetidas")
+  ) {
+    return "aggressive_sales_call";
+  }
+
+  if (
+    t.includes("numero de telefono") ||
+    t.includes("teléfono o llamada") ||
+    t.includes("telefono o llamada") ||
+    t.includes("llamada sospechosa")
+  ) {
+    return "phone_number_only";
+  }
+
+  return "unknown_phone_contact";
+}
+
+function phoneRiskFromPatternForMoat(pattern: string, lineType: string) {
+  if (pattern === "bank_code_request") return { risk_level: "high", risk_score: 82 };
+  if (pattern === "remote_access_support_scam") return { risk_level: "high", risk_score: 86 };
+  if (pattern === "money_request") return { risk_level: "high", risk_score: 74 };
+  if (pattern === "fake_delivery_contact") return { risk_level: "medium", risk_score: 62 };
+  if (pattern === "whatsapp_unknown_request") return { risk_level: "medium", risk_score: 58 };
+  if (pattern === "aggressive_sales_call") return { risk_level: "medium", risk_score: 45 };
+
+  if (lineType === "premium") return { risk_level: "high", risk_score: 72 };
+
+  if (pattern === "phone_number_only") return { risk_level: "low", risk_score: 20 };
+
+  return { risk_level: "medium", risk_score: 40 };
+}
+
+function buildPhoneContextSignalsForMoat(text: string) {
+  const t = normalizePhoneMoatText(text);
+  const signals: string[] = [];
+
+  if (t.includes("banco")) signals.push("Menciona banco.");
+  if (t.includes("cargo")) signals.push("Menciona cargo o bloqueo de cargo.");
+  if (t.includes("codigo") || t.includes("sms") || t.includes("otp")) signals.push("Menciona código SMS/OTP.");
+  if (t.includes("bizum")) signals.push("Menciona Bizum.");
+  if (t.includes("transferencia") || t.includes("dinero") || t.includes("pago")) signals.push("Menciona dinero, pago o transferencia.");
+  if (t.includes("whatsapp")) signals.push("Canal WhatsApp.");
+  if (t.includes("paquete") || t.includes("envio")) signals.push("Menciona paquete o envío.");
+  if (t.includes("instalar") || t.includes("acceso remoto") || t.includes("anydesk") || t.includes("teamviewer")) {
+    signals.push("Menciona instalación o acceso remoto.");
+  }
+  if (t.includes("datos")) signals.push("Menciona datos personales.");
+  if (t.includes("urgente") || t.includes("bloquear")) signals.push("Menciona urgencia o bloqueo.");
+
+  return Array.from(new Set(signals)).slice(0, 12);
+}
+
+function buildPhoneRecommendedActionsForMoat(pattern: string) {
+  if (pattern === "bank_code_request") {
+    return [
+      "No compartir códigos SMS, OTP ni claves.",
+      "Colgar o no responder.",
+      "Verificar desde la app o teléfono oficial del banco.",
+      "No devolver la llamada al número recibido.",
+    ];
+  }
+
+  if (pattern === "remote_access_support_scam") {
+    return [
+      "No instalar apps de control remoto.",
+      "No dar acceso al ordenador o móvil.",
+      "Cerrar la conversación y verificar por canal oficial.",
+    ];
+  }
+
+  if (pattern === "fake_delivery_contact") {
+    return [
+      "No enviar datos personales ni bancarios.",
+      "No pagar desde enlaces recibidos.",
+      "Verificar el envío desde la web o app oficial.",
+    ];
+  }
+
+  if (pattern === "whatsapp_unknown_request") {
+    return [
+      "No compartir datos, códigos ni dinero por WhatsApp.",
+      "Verificar identidad por otro canal.",
+      "Bloquear o reportar si insiste.",
+    ];
+  }
+
+  if (pattern === "aggressive_sales_call") {
+    return [
+      "No devolver la llamada si no se reconoce.",
+      "Bloquear si insiste.",
+      "No aceptar cambios o contratos por presión.",
+    ];
+  }
+
+  return [
+    "No compartir códigos, datos bancarios ni documentos.",
+    "Verificar por canal oficial si dice representar a una entidad.",
+    "No pagar ni instalar apps sin confirmar identidad.",
+  ];
+}
+
+async function hashPhoneForMoat(value: string | null) {
+  if (!value) return null;
+
+  const secret =
+    Deno.env.get("PHONE_HASH_SECRET") ||
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
+    "vonu_phone_hash_dev";
+
+  const input = new TextEncoder().encode(`${secret}:${value}`);
+  const hash = await crypto.subtle.digest("SHA-256", input);
+
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function makePhoneSimilaritySignature(params: {
+  country: string | null;
+  prefixBucket: string | null;
+  lineType: string | null;
+  channel: string;
+  claimedEntityType: string;
+  riskPattern: string;
+  contextSignals: string[];
+}) {
+  return compactText(
+    [
+      params.country || "unknown_country",
+      params.prefixBucket || "unknown_prefix",
+      params.lineType || "unknown_line",
+      params.channel,
+      params.claimedEntityType,
+      params.riskPattern,
+      ...params.contextSignals.map((x) =>
+        normalizePhoneMoatText(x).replace(/[^a-z0-9]+/g, "_")
+      ),
+    ]
+      .filter(Boolean)
+      .join("|"),
+    500,
+  );
+}
+
+function shouldCollectPhoneChatReport(params: {
+  userText: string;
+  assistantText: string;
+  effectiveMode: ThreadMode;
+  footballIntent: boolean;
+}) {
+  if (params.effectiveMode !== "chat") return false;
+  if (params.footballIntent) return false;
+
+  const rawPhone = extractPhoneForMoat(params.userText);
+  if (!rawPhone) return false;
+
+  const combined = `${params.userText}\n\n${params.assistantText}`;
+  const pattern = inferPhoneRiskPatternForMoat(combined);
+
+  // No llenamos el moat con números sueltos de bajo riesgo.
+  if (pattern === "phone_number_only") return false;
+
+  return pattern !== "unknown_phone_contact";
+}
+
+async function buildPhoneChatReportPayload(params: {
+  userText: string;
+  assistantText: string;
+  userId: string | null;
+  body: any;
+}) {
+  const rawPhone = extractPhoneForMoat(params.userText);
+  if (!rawPhone) return null;
+
+  const combined = `${params.userText}\n\n${params.assistantText}`;
+
+  const country = inferCountryForPhone(rawPhone);
+  const countryCallingCode = inferCountryCallingCodeForPhone(rawPhone);
+  const prefixBucket = inferPrefixBucketForPhone(rawPhone);
+  const lineType = inferLineTypeForPhone(rawPhone);
+  const phoneMasked = maskPhoneForMoat(rawPhone);
+
+  const channel = inferPhoneChannelForMoat(combined);
+  const claimedEntityType = inferClaimedEntityTypeForPhoneMoat(combined);
+  const riskPattern = inferPhoneRiskPatternForMoat(combined);
+  const risk = phoneRiskFromPatternForMoat(riskPattern, lineType);
+  const contextSignals = buildPhoneContextSignalsForMoat(combined);
+  const recommendedActions = buildPhoneRecommendedActionsForMoat(riskPattern);
+
+  const similaritySignature = makePhoneSimilaritySignature({
+    country,
+    prefixBucket,
+    lineType,
+    channel,
+    claimedEntityType,
+    riskPattern,
+    contextSignals,
+  });
+
+  const normalizedSummary =
+    `Caso telefónico: ${phoneMasked || "número oculto"} · ` +
+    `país ${country || "unknown"} · ` +
+    `tipo ${lineType || "unknown"} · ` +
+    `canal ${channel} · ` +
+    `patrón ${riskPattern} · ` +
+    `riesgo ${risk.risk_level}.`;
+
+  const numberHash = await hashPhoneForMoat(phoneDigits(rawPhone));
+
+  return {
+    source: "chat",
+    source_user_id: params.userId,
+    source_thread_id:
+      typeof params.body?.threadId === "string" ? params.body.threadId : null,
+    source_message_id:
+      typeof params.body?.messageId === "string" ? params.body.messageId : null,
+
+    number_hash: numberHash,
+    phone_masked: phoneMasked,
+
+    country,
+    country_calling_code: countryCallingCode,
+    prefix_bucket: prefixBucket,
+    line_type: lineType,
+
+    channel,
+    claimed_entity_type: claimedEntityType,
+    claimed_entity_name: null,
+
+    risk_pattern: riskPattern,
+    risk_level: risk.risk_level,
+    risk_score: risk.risk_score,
+
+    technical_signals: [
+      phoneMasked ? "Número enmascarado correctamente." : "Número detectado pero no se pudo enmascarar.",
+      country ? `País inferido: ${country}.` : "País no determinado.",
+      prefixBucket ? `Bucket de prefijo: ${prefixBucket}.` : "Bucket de prefijo no determinado.",
+      lineType ? `Tipo inferido: ${lineType}.` : "Tipo de línea no determinado.",
+    ],
+
+    context_signals: contextSignals,
+    recommended_actions: recommendedActions,
+
+    normalized_summary: compactText(normalizedSummary, 900),
+    raw_excerpt: compactText(maskSensitiveText(params.userText), 700),
+
+    similarity_signature: similaritySignature,
+
+    metadata: {
+      source: "quick_service",
+      assistant_excerpt: compactText(maskSensitiveText(params.assistantText), 700),
+      privacy_level: "anonymized_case",
+      verified_level: "user_reported",
+    },
+  };
+}
+
+async function savePhoneChatReportIfRelevant(
+  supabase: any,
+  params: {
+    userText: string;
+    assistantText: string;
+    userId: string | null;
+    body: any;
+    effectiveMode: ThreadMode;
+    footballIntent: boolean;
+  },
+) {
+  if (
+    !shouldCollectPhoneChatReport({
+      userText: params.userText,
+      assistantText: params.assistantText,
+      effectiveMode: params.effectiveMode,
+      footballIntent: params.footballIntent,
+    })
+  ) {
+    return { saved: false, reason: "not_relevant" };
+  }
+
+  const payload = await buildPhoneChatReportPayload({
+    userText: params.userText,
+    assistantText: params.assistantText,
+    userId: params.userId,
+    body: params.body,
+  });
+
+  if (!payload) {
+    return { saved: false, reason: "no_payload" };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("phone_chat_reports")
+      .insert(payload)
+      .select("id")
+      .single();
+
+    if (error) {
+      console.warn("phone_chat_report_insert_error", error);
+      return { saved: false, reason: "insert_error" };
+    }
+
+    return { saved: true, id: data?.id ?? null };
+  } catch (error) {
+    console.warn("phone_chat_report_insert_exception", error);
+    return { saved: false, reason: "exception" };
+  }
+}
+
 // ---------- handler ----------
 serve(async (req) => {
   const supabase = createClient(
@@ -7380,6 +8010,53 @@ serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
+    // ---------- FAST PATH DE EMERGENCIA ----------
+// Esto debe ir antes de auth, usage, profiles, plans, OpenAI, Gemini, Vision y moats.
+const earlyUserText =
+  typeof body?.userText === "string"
+    ? body.userText
+    : typeof body?.name === "string"
+    ? body.name
+    : "";
+
+const earlyImageBase64 =
+  typeof body?.imageBase64 === "string" ? body.imageBase64 : null;
+
+const earlyPdfText =
+  typeof body?.pdfText === "string" ? body.pdfText : null;
+
+const earlyRequestedMode = normalizeThreadMode(body?.mode);
+
+const earlyClean = String(earlyUserText || "").trim().toLowerCase();
+
+const earlyIsShortGreeting =
+  earlyClean.length <= 20 &&
+  /^(hola|buenas|ok|vale|gracias|adios|adiós|saludos|buenos dias|buenos días|buenas noches|buenas tardes|hey|hi|hello)$/i.test(
+    earlyClean,
+  );
+
+if (
+  earlyRequestedMode === "chat" &&
+  !earlyImageBase64 &&
+  !earlyPdfText &&
+  earlyIsShortGreeting
+) {
+  console.log("[quick-service] emergency_fast_path_greeting");
+
+  return json(
+    {
+      text: "Hola 👋 Dime qué quieres revisar y lo miramos con calma.",
+      model: "fast-path",
+      pillar: "CONVERSACION_GENERAL",
+      mode: "chat",
+      tutorLevel: null,
+      studyMode: null,
+      fastPath: "emergency_greeting",
+    },
+    200,
+  );
+}
+// ---------- FIN FAST PATH DE EMERGENCIA ----------
     const authHeader = req.headers.get("Authorization");
 const token = authHeader?.replace("Bearer ", "") ?? null;
 const apikeyHeader = req.headers.get("apikey") ?? "";
@@ -7475,6 +8152,8 @@ let usage: any = null;
 let profile: any = null;
 let plan: any = null;
 let planId = "free";
+let extraMessages = 0;
+let extraRealtimeSeconds = 0;
 
 if (!isGuest && userId) {
   let usageQuery = await supabase
@@ -7517,9 +8196,76 @@ if (!isGuest && userId) {
     .single();
 
   plan = planQuery.data;
+  const topupsQuery = await supabase
+  .from("usage_topups")
+  .select("extra_messages, extra_realtime_seconds")
+  .eq("user_id", userId)
+  .eq("month", month);
+
+if (Array.isArray(topupsQuery.data)) {
+  extraMessages = topupsQuery.data.reduce(
+    (acc: number, row: any) => acc + Number(row?.extra_messages ?? 0),
+    0
+  );
+
+  extraRealtimeSeconds = topupsQuery.data.reduce(
+    (acc: number, row: any) => acc + Number(row?.extra_realtime_seconds ?? 0),
+    0
+  );
+}
 }
   
 const lowContext = isLowContext(userText, !!imageBase64);
+const userTextClean = String(userText || "").trim().toLowerCase();
+
+const isShortGreeting =
+  userTextClean.length <= 20 &&
+  /^(hola|buenas|ok|vale|gracias|adios|adiós|saludos|buenos dias|buenos días|buenas noches|buenas tardes|hey|hi|hello)$/i.test(
+    userTextClean,
+  );
+
+if (
+  effectiveMode === "chat" &&
+  !imageBase64 &&
+  !pdfText &&
+  !footballIntent &&
+  isShortGreeting
+) {
+  console.log("[quick-service] fast_path_greeting");
+
+  return json(
+    {
+      text: "Hola 👋 Dime qué quieres revisar y lo miramos con calma.",
+      model: "fast-path",
+      pillar,
+      mode: effectiveMode,
+      tutorLevel: null,
+      studyMode: null,
+      fastPath: "greeting",
+    },
+    200,
+  );
+}
+if (
+  effectiveMode === "chat" &&
+  !imageBase64 &&
+  !pdfText &&
+  !footballIntent &&
+  isGreetingOrVeryShort(userText)
+) {
+  return json(
+    {
+      text: "Hola 👋 Dime qué quieres revisar y lo miramos con calma.",
+      model: "fast-path",
+      pillar,
+      mode: effectiveMode,
+      tutorLevel: null,
+      studyMode: null,
+      fastPath: "greeting",
+    },
+    200,
+  );
+}
 const incompletePhysicsProblem = detectIncompletePhysicsProblem(userText);
 
 let footballPrediction: any | null = null;
@@ -7552,7 +8298,11 @@ const personalSafetyIntelContext = buildPersonalSafetyIntelContext(personalSafet
 
 const fraudIntelContext = buildFraudIntelContext(fraudIntelMatches);
 
-    const messagesLimit = plan?.messages_limit ?? 20;
+    const baseMessagesLimit = Number(plan?.messages_limit ?? 20);
+const baseRealtimeSecondsLimit = Number(plan?.realtime_seconds_limit ?? 0);
+
+const messagesLimit = baseMessagesLimit + extraMessages;
+const realtimeSecondsLimit = baseRealtimeSecondsLimit + extraRealtimeSeconds;
 
 if (!isGuest && (usage?.messages_used ?? 0) >= messagesLimit) {
   return json(
@@ -7849,13 +8599,15 @@ if (effectiveMode === "tutor" && incompletePhysicsProblem.isIncomplete) {
     const model = effectiveMode === "tutor" ? modelTutor : (Deno.env.get("OPENAI_MODEL") || modelChat);
 
     const max_output_tokens =
-      effectiveMode === "tutor"
-        ? 1600
-        : studyMode.active
-        ? 700
-        : lowContext
-        ? 700
-        : 1400;
+  effectiveMode === "tutor"
+    ? 1600
+    : imageBase64
+    ? 900
+    : studyMode.active
+    ? 700
+    : lowContext
+    ? 700
+    : 1400;
 
     const temperature = effectiveMode === "tutor" ? 0.25 : 0.35;
 
@@ -7901,61 +8653,126 @@ let geminiImageAnalysis: {
   error: string | null;
 } | null = null;
 
-if (effectiveMode === "chat" && imageBase64 && GEMINI_API_KEY) {
-  geminiImageAnalysis = await analyzeImageWithGemini({
-    imageBase64,
-    userText,
-    pillar,
-  });
-
-  console.log(
-    "gemini_image_analysis_preview",
-    JSON.stringify({
-      ok: geminiImageAnalysis.ok,
-      model: geminiImageAnalysis.model,
-      error: geminiImageAnalysis.error,
-      json: geminiImageAnalysis.json,
-    }).slice(0, 3500),
-  );
-}
-
 let reverseImageRisk: ReverseImageWebDetectionResult | null = null;
 
 const hasGoogleCloudVisionApiKey =
   Boolean(Deno.env.get("GOOGLE_CLOUD_VISION_API_KEY"));
 
-if (
+const shouldRunGeminiImageAnalysis =
+  ENABLE_IMAGE_AUX_CHECKS &&
+  effectiveMode === "chat" &&
+  Boolean(imageBase64) &&
+  Boolean(GEMINI_API_KEY);
+
+const shouldRunReverseImageAnalysis =
+  ENABLE_IMAGE_AUX_CHECKS &&
   hasGoogleCloudVisionApiKey &&
   shouldRunReverseImageRiskCheck({
     userText,
     pillar,
     hasImage: Boolean(imageBase64),
     effectiveMode,
-  })
-) {
-  reverseImageRisk = await runReverseImageWebDetection({
-    imageBase64,
-    userText,
   });
+  
+if (shouldRunGeminiImageAnalysis || shouldRunReverseImageAnalysis) {
+  const startedAt = Date.now();
+
+  const [geminiResult, reverseResult] = await Promise.all([
+    shouldRunGeminiImageAnalysis
+      ? analyzeImageWithGemini({
+          imageBase64,
+          userText,
+          pillar,
+        }).catch((error) => ({
+          ok: false,
+          model: GEMINI_MODEL_IMAGE,
+          text: null,
+          json: null,
+          error: String(error),
+        }))
+      : Promise.resolve(null),
+
+    shouldRunReverseImageAnalysis
+      ? runReverseImageWebDetection({
+          imageBase64,
+          userText,
+        }).catch((error) => ({
+          ok: false,
+          checked: false,
+          error: String(error),
+          risk_score: 0,
+          risk_level: "unknown" as const,
+          reused_image_suspected: false,
+          multiple_sources_found: false,
+          social_or_profile_matches_found: false,
+          full_matching_images_count: 0,
+          partial_matching_images_count: 0,
+          pages_with_matching_images_count: 0,
+          visually_similar_images_count: 0,
+          best_guess_labels: [],
+          top_web_entities: [],
+          top_pages: [],
+          risk_signals: [],
+          safe_signals: [],
+          recommended_actions: [],
+          similarity_signature: "",
+        }))
+      : Promise.resolve(null),
+  ]);
+
+  geminiImageAnalysis = geminiResult;
+  reverseImageRisk = reverseResult;
 
   console.log(
-    "reverse_image_web_detection_preview",
+    "image_auxiliary_checks_finished",
     JSON.stringify({
-      ok: reverseImageRisk.ok,
-      checked: reverseImageRisk.checked,
-      error: reverseImageRisk.error,
-      risk_score: reverseImageRisk.risk_score,
-      risk_level: reverseImageRisk.risk_level,
-      reused_image_suspected: reverseImageRisk.reused_image_suspected,
-      multiple_sources_found: reverseImageRisk.multiple_sources_found,
-      social_or_profile_matches_found: reverseImageRisk.social_or_profile_matches_found,
-      full_matching_images_count: reverseImageRisk.full_matching_images_count,
-      partial_matching_images_count: reverseImageRisk.partial_matching_images_count,
-      pages_with_matching_images_count: reverseImageRisk.pages_with_matching_images_count,
-      top_pages: reverseImageRisk.top_pages?.slice(0, 5),
-      risk_signals: reverseImageRisk.risk_signals,
-    }).slice(0, 5000),
+      ms: Date.now() - startedAt,
+      gemini_ok: geminiImageAnalysis?.ok ?? null,
+      gemini_error: geminiImageAnalysis?.error ?? null,
+      reverse_ok: reverseImageRisk?.ok ?? null,
+      reverse_checked: reverseImageRisk?.checked ?? null,
+      reverse_error: reverseImageRisk?.error ?? null,
+      reverse_risk_score: reverseImageRisk?.risk_score ?? null,
+      reverse_reused_image_suspected:
+        reverseImageRisk?.reused_image_suspected ?? null,
+    }).slice(0, 3000),
   );
+
+  if (geminiImageAnalysis) {
+    console.log(
+      "gemini_image_analysis_preview",
+      JSON.stringify({
+        ok: geminiImageAnalysis.ok,
+        model: geminiImageAnalysis.model,
+        error: geminiImageAnalysis.error,
+        json: geminiImageAnalysis.json,
+      }).slice(0, 2000),
+    );
+  }
+
+  if (reverseImageRisk) {
+    console.log(
+      "reverse_image_web_detection_preview",
+      JSON.stringify({
+        ok: reverseImageRisk.ok,
+        checked: reverseImageRisk.checked,
+        error: reverseImageRisk.error,
+        risk_score: reverseImageRisk.risk_score,
+        risk_level: reverseImageRisk.risk_level,
+        reused_image_suspected: reverseImageRisk.reused_image_suspected,
+        multiple_sources_found: reverseImageRisk.multiple_sources_found,
+        social_or_profile_matches_found:
+          reverseImageRisk.social_or_profile_matches_found,
+        full_matching_images_count: reverseImageRisk.full_matching_images_count,
+        partial_matching_images_count:
+          reverseImageRisk.partial_matching_images_count,
+        pages_with_matching_images_count:
+          reverseImageRisk.pages_with_matching_images_count,
+        top_pages: reverseImageRisk.top_pages?.slice(0, 3),
+        risk_signals: reverseImageRisk.risk_signals?.slice(0, 4),
+      }).slice(0, 2500),
+    );
+  }
 }
 
 const auxiliaryImageAnalysisContext =
@@ -8088,19 +8905,6 @@ REGLA FINAL DE AUTENTICIDAD VISUAL:
 `.trim();
 }
 
-console.log(
-  "image_context_flags",
-  JSON.stringify({
-    hasGemini: Boolean(geminiImageAnalysis?.ok),
-    reverseOk: Boolean(reverseImageRisk?.ok),
-    reverseChecked: Boolean(reverseImageRisk?.checked),
-    reused: Boolean(reverseImageRisk?.reused_image_suspected),
-    reverseRiskScore: reverseImageRisk?.risk_score ?? null,
-    reverseRiskLevel: reverseImageRisk?.risk_level ?? null,
-    hasReverseContext: Boolean(reverseImageRiskContext),
-  }),
-);
-
 const input: any[] = [];
     for (const h of history) input.push({ role: h.role, content: h.content });
 
@@ -8135,22 +8939,27 @@ if (imageBase64) {
 
     input.push({ role: "user", content: userContent });
 
-    const resp = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        instructions,
-        input,
-        max_output_tokens,
-        temperature,
-      }),
-    });
+const openAiController = new AbortController();
+const openAiTimeout = setTimeout(() => openAiController.abort(), 35000);
 
-    const raw = await resp.text().catch(() => "");
+const resp = await fetch("https://api.openai.com/v1/responses", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${OPENAI_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  signal: openAiController.signal,
+  body: JSON.stringify({
+    model,
+    instructions,
+    input,
+    max_output_tokens,
+    temperature,
+  }),
+});
+
+clearTimeout(openAiTimeout);
+const raw = await resp.text().catch(() => "");
     let data: any = null;
     try {
       data = raw ? JSON.parse(raw) : null;
@@ -8195,38 +9004,131 @@ if (imageBase64) {
         : "He recibido una respuesta vacía. ¿Puedes darme un poco más de contexto?";
     }
 
-    const fraudChatReport = await saveFraudChatReportIfRelevant(supabase, {
-      userText,
-      assistantText: text,
-      userId,
-      body,
-      pillar,
-      effectiveMode,
-      footballIntent,
-      fraudIntelMatches,
-    });
+    let fraudChatReport: any = {
+  saved: false,
+  reason: "disabled_emergency_mode",
+};
 
-    const legalChatReport = await saveLegalChatReportIfRelevant(supabase, {
-  userText,
-  assistantText: text,
-  userId,
-  body,
-  pillar,
-  effectiveMode,
-  footballIntent,
-  legalConsumerIntelMatches,
-});
+let legalChatReport: any = {
+  saved: false,
+  reason: "disabled_emergency_mode",
+};
 
-const personalSafetyChatReport = await savePersonalSafetyChatReportIfRelevant(supabase, {
-  userText,
-  assistantText: text,
-  userId,
-  body,
-  pillar,
-  effectiveMode,
-  footballIntent,
-  personalSafetyIntelMatches,
-});
+let personalSafetyChatReport: any = {
+  saved: false,
+  reason: "disabled_emergency_mode",
+};
+
+let phoneChatReport: any = {
+  saved: false,
+  reason: "disabled_emergency_mode",
+};
+
+if (ENABLE_REPORT_SAVES) {
+  console.log("[quick-service] report_saves_start");
+
+  const reportResults = await Promise.race([
+    Promise.allSettled([
+      saveFraudChatReportIfRelevant(supabase, {
+        userText,
+        assistantText: text,
+        userId,
+        body,
+        pillar,
+        effectiveMode,
+        footballIntent,
+        fraudIntelMatches,
+      }),
+
+      saveLegalChatReportIfRelevant(supabase, {
+        userText,
+        assistantText: text,
+        userId,
+        body,
+        pillar,
+        effectiveMode,
+        footballIntent,
+        legalConsumerIntelMatches,
+      }),
+
+      savePersonalSafetyChatReportIfRelevant(supabase, {
+        userText,
+        assistantText: text,
+        userId,
+        body,
+        pillar,
+        effectiveMode,
+        footballIntent,
+        personalSafetyIntelMatches,
+      }),
+
+      savePhoneChatReportIfRelevant(supabase, {
+        userText,
+        assistantText: text,
+        userId,
+        body,
+        effectiveMode,
+        footballIntent,
+      }),
+    ]),
+    new Promise<"timeout">((resolve) =>
+      setTimeout(() => resolve("timeout"), 800),
+    ),
+  ]);
+
+  if (reportResults === "timeout") {
+    console.log("[quick-service] report_saves_timeout_800ms");
+  } else {
+    const [
+      fraudResult,
+      legalResult,
+      personalSafetyResult,
+      phoneResult,
+    ] = reportResults;
+
+    if (fraudResult.status === "fulfilled") {
+      fraudChatReport = fraudResult.value;
+    } else {
+      fraudChatReport = {
+        saved: false,
+        reason: "save_error",
+        error: String(fraudResult.reason),
+      };
+    }
+
+    if (legalResult.status === "fulfilled") {
+      legalChatReport = legalResult.value;
+    } else {
+      legalChatReport = {
+        saved: false,
+        reason: "save_error",
+        error: String(legalResult.reason),
+      };
+    }
+
+    if (personalSafetyResult.status === "fulfilled") {
+      personalSafetyChatReport = personalSafetyResult.value;
+    } else {
+      personalSafetyChatReport = {
+        saved: false,
+        reason: "save_error",
+        error: String(personalSafetyResult.reason),
+      };
+    }
+
+    if (phoneResult.status === "fulfilled") {
+      phoneChatReport = phoneResult.value;
+    } else {
+      phoneChatReport = {
+        saved: false,
+        reason: "save_error",
+        error: String(phoneResult.reason),
+      };
+    }
+  }
+
+  console.log("[quick-service] report_saves_end");
+}
 
 
     if (!isGuest && userId) {
@@ -8251,9 +9153,25 @@ const personalSafetyChatReport = await savePersonalSafetyChatReportIfRelevant(su
     usage: !isGuest
   ? {
       plan_id: planId,
+
       messages_used: (usage?.messages_used ?? 0) + 1,
       messages_limit: messagesLimit,
-      messages_left: Math.max(0, messagesLimit - ((usage?.messages_used ?? 0) + 1)),
+      messages_left: Math.max(
+        0,
+        messagesLimit - ((usage?.messages_used ?? 0) + 1)
+      ),
+
+      realtime_seconds_used: usage?.realtime_seconds ?? 0,
+      realtime_seconds_limit: realtimeSecondsLimit,
+      realtime_seconds_left: Math.max(
+        0,
+        realtimeSecondsLimit - (usage?.realtime_seconds ?? 0)
+      ),
+
+      base_messages_limit: baseMessagesLimit,
+      base_realtime_seconds_limit: baseRealtimeSecondsLimit,
+      extra_messages: extraMessages,
+      extra_realtime_seconds: extraRealtimeSeconds,
     }
   : null,
     autoTutor:
@@ -8298,6 +9216,14 @@ personalSafetyChatReport:
         saved: personalSafetyChatReport.saved,
         id: "id" in personalSafetyChatReport ? personalSafetyChatReport.id : null,
         reason: "reason" in personalSafetyChatReport ? personalSafetyChatReport.reason : null,
+      }
+    : null,
+    phoneChatReport:
+  effectiveMode === "chat"
+    ? {
+        saved: phoneChatReport.saved,
+        id: "id" in phoneChatReport ? phoneChatReport.id : null,
+        reason: "reason" in phoneChatReport ? phoneChatReport.reason : null,
       }
     : null,
   },
