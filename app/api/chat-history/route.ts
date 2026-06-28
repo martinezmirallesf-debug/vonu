@@ -343,6 +343,37 @@ export async function POST(req: NextRequest) {
         });
 
       if (insertError) {
+  // Carrera normal: dos guardados del mismo hilo pueden llegar casi a la vez.
+  // Si otra petición ya lo creó, recuperamos haciendo update.
+  if (insertError.code === "23505") {
+    const { error: duplicateUpdateError } = await serviceClient
+      .from("chat_threads")
+      .update({
+        title: thread.title,
+        mode: thread.mode,
+        tutor_profile: thread.tutorProfile,
+        messages: thread.messages,
+        client_updated_at: thread.clientUpdatedAt,
+        deleted_at: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id)
+      .eq("thread_id", thread.threadId);
+
+    if (duplicateUpdateError) {
+      return NextResponse.json(
+        supabaseErrorPayload("duplicate-update-thread", duplicateUpdateError),
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      ok: true,
+      threadId: thread.threadId,
+      recoveredFromDuplicate: true,
+    });
+  }
+
   return NextResponse.json(
     supabaseErrorPayload("insert-thread", insertError),
     { status: 500 }
@@ -400,7 +431,7 @@ export async function DELETE(req: NextRequest) {
 
     if (error) {
   return NextResponse.json(
-    supabaseErrorPayload("get-threads", error),
+    supabaseErrorPayload("delete-thread", error),
     { status: 500 }
   );
 }
