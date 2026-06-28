@@ -7802,8 +7802,7 @@ if (!isDesktopPointer()) {
           content: m.text ?? "",
         }));
 
-      const { data: sessionData } = await supabaseBrowser.auth.getSession();
-const accessToken = sessionData?.session?.access_token ?? null;
+      const accessToken = await getChatAccessTokenWithTimeout(1200);
 
 
 const res = await fetchJsonWithTimeout("/api/chat", {
@@ -8317,6 +8316,30 @@ body: JSON.stringify({
 }),
     });
 
+    async function getChatAccessTokenWithTimeout(timeoutMs = 1200): Promise<string | null> {
+  let timeoutId: number | null = null;
+
+  try {
+    const timeoutPromise = new Promise<null>((resolve) => {
+      timeoutId = window.setTimeout(() => resolve(null), timeoutMs);
+    });
+
+    const result: any = await Promise.race([
+      supabaseBrowser.auth.getSession(),
+      timeoutPromise,
+    ]);
+
+    return result?.data?.session?.access_token ?? null;
+  } catch (error) {
+    console.warn("[Vonu chat] getSession timeout/error, continuing without token", error);
+    return null;
+  } finally {
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId);
+    }
+  }
+}
+
     if (!res.ok) {
       const txt = await res.text().catch(() => "");
       throw new Error(`HTTP ${res.status} ${res.statusText} ${txt}`);
@@ -8421,8 +8444,7 @@ return;
           content: m.text ?? "",
         }));
 
-      const { data: sessionData } = await supabaseBrowser.auth.getSession();
-const accessToken = sessionData?.session?.access_token ?? null;
+      const accessToken = await getChatAccessTokenWithTimeout(1200);
 
 const res = await fetchJsonWithTimeout("/api/chat", {
   method: "POST",
