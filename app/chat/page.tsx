@@ -3187,12 +3187,15 @@ setSubscriptionInfo(null);
 
     if (!token) {
       setUsageInfo(null);
-      return;
+      return null;
     }
 
-    const res = await fetch("/api/usage/status", {
+    const res = await fetch(`/api/usage/status?t=${Date.now()}`, {
       method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Cache-Control": "no-cache",
+      },
       cache: "no-store",
     });
 
@@ -3200,16 +3203,19 @@ setSubscriptionInfo(null);
 
     if (!res.ok) {
       setUsageInfo(null);
-      return;
+      return null;
     }
 
     if (json?.usage) {
       setUsageInfo(json.usage);
-    } else {
-      setUsageInfo(null);
+      return json.usage;
     }
+
+    setUsageInfo(null);
+    return null;
   } catch {
     setUsageInfo(null);
+    return null;
   }
 }
 
@@ -3703,13 +3709,34 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
 
       if (checkout === "success") {
   setToastMsg("✅ Pago completado. Actualizando tu cuenta…");
+  setPaywallOpen(false);
+  setPayMsg(null);
+
   url.searchParams.delete("checkout");
   window.history.replaceState({}, "", url.toString());
 
-  Promise.all([refreshProStatus(), refreshUsageInfo()]).finally(() => {
+  const refreshAfterCheckout = async () => {
+    await refreshProStatus();
+
+    let latestUsage: any = null;
+
+    // Stripe puede tardar unos segundos en confirmar el webhook.
+    // Reintentamos para que las recargas de voz aparezcan sin recargar página.
+    for (let i = 0; i < 6; i += 1) {
+      latestUsage = await refreshUsageInfo();
+
+      if (Number(latestUsage?.realtime_seconds_left ?? 0) > 0) {
+        break;
+      }
+
+      await sleep(900);
+    }
+
     setToastMsg("✅ Listo. Tu cuenta se ha actualizado.");
     setTimeout(() => setToastMsg(null), 3500);
-  });
+  };
+
+  refreshAfterCheckout();
 } else if (checkout === "cancel") {
         setToastMsg("Pago cancelado. Puedes intentarlo cuando quieras.");
         url.searchParams.delete("checkout");
@@ -4653,6 +4680,16 @@ function clearRealtimeLimitTimers() {
 }
 
 function openVoiceTopupModal() {
+  realtimeStoppedByLimitRef.current = false;
+
+  try {
+    clearRealtimeLimitTimers();
+  } catch {}
+
+  setRealtimeStatus("closed");
+  voiceModeRef.current = false;
+  setVoiceMode(false);
+
   setPayMsg(
     "Se han agotado tus minutos de voz. Puedes seguir usando el chat escrito, o hacer una recarga para continuar hablando con Vonu."
   );
@@ -4856,11 +4893,26 @@ async function toggleConversation() {
   setRealtimeStatus("connecting");
 
   try {
-    const realtimeSecondsLeftBeforeStart = Math.max(
+    const freshUsage = await refreshUsageInfo();
+
+const realtimeSecondsLeftBeforeStart = Math.max(
   0,
-  Number(usageInfo?.realtime_seconds_left ?? 0)
+  Number(
+    freshUsage?.realtime_seconds_left ??
+      usageInfo?.realtime_seconds_left ??
+      0
+  )
 );
-    const conn = await startRealtimeVoice({
+
+if (realtimeSecondsLeftBeforeStart <= 0) {
+  realtimeStoppedByLimitRef.current = false;
+  openVoiceTopupModal();
+  setMicMsg("No quedan minutos de voz disponibles.");
+  setTimeout(() => setMicMsg(null), 2400);
+  return;
+}
+
+const conn = await startRealtimeVoice({
       onStatus: (status) => {
         setRealtimeStatus(status);
 
@@ -4883,12 +4935,17 @@ async function toggleConversation() {
         }
       },
 
-        onUsageTracked: () => {
-  refreshUsageInfo();
+        onUsageTracked: async () => {
+  const latestUsage = await refreshUsageInfo();
+
+  const left = Number(latestUsage?.realtime_seconds_left ?? 0);
 
   if (realtimeStoppedByLimitRef.current) {
     realtimeStoppedByLimitRef.current = false;
-    openVoiceTopupModal();
+
+    if (left <= 0) {
+      openVoiceTopupModal();
+    }
   }
 },
 
