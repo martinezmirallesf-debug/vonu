@@ -3738,7 +3738,7 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
       if (checkout === "success") {
   setToastMsg("✅ Pago completado. Actualizando tu cuenta…");
 
-  // Desbloqueamos cualquier estado viejo de pago/paywall al volver de Stripe.
+  // Al volver de Stripe, quitamos cualquier bloqueo visual de pago.
   setPayLoading(false);
   setPaywallOpen(false);
   setPayMsg(null);
@@ -3761,6 +3761,11 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
       if (exists) {
         activeThreadIdRef.current = returnThreadId;
         setActiveThreadId(returnThreadId);
+
+        requestAnimationFrame(() => {
+          pendingScrollToBottomRef.current = true;
+          shouldStickToBottomRef.current = true;
+        });
       }
 
       window.localStorage.removeItem("vonu_checkout_return_thread_id_v1");
@@ -3768,16 +3773,28 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
   };
 
   const refreshAfterCheckout = async () => {
+    // Primero intentamos volver al hilo donde estabas.
     restoreThreadAfterCheckout();
 
     await refreshProStatus();
 
-    // Stripe/webhook puede tardar unos segundos en reflejar la recarga.
-    // Por eso refrescamos usage varias veces sin obligar a recargar página.
+    let latestUsage: any = null;
+
+    // Stripe puede tardar unos segundos en confirmar el webhook.
+    // Reintentamos para que las recargas de voz aparezcan sin recargar página.
     for (let i = 0; i < 6; i += 1) {
-      await refreshUsageInfo();
+      latestUsage = await refreshUsageInfo();
+
+      if (Number(latestUsage?.realtime_seconds_left ?? 0) > 0) {
+        break;
+      }
+
       await sleep(900);
     }
+
+    // Por si la carga del historial remoto pisa el hilo activo unos ms después,
+    // lo reintentamos al final.
+    restoreThreadAfterCheckout();
 
     setPayLoading(false);
     setToastMsg("✅ Listo. Tu cuenta se ha actualizado.");
