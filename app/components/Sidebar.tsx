@@ -862,13 +862,16 @@ const planIsCanceledAtPeriodEnd =
 
     setAccountScreen("account");
   }}
+  disabled={authLoading}
   className={[
-    "flex w-full items-center justify-between rounded-full border border-zinc-200 bg-white px-4 py-3 shadow-sm transition active:scale-[0.99]",
-    authLoading ? "opacity-60" : "hover:bg-zinc-50",
+    "-ml-2 mb-4 grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition active:scale-95",
+    authLoading ? "opacity-60" : "hover:bg-zinc-100",
   ].join(" ")}
+  aria-label="Volver a tu cuenta"
+  title="Volver"
 >
-                    <BackIcon className="h-6 w-6" />
-                  </button>
+  <BackIcon className="h-6 w-6" />
+</button>
 
                   <div className="mb-3">
                     <div className="text-[32px] font-semibold leading-none tracking-[-0.06em] text-zinc-950 md:text-[24px]">
