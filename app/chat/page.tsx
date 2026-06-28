@@ -8176,11 +8176,24 @@ if (isDesktopPointer()) {
     return;
   }
 
-  if (!canSend) return;
-  if (!activeThread) return;
+  if (!canSend) {
+  setUiError(
+    `DEBUG envío bloqueado: canSend=false | input="${input.trim().slice(0, 80)}" | isTyping=${String(isTyping)} | hasImage=${String(!!imagePreview)} | hasPdf=${String(!!pdfPreview)} | paywall=${String(isBlockedByPaywall)}`
+  );
+  return;
+}
+
+if (!activeThread) {
+  setUiError("DEBUG envío bloqueado: activeThread=null");
+  return;
+}
 
 // ✅ SEND LOCK (anti doble click / Enter repetido / carreras)
-if (sendGuardRef.current.busy) return;
+if (sendGuardRef.current.busy) {
+  setUiError("DEBUG envío bloqueado: sendGuardRef.current.busy=true");
+  return;
+}
+
 sendGuardRef.current.busy = true;
 
 const targetThreadId = activeThread.id;
@@ -8837,7 +8850,12 @@ function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
 
-    if (!canSendForInput) return;
+    if (!canSendForInput) {
+      setUiError(
+        `DEBUG envío bloqueado: canSendForInput=false | canSend=${String(canSend)} | authLoading=${String(authLoading)} | isLoggedIn=${String(isLoggedIn)} | isTyping=${String(isTyping)} | paywall=${String(isBlockedByPaywall)} | activeThread=${String(!!activeThread)} | input="${input.trim().slice(0, 80)}"`
+      );
+      return;
+    }
 
     sendMessage();
   }
