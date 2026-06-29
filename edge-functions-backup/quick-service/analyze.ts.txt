@@ -1227,6 +1227,29 @@ function isLowContext(userText: string, hasImage: boolean) {
   return !situationHints.some((s) => tl.includes(s));
 }
 
+function shouldUseCopyableExtraInstructions(userText: string) {
+  const t = String(userText ?? "").toLowerCase();
+
+  return (
+    t.includes("redacta") ||
+    t.includes("escríbeme") ||
+    t.includes("escribeme") ||
+    t.includes("prepara") ||
+    t.includes("hazme un mensaje") ||
+    t.includes("haz un mensaje") ||
+    t.includes("mensaje para copiar") ||
+    t.includes("correo") ||
+    t.includes("email") ||
+    t.includes("whatsapp") ||
+    t.includes("sms para") ||
+    t.includes("reclamación") ||
+    t.includes("reclamacion") ||
+    t.includes("carta") ||
+    t.includes("texto para enviar") ||
+    t.includes("texto para copiar")
+  );
+}
+
 function buildCurrentDateContext() {
   const now = new Date();
 
@@ -8257,7 +8280,7 @@ if (token && !isGuest) {
     type FootballProfile = "normal" | "wide";
     const footballProfile: FootballProfile = body?.footballProfile === "normal" ? "normal" : "wide";
 
-    const history = buildHistory(messages, 10);
+    const history = buildHistory(messages, 6);
 
     let footballReq = parseFootballReqFixture(userText);
 const fraudOverride = hasStrongFraudOverride(userText);
@@ -8695,6 +8718,89 @@ if (effectiveMode === "tutor" && incompletePhysicsProblem.isIncomplete) {
       );
     }
 
+    function shouldUseCompactChatPrompt(params: {
+  userText: string;
+  pillar: string;
+  hasImage: boolean;
+  hasPdf: boolean;
+  studyModeActive: boolean;
+  effectiveMode: ThreadMode;
+}) {
+  if (params.effectiveMode !== "chat") return false;
+  if (params.hasImage || params.hasPdf) return false;
+  if (params.studyModeActive) return false;
+
+  const t = String(params.userText ?? "").toLowerCase();
+
+  const compactSignals = [
+    "me puedo fiar",
+    "puedo fiarme",
+    "es fiable",
+    "web fiable",
+    "tienda online",
+    "dominio",
+    "url",
+    "enlace",
+    "link",
+    "http://",
+    "https://",
+    "www.",
+    ".es",
+    ".com",
+    ".sh",
+    ".exe",
+    ".apk",
+    "sms",
+    "correos",
+    "seur",
+    "dhl",
+    "pagar",
+    "1,99",
+    "1.99",
+    "banco",
+    "bizum",
+    "tarjeta",
+    "código",
+    "codigo",
+    "otp",
+  ];
+
+  if (compactSignals.some((word) => t.includes(word))) return true;
+
+  return t.length > 0 && t.length <= 180;
+}
+
+function instructionsChatCompact(pillar: string, userText: string) {
+  return `
+Eres Vonu, un asistente preventivo para decidir con calma antes de pagar, clicar, firmar, responder o confiar.
+
+Tono:
+- Natural, claro y cercano.
+- No suenes a plantilla.
+- Si hay peligro, abre con una frase directa.
+- Si parece seguro, transmite tranquilidad prudente.
+- No digas que has hecho comprobaciones exhaustivas si solo hay indicios.
+- No inventes datos externos.
+
+Formato:
+- Primera frase: veredicto práctico.
+- Después: "Lo que veo:" con 2-4 puntos.
+- Después: "Qué haría ahora:" con pasos concretos.
+- Usa negritas solo para lo importante.
+- Sé breve si el caso es simple.
+
+Reglas de riesgo:
+- Web oficial o dominio coherente sin urgencia/pago raro: verde, confianza prudente.
+- SMS de paquetería, banco, pago pequeño, urgencia o enlaces: alto riesgo.
+- IP directa, puerto raro, descarga o archivo .sh/.exe/.apk: riesgo alto o muy alto.
+- Nunca recomiendes abrir, descargar o ejecutar enlaces peligrosos.
+- Si el usuario ya ha abierto/descargado algo, recomienda cerrar, no ejecutar, borrar descarga, antivirus y cambiar contraseñas si metió datos.
+
+Pilar inferido: ${pillar}
+Mensaje del usuario: ${userText}
+`.trim();
+}
+
     // ------------------------- OpenAI normal (no fútbol) -------------------------
     const modelChat = Deno.env.get("OPENAI_MODEL_CHAT") || "gpt-4o";
     const modelTutor = Deno.env.get("OPENAI_MODEL_TUTOR") || "gpt-4o";
@@ -8713,9 +8819,20 @@ if (effectiveMode === "tutor" && incompletePhysicsProblem.isIncomplete) {
 
     const temperature = effectiveMode === "tutor" ? 0.25 : 0.35;
 
-    let instructions =
+    const useCompactChatPrompt = shouldUseCompactChatPrompt({
+  userText,
+  pillar,
+  hasImage: Boolean(imageBase64),
+  hasPdf: Boolean(pdfText),
+  studyModeActive: Boolean(studyMode?.active),
+  effectiveMode,
+});
+
+let instructions =
   effectiveMode === "tutor"
     ? instructionsTutor(pillar, tutorLevel, userText)
+    : useCompactChatPrompt
+    ? instructionsChatCompact(pillar, userText)
     : instructionsChat(pillar, lowContext, studyMode);
 
 const extraInstructions =
@@ -8723,7 +8840,7 @@ const extraInstructions =
     ? body.extraInstructions.trim()
     : "";
 
-if (extraInstructions) {
+if (extraInstructions && shouldUseCopyableExtraInstructions(userText)) {
   instructions += `\n\n${extraInstructions}`;
 }
 

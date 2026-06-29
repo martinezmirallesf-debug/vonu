@@ -1,4 +1,4 @@
-// app/page.tsx
+// app/chat/page.tsx
 
 
 "use client";
@@ -9,6 +9,7 @@ import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
+import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 
 import PaywallModal from "@/app/components/PaywallModal";
@@ -18,7 +19,6 @@ import TopBar from "@/app/components/TopBar";
 import Sidebar from "@/app/components/Sidebar";
 import VonuThinking from "@/app/components/VonuThinking";
 import AssistantMessageActions from "@/app/components/AssistantMessageActions";
-import { analyzeAttachment } from "@/app/lib/analysis/analyzeAttachment";
 import FilePickerModal from "@/app/components/FilePickerModal";
 import ChatFileDropCard from "@/app/components/ChatFileDropCard";
 import ManualWhiteboardModal from "@/app/components/ManualWhiteboardModal";
@@ -61,7 +61,13 @@ type Message = {
   id: string;
   role: "user" | "assistant";
   text?: string;
+
+  // Imagen completa: solo para el análisis en vivo, NO para persistir en localStorage.
   image?: string;
+
+  // Miniatura ligera: sí se puede guardar en historial local.
+  imageThumb?: string;
+
   streaming?: boolean;
   pizarra?: string | null;
   boardImageB64?: string | null;
@@ -145,69 +151,1395 @@ function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-function getAdaptiveRevealTimings(text: string) {
-  const len = (text || "").trim().length;
+function isBrowserTabVisible() {
+  if (typeof document === "undefined") return true;
+  return document.visibilityState === "visible";
+}
 
-  const thinkMs =
-    len < 120 ? 420 :
-    len < 280 ? 650 :
-    len < 600 ? 950 :
-    len < 1100 ? 1300 :
-    1700;
+function shouldUseProgressiveReveal() {
+  return isBrowserTabVisible();
+}
 
-  const revealMs =
-    len < 120 ? 260 :
-    len < 280 ? 420 :
-    len < 600 ? 700 :
-    len < 1100 ? 1000 :
-    1400;
+async function fetchJsonWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeoutMs = 25000
+) {
+  const controller = new AbortController();
 
-  return { thinkMs, revealMs };
+  const timeout = window.setTimeout(() => {
+    controller.abort();
+  }, timeoutMs);
+
+  try {
+    const res = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+
+    return res;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+async function getChatAccessTokenWithTimeout(
+  timeoutMs = 1200
+): Promise<string | null> {
+  let timeoutId: number | null = null;
+
+  try {
+    const timeoutPromise = new Promise<null>((resolve) => {
+      timeoutId = window.setTimeout(() => resolve(null), timeoutMs);
+    });
+
+    const result = await Promise.race([
+      supabaseBrowser.auth.getSession(),
+      timeoutPromise,
+    ]);
+
+    if (
+      result &&
+      typeof result === "object" &&
+      "data" in result
+    ) {
+      return result.data?.session?.access_token ?? null;
+    }
+
+    return null;
+  } catch (error) {
+    console.warn(
+      "[Vonu chat] getSession timeout/error, continuing without token",
+      error
+    );
+    return null;
+  } finally {
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId);
+    }
+  }
+}
+
+function getAdaptiveRevealTimings(_text: string) {
+  return { thinkMs: 0, revealMs: 0 };
 }
 
 function splitTextForProgressiveReveal(text: string) {
   const clean = normalizeAssistantText(text || "").trim();
-  if (!clean) return [];
+  return clean ? [clean] : [];
+}
 
-  const blocks = clean
-    .split(/\n\s*\n/g)
-    .map((b) => b.trim())
-    .filter(Boolean);
+function getProgressiveChunkDelay(_index: number, _total: number) {
+  return 0;
+}
 
-  if (blocks.length >= 2) return blocks;
+function looksLikeRiskAnalysis(text: string) {
+  const t = String(text ?? "").toLowerCase();
 
-  // fallback: si no hay párrafos claros, partir por frases
-  const sentences = clean
-    .split(/(?<=[\.\?\!])\s+/g)
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const riskWords = [
+    "estafa",
+    "fraude",
+    "phishing",
+    "smishing",
+    "sms",
+    "whatsapp",
+    "telegram",
+    "email",
+    "correo sospechoso",
+    "enlace",
+    "link",
+    "url",
+    "web",
+    "tienda online",
+    "pagar",
+    "transferencia",
+    "bizum",
+    "tarjeta",
+    "banco",
+    "correos",
+    "seur",
+    "dhl",
+    "paquete",
+    "envío",
+    "envio",
+    "aduanas",
+    "factura",
+    "contrato",
+    "cláusula",
+    "clausula",
+    "me manipula",
+    "manipulación",
+    "manipulacion",
+    "me presiona",
+    "presión",
+    "presion",
+    "amenaza",
+    "chantaje",
+    "sextorsión",
+    "sextorsion",
+    "tinder",
+    "badoo",
+    "bumble",
+    "instagram",
+    "facebook",
+    "app de citas",
+    "red social",
+    "perfil falso",
+    "cripto",
+    "crypto",
+    "bitcoin",
+    "trading",
+    "inversión",
+    "inversion",
+    "invertir",
+    "ganar dinero",
+    "oportunidad única",
+    "oportunidad unica",
+    "urgente",
+    "urgencia",
+    "médico",
+    "medico",
+    "salud",
+    "dolor",
+    "síntoma",
+    "sintoma",
+    "urgencias",
+        "cláusula abusiva",
+    "clausula abusiva",
+    "abusivo",
+    "abusiva",
+    "reclamable",
+    "legal",
+    "contrato de alquiler",
+    "alquiler",
+    "arrendamiento",
+    "inquilino",
+    "casero",
+    "fianza",
+    "permanencia",
+    "penalización",
+    "penalizacion",
+    "cobro indebido",
+    "cobro no reconocido",
+    "me han cobrado",
+    "servicio no contratado",
+    "mantenimiento no contratado",
+    "suscripción",
+    "suscripcion",
+    "darme de baja",
+    "cancelar suscripción",
+    "cancelar suscripcion",
+    "garantía",
+    "garantia",
+    "devolución",
+    "devolucion",
+    "reembolso",
+    "precaución media-alta",
+    "precaucion media-alta",
+    "riesgo medio-alto",
+    "malware",
+"script",
+".sh",
+"ip directa",
+"puerto",
+"infectar",
+"robar información",
+"robar informacion",
+"amenaza conocida",
+"comprobación de seguridad",
+"comprobacion de seguridad",
+"malware",
+"script",
+".sh",
+"ip directa",
+"puerto",
+"infectar",
+"robar información",
+"robar informacion",
+"amenaza conocida",
+"comprobación de seguridad",
+"comprobacion de seguridad",
+  ];
 
-  if (sentences.length <= 1) return [clean];
+  return riskWords.some((word) => t.includes(word));
+}
 
-  const chunks: string[] = [];
-  let buf = "";
-
-  for (const s of sentences) {
-    const next = buf ? `${buf} ${s}` : s;
-    if (next.length < 220) {
-      buf = next;
-    } else {
-      if (buf) chunks.push(buf);
-      buf = s;
+function getPreviousUserMessage(messages: Message[], index: number) {
+  for (let j = index - 1; j >= 0; j -= 1) {
+    const candidate = messages[j];
+    if (candidate?.role === "user") {
+      return candidate;
     }
   }
 
-  if (buf) chunks.push(buf);
-
-  return chunks.length ? chunks : [clean];
+  return null;
 }
 
-function getProgressiveChunkDelay(index: number, total: number) {
-  if (total <= 1) return 0;
-  if (index === 0) return 0;
-  if (index === 1) return 220;
-  if (index === 2) return 300;
-  return 360;
+type RiskStatus = "safe" | "warning" | "high" | "danger";
+
+function riskStatusFromScore(score: number): RiskStatus {
+  if (score >= 85) return "danger";
+  if (score >= 65) return "high";
+  if (score >= 35) return "warning";
+  return "safe";
+}
+
+function extractRiskPercentFromAssistantText(text: string): number | null {
+  const t = String(text ?? "").toLowerCase();
+  if (!t.trim()) return null;
+
+  const riskContextWords = [
+    "probabilidad estimada",
+    "probabilidad de estafa",
+    "probabilidad estimada de estafa",
+    "probabilidad de riesgo",
+    "probabilidad estimada de riesgo",
+    "probabilidad de engaño",
+    "probabilidad estimada de engaño",
+    "probabilidad de phishing",
+    "probabilidad de smishing",
+    "riesgo estimado",
+    "riesgo del perfil",
+    "riesgo general",
+    "nivel de riesgo",
+    "estafa",
+    "fraude",
+    "phishing",
+    "smishing",
+    "malware",
+    "engaño",
+    "scam",
+    "perfil falso",
+    "ia",
+    "inteligencia artificial",
+    "manipulación",
+    "manipulacion",
+    "edición fuerte",
+    "edicion fuerte",
+  ];
+
+  const hasRiskContext = riskContextWords.some((word) => t.includes(word));
+  if (!hasRiskContext) return null;
+
+  // Detecta rangos tipo 90-98%, 90–98%, 90 a 98%
+  const rangeRegex =
+    /(?:probabilidad estimada|probabilidad|riesgo estimado|riesgo|nivel de riesgo)[^%\n]{0,90}?(\d{1,3})\s*(?:-|–|—|a)\s*(\d{1,3})\s*%/gi;
+
+  let rangeMatch: RegExpExecArray | null;
+  let bestRange: number | null = null;
+
+  while ((rangeMatch = rangeRegex.exec(t)) !== null) {
+    const a = Number(rangeMatch[1]);
+    const b = Number(rangeMatch[2]);
+
+    if (Number.isFinite(a) && Number.isFinite(b)) {
+      const avg = Math.max(0, Math.min(100, (a + b) / 2));
+      bestRange = bestRange === null ? avg : Math.max(bestRange, avg);
+    }
+  }
+
+  if (bestRange !== null) return bestRange;
+
+  // Detecta porcentajes simples tipo 95%
+  const singleRegex =
+    /(?:probabilidad estimada|probabilidad|riesgo estimado|riesgo|nivel de riesgo)[^%\n]{0,90}?(\d{1,3})\s*%/gi;
+
+  let singleMatch: RegExpExecArray | null;
+  let bestSingle: number | null = null;
+
+  while ((singleMatch = singleRegex.exec(t)) !== null) {
+    const n = Number(singleMatch[1]);
+
+    if (Number.isFinite(n)) {
+      const score = Math.max(0, Math.min(100, n));
+      bestSingle = bestSingle === null ? score : Math.max(bestSingle, score);
+    }
+  }
+
+  const reverseRangeRegex =
+  /(\d{1,3})\s*(?:-|–|—|a)\s*(\d{1,3})\s*%\s*(?:de\s+)?(?:probabilidad|riesgo|posibilidad)/gi;
+
+let reverseRangeMatch: RegExpExecArray | null;
+let bestReverseRange: number | null = null;
+
+while ((reverseRangeMatch = reverseRangeRegex.exec(t)) !== null) {
+  const a = Number(reverseRangeMatch[1]);
+  const b = Number(reverseRangeMatch[2]);
+
+  if (Number.isFinite(a) && Number.isFinite(b)) {
+    const avg = Math.max(0, Math.min(100, (a + b) / 2));
+    bestReverseRange =
+      bestReverseRange === null ? avg : Math.max(bestReverseRange, avg);
+  }
+}
+
+if (bestReverseRange !== null) return bestReverseRange;
+
+const reverseSingleRegex =
+  /(\d{1,3})\s*%\s*(?:de\s+)?(?:probabilidad|riesgo|posibilidad)/gi;
+
+let reverseSingleMatch: RegExpExecArray | null;
+let bestReverseSingle: number | null = null;
+
+while ((reverseSingleMatch = reverseSingleRegex.exec(t)) !== null) {
+  const n = Number(reverseSingleMatch[1]);
+
+  if (Number.isFinite(n)) {
+    const score = Math.max(0, Math.min(100, n));
+    bestReverseSingle =
+      bestReverseSingle === null ? score : Math.max(bestReverseSingle, score);
+  }
+}
+
+if (bestReverseSingle !== null) return bestReverseSingle;
+
+  return bestSingle;
+}
+
+function normalizeRiskText(text: string) {
+  return String(text ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\bhttps?:\/\/www\./g, "https://")
+    .replace(/\bwww\./g, "")
+    .replace(/\/+(\s|$)/g, "$1");
+}
+
+function looksLikeSafeOfficialWebsiteAssistantVerdict(text: string) {
+  const t = normalizeRiskText(text);
+
+  const safe =
+    t.includes("puedes fiarte") ||
+    t.includes("puedes usarla con tranquilidad") ||
+    t.includes("puedes usarlo con tranquilidad") ||
+    t.includes("tranquilidad razonable") ||
+    t.includes("parece fiable") ||
+    t.includes("parece legitima") ||
+    t.includes("parece legitimo") ||
+    t.includes("parece segura") ||
+    t.includes("parece seguro") ||
+    t.includes("parece oficial") ||
+    t.includes("pinta bien") ||
+    t.includes("riesgo bajo") ||
+    t.includes("bajo riesgo") ||
+    t.includes("web oficial") ||
+    t.includes("dominio oficial") ||
+    t.includes("dominio reconocido") ||
+    t.includes("marca conocida") ||
+    t.includes("marca reconocida") ||
+    t.includes("coherente con la marca") ||
+    t.includes("coherente con la marca reconocida") ||
+    t.includes("corresponde claramente a la marca") ||
+    t.includes("coincide con la marca oficial") ||
+    t.includes("no aparece marcado") ||
+    t.includes("no aparece marcada") ||
+    t.includes("no aparece senalado") ||
+    t.includes("no aparece senalada") ||
+    t.includes("no aparece en listas de sitios maliciosos") ||
+    t.includes("no aparece relacionada con malware") ||
+    t.includes("no aparece relacionado con malware") ||
+    t.includes("no aparece como peligrosa") ||
+    t.includes("no aparece como peligroso") ||
+    t.includes("no hay senales de phishing") ||
+    t.includes("no hay senales de malware") ||
+    t.includes("no hay senales tipicas de phishing") ||
+    t.includes("no hay senales tipicas de estafa") ||
+    t.includes("no parece una estafa") ||
+    t.includes("no parece phishing") ||
+    t.includes("no veo senales claras de peligro") ||
+    t.includes("no veo senales claras de riesgo");
+
+  const danger =
+    t.includes("riesgo alto") ||
+    t.includes("riesgo muy alto") ||
+    t.includes("riesgo critico") ||
+    t.includes("estafa clara") ||
+    t.includes("estafa confirmada") ||
+    t.includes("fraude confirmado") ||
+    t.includes("phishing confirmado") ||
+    t.includes("smishing confirmado") ||
+    t.includes("malware confirmado") ||
+    t.includes("relacionado con malware") ||
+    t.includes("asociado a malware") ||
+    t.includes("amenaza conocida") ||
+    t.includes("no pulses") ||
+    t.includes("no abras el enlace") ||
+    t.includes("no pagues") ||
+    t.includes("no introduzcas datos") ||
+    t.includes("no metas datos") ||
+    t.includes("no descargues") ||
+    t.includes("no lo abras") ||
+    t.includes("no lo ejecutes");
+
+  return safe && !danger;
+}
+
+function looksLikeNeutralWebsiteCheckFromUserText(text: string) {
+  const t = normalizeRiskText(text);
+
+  const asksWebsiteCheck =
+    t.includes("me puedo fiar de") ||
+    t.includes("puedo fiarme de") ||
+    t.includes("esta web es fiable") ||
+    t.includes("la web es fiable") ||
+    t.includes("web fiable") ||
+    t.includes("es fiable") ||
+    t.includes("parece fiable");
+
+  if (!asksWebsiteCheck) return false;
+
+  const hasRealDangerContext =
+    t.includes("sms") ||
+    t.includes("whatsapp") ||
+    t.includes("telegram") ||
+    t.includes("me pide pagar") ||
+    t.includes("me pide tarjeta") ||
+    t.includes("me pide datos") ||
+    t.includes("he pagado") ||
+    t.includes("he enviado dinero") ||
+    t.includes("me han cobrado") ||
+    t.includes("urgente") ||
+    t.includes("codigo") ||
+    t.includes("banco") ||
+    t.includes("bizum") ||
+    t.includes("transferencia") ||
+    t.includes("descargar") ||
+    t.includes(".sh") ||
+    t.includes(".exe") ||
+    t.includes(".apk");
+
+  return !hasRealDangerContext;
+}
+
+function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
+  const t = String(text ?? "").toLowerCase();
+
+  if (!t.trim()) return null;
+
+  if (looksLikeSafeOfficialWebsiteAssistantVerdict(t)) {
+    return "safe";
+  }
+
+  // ✅ OVERRIDE ULTRA PRIORITARIO:
+// Si la respuesta de Vonu dice que un perfil de citas no tiene banderas rojas
+// y además menciona verificación/confianza, debe ser VERDE antes de mirar porcentajes,
+// palabras sueltas como "inversión" en contexto negativo, o precaución normal.
+const hasUltraSafeDatingProfileVerdict =
+  (
+    t.includes("tinder") ||
+    t.includes("bumble") ||
+    t.includes("badoo") ||
+    t.includes("app de citas") ||
+    t.includes("perfil de citas")
+  ) &&
+  (
+    t.includes("no hay banderas rojas claras") ||
+    t.includes("no se detectan señales claras") ||
+    t.includes("no se detectan senales claras") ||
+    t.includes("no veo señales claras de peligro") ||
+    t.includes("no veo senales claras de peligro") ||
+    t.includes("no hay señales claras de peligro") ||
+    t.includes("no hay senales claras de peligro") ||
+    t.includes("no hay señales visibles de urgencia") ||
+    t.includes("no hay senales visibles de urgencia")
+  ) &&
+  (
+    t.includes("verificación visible") ||
+    t.includes("verificacion visible") ||
+    t.includes("muestra una verificación visible") ||
+    t.includes("muestra una verificacion visible") ||
+    t.includes("perfil tiene una verificación visible") ||
+    t.includes("perfil tiene una verificacion visible") ||
+    t.includes("suma confianza") ||
+    t.includes("buen indicio")
+  ) &&
+  !t.includes("aparece reutilizada") &&
+  !t.includes("foto reutilizada") &&
+  !t.includes("imagen reutilizada") &&
+  !t.includes("foto robada") &&
+  !t.includes("imagen robada") &&
+  !t.includes("perfil falso") &&
+  !t.includes("catfish") &&
+  !t.includes("catfishing") &&
+  !t.includes("pide dinero") &&
+  !t.includes("pedir dinero") &&
+  !t.includes("enviar dinero") &&
+  !t.includes("envíes dinero") &&
+  !t.includes("envies dinero") &&
+  !t.includes("enlace sospechoso") &&
+  !t.includes("enlaces sospechosos") &&
+  !t.includes("amenaza") &&
+  !t.includes("chantaje") &&
+  !t.includes("presión fuerte") &&
+  !t.includes("presion fuerte");
+
+if (hasUltraSafeDatingProfileVerdict) {
+  return "safe";
+}
+
+const percentScore = extractRiskPercentFromAssistantText(t);
+
+if (typeof percentScore === "number") {
+  return riskStatusFromScore(percentScore);
+}
+
+// ✅ BANCO + LLAMADA + CÓDIGO SMS/OTP = riesgo alto.
+// Este patrón debe ganar antes que las reglas suaves de teléfono.
+// Es vishing: phishing por llamada, normalmente usando códigos SMS/OTP.
+const hasBankPhoneCodeFraud =
+  (
+    t.includes("vishing") ||
+    t.includes("phishing por llamada") ||
+    t.includes("phishing por voz") ||
+    t.includes("llamada falsa") ||
+    t.includes("llamada de banco") ||
+    t.includes("llamada del banco") ||
+    t.includes("diciendo que era del banco") ||
+    t.includes("diciendo que era tu banco") ||
+    t.includes("diciendo que era mi banco") ||
+    t.includes("supuesto banco") ||
+    t.includes("banco")
+  ) &&
+  (
+    t.includes("código sms") ||
+    t.includes("codigo sms") ||
+    t.includes("código de verificación") ||
+    t.includes("codigo de verificacion") ||
+    t.includes("código de seguridad") ||
+    t.includes("codigo de seguridad") ||
+    t.includes("otp") ||
+    t.includes("clave de un solo uso") ||
+    t.includes("clave temporal") ||
+    t.includes("no des ningún código") ||
+    t.includes("no des ningun codigo") ||
+    t.includes("no compartas el código") ||
+    t.includes("no compartas el codigo") ||
+    t.includes("no dar ningún código") ||
+    t.includes("no dar ningun codigo")
+  );
+
+const hasCrossChannelPhoneFraud =
+  (
+    t.includes("vishing") ||
+    t.includes("phishing por llamada") ||
+    t.includes("llamada falsa") ||
+    t.includes("llamada") ||
+    t.includes("por teléfono") ||
+    t.includes("por telefono")
+  ) &&
+  (
+    t.includes("whatsapp") ||
+    t.includes("seguir por whatsapp") ||
+    t.includes("continuar por whatsapp") ||
+    t.includes("llevarte a whatsapp") ||
+    t.includes("sacarte del canal oficial")
+  ) &&
+  (
+    t.includes("banco") ||
+    t.includes("cargo") ||
+    t.includes("operación") ||
+    t.includes("operacion") ||
+    t.includes("cuenta") ||
+    t.includes("tarjeta")
+  );
+
+const hasStrongOtpFraudLanguage =
+  (
+    t.includes("riesgo alto") ||
+    t.includes("intento de fraude") ||
+    t.includes("intento de estafa") ||
+    t.includes("señales claras de intento de fraude") ||
+    t.includes("senales claras de intento de fraude") ||
+    t.includes("señales claras de fraude") ||
+    t.includes("senales claras de fraude")
+  ) &&
+  (
+    t.includes("código sms") ||
+    t.includes("codigo sms") ||
+    t.includes("otp") ||
+    t.includes("código de verificación") ||
+    t.includes("codigo de verificacion")
+  );
+
+if (hasBankPhoneCodeFraud || hasCrossChannelPhoneFraud || hasStrongOtpFraudLanguage) {
+  return "high";
+}
+
+// ✅ TELÉFONO: solo número válido + sin señal fuerte = verde/neutro.
+// Evita puntos naranjas cuando Vonu solo dice prudencia normal
+// ante un número de teléfono sin contexto peligroso.
+const looksLikeLowRiskPhoneOnlyAnswer =
+  (
+    t.includes("número de teléfono") ||
+    t.includes("numero de telefono") ||
+    t.includes("llamada sospechosa") ||
+    t.includes("móvil válido") ||
+    t.includes("movil valido") ||
+    t.includes("móvil español válido") ||
+    t.includes("movil espanol valido") ||
+    t.includes("móvil en españa") ||
+    t.includes("movil en espana")
+  ) &&
+  (
+    t.includes("solo por el número") ||
+    t.includes("solo por el numero") ||
+    t.includes("por sí solo") ||
+    t.includes("por si solo") ||
+    t.includes("no veo una señal técnica fuerte") ||
+    t.includes("no veo una senal tecnica fuerte") ||
+    t.includes("no se ve una señal técnica fuerte") ||
+    t.includes("no se ve una senal tecnica fuerte") ||
+    t.includes("no muestra señales claras") ||
+    t.includes("no muestra senales claras") ||
+    t.includes("no demuestra estafa") ||
+    t.includes("no prueba una estafa") ||
+    t.includes("riesgo bajo")
+  );
+
+const hasRealPhoneDangerContext =
+  t.includes("riesgo alto") ||
+  t.includes("riesgo muy alto") ||
+  t.includes("riesgo crítico") ||
+  t.includes("riesgo critico") ||
+  t.includes("estafa clara") ||
+  t.includes("intento de estafa") ||
+  t.includes("suplantación clara") ||
+  t.includes("suplantacion clara") ||
+  t.includes("parece phishing") ||
+  t.includes("parece vishing") ||
+  t.includes("no des el código") ||
+  t.includes("no des el codigo") ||
+  t.includes("no compartas el código") ||
+  t.includes("no compartas el codigo") ||
+  t.includes("código sms") ||
+  t.includes("codigo sms") ||
+  t.includes("otp") ||
+  t.includes("bizum") ||
+  t.includes("transferencia") ||
+  t.includes("datos bancarios") ||
+  t.includes("instalar una app") ||
+  t.includes("acceso remoto") ||
+  t.includes("diciendo que era tu banco") ||
+  t.includes("diciendo que era mi banco") ||
+  t.includes("bloquear un cargo") ||
+  t.includes("cargo no reconocido");
+
+if (looksLikeLowRiskPhoneOnlyAnswer && !hasRealPhoneDangerContext) {
+  return "safe";
+}
+
+  // ✅ OVERRIDE PRIORITARIO: perfil de citas tranquilo/verificado = verde.
+// Esto debe ir arriba del todo, antes de cualquier regla de "precaución".
+const hasLowRiskDatingProfileVerdict =
+  (
+    t.includes("tinder") ||
+    t.includes("bumble") ||
+    t.includes("badoo") ||
+    t.includes("app de citas") ||
+    t.includes("perfil de citas")
+  ) &&
+  (
+    t.includes("no hay banderas rojas claras") ||
+    t.includes("no se detectan señales claras") ||
+    t.includes("no se detectan senales claras") ||
+    t.includes("no veo señales claras de peligro") ||
+    t.includes("no veo senales claras de peligro") ||
+    t.includes("no veo señales claras de riesgo") ||
+    t.includes("no veo senales claras de riesgo") ||
+    t.includes("no hay señales claras de peligro") ||
+    t.includes("no hay senales claras de peligro") ||
+    t.includes("no hay señales visibles de urgencia") ||
+    t.includes("no hay senales visibles de urgencia") ||
+    t.includes("no hay señales visibles de urgencia, dinero") ||
+    t.includes("no hay senales visibles de urgencia, dinero") ||
+    t.includes("verificación visible") ||
+    t.includes("verificacion visible") ||
+    t.includes("perfil tiene una verificación visible") ||
+    t.includes("perfil tiene una verificacion visible")
+  );
+
+const hasCalmVerifiedDatingAnswer =
+  (
+    t.includes("tinder") ||
+    t.includes("bumble") ||
+    t.includes("badoo") ||
+    t.includes("app de citas") ||
+    t.includes("perfil de citas")
+  ) &&
+  (
+    t.includes("no hay banderas rojas claras") ||
+    t.includes("no se detectan señales claras") ||
+    t.includes("no se detectan senales claras") ||
+    t.includes("no veo señales claras de peligro") ||
+    t.includes("no veo senales claras de peligro") ||
+    t.includes("no hay señales claras de peligro") ||
+    t.includes("no hay senales claras de peligro")
+  ) &&
+  (
+    t.includes("verificación visible") ||
+    t.includes("verificacion visible") ||
+    t.includes("perfil tiene una verificación visible") ||
+    t.includes("perfil tiene una verificacion visible") ||
+    t.includes("muestra una verificación visible") ||
+    t.includes("muestra una verificacion visible") ||
+    t.includes("suma confianza")
+  );
+
+const hasStrongDatingDanger =
+  t.includes("aparece reutilizada") ||
+  t.includes("foto reutilizada") ||
+  t.includes("imagen reutilizada") ||
+  t.includes("foto robada") ||
+  t.includes("imagen robada") ||
+  t.includes("perfil falso") ||
+  t.includes("catfish") ||
+  t.includes("catfishing") ||
+  t.includes("pide dinero") ||
+  t.includes("pedir dinero") ||
+  t.includes("enviar dinero") ||
+  t.includes("envíes dinero") ||
+  t.includes("envies dinero") ||
+  t.includes("cripto") ||
+  t.includes("crypto") ||
+  t.includes("bitcoin") ||
+  t.includes("trading") ||
+  t.includes("enlace sospechoso") ||
+  t.includes("enlaces sospechosos") ||
+  t.includes("amenaza") ||
+  t.includes("chantaje") ||
+  t.includes("presión fuerte") ||
+  t.includes("presion fuerte");
+
+// ✅ Este caso debe ganar sí o sí:
+// Tinder/Bumble/Badoo + apertura tranquila + verificación visible = verde,
+// salvo que haya señales fuertes reales.
+if (hasCalmVerifiedDatingAnswer && !hasStrongDatingDanger) {
+  return "safe";
+}
+
+const hasRealDatingDangerInVerdict = hasStrongDatingDanger;
+
+if (hasLowRiskDatingProfileVerdict && !hasRealDatingDangerInVerdict) {
+  return "safe";
+}
+
+  const isDatingOrSocialProfile =
+    t.includes("tinder") ||
+    t.includes("bumble") ||
+    t.includes("badoo") ||
+    t.includes("instagram") ||
+    t.includes("facebook") ||
+    t.includes("tiktok") ||
+    t.includes("perfil") ||
+    t.includes("app de citas") ||
+    t.includes("red social");
+
+  const isAiImageAnalysis =
+    t.includes("ia") ||
+    t.includes("inteligencia artificial") ||
+    t.includes("generada por ia") ||
+    t.includes("generado por ia") ||
+    t.includes("imagen generada") ||
+    t.includes("foto generada") ||
+    t.includes("edición fuerte") ||
+    t.includes("edicion fuerte") ||
+    t.includes("manipulada") ||
+    t.includes("manipulado") ||
+    t.includes("deepfake");
+
+  const hasReusedImageSignal =
+    t.includes("aparece reutilizada") ||
+    t.includes("aparece reutilizado") ||
+    t.includes("foto reutilizada") ||
+    t.includes("imagen reutilizada") ||
+    t.includes("aparece en varias fuentes") ||
+    t.includes("varias fuentes en la web") ||
+    t.includes("varias fuentes distintas") ||
+    t.includes("coincidencias completas") ||
+    t.includes("foto reciclada") ||
+    t.includes("imagen reciclada") ||
+    t.includes("foto robada") ||
+    t.includes("imagen robada") ||
+    t.includes("no parece una foto única") ||
+    t.includes("no parece una foto unica") ||
+    t.includes("no parece una foto original") ||
+    t.includes("no es una foto original") ||
+    t.includes("procedencia dudosa");
+
+  const hasMoneyCryptoOrRealDanger =
+    t.includes("pide dinero") ||
+    t.includes("pedir dinero") ||
+    t.includes("enviar dinero") ||
+    t.includes("envíes dinero") ||
+    t.includes("envies dinero") ||
+    t.includes("transferencia") ||
+    t.includes("bizum") ||
+    t.includes("tarjeta bancaria") ||
+    t.includes("código") ||
+    t.includes("codigo") ||
+    t.includes("otp") ||
+    t.includes("documento") ||
+    t.includes("dni") ||
+    t.includes("pasaporte") ||
+    t.includes("cripto") ||
+    t.includes("crypto") ||
+    t.includes("bitcoin") ||
+    t.includes("trading") ||
+    t.includes("inversión") ||
+    t.includes("inversion") ||
+    t.includes("fotos íntimas") ||
+    t.includes("fotos intimas") ||
+    t.includes("sextorsión") ||
+    t.includes("sextorsion") ||
+    t.includes("amenaza") ||
+    t.includes("chantaje") ||
+    t.includes("presión fuerte") ||
+    t.includes("presion fuerte") ||
+    t.includes("urgencia sospechosa");
+
+  const hasClearAiFakeConclusion =
+    isAiImageAnalysis &&
+    (
+      t.includes("no parece una foto real") ||
+      t.includes("no parece una imagen real") ||
+      t.includes("no la daría por una foto real") ||
+      t.includes("no la daria por una foto real") ||
+      t.includes("no la daría por una foto real sin más") ||
+      t.includes("no la daria por una foto real sin mas") ||
+      t.includes("hay varias anomalías") ||
+      t.includes("hay varias anomalias") ||
+      t.includes("anomalías físicas") ||
+      t.includes("anomalias fisicas") ||
+      t.includes("generada o manipulada por ia") ||
+      t.includes("generado o manipulado por ia") ||
+      t.includes("generada o editada con ia") ||
+      t.includes("generado o editado con ia") ||
+      t.includes("sugieren que esta imagen está generada por ia") ||
+      t.includes("sugieren que esta imagen esta generada por ia") ||
+      t.includes("sugieren que es generada o manipulada por ia") ||
+      t.includes("imagen está generada por ia") ||
+      t.includes("imagen esta generada por ia") ||
+      t.includes("señales compatibles con ia") ||
+      t.includes("senales compatibles con ia") ||
+      t.includes("señales claras de ia") ||
+      t.includes("senales claras de ia") ||
+      t.includes("postura físicamente improbable") ||
+      t.includes("postura fisicamente improbable") ||
+      t.includes("postura físicamente imposible") ||
+      t.includes("postura fisicamente imposible") ||
+      t.includes("postura antinatural") ||
+      t.includes("proporciones inusuales") ||
+      t.includes("extremidades deformes") ||
+      t.includes("brazos y piernas deformes") ||
+      t.includes("piernas en vez de brazos") ||
+      t.includes("cabeza doblada") ||
+      t.includes("pies deformes") ||
+      t.includes("manos deformes") ||
+      t.includes("calzado deformado") ||
+      t.includes("zapatillas deformadas") ||
+      t.includes("suelas imposibles") ||
+      t.includes("apoyo poco realista") ||
+      t.includes("no transmite un contacto real") ||
+      t.includes("mal apoyado") ||
+      t.includes("flotando") ||
+      t.includes("sombras incoherentes") ||
+      t.includes("sombra no corresponde") ||
+      t.includes("contacto con el suelo no parece realista") ||
+      t.includes("detalles visuales que me hacen dudar")
+    );
+
+  if (hasClearAiFakeConclusion) {
+    return "warning";
+  }
+
+  const hasCalmDatingOpening =
+    isDatingOrSocialProfile &&
+    (
+      t.includes("en principio, no se detectan señales claras") ||
+      t.includes("en principio, no se detectan senales claras") ||
+      t.includes("en principio, no veo indicios claros") ||
+      t.includes("no hay banderas rojas claras") ||
+      t.includes("no se detectan señales claras") ||
+      t.includes("no se detectan senales claras") ||
+      t.includes("no hay señales claras de riesgo") ||
+      t.includes("no hay senales claras de riesgo") ||
+      t.includes("no hay señales claras por las que preocuparse") ||
+      t.includes("no hay senales claras por las que preocuparse") ||
+      t.includes("no veo indicios claros de que este perfil sea peligroso") ||
+      t.includes("no veo indicios claros de que este perfil de tinder sea peligroso") ||
+      t.includes("no veo señales típicas de perfil falso") ||
+      t.includes("no veo senales tipicas de perfil falso")
+    );
+
+  const hasVerifiedDatingSignal =
+    isDatingOrSocialProfile &&
+    (
+      t.includes("perfil está verificado") ||
+      t.includes("perfil esta verificado") ||
+      t.includes("perfil verificado") ||
+      t.includes("foto está verificada") ||
+      t.includes("foto esta verificada") ||
+      t.includes("foto verificada") ||
+      t.includes("verificación visible") ||
+      t.includes("verificacion visible") ||
+      t.includes("la foto está verificada") ||
+      t.includes("la foto esta verificada")
+    );
+
+  const hasDatingHardNegative =
+    hasMoneyCryptoOrRealDanger ||
+    hasReusedImageSignal ||
+    t.includes("perfil falso") ||
+    t.includes("catfish") ||
+    t.includes("catfishing") ||
+    t.includes("foto robada") ||
+    t.includes("imagen robada") ||
+    t.includes("aparece reutilizada") ||
+    t.includes("aparece en varias fuentes") ||
+    t.includes("precaución alta") ||
+    t.includes("precaucion alta") ||
+    t.includes("bastante precaución") ||
+    t.includes("bastante precaucion");
+
+  // ✅ Caso importante:
+  // Perfil Tinder/Bumble/Badoo/Instagram normal o verificado, sin señales fuertes:
+  // verde aunque Vonu recomiende prudencia normal.
+  if (
+    isDatingOrSocialProfile &&
+    hasCalmDatingOpening &&
+    !hasDatingHardNegative
+  ) {
+    return "safe";
+  }
+
+  if (
+    isDatingOrSocialProfile &&
+    hasVerifiedDatingSignal &&
+    !hasDatingHardNegative
+  ) {
+    return "safe";
+  }
+
+  // ✅ Foto reutilizada: naranja.
+  // No la subimos a rojo solo por reutilización.
+  if (hasReusedImageSignal) {
+    return "warning";
+  }
+
+  const hasLowRiskNormalImageTone =
+    (
+      t.includes("parece una selfie natural") ||
+      t.includes("parece una foto natural") ||
+      t.includes("parece una imagen natural") ||
+      t.includes("parece una foto real") ||
+      t.includes("parece una selfie real") ||
+      t.includes("tomada al aire libre") ||
+      t.includes("sin señales evidentes de manipulación") ||
+      t.includes("sin senales evidentes de manipulacion") ||
+      t.includes("sin señales claras de manipulación") ||
+      t.includes("sin senales claras de manipulacion") ||
+      t.includes("sin señales evidentes de edición fuerte") ||
+      t.includes("sin senales evidentes de edicion fuerte") ||
+      t.includes("sin anomalías visibles") ||
+      t.includes("sin anomalias visibles") ||
+      t.includes("no hay anomalías visibles") ||
+      t.includes("no hay anomalias visibles") ||
+      t.includes("no muestra señales claras de edición") ||
+      t.includes("no muestra senales claras de edicion") ||
+      t.includes("no parece generada por ia") ||
+      t.includes("no parece generado por ia") ||
+      t.includes("no parece ia pura")
+    ) &&
+    !hasReusedImageSignal &&
+    !hasMoneyCryptoOrRealDanger &&
+    !hasClearAiFakeConclusion &&
+    !t.includes("perfil falso") &&
+    !t.includes("catfish") &&
+    !t.includes("estafa");
+
+  if (hasLowRiskNormalImageTone) {
+    return "safe";
+  }
+
+  const dangerSignals = [
+    "riesgo crítico",
+    "riesgo critico",
+    "riesgo muy alto",
+    "peligro muy alto",
+    "probabilidad muy alta",
+    "estafa confirmada",
+    "fraude confirmado",
+    "phishing confirmado",
+    "smishing confirmado",
+    "alerta máxima",
+    "alerta maxima",
+    "no pulses",
+    "no abras el enlace",
+    "no pagues",
+    "no envíes dinero",
+    "no envies dinero",
+    "no compartas códigos",
+    "no compartas codigos",
+    "malware",
+    "relacionado con malware",
+    "asociado a malware",
+    "amenaza conocida",
+    "no lo abras",
+    "no lo descargues",
+    "no lo ejecutes",
+    "no abras ni descargues",
+    "podría infectar",
+    "podria infectar",
+    "robar información",
+    "robar informacion",
+    "script malicioso",
+    "archivo .sh",
+    "ip directa",
+    "vishing confirmado",
+"robo de cuenta bancaria",
+"autorizar operaciones",
+"autorizar una operación",
+"autorizar una operacion",
+  ];
+
+  if (dangerSignals.some((s) => t.includes(s))) {
+    return "danger";
+  }
+
+  const highSignals = [
+    "riesgo alto",
+    "alto riesgo",
+    "intento de estafa",
+    "huele a intento de estafa",
+    "muy sospechoso",
+    "parece phishing",
+    "parece smishing",
+    "parece una estafa",
+    "huele a estafa",
+    "yo no pagaría",
+    "yo no pagaria",
+    "yo no pulsaría",
+    "yo no pulsaria",
+    "señales de fraude",
+    "senales de fraude",
+    "señales claras de riesgo",
+    "senales claras de riesgo",
+    "riesgo medio-alto",
+    "precaución media-alta",
+    "precaucion media-alta",
+    "puede ser abusivo",
+    "puede ser abusiva",
+    "puede ser reclamable",
+    "cláusula abusiva",
+    "clausula abusiva",
+    "no firmaría",
+    "no firmaria",
+    "no firmes",
+    "no pagaría",
+    "no pagaria",
+    "no pagues nada extra",
+    "puede afectar a dinero",
+    "obligación contractual",
+    "obligacion contractual",
+    "penalización económica",
+    "penalizacion economica",
+    "comprobación de seguridad",
+    "comprobacion de seguridad",
+    "enlace malicioso",
+    "script para sistemas tipo linux",
+    "puerto raro",
+    "vishing",
+"phishing por llamada",
+"phishing por voz",
+"llamada falsa",
+"código sms",
+"codigo sms",
+"código de verificación",
+"codigo de verificacion",
+"otp",
+"intento de fraude",
+"señales claras de intento de fraude",
+"senales claras de intento de fraude",
+"no des ningún código",
+"no des ningun codigo",
+"no dar ningún código",
+"no dar ningun codigo",
+"no compartas el código",
+"no compartas el codigo",
+"supuesto banco",
+"sacarte del canal oficial",
+"seguir por whatsapp",
+"continuar por whatsapp",
+  ];
+
+  if (highSignals.some((s) => t.includes(s))) {
+    return "high";
+  }
+
+  if (
+    isAiImageAnalysis &&
+    (
+      t.includes("edición fuerte") ||
+      t.includes("edicion fuerte") ||
+      t.includes("retoque digital") ||
+      t.includes("retocada") ||
+      t.includes("retocado") ||
+      t.includes("probabilidad de edición") ||
+      t.includes("probabilidad de edicion") ||
+      t.includes("podría estar editada") ||
+      t.includes("podria estar editada") ||
+      t.includes("podría ser ia") ||
+      t.includes("podria ser ia") ||
+      t.includes("podría estar manipulada") ||
+      t.includes("podria estar manipulada") ||
+      t.includes("duda razonable") ||
+      t.includes("demasiado perfecta") ||
+      t.includes("demasiado pulida") ||
+      t.includes("no puedo confirmarlo") ||
+      t.includes("no se puede confirmar") ||
+      t.includes("imagen sola no permite")
+    )
+  ) {
+    return "warning";
+  }
+
+  const warningSignals = [
+    "riesgo medio",
+    "precaución",
+    "precaucion",
+    "cuidado",
+    "no concluyente",
+    "no puedo confirmarlo",
+    "conviene revisar",
+    "revisaría",
+    "revisaria",
+    "me haría comprobar",
+    "me haria comprobar",
+    "antes de seguir",
+    "verifica",
+    "compruébalo",
+    "compruebalo",
+    "merece revisarse",
+    "merece mirarlo",
+    "duda razonable",
+    "confianza media",
+    "confianza media-baja",
+    "no se puede asegurar",
+    "no se puede confirmar",
+    "no significa que sea scam",
+    "posible indicio",
+    "no verificado",
+    "no veo verificación",
+    "no aparece verificación",
+    "no aparece verificado",
+    "no se ve verificación",
+    "perfil no verificado",
+    "guarda copia",
+    "guarda pruebas",
+    "pídelo por escrito",
+    "pidelo por escrito",
+  ];
+
+  if (warningSignals.some((s) => t.includes(s))) {
+    return "warning";
+  }
+
+  const safeSignals = [
+    "riesgo bajo",
+    "bajo riesgo",
+    "probabilidad baja",
+    "probabilidad estimada baja",
+    "pinta bien",
+    "parece fiable",
+    "parece seguro",
+    "parece segura",
+    "parece legítima",
+    "parece legitima",
+    "parece legítimo",
+    "parece legitimo",
+    "parece oficial",
+    "web oficial",
+    "dominio oficial",
+    "dominio reconocido",
+    "marca conocida",
+    "puedes usarla con confianza",
+    "puedes usarlo con confianza",
+    "puedes usarla con tranquilidad",
+    "puedes usarlo con tranquilidad",
+    "tranquilidad razonable",
+    "confianza razonable",
+    "no aparece marcada",
+    "no aparece marcado",
+    "no aparece marcada en esta primera revisión",
+    "no aparece marcado en esta primera revisión",
+    "no aparece relacionada con malware",
+    "no aparece relacionado con malware",
+    "no aparece como peligrosa",
+    "no aparece como peligroso",
+    "no parece una estafa",
+    "no parece phishing",
+    "no parece sospechoso",
+    "es un buen indicio",
+  ];
+
+  if (safeSignals.some((s) => t.includes(s))) {
+    return "safe";
+  }
+
+  return null;
+}
+
+function inferRiskStatusFromUserText(text: string): "safe" | "warning" | "high" | "danger" | null {
+  const t = String(text ?? "").toLowerCase();
+
+  if (!t.trim()) return null;
+
+  if (looksLikeNeutralWebsiteCheckFromUserText(t)) {
+    return null;
+  }
+
+  const veryHighRisk = [
+    "sms",
+    "correos",
+    "seur",
+    "dhl",
+    "aduanas",
+    "pagar",
+    "1,99",
+    "1.99",
+    "enlace",
+    "link",
+    "url",
+    "banco",
+    "bizum",
+    "tarjeta",
+    "código",
+    "codigo",
+    "whatsapp",
+    "telegram",
+    "cripto",
+    "crypto",
+    "bitcoin",
+    "trading",
+    "inversión",
+    "inversion",
+    "tinder",
+    "app de citas",
+    "instagram",
+    "oportunidad única",
+    "oportunidad unica",
+    "urgente",
+        "contrato",
+    "cláusula",
+    "clausula",
+    "abusiva",
+    "abusivo",
+    "alquiler",
+    "arrendamiento",
+    "fianza",
+    "permanencia",
+    "penalización",
+    "penalizacion",
+    "pagar un año",
+    "pagar todo el año",
+    "factura",
+    "recibo",
+    "cobro",
+    "me han cobrado",
+    "servicio no contratado",
+    "suscripción",
+    "suscripcion",
+    "darme de baja",
+    "cancelar",
+    "garantía",
+    "garantia",
+    "devolución",
+    "devolucion",
+  ];
+
+  const score = veryHighRisk.reduce((acc, word) => acc + (t.includes(word) ? 1 : 0), 0);
+
+  if (score >= 4) return "high";
+  if (score >= 2) return "warning";
+
+  return null;
+}
+
+function looksLikeNeutralIdentityLookupFromUserText(text: string): boolean {
+  const t = String(text ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  if (!t.trim()) return false;
+
+  const asksIdentity =
+    t.includes("quien es") ||
+    t.includes("quien era") ||
+    t.includes("como se llama") ||
+    t.includes("sabes quien") ||
+    t.includes("sabes quien es") ||
+    t.includes("cual es su nombre") ||
+    t.includes("cual es el nombre") ||
+    t.includes("identificar") ||
+    t.includes("identificame") ||
+    t.includes("nombre de esta persona") ||
+    t.includes("nombre de la chica") ||
+    t.includes("nombre de este chico");
+
+  const looksLikePersonContext =
+    t.includes("chica") ||
+    t.includes("chico") ||
+    t.includes("mujer") ||
+    t.includes("hombre") ||
+    t.includes("persona") ||
+    t.includes("famosa") ||
+    t.includes("famoso") ||
+    t.includes("actriz") ||
+    t.includes("actor") ||
+    t.includes("cantante") ||
+    t.includes("modelo") ||
+    t.includes("influencer") ||
+    t.includes("tiktoker") ||
+    t.includes("instagram") ||
+    t.includes("redes") ||
+    t.includes("redes sociales") ||
+    t.includes("estrella porno") ||
+    t.includes("porno");
+
+  const hasRealRiskContext =
+    t.includes("estafa") ||
+    t.includes("estaf") ||
+    t.includes("scam") ||
+    t.includes("fraude") ||
+    t.includes("perfil falso") ||
+    t.includes("fake") ||
+    t.includes("catfish") ||
+    t.includes("catfishing") ||
+    t.includes("me pide dinero") ||
+    t.includes("dinero") ||
+    t.includes("inversion") ||
+    t.includes("cripto") ||
+    t.includes("bitcoin") ||
+    t.includes("enlace") ||
+    t.includes("link") ||
+    t.includes("whatsapp") ||
+    t.includes("telegram") ||
+    t.includes("amenaza") ||
+    t.includes("chantaje") ||
+    t.includes("sextorsion") ||
+    t.includes("extorsion") ||
+    t.includes("menor") ||
+    t.includes("grooming") ||
+    t.includes("suplantacion") ||
+    t.includes("ia") ||
+    t.includes("generada por ia") ||
+    t.includes("manipulada") ||
+    t.includes("foto robada") ||
+    t.includes("foto reutilizada");
+
+  return asksIdentity && looksLikePersonContext && !hasRealRiskContext;
 }
 
 function initialAssistantMessage(): Message {
@@ -239,11 +1571,317 @@ function makeTitleFromText(text: string) {
   return t.length > 34 ? t.slice(0, 34) + "…" : t;
 }
 
+function makeSmartThreadTitle(text: string) {
+  let t = String(text ?? "")
+    .trim()
+    .replace(/\s+/g, " ");
+
+  if (!t) return "Nueva consulta";
+
+  // Limpieza suave para que no empiece con frases demasiado genéricas.
+  t = t
+    .replace(/^hola[,!\s]*/i, "")
+    .replace(/^buenas[,!\s]*/i, "")
+    .replace(/^oye[,!\s]*/i, "")
+    .replace(/^vale[,!\s]*/i, "")
+    .replace(/^puedes\s+/i, "")
+    .replace(/^me puedes\s+/i, "")
+    .replace(/^podrías\s+/i, "")
+    .replace(/^podrias\s+/i, "")
+    .replace(/^quiero\s+/i, "")
+    .replace(/^necesito\s+/i, "")
+    .trim();
+
+  if (!t) return makeTitleFromText(text);
+
+  // Quitar dos puntos finales típicos de prompts:
+  t = t.replace(/[:：]\s*$/g, "").trim();
+
+  // Primera letra en mayúscula si procede.
+  t = t.charAt(0).toUpperCase() + t.slice(1);
+
+  return t.length > 44 ? t.slice(0, 44).trim() + "…" : t;
+}
+
+function shouldAutoTitleThread(title: string) {
+  const t = String(title ?? "").trim().toLowerCase();
+
+  return (
+    !t ||
+    t === "nueva consulta" ||
+    t === "consulta" ||
+    t === "nuevo chat" ||
+    t === "chat nuevo"
+  );
+}
+
 const STORAGE_KEY = "vonu_threads_v2";
+const STORAGE_BACKUP_KEY = "vonu_threads_v2_backup";
+const STORAGE_LAST_GOOD_KEY = "vonu_threads_v2_last_good";
+const CHECKOUT_RETURN_THREAD_KEY = "vonu_checkout_return_thread_id_v1";
 const HOME_URL = "https://vonuai.com";
+
+const MAX_STORED_THREADS = 24;
+const MAX_STORED_MESSAGES_PER_THREAD = 80;
+
+function stripHeavyMessageForStorage(message: Message): Message {
+  const clean: Message = { ...message };
+
+  // Evitamos guardar imágenes grandes en base64 dentro de localStorage.
+  // La imagen completa se usa para el análisis en el momento, pero no debe romper el historial.
+  if (typeof clean.image === "string" && clean.image.startsWith("data:")) {
+    clean.image = undefined;
+  }
+
+  // La miniatura sí se guarda porque es ligera y mantiene el contexto visual del chat.
+  if (
+    typeof clean.imageThumb === "string" &&
+    clean.imageThumb.startsWith("data:") &&
+    clean.imageThumb.length > 220_000
+  ) {
+    clean.imageThumb = undefined;
+  }
+
+  // La pizarra/imagen de tutor también puede pesar mucho.
+  if (typeof clean.boardImageB64 === "string" && clean.boardImageB64.startsWith("data:")) {
+    clean.boardImageB64 = null;
+    clean.boardImagePlacement = null;
+  }
+
+  return clean;
+}
+
+function sanitizeThreadsForStorage(threads: ChatThread[]): ChatThread[] {
+  return threads
+    .slice(0, MAX_STORED_THREADS)
+    .map((thread) => ({
+      ...thread,
+      messages: (thread.messages ?? [])
+        .slice(-MAX_STORED_MESSAGES_PER_THREAD)
+        .map(stripHeavyMessageForStorage),
+    }));
+}
+
+function looksLikeValidStoredThreads(value: unknown): value is ChatThread[] {
+  if (!Array.isArray(value)) return false;
+  if (!value.length) return false;
+
+  return value.some((thread: any) => {
+    if (!thread || typeof thread.id !== "string") return false;
+    if (!Array.isArray(thread.messages)) return false;
+
+    return thread.messages.some((message: any) => {
+      return (
+        message &&
+        (message.role === "user" || message.role === "assistant") &&
+        (
+          typeof message.text === "string" ||
+          typeof message.imageThumb === "string"
+        )
+      );
+    });
+  });
+}
+
+function readStoredThreadsFromLocalStorage() {
+  if (typeof window === "undefined") return null;
+
+  const keys = [STORAGE_KEY, STORAGE_LAST_GOOD_KEY, STORAGE_BACKUP_KEY];
+
+  for (const key of keys) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) continue;
+
+      const parsed = JSON.parse(raw);
+
+      if (looksLikeValidStoredThreads(parsed)) {
+        return parsed;
+      }
+    } catch {
+      // probamos la siguiente copia
+    }
+  }
+
+  return null;
+}
+
+function normalizeRemoteThreadForClient(raw: any): ChatThread | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const id =
+    typeof raw.id === "string" && raw.id.trim()
+      ? raw.id.trim()
+      : null;
+
+  if (!id) return null;
+
+  const rawMessages = Array.isArray(raw.messages) ? raw.messages : [];
+
+  const messages: Message[] = rawMessages
+    .map((m: any) => {
+      const role =
+        m?.role === "user" || m?.role === "assistant"
+          ? m.role
+          : null;
+
+      if (!role) return null;
+
+      const text =
+        typeof m?.text === "string"
+          ? m.text
+          : typeof m?.content === "string"
+            ? m.content
+            : "";
+
+      const imageThumb =
+        typeof m?.imageThumb === "string" && m.imageThumb.startsWith("data:image")
+          ? m.imageThumb
+          : undefined;
+
+      if (!text.trim() && !imageThumb) return null;
+
+      const msg: Message = {
+        id:
+          typeof m?.id === "string" && m.id.trim()
+            ? m.id.trim()
+            : crypto.randomUUID(),
+        role,
+        text,
+        imageThumb,
+        streaming: false,
+        pizarra: typeof m?.pizarra === "string" ? m.pizarra : null,
+        boardImageB64: null,
+        boardImagePlacement: null,
+      };
+
+      if (typeof m?.revealMs === "number" && Number.isFinite(m.revealMs)) {
+        msg.revealMs = m.revealMs;
+      }
+
+      return msg;
+    })
+    .filter(Boolean) as Message[];
+
+  if (!messages.length) return null;
+
+  const rawTitle =
+    typeof raw.title === "string" && raw.title.trim()
+      ? raw.title.trim()
+      : "Nueva consulta";
+
+  const firstUserText =
+    messages.find((m) => m.role === "user" && typeof m.text === "string" && m.text.trim())
+      ?.text ?? "";
+
+  const title =
+    shouldAutoTitleThread(rawTitle) && firstUserText.trim()
+      ? makeSmartThreadTitle(firstUserText)
+      : rawTitle;
+
+  const updatedAt =
+    typeof raw.updatedAt === "number" && Number.isFinite(raw.updatedAt)
+      ? raw.updatedAt
+      : Date.now();
+
+  const mode: ThreadMode = raw.mode === "tutor" ? "tutor" : "chat";
+
+  const level =
+    raw?.tutorProfile?.level === "kid" ||
+    raw?.tutorProfile?.level === "teen" ||
+    raw?.tutorProfile?.level === "adult"
+      ? raw.tutorProfile.level
+      : "adult";
+
+  return {
+    id,
+    title,
+    updatedAt,
+    mode,
+    tutorProfile: { level },
+    messages,
+  };
+}
+
+function pickBetterThread(localThread: ChatThread, cloudThread: ChatThread) {
+  const localCount = localThread.messages?.length ?? 0;
+  const cloudCount = cloudThread.messages?.length ?? 0;
+
+  // Si uno tiene más mensajes, suele ser el más completo.
+  if (cloudCount > localCount) return cloudThread;
+  if (localCount > cloudCount) return localThread;
+
+  const localTitleIsGeneric = shouldAutoTitleThread(localThread.title);
+  const cloudTitleIsGeneric = shouldAutoTitleThread(cloudThread.title);
+
+  // Si el remoto tiene buen título y local sigue genérico, gana remoto.
+  if (localTitleIsGeneric && !cloudTitleIsGeneric) return cloudThread;
+
+  // Si local tiene buen título y remoto sigue genérico, gana local.
+  if (!localTitleIsGeneric && cloudTitleIsGeneric) return localThread;
+
+  // Si tienen lo mismo, gana el más reciente.
+  return cloudThread.updatedAt > localThread.updatedAt
+    ? cloudThread
+    : localThread;
+}
+
+function mergeLocalAndCloudThreads(
+  localThreads: ChatThread[],
+  cloudThreads: ChatThread[]
+) {
+  const byId = new Map<string, ChatThread>();
+
+  for (const thread of localThreads) {
+    if (!thread?.id) continue;
+    byId.set(thread.id, thread);
+  }
+
+  for (const cloudThread of cloudThreads) {
+    if (!cloudThread?.id) continue;
+
+    const localThread = byId.get(cloudThread.id);
+
+    if (!localThread) {
+      byId.set(cloudThread.id, cloudThread);
+      continue;
+    }
+
+    byId.set(
+      cloudThread.id,
+      pickBetterThread(localThread, cloudThread)
+    );
+  }
+
+  return Array.from(byId.values())
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, MAX_STORED_THREADS);
+}
 
 // ✅ regla: tras 1 mensaje, pedir login/pago
 const GUEST_MESSAGE_LIMIT = 1;
+
+const GUEST_FREE_MESSAGE_USED_KEY = "vonu_guest_free_message_used_v1";
+
+function hasGuestFreeMessageBeenUsed() {
+  if (typeof window === "undefined") return false;
+
+  try {
+    return window.localStorage.getItem(GUEST_FREE_MESSAGE_USED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markGuestFreeMessageAsUsed() {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(GUEST_FREE_MESSAGE_USED_KEY, "1");
+  } catch {
+    // No rompemos el envío si localStorage falla.
+  }
+}
 
 function isDesktopPointer() {
   if (typeof window === "undefined") return true;
@@ -281,8 +1919,152 @@ function Fraction({ a, b }: { a: string; b: string }) {
   );
 }
 
-function renderTextWithFractions(text: string) {
+function normalizeRepeatedVariableText(text: string) {
+  let s = String(text ?? "");
+
+  // Variables de varias letras que a veces llegan repetidas:
+  // VFVFVFVF -> VF
+  // VPVPVPVP -> VP
+  // VAVAVA -> VA
+  // PVPVPV -> PV
+  const multiLetterVariables = ["VA", "VF", "VP", "PV", "CF", "FV"];
+
+  for (const variable of multiLetterVariables) {
+    const re = new RegExp(`\\b(?:${variable}){2,}\\b`, "gi");
+
+    s = s.replace(re, (match) => {
+      return match.slice(0, variable.length);
+    });
+  }
+
+  // Variables de una sola letra repetidas:
+  // iii -> i
+  // nnn -> n
+  // CCC -> C
+  // RRR -> R
+  s = s.replace(/\b([A-Za-z])\1{1,}\b/g, "$1");
+
+  return s;
+}
+
+function getVonuCopyBlockLabel(kind: string) {
+  const k = String(kind ?? "").toLowerCase();
+
+  if (k === "email" || k === "correo") return "Email para copiar";
+  if (k === "mensaje" || k === "whatsapp" || k === "sms") return "Mensaje para copiar";
+  if (k === "carta") return "Carta para copiar";
+  if (k === "reclamacion" || k === "reclamación") return "Reclamación para copiar";
+  if (k === "codigo" || k === "code") return "Código";
+  if (k === "texto") return "Texto para copiar";
+
+  return "Texto para copiar";
+}
+
+function VonuCopyBlock({ kind, text }: { kind: string; text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const label = getVonuCopyBlockLabel(kind);
+  const cleanText = String(text ?? "").replace(/\n+$/g, "");
+
+  async function copyBlock() {
+    try {
+      await navigator.clipboard.writeText(cleanText);
+      setCopied(true);
+
+      window.setTimeout(() => {
+        setCopied(false);
+      }, 1200);
+    } catch (err) {
+      console.error("No se pudo copiar el bloque:", err);
+    }
+  }
+
+  return (
+    <div
+  className="not-prose my-4 mx-px box-border w-[calc(100%-2px)] min-w-0 max-w-full overflow-hidden rounded-[22px] border border-transparent bg-[#fbfaf7] outline outline-1 -outline-offset-1 outline-zinc-200"
+  style={{ boxShadow: "none" }}
+>
+      <div className="flex items-center justify-between gap-3 border-b border-zinc-200/70 bg-white/55 px-4 py-2.5">
+        <div className="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+          {label}
+        </div>
+
+        <button
+          type="button"
+          onClick={copyBlock}
+          className={[
+            "shrink-0 rounded-full border px-3 py-1 text-[12px] font-semibold transition active:scale-95",
+            copied
+              ? "border-zinc-900 bg-zinc-900 text-white"
+              : "border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50",
+          ].join(" ")}
+        >
+          {copied ? "Copiado" : "Copiar"}
+        </button>
+      </div>
+
+      <pre
+  className="m-0 box-border w-full min-w-0 max-w-full overflow-x-hidden whitespace-pre-wrap break-words px-4 py-3.5 text-[13px] leading-[1.72] text-zinc-950 [overflow-wrap:anywhere] md:text-[13.5px]"
+        style={{
+          fontFamily:
+            'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+        }}
+      >
+        {cleanText}
+      </pre>
+    </div>
+  );
+}
+
+function renderTextWithInlineExponents(text: string, keyPrefix = "exp") {
   const s = String(text ?? "");
+  if (!s) return s;
+
+  // Convierte texto normal tipo:
+  // (1+0,08)^2  -> (1+0,08)² visualmente como <sup>2</sup>
+  // x^n         -> xⁿ visualmente como <sup>n</sup>
+  // NO toca KaTeX porque renderChildrenWithFractions ya evita entrar en elementos .katex.
+  const re = /\^(?:\{([^}\n]{1,12})\}|([A-Za-z0-9]{1,6}))/g;
+
+  const parts: ReactNode[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let count = 0;
+
+  while ((m = re.exec(s)) !== null) {
+    const start = m.index;
+    const end = re.lastIndex;
+
+    if (start > last) {
+      parts.push(s.slice(last, start));
+    }
+
+    const exp = String(m[1] ?? m[2] ?? "").trim();
+
+    parts.push(
+      <sup
+        key={`${keyPrefix}-sup-${count}`}
+        className="ml-[1px] align-super text-[0.72em] font-semibold leading-none"
+      >
+        {exp}
+      </sup>
+    );
+
+    last = end;
+    count++;
+  }
+
+  if (!parts.length) return s;
+
+  if (last < s.length) {
+    parts.push(s.slice(last));
+  }
+
+  return parts;
+}
+
+function renderTextWithFractions(text: string) {
+  const s = normalizeRepeatedVariableText(String(text ?? ""));
   if (!s) return s;
 
   // ✅ SOLO convierte fracciones matemáticas reales:
@@ -296,9 +2078,14 @@ function renderTextWithFractions(text: string) {
   // - m/s
   // - kg/m3
   // - N/m
+  //
+  // Además, si detecta algo tipo 30.000/(1+0,08), no fuerza fracción rara.
   const re = /(\([^()\n]+\)|\d+)\s*\/\s*(\([^()\n]+\)|\d+)/g;
 
-  const parts: Array<string | { a: string; b: string }> = [];
+  const parts: Array<
+    | { type: "text"; value: string }
+    | { type: "frac"; a: string; b: string }
+  > = [];
 
   let last = 0;
   let m: RegExpExecArray | null;
@@ -307,29 +2094,59 @@ function renderTextWithFractions(text: string) {
     const start = m.index;
     const end = re.lastIndex;
 
-    if (start > last) parts.push(s.slice(last, start));
+    const before = s[start - 1] ?? "";
+    const after = s[end] ?? "";
 
-    const a = String(m[1] ?? "").trim();
-    const b = String(m[2] ?? "").trim();
+    const isInsideDecimalOrThousandsNumber =
+      /[A-Za-z0-9.,]/.test(before) || /[A-Za-z0-9.,]/.test(after);
 
-    const isPureNumericOrParen =
-      (/^\d+$/.test(a) || /^\([^()\n]+\)$/.test(a)) &&
-      (/^\d+$/.test(b) || /^\([^()\n]+\)$/.test(b));
-
-    if (isPureNumericOrParen) {
-      parts.push({ a, b });
-    } else {
-      parts.push(s.slice(start, end));
+    if (isInsideDecimalOrThousandsNumber) {
+      continue;
     }
+
+    if (start > last) {
+      parts.push({ type: "text", value: s.slice(last, start) });
+    }
+
+    parts.push({
+      type: "frac",
+      a: String(m[1] ?? "").trim(),
+      b: String(m[2] ?? "").trim(),
+    });
 
     last = end;
   }
 
-  if (last < s.length) parts.push(s.slice(last));
+  if (last < s.length) {
+    parts.push({ type: "text", value: s.slice(last) });
+  }
 
-  return parts.map((p, i) => {
-    if (typeof p === "string") return <span key={i}>{p}</span>;
-    return <Fraction key={i} a={p.a} b={p.b} />;
+  if (!parts.length) {
+    return renderTextWithInlineExponents(s, "plain");
+  }
+
+  return parts.map((part, index) => {
+    if (part.type === "text") {
+      return (
+        <Fragment key={`txt-${index}`}>
+          {renderTextWithInlineExponents(part.value, `txt-${index}`)}
+        </Fragment>
+      );
+    }
+
+    return (
+      <span
+        key={`frac-${index}`}
+        className="mx-[2px] inline-flex translate-y-[0.06em] flex-col items-center align-middle text-[0.92em] leading-none"
+      >
+        <span className="border-b border-zinc-700 px-[2px] pb-[1px]">
+          {renderTextWithInlineExponents(part.a, `frac-${index}-a`)}
+        </span>
+        <span className="px-[2px] pt-[1px]">
+          {renderTextWithInlineExponents(part.b, `frac-${index}-b`)}
+        </span>
+      </span>
+    );
   });
 }
 
@@ -347,9 +2164,42 @@ function renderChildrenWithFractions(children: ReactNode): ReactNode {
       return child;
     }
 
-    // ✅ Si es un elemento React con hijos, recorremos también sus hijos
+        // ✅ Si es un elemento React con hijos, recorremos también sus hijos
     if (React.isValidElement(child)) {
       const el = child as React.ReactElement<any>;
+
+      const className =
+        typeof el.props?.className === "string" ? el.props.className : "";
+
+      // ✅ MUY IMPORTANTE:
+      // No tocar nunca el árbol interno de KaTeX.
+      // Si renderChildrenWithFractions entra dentro de KaTeX,
+      // puede duplicar variables como VA, VF, i, n -> VAVAVA, VFVFVF, iii, nnn.
+      const isKatexInternalElement =
+        className.includes("katex") ||
+        className.includes("katex-mathml") ||
+        className.includes("katex-html") ||
+        className.includes("mord") ||
+        className.includes("mop") ||
+        className.includes("mbin") ||
+        className.includes("mrel") ||
+        className.includes("mopen") ||
+        className.includes("mclose") ||
+        className.includes("mpunct") ||
+        className.includes("mfrac") ||
+        className.includes("msupsub") ||
+        className.includes("sqrt") ||
+        className.includes("root") ||
+        className.includes("vlist") ||
+        className.includes("vlist-t") ||
+        className.includes("base") ||
+        className.includes("strut") ||
+        className.includes("pstrut") ||
+        className.includes("mspace");
+
+      if (isKatexInternalElement) {
+        return child;
+      }
 
       if (!el.props?.children) return child;
 
@@ -518,7 +2368,272 @@ function normalizeMathMarkdown(text: string) {
   // Normalizar saltos
   s = s.replace(/\r\n/g, "\n");
 
-  // \[ ... \]  -> $$ ... $$
+    // Corrige fórmulas trigonométricas que llegan como LaTeX suelto en viñetas:
+  //
+  // - \cos(\theta) =
+  //   \dfrac{...}{...}
+  //
+  // pasa a:
+  //
+  // $$
+  // \cos(\theta) = \dfrac{...}{...}
+  // $$
+  const trigFunctions = "sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan";
+
+  const bareTrigTwoLineRegex = new RegExp(
+    `^\\s*(?:[-*]|[•●])\\s*(\\\\(?:${trigFunctions})[^\\n]*?=\\s*)\\n+\\s*(\\\\(?:dfrac|frac)\\{[^\\n]+\\}\\{[^\\n]+\\})\\s*$`,
+    "gim"
+  );
+
+  s = s.replace(bareTrigTwoLineRegex, (_match, left, right) => {
+    return `\n$$\n${String(left).trim()}${String(right).trim()}\n$$\n`;
+  });
+
+  // También corrige si viene todo en una sola línea:
+  // - \cos(\theta) = \dfrac{...}{...}
+  const bareTrigOneLineRegex = new RegExp(
+    `^\\s*(?:[-*]|[•●])\\s*(\\\\(?:${trigFunctions})[^\\n]*?=\\s*\\\\(?:dfrac|frac)\\{[^\\n]+\\}\\{[^\\n]+\\})\\s*$`,
+    "gim"
+  );
+
+  s = s.replace(bareTrigOneLineRegex, (_match, formula) => {
+    return `\n$$\n${String(formula).trim()}\n$$\n`;
+  });
+
+  // Convierte etiquetas matemáticas simples a texto legible.
+  // Ejemplos:
+  // VA -> VA
+  // \vec{a} -> Vector a
+  // \theta -> θ
+  // C_0 -> C_0
+  // a_x -> a_x
+  //
+  // Si detecta una fórmula real, devuelve null y NO la toca.
+  const simpleMathLabelToText = (rawLabel: string) => {
+    let label = String(rawLabel ?? "").trim();
+
+    if (!label || label.length > 60) return null;
+
+    // Si parece una fórmula real, no convertir.
+    const looksLikeRealFormula =
+      label.includes("=") ||
+      label.includes("+") ||
+      label.includes("-") ||
+      label.includes("*") ||
+      label.includes("/") ||
+      label.includes("\\frac") ||
+      label.includes("\\dfrac") ||
+      label.includes("\\sum") ||
+      label.includes("\\int") ||
+      label.includes("\\sqrt") ||
+      label.includes("\\lim");
+
+    if (looksLikeRealFormula) return null;
+
+    // Vectores
+    label = label.replace(/\\vec\s*\{\s*([A-Za-z])\s*\}/g, "Vector $1");
+    label = label.replace(/\\overrightarrow\s*\{\s*([A-Za-z])\s*\}/g, "Vector $1");
+    label = label.replace(/\\mathbf\s*\{\s*([A-Za-z])\s*\}/g, "Vector $1");
+
+    // Subíndices comunes: C_{0}, C_0, a_x...
+    label = label.replace(/([A-Za-z])_\{?([A-Za-z0-9]+)\}?/g, "$1_$2");
+
+    // Letras griegas más habituales en mates/física/estadística
+    const greek: Record<string, string> = {
+      alpha: "α",
+      beta: "β",
+      gamma: "γ",
+      delta: "δ",
+      Delta: "Δ",
+      epsilon: "ε",
+      theta: "θ",
+      lambda: "λ",
+      mu: "μ",
+      pi: "π",
+      rho: "ρ",
+      sigma: "σ",
+      Sigma: "Σ",
+      tau: "τ",
+      phi: "φ",
+      omega: "ω",
+      Omega: "Ω",
+    };
+
+    for (const [name, symbol] of Object.entries(greek)) {
+      label = label.replace(new RegExp(`\\\\${name}\\b`, "g"), symbol);
+    }
+
+    label = label
+      .replace(/\\,/g, " ")
+      .replace(/[{}]/g, "")
+      .replace(/\\/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (!label || label.length > 40) return null;
+
+    return label;
+  };
+
+  // Caso 1:
+  // • \( \vec{a} = (3, 4) \)
+  // -> • **Vector a** = (3, 4)
+  s = s.replace(
+    /^(\s*(?:[-*]|[•●])\s*)\\\(\s*([^=\n]{1,60})\s*=\s*([^\n]+?)\s*\\\)\s*$/gm,
+    (_match, prefix, rawLabel, value) => {
+      const label = simpleMathLabelToText(rawLabel);
+      if (!label) return _match;
+      return `${prefix}**${label}** = ${String(value).trim()}`;
+    }
+  );
+
+  // Caso 2:
+  // • $ \vec{a} = (3, 4) $
+  // -> • **Vector a** = (3, 4)
+  s = s.replace(
+    /^(\s*(?:[-*]|[•●])\s*)\$\s*([^=$\n]{1,60})\s*=\s*([^$\n]+?)\s*\$\s*$/gm,
+    (_match, prefix, rawLabel, value) => {
+      const label = simpleMathLabelToText(rawLabel);
+      if (!label) return _match;
+      return `${prefix}**${label}** = ${String(value).trim()}`;
+    }
+  );
+
+  // Caso 3:
+  // • \( VA \) = valor actual
+  // -> • **VA** = valor actual
+  //
+  // • \( \theta \) = ángulo
+  // -> • **θ** = ángulo
+  s = s.replace(
+    /^(\s*(?:[-*]|[•●])\s*)\\\(\s*([^\n()]{1,60})\s*\\\)\s*=/gm,
+    (_match, prefix, rawLabel) => {
+      const label = simpleMathLabelToText(rawLabel);
+      if (!label) return _match;
+      return `${prefix}**${label}** =`;
+    }
+  );
+
+  // Caso 4:
+  // • $VA$ = valor actual
+  // -> • **VA** = valor actual
+  s = s.replace(
+    /^(\s*(?:[-*]|[•●])\s*)\$\s*([^$\n]{1,60})\s*\$\s*=/gm,
+    (_match, prefix, rawLabel) => {
+      const label = simpleMathLabelToText(rawLabel);
+      if (!label) return _match;
+      return `${prefix}**${label}** =`;
+    }
+  );
+
+  // Evita duplicados cuando el modelo mezcla inline math + texto:
+  // $C$C =  -> $C$ =
+  // $i$i =  -> $i$ =
+  // $VA$VA = -> $VA$ =
+  s = s.replace(/\$([A-Za-z]{1,4}[0-9n]?)\$\s*\1(?=\s*=)/g, (_match, variable) => {
+    return `$${variable}$`;
+  });
+
+  // Corrige duplicados textuales:
+  // VAVAVA -> VA
+  // VFVFVF -> VF
+  // VPVPVP -> VP
+  // iii -> i
+  // nnn -> n
+  const collapseRepeatedVariableLabel = (rawLabel: string) => {
+    const compact = String(rawLabel ?? "")
+      .replace(/\$/g, "")
+      .replace(/\*/g, "")
+      .replace(/\s+/g, "")
+      .trim();
+
+    if (!compact) return String(rawLabel ?? "").trim();
+
+    const candidates = [
+      "VA",
+      "VF",
+      "VP",
+      "PV",
+      "CF",
+      "FV",
+      "VAN",
+      "TIR",
+      "WACC",
+      "C0",
+      "Cn",
+      "R",
+      "C",
+      "i",
+      "n",
+      "r",
+      "t",
+      "x",
+      "y",
+      "z",
+      "P",
+      "F",
+      "V",
+      "M",
+      "N",
+      "A",
+      "θ",
+      "α",
+      "β",
+      "γ",
+      "μ",
+      "σ",
+      "λ",
+    ];
+
+    for (const variable of candidates) {
+      if (compact.length <= variable.length) continue;
+      if (compact.length % variable.length !== 0) continue;
+
+      const times = compact.length / variable.length;
+      if (times < 2) continue;
+
+      const repeated = variable.repeat(times);
+
+      if (compact.toLowerCase() === repeated.toLowerCase()) {
+        return compact.slice(0, variable.length);
+      }
+    }
+
+    return String(rawLabel ?? "").trim();
+  };
+
+  s = s.replace(
+    /^(\s*[-*]\s*)((?:\$?(?:VA|VF|VP|PV|CF|FV|VAN|TIR|WACC|C0|Cn|[A-Za-z])\$?\s*){2,})(?=\s*=)/gim,
+    (_match, prefix, rawLabel) =>
+      `${prefix}${collapseRepeatedVariableLabel(rawLabel)}`
+  );
+
+  s = s.replace(
+    /^(\s*)((?:\$?(?:VA|VF|VP|PV|CF|FV|VAN|TIR|WACC|C0|Cn|[A-Za-z])\$?\s*){2,})(?=\s*=)/gim,
+    (_match, prefix, rawLabel) =>
+      `${prefix}${collapseRepeatedVariableLabel(rawLabel)}`
+  );
+
+  // Evita que definiciones cortas de variables se rompan así:
+  // - i =
+  //   tipo de interés
+  //
+  // y las deja como:
+  // - i = tipo de interés
+  s = s.replace(
+    /^(\s*(?:[-*]|[•●])\s*(?:\*\*[^*\n]{1,40}\*\*|\$[A-Za-z]{1,8}\$|[A-Za-z]{1,8})\s*=\s*)\n+\s+/gm,
+    "$1"
+  );
+
+  // Lo mismo si viene sin viñeta:
+  // i =
+  // tipo de interés
+  s = s.replace(
+    /^(\s*(?:\*\*[^*\n]{1,40}\*\*|\$[A-Za-z]{1,8}\$|[A-Za-z]{1,8})\s*=\s*)\n+\s+/gm,
+    "$1"
+  );
+
+  // \[ ... \] -> $$ ... $$
   s = s.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_match, expr) => {
     return `\n$$\n${String(expr).trim()}\n$$\n`;
   });
@@ -533,8 +2648,53 @@ function normalizeMathMarkdown(text: string) {
     return `$$${String(expr).trim()}$$`;
   });
 
-  // compactar saltos excesivos
+  // Compactar saltos excesivos
   s = s.replace(/\n{3,}/g, "\n\n");
+
+  return s.trim();
+}
+
+function normalizeBulletMarkdown(text: string) {
+  let s = String(text ?? "");
+
+    // Elimina viñetas vacías que a veces aparecen cuando una fórmula se parte mal.
+  s = s.replace(/^\s*(?:[•●]|[-*])\s*$/gm, "");
+
+  // Convierte viñetas tipo "• texto" o "● texto" a Markdown real.
+  s = s.replace(/^\s*[•●]\s+/gm, "- ");
+
+  // Convierte falsas listas indentadas a listas reales SOLO cuando hay varias líneas seguidas.
+  const lines = s.split("\n");
+  const out: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    const prev = lines[i - 1] ?? "";
+    const next = lines[i + 1] ?? "";
+
+    const isIndentedText =
+      /^\s{2,}\S/.test(line) &&
+      !/^\s{2,}[-*+]\s+/.test(line) &&
+      !/^\s{2,}\d+\.\s+/.test(line);
+
+    const hasIndentedNeighbour =
+      /^\s{2,}\S/.test(prev) || /^\s{2,}\S/.test(next);
+
+    const looksLikeHeading =
+      /^\s{2,}.{1,48}:\s*$/.test(line);
+
+    if (isIndentedText && hasIndentedNeighbour && !looksLikeHeading) {
+      out.push(line.replace(/^\s+/, "- "));
+    } else {
+      out.push(line);
+    }
+  }
+
+  s = out.join("\n");
+
+  // Asegura salto antes de listas Markdown.
+  s = s.replace(/([^\n])\n(-\s+)/g, "$1\n\n$2");
 
   return s.trim();
 }
@@ -849,9 +3009,11 @@ const [contextualFilePrompt, setContextualFilePrompt] = useState("");
 
   // ===== AUTH =====
   const [authLoading, setAuthLoading] = useState(true);
-  const [authUserEmail, setAuthUserEmail] = useState<string | null>(null);
-  const [authUserId, setAuthUserId] = useState<string | null>(null);
-  const [authUserName, setAuthUserName] = useState<string | null>(null);
+const [authUserEmail, setAuthUserEmail] = useState<string | null>(null);
+const [authUserId, setAuthUserId] = useState<string | null>(null);
+const [authUserName, setAuthUserName] = useState<string | null>(null);
+
+const authUserIdRef = useRef<string | null>(null);
 
   const [loginOpen, setLoginOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthCardMode>("signin");
@@ -873,6 +3035,11 @@ const [billing, setBilling] = useState<"monthly" | "yearly" | "topup">("monthly"
 const [plan, setPlan] = useState<"plus" | "max" | "free">("plus");
 const [payLoading, setPayLoading] = useState(false);
 const [payMsg, setPayMsg] = useState<string | null>(null);
+const [subscriptionInfo, setSubscriptionInfo] = useState<{
+  subscription_status: string | null;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+} | null>(null);
 
 // ✅ Si el usuario intenta pagar estando logout, guardamos plan + billing y tras login lanzamos checkout
 const [pendingCheckout, setPendingCheckout] = useState<{
@@ -987,9 +3154,10 @@ const [pendingCheckout, setPendingCheckout] = useState<{
       const token = data?.session?.access_token;
 
       if (!token) {
-        setIsPro(false);
-        return;
-      }
+  setIsPro(false);
+  setSubscriptionInfo(null);
+  return;
+}
 
       const res = await fetch("/api/subscription/status", {
         method: "GET",
@@ -998,9 +3166,16 @@ const [pendingCheckout, setPendingCheckout] = useState<{
       });
 
       const json = await res.json().catch(() => ({}));
-      setIsPro(!!json?.active);
+
+setIsPro(!!json?.active);
+setSubscriptionInfo({
+  subscription_status: json?.subscription_status ?? null,
+  current_period_end: json?.current_period_end ?? null,
+  cancel_at_period_end: !!json?.cancel_at_period_end,
+});
     } catch {
       setIsPro(false);
+setSubscriptionInfo(null);
     } finally {
       setProLoading(false);
     }
@@ -1013,12 +3188,15 @@ const [pendingCheckout, setPendingCheckout] = useState<{
 
     if (!token) {
       setUsageInfo(null);
-      return;
+      return null;
     }
 
-    const res = await fetch("/api/usage/status", {
+    const res = await fetch(`/api/usage/status?t=${Date.now()}`, {
       method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Cache-Control": "no-cache",
+      },
       cache: "no-store",
     });
 
@@ -1026,16 +3204,19 @@ const [pendingCheckout, setPendingCheckout] = useState<{
 
     if (!res.ok) {
       setUsageInfo(null);
-      return;
+      return null;
     }
 
     if (json?.usage) {
       setUsageInfo(json.usage);
-    } else {
-      setUsageInfo(null);
+      return json.usage;
     }
+
+    setUsageInfo(null);
+    return null;
   } catch {
     setUsageInfo(null);
+    return null;
   }
 }
 
@@ -1083,31 +3264,98 @@ const [pendingCheckout, setPendingCheckout] = useState<{
     }
   }
 
-  async function refreshAuthSession() {
-    try {
-      const { data } = await supabaseBrowser.auth.getSession();
-      const u = data?.session?.user;
+  async function ensureProfileExists(_u: any) {
+  try {
+    const { data } = await supabaseBrowser.auth.getSession();
+    const token = data?.session?.access_token;
 
-      if (!u) {
-        setAuthUserEmail(null);
-        setAuthUserId(null);
-        setAuthUserName(null);
-        return;
-      }
+    if (!token) return;
 
-      const profile = computeProfileFromUser(u);
+    const res = await fetch("/api/profile/ensure", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+      body: JSON.stringify({}),
+    });
 
-      setAuthUserEmail(profile.email);
-      setAuthUserId(profile.id);
-      setAuthUserName(profile.name);
-    } catch {
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      console.warn(
+        "[Vonu] No se pudo asegurar profile:",
+        json?.error || res.status
+      );
+    }
+  } catch (error) {
+    console.warn("[Vonu] Error asegurando profile:", error);
+  }
+}
+
+  async function refreshAuthSession(): Promise<boolean> {
+  try {
+    const { data } = await supabaseBrowser.auth.getSession();
+    const u = data?.session?.user;
+
+    if (!u) {
+      authUserIdRef.current = null;
+
       setAuthUserEmail(null);
       setAuthUserId(null);
       setAuthUserName(null);
-    } finally {
-      setAuthLoading(false);
+      setIsPro(false);
+      setSubscriptionInfo(null);
+      setUsageInfo(null);
+      setPayMsg(null);
+      setPendingCheckout(null);
+      setPlan("free");
+      setBilling("monthly");
+
+      return false;
     }
+
+    await ensureProfileExists(u);
+
+    const profile = computeProfileFromUser(u);
+
+    authUserIdRef.current = profile.id;
+
+    setAuthUserEmail(profile.email);
+    setAuthUserId(profile.id);
+    setAuthUserName(profile.name);
+
+    return true;
+  } catch {
+    authUserIdRef.current = null;
+
+    setAuthUserEmail(null);
+    setAuthUserId(null);
+    setAuthUserName(null);
+    setIsPro(false);
+    setSubscriptionInfo(null);
+    setUsageInfo(null);
+
+    return false;
+  } finally {
+    setAuthLoading(false);
   }
+}
+
+async function hydrateAuthAndAccountFromBrowserSession() {
+  const hasSession = await refreshAuthSession();
+
+  if (!hasSession) {
+    return false;
+  }
+
+  await Promise.all([
+    refreshProStatus(),
+    refreshUsageInfo(),
+  ]);
+
+  return true;
+}
 
   function decodeMaybe(x: string) {
     try {
@@ -1219,9 +3467,11 @@ const [pendingCheckout, setPendingCheckout] = useState<{
       }
 
       await persistNameIfMissing(after.session.user);
+await ensureProfileExists(after.session.user);
 
-      await refreshAuthSession();
-      await refreshProStatus();
+await refreshAuthSession();
+await refreshProStatus();
+await refreshUsageInfo();
 
       setLoginOpen(false);
       setLoginMsg(null);
@@ -1247,36 +3497,48 @@ const [pendingCheckout, setPendingCheckout] = useState<{
 
   // Cargar sesión + escuchar cambios
   useEffect(() => {
-    let unsub: (() => void) | null = null;
+  let unsub: (() => void) | null = null;
 
-    (async () => {
-      await handleOAuthReturnIfPresent();
-await refreshAuthSession();
-await refreshProStatus();
-await refreshUsageInfo();
-await refreshUsageInfo();
+  (async () => {
+    await handleOAuthReturnIfPresent();
+    await refreshAuthSession();
+    await refreshProStatus();
+    await refreshUsageInfo();
 
-      const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
+    const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
         const u = session?.user;
 
         // ✅ FIX: aseguramos que authLoading se apaga también aquí (evita estados “colgados” tras OAuth)
         setAuthLoading(false);
 
         if (!u) {
-          setAuthUserEmail(null);
-          setAuthUserId(null);
-          setAuthUserName(null);
-          setIsPro(false);
-          return;
-        }
+  authUserIdRef.current = null;
+
+  setAuthUserEmail(null);
+  setAuthUserId(null);
+  setAuthUserName(null);
+  setIsPro(false);
+  setUsageInfo(null);
+  setPayMsg(null);
+  setToastMsg(null);
+  setPendingCheckout(null);
+  setPlan("free");
+  setBilling("monthly");
+  resetVisibleHistoryForLoggedOut();
+  setSubscriptionInfo(null);
+  return;
+}
 
         await persistNameIfMissing(u);
+await ensureProfileExists(u);
 
-        const profile = computeProfileFromUser(u);
+const profile = computeProfileFromUser(u);
 
-        setAuthUserEmail(profile.email);
-        setAuthUserId(profile.id);
-        setAuthUserName(profile.name);
+authUserIdRef.current = profile.id;
+
+setAuthUserEmail(profile.email);
+setAuthUserId(profile.id);
+setAuthUserName(profile.name);
 
         setTimeout(() => {
   refreshProStatus();
@@ -1329,6 +3591,58 @@ await refreshUsageInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ✅ Sync entre pestañas: login/logout/refresh de sesión en otra pestaña
+useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  let busy = false;
+
+  const refreshAllFromAnotherTab = async () => {
+    if (busy) return;
+    busy = true;
+
+    try {
+      await refreshAuthSession();
+      await refreshProStatus();
+      await refreshUsageInfo();
+    } finally {
+      busy = false;
+    }
+  };
+
+  const onStorage = (event: StorageEvent) => {
+    const key = String(event.key ?? "");
+
+    // Supabase guarda sesión en localStorage con keys tipo sb-...-auth-token.
+    // Si cambia eso en otra pestaña, refrescamos esta.
+    const looksLikeSupabaseAuthChange =
+      !key ||
+      key.startsWith("sb-") ||
+      key.toLowerCase().includes("supabase") ||
+      key.toLowerCase().includes("auth-token");
+
+    if (!looksLikeSupabaseAuthChange) return;
+
+    window.setTimeout(() => {
+      refreshAllFromAnotherTab();
+    }, 80);
+  };
+
+  const onPageShow = () => {
+    refreshAllFromAnotherTab();
+  };
+
+  window.addEventListener("storage", onStorage);
+  window.addEventListener("pageshow", onPageShow);
+
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener("pageshow", onPageShow);
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
+
   // Refrescar pro al cambiar user
   useEffect(() => {
     if (authLoading) return;
@@ -1354,11 +3668,33 @@ await refreshUsageInfo();
 }, [authLoading, isLoggedIn, pendingCheckout]);
 
 async function startTopupCheckout(pack: "basic" | "medium" | "large") {
-  try {
-    const { data } = await supabaseBrowser.auth.getSession();
-    const token = data?.session?.access_token;
+  if (payLoading) return;
 
-    if (!token) {
+  setPayLoading(true);
+  setPayMsg(null);
+
+  try {
+    // Guardamos el hilo activo antes de salir a Stripe.
+    // Así, al volver, podemos intentar restaurarlo.
+    try {
+      const currentThreadId = activeThreadIdRef.current || activeThreadId;
+      if (currentThreadId) {
+        window.localStorage.setItem(CHECKOUT_RETURN_THREAD_KEY, currentThreadId);
+
+        const currentThread = threadsRef.current.find(
+          (thread) => thread.id === currentThreadId
+        );
+
+        if (currentThread) {
+          saveThreadToCloud(currentThread);
+        }
+      }
+    } catch {}
+
+    const accessToken = await getChatAccessTokenWithTimeout(1500);
+
+    if (!accessToken) {
+      setPayLoading(false);
       setPayMsg("Para comprar una recarga, inicia sesión.");
       openLoginModal("signin");
       return;
@@ -1368,7 +3704,7 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       cache: "no-store",
       body: JSON.stringify({ pack }),
@@ -1377,11 +3713,14 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
     const json = await res.json().catch(() => ({}));
 
     if (!res.ok || !json?.url) {
-      throw new Error(json?.error || "No se pudo iniciar la recarga.");
+      setPayLoading(false);
+      setPayMsg(json?.error || "No se pudo iniciar la recarga.");
+      return;
     }
 
     window.location.href = json.url;
   } catch (e: any) {
+    setPayLoading(false);
     setPayMsg(e?.message ?? "No se pudo iniciar la recarga.");
   }
 }
@@ -1395,15 +3734,62 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
       if (!checkout) return;
 
       if (checkout === "success") {
-        setToastMsg(`✅ Pago completado. Activando tu cuenta ${PLUS_TEXT}…`);
-        url.searchParams.delete("checkout");
-        window.history.replaceState({}, "", url.toString());
+  setToastMsg("✅ Pago completado. Actualizando tu cuenta…");
 
-        refreshProStatus().finally(() => {
-          setToastMsg(`✅ Listo. Ya tienes ${PLUS_TEXT} activo.`);
-          setTimeout(() => setToastMsg(null), 3500);
-        });
-      } else if (checkout === "cancel") {
+  setPayLoading(false);
+  setPaywallOpen(false);
+  setPayMsg(null);
+
+  url.searchParams.delete("checkout");
+  window.history.replaceState({}, "", url.toString());
+
+  const restoreCheckoutThread = () => {
+    try {
+      const returnThreadId = window.localStorage.getItem(CHECKOUT_RETURN_THREAD_KEY);
+      if (!returnThreadId) return false;
+
+      const exists = threadsRef.current.some((thread) => thread.id === returnThreadId);
+
+      if (!exists) return false;
+
+      activeThreadIdRef.current = returnThreadId;
+      setActiveThreadId(returnThreadId);
+
+      requestAnimationFrame(() => {
+        shouldStickToBottomRef.current = true;
+        pendingScrollToBottomRef.current = true;
+      });
+
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const refreshAfterCheckout = async () => {
+    restoreCheckoutThread();
+
+    await refreshProStatus();
+
+    for (let i = 0; i < 6; i += 1) {
+      await refreshUsageInfo();
+      restoreCheckoutThread();
+      await sleep(900);
+    }
+
+    restoreCheckoutThread();
+
+    try {
+      window.localStorage.removeItem(CHECKOUT_RETURN_THREAD_KEY);
+    } catch {}
+
+    setPayLoading(false);
+    setToastMsg("✅ Listo. Tu cuenta se ha actualizado.");
+    setTimeout(() => setToastMsg(null), 3500);
+  };
+
+  refreshAfterCheckout();
+} else if (checkout === "cancel") {
         setToastMsg("Pago cancelado. Puedes intentarlo cuando quieras.");
         url.searchParams.delete("checkout");
         window.history.replaceState({}, "", url.toString());
@@ -1600,12 +3986,14 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
       }
 
       setLoginOpen(false);
-      setLoginPassword("");
-      setLoginMsg(null);
+setLoginPassword("");
+setLoginMsg(null);
 
-      setTimeout(() => {
-        refreshProStatus();
-      }, 300);
+setTimeout(() => {
+  refreshAuthSession();
+  refreshProStatus();
+  refreshUsageInfo();
+}, 300);
     } catch (e: any) {
       setLoginMsg(e?.message ?? "Error iniciando sesión con contraseña.");
     } finally {
@@ -1647,14 +4035,45 @@ async function startTopupCheckout(pack: "basic" | "medium" | "large") {
   async function logout() {
   try {
     await supabaseBrowser.auth.signOut();
+    authUserIdRef.current = null;
+
+    setAuthUserEmail(null);
+    setAuthUserId(null);
+    setAuthUserName(null);
+
+    setIsPro(false);
+    setProLoading(false);
+    setSubscriptionInfo(null);
+
+    setUsageInfo(null);
+
+    setPaywallOpen(false);
+    setPayLoading(false);
+    setPayMsg(null);
+    setToastMsg(null);
+    setPendingCheckout(null);
+    setPlan("free");
+    setBilling("monthly");
+
+    setAuthLoading(false);
+
+    resetVisibleHistoryForLoggedOut();
+  } catch {
+    authUserIdRef.current = null;
     setAuthUserEmail(null);
     setAuthUserId(null);
     setAuthUserName(null);
     setIsPro(false);
-    setPaywallOpen(false);
+    setSubscriptionInfo(null);
+    setUsageInfo(null);
+    setPayMsg(null);
+    setToastMsg(null);
     setPendingCheckout(null);
-    setAuthLoading(false);
-  } catch {}
+    setPlan("free");
+    setBilling("monthly");
+
+    resetVisibleHistoryForLoggedOut();
+  }
 }
 
   // -------- Persistencia local --------
@@ -1662,19 +4081,287 @@ const [threads, setThreads] = useState<ChatThread[]>([makeNewThread()]);
 const threadsRef = useRef<ChatThread[]>([]);
 const [activeThreadId, setActiveThreadId] = useState<string>("");
 const activeThreadIdRef = useRef<string>("");
+const lastCloudSavedAssistantKeyRef = useRef<string>("");
+const cloudHistoryLoadedForUserRef = useRef<string | null>(null);
 
 useEffect(() => {
   threadsRef.current = threads;
 }, [threads]);
 
+// ✅ Seguridad: si no hay sesión, no debe quedar visible historial anterior.
+// Esto evita que el historial local aparezca después de cerrar sesión.
+useEffect(() => {
+  if (!mounted) return;
+  if (authLoading) return;
+  if (isLoggedIn) return;
+
+  resetVisibleHistoryForLoggedOut();
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted, authLoading, isLoggedIn]);
+
+useEffect(() => {
+  if (authLoading) return;
+  if (!isLoggedIn) return;
+  if (!authUserId) return;
+
+  const timer = window.setTimeout(() => {
+    loadCloudThreadsOnce();
+  }, 450);
+
+  return () => window.clearTimeout(timer);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [authLoading, isLoggedIn, authUserId]);
+
+// =======================
+// ☁️ HISTORIAL REMOTO — fase 2A
+// Guardamos solo en eventos concretos.
+// NO autosync general sobre threads.
+// =======================
+
+async function getHistoryAccessToken() {
+  try {
+    const { data } = await supabaseBrowser.auth.getSession();
+    return data?.session?.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function saveThreadToCloud(thread?: ChatThread | null) {
+  try {
+    console.log("[Vonu history] saveThreadToCloud START", {
+      hasThread: !!thread,
+      isLoggedIn,
+      threadId: thread?.id,
+      title: thread?.title,
+      messages: thread?.messages?.length,
+    });
+    if (!thread) return;
+    if (!isLoggedIn) {
+  console.log("[Vonu history] cancelado: usuario no logueado");
+  return;
+}
+
+    const safeThread = sanitizeThreadsForStorage([thread])[0];
+    if (!safeThread) return;
+
+    const hasUserMessage = safeThread.messages.some((m) => m.role === "user");
+    if (!hasUserMessage) return;
+
+    const firstUserTextForTitle =
+  safeThread.messages.find(
+    (m) => m.role === "user" && typeof m.text === "string" && m.text.trim()
+  )?.text ?? "";
+
+const threadForCloud = {
+  ...safeThread,
+  title:
+    shouldAutoTitleThread(safeThread.title) && firstUserTextForTitle.trim()
+      ? makeSmartThreadTitle(firstUserTextForTitle)
+      : safeThread.title,
+};
+
+    const token = await getHistoryAccessToken();
+    if (!token) {
+  console.log("[Vonu history] cancelado: sin token");
+  return;
+}
+
+    const res = await fetch("/api/chat-history", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+      body: JSON.stringify({
+  thread: threadForCloud,
+}),
+    });
+
+    console.log("[Vonu history] POST /api/chat-history", {
+  status: res.status,
+  ok: res.ok,
+  threadId: safeThread.id,
+  title: safeThread.title,
+  messages: safeThread.messages.length,
+});
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      console.warn("[Vonu] No se pudo guardar historial remoto:", txt);
+    }
+  } catch (error) {
+    console.warn("[Vonu] Error guardando historial remoto:", error);
+  }
+}
+
+function queueSaveThreadToCloud(threadId: string, delay = 700) {
+  if (!threadId) {
+    console.log("[Vonu history] queue cancelada: sin threadId");
+    return;
+  }
+
+  console.log("[Vonu history] queue save", {
+    threadId,
+    delay,
+  });
+
+  window.setTimeout(() => {
+    const thread = threadsRef.current.find((t) => t.id === threadId);
+
+    console.log("[Vonu history] queue fired", {
+      threadId,
+      found: !!thread,
+      title: thread?.title,
+      messages: thread?.messages?.length,
+      hasUserMessage: thread?.messages?.some((m) => m.role === "user"),
+    });
+
+    saveThreadToCloud(thread);
+  }, delay);
+}
+
+async function deleteThreadFromCloud(threadId: string) {
+  try {
+    if (!threadId) return;
+    if (!isLoggedIn) return;
+
+    const token = await getHistoryAccessToken();
+    if (!token) return;
+
+    const res = await fetch("/api/chat-history", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+      body: JSON.stringify({
+        threadId,
+      }),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      console.warn("[Vonu] No se pudo borrar historial remoto:", txt);
+    }
+  } catch (error) {
+    console.warn("[Vonu] Error borrando historial remoto:", error);
+  }
+}
+
+function resetVisibleHistoryForLoggedOut() {
+  const fresh = makeNewThread();
+
+  cloudHistoryLoadedForUserRef.current = null;
+  lastCloudSavedAssistantKeyRef.current = "";
+
+  setThreads([fresh]);
+  setActiveThreadId(fresh.id);
+  setMenuOpen(false);
+  setUiError(null);
+  setInput("");
+  setImagePreview(null);
+  setPdfPreview(null);
+
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem(STORAGE_BACKUP_KEY);
+    window.localStorage.removeItem(STORAGE_LAST_GOOD_KEY);
+  } catch {}
+
+  requestAnimationFrame(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    shouldStickToBottomRef.current = false;
+  });
+}
+
+async function loadCloudThreadsOnce() {
+  try {
+    if (!isLoggedIn) return;
+    if (!authUserId) return;
+
+    if (cloudHistoryLoadedForUserRef.current === authUserId) {
+      return;
+    }
+
+    cloudHistoryLoadedForUserRef.current = authUserId;
+
+    const token = await getHistoryAccessToken();
+
+    if (!token) {
+      cloudHistoryLoadedForUserRef.current = null;
+      return;
+    }
+
+    const res = await fetch("/api/chat-history", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
+
+    const json = await res.json().catch(() => null);
+
+    if (!res.ok || !json?.ok) {
+      console.warn("[Vonu] No se pudo cargar historial remoto:", json);
+      cloudHistoryLoadedForUserRef.current = null;
+      return;
+    }
+
+    const remoteThreads = Array.isArray(json.threads)
+      ? json.threads.map(normalizeRemoteThreadForClient).filter(Boolean) as ChatThread[]
+      : [];
+
+    if (!remoteThreads.length) return;
+
+    let nextActiveId = activeThreadIdRef.current;
+
+try {
+  const returnThreadId = window.localStorage.getItem(CHECKOUT_RETURN_THREAD_KEY);
+
+  if (returnThreadId) {
+    nextActiveId = returnThreadId;
+  }
+} catch {}
+
+    setThreads((prev) => {
+      const merged = mergeLocalAndCloudThreads(prev, remoteThreads);
+
+      if (!merged.some((t) => t.id === nextActiveId)) {
+        nextActiveId = merged[0]?.id ?? "";
+      }
+
+      return merged;
+    });
+
+    window.setTimeout(() => {
+  if (nextActiveId) {
+    activeThreadIdRef.current = nextActiveId;
+    setActiveThreadId(nextActiveId);
+  }
+}, 0);
+  } catch (error) {
+    console.warn("[Vonu] Error cargando historial remoto:", error);
+    cloudHistoryLoadedForUserRef.current = null;
+  }
+}
 
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+    if (authLoading) return;
 
-      const parsed = JSON.parse(raw) as any[];
-      if (!Array.isArray(parsed) || parsed.length === 0) return;
+    if (!isLoggedIn) {
+      resetVisibleHistoryForLoggedOut();
+      return;
+    }
+
+    try {
+      const parsed = readStoredThreadsFromLocalStorage();
+      if (!parsed) return;
 
       const clean: ChatThread[] = parsed
         .filter((t) => t && typeof t.id === "string")
@@ -1696,18 +4383,77 @@ useEffect(() => {
         }));
 
       if (clean.length) {
-        setThreads(clean);
-        setActiveThreadId(clean[0].id);
-      }
+  let nextActiveId = clean[0].id;
+
+  try {
+    const returnThreadId = window.localStorage.getItem(CHECKOUT_RETURN_THREAD_KEY);
+
+    if (returnThreadId && clean.some((t) => t.id === returnThreadId)) {
+      nextActiveId = returnThreadId;
+    }
+  } catch {}
+
+  activeThreadIdRef.current = nextActiveId;
+  setThreads(clean);
+  setActiveThreadId(nextActiveId);
+}
     } catch {}
-  }, []);
+  }, [authLoading, isLoggedIn]);
 
   useEffect(() => {
-    if (!mounted) return;
+  if (!mounted) return;
+  if (typeof window === "undefined") return;
+
+  try {
+    const safeThreads = sanitizeThreadsForStorage(threads);
+
+    // Protección: nunca sobrescribimos el historial con algo vacío o corrupto.
+    if (!looksLikeValidStoredThreads(safeThreads)) {
+      console.warn("[Vonu] Guardado cancelado: historial vacío o no válido.");
+      return;
+    }
+
+    const previousRaw = window.localStorage.getItem(STORAGE_KEY);
+
+    if (previousRaw) {
+      window.localStorage.setItem(STORAGE_BACKUP_KEY, previousRaw);
+    }
+
+    const nextRaw = JSON.stringify(safeThreads);
+
+    window.localStorage.setItem(STORAGE_KEY, nextRaw);
+    window.localStorage.setItem(STORAGE_LAST_GOOD_KEY, nextRaw);
+  } catch (error) {
+    console.warn("[Vonu] No se pudo guardar el historial completo:", error);
+
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(threads));
-    } catch {}
-  }, [threads, mounted]);
+      const ultraSafeThreads = sanitizeThreadsForStorage(threads)
+        .slice(0, 8)
+        .map((thread) => ({
+          ...thread,
+          messages: thread.messages.slice(-30),
+        }));
+
+      if (!looksLikeValidStoredThreads(ultraSafeThreads)) {
+        console.warn("[Vonu] Guardado reducido cancelado: historial no válido.");
+        return;
+      }
+
+      const previousRaw = window.localStorage.getItem(STORAGE_KEY);
+
+      if (previousRaw) {
+        window.localStorage.setItem(STORAGE_BACKUP_KEY, previousRaw);
+      }
+
+      const fallbackRaw = JSON.stringify(ultraSafeThreads);
+
+      window.localStorage.setItem(STORAGE_KEY, fallbackRaw);
+      window.localStorage.setItem(STORAGE_LAST_GOOD_KEY, fallbackRaw);
+    } catch (fallbackError) {
+      console.warn("[Vonu] No se pudo guardar ni el historial reducido:", fallbackError);
+    }
+  }
+}, [threads, mounted]);
 
 // -------- UI --------
 const [input, setInput] = useState("");
@@ -1727,6 +4473,9 @@ const [realtimeStatus, setRealtimeStatus] = useState<RealtimeVoiceStatus>("idle"
 const realtimeConnRef = useRef<RealtimeVoiceConnection | null>(null);
 const realtimeLastUserTextRef = useRef<string>("");
 const realtimeWriteBusyRef = useRef(false);
+const realtimeLimitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+const realtimeWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+const realtimeStoppedByLimitRef = useRef(false);
 const voiceWriteGuardRef = useRef(makeVoiceWriteGuard());
 const realtimeManualCloseRef = useRef(false);
 
@@ -1987,8 +4736,112 @@ function sendTextToRealtime(text: string) {
   }
 }
 
+function clearRealtimeLimitTimers() {
+  try {
+    if (realtimeLimitTimerRef.current) {
+      clearTimeout(realtimeLimitTimerRef.current);
+    }
+
+    if (realtimeWarningTimerRef.current) {
+      clearTimeout(realtimeWarningTimerRef.current);
+    }
+  } catch {}
+
+  realtimeLimitTimerRef.current = null;
+  realtimeWarningTimerRef.current = null;
+}
+
+function openVoiceTopupModal() {
+  realtimeStoppedByLimitRef.current = false;
+  realtimeManualCloseRef.current = false;
+
+  try {
+    clearRealtimeLimitTimers();
+  } catch {}
+
+  try {
+    realtimeConnRef.current?.stop();
+  } catch {}
+
+  realtimeConnRef.current = null;
+
+  try {
+    stopMic();
+  } catch {}
+
+  try {
+    stopTTS();
+  } catch {}
+
+  try {
+    clearSilenceTimer();
+  } catch {}
+
+  voiceModeRef.current = false;
+  setVoiceMode(false);
+  setRealtimeStatus("closed");
+
+  setPayLoading(false);
+
+  setPayMsg(
+    "Se han agotado tus minutos de voz. Puedes seguir usando el chat escrito, o hacer una recarga para continuar hablando con Vonu."
+  );
+
+  setBilling("topup");
+  setPlan("free");
+  setPaywallOpen(true);
+}
+
+function openMessageLimitTopupModal() {
+  setPayMsg(
+    "Has llegado al límite de mensajes de este mes. Puedes esperar a la renovación mensual o hacer una recarga para seguir usando Vonu ahora."
+  );
+
+  setBilling("topup");
+  setPlan("free");
+  setPaywallOpen(true);
+}
+
+function armRealtimeVoiceLimit(secondsLeft: number) {
+  clearRealtimeLimitTimers();
+
+  const safeSecondsLeft = Math.max(0, Math.floor(Number(secondsLeft || 0)));
+
+  if (safeSecondsLeft <= 0) {
+    realtimeStoppedByLimitRef.current = true;
+    setVoiceModeOff();
+    openVoiceTopupModal();
+    return;
+  }
+
+  // Aviso suave cuando queda menos de 1 minuto.
+  if (safeSecondsLeft > 30) {
+    realtimeWarningTimerRef.current = setTimeout(() => {
+      setMicMsg("Te queda menos de 1 minuto de voz.");
+      setTimeout(() => setMicMsg(null), 3500);
+    }, Math.max(0, (safeSecondsLeft - 30) * 1000));
+  }
+
+  // Corte automático al agotar minutos.
+  realtimeLimitTimerRef.current = setTimeout(() => {
+    realtimeStoppedByLimitRef.current = true;
+
+    setMicMsg("Se han agotado tus minutos de voz.");
+    setTimeout(() => setMicMsg(null), 2500);
+
+    setVoiceModeOff();
+
+    // Damos un pequeño margen para que se registre el consumo realtime.
+    setTimeout(async () => {
+  await refreshUsageInfo();
+  openVoiceTopupModal();
+}, 1500);
+  }, safeSecondsLeft * 1000);
+}
 
 function setVoiceModeOff() {
+  unlockChatUi("setVoiceModeOff");
+
   voiceModeRef.current = false;
   setVoiceMode(false);
   setRealtimeStatus("closed");
@@ -2011,6 +4864,10 @@ function setVoiceModeOff() {
 
 function stopConversationModeBeforeTypedSend() {
   if (!voiceModeRef.current) return;
+
+  unlockChatUi("stopConversationModeBeforeTypedSend");
+
+  realtimeManualCloseRef.current = true;
 
   realtimeManualCloseRef.current = true;
 
@@ -2045,6 +4902,8 @@ function toggleDictation() {
   }
   // ✅ Si estás en modo conversación, el dictado no se usa (evita conflicto)
   if (voiceModeRef.current) {
+        clearRealtimeLimitTimers();
+    realtimeStoppedByLimitRef.current = false;
     setMicMsg("Apaga el modo conversación para usar dictado.");
     setTimeout(() => setMicMsg(null), 2200);
     return;
@@ -2063,16 +4922,25 @@ async function toggleConversation() {
     !!navigator.mediaDevices &&
     !!navigator.mediaDevices.getUserMedia;
 
-
-
-  // ✅ SI YA ESTÁ ACTIVO, PRIMERO APAGAR SIEMPRE
+  // ✅ Si ya está activo, apagamos siempre de forma limpia.
   if (voiceModeRef.current) {
+    unlockChatUi("toggleConversationOff");
     realtimeManualCloseRef.current = true;
+    realtimeStoppedByLimitRef.current = false;
+
+    try {
+      clearRealtimeLimitTimers();
+    } catch {}
 
     try {
       realtimeConnRef.current?.stop();
     } catch {}
+
     realtimeConnRef.current = null;
+
+    try {
+      stopMic();
+    } catch {}
 
     voiceModeRef.current = false;
     setVoiceMode(false);
@@ -2087,24 +4955,75 @@ async function toggleConversation() {
     return;
   }
 
-  // ✅ A partir de aquí solo estamos intentando ENCENDERLO
+  // ✅ No logueado: no intentamos abrir Realtime.
   if (!isLoggedIn) {
+    realtimeStoppedByLimitRef.current = false;
+    realtimeManualCloseRef.current = false;
+
+    try {
+      clearRealtimeLimitTimers();
+    } catch {}
+
+    setRealtimeStatus("closed");
+    setVoiceMode(false);
+    voiceModeRef.current = false;
+    setPayLoading(false);
+
     setMicMsg("Debes iniciar sesión para usar el modo conversación.");
     setTimeout(() => setMicMsg(null), 2400);
+
     openLoginModal("signin");
     return;
   }
 
-  if (usageInfo && !["plus", "max"].includes(usageInfo.plan_id)) {
-  setMicMsg("El modo conversación por voz no está disponible en tu plan actual.");
-  setTimeout(() => setMicMsg(null), 2800);
-  handleOpenPlansCTA();
-  return;
-}
-
   if (!supportsMic) {
     setMicMsg("Tu navegador no soporta micrófono en este modo.");
     setTimeout(() => setMicMsg(null), 2400);
+    return;
+  }
+
+  // ✅ Refrescamos usage justo antes de decidir.
+  const freshUsage = await refreshUsageInfo();
+
+  const currentUsage = freshUsage ?? usageInfo;
+
+  const planId = String(currentUsage?.plan_id ?? "free");
+  const realtimeSecondsLeftBeforeStart = Math.max(
+    0,
+    Number(currentUsage?.realtime_seconds_left ?? 0)
+  );
+
+  // ✅ Logueado pero sin plan/voz disponible.
+  if (!["plus", "max"].includes(planId)) {
+    realtimeStoppedByLimitRef.current = false;
+    realtimeManualCloseRef.current = false;
+
+    setRealtimeStatus("closed");
+    setVoiceMode(false);
+    voiceModeRef.current = false;
+    setPayLoading(false);
+
+    setMicMsg("El modo conversación por voz no está disponible en tu plan actual.");
+    setTimeout(() => setMicMsg(null), 2800);
+
+    handleOpenPlansCTA();
+    return;
+  }
+
+  // ✅ Logueado con plan, pero sin minutos.
+  if (realtimeSecondsLeftBeforeStart <= 0) {
+    realtimeStoppedByLimitRef.current = false;
+    realtimeManualCloseRef.current = false;
+
+    setRealtimeStatus("closed");
+    setVoiceMode(false);
+    voiceModeRef.current = false;
+    setPayLoading(false);
+
+    setMicMsg("No quedan minutos de voz disponibles.");
+    setTimeout(() => setMicMsg(null), 2400);
+
+    openVoiceTopupModal();
     return;
   }
 
@@ -2121,6 +5040,8 @@ async function toggleConversation() {
   clearSilenceTimer();
 
   realtimeLastUserTextRef.current = "";
+  realtimeManualCloseRef.current = false;
+  realtimeStoppedByLimitRef.current = false;
 
   setMicMsg("Conectando con Vonu por voz…");
   setRealtimeStatus("connecting");
@@ -2149,20 +5070,41 @@ async function toggleConversation() {
         }
       },
 
+      onUsageTracked: async () => {
+        const latestUsage = await refreshUsageInfo();
+        const left = Number(latestUsage?.realtime_seconds_left ?? 0);
+
+        if (realtimeStoppedByLimitRef.current) {
+          realtimeStoppedByLimitRef.current = false;
+
+          if (left <= 0) {
+            openVoiceTopupModal();
+          }
+        }
+      },
+
       onError: (message) => {
         realtimeManualCloseRef.current = false;
+        realtimeStoppedByLimitRef.current = false;
+
         setMicMsg(message || "Error en el modo conversación.");
 
         console.error("[Realtime UI error]", message);
 
         try {
+          clearRealtimeLimitTimers();
+        } catch {}
+
+        try {
           realtimeConnRef.current?.stop();
         } catch {}
+
         realtimeConnRef.current = null;
 
         voiceModeRef.current = false;
         setVoiceMode(false);
         setRealtimeStatus("error");
+        setPayLoading(false);
       },
 
       onUserFinalTranscript: (text) => {
@@ -2187,20 +5129,29 @@ async function toggleConversation() {
     voiceModeRef.current = true;
     setVoiceMode(true);
     setTtsEnabled(false);
-    setMicMsg("✅ Conectando modo conversación…");
+    setMicMsg("✅ Conectado. Habla cuando quieras.");
+
+    // ✅ Corte automático según minutos reales disponibles.
+    armRealtimeVoiceLimit(realtimeSecondsLeftBeforeStart);
   } catch (e: any) {
+    try {
+      clearRealtimeLimitTimers();
+    } catch {}
+
     try {
       realtimeConnRef.current?.stop();
     } catch {}
+
     realtimeConnRef.current = null;
 
     voiceModeRef.current = false;
     setVoiceMode(false);
     setRealtimeStatus("closed");
     voiceWriteGuardRef.current.reset();
+    setPayLoading(false);
 
     setMicMsg(e?.message ?? "No se pudo iniciar el modo conversación.");
-    setTimeout(() => setMicMsg(null), 3200);
+    setTimeout(() => setMicMsg(null), 2800);
   }
 }
 
@@ -2222,6 +5173,66 @@ function fileToDataUrl(file: File): Promise<string> {
     reader.onload = () => resolve(String(reader.result || ""));
     reader.onerror = reject;
     reader.readAsDataURL(file);
+  });
+}
+
+function createImageThumbnailFromDataUrl(
+  dataUrl: string,
+  options?: { maxSide?: number; quality?: number }
+): Promise<string | null> {
+  const maxSide = options?.maxSide ?? 520;
+  const quality = options?.quality ?? 0.72;
+
+  return new Promise((resolve) => {
+    try {
+      if (!dataUrl || !dataUrl.startsWith("data:image")) {
+        resolve(null);
+        return;
+      }
+
+      const img = new Image();
+
+      img.onload = () => {
+        try {
+          const width = img.naturalWidth || img.width;
+          const height = img.naturalHeight || img.height;
+
+          if (!width || !height) {
+            resolve(null);
+            return;
+          }
+
+          const ratio = Math.min(1, maxSide / Math.max(width, height));
+          const nextW = Math.max(1, Math.round(width * ratio));
+          const nextH = Math.max(1, Math.round(height * ratio));
+
+          const canvas = document.createElement("canvas");
+          canvas.width = nextW;
+          canvas.height = nextH;
+
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            resolve(null);
+            return;
+          }
+
+          // Fondo blanco por si la imagen original tiene transparencia.
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, nextW, nextH);
+          ctx.drawImage(img, 0, 0, nextW, nextH);
+
+          const thumb = canvas.toDataURL("image/jpeg", quality);
+          resolve(thumb);
+        } catch {
+          resolve(null);
+        }
+      };
+
+      img.onerror = () => resolve(null);
+      img.src = dataUrl;
+    } catch {
+      resolve(null);
+    }
   });
 }
 
@@ -2594,6 +5605,34 @@ const [pdfPreview, setPdfPreview] = useState<{
 } | null>(null);
 
 const [isTyping, setIsTyping] = useState(false);
+const typingStartedAtRef = useRef<number | null>(null);
+
+useEffect(() => {
+  if (!isTyping) {
+    typingStartedAtRef.current = null;
+    return;
+  }
+
+  typingStartedAtRef.current = Date.now();
+
+  const timer = window.setTimeout(() => {
+    const startedAt = typingStartedAtRef.current;
+    if (!startedAt) return;
+
+    const elapsed = Date.now() - startedAt;
+
+    if (elapsed < 28_000) return;
+
+unlockWrittenChatUi("typing-watchdog-timeout");
+
+    setUiError(
+      "La respuesta está tardando demasiado y he desbloqueado el chat. Prueba de nuevo; si era un análisis con imagen o web, puede que una comprobación externa haya tardado demasiado."
+    );
+  }, 30_000);
+
+  return () => window.clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [isTyping]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
 
@@ -2603,6 +5642,20 @@ const [urlInputOpen, setUrlInputOpen] = useState(false);
 const [urlDraft, setUrlDraft] = useState("");
 const [phoneInputOpen, setPhoneInputOpen] = useState(false);
 const [phoneDraft, setPhoneDraft] = useState("");
+function submitPhoneAnalysis() {
+  const clean = phoneDraft.trim();
+  if (!clean) return;
+
+  setPhoneInputOpen(false);
+  setPhoneDraft("");
+
+  sendQuickMessage(
+  `Analiza este número de teléfono o llamada sospechosa: ${clean}
+
+Dime si ves señales de riesgo y qué harías antes de devolver la llamada, responder por WhatsApp o compartir datos.`,
+  "chat"
+);
+}
 
   const [usageInfo, setUsageInfo] = useState<{
   plan_id: string;
@@ -2613,6 +5666,23 @@ const [phoneDraft, setPhoneDraft] = useState("");
   realtime_seconds_limit: number;
   realtime_seconds_left: number;
 } | null>(null);
+
+function hasNoMessagesLeft() {
+  if (!isLoggedIn) return false;
+  if (!usageInfo) return false;
+
+  return Number(usageInfo.messages_left ?? 0) <= 0;
+}
+
+function blockSendBecauseMessageLimitReached() {
+  setIsTyping(false);
+  sendGuardRef.current.busy = false;
+
+  setMicMsg("Has llegado al límite de mensajes de este mes.");
+  setTimeout(() => setMicMsg(null), 2200);
+
+  openMessageLimitTopupModal();
+}
 
   // =========================
   // ✅ ANTI-DUPLICADO / SEND LOCK
@@ -2656,9 +5726,40 @@ const [phoneDraft, setPhoneDraft] = useState("");
     return false;
   }
 
+  function unlockChatUi(reason?: string) {
+  console.log("[Vonu unlockChatUi]", reason ?? "unknown");
 
-  const [renameOpen, setRenameOpen] = useState(false);
-  const [renameValue, setRenameValue] = useState("");
+  setIsTyping(false);
+  sendGuardRef.current.busy = false;
+  pendingScrollToBottomRef.current = false;
+
+  try {
+    stopTTS();
+  } catch {}
+
+  try {
+    clearRealtimeLimitTimers();
+  } catch {}
+
+  try {
+    clearSilenceTimer();
+  } catch {}
+}
+
+function unlockWrittenChatUi(reason?: string) {
+  console.log("[Vonu unlockWrittenChatUi]", reason ?? "unknown");
+
+  setIsTyping(false);
+  sendGuardRef.current.busy = false;
+  pendingScrollToBottomRef.current = false;
+}
+
+
+ const [renameOpen, setRenameOpen] = useState(false);
+const [renameValue, setRenameValue] = useState("");
+const [renameSavedPulse, setRenameSavedPulse] = useState(false);
+const [renameThreadId, setRenameThreadId] = useState<string | null>(null);
+const [recentlyRenamedThreadId, setRecentlyRenamedThreadId] = useState<string | null>(null);
 
   const [inputExpanded, setInputExpanded] = useState(false);
 
@@ -3412,7 +6513,7 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
   if (!parts) return renderTextWithFractions(text);
 
   return (
-  <div className="my-3 w-full overflow-visible py-[2px]">
+  <div className="my-3 w-full min-w-0 max-w-full overflow-x-hidden overflow-y-visible py-[2px]">
     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-2 w-full text-zinc-900 font-medium text-[1.04em] leading-[2.1]">
         <span className="min-w-0 break-words">{renderTextWithFractions(parts.left)}</span>
         <span className="font-semibold shrink-0">{parts.op}</span>
@@ -3424,39 +6525,106 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
 
   return {
 
-  // ✅ Lista ordenada con contador “badge” (como tu captura)
-      ol({ children, ...props }: any) {
-    return (
-      <ol
-        className="my-3 pl-6 list-decimal space-y-2 text-zinc-900 marker:text-blue-700 marker:font-bold"
+      // ✅ Tablas Markdown bien renderizadas
+  // Si el modelo genera una tabla, no la dejamos como texto roto con pipes.
+  table({ children, ...props }: any) {
+  return (
+    <div className="not-prose my-4 box-border w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain rounded-2xl border border-zinc-200 bg-white [scrollbar-width:thin]">
+      <table
+        className="w-max min-w-full max-w-none border-collapse text-left text-[12.5px] leading-relaxed text-zinc-900 md:text-[14px]"
         {...props}
       >
-        {renderChildrenWithFractions(children)}
-      </ol>
+        {children}
+      </table>
+    </div>
+  );
+},
+
+  thead({ children, ...props }: any) {
+    return (
+      <thead className="bg-zinc-50 text-[12px] font-bold uppercase tracking-[0.08em] text-zinc-500" {...props}>
+        {children}
+      </thead>
     );
   },
 
-      ul({ children, ...props }: any) {
+  tbody({ children, ...props }: any) {
     return (
-      <ul className="my-3 space-y-2 text-zinc-900" {...props}>
-        {renderChildrenWithFractions(children)}
-      </ul>
+      <tbody className="divide-y divide-zinc-100" {...props}>
+        {children}
+      </tbody>
     );
   },
 
-      li({ children, ...props }: any) {
+  tr({ children, ...props }: any) {
     return (
-      <li className="leading-relaxed text-zinc-900" {...props}>
-        {renderChildrenWithFractions(children)}
-      </li>
+      <tr className="border-b border-zinc-100 last:border-b-0" {...props}>
+        {children}
+      </tr>
     );
   },
+
+  th({ children, ...props }: any) {
+  return (
+    <th
+      className="border-b border-zinc-200 bg-zinc-50 px-3 py-2.5 align-top text-[12px] font-semibold text-zinc-800 md:text-[13px]"
+      {...props}
+    >
+      {children}
+    </th>
+  );
+},
+
+td({ children, ...props }: any) {
+  return (
+    <td
+      className="border-b border-zinc-100 px-3 py-2.5 align-top text-[12px] text-zinc-800 md:text-[13px]"
+      {...props}
+    >
+      {children}
+    </td>
+  );
+},
+
+  // ✅ Lista ordenada con contador “badge” (como tu captura)
+      ol({ children, ...props }: any) {
+  return (
+    <ol
+      className="my-3 box-border list-decimal space-y-1.5 pl-8 pr-1 text-[16.5px] leading-8 text-zinc-900 marker:text-zinc-500 md:text-[17px]"
+      {...props}
+    >
+      {children}
+    </ol>
+  );
+},
+
+ul({ children, ...props }: any) {
+  return (
+    <ul
+      className="my-3 box-border list-disc space-y-1.5 pl-7 pr-1 text-[16.5px] leading-8 text-zinc-900 marker:text-zinc-500 md:text-[17px]"
+      {...props}
+    >
+      {children}
+    </ul>
+  );
+},
+
+li({ children, ...props }: any) {
+  return (
+    <li
+      className="min-w-0 pl-1 [overflow-wrap:anywhere]"
+      {...props}
+    >
+      {children}
+    </li>
+  );
+},
 
     // ✅ Títulos y negritas más potentes
     h1({ children, ...props }: any) {
     return (
       <h1
-        className="mt-4 mb-2 text-[24px] md:text-[28px] leading-tight font-extrabold tracking-tight text-zinc-900"
+        className="mt-4 mb-2 text-[21px] md:text-[22px] leading-tight font-extrabold tracking-tight text-zinc-900"
         {...props}
       >
         {renderChildrenWithFractions(children)}
@@ -3467,7 +6635,7 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
   h2({ children, ...props }: any) {
     return (
       <h2
-        className="mt-4 mb-2 text-[20px] md:text-[23px] leading-tight font-extrabold tracking-tight text-zinc-900"
+        className="mt-4 mb-2 text-[18.5px] md:text-[19px] leading-snug font-extrabold tracking-tight text-zinc-950"
         {...props}
       >
         {renderChildrenWithFractions(children)}
@@ -3478,7 +6646,7 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
   h3({ children, ...props }: any) {
     return (
       <h3
-        className="mt-3 mb-1.5 text-[17px] md:text-[19px] leading-snug font-bold text-zinc-900"
+        className="mt-3 mb-2 text-[17.5px] md:text-[18px] leading-snug font-extrabold text-zinc-950"
         {...props}
       >
         {renderChildrenWithFractions(children)}
@@ -3503,38 +6671,48 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
       }
 
       return (
-        <p
-          className={
-            looksMathLine
-              ? "my-4 leading-8 text-zinc-900 font-medium"
-              : "my-2 leading-7 text-zinc-900"
-          }
-          {...props}
-        >
-          {renderChildrenWithFractions(children)}
-        </p>
-      );
+  <p
+    className={
+      looksMathLine
+        ? "my-4 text-[16.5px] leading-8 text-zinc-900 font-medium md:text-[17px]"
+        : "my-3 text-[16.5px] leading-8 text-zinc-900 md:text-[17px]"
+    }
+    {...props}
+  >
+    {renderChildrenWithFractions(children)}
+  </p>
+);
     },
 
   // ✅ Negritas más visibles
   strong({ children, ...props }: any) {
   return (
-    <strong className="font-extrabold text-zinc-900" {...props}>
+    <strong className="font-extrabold text-zinc-950" {...props}>
       {renderChildrenWithFractions(children)}
     </strong>
   );
 },
 
   // ✅ Bloques de código
-  code({ inline, className, children, ...props }: any) {
-    const isInline = !!inline;
+code({ inline, className, children, ...props }: any) {
+  const cn = typeof className === "string" ? className : "";
+  const match = cn.match(/language-([a-zA-Z0-9_-]+)/);
+  const lang = (match?.[1] || "").toLowerCase();
 
-    const cn = typeof className === "string" ? className : "";
-    const match = cn.match(/language-([a-zA-Z0-9_-]+)/);
-    const lang = (match?.[1] || "").toLowerCase();
+  const contentFromChildren = extractPlainText(children);
+  const content =
+    contentFromChildren ||
+    (Array.isArray(children)
+      ? children.map(extractPlainText).join("")
+      : String(children ?? ""));
 
-    const content = Array.isArray(children) ? children.join("") : String(children ?? "");
-    const clean = content.replace(/\n$/, "");
+  const clean = content.replace(/\n$/, "");
+
+  // En versiones actuales de react-markdown, `inline` puede venir vacío.
+  // Si no hay lenguaje y no hay saltos de línea, lo tratamos como código inline:
+  // `.sh`, `crocs.es`, `npm run dev`, etc.
+  const isInline =
+    Boolean(inline) || (!lang && !clean.includes("\n"));
 
     // ✅ PIZARRA: si viene ```pizarra``` o ```whiteboard``` => texto "cuaderno", NO código
     if (!isInline && (lang === "pizarra" || lang === "whiteboard")) {
@@ -3566,10 +6744,43 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
     );
   }
 
-    // ✅ code block normal: SOLO para modo chat real (esto sí puede ser monospace)
+        // ✅ Bloques especiales copiables:
+    // ```mensaje
+    // ...
+    // ```
+    //
+    // ```email
+    // ...
+    // ```
+    //
+    // ```texto
+    // ...
+    // ```
+    const languageMatch = /language-([a-zA-Z0-9_-]+)/.exec(String(className ?? ""));
+    const language = languageMatch?.[1]?.toLowerCase() ?? "";
+
+    const copyBlockLanguages = new Set([
+      "mensaje",
+      "whatsapp",
+      "sms",
+      "email",
+      "correo",
+      "texto",
+      "carta",
+      "reclamacion",
+      "reclamación",
+      "codigo",
+      "code",
+    ]);
+
+    if (copyBlockLanguages.has(language)) {
+      return <VonuCopyBlock kind={language} text={clean} />;
+    }
+
+    // ✅ code block normal
     return (
-      <pre className="rounded-xl bg-zinc-900 text-white p-3 overflow-x-auto">
-        <code className="text-[12.5px]" {...props}>
+      <pre className="max-w-full rounded-xl bg-zinc-900 p-3 text-white overflow-x-auto whitespace-pre-wrap break-words">
+        <code className="text-[12.5px] whitespace-pre-wrap break-words" {...props}>
           {clean}
         </code>
       </pre>
@@ -3618,11 +6829,12 @@ const [boardColor, setBoardColor] = useState<string>("#111827");
 if (cn.includes("katex-display")) {
   return (
     <div
-      className={`${className ?? ""} my-4 rounded-2xl bg-white/45 px-2 py-2 text-left`}
+      className={`${className ?? ""} my-4 min-w-0 max-w-full rounded-2xl bg-white/45 px-2 py-2 text-center`}
       style={{
-        overflow: "visible",
+        overflowX: "hidden",
+        overflowY: "visible",
         maxWidth: "100%",
-        WebkitOverflowScrolling: "auto",
+        width: "100%",
       }}
       {...props}
     >
@@ -3876,15 +7088,24 @@ useEffect(() => {
       return;
     }
 
-    // Conversación normal: aquí sí dejamos que el input inferior siga al teclado.
+        // Conversación normal: aquí sí dejamos que el input inferior siga al teclado.
     document.documentElement.style.setProperty("--vvh", `${viewportHeight}px`);
 
     const bottomInset = Math.max(
       0,
-      window.innerHeight - (viewportHeight + viewportTop)
+      Math.round(window.innerHeight - (viewportHeight + viewportTop))
     );
 
-    document.documentElement.style.setProperty("--vvb", `${bottomInset}px`);
+    // En algunos móviles/Android, al usar VirtualKeyboard.overlaysContent,
+    // visualViewport puede devolver poco o 0, pero virtualKeyboard.boundingRect
+    // sí trae la altura real del teclado. Usamos el mayor de los dos.
+    const effectiveBottomInset = Math.max(bottomInset, keyboardHeight);
+
+    document.documentElement.style.setProperty("--vvb", `${effectiveBottomInset}px`);
+    document.documentElement.style.setProperty(
+      "--vonu-keyboard-height",
+      `${effectiveBottomInset}px`
+    );
   };
 
   setVars();
@@ -3949,6 +7170,85 @@ const activeThread = useMemo(() => {
 }, [threads, activeThreadId]);
 
 const messages = activeThread?.messages ?? [];
+
+// =======================
+// 🏷️ TÍTULO AUTOMÁTICO
+// Si el chat sigue como "Nueva consulta", usamos el primer mensaje real del usuario.
+// Funciona para envío normal, quick prompts y voz.
+// =======================
+useEffect(() => {
+  if (!activeThread) return;
+  if (!shouldAutoTitleThread(activeThread.title)) return;
+
+  const firstUserMessage = activeThread.messages.find(
+    (m) => m.role === "user" && typeof m.text === "string" && m.text.trim()
+  );
+
+  const sourceText = firstUserMessage?.text?.trim();
+  if (!sourceText) return;
+
+  const nextTitle = makeSmartThreadTitle(sourceText);
+  if (!nextTitle || nextTitle === activeThread.title) return;
+
+  setThreads((prev) =>
+    prev.map((t) =>
+      t.id === activeThread.id
+        ? {
+            ...t,
+            title: nextTitle,
+            updatedAt: Date.now(),
+          }
+        : t
+    )
+  );
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [activeThread?.id, activeThread?.title, messages.length]);
+
+// =======================
+// ☁️ HISTORIAL REMOTO — guardado al terminar respuesta
+// No es autosync general: solo guarda cuando la última respuesta assistant ya está cerrada.
+// =======================
+useEffect(() => {
+  if (!mounted) return;
+  if (authLoading) return;
+  if (!isLoggedIn) return;
+  if (!activeThread) return;
+  if (isTyping) return;
+
+  const thread = activeThread;
+  const threadMessages = thread.messages ?? [];
+
+  const hasUserMessage = threadMessages.some((m) => m.role === "user");
+  if (!hasUserMessage) return;
+
+  const lastMessage = threadMessages[threadMessages.length - 1];
+
+  if (!lastMessage) return;
+  if (lastMessage.role !== "assistant") return;
+  if (lastMessage.streaming) return;
+
+  const saveKey = `${thread.id}:${lastMessage.id}:${threadMessages.length}:${thread.updatedAt}`;
+
+  if (lastCloudSavedAssistantKeyRef.current === saveKey) return;
+  lastCloudSavedAssistantKeyRef.current = saveKey;
+
+  const timer = window.setTimeout(() => {
+    const latestThread = threadsRef.current.find((t) => t.id === thread.id);
+    saveThreadToCloud(latestThread);
+  }, 800);
+
+  return () => window.clearTimeout(timer);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [
+  mounted,
+  authLoading,
+  isLoggedIn,
+  isTyping,
+  activeThread?.id,
+  messages.length,
+]);
 
 useEffect(() => {
   if (!activeThread) {
@@ -4044,6 +7344,11 @@ const showHardLimitWarning =
     return [...threads].sort((a, b) => b.updatedAt - a.updatedAt);
   }, [threads]);
 
+  const visibleSortedThreads = useMemo(() => {
+  if (!isLoggedIn) return [];
+  return sortedThreads;
+}, [isLoggedIn, sortedThreads]);
+
   const userMsgCountInThread = useMemo(() => messages.filter((m) => m.role === "user").length, [messages]);
 
   const canSend = useMemo(() => {
@@ -4051,6 +7356,12 @@ const showHardLimitWarning =
   if (isBlockedByPaywall) return false;
   return basicReady;
 }, [isTyping, input, imagePreview, pdfPreview, isBlockedByPaywall]);
+
+const hasDraftToSend =
+  input.trim().length > 0 || !!imagePreview || !!pdfPreview;
+
+const canSendForInput =
+  canSend || (!authLoading && !isLoggedIn && hasDraftToSend);
 
 const voiceUiState = useMemo<"idle" | "listening" | "speaking">(() => {
   if (!voiceMode) return "idle";
@@ -4323,23 +7634,51 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
 }
 
   function createThreadAndActivate() {
-    const t = makeNewThread();
-    setThreads((prev) => [t, ...prev]);
-    setActiveThreadId(t.id);
-    setMenuOpen(false);
-    setUiError(null);
-    setInput("");
-    setImagePreview(null);
+  unlockWrittenChatUi("create-thread-reset");
 
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-      shouldStickToBottomRef.current = false;
-    });
-
-    if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+  // ✅ Nueva consulta pasa a ser feature de cuenta/plan.
+  // Invitado: no puede reiniciar el contador creando hilos nuevos.
+  if (!isLoggedIn) {
+    setLoginMsg(
+      "Para abrir nuevas consultas y guardar tu historial, inicia sesión."
+    );
+    openLoginModal("signin");
+    return;
   }
 
+  // ✅ Usuario registrado sin plan activo:
+  // puede seguir dentro de su consulta/límite, pero no crear consultas infinitas.
+  if (!isPro) {
+    setPayMsg(
+      "Nueva consulta es una función de los planes de Vonu. Puedes seguir en tu consulta actual o mejorar tu plan."
+    );
+    openPlansModal();
+    return;
+  }
+
+  const t = makeNewThread();
+
+  setThreads((prev) => [t, ...prev]);
+  setActiveThreadId(t.id);
+  setMenuOpen(false);
+  setUiError(null);
+  setInput("");
+  setImagePreview(null);
+  setPdfPreview(null);
+  setShowContextualFileCard(false);
+  setContextualFilePrompt("");
+
+  requestAnimationFrame(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    shouldStickToBottomRef.current = false;
+  });
+
+  if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+}
+
  function activateThread(id: string) {
+  unlockWrittenChatUi("activate-thread-reset");
+
   setActiveThreadId(id);
   setMenuOpen(false);
   setUiError(null);
@@ -4366,24 +7705,53 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
   if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 }
 
-  function openRename() {
-    if (!activeThread) return;
-    setRenameValue(activeThread.title);
-    setRenameOpen(true);
-    setMenuOpen(false);
-  }
+  function openRename(threadId?: string) {
+  const targetThread =
+    threadId
+      ? threadsRef.current.find((t) => t.id === threadId)
+      : activeThread;
+
+  if (!targetThread) return;
+
+  setRenameSavedPulse(false);
+  setRenameThreadId(targetThread.id);
+  setRenameValue(targetThread.title);
+  setRenameOpen(true);
+}
 
   function confirmRename() {
-    if (!activeThread) return;
-    const name = renameValue.trim() || "Consulta";
-    setThreads((prev) => prev.map((t) => (t.id === activeThread.id ? { ...t, title: name, updatedAt: Date.now() } : t)));
-    setRenameOpen(false);
+  const targetThreadId = renameThreadId ?? activeThread?.id;
+  if (!targetThreadId || renameSavedPulse) return;
 
-    if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
-  }
+  const name = renameValue.trim() || "Consulta";
+
+  setThreads((prev) =>
+    prev.map((t) =>
+      t.id === targetThreadId
+        ? { ...t, title: name, updatedAt: Date.now() }
+        : t
+    )
+  );
+
+  setRecentlyRenamedThreadId(targetThreadId);
+
+  window.setTimeout(() => {
+    setRecentlyRenamedThreadId((current) =>
+      current === targetThreadId ? null : current
+    );
+  }, 1600);
+
+  setRenameOpen(false);
+setRenameSavedPulse(false);
+setRenameThreadId(null);
+
+queueSaveThreadToCloud(targetThreadId, 350);
+}
 
   function deleteActiveThread() {
-    if (!activeThread) return;
+  if (!activeThread) return;
+
+  deleteThreadFromCloud(activeThread.id);
 
     if (threads.length === 1) {
       const fresh = makeNewThread();
@@ -4423,6 +7791,8 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
 
   function deleteThreadById(threadId: string) {
   if (!threadId) return;
+
+  deleteThreadFromCloud(threadId);
 
   if (threads.length <= 1) {
     const fresh = makeNewThread();
@@ -4484,16 +7854,24 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
   function enforceLimitIfNeeded(): boolean {
   const nextUserCount = userMsgCountInThread + 1;
 
-  // ✅ Invitado: solo 1 mensaje de prueba
+  // ✅ Invitado: solo 1 mensaje gratuito total por navegador.
+  // No depende solo del hilo actual, para evitar el bypass de abrir "Nueva consulta".
   if (!isLoggedIn) {
-    if (nextUserCount <= GUEST_MESSAGE_LIMIT) return false;
+    const guestFreeAlreadyUsed = hasGuestFreeMessageBeenUsed();
 
-    setLoginMsg("Puedes probar Vonu con 1 mensaje. Para seguir, inicia sesión.");
-    openLoginModal("signin");
-    return true;
+    if (guestFreeAlreadyUsed || nextUserCount > GUEST_MESSAGE_LIMIT) {
+      setLoginMsg(
+        "Puedes probar Vonu con 1 mensaje gratuito. Para seguir, inicia sesión."
+      );
+      openLoginModal("signin");
+      return true;
+    }
+
+    markGuestFreeMessageAsUsed();
+    return false;
   }
 
-  // ✅ Usuario loggeado: el límite real lo controla Supabase / analyze.ts
+  // ✅ Usuario logueado: el límite real lo controla Supabase / usage.
   return false;
 }
 
@@ -4504,8 +7882,16 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
 ) {
 
   if (authLoading) return;
+  if (hasNoMessagesLeft()) {
+  blockSendBecauseMessageLimitReached();
+  return;
+}
 
-    if (enforceLimitIfNeeded()) return;
+    if (enforceLimitIfNeeded()) {
+  setIsTyping(false);
+  sendGuardRef.current.busy = false;
+  return;
+}
 
     if (isBlockedByPaywall) {
       openPlansModal();
@@ -4545,17 +7931,20 @@ if (voiceModeRef.current) {
 
     // ✅ Guardamos modo en el thread (así el backend recibe el modo correcto)
     setThreads((prev) =>
-      prev.map((t) =>
-        t.id === targetThreadId
-          ? {
-              ...t,
-              updatedAt: Date.now(),
-              mode: modePreset,
-              tutorProfile: t.tutorProfile ?? { level: "adult" },
-            }
-          : t
-      )
-    );
+  prev.map((t) => {
+    if (t.id !== targetThreadId) return t;
+
+    const shouldAutoTitle = shouldAutoTitleThread(t.title);
+
+    return {
+      ...t,
+      title: shouldAutoTitle ? makeSmartThreadTitle(userText) : t.title,
+      updatedAt: Date.now(),
+      mode: modePreset,
+      tutorProfile: t.tutorProfile ?? { level: "adult" },
+    };
+  })
+);
 
     const userMsg: Message = {
   id: crypto.randomUUID(),
@@ -4598,8 +7987,13 @@ const assistantMsg: Message = {
     setThreads((prev) =>
   prev.map((t) => {
     if (t.id !== targetThreadId) return t;
+
+    const shouldAutoTitle = shouldAutoTitleThread(t.title);
+    const titleSource = userMsg.text || userText;
+
     return {
       ...t,
+      title: shouldAutoTitle ? makeSmartThreadTitle(titleSource) : t.title,
       updatedAt: Date.now(),
       messages: [...t.messages, userMsg],
     };
@@ -4661,10 +8055,10 @@ if (!isDesktopPointer()) {
           content: m.text ?? "",
         }));
 
-      const { data: sessionData } = await supabaseBrowser.auth.getSession();
-const accessToken = sessionData?.session?.access_token ?? null;
+      const accessToken = await getChatAccessTokenWithTimeout(1200);
 
-const res = await fetch("/api/chat", {
+
+const res = await fetchJsonWithTimeout("/api/chat", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -4688,34 +8082,68 @@ body: JSON.stringify({
 
       const data = await res.json().catch(() => ({} as any));
 
-      if (data?.usage) {
+if (data?.usage) {
   setUsageInfo(data.usage);
 }
 
-      const fullText =
-        typeof data?.text === "string" && data.text.trim()
-          ? data.text
-          : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
+const isUsageLimitGuard =
+  data?.model === "usage-limit-guard" ||
+  String(data?.text ?? "").toLowerCase().includes("límite alcanzado") ||
+  String(data?.text ?? "").toLowerCase().includes("limite alcanzado");
 
-      const boardImageB64 = typeof data?.boardImageB64 === "string" && data.boardImageB64 ? data.boardImageB64 : null;
+const fullText =
+  typeof data?.text === "string" && data.text.trim()
+    ? data.text
+    : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
 
-      const boardImagePlacement =
-        data?.boardImagePlacement &&
-        typeof data.boardImagePlacement?.x === "number" &&
-        typeof data.boardImagePlacement?.y === "number" &&
-        typeof data.boardImagePlacement?.w === "number" &&
-        typeof data.boardImagePlacement?.h === "number"
-          ? (data.boardImagePlacement as { x: number; y: number; w: number; h: number })
-          : null;
+if (isUsageLimitGuard) {
+  setThreads((prev) =>
+    prev.map((t) => {
+      if (t.id !== targetThreadId) return t;
 
-      const pizarraJson = typeof data?.pizarra === "string" && data.pizarra.trim() ? data.pizarra : null;
+      return {
+        ...t,
+        updatedAt: Date.now(),
+        messages: t.messages.map((m) =>
+          m.id === assistantId
+            ? {
+                ...m,
+                text: fullText,
+                streaming: false,
+                pizarra: null,
+                boardImageB64: null,
+                boardImagePlacement: null,
+              }
+            : m
+        ),
+      };
+    })
+  );
 
-      await sleep(90);
+  setIsTyping(false);
+  sendGuardRef.current.busy = false;
+
+  openMessageLimitTopupModal();
+
+  queueSaveThreadToCloud(targetThreadId, 700);
+
+  if (isDesktopPointer()) {
+    setTimeout(() => textareaRef.current?.focus(), 60);
+  }
+
+  return;
+}
+
+const boardImageB64 = null;
+const boardImagePlacement = null;
+const pizarraJson = null;
+
+      await sleep(20);
 
       const isTutor = modePreset === "tutor";
 
       if (isTutor) {
-        await sleep(220);
+        await sleep(60);
 
         setThreads((prev) =>
           prev.map((t) => {
@@ -4743,17 +8171,67 @@ body: JSON.stringify({
         sendGuardRef.current.busy = false;
 
 // ✅ Solo usamos la voz del navegador fuera del modo conversación
-if (!voiceModeRef.current) {
-  speakTTS(fullText);
-}
+
+
+queueSaveThreadToCloud(targetThreadId, 700);
 
 if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
 
       } else {
   const { thinkMs, revealMs } = getAdaptiveRevealTimings(fullText);
+
+  const finishAssistantImmediately = () => {
+    setThreads((prev) =>
+      prev.map((t) => {
+        if (t.id !== targetThreadId) return t;
+
+        return {
+          ...t,
+          updatedAt: Date.now(),
+          messages: t.messages.map((m) =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  text: fullText,
+                  streaming: false,
+                  pizarra: pizarraJson,
+                  boardImageB64,
+                  boardImagePlacement,
+                  revealMs,
+                }
+              : m
+          ),
+        };
+      })
+    );
+
+    setIsTyping(false);
+    sendGuardRef.current.busy = false;
+
+    queueSaveThreadToCloud(targetThreadId, 700);
+
+    if (!voiceModeRef.current) {
+      speakTTS(fullText);
+    }
+
+    if (isDesktopPointer()) {
+      setTimeout(() => textareaRef.current?.focus(), 60);
+    }
+  };
+
+  if (!shouldUseProgressiveReveal()) {
+    finishAssistantImmediately();
+    return;
+  }
+
   const chunks = splitTextForProgressiveReveal(fullText);
 
   await sleep(thinkMs);
+
+  if (!shouldUseProgressiveReveal()) {
+    finishAssistantImmediately();
+    return;
+  }
 
   let built = "";
 
@@ -4764,6 +8242,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
     setThreads((prev) =>
       prev.map((t) => {
         if (t.id !== targetThreadId) return t;
+
         return {
           ...t,
           updatedAt: Date.now(),
@@ -4784,6 +8263,11 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       })
     );
 
+    if (!shouldUseProgressiveReveal()) {
+      finishAssistantImmediately();
+      return;
+    }
+
     if (i < chunks.length - 1) {
       await sleep(getProgressiveChunkDelay(i + 1, chunks.length));
     }
@@ -4792,6 +8276,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   setThreads((prev) =>
     prev.map((t) => {
       if (t.id !== targetThreadId) return t;
+
       return {
         ...t,
         updatedAt: Date.now(),
@@ -4815,11 +8300,15 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   setIsTyping(false);
   sendGuardRef.current.busy = false;
 
+  queueSaveThreadToCloud(targetThreadId, 700);
+
   if (!voiceModeRef.current) {
     speakTTS(fullText);
   }
 
-  if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+  if (isDesktopPointer()) {
+    setTimeout(() => textareaRef.current?.focus(), 60);
+  }
 }
     } catch (err: any) {
       const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
@@ -4844,9 +8333,11 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       );
 
       setUiError(msg);
-      setIsTyping(false);
-      sendGuardRef.current.busy = false;
-      if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+unlockWrittenChatUi("sendQuickMessage-catch");
+
+if (isDesktopPointer()) {
+  setTimeout(() => textareaRef.current?.focus(), 60);
+}
     }
   }
 
@@ -4876,28 +8367,85 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       }`
     );
 
-    setTimeout(() => {
-      sendQuickMessage(cleanExample, "chat");
-    }, 120);
-  } catch {}
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [mounted, authLoading, activeThread?.id]);
+    const guestAlreadyUsedFreeMessage =
+      !isLoggedIn && hasGuestFreeMessageBeenUsed();
 
-  async function sendMessage() {
-  if (authLoading) return;
+    if (guestAlreadyUsedFreeMessage) {
+      setInput(cleanExample);
+      setIsTyping(false);
+      sendGuardRef.current.busy = false;
 
-    if (enforceLimitIfNeeded()) return;
-
-    if (isBlockedByPaywall) {
-      openPlansModal();
+      setLoginMsg(
+        "Puedes probar Vonu con 1 mensaje gratuito. Para revisar esto, inicia sesión."
+      );
+      openLoginModal("signin");
       return;
     }
 
-    if (!canSend) return;
-if (!activeThread) return;
+    setTimeout(() => {
+      sendQuickMessage(cleanExample, "chat");
+    }, 180);
+  } catch {
+    setIsTyping(false);
+    sendGuardRef.current.busy = false;
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted, authLoading, activeThread?.id, isLoggedIn]);
+
+  async function sendMessage() {
+  if (authLoading) {
+    const hasSession = await hydrateAuthAndAccountFromBrowserSession();
+
+    if (!hasSession) {
+      setAuthLoading(false);
+    }
+  }
+
+  const hasDraftToSendNow =
+    input.trim().length > 0 || !!imagePreview || !!pdfPreview;
+
+  if (!isLoggedIn && hasDraftToSendNow && hasGuestFreeMessageBeenUsed()) {
+    setLoginMsg(
+      "Puedes probar Vonu con 1 mensaje gratuito. Para seguir, inicia sesión."
+    );
+    openLoginModal("signin");
+    return;
+  }
+
+  if (hasNoMessagesLeft()) {
+    blockSendBecauseMessageLimitReached();
+    return;
+  }
+
+  if (enforceLimitIfNeeded()) {
+  setIsTyping(false);
+  sendGuardRef.current.busy = false;
+  return;
+}
+
+  if (isBlockedByPaywall) {
+    openPlansModal();
+    return;
+  }
+
+  if (!canSend) {
+  setUiError(
+    `DEBUG envío bloqueado: canSend=false | input="${input.trim().slice(0, 80)}" | isTyping=${String(isTyping)} | hasImage=${String(!!imagePreview)} | hasPdf=${String(!!pdfPreview)} | paywall=${String(isBlockedByPaywall)}`
+  );
+  return;
+}
+
+if (!activeThread) {
+  setUiError("DEBUG envío bloqueado: activeThread=null");
+  return;
+}
 
 // ✅ SEND LOCK (anti doble click / Enter repetido / carreras)
-if (sendGuardRef.current.busy) return;
+if (sendGuardRef.current.busy) {
+  setUiError("DEBUG envío bloqueado: sendGuardRef.current.busy=true");
+  return;
+}
+
 sendGuardRef.current.busy = true;
 
 const targetThreadId = activeThread.id;
@@ -4914,6 +8462,13 @@ const userText = input.trim();
 const imageBase64 = imagePreview;
 const pdfAttachment = pdfPreview;
 
+const imageThumb = imageBase64
+  ? await createImageThumbnailFromDataUrl(imageBase64, {
+      maxSide: 520,
+      quality: 0.72,
+    })
+  : null;
+
 setUiError(null);
 
 // ===== Tutor auto-activación (DESACTIVADA) =====
@@ -4925,28 +8480,6 @@ let nextTutorLevel: TutorLevel = activeThread.tutorProfile?.level ?? "adult";
 // ✅ Ya NO forzamos modo tutor por intención.
 // El modo lo decide el usuario (UI) y se guarda en el thread.
 // nextMode y nextTutorLevel quedan como están.
-
-const conversationText = messages
-  .filter((m) => (m.text ?? "").trim())
-  .map((m) => `${m.role === "user" ? "Usuario" : "Vonu"}: ${m.text ?? ""}`)
-  .join("\n\n");
-
-if (imageBase64) {
-  try {
-    const attachmentPreviewResult = await analyzeAttachment({
-      kind: "image",
-      imageBase64,
-      userMessage: userText,
-      conversationText,
-      mode: voiceModeRef.current ? "realtime" : nextMode,
-    });
-
-    console.log("[Attachment analysis preview]", attachmentPreviewResult);
-  } catch (error) {
-    console.error("Error preparando análisis de adjunto:", error);
-  }
-}
-
 
 const userMsg: Message = {
   id: crypto.randomUUID(),
@@ -4961,6 +8494,7 @@ const userMsg: Message = {
           ? `He adjuntado un PDF: ${pdfAttachment.filename}`
           : undefined),
   image: imageBase64 || undefined,
+  imageThumb: imageThumb || undefined,
 };
 
 const assistantId = crypto.randomUUID();
@@ -5003,7 +8537,7 @@ if (!isDesktopPointer()) {
 
 if (voiceModeRef.current && imageBase64) {
   try {
-    await sleep(220);
+    await sleep(60);
 
     const threadNow =
       threadsRef.current.find((x) => x.id === targetThreadId) ?? activeThread;
@@ -5018,7 +8552,7 @@ if (voiceModeRef.current && imageBase64) {
     const { data: sessionData } = await supabaseBrowser.auth.getSession();
     const accessToken = sessionData?.session?.access_token ?? null;
 
-    const res = await fetch("/api/chat", {
+    const res = await fetchJsonWithTimeout("/api/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -5034,6 +8568,30 @@ body: JSON.stringify({
   tutorLevel: nextTutorLevel,
 }),
     });
+
+    async function getChatAccessTokenWithTimeout(timeoutMs = 1200): Promise<string | null> {
+  let timeoutId: number | null = null;
+
+  try {
+    const timeoutPromise = new Promise<null>((resolve) => {
+      timeoutId = window.setTimeout(() => resolve(null), timeoutMs);
+    });
+
+    const result: any = await Promise.race([
+      supabaseBrowser.auth.getSession(),
+      timeoutPromise,
+    ]);
+
+    return result?.data?.session?.access_token ?? null;
+  } catch (error) {
+    console.warn("[Vonu chat] getSession timeout/error, continuing without token", error);
+    return null;
+  } finally {
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId);
+    }
+  }
+}
 
     if (!res.ok) {
       const txt = await res.text().catch(() => "");
@@ -5122,14 +8680,13 @@ return;
   );
 
     setUiError(msg);
-    setIsTyping(false);
-    sendGuardRef.current.busy = false;
-    return;
+unlockWrittenChatUi("sendMessage-image-realtime-catch");
+return;
   }
 }
 
     try {
-      await sleep(220);
+      await sleep(60);
 
       const threadNow = threadsRef.current.find((x) => x.id === targetThreadId) ?? activeThread;
 
@@ -5140,10 +8697,9 @@ return;
           content: m.text ?? "",
         }));
 
-      const { data: sessionData } = await supabaseBrowser.auth.getSession();
-const accessToken = sessionData?.session?.access_token ?? null;
+      const accessToken = await getChatAccessTokenWithTimeout(1200);
 
-const res = await fetch("/api/chat", {
+const res = await fetchJsonWithTimeout("/api/chat", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -5202,13 +8758,13 @@ const boardImageB64 = typeof data?.boardImageB64 === "string" && data.boardImage
       // ✅ NUEVO: JSON de pizarra (si viene)
       const pizarraJson = typeof data?.pizarra === "string" && data.pizarra.trim() ? data.pizarra : null;
 
-      await sleep(90);
+      await sleep(20);
 
       const isTutor = nextMode === "tutor";
 
       if (isTutor) {
         // ✅ Tutor: estable (no streaming letra a letra). Mostramos dots y luego el bloque completo.
-        await sleep(220);
+        await sleep(60);
 
         setThreads((prev) =>
           prev.map((t) => {
@@ -5242,9 +8798,60 @@ if (!voiceModeRef.current) {
 if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       } else {
   const { thinkMs, revealMs } = getAdaptiveRevealTimings(fullText);
+
+  const finishAssistantImmediately = () => {
+    setThreads((prev) =>
+      prev.map((t) => {
+        if (t.id !== targetThreadId) return t;
+
+        return {
+          ...t,
+          updatedAt: Date.now(),
+          messages: t.messages.map((m) =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  text: fullText,
+                  streaming: false,
+                  pizarra: pizarraJson,
+                  boardImageB64,
+                  boardImagePlacement,
+                  revealMs,
+                }
+              : m
+          ),
+        };
+      })
+    );
+
+    setIsTyping(false);
+    sendGuardRef.current.busy = false;
+
+
+    queueSaveThreadToCloud(targetThreadId, 700);
+
+    if (!voiceModeRef.current) {
+      speakTTS(fullText);
+    }
+
+    if (isDesktopPointer()) {
+      setTimeout(() => textareaRef.current?.focus(), 60);
+    }
+  };
+
+  if (!shouldUseProgressiveReveal()) {
+    finishAssistantImmediately();
+    return;
+  }
+
   const chunks = splitTextForProgressiveReveal(fullText);
 
   await sleep(thinkMs);
+
+  if (!shouldUseProgressiveReveal()) {
+    finishAssistantImmediately();
+    return;
+  }
 
   let built = "";
 
@@ -5255,25 +8862,31 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
     setThreads((prev) =>
       prev.map((t) => {
         if (t.id !== targetThreadId) return t;
+
         return {
           ...t,
           updatedAt: Date.now(),
           messages: t.messages.map((m) =>
-  m.id === assistantId
-    ? {
-        ...m,
-        text: built,
-        streaming: false,
-        pizarra: pizarraJson,
-        boardImageB64,
-        boardImagePlacement,
-        revealMs,
-      }
-    : m
-),
+            m.id === assistantId
+              ? {
+                  ...m,
+                  text: built,
+                  streaming: i < chunks.length - 1,
+                  pizarra: pizarraJson,
+                  boardImageB64,
+                  boardImagePlacement,
+                  revealMs,
+                }
+              : m
+          ),
         };
       })
     );
+
+    if (!shouldUseProgressiveReveal()) {
+      finishAssistantImmediately();
+      return;
+    }
 
     if (i < chunks.length - 1) {
       await sleep(getProgressiveChunkDelay(i + 1, chunks.length));
@@ -5283,6 +8896,7 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   setThreads((prev) =>
     prev.map((t) => {
       if (t.id !== targetThreadId) return t;
+
       return {
         ...t,
         updatedAt: Date.now(),
@@ -5306,11 +8920,15 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
   setIsTyping(false);
   sendGuardRef.current.busy = false;
 
+  queueSaveThreadToCloud(targetThreadId, 700);
+
   if (!voiceModeRef.current) {
     speakTTS(fullText);
   }
 
-  if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+  if (isDesktopPointer()) {
+    setTimeout(() => textareaRef.current?.focus(), 60);
+  }
 }
     } catch (err: any) {
       const msg = typeof err?.message === "string" ? err.message : "Error desconocido conectando con la IA.";
@@ -5335,9 +8953,11 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
       );
 
       setUiError(msg);
-      setIsTyping(false);
-      sendGuardRef.current.busy = false;
-      if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
+unlockWrittenChatUi("sendMessage-catch");
+
+if (isDesktopPointer()) {
+  setTimeout(() => textareaRef.current?.focus(), 60);
+}
     }
   }
 
@@ -5399,10 +9019,30 @@ const topPlanLabel =
   const BEST_VALUE_BADGE = "Mejor valor";
 
   function closePaywall() {
-    if (payLoading) return;
-    setPaywallOpen(false);
-    setPayMsg(null);
-  }
+  if (payLoading) return;
+
+  setPaywallOpen(false);
+  setPayMsg(null);
+
+  // Evita que el input se quede visualmente más alto tras cerrar el modal.
+  setInputExpanded(false);
+
+  requestAnimationFrame(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "auto";
+
+    // Si no hay texto, lo dejamos completamente compacto.
+    if (!input.trim()) {
+      textarea.style.height = "";
+      return;
+    }
+
+    // Si hay texto, recalculamos la altura real sin esperar al siguiente onChange.
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  });
+}
 
   // ESC para cerrar paywall / board / rename
   useEffect(() => {
@@ -5484,7 +9124,14 @@ function BubbleTail({ side, color }: { side: "left" | "right"; color: string }) 
 function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
-    if (!canSend) return;
+
+    if (!canSendForInput) {
+      setUiError(
+        `DEBUG envío bloqueado: canSendForInput=false | canSend=${String(canSend)} | authLoading=${String(authLoading)} | isLoggedIn=${String(isLoggedIn)} | isTyping=${String(isTyping)} | paywall=${String(isBlockedByPaywall)} | activeThread=${String(!!activeThread)} | input="${input.trim().slice(0, 80)}"`
+      );
+      return;
+    }
+
     sendMessage();
   }
 }
@@ -5736,73 +9383,175 @@ return (
     }
   }
 
-        @keyframes vonuAmbientDrift {
-    0% {
-      transform: translate3d(-2%, -1%, 0) scale(1.04);
-      opacity: 0.66;
-    }
-    35% {
-      transform: translate3d(3%, 2%, 0) scale(1.10);
-      opacity: 0.9;
-    }
-    70% {
-      transform: translate3d(1%, -3%, 0) scale(1.07);
-      opacity: 0.74;
-    }
-    100% {
-      transform: translate3d(-2%, -1%, 0) scale(1.04);
-      opacity: 0.66;
-    }
+  /* Markdown real de respuestas Vonu */
+.vonu-markdown {
+  font-size: 18px;
+  line-height: 1.78;
+  color: #18181b;
+  font-weight: 500;
+}
+
+.vonu-markdown p {
+  margin: 0.72rem 0 !important;
+}
+
+.vonu-markdown strong {
+  font-weight: 950 !important;
+  color: #000 !important;
+}
+
+.vonu-markdown h1,
+.vonu-markdown h2,
+.vonu-markdown h3 {
+  color: #000 !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.025em;
+}
+
+.vonu-markdown h2 {
+  margin: 1.15rem 0 0.5rem !important;
+  font-size: 1.08em !important;
+  line-height: 1.32 !important;
+}
+
+.vonu-markdown h3 {
+  margin: 1rem 0 0.42rem !important;
+  font-size: 1.02em !important;
+  line-height: 1.34 !important;
+}
+
+.vonu-markdown .vonu-md-list {
+  display: block !important;
+  margin: 0.85rem 0 1rem 0 !important;
+  padding-left: 1.35rem !important;
+}
+
+.vonu-markdown .vonu-md-ul {
+  list-style: disc outside !important;
+}
+
+.vonu-markdown .vonu-md-ol {
+  list-style: decimal outside !important;
+}
+
+.vonu-markdown .vonu-md-li {
+  display: list-item !important;
+  margin: 0.38rem 0 !important;
+  padding-left: 0.2rem !important;
+  line-height: 1.65 !important;
+}
+
+.vonu-markdown .vonu-md-li::marker {
+  color: #52525b !important;
+  font-weight: 900 !important;
+}
+
+/* Si ReactMarkdown mete un <p> dentro de un <li>, evitamos que
+   definiciones cortas tipo "i = tipo de interés" bajen a otra línea. */
+.vonu-markdown .vonu-md-li > p {
+  display: inline !important;
+  margin: 0 !important;
+}
+
+.vonu-markdown .vonu-md-li > p + p {
+  display: block !important;
+  margin-top: 0.45rem !important;
+}
+
+@media (max-width: 767px) {
+  .vonu-markdown {
+    font-size: 18px;
+    line-height: 1.76;
   }
 
-  @keyframes vonuAmbientDriftAlt {
-    0% {
-      transform: translate3d(4%, 2%, 0) scale(1.05) rotate(0deg);
-      opacity: 0.42;
-    }
-    45% {
-      transform: translate3d(-5%, -3%, 0) scale(1.18) rotate(-10deg);
-      opacity: 0.72;
-    }
-    100% {
-      transform: translate3d(4%, 2%, 0) scale(1.05) rotate(0deg);
-      opacity: 0.42;
-    }
+  .vonu-markdown strong {
+    font-weight: 950 !important;
+    color: #000 !important;
   }
 
-  @keyframes vonuGeoFloat {
-    0% {
-      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
-      opacity: 0.18;
-    }
-    40% {
-      transform: translate3d(18px, -22px, 0) rotate(14deg) scale(1.06);
-      opacity: 0.28;
-    }
-    75% {
-      transform: translate3d(-14px, 16px, 0) rotate(-8deg) scale(0.98);
-      opacity: 0.20;
-    }
-    100% {
-      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
-      opacity: 0.18;
-    }
+  .vonu-markdown .vonu-md-list {
+    padding-left: 1.25rem !important;
+  }
+}
+
+  /* Fondo inicial ligero: premium sin coste alto en móvil */
+.vonu-home-soft-bg {
+  background:
+    radial-gradient(circle at 50% 18%, rgba(26, 115, 232, 0.10), transparent 34%),
+    radial-gradient(circle at 16% 38%, rgba(96, 165, 250, 0.08), transparent 28%),
+    radial-gradient(circle at 84% 42%, rgba(16, 185, 129, 0.06), transparent 30%),
+    linear-gradient(180deg, #ffffff 0%, #f8f9fa 56%, #eef5ff 100%);
+}
+
+@keyframes vonuAssistantLogoEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(2px) scale(0.96);
+    filter: blur(1px);
   }
 
-  @keyframes vonuGeoFloatAlt {
-    0% {
-      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
-      opacity: 0.14;
-    }
-    50% {
-      transform: translate3d(-20px, 18px, 0) rotate(-18deg) scale(1.08);
-      opacity: 0.26;
-    }
-    100% {
-      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
-      opacity: 0.14;
-    }
+  42% {
+    opacity: 0.58;
+    transform: translateY(1px) scale(0.985);
+    filter: blur(0.45px);
   }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.vonu-assistant-logo-enter {
+  animation: vonuAssistantLogoEnter 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: center center;
+  will-change: transform, opacity, filter;
+}
+
+@media (max-width: 767px) {
+  .vonu-assistant-logo-enter {
+    animation-duration: 660ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vonu-assistant-logo-enter {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .vonu-home-soft-bg {
+    background:
+      radial-gradient(circle at 50% 20%, rgba(26, 115, 232, 0.08), transparent 34%),
+      linear-gradient(180deg, #ffffff 0%, #f8f9fa 62%, #eef5ff 100%);
+  }
+}
+
+/* Rendimiento móvil: reducimos animaciones decorativas */
+@media (max-width: 767px) {
+  .vonu-hero-rise,
+  .vonu-input-motion-shell,
+  .vonu-reveal,
+  .vonu-dotmark-wrap,
+  .vonu-dotmark-fill {
+    animation: none !important;
+    filter: none !important;
+    will-change: auto !important;
+  }
+
+  .vonu-reveal {
+    clip-path: none !important;
+  }
+
+  .vonu-input-motion-shell {
+    transition:
+      bottom 240ms ease-out,
+      transform 240ms ease-out,
+      opacity 160ms ease-out !important;
+  }
+}
 
   @keyframes vonuHeroRise {
     from {
@@ -5838,123 +9587,27 @@ return (
     }
   }
 
-  .vonu-home-ambient {
-    background:
-      radial-gradient(circle at 22% 20%, rgba(26, 115, 232, 0.16), transparent 34%),
-      radial-gradient(circle at 78% 18%, rgba(34, 197, 94, 0.11), transparent 32%),
-      radial-gradient(circle at 48% 82%, rgba(245, 158, 11, 0.12), transparent 35%),
-      radial-gradient(circle at 50% 48%, rgba(255,255,255,0.72), transparent 32%),
-      linear-gradient(180deg, rgba(255,255,255,0.94), rgba(246,248,251,0.97));
-    animation: vonuAmbientDrift 18s ease-in-out infinite;
-  }
-
-  @keyframes vonuDotCloudBreathe {
-  0%, 100% {
-    transform: scale(0.82);
-    opacity: 0.08;
-  }
-
-  42% {
-    transform: scale(1.58);
-    opacity: 0.14;
-  }
-
-  68% {
-    transform: scale(1.92);
-    opacity: 0.17;
-  }
-
-  84% {
-    transform: scale(1.18);
-    opacity: 0.11;
-  }
-}
-
-.vonu-dot-cloud {
-  transform-origin: center center;
-  border-radius: 9999px;
-  opacity: 0.1;
-  background-size: 34px 34px;
-  background-position: center;
-  background-repeat: repeat;
-  filter: blur(1.35px);
-  mix-blend-mode: multiply;
-  mask-image: radial-gradient(circle, black 0%, black 48%, transparent 84%);
-  -webkit-mask-image: radial-gradient(circle, black 0%, black 48%, transparent 84%);
-  animation: vonuDotCloudBreathe 13s ease-in-out infinite;
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-  transform: translateZ(0);
-}
-
-.vonu-dot-cloud-a {
-  background-image: radial-gradient(circle, rgba(59, 130, 246, 0.16) 3.8px, transparent 4.6px);
-}
-
-.vonu-dot-cloud-b {
-  background-image: radial-gradient(circle, rgba(16, 185, 129, 0.12) 3.8px, transparent 4.6px);
-  animation-duration: 15s;
-  animation-delay: -3s;
-}
-
-.vonu-dot-cloud-c {
-  background-image: radial-gradient(circle, rgba(245, 158, 11, 0.10) 3.8px, transparent 4.6px);
-  animation-duration: 17s;
-  animation-delay: -6s;
-}
-
-@media (max-width: 767px) {
-  .vonu-dot-cloud {
-    opacity: 0.075;
-    filter: blur(1.1px);
-    animation-duration: 16s;
-  }
-
-  .vonu-dot-cloud-a {
-    background-image: radial-gradient(circle, rgba(59, 130, 246, 0.12) 3.6px, transparent 4.5px);
-  }
-
-  .vonu-dot-cloud-b {
-    background-image: radial-gradient(circle, rgba(16, 185, 129, 0.09) 3.6px, transparent 4.5px);
-  }
-
-  .vonu-dot-cloud-c {
-    background-image: radial-gradient(circle, rgba(245, 158, 11, 0.08) 3.6px, transparent 4.5px);
-  }
-}
-
-  .vonu-orb-one {
-    animation: vonuAmbientDrift 16s ease-in-out infinite;
-  }
-
-  .vonu-orb-two {
-    animation: vonuAmbientDriftAlt 19s ease-in-out infinite;
-  }
-
-  .vonu-geo-one {
-    animation: vonuGeoFloat 16s ease-in-out infinite;
-  }
-
-  .vonu-geo-two {
-    animation: vonuGeoFloatAlt 18s ease-in-out infinite;
-  }
-
-  .vonu-geo-three {
-    animation: vonuGeoFloat 22s ease-in-out infinite reverse;
-  }
-
   .vonu-hero-rise {
     animation: vonuHeroRise 620ms cubic-bezier(.2,.8,.2,1) both;
   }
 
     .vonu-input-motion-shell {
   transition:
-    bottom 980ms cubic-bezier(.16,.9,.18,1),
-    transform 980ms cubic-bezier(.16,.9,.18,1),
-    opacity 520ms ease,
-    filter 520ms ease,
-    background-color 520ms ease !important;
+    bottom 240ms cubic-bezier(.22, .61, .36, 1),
+    transform 240ms cubic-bezier(.22, .61, .36, 1),
+    opacity 260ms ease,
+    filter 260ms ease,
+    background-color 260ms ease !important;
   will-change: bottom, transform, filter;
+}
+
+.vonu-input-motion-shell.vonu-home-input-centered {
+  transition:
+    bottom 420ms cubic-bezier(.2,.8,.2,1),
+    transform 420ms cubic-bezier(.2,.8,.2,1),
+    opacity 320ms ease,
+    filter 320ms ease,
+    background-color 320ms ease !important;
 }
 
 .vonu-home-input-centered {
@@ -5971,7 +9624,7 @@ return (
 }
 
 html.vonu-home-keyboard-open .vonu-home-input-centered {
-  bottom: calc(var(--vonu-keyboard-height, 0px) + 12px) !important;
+  bottom: calc(var(--vonu-keyboard-height, 0px) + env(safe-area-inset-bottom, 0px) + 8px) !important;
   transform: translateY(0) !important;
 }
 
@@ -6116,19 +9769,21 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
   @keyframes vonuRevealIn {
   0% {
     opacity: 0;
-    clip-path: inset(0 0 100% 0);
+    transform: translateY(4px);
     filter: blur(1px);
   }
+
   100% {
     opacity: 1;
-    clip-path: inset(0 0 0 0);
+    transform: translateY(0);
     filter: blur(0);
   }
 }
 
 .vonu-reveal {
   animation: vonuRevealIn var(--vonu-reveal-ms, 520ms) ease-out both;
-  will-change: opacity, clip-path, filter;
+  will-change: opacity, transform, filter;
+  overflow: visible !important;
 }
 
 .modal-close-btn {
@@ -6187,83 +9842,128 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 
 /* ===== KaTeX bonito y controlado ===== */
 
-/* Fórmulas inline: un poco más grandes, pero sin tocar demasiado el flujo */
-.prose .katex {
-  font-size: 1.06em !important;
-  line-height: normal !important;
+/* Evita duplicados visuales: KaTeX genera una capa MathML accesible y una capa HTML visible.
+   La capa MathML debe permanecer oculta en pantalla. */
+.katex .katex-mathml,
+.vonu-markdown .katex .katex-mathml,
+.prose .katex .katex-mathml {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  overflow: hidden !important;
 }
 
-/* Fórmulas en bloque: centradas, limpias y con espacio vertical suficiente */
-.prose .katex-display {
-  display: block !important;
-  margin: 1rem 0 1.15rem !important;
-  padding: 0.28rem 0 0.38rem !important;
-  text-align: center !important;
-  overflow-x: auto !important;
-  overflow-y: visible !important;
+.katex .katex-html,
+.vonu-markdown .katex .katex-html,
+.prose .katex .katex-html {
+  display: inline-block !important;
+}
+
+.vonu-markdown {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.vonu-markdown pre,
+.vonu-markdown code {
   max-width: 100%;
 }
 
-/* No apretar KaTeX: dejamos respirar estructuras altas como fracciones anidadas */
+.vonu-markdown pre {
+  overflow-x: auto;
+}
+
+/* Fórmulas inline: legibles, sin crecer demasiado en móvil */
+.prose .katex {
+  font-size: 1.02em !important;
+  line-height: normal !important;
+  max-width: 100%;
+}
+
+/* Bloques matemáticos: no deben crear scroll horizontal visible */
+.vonu-markdown .katex-display,
+.prose .katex-display {
+  box-sizing: border-box !important;
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 1rem 0 1.15rem !important;
+  padding: 0.38rem 0.12rem 0.48rem !important;
+  text-align: center !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+}
+
+/* La fórmula debe intentar adaptarse al ancho disponible */
+.vonu-markdown .katex-display > .katex,
 .prose .katex-display > .katex {
   display: inline-block !important;
-  max-width: 100%;
-  font-size: 1.16em !important;
-  line-height: 1.52 !important;
-  white-space: nowrap !important;
+  max-width: 100% !important;
+  width: auto !important;
+  font-size: 1em !important;
+  line-height: 1.44 !important;
+  white-space: normal !important;
   word-break: normal !important;
+  overflow-wrap: normal !important;
 }
 
-/* Un poco más de aire general para fórmulas de varios pisos */
+/* Aire para estructuras altas: fracciones, raíces, exponentes */
+.vonu-markdown .katex-display .vlist-t,
 .prose .katex-display .vlist-t {
-  line-height: 1.32 !important;
+  line-height: 1.26 !important;
 }
 
-/* Fracciones anidadas: más aire para que el numerador/denominador no toque la raya principal */
+/* Fracciones anidadas: un poco de aire sin hacerlas gigantes */
+.vonu-markdown .katex-display .mfrac .mfrac,
 .prose .katex-display .mfrac .mfrac {
-  padding-top: 0.28em !important;
-  padding-bottom: 0.28em !important;
+  padding-top: 0.16em !important;
+  padding-bottom: 0.16em !important;
 }
 
-/* Línea de fracción algo fina y limpia */
+/* Línea de fracción limpia */
+.vonu-markdown .katex .mfrac .frac-line,
 .prose .katex .mfrac .frac-line {
   border-bottom-width: 0.055em !important;
 }
 
 /* Separación entre texto y fórmula */
+.vonu-markdown .katex-display + p,
+.vonu-markdown p + .katex-display,
 .prose .katex-display + p,
 .prose p + .katex-display {
   margin-top: 0.8rem !important;
 }
 
-/* Móvil: mantener legible sin hacer la fórmula monstruosa */
+/* Móvil: más compacto para evitar scroll en fórmulas */
 @media (max-width: 767px) {
   .prose .katex {
-    font-size: 1.02em !important;
+    font-size: 0.94em !important;
     line-height: normal !important;
   }
 
+  .vonu-markdown .katex-display,
   .prose .katex-display {
-    margin: 0.85rem 0 1rem !important;
-    padding: 0.22rem 0 0.32rem !important;
-    text-align: center !important;
-    overflow-x: auto !important;
-    overflow-y: visible !important;
+    margin: 0.8rem 0 0.95rem !important;
+    padding: 0.28rem 0.04rem 0.38rem !important;
   }
 
-.prose .katex-display > .katex {
-  font-size: 1.08em !important;
-  line-height: 1.46 !important;
-  white-space: nowrap !important;
-}
+  .vonu-markdown .katex-display > .katex,
+  .prose .katex-display > .katex {
+    font-size: 0.84em !important;
+    line-height: 1.34 !important;
+  }
 
+  .vonu-markdown .katex-display .vlist-t,
   .prose .katex-display .vlist-t {
-    line-height: 1.22 !important;
+    line-height: 1.16 !important;
   }
 
+  .vonu-markdown .katex-display .mfrac .mfrac,
   .prose .katex-display .mfrac .mfrac {
-    padding-top: 0.14em !important;
-    padding-bottom: 0.14em !important;
+    padding-top: 0.1em !important;
+    padding-bottom: 0.1em !important;
   }
 }
 
@@ -6325,23 +10025,23 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 .paywall-scroll::-webkit-scrollbar {
   display: none;
 }
+
 `}</style>
 
       {/* TOAST */}
 {toastMsg && (
-  <div className="pointer-events-none fixed left-0 right-0 top-4 z-[90] flex justify-center px-4">
-    <div className="pointer-events-auto flex w-full max-w-[540px] items-start gap-3 rounded-[28px] border border-zinc-200/80 bg-white/95 px-4 py-3 shadow-[0_18px_60px_rgba(15,23,42,0.14)] backdrop-blur-xl">
-      <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-zinc-950 text-[13px] font-semibold text-white">
+  <div className="pointer-events-none fixed inset-0 z-[120] flex items-center justify-center px-4 py-6 md:left-[304px]">
+    <div className="pointer-events-auto flex w-full max-w-[520px] items-center justify-center gap-3 rounded-full border border-zinc-200/80 bg-white/95 px-4 py-4 text-center shadow-[0_18px_60px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-950 text-[14px] font-semibold text-white">
         ✓
       </div>
 
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 self-center">
         <div className="text-[14px] font-semibold leading-5 tracking-[-0.02em] text-zinc-950">
           {toastMsg.replace(/^✅\s*/, "")}
         </div>
 
-        {toastMsg.toLowerCase().includes("suscripción") ||
-        toastMsg.toLowerCase().includes("plan") ? (
+        {toastMsg.toLowerCase().includes("cancelado") ? (
           <div className="mt-0.5 text-[12.5px] leading-5 text-zinc-500">
             Puedes seguir usando VonuAI hasta que termine el periodo pagado.
           </div>
@@ -6351,67 +10051,122 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
       <button
         type="button"
         onClick={() => setToastMsg(null)}
-        className="-mr-1 grid h-8 w-8 shrink-0 place-items-center rounded-full text-[18px] leading-none text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
+        className={[
+          "-mr-1 grid h-10 w-10 shrink-0 place-items-center rounded-full",
+          "text-zinc-950 transition",
+          "hover:bg-zinc-100 active:bg-zinc-200 active:scale-95",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300",
+        ].join(" ")}
         aria-label="Cerrar aviso"
         title="Cerrar"
       >
-        ×
+        <span className="relative block h-5 w-5" aria-hidden="true">
+          <span className="absolute left-1/2 top-1/2 h-[2.4px] w-5 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-current" />
+          <span className="absolute left-1/2 top-1/2 h-[2.4px] w-5 -translate-x-1/2 -translate-y-1/2 -rotate-45 rounded-full bg-current" />
+        </span>
       </button>
     </div>
   </div>
 )}
 
       {/* ===== RENAME MODAL ===== */}
-      {renameOpen && (
-        <div className="fixed inset-0 z-[85] bg-black/25 backdrop-blur-sm flex items-center justify-center px-6" onClick={() => setRenameOpen(false)}>
-          <div
-            className="w-full max-w-[420px] rounded-[20px] bg-white border border-zinc-200 shadow-[0_30px_90px_rgba(0,0,0,0.18)] p-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-[16px] font-semibold text-zinc-900">Renombrar conversación</div>
-                <div className="text-[12.5px] text-zinc-500 mt-1">Ponle un nombre para encontrarla rápido.</div>
-              </div>
-
-              <button
-  onClick={() => setRenameOpen(false)}
-  className="grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition hover:bg-zinc-100 active:scale-95"
-  aria-label="Cerrar"
->
-  <span className="text-[24px] font-light leading-none relative top-[-1px]">×</span>
-</button>
+{renameOpen && (
+  <div
+    className="fixed inset-0 z-[85] overflow-y-auto bg-black/25 px-4 py-5 backdrop-blur-sm sm:px-6"
+    onClick={() => {
+      if (renameSavedPulse) return;
+      setRenameSavedPulse(false);
+      setRenameOpen(false);
+    }}
+  >
+    <div className="flex min-h-full items-start justify-center">
+      <div
+        className={`mt-[8dvh] mb-6 w-full max-w-[420px] rounded-[22px] border border-zinc-200 bg-white p-5 shadow-[0_30px_90px_rgba(0,0,0,0.18)] transition-all duration-200 ${
+          renameSavedPulse ? "scale-[0.985]" : "scale-100"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-[16px] font-semibold text-zinc-900">
+              Renombrar conversación
             </div>
-
-            <div className="mt-4">
-              <div className="text-[12px] text-zinc-600 mb-1">Nombre</div>
-              <input
-                value={renameValue}
-                onChange={(e) => setRenameValue(e.target.value)}
-                className="w-full h-11 rounded-[14px] border border-zinc-300 px-4 text-sm outline-none focus:border-zinc-400"
-                placeholder="Ej: Estafa Wallapop, Inglés vocabulario…"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") setRenameOpen(false);
-                  if (e.key === "Enter") confirmRename();
-                }}
-              />
-            </div>
-
-            <div className="mt-4 flex gap-2">
-              <button
-                onClick={() => setRenameOpen(false)}
-                className="flex-1 h-11 rounded-full border border-zinc-200 hover:bg-zinc-50 text-sm font-semibold transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button onClick={confirmRename} className="flex-1 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors cursor-pointer">
-                Guardar
-              </button>
+            <div className="mt-1 text-[12.5px] leading-5 text-zinc-500">
+              Ponle un nombre para encontrarla rápido.
             </div>
           </div>
+
+          <button
+            onClick={() => {
+              if (renameSavedPulse) return;
+              setRenameSavedPulse(false);
+              setRenameOpen(false);
+            }}
+            className="grid h-10 w-10 place-items-center rounded-full text-zinc-950 transition hover:bg-zinc-100 active:scale-95"
+            aria-label="Cerrar"
+          >
+            <span className="relative top-[-1px] text-[24px] font-light leading-none">
+              ×
+            </span>
+          </button>
         </div>
-      )}
+
+        <div className="mt-4">
+          <div className="mb-1 text-[12px] text-zinc-600">Nombre</div>
+
+          <input
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            disabled={renameSavedPulse}
+            className="h-12 w-full rounded-[15px] border border-zinc-300 px-4 text-[15px] text-zinc-950 outline-none transition focus:border-zinc-500 disabled:bg-zinc-50 disabled:text-zinc-500"
+            placeholder="Ej: Estafa Wallapop, Inglés vocabulario…"
+            autoFocus={isDesktopPointer()}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+
+              if (e.key === "Escape") {
+                setRenameSavedPulse(false);
+                setRenameOpen(false);
+              }
+
+              if (e.key === "Enter") {
+                confirmRename();
+              }
+            }}
+          />
+        </div>
+
+        {renameSavedPulse ? (
+          <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[13px] font-semibold text-emerald-800">
+            Nombre actualizado ✓
+          </div>
+        ) : null}
+
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={() => {
+              if (renameSavedPulse) return;
+              setRenameSavedPulse(false);
+              setRenameOpen(false);
+            }}
+            disabled={renameSavedPulse}
+            className="h-11 flex-1 cursor-pointer rounded-full border border-zinc-200 text-sm font-semibold transition-colors hover:bg-zinc-50 disabled:cursor-default disabled:opacity-60"
+          >
+            Cancelar
+          </button>
+
+          <button
+            onClick={confirmRename}
+            disabled={renameSavedPulse}
+            className="h-11 flex-1 cursor-pointer rounded-full bg-zinc-950 text-sm font-semibold text-white transition-colors hover:bg-zinc-800 disabled:cursor-default disabled:bg-emerald-600"
+          >
+            {renameSavedPulse ? "Guardado ✓" : "Guardar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* ===== WHITEBOARD ===== */}
 <ManualWhiteboardModal
@@ -6587,9 +10342,15 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 
         <div className="p-4">
           <input
-            value={phoneDraft}
-            onChange={(e) => setPhoneDraft(e.target.value)}
-            placeholder="+34 600 000 000"
+  value={phoneDraft}
+  onChange={(e) => setPhoneDraft(e.target.value)}
+  onKeyDown={(e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      submitPhoneAnalysis();
+    }
+  }}
+  placeholder="+34 600 000 000"
             className="w-full h-12 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-[16px] text-zinc-900 placeholder:text-zinc-500 outline-none focus:border-zinc-300"
             autoFocus
             inputMode="tel"
@@ -6609,19 +10370,8 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
           </button>
 
           <button
-            type="button"
-            onClick={() => {
-              const clean = phoneDraft.trim();
-              if (!clean) return;
-
-              setPhoneInputOpen(false);
-              setPhoneDraft("");
-
-              sendQuickMessage(
-                `Quiero que analices este número de teléfono y me digas si ves señales de riesgo, fraude o algo importante: ${clean}`,
-                activeThread?.mode ?? "chat"
-              );
-            }}
+  type="button"
+  onClick={submitPhoneAnalysis}
             className="flex-1 h-11 rounded-full bg-[#1a73e8] hover:bg-[#1669c1] text-white text-[14px] font-semibold transition-colors cursor-pointer"
           >
             Analizar
@@ -6674,6 +10424,7 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
   sortedThreads={sortedThreads}
   activeThreadId={activeThreadId}
   activateThread={activateThread}
+    recentlyRenamedThreadId={recentlyRenamedThreadId}
   createThreadAndActivate={createThreadAndActivate}
   openRename={openRename}
   deleteActiveThread={deleteActiveThread}
@@ -6693,6 +10444,9 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
   currentPlanId={usageInfo?.plan_id ?? null}
   messagesLeft={usageInfo?.messages_left ?? null}
 realtimeSecondsLeft={usageInfo?.realtime_seconds_left ?? null}
+subscriptionStatus={subscriptionInfo?.subscription_status ?? null}
+subscriptionCurrentPeriodEnd={subscriptionInfo?.current_period_end ?? null}
+subscriptionCancelAtPeriodEnd={!!subscriptionInfo?.cancel_at_period_end}
 billing={billing}
 setBilling={setBilling}
 plan={plan}
@@ -6728,25 +10482,14 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   ].join(" ")}
 >
    <div
-    className={[
-      "pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-700",
-      hasUserMessage ? "opacity-0" : "opacity-100",
-    ].join(" ")}
-    aria-hidden="true"
-  >
-    <div className="vonu-home-ambient absolute inset-0" />
-
-<div className="vonu-orb-one absolute -left-[14%] top-[4%] h-[460px] w-[460px] rounded-full bg-blue-300/18 blur-3xl" />
-<div className="vonu-orb-two absolute -right-[12%] top-[12%] h-[420px] w-[420px] rounded-full bg-emerald-200/20 blur-3xl" />
-<div className="vonu-geo-three absolute bottom-[-16%] left-[30%] h-[430px] w-[430px] rounded-full bg-amber-100/36 blur-3xl" />
-
-<div className="vonu-dot-cloud vonu-dot-cloud-a absolute left-[2%] top-[8%] h-[460px] w-[460px]" />
-<div className="vonu-dot-cloud vonu-dot-cloud-b absolute right-[4%] top-[16%] h-[410px] w-[410px]" />
-<div className="vonu-dot-cloud vonu-dot-cloud-c absolute left-[31%] top-[52%] h-[380px] w-[380px]" />
-
-<div className="vonu-geo-two absolute left-[24%] top-[58%] h-[86px] w-[86px] rotate-12 rounded-[28px] border border-indigo-200/36 bg-indigo-100/14 backdrop-blur-[1px]" />
-<div className="vonu-geo-one absolute right-[30%] top-[20%] h-[72px] w-[72px] rounded-full border border-sky-200/40 bg-sky-100/16 backdrop-blur-[1px]" />
-  </div>
+  className={[
+    "pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-500",
+    hasUserMessage ? "opacity-0" : "opacity-100",
+  ].join(" ")}
+  aria-hidden="true"
+>
+  <div className="vonu-home-soft-bg absolute inset-0" />
+</div>
 
     <div
   className={[
@@ -6784,17 +10527,26 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 
 {showHardLimitWarning ? (
   <div className="flex justify-start">
-    <div className="max-w-[92%] md:max-w-[85%] rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-zinc-900 shadow-sm">
-      <div className="text-[15px] font-semibold">
-        Has llegado al límite de mensajes de este mes
-      </div>
+    <div className="max-w-[92%] md:max-w-[85%] rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 md:px-4 md:py-3 text-zinc-900 shadow-sm">
+      <div className="mt-1 hidden text-[13px] leading-6 text-zinc-700 md:block">
+  Puedes esperar a la renovación mensual o añadir una recarga para seguir usando Vonu ahora.
+</div>
       <div className="mt-1 text-[13px] text-zinc-700 leading-6">
-        Puedes seguir usando Vonu mejorando tu plan y, más adelante, también podrás añadir mensajes extra si lo necesitas.
+        Puedes esperar a la renovación mensual o añadir una recarga para seguir usando Vonu ahora.
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <button
+          type="button"
+          onClick={openMessageLimitTopupModal}
+          className="h-9 px-4 rounded-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-[12px] font-semibold transition"
+        >
+          Ver recargas
+        </button>
+
+        <button
+          type="button"
           onClick={handleOpenPlansCTA}
-          className="h-9 px-4 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold"
+          className="h-9 px-4 rounded-full bg-white hover:bg-zinc-50 active:scale-95 text-zinc-900 border border-blue-200 text-[12px] font-semibold transition"
         >
           Ver planes
         </button>
@@ -6859,10 +10611,12 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
             : normalizeAssistantText(rawText);
 
           const mdText = !isUser
-            ? normalizeMathMarkdown(
-                sanitizeTutorLikeImage(normalizeAssistantText(mdTextRaw))
-              )
-            : mdTextRaw;
+  ? normalizeBulletMarkdown(
+      normalizeMathMarkdown(
+        sanitizeTutorLikeImage(normalizeAssistantText(mdTextRaw))
+      )
+    )
+  : mdTextRaw;
 
           const isStreaming = !!m.streaming;
           const hasText = (m.text ?? "").length > 0;
@@ -6878,28 +10632,28 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   isFirstUserMessage ? "mt-12 lg:mt-0" : "",
 ].join(" ")}
               >
+
                 <div
                   className={[
-                    "relative min-w-0 max-w-[88%] md:max-w-[85%] px-3 py-2 text-[15px] leading-relaxed overflow-visible break-words",
+                    "relative min-w-0 max-w-[88%] overflow-x-hidden overflow-y-visible break-words px-3 py-2 text-[15px] leading-relaxed md:max-w-[85%]",
                     "md:shadow-sm bg-[#e9edf1] text-zinc-900 rounded-[22px] mr-1 md:mr-2",
                   ].join(" ")}
                 >
-
                   <div className="relative z-10">
-                    {m.image && (
-                      <div className="mb-2">
-                        <img
-                          src={m.image}
-                          alt="Adjunto"
-                          className="rounded-md max-h-60 max-w-full object-cover"
-                        />
-                      </div>
-                    )}
+                    {(m.image || m.imageThumb) && (
+                    <div className="mb-2">
+                      <img
+                        src={m.image || m.imageThumb}
+                        alt="Adjunto"
+                        className="rounded-md max-h-60 max-w-full object-cover"
+                      />
+                    </div>
+                  )}
 
                     {(m.text || m.streaming) && (
-                      <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[21px] md:text-[22px] leading-9 md:leading-9 text-zinc-900">
-  <span className="whitespace-pre-wrap">{mdText}</span>
-</div>
+                      <div className="vonu-markdown w-full max-w-full min-w-0 overflow-x-hidden overflow-y-visible break-words [overflow-wrap:anywhere] font-sans text-[17.5px] md:text-[18px] leading-[1.72] md:leading-[1.72]">
+                        <span className="whitespace-pre-wrap">{mdText}</span>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -6907,30 +10661,23 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
             );
           }
 
-          // ===== VONU PENSANDO (misma estructura que la respuesta para que no se mueva) =====
+                              // ===== VONU PENSANDO =====
+          // Sale siempre durante la espera para que Vonu se sienta vivo.
+          // Si luego la respuesta es de riesgo, quedará un indicador fijo encima.
           if (isStreaming && !((m.text ?? "").trim())) {
-            return (
-              <div
-                key={m.id}
-                className="flex w-full justify-start mt-3 md:mt-4 vonu-answer-in"
-              >
-                <div className="ml-2 mr-3 md:mr-0 flex w-full max-w-[93%] md:max-w-[88%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
-                  <div
-                    className={[
-                      "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center self-start",
-                      activeThread?.mode === "tutor"
-                        ? "mt-[22px] md:mt-[24px] -ml-[1px] md:-ml-[2px]"
-                        : "mt-[7px] md:mt-[9px] -ml-[2px] md:-ml-[3px]",
-                    ].join(" ")}
-                  >
-                    <VonuThinking />
-                  </div>
-
-                  <div className="min-w-0 flex-1" />
-                </div>
-              </div>
-            );
-          }
+  return (
+    <div
+      key={m.id}
+      className="flex w-full justify-start mt-3 md:mt-4 vonu-answer-in"
+    >
+      <div className="ml-2 mr-3 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col">
+        <div className="mb-1.5 md:mb-2 flex justify-start pl-0 md:pl-0">
+          <VonuThinking size={38} status="thinking" active />
+        </div>
+      </div>
+    </div>
+  );
+}
 
           // ===== VONU RESPONDIENDO (sin burbuja) =====
           return (
@@ -6940,24 +10687,180 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
               style={{ ["--vonu-reveal-ms" as any]: `${m.revealMs ?? 520}ms` }}
             >
               <div className="ml-2 mr-2 md:mr-4 flex w-full max-w-[94%] md:max-w-[86%] flex-col md:flex-row md:items-start gap-0.5 md:gap-1">
-                <div
-                  className={[
-                    "shrink-0 flex h-7 w-7 md:h-8 md:w-8 items-start justify-center self-start",
-                    activeThread?.mode === "tutor"
-                      ? "mt-[22px] md:mt-[24px]"
-                      : "mt-[10px] md:mt-[12px]",
-                  ].join(" ")}
-                >
-                  <img
-                    src="/logo/vonu-cube-black.png?v=4"
-                    alt="Vonu"
-                    className="block h-[20px] w-[20px] md:h-[21px] md:w-[21px] object-contain"
-                    draggable={false}
-                  />
-                </div>
+                                <div className="hidden" aria-hidden="true" />
 
-                <div className="min-w-0 flex-1 vonu-reveal">
-                  {m.image && (
+                                <div className="min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-visible">
+  {(() => {
+    if (isStreaming || isUser) return null;
+
+    const previousUserMessage = getPreviousUserMessage(messages, i);
+
+    const previousUserTextForDots = previousUserMessage?.text ?? "";
+
+const isAcademicFinanceContextForDots =
+  /\b(mof|ade|van|tir|valor actual|valor actual neto|finanzas|financiera|financieras|matemáticas financieras|matematicas financieras|coste de capital|costo de capital|tasa de descuento|flujo de caja|flujos de caja|proyecto de inversión|proyecto de inversion|renta financiera|amortización|amortizacion)\b/i.test(
+    previousUserTextForDots
+  );
+
+const hasPracticalRiskIntentForDots =
+  /\b(estafa|fraude|phishing|smishing|sms|whatsapp|telegram|enlace|link|url|web sospechosa|tienda online|banco|tarjeta|bizum|transferencia|contrato|cláusula|clausula|factura|cobro|suscripción|suscripcion|tinder|badoo|bumble|instagram|perfil falso|catfish|ia|deepfake|manipulada|manipulado|amenaza|chantaje|sextorsión|sextorsion|me manipula|me presiona|salud|dolor|síntoma|sintoma|urgencias)\b/i.test(
+    previousUserTextForDots
+  );
+
+const shouldHideRiskDotsForTutorOrAcademic =
+  activeThread?.mode === "tutor" ||
+  isAcademicFinanceContextForDots ||
+  (looksLikeTutorIntent(previousUserTextForDots) && !hasPracticalRiskIntentForDots);
+
+if (shouldHideRiskDotsForTutorOrAcademic) return null;
+
+const assistantRiskStatus = inferRiskStatusFromAssistantText(m.text ?? "");
+const userRiskStatus = inferRiskStatusFromUserText(previousUserMessage?.text ?? "");
+const neutralIdentityLookup = looksLikeNeutralIdentityLookupFromUserText(previousUserMessage?.text ?? "");
+
+const assistantTextForDots = String(m.text ?? "").toLowerCase();
+
+const previousUserTextForDotsLower = String(previousUserMessage?.text ?? "").toLowerCase();
+
+const isPhoneAnalysisPromptForDots =
+  (
+    previousUserTextForDotsLower.includes("número de teléfono") ||
+    previousUserTextForDotsLower.includes("numero de telefono") ||
+    previousUserTextForDotsLower.includes("llamada sospechosa") ||
+    previousUserTextForDotsLower.includes("teléfono o llamada") ||
+    previousUserTextForDotsLower.includes("telefono o llamada")
+  ) &&
+  /(?:\+?\d[\d\s().-]{6,}\d)/.test(previousUserTextForDotsLower);
+
+const assistantClearlyLowRiskPhone =
+  isPhoneAnalysisPromptForDots &&
+  (
+    assistantTextForDots.includes("móvil español válido") ||
+    assistantTextForDots.includes("movil espanol valido") ||
+    assistantTextForDots.includes("móvil válido en españa") ||
+    assistantTextForDots.includes("movil valido en espana") ||
+    assistantTextForDots.includes("número válido") ||
+    assistantTextForDots.includes("numero valido")
+  ) &&
+  (
+    assistantTextForDots.includes("no muestra señales técnicas claras") ||
+    assistantTextForDots.includes("no muestra senales tecnicas claras") ||
+    assistantTextForDots.includes("no veo señales técnicas claras") ||
+    assistantTextForDots.includes("no veo senales tecnicas claras") ||
+    assistantTextForDots.includes("por sí solo") ||
+    assistantTextForDots.includes("por si solo") ||
+    assistantTextForDots.includes("sin más contexto") ||
+    assistantTextForDots.includes("sin mas contexto") ||
+    assistantTextForDots.includes("solo por el número") ||
+    assistantTextForDots.includes("solo por el numero")
+  );
+
+const hasHardPhoneDangerInUserPrompt =
+  previousUserTextForDotsLower.includes("banco") ||
+  previousUserTextForDotsLower.includes("bizum") ||
+  previousUserTextForDotsLower.includes("transferencia") ||
+  previousUserTextForDotsLower.includes("código sms") ||
+  previousUserTextForDotsLower.includes("codigo sms") ||
+  previousUserTextForDotsLower.includes("otp") ||
+  previousUserTextForDotsLower.includes("cargo") ||
+  previousUserTextForDotsLower.includes("tarjeta") ||
+  previousUserTextForDotsLower.includes("instalar") ||
+  previousUserTextForDotsLower.includes("anydesk") ||
+  previousUserTextForDotsLower.includes("teamviewer") ||
+  previousUserTextForDotsLower.includes("acceso remoto") ||
+  previousUserTextForDotsLower.includes("dni") ||
+  previousUserTextForDotsLower.includes("contraseña") ||
+  previousUserTextForDotsLower.includes("contrasena");
+
+const assistantClearlyLowRiskPhoneForDots =
+  assistantClearlyLowRiskPhone && !hasHardPhoneDangerInUserPrompt;
+
+  const hasStrongPhoneFraudContextForDots =
+  isPhoneAnalysisPromptForDots &&
+  (
+    hasHardPhoneDangerInUserPrompt ||
+    assistantTextForDots.includes("no des ningún código") ||
+    assistantTextForDots.includes("no des ningun codigo") ||
+    assistantTextForDots.includes("no facilites ningún código") ||
+    assistantTextForDots.includes("no facilites ningun codigo") ||
+    assistantTextForDots.includes("intento de fraude") ||
+    assistantTextForDots.includes("robarte el código") ||
+    assistantTextForDots.includes("robarte el codigo") ||
+    assistantTextForDots.includes("vaciar tu cuenta") ||
+    assistantTextForDots.includes("los bancos nunca piden códigos") ||
+    assistantTextForDots.includes("los bancos nunca piden codigos") ||
+    assistantTextForDots.includes("contacta directamente con tu banco") ||
+    assistantTextForDots.includes("teléfono oficial de tu banco") ||
+    assistantTextForDots.includes("telefono oficial de tu banco")
+  );
+
+const assistantClearlyLowRiskDating =
+  (
+    assistantTextForDots.includes("tinder") ||
+    assistantTextForDots.includes("bumble") ||
+    assistantTextForDots.includes("badoo") ||
+    assistantTextForDots.includes("app de citas") ||
+    assistantTextForDots.includes("perfil de citas")
+  ) &&
+  (
+    assistantTextForDots.includes("no hay banderas rojas claras") ||
+    assistantTextForDots.includes("no se detectan señales claras") ||
+    assistantTextForDots.includes("no se detectan senales claras") ||
+    assistantTextForDots.includes("no veo señales claras de peligro") ||
+    assistantTextForDots.includes("no veo senales claras de peligro") ||
+    assistantTextForDots.includes("no hay señales claras de peligro") ||
+    assistantTextForDots.includes("no hay senales claras de peligro")
+  ) &&
+  (
+    assistantTextForDots.includes("verificación visible") ||
+    assistantTextForDots.includes("verificacion visible") ||
+    assistantTextForDots.includes("suma confianza") ||
+    assistantTextForDots.includes("buen indicio")
+  ) &&
+  !assistantTextForDots.includes("aparece reutilizada") &&
+  !assistantTextForDots.includes("foto reutilizada") &&
+  !assistantTextForDots.includes("imagen reutilizada") &&
+  !assistantTextForDots.includes("foto robada") &&
+  !assistantTextForDots.includes("imagen robada") &&
+  !assistantTextForDots.includes("perfil falso") &&
+  !assistantTextForDots.includes("catfish") &&
+  !assistantTextForDots.includes("pide dinero") &&
+  !assistantTextForDots.includes("pedir dinero") &&
+  !assistantTextForDots.includes("enviar dinero") &&
+  !assistantTextForDots.includes("envíes dinero") &&
+  !assistantTextForDots.includes("envies dinero") &&
+  !assistantTextForDots.includes("enlace sospechoso") &&
+  !assistantTextForDots.includes("enlaces sospechosos") &&
+  !assistantTextForDots.includes("amenaza") &&
+  !assistantTextForDots.includes("chantaje");
+
+const finalRiskStatus = hasStrongPhoneFraudContextForDots
+  ? "high"
+  : neutralIdentityLookup
+    ? "safe"
+    : assistantClearlyLowRiskDating
+      ? "safe"
+      : assistantClearlyLowRiskPhoneForDots
+        ? "safe"
+        : assistantRiskStatus ?? userRiskStatus;
+
+if (!finalRiskStatus) return null;
+
+    return (
+  <div className="mb-2 md:mb-2.5 flex min-h-[34px] md:min-h-0 items-start justify-start overflow-visible pt-2.5 md:pt-0 pl-0 md:pl-0">
+    <div className="overflow-visible translate-y-[5px] md:translate-y-0">
+      <VonuThinking
+        size={38}
+        status={finalRiskStatus}
+        active={false}
+      />
+    </div>
+  </div>
+);
+  })()}
+
+  <div className="vonu-reveal min-w-0 max-w-full overflow-x-hidden overflow-y-visible">
+    {m.image && (
                     <div className="mb-2">
                       <img
                         src={m.image}
@@ -6968,12 +10871,12 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                   )}
 
                   {(m.text || m.streaming) && (
-  <div className="prose max-w-none min-w-0 overflow-visible break-words prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-headings:my-0 font-sans text-[21px] md:text-[22px] leading-9 md:leading-9">
+    <div className="vonu-markdown w-full max-w-full min-w-0 overflow-x-hidden overflow-y-visible break-words [overflow-wrap:anywhere] font-sans text-[18px] md:text-[19px] leading-8 md:leading-8">
     {mdText.includes('"elements"') || mdText.includes("```excalidraw") ? null : (
       <>
         <ReactMarkdown
-          remarkPlugins={[remarkMath]}
-          rehypePlugins={[rehypeKatex]}
+  remarkPlugins={[remarkGfm, remarkMath]}
+  rehypePlugins={[rehypeKatex]}
           components={makeMdComponents(
             m.boardImageB64,
             m.boardImagePlacement,
@@ -6989,7 +10892,8 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   </div>
 )}
 
-                  {activeThread?.mode === "tutor" && m.boardImageB64 ? (
+
+                                    {activeThread?.mode === "tutor" && m.boardImageB64 ? (
                     <div className="mt-3">
                       <ChalkboardTutorBoard
                         className="w-full"
@@ -6999,6 +10903,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
                       />
                     </div>
                   ) : null}
+  </div>
 
                   <AssistantMessageActions
                     isLastAssistantMessage={isLastAssistantMessage}
@@ -7019,7 +10924,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 </div>
 
 {isDraggingFile && !paywallOpen ? (
-  <div className="fixed inset-0 z-[120] pointer-events-none">
+  <div className="fixed inset-0 z-[9999] pointer-events-none">
     <div className="absolute inset-0 bg-white/42 backdrop-blur-[6px]" />
 
     <div className="absolute inset-0 flex items-center justify-center px-6">
@@ -7097,13 +11002,18 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 onHomeInputBlur={() => {
   document.documentElement.classList.remove("vonu-home-input-focus-mode");
   document.documentElement.classList.remove("vonu-home-keyboard-open");
-  document.documentElement.style.removeProperty("--vonu-keyboard-height");
+
+  // Solo limpiamos la altura del teclado si seguimos en pantalla inicial.
+  // En conversación normal la necesitamos para que el input no quede debajo del teclado.
+  if (!hasUserMessage) {
+    document.documentElement.style.removeProperty("--vonu-keyboard-height");
+  }
 }}
     isTyping={isTyping}
     textareaRef={textareaRef}
     handleKeyDown={handleKeyDown}
     handlePaste={handlePasteIntoChat}
-    canSend={canSend}
+    canSend={canSendForInput}
     sendMessage={sendMessage}
     voiceMode={voiceMode}
     realtimeStatus={realtimeStatus}
