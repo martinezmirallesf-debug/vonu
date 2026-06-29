@@ -4922,17 +4922,25 @@ async function toggleConversation() {
     !!navigator.mediaDevices &&
     !!navigator.mediaDevices.getUserMedia;
 
-
-
-  // ✅ SI YA ESTÁ ACTIVO, PRIMERO APAGAR SIEMPRE
+  // ✅ Si ya está activo, apagamos siempre de forma limpia.
   if (voiceModeRef.current) {
-        unlockChatUi("toggleConversationOff");
+    unlockChatUi("toggleConversationOff");
     realtimeManualCloseRef.current = true;
+    realtimeStoppedByLimitRef.current = false;
+
+    try {
+      clearRealtimeLimitTimers();
+    } catch {}
 
     try {
       realtimeConnRef.current?.stop();
     } catch {}
+
     realtimeConnRef.current = null;
+
+    try {
+      stopMic();
+    } catch {}
 
     voiceModeRef.current = false;
     setVoiceMode(false);
@@ -4947,24 +4955,75 @@ async function toggleConversation() {
     return;
   }
 
-  // ✅ A partir de aquí solo estamos intentando ENCENDERLO
+  // ✅ No logueado: no intentamos abrir Realtime.
   if (!isLoggedIn) {
+    realtimeStoppedByLimitRef.current = false;
+    realtimeManualCloseRef.current = false;
+
+    try {
+      clearRealtimeLimitTimers();
+    } catch {}
+
+    setRealtimeStatus("closed");
+    setVoiceMode(false);
+    voiceModeRef.current = false;
+    setPayLoading(false);
+
     setMicMsg("Debes iniciar sesión para usar el modo conversación.");
     setTimeout(() => setMicMsg(null), 2400);
+
     openLoginModal("signin");
     return;
   }
 
-  if (usageInfo && !["plus", "max"].includes(usageInfo.plan_id)) {
-  setMicMsg("El modo conversación por voz no está disponible en tu plan actual.");
-  setTimeout(() => setMicMsg(null), 2800);
-  handleOpenPlansCTA();
-  return;
-}
-
   if (!supportsMic) {
     setMicMsg("Tu navegador no soporta micrófono en este modo.");
     setTimeout(() => setMicMsg(null), 2400);
+    return;
+  }
+
+  // ✅ Refrescamos usage justo antes de decidir.
+  const freshUsage = await refreshUsageInfo();
+
+  const currentUsage = freshUsage ?? usageInfo;
+
+  const planId = String(currentUsage?.plan_id ?? "free");
+  const realtimeSecondsLeftBeforeStart = Math.max(
+    0,
+    Number(currentUsage?.realtime_seconds_left ?? 0)
+  );
+
+  // ✅ Logueado pero sin plan/voz disponible.
+  if (!["plus", "max"].includes(planId)) {
+    realtimeStoppedByLimitRef.current = false;
+    realtimeManualCloseRef.current = false;
+
+    setRealtimeStatus("closed");
+    setVoiceMode(false);
+    voiceModeRef.current = false;
+    setPayLoading(false);
+
+    setMicMsg("El modo conversación por voz no está disponible en tu plan actual.");
+    setTimeout(() => setMicMsg(null), 2800);
+
+    handleOpenPlansCTA();
+    return;
+  }
+
+  // ✅ Logueado con plan, pero sin minutos.
+  if (realtimeSecondsLeftBeforeStart <= 0) {
+    realtimeStoppedByLimitRef.current = false;
+    realtimeManualCloseRef.current = false;
+
+    setRealtimeStatus("closed");
+    setVoiceMode(false);
+    voiceModeRef.current = false;
+    setPayLoading(false);
+
+    setMicMsg("No quedan minutos de voz disponibles.");
+    setTimeout(() => setMicMsg(null), 2400);
+
+    openVoiceTopupModal();
     return;
   }
 
@@ -4981,31 +5040,14 @@ async function toggleConversation() {
   clearSilenceTimer();
 
   realtimeLastUserTextRef.current = "";
+  realtimeManualCloseRef.current = false;
+  realtimeStoppedByLimitRef.current = false;
 
   setMicMsg("Conectando con Vonu por voz…");
   setRealtimeStatus("connecting");
 
   try {
-    const freshUsage = await refreshUsageInfo();
-
-const realtimeSecondsLeftBeforeStart = Math.max(
-  0,
-  Number(
-    freshUsage?.realtime_seconds_left ??
-      usageInfo?.realtime_seconds_left ??
-      0
-  )
-);
-
-if (realtimeSecondsLeftBeforeStart <= 0) {
-  realtimeStoppedByLimitRef.current = false;
-  openVoiceTopupModal();
-  setMicMsg("No quedan minutos de voz disponibles.");
-  setTimeout(() => setMicMsg(null), 2400);
-  return;
-}
-
-const conn = await startRealtimeVoice({
+    const conn = await startRealtimeVoice({
       onStatus: (status) => {
         setRealtimeStatus(status);
 
@@ -5028,34 +5070,41 @@ const conn = await startRealtimeVoice({
         }
       },
 
-        onUsageTracked: async () => {
-  const latestUsage = await refreshUsageInfo();
+      onUsageTracked: async () => {
+        const latestUsage = await refreshUsageInfo();
+        const left = Number(latestUsage?.realtime_seconds_left ?? 0);
 
-  const left = Number(latestUsage?.realtime_seconds_left ?? 0);
+        if (realtimeStoppedByLimitRef.current) {
+          realtimeStoppedByLimitRef.current = false;
 
-  if (realtimeStoppedByLimitRef.current) {
-    realtimeStoppedByLimitRef.current = false;
-
-    if (left <= 0) {
-      openVoiceTopupModal();
-    }
-  }
-},
+          if (left <= 0) {
+            openVoiceTopupModal();
+          }
+        }
+      },
 
       onError: (message) => {
         realtimeManualCloseRef.current = false;
+        realtimeStoppedByLimitRef.current = false;
+
         setMicMsg(message || "Error en el modo conversación.");
 
         console.error("[Realtime UI error]", message);
 
         try {
+          clearRealtimeLimitTimers();
+        } catch {}
+
+        try {
           realtimeConnRef.current?.stop();
         } catch {}
+
         realtimeConnRef.current = null;
 
         voiceModeRef.current = false;
         setVoiceMode(false);
         setRealtimeStatus("error");
+        setPayLoading(false);
       },
 
       onUserFinalTranscript: (text) => {
@@ -5080,22 +5129,29 @@ const conn = await startRealtimeVoice({
     voiceModeRef.current = true;
     setVoiceMode(true);
     setTtsEnabled(false);
-    setMicMsg("✅ Conectando modo conversación…");
+    setMicMsg("✅ Conectado. Habla cuando quieras.");
 
+    // ✅ Corte automático según minutos reales disponibles.
     armRealtimeVoiceLimit(realtimeSecondsLeftBeforeStart);
   } catch (e: any) {
     try {
+      clearRealtimeLimitTimers();
+    } catch {}
+
+    try {
       realtimeConnRef.current?.stop();
     } catch {}
+
     realtimeConnRef.current = null;
 
     voiceModeRef.current = false;
     setVoiceMode(false);
     setRealtimeStatus("closed");
     voiceWriteGuardRef.current.reset();
+    setPayLoading(false);
 
     setMicMsg(e?.message ?? "No se pudo iniciar el modo conversación.");
-    setTimeout(() => setMicMsg(null), 3200);
+    setTimeout(() => setMicMsg(null), 2800);
   }
 }
 
