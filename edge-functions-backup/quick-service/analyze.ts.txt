@@ -30,6 +30,62 @@ function json(data: unknown, status = 200) {
   });
 }
 
+async function runOpenAILightGreeting(params: {
+  openaiApiKey: string;
+  userText: string;
+}) {
+  const model =
+    Deno.env.get("OPENAI_MODEL_LIGHT") ||
+    Deno.env.get("OPENAI_MODEL_CHAT") ||
+    Deno.env.get("OPENAI_MODEL") ||
+    "gpt-4o-mini";
+
+  try {
+    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${params.openaiApiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.6,
+        max_tokens: 90,
+        messages: [
+          {
+            role: "system",
+            content:
+              "Eres Vonu, un asistente preventivo y cercano. Responde al saludo de forma natural, breve y humana. No suenes a plantilla. No hagas análisis si el usuario solo saluda. Invítale suavemente a contar qué quiere revisar.",
+          },
+          {
+            role: "user",
+            content: params.userText || "hola",
+          },
+        ],
+      }),
+    });
+
+    const data = await resp.json().catch(() => null);
+    const text = data?.choices?.[0]?.message?.content?.trim();
+
+    return {
+      text:
+        text ||
+        "Hola 👋 Estoy aquí. Cuéntame qué quieres revisar y lo vemos con calma.",
+      model,
+      tokens_used: data?.usage?.total_tokens ?? null,
+    };
+  } catch (error) {
+    console.warn("[quick-service] openai_light_greeting_error", error);
+
+    return {
+      text: "Hola 👋 Estoy aquí. Cuéntame qué quieres revisar y lo vemos con calma.",
+      model,
+      tokens_used: null,
+    };
+  }
+}
+
 // ---------- helpers ----------
 type ThreadMode = "chat" | "tutor";
 type TutorLevel = "kid" | "teen" | "adult" | "unknown";
@@ -1275,7 +1331,7 @@ async function queryUrlhaus(safeUrl: string): Promise<Partial<UrlhausRiskResult>
   const authKey = Deno.env.get("URLHAUS_AUTH_KEY") || "";
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 4500);
+  const timeout = setTimeout(() => controller.abort(), 1200);
 
   try {
     const body = new URLSearchParams();
@@ -1353,12 +1409,94 @@ async function queryUrlhaus(safeUrl: string): Promise<Partial<UrlhausRiskResult>
   }
 }
 
+function shouldRunLiveUrlhausCheck(
+  userText: string,
+  normalized: { safeUrl: string | null; domain: string | null }
+) {
+  const t = String(userText ?? "").toLowerCase();
+  const safeUrl = String(normalized.safeUrl ?? "").toLowerCase();
+  const domain = String(normalized.domain ?? "").toLowerCase();
+
+  const isDirectIp =
+    /^\d{1,3}(?:\.\d{1,3}){3}$/.test(domain);
+
+  const hasDangerousFile =
+    /\.(sh|exe|apk|bat|cmd|ps1|scr|jar|zip|rar)(?:$|[/?#])/i.test(safeUrl);
+
+  const hasSuspiciousContext = [
+    "sms",
+    "whatsapp",
+    "telegram",
+    "email",
+    "correo",
+    "banco",
+    "correos",
+    "seur",
+    "dhl",
+    "paypal",
+    "bizum",
+    "tarjeta",
+    "pagar",
+    "pago",
+    "1,99",
+    "1.99",
+    "aduanas",
+    "multa",
+    "qr",
+    "parquímetro",
+    "parquimetro",
+    "urgente",
+    "verificar",
+    "verificación",
+    "verificacion",
+    "código",
+    "codigo",
+    "otp",
+    "login",
+    "descargar",
+    "descarga",
+    "instalar",
+    "soporte",
+    "microsoft",
+    "anydesk",
+    "rustdesk",
+    "metamask",
+    "binance",
+    "wallet",
+    "cripto",
+    "crypto",
+  ].some((word) => t.includes(word));
+
+  return isDirectIp || hasDangerousFile || hasSuspiciousContext;
+}
+
 async function buildExternalWebRiskContext(userText: string) {
   const normalized = normalizeUrlForExternalRisk(userText);
 
-  if (!normalized.safeUrl || !normalized.domain) return "";
+if (!normalized.safeUrl || !normalized.domain) return "";
 
-  const urlhaus = await queryUrlhaus(normalized.safeUrl);
+// Modo sano: no bloqueamos una web normal/oficial con URLhaus.
+// URLhaus queda solo para enlaces con contexto sospechoso, descargas,
+// IP directa, SMS, pagos, bancos, QR, malware, etc.
+if (!shouldRunLiveUrlhausCheck(userText, normalized)) {
+  return `
+CONTEXTO WEB BÁSICO:
+Se ha detectado una URL o dominio en el mensaje del usuario.
+
+Datos normalizados:
+- Dominio normalizado: ${normalized.domain}
+- URL normalizada sin parámetros sensibles: ${normalized.safeUrl}
+- Parámetros eliminados: ${normalized.queryRemoved ? "sí" : "no"}
+
+Cómo usar este contexto:
+- No digas que has hecho una comprobación externa exhaustiva.
+- Evalúa dominio, marca, coherencia, contexto, pagos, urgencia, datos solicitados, contacto y señales visibles.
+- Si parece una web oficial conocida y no hay urgencia, pago raro, SMS, WhatsApp, banco, descarga o datos sensibles, transmite confianza prudente.
+- Si hay dudas, recomienda entrar escribiendo la dirección manualmente o desde canales oficiales.
+`.trim();
+}
+
+const urlhaus = await queryUrlhaus(normalized.safeUrl);
 
   const result: UrlhausRiskResult = {
     hasUrl: true,
@@ -8041,17 +8179,23 @@ if (
   !earlyPdfText &&
   earlyIsShortGreeting
 ) {
-  console.log("[quick-service] emergency_fast_path_greeting");
+  console.log("[quick-service] openai_light_greeting");
+
+  const lightGreeting = await runOpenAILightGreeting({
+    openaiApiKey: OPENAI_API_KEY,
+    userText: earlyUserText,
+  });
 
   return json(
     {
-      text: "Hola 👋 Dime qué quieres revisar y lo miramos con calma.",
-      model: "fast-path",
+      text: lightGreeting.text,
+      model: lightGreeting.model,
       pillar: "CONVERSACION_GENERAL",
       mode: "chat",
       tutorLevel: null,
       studyMode: null,
-      fastPath: "emergency_greeting",
+      tokens_used: lightGreeting.tokens_used,
+      lightPath: "openai_light_greeting",
     },
     200,
   );
@@ -8224,48 +8368,6 @@ const isShortGreeting =
     userTextClean,
   );
 
-if (
-  effectiveMode === "chat" &&
-  !imageBase64 &&
-  !pdfText &&
-  !footballIntent &&
-  isShortGreeting
-) {
-  console.log("[quick-service] fast_path_greeting");
-
-  return json(
-    {
-      text: "Hola 👋 Dime qué quieres revisar y lo miramos con calma.",
-      model: "fast-path",
-      pillar,
-      mode: effectiveMode,
-      tutorLevel: null,
-      studyMode: null,
-      fastPath: "greeting",
-    },
-    200,
-  );
-}
-if (
-  effectiveMode === "chat" &&
-  !imageBase64 &&
-  !pdfText &&
-  !footballIntent &&
-  isGreetingOrVeryShort(userText)
-) {
-  return json(
-    {
-      text: "Hola 👋 Dime qué quieres revisar y lo miramos con calma.",
-      model: "fast-path",
-      pillar,
-      mode: effectiveMode,
-      tutorLevel: null,
-      studyMode: null,
-      fastPath: "greeting",
-    },
-    200,
-  );
-}
 const incompletePhysicsProblem = detectIncompletePhysicsProblem(userText);
 
 let footballPrediction: any | null = null;
@@ -8615,6 +8717,15 @@ if (effectiveMode === "tutor" && incompletePhysicsProblem.isIncomplete) {
   effectiveMode === "tutor"
     ? instructionsTutor(pillar, tutorLevel, userText)
     : instructionsChat(pillar, lowContext, studyMode);
+
+const extraInstructions =
+  typeof body?.extraInstructions === "string"
+    ? body.extraInstructions.trim()
+    : "";
+
+if (extraInstructions) {
+  instructions += `\n\n${extraInstructions}`;
+}
 
 instructions += `\n\n${buildCurrentDateContext()}`;
 

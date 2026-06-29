@@ -5132,7 +5132,7 @@ async function toggleConversation() {
     setMicMsg("✅ Conectado. Habla cuando quieras.");
 
     // ✅ Corte automático según minutos reales disponibles.
-    armRealtimeVoiceLimit(20);
+    armRealtimeVoiceLimit(realtimeSecondsLeftBeforeStart);
   } catch (e: any) {
     try {
       clearRealtimeLimitTimers();
