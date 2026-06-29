@@ -4832,10 +4832,10 @@ function armRealtimeVoiceLimit(secondsLeft: number) {
     setVoiceModeOff();
 
     // Damos un pequeño margen para que se registre el consumo realtime.
-    setTimeout(() => {
-      refreshUsageInfo();
-      openVoiceTopupModal();
-    }, 900);
+    setTimeout(async () => {
+  await refreshUsageInfo();
+  openVoiceTopupModal();
+}, 1500);
   }, safeSecondsLeft * 1000);
 }
 
@@ -5132,7 +5132,7 @@ async function toggleConversation() {
     setMicMsg("✅ Conectado. Habla cuando quieras.");
 
     // ✅ Corte automático según minutos reales disponibles.
-    armRealtimeVoiceLimit(realtimeSecondsLeftBeforeStart);
+    armRealtimeVoiceLimit(20);
   } catch (e: any) {
     try {
       clearRealtimeLimitTimers();
