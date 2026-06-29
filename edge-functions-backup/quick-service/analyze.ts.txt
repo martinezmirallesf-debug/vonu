@@ -1240,7 +1240,7 @@ function shouldUseCopyableExtraInstructions(userText: string) {
     t.includes("mensaje para copiar") ||
     t.includes("correo") ||
     t.includes("email") ||
-    t.includes("whatsapp") ||
+    t.includes("whatsapp para") ||
     t.includes("sms para") ||
     t.includes("reclamación") ||
     t.includes("reclamacion") ||
@@ -8730,7 +8730,9 @@ if (effectiveMode === "tutor" && incompletePhysicsProblem.isIncomplete) {
   if (params.hasImage || params.hasPdf) return false;
   if (params.studyModeActive) return false;
 
-  const t = String(params.userText ?? "").toLowerCase();
+  const t = String(params.userText ?? "").toLowerCase().trim();
+
+  if (!t) return false;
 
   const compactSignals = [
     "me puedo fiar",
@@ -8767,7 +8769,7 @@ if (effectiveMode === "tutor" && incompletePhysicsProblem.isIncomplete) {
 
   if (compactSignals.some((word) => t.includes(word))) return true;
 
-  return t.length > 0 && t.length <= 180;
+  return t.length <= 180;
 }
 
 function instructionsChatCompact(pillar: string, userText: string) {
@@ -9377,7 +9379,14 @@ if (ENABLE_REPORT_SAVES) {
     pillar,
     model,
     tokens_used: data?.usage?.total_tokens ?? null,
-    studyMode: studyMode.active ? studyMode : null,
+
+debugPromptMode: useCompactChatPrompt ? "compact" : "full",
+debugHistoryCount: history.length,
+debugHasExtraInstructions: Boolean(extraInstructions),
+debugHasImage: Boolean(imageBase64),
+debugHasPdf: Boolean(pdfText),
+
+studyMode: studyMode.active ? studyMode : null,
     usage: !isGuest
   ? {
       plan_id: planId,
