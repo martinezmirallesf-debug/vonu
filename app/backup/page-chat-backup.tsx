@@ -3591,6 +3591,63 @@ await refreshUsageInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ✅ Autologin suave en pestaña nueva:
+// No toca el modal, no toca botones, no reescribe el flujo principal.
+// Solo intenta recuperar una sesión que Supabase pueda hidratar unos ms tarde.
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  if (!mounted) return;
+  if (authUserIdRef.current) return;
+
+  let cancelled = false;
+
+  const tryLateSessionRecovery = async () => {
+    try {
+      // Pequeña espera para dar tiempo a Supabase a hidratar storage/cookies.
+      await sleep(650);
+
+      if (cancelled) return;
+      if (authUserIdRef.current) return;
+
+      const { data } = await supabaseBrowser.auth.getSession();
+      const user = data?.session?.user;
+
+      if (!user) return;
+
+      await ensureProfileExists(user);
+
+      if (cancelled) return;
+
+      const profile = computeProfileFromUser(user);
+
+      authUserIdRef.current = profile.id;
+
+      setAuthUserEmail(profile.email);
+      setAuthUserId(profile.id);
+      setAuthUserName(profile.name);
+      setAuthLoading(false);
+
+      setLoginOpen(false);
+      setLoginMsg(null);
+
+      setTimeout(() => {
+        refreshProStatus();
+        refreshUsageInfo();
+      }, 80);
+    } catch (error) {
+      console.warn("[Vonu auth] late session recovery failed:", error);
+    }
+  };
+
+  tryLateSessionRecovery();
+
+  return () => {
+    cancelled = true;
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted]);
+
   // ✅ Sync entre pestañas: login/logout/refresh de sesión en otra pestaña
 useEffect(() => {
   if (typeof window === "undefined") return;
@@ -5773,29 +5830,51 @@ const shownFileCardForMessageRef = useRef<Set<string>>(new Set());
 const pdfInputRef = useRef<HTMLInputElement | null>(null);
 
 
-  function pinUserMessageNearTop(messageId: string) {
+  function getPinnedUserTopGap() {
+  const headerHeight =
+    headerRef.current?.getBoundingClientRect().height ??
+    (isDesktopPointer() ? 70 : 58);
+
+  return Math.round(headerHeight + (isDesktopPointer() ? 14 : 2));
+}
+
+function pinUserMessageNearTop(messageId: string) {
+  const runPin = (duration = 360) => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const msgEl = container.querySelector(
+      `[data-msg-id="${messageId}"]`
+    ) as HTMLElement | null;
+
+    if (!msgEl) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const msgRect = msgEl.getBoundingClientRect();
+
+    const topGap = getPinnedUserTopGap();
+
+    const targetTop =
+      container.scrollTop + (msgRect.top - containerRect.top) - topGap;
+
+    smoothScrollToPosition(container, Math.max(0, targetTop), duration);
+  };
+
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      const container = scrollRef.current;
-      if (!container) return;
-
-      const msgEl = container.querySelector(
-        `[data-msg-id="${messageId}"]`
-      ) as HTMLElement | null;
-
-      if (!msgEl) return;
-
-      const containerRect = container.getBoundingClientRect();
-      const msgRect = msgEl.getBoundingClientRect();
-
-      const topGap = isDesktopPointer() ? 92 : 125;
-
-      const targetTop =
-        container.scrollTop + (msgRect.top - containerRect.top) - topGap;
-
-      smoothScrollToPosition(container, Math.max(0, targetTop), 420);
+      runPin(360);
     });
   });
+
+  window.setTimeout(() => {
+    runPin(260);
+  }, isDesktopPointer() ? 120 : 220);
+
+  if (!isDesktopPointer()) {
+    window.setTimeout(() => {
+      runPin(180);
+    }, 520);
+  }
 }
 
  const [inputBarH, setInputBarH] = useState<number>(140);
@@ -10497,11 +10576,11 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
     hasUserMessage ? "mx-auto max-w-3xl" : "mx-auto max-w-[980px]",
   ].join(" ")}
   style={{
-    paddingTop: hasUserMessage ? 0 : 92,
-    paddingBottom: hasUserMessage
-      ? chatBottomPad + (isDesktopPointer() ? 90 : 44)
-      : inputBarH + 180,
-  }}
+  paddingTop: hasUserMessage ? (isDesktopPointer() ? 24 : 84) : 92,
+  paddingBottom: hasUserMessage
+    ? chatBottomPad + (isDesktopPointer() ? 90 : 44)
+    : inputBarH + 180,
+}}
 >
 
 {showSoftLimitWarning ? (

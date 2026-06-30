@@ -10576,7 +10576,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
     hasUserMessage ? "mx-auto max-w-3xl" : "mx-auto max-w-[980px]",
   ].join(" ")}
   style={{
-  paddingTop: hasUserMessage ? (isDesktopPointer() ? 24 : 84) : 92,
+  paddingTop: hasUserMessage ? (isDesktopPointer() ? 22 : 72) : 92,
   paddingBottom: hasUserMessage
     ? chatBottomPad + (isDesktopPointer() ? 90 : 44)
     : inputBarH + 180,
