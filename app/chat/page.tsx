@@ -11277,14 +11277,64 @@ const finalRiskStatus = forceSafeSocialProfilePhotoDots
             ? "safe"
             : assistantRiskStatus ?? userRiskStatus;
 
-if (!finalRiskStatus) return null;
+const forceGreenForSafeSocialProfilePhoto =
+  (
+    previousUserTextForDotsLower.includes("foto de perfil") ||
+    previousUserTextForDotsLower.includes("imagen de perfil") ||
+    previousUserTextForDotsLower.includes("perfil de facebook") ||
+    previousUserTextForDotsLower.includes("perfil de instagram")
+  ) &&
+  (
+    previousUserTextForDotsLower.includes("facebook") ||
+    previousUserTextForDotsLower.includes("instagram") ||
+    previousUserTextForDotsLower.includes("red social") ||
+    previousUserTextForDotsLower.includes("perfil")
+  ) &&
+  (
+    assistantTextForDots.includes("foto de perfil normal") ||
+    assistantTextForDots.includes("perfil de red social normal") ||
+    assistantTextForDots.includes("foto de perfil normal y natural") ||
+    assistantTextForDots.includes("parece una foto de perfil normal") ||
+    assistantTextForDots.includes("parece un perfil de red social normal") ||
+    assistantTextForDots.includes("parece una foto normal") ||
+    assistantTextForDots.includes("parece natural") ||
+    assistantTextForDots.includes("sin señales sospechosas evidentes") ||
+    assistantTextForDots.includes("sin senales sospechosas evidentes") ||
+    assistantTextForDots.includes("sin señales sospechosas relevantes") ||
+    assistantTextForDots.includes("sin senales sospechosas relevantes") ||
+    assistantTextForDots.includes("sin señales claras de peligro") ||
+    assistantTextForDots.includes("sin senales claras de peligro")
+  ) &&
+  !assistantTextForDots.includes("foto reutilizada") &&
+  !assistantTextForDots.includes("imagen reutilizada") &&
+  !assistantTextForDots.includes("foto robada") &&
+  !assistantTextForDots.includes("imagen robada") &&
+  !assistantTextForDots.includes("perfil falso") &&
+  !assistantTextForDots.includes("suplantación clara") &&
+  !assistantTextForDots.includes("suplantacion clara") &&
+  !assistantTextForDots.includes("pide dinero") &&
+  !assistantTextForDots.includes("te pide dinero") &&
+  !assistantTextForDots.includes("pide códigos") &&
+  !assistantTextForDots.includes("pide codigos") &&
+  !assistantTextForDots.includes("enlace sospechoso") &&
+  !assistantTextForDots.includes("enlaces sospechosos") &&
+  !assistantTextForDots.includes("inversión") &&
+  !assistantTextForDots.includes("inversion") &&
+  !assistantTextForDots.includes("cripto") &&
+  !assistantTextForDots.includes("crypto");
+
+const visualRiskStatus = forceGreenForSafeSocialProfilePhoto
+  ? "safe"
+  : finalRiskStatus;
+
+if (!visualRiskStatus) return null;
 
     return (
   <div className="mb-2 md:mb-2.5 flex min-h-[34px] md:min-h-0 items-start justify-start overflow-visible pt-2.5 md:pt-0 pl-0 md:pl-0">
     <div className="overflow-visible translate-y-[5px] md:translate-y-0">
       <VonuThinking
         size={38}
-        status={finalRiskStatus}
+        status={visualRiskStatus}
         active={false}
       />
     </div>
