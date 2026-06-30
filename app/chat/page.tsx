@@ -3591,6 +3591,63 @@ await refreshUsageInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ✅ Autologin suave en pestaña nueva:
+// No toca el modal, no toca botones, no reescribe el flujo principal.
+// Solo intenta recuperar una sesión que Supabase pueda hidratar unos ms tarde.
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  if (!mounted) return;
+  if (authUserIdRef.current) return;
+
+  let cancelled = false;
+
+  const tryLateSessionRecovery = async () => {
+    try {
+      // Pequeña espera para dar tiempo a Supabase a hidratar storage/cookies.
+      await sleep(650);
+
+      if (cancelled) return;
+      if (authUserIdRef.current) return;
+
+      const { data } = await supabaseBrowser.auth.getSession();
+      const user = data?.session?.user;
+
+      if (!user) return;
+
+      await ensureProfileExists(user);
+
+      if (cancelled) return;
+
+      const profile = computeProfileFromUser(user);
+
+      authUserIdRef.current = profile.id;
+
+      setAuthUserEmail(profile.email);
+      setAuthUserId(profile.id);
+      setAuthUserName(profile.name);
+      setAuthLoading(false);
+
+      setLoginOpen(false);
+      setLoginMsg(null);
+
+      setTimeout(() => {
+        refreshProStatus();
+        refreshUsageInfo();
+      }, 80);
+    } catch (error) {
+      console.warn("[Vonu auth] late session recovery failed:", error);
+    }
+  };
+
+  tryLateSessionRecovery();
+
+  return () => {
+    cancelled = true;
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted]);
+
   // ✅ Sync entre pestañas: login/logout/refresh de sesión en otra pestaña
 useEffect(() => {
   if (typeof window === "undefined") return;

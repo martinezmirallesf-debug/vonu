@@ -20,6 +20,14 @@ const GEMINI_MODEL_IMAGE =
 const ENABLE_IMAGE_AUX_CHECKS =
   Deno.env.get("ENABLE_IMAGE_AUX_CHECKS") === "true";
 
+const ENABLE_GEMINI_IMAGE_AUX =
+  ENABLE_IMAGE_AUX_CHECKS &&
+  Deno.env.get("ENABLE_GEMINI_IMAGE_AUX") === "true";
+
+const ENABLE_REVERSE_IMAGE_CHECKS =
+  ENABLE_IMAGE_AUX_CHECKS &&
+  Deno.env.get("ENABLE_REVERSE_IMAGE_CHECKS") === "true";
+
 const ENABLE_REPORT_SAVES =
   Deno.env.get("ENABLE_REPORT_SAVES") === "true";
 
@@ -1579,6 +1587,86 @@ Cómo usar este contexto:
 `.trim();
 }
 
+function buildVisualRiskContextCompact(hasImage: boolean, userText: string) {
+  if (!hasImage) return "";
+
+  const t = String(userText || "").toLowerCase();
+
+  const isDatingOrProfile =
+    t.includes("tinder") ||
+    t.includes("bumble") ||
+    t.includes("badoo") ||
+    t.includes("perfil") ||
+    t.includes("app de citas") ||
+    t.includes("instagram") ||
+    t.includes("facebook") ||
+    t.includes("red social") ||
+    t.includes("real o falso") ||
+    t.includes("me puedo fiar");
+
+  const asksAiOrManipulation =
+    t.includes("ia") ||
+    t.includes("inteligencia artificial") ||
+    t.includes("es real") ||
+    t.includes("real o falso") ||
+    t.includes("foto real") ||
+    t.includes("imagen real") ||
+    t.includes("editada") ||
+    t.includes("manipulada") ||
+    t.includes("fake") ||
+    t.includes("falso") ||
+    t.includes("falsa");
+
+  return `
+CONTEXTO VISUAL COMPACTO:
+El usuario ha adjuntado una imagen. Analízala con criterio práctico de seguridad.
+
+Objetivo:
+- No te limites a describir la imagen.
+- Da un veredicto útil en la primera frase.
+- Si hay señales claras, dilo sin rodeos.
+- Si no hay señales claras, transmite calma prudente.
+- No inventes comprobaciones externas.
+- No digas que has hecho búsqueda inversa salvo que el contexto de búsqueda inversa aparezca después.
+
+Si la pregunta va sobre IA, edición o si la imagen es real:
+- Distingue entre:
+  1. imagen generada por IA;
+  2. foto real editada/retocada;
+  3. foto real pero posiblemente reutilizada;
+  4. perfil fiable o no fiable.
+- Una foto real puede estar robada.
+- Si ves sombras raras, reflejos extraños, manos/pies deformados, contacto raro con el suelo, fondo incoherente o estética demasiado artificial, menciónalo.
+- Si no puedes cerrarlo al 100%, dilo con naturalidad.
+
+Si parece perfil de citas o red social:
+- Revisa si hay verificación visible, más fotos, bio coherente y señales humanas.
+- La falta de verificación por sí sola no prueba estafa.
+- Si aparece dinero, inversión, cripto, enlaces, urgencia, códigos o presión, sube mucho el riesgo.
+- Si la búsqueda inversa indica imagen reutilizada, eso pesa mucho y debe ir en la primera frase.
+- Si no hay dinero, enlaces, presión ni foto reutilizada, no alarmes.
+
+Color/veredicto:
+- Verde: no hay señales claras de peligro.
+- Naranja: hay duda razonable, imagen rara, perfil poco verificable o no lo darías por fiable solo con la imagen.
+- Rojo: foto reutilizada, suplantación clara, dinero/inversión/cripto, enlaces, presión, amenaza o estafa probable.
+
+Formato:
+- Primera frase: veredicto práctico.
+- Luego usa:
+  **Lo que veo:**
+  **Lo que me hace dudar:**
+  **Qué haría ahora:**
+  **Para quedarte con la idea:**
+- No uses listas largas.
+- No uses tono robótico.
+
+Contexto detectado:
+- Perfil/citas/red social: ${isDatingOrProfile ? "sí" : "no"}
+- Pregunta sobre IA/real/falso/edición: ${asksAiOrManipulation ? "sí" : "no"}
+`.trim();
+}
+
 function buildVisualRiskContext(hasImage: boolean, userText: string) {
   if (!hasImage) return "";
 
@@ -1808,6 +1896,19 @@ Reglas generales:
 - Perfil no verificado no significa scam.
 - Una foto real puede estar robada.
 - Aunque visualmente la foto parezca real, explica al usuario cómo comprobar la coherencia del perfil según la plataforma.
+
+REGLA DE VEREDICTO Y COLOR:
+- Si la conclusión tiene señales mixtas, NO abras con una frase que parezca verde como “No parece IA” sin matiz.
+- Si ves dudas visuales, sombras raras, edición posible, incoherencias, perfil no verificable o no lo darías por fiable, abre con:
+  “Precaución moderada: ...”
+  o
+  “Yo lo dejaría en duda razonable: ...”
+  o
+  “No lo daría por fiable solo con esta imagen: ...”
+- Si no hay foto reutilizada, dinero, enlaces, presión, cripto ni suplantación clara, no lo marques como riesgo alto.
+- Pero si dices “no lo daría por fiable”, “me hace dudar”, “hay señales raras” o “no usaría esta foto como prueba”, la respuesta debe sonar naranja/precaución, no verde.
+- Evita abrir con “No parece IA pura” cuando después vas a decir que no es fiable. Mejor:
+  “Precaución moderada: no parece IA generada desde cero, pero hay detalles que me hacen dudar.”
 
 REGLA DE CALMA Y NO ALARMISMO:
 - Si no ves señales claras de riesgo, engaño, manipulación o estafa, no alarmes.
@@ -3901,151 +4002,56 @@ if (!riskSignals.length) {
 function buildReverseImageRiskContext(result: ReverseImageWebDetectionResult | null) {
   if (!result?.ok || !result.checked) return "";
 
-  const compact = {
-    risk_score: result.risk_score,
-    risk_level: result.risk_level,
-    reused_image_suspected: result.reused_image_suspected,
-    multiple_sources_found: result.multiple_sources_found,
-    social_or_profile_matches_found: result.social_or_profile_matches_found,
-    full_matching_images_count: result.full_matching_images_count,
-    partial_matching_images_count: result.partial_matching_images_count,
-    pages_with_matching_images_count: result.pages_with_matching_images_count,
-    visually_similar_images_count: result.visually_similar_images_count,
-    best_guess_labels: result.best_guess_labels,
-    top_web_entities: result.top_web_entities,
-    top_pages: result.top_pages.slice(0, 5).map((p) => ({
-      title: p.title,
-      domain: p.domain,
-      url: p.url,
-    })),
-    risk_signals: result.risk_signals,
-    safe_signals: result.safe_signals,
-    recommended_actions: result.recommended_actions,
-    similarity_signature: result.similarity_signature,
-  };
+  const riskScore = Number(result.risk_score ?? 0);
+  const riskLevel = String(result.risk_level ?? "unknown");
+  const reused = Boolean(result.reused_image_suspected);
+  const pagesCount = Number(result.pages_with_matching_images_count ?? 0);
+  const fullCount = Number(result.full_matching_images_count ?? 0);
+  const partialCount = Number(result.partial_matching_images_count ?? 0);
+
+  const topEntities = Array.isArray(result.top_web_entities)
+    ? result.top_web_entities.slice(0, 3).map((x) => String(x)).filter(Boolean)
+    : [];
+
+  if (reused) {
+    return `
+CONTEXTO DE BÚSQUEDA INVERSA:
+La imagen aparece reutilizada o con coincidencias web suficientes.
+
+Datos:
+- riesgo: ${riskScore}
+- nivel: ${riskLevel}
+- páginas con coincidencias: ${pagesCount}
+- coincidencias completas: ${fullCount}
+- coincidencias parciales: ${partialCount}
+- entidades: ${topEntities.length ? topEntities.join(", ") : "sin entidad clara"}
+
+Uso en la respuesta:
+- Primera frase: di claramente que la foto aparece reutilizada.
+- Esta señal pesa más que que la imagen parezca natural.
+- Explica que una foto real puede estar robada o usada en un perfil falso.
+- No muestres URLs ni detalles técnicos.
+- Recomienda revisar perfil completo, más fotos, bio coherente, verificación visible y conversación natural.
+- Si es app de citas y la conversación avanza, sugiere videollamada corta.
+`.trim();
+  }
 
   return `
-CONTEXTO INTERNO DE BÚSQUEDA INVERSA DE IMAGEN:
-Se ha hecho una comprobación interna de coincidencias web de la imagen.
+CONTEXTO DE BÚSQUEDA INVERSA:
+No aparecen coincidencias web claras de reutilización en esta primera comprobación.
 
-IMPORTANTE:
-- No digas al usuario que se ha usado Google, Google Lens, Cloud Vision, proveedores externos ni herramientas internas, salvo que el usuario pregunte explícitamente.
-- No muestres URLs largas ni hagas una lista técnica de resultados.
-- Traduce el resultado a una conclusión útil, humana y accionable.
-- Una foto puede ser real y aun así estar robada, reutilizada, editada o usada en un perfil falso.
-- Si hay coincidencias web de la misma imagen en varios sitios, dominios o perfiles, eso pesa más que que la foto “parezca natural”.
-- Si reused_image_suspected es true, no respondas “parece real, todo bien”.
-- Si no hay coincidencias, no digas que está verificada; solo que no aparece reutilizada en esta primera comprobación.
-SI reverse_image_web_detection indica reused_image_suspected=true:
-- La señal de reutilización tiene prioridad sobre la apariencia visual.
-- El primer párrafo debe decirlo de forma clara y rápida.
-- No empieces diciendo “parece una foto real”, “parece natural” o “no hay señales claras”.
-- Si el usuario pregunta si es IA, separa desde el principio:
-  1. Puede no ser IA generada desde cero.
-  2. Pero aparece reutilizada/reciclada en varias fuentes.
-  3. Por tanto, baja la confianza en su origen o en el perfil que la usa.
-- Frases recomendadas:
-  “No parece IA pura, pero no la daría por fiable: aparece reutilizada en varias fuentes.”
-  “No diría que sea IA generada desde cero, pero ojo: esta foto aparece reutilizada en varias fuentes.”
-  “Puede ser una foto real o editada, pero no parece una imagen original de ese perfil.”
-- Si también hay anomalía visual, sombra rara o posible edición, menciónalo en el primer párrafo:
-  “No parece IA pura, pero no la daría por fiable: aparece reutilizada y hay una sombra rara.”
-- Si el usuario pregunta solo si es IA, no conviertas automáticamente el caso en estafa, pero sí menciona la reutilización arriba del todo si existe.
+Datos:
+- riesgo: ${riskScore}
+- nivel: ${riskLevel}
+- páginas con coincidencias: ${pagesCount}
+- coincidencias completas: ${fullCount}
+- coincidencias parciales: ${partialCount}
 
-REGLA ESPECIAL PARA APPS DE CITAS Y REDES:
-Diferencia siempre entre apps de citas y redes sociales. No las analices igual.
-
-SI ES TINDER / BUMBLE / BADOO / APP DE CITAS:
-- Responde en formato móvil: frases cortas, negritas útiles y viñetas accionables.
-- Empieza siempre con el veredicto práctico, no con la apariencia visual.
-- Primera frase recomendada si hay reutilización:
-  “Yo no me fiaría del todo.”
-  o
-  “Yo no confiaría en este perfil solo por esta foto.”
-- En la primera o segunda frase menciona la señal principal:
-  “Esta misma foto aparece reutilizada en varias fuentes.”
-- No empieces diciendo que “parece natural”, “parece humana”, “parece típica de Tinder” o “suma autenticidad visual”.
-- Si la foto visualmente parece real, dilo después del aviso principal:
-  “Aunque visualmente pueda parecer una selfie real, eso no confirma que el perfil sea auténtico.”
-- Si risk_level es high o risk_score >= 70, usa “precaución alta”.
-- Si no hay foto reutilizada, dinero, enlaces, presión, urgencia ni señales raras, transmite calma antes que sospecha.
-- Aperturas recomendadas:
-  “En principio, no se detectan señales por las que preocuparse.”
-  “Con lo que se ve aquí, no hay banderas rojas claras.”
-  “De entrada, no me da mala espina.”
-- Después matiza de forma natural:
-  “Aun así, en apps de citas es normal comprobar poco a poco que el perfil sea coherente.”
-- Evita abrir con “precaución moderada” cuando el riesgo práctico es bajo o normal.
-- En apps de citas revisa o recomienda revisar SOLO:
-  - verificación visible;
-  - más fotos variadas;
-  - biografía coherente;
-  - conversación natural;
-  - si intenta mover rápido a WhatsApp/Telegram;
-  - si evita videollamada;
-  - si aparece dinero, inversión, cripto, códigos, documentos o fotos íntimas.
-- No menciones publicaciones antiguas, comentarios, seguidores, seguidos, historias ni etiquetas si el usuario solo ha dicho Tinder/Bumble/Badoo y la captura no muestra esos elementos.
-- No des un porcentaje tipo “70% de que sea real o editada”.
-- Si das porcentaje, que sea sobre el riesgo práctico:
-  “La probabilidad de que esta foto no sea original de ese perfil me parece alta.”
-- Añade una mini educación final:
-  “Una foto bonita o natural no garantiza que la persona detrás sea real.”
-
-SI ES INSTAGRAM / TIKTOK / FACEBOOK / THREADS / RED SOCIAL:
-- Analiza si el perfil parece tener vida real.
-- Revisa o recomienda revisar:
-  - publicaciones antiguas y variadas;
-  - comentarios naturales de personas reales;
-  - seguidores y seguidos coherentes;
-  - etiquetas;
-  - historias;
-  - captions/textos coherentes;
-  - fotos variadas en distintos contextos;
-  - interacción real.
-- Si hay foto reutilizada, cuenta recién creada, pocas publicaciones, comentarios raros, seguidores incoherentes o presión por dinero/datos, sube la precaución.
-- Si hay verificación visible, di que suma confianza, pero no garantiza intenciones.
-
-Resultado normalizado:
-${JSON.stringify(compact, null, 2)}
-
-FORMATO OBLIGATORIO DE LA RESPUESTA FINAL:
-- La respuesta final al usuario debe usar Markdown visual.
-- El primer párrafo debe ir en negrita si contiene el veredicto principal.
-- Los apartados deben ir con negritas Markdown:
-  **Lo que me hace dudar:**
-  **Qué haría ahora:**
-  **Para quedarte con la idea:**
-- No uses títulos planos sin negrita.
-- Las listas deben usar guiones Markdown reales, no “•”.
-- Ejemplo correcto:
-  **No parece IA pura, pero no la daría por fiable: aparece reutilizada en varias fuentes.**
-
-  **Lo que me hace dudar:**
-  - La imagen aparece reutilizada.
-  - Hay una sombra que conviene mirar con cautela.
-
-  **Qué haría ahora:**
-  - No usaría esta foto como prueba de identidad.
-  - Revisaría el perfil completo.
-
-Cómo usarlo:
-- Si reused_image_suspected es true:
-  - di que la foto parece reutilizada, reciclada o posiblemente robada;
-  - si el contexto es Tinder/app de citas/red social, trata el perfil con precaución alta;
-  - explica que una foto real o bonita no demuestra identidad real;
-  - si además el análisis visual marca edición, exceso de perfección, sombra rara, retoque o anomalías, explica que podría ser foto real editada con IA/filtros fuertes o generación parcial;
-  - separa “foto real”, “foto editada/IA” y “perfil fiable”.
-- Si multiple_sources_found es true:
-  - di que aparece en varias fuentes y eso baja mucho la confianza.
-- Si social_or_profile_matches_found es true:
-  - explica que esa señal encaja con perfil reciclado/catfish, sin afirmar certeza absoluta.
-- Si risk_score >= 70:
-  - trata el caso como precaución alta aunque visualmente la imagen parezca real.
-- Si risk_score es bajo:
-  - transmite tranquilidad prudente, sin afirmar certeza absoluta.
-- Educa brevemente:
-  - “Una foto real no demuestra que el perfil sea real; lo importante es la procedencia y la coherencia del perfil.”
-  - “Una foto puede ser real, estar retocada con IA y aun así usarse en un perfil falso; no basta con que la cara o las manos parezcan naturales.”
+Uso en la respuesta:
+- No digas que la imagen está verificada.
+- Di solo que no aparece reutilizada en esta primera comprobación.
+- Combina esta señal con el análisis visual y el contexto.
+- Si no hay dinero, enlaces, presión, cripto ni señales raras, transmite calma prudente.
 `.trim();
 }
 
@@ -8803,6 +8809,55 @@ Mensaje del usuario: ${userText}
 `.trim();
 }
 
+function instructionsChatImageCompact(pillar: string, userText: string) {
+  return `
+Eres Vonu, un asistente preventivo y cercano para ayudar al usuario a decidir con calma ante imágenes, perfiles, capturas, webs, pagos o situaciones dudosas.
+
+Tono:
+- Natural, claro y humano.
+- No suenes a plantilla.
+- No exageres si no hay señales claras.
+- Si hay una señal fuerte, abre directo.
+- Si hay dudas, usa precaución moderada.
+- Si no hay señales claras, transmite calma prudente.
+
+Reglas:
+- No empieces diciendo “No puedo identificar a la persona” salvo que el usuario pregunte explícitamente quién es.
+- Si el usuario solo pregunta qué se ve, describe la imagen directamente.
+- Si aparece una persona, puedes describir rasgos visibles no sensibles como ropa, postura, expresión, entorno y objetos.
+- No conviertas una simple descripción de imagen en análisis de perfil falso si el usuario no menciona perfil, citas, Tinder, Instagram, estafa o fiabilidad.
+- No inventes comprobaciones externas.
+- No digas que has hecho búsqueda inversa salvo que el contexto de búsqueda inversa lo indique.
+- Una foto real puede estar robada o reutilizada.
+- Una foto bonita o natural no garantiza que el perfil sea auténtico.
+- Si hay foto reutilizada, eso pesa más que la apariencia visual.
+- Si hay dinero, inversión, cripto, enlaces, urgencia, códigos o presión, sube mucho el riesgo.
+- Si no hay foto reutilizada, dinero, enlaces, presión ni señales raras, no alarmes.
+- Si el usuario pregunta qué se ve en la imagen, descríbela directamente.
+- Si la imagen muestra una persona, objeto, escena, deporte, documento, web, captura o perfil, identifica lo visible con prudencia.
+- No digas “no puedo identificar lo que se ve” salvo que la imagen sea ilegible, esté demasiado borrosa o no haya imagen.
+- Si ves suficiente para describirla, responde describiendo lo visible antes de valorar riesgos.
+- No conviertas una simple descripción de imagen en análisis de perfil falso si el usuario no menciona perfil, citas, Tinder, Instagram, estafa, autenticidad o fiabilidad.
+- Si la imagen parece normal y el usuario solo pide describirla, no cierres con advertencias de seguridad.
+
+Formato:
+- No escribas literalmente “Veredicto práctico:”.
+- La primera frase debe sonar natural.
+- Si el usuario solo pregunta qué se ve en la imagen, responde con una descripción directa y breve.
+- En una simple descripción de imagen, no uses apartados de riesgo salvo que el usuario pregunte por fiabilidad, estafa, perfil, IA, edición, autenticidad o seguridad.
+- Si hay riesgo o duda real, entonces usa los apartados necesarios:
+  **Lo que veo:**
+  **Lo que me hace dudar:**
+  **Qué haría ahora:**
+  **Para quedarte con la idea:**
+- Si no hay riesgo claro, evita “Lo que me hace dudar”.
+- Respuesta breve, útil y accionable.
+
+Pilar inferido: ${pillar}
+Mensaje del usuario: ${userText}
+`.trim();
+}
+
     // ------------------------- OpenAI normal (no fútbol) -------------------------
     const modelChat = Deno.env.get("OPENAI_MODEL_CHAT") || "gpt-4o";
     const modelTutor = Deno.env.get("OPENAI_MODEL_TUTOR") || "gpt-4o";
@@ -8833,6 +8888,8 @@ Mensaje del usuario: ${userText}
 let instructions =
   effectiveMode === "tutor"
     ? instructionsTutor(pillar, tutorLevel, userText)
+    : imageBase64
+    ? instructionsChatImageCompact(pillar, userText)
     : useCompactChatPrompt
     ? instructionsChatCompact(pillar, userText)
     : instructionsChat(pillar, lowContext, studyMode);
@@ -8857,7 +8914,7 @@ if (externalWebRiskContext) {
   instructions += `\n\n${externalWebRiskContext}`;
 }
 
-const visualRiskContext = buildVisualRiskContext(!!imageBase64, userText);
+const visualRiskContext = buildVisualRiskContextCompact(!!imageBase64, userText);
 
 if (effectiveMode === "chat" && visualRiskContext) {
   instructions += `\n\n${visualRiskContext}`;
@@ -8889,13 +8946,13 @@ const hasGoogleCloudVisionApiKey =
   Boolean(Deno.env.get("GOOGLE_CLOUD_VISION_API_KEY"));
 
 const shouldRunGeminiImageAnalysis =
-  ENABLE_IMAGE_AUX_CHECKS &&
+  ENABLE_GEMINI_IMAGE_AUX &&
   effectiveMode === "chat" &&
   Boolean(imageBase64) &&
   Boolean(GEMINI_API_KEY);
 
 const shouldRunReverseImageAnalysis =
-  ENABLE_IMAGE_AUX_CHECKS &&
+  ENABLE_REVERSE_IMAGE_CHECKS &&
   hasGoogleCloudVisionApiKey &&
   shouldRunReverseImageRiskCheck({
     userText,
@@ -9023,6 +9080,13 @@ if (reverseImageRiskContext) {
   instructions += `\n\n${reverseImageRiskContext}`;
 }
 
+const hasStrongReusedImageSignal =
+  effectiveMode === "chat" &&
+  Boolean(reverseImageRisk?.ok) &&
+  Boolean(reverseImageRisk?.checked) &&
+  Boolean(reverseImageRisk?.reused_image_suspected) &&
+  Number(reverseImageRisk?.risk_score ?? 0) >= 70;
+
 if (
   effectiveMode === "chat" &&
   reverseImageRisk?.ok &&
@@ -9031,18 +9095,11 @@ if (
 ) {
   instructions += `
 
-REGLA FINAL PRIORITARIA PARA ESTA RESPUESTA:
-- En esta ejecución concreta, la búsqueda inversa indica que la imagen aparece reutilizada o tiene coincidencias web.
-- La primera frase de la respuesta final DEBE mencionar esa reutilización.
-- No empieces diciendo que la imagen parece real, natural o no generada por IA sin mencionar antes la reutilización.
-- Usa una apertura parecida a:
-  **No parece IA pura, pero no la daría por fiable: aparece reutilizada en varias fuentes.**
-- Si además hay duda visual de sombra, edición o anomalía, añade esa señal en el mismo primer párrafo.
-- Los apartados deben ir en negrita Markdown:
-  **Lo que me hace dudar:**
-  **Qué haría ahora:**
-  **Para quedarte con la idea:**
-- Las listas deben usar guiones Markdown reales, no “•”.
+REGLA PRIORITARIA:
+- La primera frase debe mencionar que la foto aparece reutilizada en varias fuentes.
+- No empieces diciendo que parece real o natural sin mencionar antes la reutilización.
+- Usa una apertura natural como:
+  “No me fiaría del todo: esta foto aparece reutilizada en varias fuentes.”
 `.trim();
 }
 
@@ -9068,11 +9125,19 @@ const asksImageAuthenticity =
     /bumble/i.test(userText || "") ||
     /badoo/i.test(userText || "") ||
     /app de citas/i.test(userText || "") ||
-    /perfil de citas/i.test(userText || "")
+    /perfil de citas/i.test(userText || "") ||
+    /perfil/i.test(userText || "")
   ) &&
   (
     /fiable/i.test(userText || "") ||
+    /fiar/i.test(userText || "") ||
+    /fiarme/i.test(userText || "") ||
+    /f[ií]o/i.test(userText || "") ||
+    /confiar/i.test(userText || "") ||
+    /confianza/i.test(userText || "") ||
     /me puedo fiar/i.test(userText || "") ||
+    /puedo fiarme/i.test(userText || "") ||
+    /puedo confiar/i.test(userText || "") ||
     /te parece fiable/i.test(userText || "") ||
     /es seguro/i.test(userText || "") ||
     /es segura/i.test(userText || "") ||
@@ -9084,6 +9149,47 @@ if (
   asksDatingProfileReliability &&
   !reverseImageRisk?.reused_image_suspected
 ) {
+
+if (
+  asksDatingProfileReliability &&
+  reverseImageRisk?.ok &&
+  reverseImageRisk.checked &&
+  reverseImageRisk.reused_image_suspected
+) {
+  instructions += `
+
+REGLA FINAL PRIORITARIA PARA PERFIL DE APP DE CITAS CON FOTO REUTILIZADA:
+- El usuario pregunta si puede fiarse de un perfil de Tinder/Bumble/Badoo/app de citas.
+- La búsqueda inversa indica que la foto aparece reutilizada o con coincidencias web.
+- NO respondas en un único párrafo.
+- NO respondas como simple descripción de imagen.
+- Responde como análisis de fiabilidad del perfil.
+
+Formato obligatorio:
+**Yo no me fiaría del todo: esta foto aparece reutilizada en varias fuentes.**
+
+**Lo que me hace dudar:**
+- La foto no parece exclusiva de ese perfil.
+- Una foto real puede estar robada o usada por otra persona.
+- En una app de citas, esto baja bastante la confianza inicial.
+
+**Qué comprobaría antes de seguir:**
+- Si tiene más fotos variadas y naturales.
+- Si la biografía encaja con la conversación.
+- Si hay verificación visible.
+- Si intenta salir rápido a WhatsApp/Telegram.
+- Si aparece dinero, inversión, cripto, códigos, documentos o urgencia.
+
+**Qué haría ahora:**
+- Seguiría con cautela y sin compartir datos personales.
+- No enviaría dinero, códigos, documentos ni fotos íntimas.
+- Si la conversación avanza, propondría una videollamada corta y natural.
+- Si da excusas raras o presiona, bloquearía o reportaría.
+
+**Para quedarte con la idea:**
+- La señal clave no es si la foto parece bonita o real, sino que no parece original de ese perfil.
+`.trim();
+}
   instructions += `
 
 REGLA FINAL PRIORITARIA PARA PERFIL DE APP DE CITAS:
@@ -9114,6 +9220,48 @@ REGLA FINAL PRIORITARIA PARA PERFIL DE APP DE CITAS:
   **Qué comprobaría con calma:**
   **Para quedarte con la idea:**
 - La respuesta debe ser compatible con puntos verdes, no con puntos naranjas.
+`.trim();
+}
+
+if (
+  asksDatingProfileReliability &&
+  reverseImageRisk?.ok &&
+  reverseImageRisk.checked &&
+  reverseImageRisk.reused_image_suspected
+) {
+  instructions += `
+
+REGLA FINAL PRIORITARIA PARA PERFIL DE APP DE CITAS CON FOTO REUTILIZADA:
+- El usuario pregunta si puede fiarse de un perfil de Tinder/Bumble/Badoo/app de citas.
+- Hay señal fuerte de búsqueda inversa: la foto aparece reutilizada o con coincidencias web.
+- No respondas en un solo párrafo corto.
+- Responde como análisis de perfil, no solo como aviso genérico.
+- Primera frase en negrita:
+  **Yo no me fiaría del todo: esta foto aparece reutilizada en varias fuentes.**
+- Después usa estos apartados:
+
+  **Lo que me hace dudar:**
+  - La foto no parece exclusiva de ese perfil.
+  - Una foto real puede estar robada o usada por otra persona.
+  - En una app de citas, esto baja bastante la confianza inicial.
+
+  **Qué comprobaría antes de seguir:**
+  - Si tiene más fotos variadas y naturales.
+  - Si la bio encaja con la conversación.
+  - Si hay verificación visible.
+  - Si intenta salir rápido a WhatsApp/Telegram.
+  - Si aparece dinero, inversión, cripto, códigos, documentos o urgencia.
+
+  **Qué haría ahora:**
+  - Seguiría con cautela y sin compartir datos personales.
+  - No enviaría dinero, códigos, documentos ni fotos íntimas.
+  - Si la conversación avanza, propondría una videollamada corta y natural.
+  - Si da excusas raras o presiona, bloquearía/reportaría.
+
+  **Para quedarte con la idea:**
+  - La señal clave no es si la foto parece bonita o real, sino que no parece original de ese perfil.
+- No menciones Google, Google Lens ni herramientas internas.
+- No digas que es estafa segura; di que baja mucho la confianza.
 `.trim();
 }
 
@@ -9160,10 +9308,20 @@ if (pdfText) {
   });
 }
 
-if (imageBase64) {
+if (imageBase64 && !hasStrongReusedImageSignal) {
   userContent.push({
     type: "input_image",
     image_url: isLikelyDataUrl(imageBase64) ? imageBase64 : imageBase64,
+    detail: "low",
+  });
+}
+
+if (imageBase64 && hasStrongReusedImageSignal) {
+  userContent.push({
+    type: "input_text",
+    text: asksDatingProfileReliability
+      ? "El usuario adjuntó una imagen de un perfil de app de citas. La señal decisiva es que la búsqueda inversa indica foto reutilizada. Responde como análisis de fiabilidad del perfil, con apartados claros: lo que me hace dudar, qué comprobaría, qué haría ahora y para quedarte con la idea. No respondas en un solo párrafo."
+      : "El usuario adjuntó una imagen. No hace falta inspeccionarla de nuevo visualmente porque la señal decisiva es la búsqueda inversa: aparece reutilizada o con coincidencias web suficientes para bajar la confianza.",
   });
 }
 
@@ -9373,23 +9531,17 @@ if (ENABLE_REPORT_SAVES) {
 
         return json(
   {
-    text,
-    mode: effectiveMode,
-    tutorLevel: effectiveMode === "tutor" ? tutorLevel : null,
-    pillar,
-    model,
-    tokens_used: data?.usage?.total_tokens ?? null,
+  text,
+  mode: effectiveMode,
+  tutorLevel: effectiveMode === "tutor" ? tutorLevel : null,
+  pillar,
+  model,
+  tokens_used: data?.usage?.total_tokens ?? null,
 
-debugPromptMode: useCompactChatPrompt ? "compact" : "full",
-debugHistoryCount: history.length,
-debugHasExtraInstructions: Boolean(extraInstructions),
-debugHasImage: Boolean(imageBase64),
-debugHasPdf: Boolean(pdfText),
-
-studyMode: studyMode.active ? studyMode : null,
-    usage: !isGuest
-  ? {
-      plan_id: planId,
+  studyMode: studyMode.active ? studyMode : null,
+  usage: !isGuest
+    ? {
+        plan_id: planId,
 
       messages_used: (usage?.messages_used ?? 0) + 1,
       messages_limit: messagesLimit,
