@@ -5830,29 +5830,51 @@ const shownFileCardForMessageRef = useRef<Set<string>>(new Set());
 const pdfInputRef = useRef<HTMLInputElement | null>(null);
 
 
-  function pinUserMessageNearTop(messageId: string) {
+  function getPinnedUserTopGap() {
+  const headerHeight =
+    headerRef.current?.getBoundingClientRect().height ??
+    (isDesktopPointer() ? 70 : 58);
+
+  return Math.round(headerHeight + (isDesktopPointer() ? 16 : 10));
+}
+
+function pinUserMessageNearTop(messageId: string) {
+  const runPin = (duration = 360) => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const msgEl = container.querySelector(
+      `[data-msg-id="${messageId}"]`
+    ) as HTMLElement | null;
+
+    if (!msgEl) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const msgRect = msgEl.getBoundingClientRect();
+
+    const topGap = getPinnedUserTopGap();
+
+    const targetTop =
+      container.scrollTop + (msgRect.top - containerRect.top) - topGap;
+
+    smoothScrollToPosition(container, Math.max(0, targetTop), duration);
+  };
+
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      const container = scrollRef.current;
-      if (!container) return;
-
-      const msgEl = container.querySelector(
-        `[data-msg-id="${messageId}"]`
-      ) as HTMLElement | null;
-
-      if (!msgEl) return;
-
-      const containerRect = container.getBoundingClientRect();
-      const msgRect = msgEl.getBoundingClientRect();
-
-      const topGap = isDesktopPointer() ? 92 : 125;
-
-      const targetTop =
-        container.scrollTop + (msgRect.top - containerRect.top) - topGap;
-
-      smoothScrollToPosition(container, Math.max(0, targetTop), 420);
+      runPin(360);
     });
   });
+
+  window.setTimeout(() => {
+    runPin(260);
+  }, isDesktopPointer() ? 120 : 220);
+
+  if (!isDesktopPointer()) {
+    window.setTimeout(() => {
+      runPin(180);
+    }, 520);
+  }
 }
 
  const [inputBarH, setInputBarH] = useState<number>(140);
@@ -10554,11 +10576,11 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
     hasUserMessage ? "mx-auto max-w-3xl" : "mx-auto max-w-[980px]",
   ].join(" ")}
   style={{
-    paddingTop: hasUserMessage ? 0 : 92,
-    paddingBottom: hasUserMessage
-      ? chatBottomPad + (isDesktopPointer() ? 90 : 44)
-      : inputBarH + 180,
-  }}
+  paddingTop: hasUserMessage ? (isDesktopPointer() ? 24 : 84) : 92,
+  paddingBottom: hasUserMessage
+    ? chatBottomPad + (isDesktopPointer() ? 90 : 44)
+    : inputBarH + 180,
+}}
 >
 
 {showSoftLimitWarning ? (
