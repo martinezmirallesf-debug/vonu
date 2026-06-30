@@ -10998,6 +10998,83 @@ const assistantTextForDots = String(m.text ?? "").toLowerCase();
 
 const previousUserTextForDotsLower = String(previousUserMessage?.text ?? "").toLowerCase();
 
+// ✅ Normalizador local para los puntos.
+// Evita que un acento o una frase ligeramente distinta impida detectar verde.
+const normalizeDotsText = (value: string) =>
+  String(value ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const assistantTextForDotsPlain = normalizeDotsText(m.text ?? "");
+const previousUserTextForDotsPlain = normalizeDotsText(previousUserMessage?.text ?? "");
+
+const isSocialProfilePhotoPromptForDots =
+  (
+    previousUserTextForDotsPlain.includes("facebook") ||
+    previousUserTextForDotsPlain.includes("instagram") ||
+    previousUserTextForDotsPlain.includes("tiktok") ||
+    previousUserTextForDotsPlain.includes("threads") ||
+    previousUserTextForDotsPlain.includes("red social") ||
+    previousUserTextForDotsPlain.includes("perfil")
+  ) &&
+  (
+    previousUserTextForDotsPlain.includes("foto de perfil") ||
+    previousUserTextForDotsPlain.includes("imagen de perfil") ||
+    previousUserTextForDotsPlain.includes("perfil de facebook") ||
+    previousUserTextForDotsPlain.includes("perfil de instagram") ||
+    previousUserTextForDotsPlain.includes("me puedo fiar") ||
+    previousUserTextForDotsPlain.includes("puedo fiarme") ||
+    previousUserTextForDotsPlain.includes("fiar") ||
+    previousUserTextForDotsPlain.includes("fiarme")
+  );
+
+const assistantClearlySafeSocialProfilePhotoForDots =
+  isSocialProfilePhotoPromptForDots &&
+  (
+    assistantTextForDotsPlain.includes("foto de perfil normal") ||
+    assistantTextForDotsPlain.includes("foto de perfil normal y natural") ||
+    assistantTextForDotsPlain.includes("parece una foto de perfil normal") ||
+    assistantTextForDotsPlain.includes("parece una foto de perfil normal y natural") ||
+    assistantTextForDotsPlain.includes("foto de perfil normal y natural") ||
+    assistantTextForDotsPlain.includes("parece una foto normal") ||
+    assistantTextForDotsPlain.includes("parece una imagen normal") ||
+    assistantTextForDotsPlain.includes("parece natural") ||
+    assistantTextForDotsPlain.includes("normal y natural") ||
+    assistantTextForDotsPlain.includes("sin senales sospechosas evidentes") ||
+    assistantTextForDotsPlain.includes("sin senales sospechosas relevantes") ||
+    assistantTextForDotsPlain.includes("sin senales claras de peligro") ||
+    assistantTextForDotsPlain.includes("no veo senales claras de peligro") ||
+    assistantTextForDotsPlain.includes("no hay senales claras de peligro") ||
+    assistantTextForDotsPlain.includes("no detecto senales de peligro") ||
+    assistantTextForDotsPlain.includes("no se aprecia peligro") ||
+    assistantTextForDotsPlain.includes("no se ve peligro")
+  );
+
+const assistantHasHardSocialProfileDangerForDots =
+  assistantTextForDotsPlain.includes("foto reutilizada") ||
+  assistantTextForDotsPlain.includes("imagen reutilizada") ||
+  assistantTextForDotsPlain.includes("foto robada") ||
+  assistantTextForDotsPlain.includes("imagen robada") ||
+  assistantTextForDotsPlain.includes("perfil falso") ||
+  assistantTextForDotsPlain.includes("suplantacion clara") ||
+  assistantTextForDotsPlain.includes("catfish") ||
+  assistantTextForDotsPlain.includes("catfishing") ||
+  assistantTextForDotsPlain.includes("pide dinero") ||
+  assistantTextForDotsPlain.includes("te pide dinero") ||
+  assistantTextForDotsPlain.includes("pide codigos") ||
+  assistantTextForDotsPlain.includes("te pide codigos") ||
+  assistantTextForDotsPlain.includes("enlace sospechoso") ||
+  assistantTextForDotsPlain.includes("enlaces sospechosos") ||
+  assistantTextForDotsPlain.includes("inversion") ||
+  assistantTextForDotsPlain.includes("cripto") ||
+  assistantTextForDotsPlain.includes("crypto") ||
+  assistantTextForDotsPlain.includes("presion fuerte");
+
+const forceSafeSocialProfilePhotoDots =
+  assistantClearlySafeSocialProfilePhotoForDots &&
+  !assistantHasHardSocialProfileDangerForDots;
+
 const isSocialProfilePromptForDots =
   (
     previousUserTextForDotsLower.includes("facebook") ||
@@ -11186,15 +11263,19 @@ const assistantClearlyLowRiskDating =
   !assistantTextForDots.includes("amenaza") &&
   !assistantTextForDots.includes("chantaje");
 
-const finalRiskStatus = hasStrongPhoneFraudContextForDots
-  ? "high"
-  : neutralIdentityLookup
-    ? "safe"
-    : assistantClearlyLowRiskDating
+const finalRiskStatus = forceSafeSocialProfilePhotoDots
+  ? "safe"
+  : hasStrongPhoneFraudContextForDots
+    ? "high"
+    : neutralIdentityLookup
       ? "safe"
-      : assistantClearlyLowRiskPhoneForDots
+      : assistantClearlyLowRiskDating
         ? "safe"
-        : assistantRiskStatus ?? userRiskStatus;
+        : assistantClearlyLowRiskSocialProfileForDots
+          ? "safe"
+          : assistantClearlyLowRiskPhoneForDots
+            ? "safe"
+            : assistantRiskStatus ?? userRiskStatus;
 
 if (!finalRiskStatus) return null;
 
