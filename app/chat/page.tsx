@@ -10933,6 +10933,70 @@ const assistantTextForDots = String(m.text ?? "").toLowerCase();
 
 const previousUserTextForDotsLower = String(previousUserMessage?.text ?? "").toLowerCase();
 
+const isSocialProfilePromptForDots =
+  (
+    previousUserTextForDotsLower.includes("facebook") ||
+    previousUserTextForDotsLower.includes("instagram") ||
+    previousUserTextForDotsLower.includes("tiktok") ||
+    previousUserTextForDotsLower.includes("threads") ||
+    previousUserTextForDotsLower.includes("red social") ||
+    previousUserTextForDotsLower.includes("perfil social") ||
+    previousUserTextForDotsLower.includes("perfil de facebook") ||
+    previousUserTextForDotsLower.includes("perfil de instagram")
+  ) &&
+  (
+    previousUserTextForDotsLower.includes("fiar") ||
+    previousUserTextForDotsLower.includes("fiarme") ||
+    previousUserTextForDotsLower.includes("fiable") ||
+    previousUserTextForDotsLower.includes("confiar") ||
+    previousUserTextForDotsLower.includes("real") ||
+    previousUserTextForDotsLower.includes("normal") ||
+    previousUserTextForDotsLower.includes("seguro") ||
+    previousUserTextForDotsLower.includes("segura")
+  );
+
+const assistantClearlyLowRiskSocialProfileForDots =
+  isSocialProfilePromptForDots &&
+  (
+    assistantTextForDots.includes("perfil de red social normal") ||
+    assistantTextForDots.includes("perfil social normal") ||
+    assistantTextForDots.includes("datos coherentes") ||
+    assistantTextForDots.includes("sin señales sospechosas relevantes") ||
+    assistantTextForDots.includes("sin senales sospechosas relevantes") ||
+    assistantTextForDots.includes("no hay señales significativas de peligro") ||
+    assistantTextForDots.includes("no hay senales significativas de peligro") ||
+    assistantTextForDots.includes("no veo señales significativas de peligro") ||
+    assistantTextForDots.includes("no veo senales significativas de peligro") ||
+    assistantTextForDots.includes("señales de coherencia") ||
+    assistantTextForDots.includes("senales de coherencia") ||
+    assistantTextForDots.includes("bajo riesgo") ||
+    assistantTextForDots.includes("no alarmaría") ||
+    assistantTextForDots.includes("no alarmaria") ||
+    assistantTextForDots.includes("parece normal") ||
+    assistantTextForDots.includes("encaja con un perfil normal")
+  ) &&
+  !assistantTextForDots.includes("foto reutilizada") &&
+  !assistantTextForDots.includes("imagen reutilizada") &&
+  !assistantTextForDots.includes("foto robada") &&
+  !assistantTextForDots.includes("imagen robada") &&
+  !assistantTextForDots.includes("perfil falso") &&
+  !assistantTextForDots.includes("suplantación clara") &&
+  !assistantTextForDots.includes("suplantacion clara") &&
+  !assistantTextForDots.includes("pide dinero") &&
+  !assistantTextForDots.includes("te pide dinero") &&
+  !assistantTextForDots.includes("pide códigos") &&
+  !assistantTextForDots.includes("pide codigos") &&
+  !assistantTextForDots.includes("te pide códigos") &&
+  !assistantTextForDots.includes("te pide codigos") &&
+  !assistantTextForDots.includes("enlace sospechoso") &&
+  !assistantTextForDots.includes("enlaces sospechosos") &&
+  !assistantTextForDots.includes("inversión") &&
+  !assistantTextForDots.includes("inversion") &&
+  !assistantTextForDots.includes("cripto") &&
+  !assistantTextForDots.includes("crypto") &&
+  !assistantTextForDots.includes("presión fuerte") &&
+  !assistantTextForDots.includes("presion fuerte");
+
 const isPhoneAnalysisPromptForDots =
   (
     previousUserTextForDotsLower.includes("número de teléfono") ||
