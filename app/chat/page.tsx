@@ -1121,6 +1121,62 @@ if (hasLowRiskDatingProfileVerdict && !hasRealDatingDangerInVerdict) {
     return "safe";
   }
 
+  const hasLowRiskSocialProfileVerdict =
+  (
+    t.includes("facebook") ||
+    t.includes("instagram") ||
+    t.includes("tiktok") ||
+    t.includes("threads") ||
+    t.includes("red social") ||
+    t.includes("perfil social") ||
+    t.includes("perfil")
+  ) &&
+  (
+    t.includes("no veo señales significativas de peligro") ||
+    t.includes("no veo senales significativas de peligro") ||
+    t.includes("no alarmaría de entrada") ||
+    t.includes("no alarmaria de entrada") ||
+    t.includes("parece más un perfil social normal") ||
+    t.includes("parece mas un perfil social normal") ||
+    t.includes("parece más una cuenta normal") ||
+    t.includes("parece mas una cuenta normal") ||
+    t.includes("riesgo bajo") ||
+    t.includes("baja bastante la sospecha") ||
+    t.includes("bajan la sospecha") ||
+    t.includes("suman confianza") ||
+    t.includes("señales que bajan la sospecha") ||
+    t.includes("senales que bajan la sospecha")
+  );
+
+const hasStrongSocialProfileDanger =
+  hasReusedImageSignal ||
+  hasMoneyCryptoOrRealDanger ||
+  t.includes("foto robada") ||
+  t.includes("imagen robada") ||
+  t.includes("suplantación clara") ||
+  t.includes("suplantacion clara") ||
+  t.includes("perfil falso") ||
+  t.includes("catfish") ||
+  t.includes("catfishing") ||
+  t.includes("enlace sospechoso") ||
+  t.includes("enlaces sospechosos") ||
+  t.includes("pide dinero") ||
+  t.includes("pedir dinero") ||
+  t.includes("inversión") ||
+  t.includes("inversion") ||
+  t.includes("cripto") ||
+  t.includes("crypto") ||
+  t.includes("códigos") ||
+  t.includes("codigos") ||
+  t.includes("documentos") ||
+  t.includes("urgencia") ||
+  t.includes("presión") ||
+  t.includes("presion");
+
+if (hasLowRiskSocialProfileVerdict && !hasStrongSocialProfileDanger) {
+  return "safe";
+}
+
   // ✅ Foto reutilizada: naranja.
   // No la subimos a rojo solo por reutilización.
   if (hasReusedImageSignal) {
