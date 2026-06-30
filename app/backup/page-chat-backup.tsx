@@ -1121,11 +1121,208 @@ if (hasLowRiskDatingProfileVerdict && !hasRealDatingDangerInVerdict) {
     return "safe";
   }
 
+  const hasLowRiskSocialProfileVerdict =
+  (
+    t.includes("facebook") ||
+    t.includes("instagram") ||
+    t.includes("tiktok") ||
+    t.includes("threads") ||
+    t.includes("red social") ||
+    t.includes("perfil social") ||
+    t.includes("perfil")
+  ) &&
+  (
+    t.includes("no veo señales significativas de peligro") ||
+    t.includes("no veo senales significativas de peligro") ||
+    t.includes("no alarmaría de entrada") ||
+    t.includes("no alarmaria de entrada") ||
+    t.includes("parece más un perfil social normal") ||
+    t.includes("parece mas un perfil social normal") ||
+    t.includes("parece más una cuenta normal") ||
+    t.includes("parece mas una cuenta normal") ||
+    t.includes("riesgo bajo") ||
+    t.includes("baja bastante la sospecha") ||
+    t.includes("bajan la sospecha") ||
+    t.includes("suman confianza") ||
+    t.includes("señales que bajan la sospecha") ||
+    t.includes("senales que bajan la sospecha")
+  );
+
+const hasStrongSocialProfileDanger =
+  hasReusedImageSignal ||
+  hasMoneyCryptoOrRealDanger ||
+  t.includes("foto robada") ||
+  t.includes("imagen robada") ||
+  t.includes("suplantación clara") ||
+  t.includes("suplantacion clara") ||
+  t.includes("perfil falso") ||
+  t.includes("catfish") ||
+  t.includes("catfishing") ||
+  t.includes("enlace sospechoso") ||
+  t.includes("enlaces sospechosos") ||
+  t.includes("pide dinero") ||
+  t.includes("pedir dinero") ||
+  t.includes("inversión") ||
+  t.includes("inversion") ||
+  t.includes("cripto") ||
+  t.includes("crypto") ||
+  t.includes("códigos") ||
+  t.includes("codigos") ||
+  t.includes("documentos") ||
+  t.includes("urgencia") ||
+  t.includes("presión") ||
+  t.includes("presion");
+
+if (hasLowRiskSocialProfileVerdict && !hasStrongSocialProfileDanger) {
+  return "safe";
+}
+
+const hasClearlyLowRiskSocialProfileVerdict =
+  (
+    t.includes("facebook") ||
+    t.includes("instagram") ||
+    t.includes("tiktok") ||
+    t.includes("threads") ||
+    t.includes("red social") ||
+    t.includes("perfil social") ||
+    t.includes("perfil de red social") ||
+    t.includes("perfil social normal") ||
+    t.includes("perfil de una red social normal")
+  ) &&
+  (
+    t.includes("perfil de red social normal") ||
+    t.includes("perfil social normal") ||
+    t.includes("datos coherentes") ||
+    t.includes("sin señales sospechosas relevantes") ||
+    t.includes("sin senales sospechosas relevantes") ||
+    t.includes("no hay señales significativas de peligro") ||
+    t.includes("no hay senales significativas de peligro") ||
+    t.includes("no veo señales significativas de peligro") ||
+    t.includes("no veo senales significativas de peligro") ||
+    t.includes("señales de coherencia") ||
+    t.includes("senales de coherencia") ||
+    t.includes("baja bastante la sospecha inicial") ||
+    t.includes("bajan bastante la sospecha inicial") ||
+    t.includes("baja mucho la sospecha inicial") ||
+    t.includes("refuerza bastante") ||
+    t.includes("suma confianza") ||
+    t.includes("cuenta normal") ||
+    t.includes("perfil normal")
+  );
+
+const hasExplicitSocialProfileAttack =
+  t.includes("foto reutilizada") ||
+  t.includes("imagen reutilizada") ||
+  t.includes("foto robada") ||
+  t.includes("imagen robada") ||
+  t.includes("suplantación clara") ||
+  t.includes("suplantacion clara") ||
+  t.includes("perfil falso") ||
+  t.includes("catfish") ||
+  t.includes("catfishing") ||
+  t.includes("enlace sospechoso") ||
+  t.includes("enlaces sospechosos") ||
+  t.includes("pide dinero") ||
+  t.includes("pedir dinero") ||
+  t.includes("te pide dinero") ||
+  t.includes("solicita dinero") ||
+  t.includes("pide inversión") ||
+  t.includes("pide inversion") ||
+  t.includes("te habla de inversión") ||
+  t.includes("te habla de inversion") ||
+  t.includes("cripto") ||
+  t.includes("crypto") ||
+  t.includes("te pide códigos") ||
+  t.includes("te pide codigos") ||
+  t.includes("pide códigos") ||
+  t.includes("pide codigos") ||
+  t.includes("te pide documentos") ||
+  t.includes("pide documentos") ||
+  t.includes("urgencia sospechosa") ||
+  t.includes("presión fuerte") ||
+  t.includes("presion fuerte");
+
+// ✅ Importante:
+// En un perfil social normal, una frase final de higiene digital tipo
+// “no enviar dinero, códigos o documentos” NO debe pintar naranja.
+// Solo bloqueamos verde si el texto afirma que el perfil los pide o hay ataque real.
+if (
+  hasClearlyLowRiskSocialProfileVerdict &&
+  !hasExplicitSocialProfileAttack
+) {
+  return "safe";
+}
+
   // ✅ Foto reutilizada: naranja.
   // No la subimos a rojo solo por reutilización.
   if (hasReusedImageSignal) {
     return "warning";
   }
+
+  // ✅ Foto de perfil social normal = verde.
+// Si Vonu concluye que una foto de perfil de Facebook/Instagram/red social
+// es normal/natural y sin señales sospechosas, NO debe pintarse naranja
+// por prudencia genérica posterior.
+const hasLowRiskSocialProfilePhotoVerdict =
+  (
+    t.includes("foto de perfil") ||
+    t.includes("imagen de perfil") ||
+    t.includes("perfil de facebook") ||
+    t.includes("perfil de instagram") ||
+    t.includes("facebook") ||
+    t.includes("instagram") ||
+    t.includes("red social")
+  ) &&
+  (
+    t.includes("foto de perfil normal") ||
+    t.includes("foto de perfil normal y natural") ||
+    t.includes("imagen de perfil normal") ||
+    t.includes("parece una foto de perfil normal") ||
+    t.includes("parece una foto de perfil normal y natural") ||
+    t.includes("parece una foto normal") ||
+    t.includes("parece una imagen normal") ||
+    t.includes("parece natural") ||
+    t.includes("normal y natural") ||
+    t.includes("sin señales sospechosas evidentes") ||
+    t.includes("sin senales sospechosas evidentes") ||
+    t.includes("sin señales sospechosas relevantes") ||
+    t.includes("sin senales sospechosas relevantes") ||
+    t.includes("sin señales claras de peligro") ||
+    t.includes("sin senales claras de peligro") ||
+    t.includes("no veo señales claras de peligro") ||
+    t.includes("no veo senales claras de peligro") ||
+    t.includes("no hay señales claras de peligro") ||
+    t.includes("no hay senales claras de peligro")
+  );
+
+const hasHardDangerInSocialProfilePhoto =
+  t.includes("foto reutilizada") ||
+  t.includes("imagen reutilizada") ||
+  t.includes("foto robada") ||
+  t.includes("imagen robada") ||
+  t.includes("perfil falso") ||
+  t.includes("suplantación clara") ||
+  t.includes("suplantacion clara") ||
+  t.includes("catfish") ||
+  t.includes("catfishing") ||
+  t.includes("pide dinero") ||
+  t.includes("te pide dinero") ||
+  t.includes("pide códigos") ||
+  t.includes("pide codigos") ||
+  t.includes("te pide códigos") ||
+  t.includes("te pide codigos") ||
+  t.includes("enlace sospechoso") ||
+  t.includes("enlaces sospechosos") ||
+  t.includes("inversión") ||
+  t.includes("inversion") ||
+  t.includes("cripto") ||
+  t.includes("crypto") ||
+  t.includes("presión fuerte") ||
+  t.includes("presion fuerte");
+
+if (hasLowRiskSocialProfilePhotoVerdict && !hasHardDangerInSocialProfilePhoto) {
+  return "safe";
+}
 
   const hasLowRiskNormalImageTone =
     (
@@ -10801,6 +10998,164 @@ const assistantTextForDots = String(m.text ?? "").toLowerCase();
 
 const previousUserTextForDotsLower = String(previousUserMessage?.text ?? "").toLowerCase();
 
+// ✅ Normalizador local para los puntos.
+// Evita que un acento o una frase ligeramente distinta impida detectar verde.
+const normalizeDotsText = (value: string) =>
+  String(value ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const assistantTextForDotsPlain = normalizeDotsText(m.text ?? "");
+const previousUserTextForDotsPlain = normalizeDotsText(previousUserMessage?.text ?? "");
+
+const isSocialProfilePhotoPromptForDots =
+  (
+    previousUserTextForDotsPlain.includes("facebook") ||
+    previousUserTextForDotsPlain.includes("instagram") ||
+    previousUserTextForDotsPlain.includes("tiktok") ||
+    previousUserTextForDotsPlain.includes("threads") ||
+    previousUserTextForDotsPlain.includes("red social") ||
+    previousUserTextForDotsPlain.includes("perfil")
+  ) &&
+  (
+    previousUserTextForDotsPlain.includes("foto de perfil") ||
+    previousUserTextForDotsPlain.includes("imagen de perfil") ||
+    previousUserTextForDotsPlain.includes("perfil de facebook") ||
+    previousUserTextForDotsPlain.includes("perfil de instagram") ||
+    previousUserTextForDotsPlain.includes("me puedo fiar") ||
+    previousUserTextForDotsPlain.includes("puedo fiarme") ||
+    previousUserTextForDotsPlain.includes("fiar") ||
+    previousUserTextForDotsPlain.includes("fiarme")
+  );
+
+const assistantClearlySafeSocialProfilePhotoForDots =
+  isSocialProfilePhotoPromptForDots &&
+  (
+    assistantTextForDotsPlain.includes("foto de perfil normal") ||
+    assistantTextForDotsPlain.includes("foto de perfil normal y natural") ||
+    assistantTextForDotsPlain.includes("parece una foto de perfil normal") ||
+    assistantTextForDotsPlain.includes("parece una foto de perfil normal y natural") ||
+    assistantTextForDotsPlain.includes("foto de perfil normal y natural") ||
+    assistantTextForDotsPlain.includes("parece una foto normal") ||
+    assistantTextForDotsPlain.includes("parece una imagen normal") ||
+    assistantTextForDotsPlain.includes("parece natural") ||
+    assistantTextForDotsPlain.includes("normal y natural") ||
+    assistantTextForDotsPlain.includes("sin senales sospechosas evidentes") ||
+    assistantTextForDotsPlain.includes("sin senales sospechosas relevantes") ||
+    assistantTextForDotsPlain.includes("sin senales claras de peligro") ||
+    assistantTextForDotsPlain.includes("no veo senales claras de peligro") ||
+    assistantTextForDotsPlain.includes("no hay senales claras de peligro") ||
+    assistantTextForDotsPlain.includes("no detecto senales de peligro") ||
+    assistantTextForDotsPlain.includes("no se aprecia peligro") ||
+    assistantTextForDotsPlain.includes("no se ve peligro")
+  );
+
+const assistantHasHardSocialProfileDangerForDots =
+  assistantTextForDotsPlain.includes("foto reutilizada") ||
+  assistantTextForDotsPlain.includes("imagen reutilizada") ||
+  assistantTextForDotsPlain.includes("aparece reutilizada") ||
+  assistantTextForDotsPlain.includes("aparece en varias fuentes") ||
+  assistantTextForDotsPlain.includes("foto robada") ||
+  assistantTextForDotsPlain.includes("imagen robada") ||
+  assistantTextForDotsPlain.includes("suplantacion clara") ||
+  assistantTextForDotsPlain.includes("catfish") ||
+  assistantTextForDotsPlain.includes("catfishing") ||
+  assistantTextForDotsPlain.includes("presion fuerte") ||
+  assistantTextForDotsPlain.includes("urgencia sospechosa") ||
+  /(?:parece|huele a|apunta a|me hace pensar|me hace dudar|podria ser|probablemente|claramente).{0,80}(perfil falso|suplantacion|estafa|fraude)/i.test(
+    assistantTextForDotsPlain
+  ) ||
+  /(?:hay|veo|detecto|se ven|aparecen|tiene|incluye).{0,80}(enlace|enlaces|link|links).{0,50}(sospechoso|sospechosos|raro|raros|malicioso|maliciosos)/i.test(
+    assistantTextForDotsPlain
+  ) ||
+  /(?:pide|te pide|solicita|te solicita|intenta conseguir|quiere que envies|quiere que mandes).{0,80}(dinero|codigos|documentos|dni|tarjeta|bizum|transferencia|cripto|crypto)/i.test(
+    assistantTextForDotsPlain
+  ) ||
+  /(?:habla de|propone|promete|ofrece).{0,80}(inversion|trading|cripto|crypto)/i.test(
+    assistantTextForDotsPlain
+  );
+
+const forceSafeSocialProfilePhotoDots =
+  assistantClearlySafeSocialProfilePhotoForDots &&
+  !assistantHasHardSocialProfileDangerForDots;
+
+const isSocialProfilePromptForDots =
+  (
+    previousUserTextForDotsLower.includes("facebook") ||
+    previousUserTextForDotsLower.includes("instagram") ||
+    previousUserTextForDotsLower.includes("tiktok") ||
+    previousUserTextForDotsLower.includes("threads") ||
+    previousUserTextForDotsLower.includes("red social") ||
+    previousUserTextForDotsLower.includes("perfil social") ||
+    previousUserTextForDotsLower.includes("perfil de facebook") ||
+    previousUserTextForDotsLower.includes("perfil de instagram")
+  ) &&
+  (
+    previousUserTextForDotsLower.includes("fiar") ||
+    previousUserTextForDotsLower.includes("fiarme") ||
+    previousUserTextForDotsLower.includes("fiable") ||
+    previousUserTextForDotsLower.includes("confiar") ||
+    previousUserTextForDotsLower.includes("real") ||
+    previousUserTextForDotsLower.includes("normal") ||
+    previousUserTextForDotsLower.includes("seguro") ||
+    previousUserTextForDotsLower.includes("segura")
+  );
+
+const assistantClearlyLowRiskSocialProfileForDots =
+  isSocialProfilePromptForDots &&
+  (
+    assistantTextForDots.includes("perfil de red social normal") ||
+    assistantTextForDots.includes("perfil social normal") ||
+    assistantTextForDots.includes("perfil de facebook normal") ||
+    assistantTextForDots.includes("perfil de instagram normal") ||
+    assistantTextForDots.includes("foto de perfil normal") ||
+    assistantTextForDots.includes("foto de perfil de facebook normal") ||
+    assistantTextForDots.includes("foto de perfil de instagram normal") ||
+    assistantTextForDots.includes("datos coherentes") ||
+    assistantTextForDots.includes("sin señales sospechosas relevantes") ||
+    assistantTextForDots.includes("sin senales sospechosas relevantes") ||
+    assistantTextForDots.includes("sin señales sospechosas evidentes") ||
+    assistantTextForDots.includes("sin senales sospechosas evidentes") ||
+    assistantTextForDots.includes("sin señales claras de peligro") ||
+    assistantTextForDots.includes("sin senales claras de peligro") ||
+    assistantTextForDots.includes("no hay señales significativas de peligro") ||
+    assistantTextForDots.includes("no hay senales significativas de peligro") ||
+    assistantTextForDots.includes("no veo señales significativas de peligro") ||
+    assistantTextForDots.includes("no veo senales significativas de peligro") ||
+    assistantTextForDots.includes("no detecto señales de peligro") ||
+    assistantTextForDots.includes("no detecto senales de peligro") ||
+    assistantTextForDots.includes("señales de coherencia") ||
+    assistantTextForDots.includes("senales de coherencia") ||
+    assistantTextForDots.includes("bajo riesgo") ||
+    assistantTextForDots.includes("no alarmaría") ||
+    assistantTextForDots.includes("no alarmaria") ||
+    assistantTextForDots.includes("parece normal") ||
+    assistantTextForDots.includes("encaja con un perfil normal") ||
+    assistantTextForDots.includes("no se aprecia peligro") ||
+    assistantTextForDots.includes("no se ve peligro")
+  ) &&
+  !assistantTextForDots.includes("foto reutilizada") &&
+  !assistantTextForDots.includes("imagen reutilizada") &&
+  !assistantTextForDots.includes("foto robada") &&
+  !assistantTextForDots.includes("imagen robada") &&
+  !assistantTextForDots.includes("perfil falso") &&
+  !assistantTextForDots.includes("suplantación clara") &&
+  !assistantTextForDots.includes("suplantacion clara") &&
+  !assistantTextForDots.includes("pide dinero") &&
+  !assistantTextForDots.includes("te pide dinero") &&
+  !assistantTextForDots.includes("pide códigos") &&
+  !assistantTextForDots.includes("pide codigos") &&
+  !assistantTextForDots.includes("te pide códigos") &&
+  !assistantTextForDots.includes("te pide codigos") &&
+  !assistantTextForDots.includes("enlace sospechoso") &&
+  !assistantTextForDots.includes("enlaces sospechosos") &&
+  !assistantTextForDots.includes("inversión") &&
+  !assistantTextForDots.includes("inversion") &&
+  !assistantTextForDots.includes("cripto") &&
+  !assistantTextForDots.includes("crypto") &&
+  !assistantTextForDots.includes("presión fuerte") &&
+  !assistantTextForDots.includes("presion fuerte");
 const isPhoneAnalysisPromptForDots =
   (
     previousUserTextForDotsLower.includes("número de teléfono") ||
@@ -10913,24 +11268,30 @@ const assistantClearlyLowRiskDating =
   !assistantTextForDots.includes("amenaza") &&
   !assistantTextForDots.includes("chantaje");
 
-const finalRiskStatus = hasStrongPhoneFraudContextForDots
-  ? "high"
-  : neutralIdentityLookup
-    ? "safe"
-    : assistantClearlyLowRiskDating
+const finalRiskStatus = forceSafeSocialProfilePhotoDots
+  ? "safe"
+  : hasStrongPhoneFraudContextForDots
+    ? "high"
+    : neutralIdentityLookup
       ? "safe"
-      : assistantClearlyLowRiskPhoneForDots
+      : assistantClearlyLowRiskDating
         ? "safe"
-        : assistantRiskStatus ?? userRiskStatus;
+        : assistantClearlyLowRiskSocialProfileForDots
+          ? "safe"
+          : assistantClearlyLowRiskPhoneForDots
+            ? "safe"
+            : assistantRiskStatus ?? userRiskStatus;
 
-if (!finalRiskStatus) return null;
+const visualRiskStatus = finalRiskStatus;
+
+if (!visualRiskStatus) return null;
 
     return (
   <div className="mb-2 md:mb-2.5 flex min-h-[34px] md:min-h-0 items-start justify-start overflow-visible pt-2.5 md:pt-0 pl-0 md:pl-0">
     <div className="overflow-visible translate-y-[5px] md:translate-y-0">
       <VonuThinking
         size={38}
-        status={finalRiskStatus}
+        status={visualRiskStatus}
         active={false}
       />
     </div>

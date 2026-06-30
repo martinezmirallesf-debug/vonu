@@ -9143,11 +9143,14 @@ if (
 ) {
   instructions += `
 
-REGLA PRIORITARIA:
-- La primera frase debe mencionar que la foto aparece reutilizada en varias fuentes.
-- No empieces diciendo que parece real o natural sin mencionar antes la reutilización.
-- Usa una apertura natural como:
-  “No me fiaría del todo: esta foto aparece reutilizada en varias fuentes.”
+REGLA PRIORITARIA DE BÚSQUEDA INVERSA:
+- La búsqueda inversa es una señal importante, pero NO siempre es decisiva.
+- En perfiles de Tinder/Bumble/Badoo/app de citas, o si la foto aparece en fuentes claramente ajenas, perfiles con otra identidad, bancos de imágenes, páginas sospechosas, anuncios, crypto, contenido adulto o campañas raras, sí debes darle mucho peso y mencionarla pronto.
+- En perfiles de Facebook/Instagram/TikTok/redes sociales, NO abras automáticamente con alarma si la captura muestra muchas señales coherentes de perfil normal: nombre realista, ciudad, formación, trabajo/actividad, familiares visibles, amigos/contactos en común, muchas publicaciones, comentarios naturales o ausencia de enlaces sospechosos.
+- En redes sociales normales, una foto de perfil puede aparecer como reutilizada por miniaturas, caché, copias del propio perfil, vistas públicas o coincidencias no maliciosas.
+- Si hay señales sociales fuertes y coherentes, menciona la búsqueda inversa solo como matiz:
+  “La búsqueda inversa deja una pequeña cautela, pero con lo que se ve del perfil no parece una señal suficiente para alarmar.”
+- No digas “foto reutilizada = no fiable” si el perfil tiene contexto social sólido y no hay señales reales de estafa.
 `.trim();
 }
 
@@ -9303,8 +9306,12 @@ REGLA FINAL PRIORITARIA PARA PERFIL DE RED SOCIAL CON FOTO REUTILIZADA:
 - El usuario pregunta por un perfil de Instagram/Facebook/TikTok/Threads/red social.
 - NO lo analices como Tinder/Bumble/Badoo.
 - La señal fuerte es que la imagen aparece reutilizada o con coincidencias web.
-- Primera frase recomendada:
-  **Yo tendría cautela: esta foto aparece reutilizada en varias fuentes, así que no parece exclusiva de ese perfil.**
+- No abras automáticamente con alarma.
+- Si el perfil completo muestra señales coherentes fuertes —nombre realista, ciudad, formación, trabajo/actividad, familiares, amigos/contactos en común, muchas publicaciones, comentarios naturales y ausencia de enlaces raros—, la búsqueda inversa debe ser solo un matiz, no el veredicto principal.
+- Primera frase recomendada si el perfil parece coherente:
+  **Con la información que se ve, parece un perfil de red social bastante coherente; la búsqueda inversa deja un matiz de cautela, pero no veo señales suficientes para alarmar solo por eso.**
+- Primera frase recomendada si la imagen aparece en fuentes claramente ajenas o sospechosas:
+  **Aquí sí tendría cautela: la imagen no parece exclusiva de ese perfil y aparece asociada a otras fuentes.**
 - No digas que es estafa segura.
 - No hables de videollamada salvo que el usuario esté valorando una relación/cita o lo pida.
 - No centres el análisis en verificación visible; en redes sociales normales la falta de check azul no prueba nada.
@@ -9345,11 +9352,58 @@ REGLA FINAL PRIORITARIA PARA PERFIL DE RED SOCIAL INTELIGENTE:
 - NO hagas un checklist genérico.
 - El valor de Vonu está en detectar microseñales que a una persona normal se le pueden pasar.
 
+FOTO DE PERFIL AISLADA EN FACEBOOK / INSTAGRAM / RED SOCIAL:
+- Si el usuario solo manda una foto de perfil, no hagas análisis como si vieras el perfil completo.
+- No uses “Señales coherentes” ni “Señales de coherencia” en una foto aislada.
+- Usa exactamente estos apartados:
+  **Lo que sí puedo valorar:**
+  **Lo que no confirma una foto sola:**
+  **Qué miraría en el perfil:**
+  **Conclusión:**
+
+- Si la foto parece normal/natural y no hay señales visuales raras, abre así:
+  “Con la información que se ve, parece una foto de perfil normal de red social, sin señales sospechosas evidentes.”
+
+- No uses frases como:
+  “pero hay algunas consideraciones”
+  “yo tendría cautela”
+  “me hace dudar”
+  “precaución moderada”
+  salvo que haya señales reales.
+
+- No metas palabras de peligro en negativo si no aportan nada.
+  Evita frases como:
+  “no se observan elementos que sugieran un perfil falso, como enlaces sospechosos...”
+  porque pueden activar mal los puntos de riesgo.
+
+- Mejor di:
+  “Una foto sola no confirma que el perfil completo sea fiable, pero visualmente no veo nada que me haga alarmarme.”
+  “La imagen parece natural: luz, postura, entorno y proporciones no muestran nada raro a simple vista.”
+  “Para fiarte mejor del perfil completo miraría publicaciones, comentarios, amigos/contactos en común, antigüedad y coherencia general.”
+
+- Si no hay señales de IA ni manipulación, dilo claramente:
+  “No veo señales claras de que esté generada por IA ni manipulada de forma fuerte.”
+
+- Si solo hay una foto y no el perfil completo, matiza bien:
+  “Una foto sola no confirma la identidad del perfil, pero esta imagen en sí no muestra señales raras.”
+
+- La respuesta debe sonar de bajo riesgo y ser compatible con puntos verdes cuando no haya señales reales.
+
 OBJETIVO:
 - Analiza el perfil con inteligencia contextual.
 - Si hay señales positivas suficientes y no hay señales claras de peligro, transmite calma y bajo riesgo.
 - La respuesta debe ser compatible con puntos verdes.
 - No alarmes sin necesidad.
+
+BÚSQUEDA INVERSA EN PERFILES SOCIALES:
+- No permitas que la búsqueda inversa tape todo el contexto del perfil.
+- Si el perfil muestra nombre completo realista, ciudad, formación, muchos amigos/publicaciones, familiares visibles, contactos en común y ausencia de enlaces sospechosos, el veredicto debe tender a bajo riesgo.
+- En ese caso, no abras con “yo tendría cautela: esta foto aparece reutilizada”.
+- Mejor apertura:
+  “Con la información que se ve, parece un perfil de red social normal, con datos personales y sociales bastante coherentes.”
+- Después puedes añadir:
+  “La búsqueda inversa deja un matiz de cautela, pero no pesa tanto como para alarmar si el resto del perfil encaja.”
+- Solo eleva fuerte el riesgo si la imagen aparece ligada a otra identidad, páginas sospechosas, anuncios, bancos de imágenes, perfiles falsos, crypto, contenido adulto o fuentes claramente ajenas.
 
 MICROSEÑALES POSITIVAS QUE DEBES BUSCAR Y EXPLICAR:
 - Nombre realista para el país, idioma o lugar donde supuestamente reside.
@@ -9357,13 +9411,23 @@ MICROSEÑALES POSITIVAS QUE DEBES BUSCAR Y EXPLICAR:
 - Trabajo, profesión, estudios, ciudad, actividad o afición declarada.
 - Coherencia entre ese trabajo/actividad y lo que se ve en fotos, publicaciones, bio, comentarios o imágenes.
 - Amigos en común, contactos conocidos o personas reales que siguen/interactúan con la cuenta.
-- Busca activamente señales de conexión social visible: “amigos en común”, “contactos en común”, “seguido por”, “también sigue”, “le sigue”, “amigo tuyo”, “mutual friends” o nombres de personas conocidas.
+- Busca activamente señales de conexión social visible: “amigos en común”, “contactos en común”, “seguido por”, “sigue esta cuenta”, “también sigue”, “le sigue”, “amigo tuyo”, “mutual friends” o nombres de personas conocidas.
+- Si la captura YA muestra una conexión social visible, NO digas al usuario que lo verifique. Úsalo directamente como señal positiva.
+- Ejemplo: si ves “Segundo Romero sigue a esta cuenta”, debes decir algo como:
+  “Aquí ya aparece una conexión social: Segundo Romero sigue esta cuenta. Eso refuerza bastante la idea de que puede ser un perfil normal, porque no es una cuenta totalmente aislada o sin vínculo con tu entorno.”
 - Si ves amigos/contactos en común, menciónalo como una señal positiva fuerte, no como un detalle menor.
 - Si el usuario dice que un amigo suyo sigue esa cuenta, intégralo claramente aunque no se vea perfecto en la captura.
 - Fórmula recomendada:
-  “El hecho de que haya un amigo/contacto en común o que una persona que tú conoces siga esta cuenta refuerza bastante la idea de que puede ser un perfil real de una persona normal. No lo verifica al 100%, pero sí baja mucho la sospecha inicial.”
+  “El hecho de que haya un amigo/contacto en común o que una persona que tú conoces siga esta cuenta refuerza bastante la fiabilidad inicial. No lo verifica al 100%, pero sí baja mucho la sospecha de que sea una cuenta creada de cero para engañar.”
+- Solo recomienda revisar amigos/contactos en común si NO se ve esa información en la captura.
 - Si no puedes ver esa zona en la captura, dilo de forma útil:
   “En esta captura no veo la parte de amigos en común; si ahí aparece alguien que tú conoces siguiendo la cuenta, eso sería una señal positiva importante.”
+  - Familia visible, familiares etiquetados, sección “Familia”, apellidos compartidos/coherentes o relaciones familiares visibles son señales positivas fuertes.
+- Si la captura muestra familiares, NO lo trates como un detalle menor.
+- Una cuenta con familiares visibles, ciudad, formación, muchas publicaciones y datos personales coherentes encaja más con un perfil normal que con una cuenta creada solo para engañar.
+- Si ves familiares con apellidos o vínculos coherentes, menciónalo directamente:
+  “También aparece una sección de familia con personas vinculadas al perfil. Eso suma bastante, porque una cuenta falsa simple normalmente no construye tan bien ese contexto familiar.”
+- No digas “revisa si tiene familiares” si ya se ve esa información en la captura. Úsala directamente.
 - Publicaciones con continuidad temporal.
 - Comentarios naturales de otras personas.
 - Me gusta/interacciones que parecen humanas y no compradas.
@@ -9403,6 +9467,7 @@ FORMATO RECOMENDADO:
 **Conclusión:**
 
 NO uses **Lo que me hace dudar:** si no hay dudas reales.
+- En **Qué revisaría para confirmarlo**, NO incluyas “verifica si hay amigos/contactos en común” si ya has visto una conexión social en la captura. En ese caso, menciónala antes en **Detalles importantes** como señal positiva ya detectada.
 
 CONTENIDO QUE DEBE APARECER SI ENCAJA:
 - “Nombre completo / nombre y apellidos” como señal positiva, si se ve.
@@ -9427,6 +9492,15 @@ El detalle importante aquí sería mirar si sus publicaciones, comentarios y me 
 - No menciones herramientas internas.
 - No digas “estafa” si no hay señales reales.
 - No fuerces naranja por falta de contexto si hay señales positivas suficientes.
+
+REGLA DE INDEPENDENCIA ENTRE ANÁLISIS:
+- Cada imagen/captura nueva debe analizarse como un caso nuevo.
+- No arrastres el veredicto, nivel de riesgo, color, búsqueda inversa, sospecha o conclusión de una imagen anterior del mismo chat.
+- Si antes hubo una imagen reutilizada o un perfil sospechoso, eso NO significa que el perfil actual también lo sea.
+- Usa el historial solo para entender referencias del usuario, no para heredar riesgo.
+- El color/veredicto del análisis actual debe depender de la captura actual, el texto actual y las señales actuales.
+- Si el usuario adjunta otra captura de otro perfil, resetea mentalmente el análisis.
+- En perfiles sociales normales, si la captura actual muestra señales coherentes y no hay peligro claro, el veredicto debe ser bajo riesgo aunque antes se hubiera analizado un caso naranja o rojo.
 `.trim();
 }
 
@@ -9473,7 +9547,14 @@ if (pdfText) {
   });
 }
 
-if (imageBase64 && !hasStrongReusedImageSignal) {
+const shouldInspectImageVisually =
+  Boolean(imageBase64) &&
+  (
+    !hasStrongReusedImageSignal ||
+    asksSocialProfileReliability
+  );
+
+if (shouldInspectImageVisually) {
   userContent.push({
     type: "input_image",
     image_url: isLikelyDataUrl(imageBase64) ? imageBase64 : imageBase64,
@@ -9485,10 +9566,10 @@ if (imageBase64 && hasStrongReusedImageSignal) {
   userContent.push({
     type: "input_text",
     text: asksDatingProfileReliability
-      ? "El usuario adjuntó una imagen de un perfil de app de citas. La señal decisiva es que la búsqueda inversa indica foto reutilizada. Responde como análisis de fiabilidad del perfil de citas, con apartados claros: lo que me hace dudar, qué comprobaría, qué haría ahora y para quedarte con la idea. No respondas en un solo párrafo."
+      ? "El usuario adjuntó una imagen de un perfil de app de citas. La búsqueda inversa indica foto reutilizada, así que esa señal pesa mucho. Responde como análisis de fiabilidad del perfil de citas, con apartados claros."
       : asksSocialProfileReliability
-      ? "El usuario adjuntó una imagen de un perfil de red social. La señal decisiva es que la búsqueda inversa indica foto reutilizada. Responde como análisis de perfil de red social, no como Tinder/app de citas. No centres la respuesta en verificación ni videollamada. Usa criterios de redes sociales: actividad antigua, publicaciones coherentes, comentarios naturales, etiquetas, seguidores/amigos, enlaces raros, dinero, presión o suplantación."
-      : "El usuario adjuntó una imagen. No hace falta inspeccionarla de nuevo visualmente porque la señal decisiva es la búsqueda inversa: aparece reutilizada o con coincidencias web suficientes para bajar la confianza.",
+      ? "El usuario adjuntó una captura de un perfil de red social. Hay una señal de búsqueda inversa positiva, pero NO la trates automáticamente como decisiva. Inspecciona también la captura visualmente y compara esa señal con la coherencia del perfil: nombre, ciudad, formación, trabajo/actividad, número de amigos/publicaciones, familiares visibles, amigos/contactos en común, ausencia de enlaces sospechosos y señales de actividad normal. Si hay muchas señales coherentes, no abras con alarma; menciona la búsqueda inversa solo como matiz de cautela y explica que puede deberse a la propia foto de perfil, miniaturas, caché o reutilización no maliciosa."
+      : "El usuario adjuntó una imagen. La búsqueda inversa indica foto reutilizada o con coincidencias web suficientes para bajar la confianza. Si no hay contexto social coherente, esta señal pesa bastante.",
   });
 }
 
