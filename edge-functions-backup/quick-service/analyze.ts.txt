@@ -1592,17 +1592,39 @@ function buildVisualRiskContextCompact(hasImage: boolean, userText: string) {
 
   const t = String(userText || "").toLowerCase();
 
-  const isDatingOrProfile =
+  const isDatingProfile =
     t.includes("tinder") ||
     t.includes("bumble") ||
     t.includes("badoo") ||
-    t.includes("perfil") ||
     t.includes("app de citas") ||
+    t.includes("perfil de citas");
+
+  const isSocialProfile =
     t.includes("instagram") ||
     t.includes("facebook") ||
+    t.includes("tiktok") ||
+    t.includes("threads") ||
+    t.includes("twitter") ||
     t.includes("red social") ||
-    t.includes("real o falso") ||
-    t.includes("me puedo fiar");
+    t.includes("perfil social");
+
+  const isProfileContext =
+    isDatingProfile ||
+    isSocialProfile ||
+    (
+      t.includes("perfil") &&
+      (
+        t.includes("fiar") ||
+        t.includes("fiarme") ||
+        t.includes("fiable") ||
+        t.includes("confiar") ||
+        t.includes("confianza") ||
+        t.includes("seguro") ||
+        t.includes("segura") ||
+        t.includes("falso") ||
+        t.includes("falsa")
+      )
+    );
 
   const asksAiOrManipulation =
     t.includes("ia") ||
@@ -1622,47 +1644,73 @@ CONTEXTO VISUAL COMPACTO:
 El usuario ha adjuntado una imagen. Analízala con criterio práctico de seguridad.
 
 Objetivo:
-- No te limites a describir la imagen.
+- No te limites a describir la imagen si el usuario pregunta por fiabilidad, riesgo, IA, edición, estafa o perfil.
 - Da un veredicto útil en la primera frase.
 - Si hay señales claras, dilo sin rodeos.
 - Si no hay señales claras, transmite calma prudente.
 - No inventes comprobaciones externas.
 - No digas que has hecho búsqueda inversa salvo que el contexto de búsqueda inversa aparezca después.
+- No conviertas una simple imagen normal en análisis de fraude si el usuario no pregunta por riesgo.
 
 Si la pregunta va sobre IA, edición o si la imagen es real:
 - Distingue entre:
   1. imagen generada por IA;
   2. foto real editada/retocada;
   3. foto real pero posiblemente reutilizada;
-  4. perfil fiable o no fiable.
+  4. perfil fiable o no fiable, solo si hay contexto de perfil.
 - Una foto real puede estar robada.
 - Si ves sombras raras, reflejos extraños, manos/pies deformados, contacto raro con el suelo, fondo incoherente o estética demasiado artificial, menciónalo.
 - Si no puedes cerrarlo al 100%, dilo con naturalidad.
 
-Si parece perfil de citas o red social:
-- Revisa si hay verificación visible, más fotos, bio coherente y señales humanas.
+Diferencia plataformas:
+
+SI ES TINDER / BUMBLE / BADOO / APP DE CITAS:
+- Revisa verificación visible, más fotos variadas, bio coherente y conversación natural.
 - La falta de verificación por sí sola no prueba estafa.
-- Si aparece dinero, inversión, cripto, enlaces, urgencia, códigos o presión, sube mucho el riesgo.
-- Si la búsqueda inversa indica imagen reutilizada, eso pesa mucho y debe ir en la primera frase.
-- Si no hay dinero, enlaces, presión ni foto reutilizada, no alarmes.
+- Una foto sugerente, atractiva, en bikini/bañador o de cuerpo entero NO es señal de riesgo por sí sola.
+- Si no hay dinero, inversión, cripto, enlaces, urgencia, códigos, documentos, presión, foto reutilizada ni intento claro de mover rápido a WhatsApp/Telegram, el tono debe ser tranquilo.
+- Si la conversación avanza, puedes sugerir una videollamada corta y natural, sin sonar policial.
+
+SI ES INSTAGRAM / FACEBOOK / TIKTOK / THREADS / RED SOCIAL:
+- NO lo analices como Tinder.
+- NO exijas verificación visible como requisito principal.
+- La ausencia de check azul NO es señal de alarma en un perfil normal.
+- Revisa actividad real: publicaciones antiguas, variedad de fotos, comentarios naturales, etiquetas, amigos/seguidores coherentes, bio, captions, historial aparente y coherencia general.
+- Si solo se ve una captura parcial, dilo: con esa captura no se puede confirmar todo.
+- Si parece un perfil normal y no hay dinero, enlaces, presión, suplantación clara, foto reutilizada ni mensajes raros, transmite calma.
+- No recomiendes videollamada salvo que el contexto sea de relación/citas o el usuario pregunte por identidad personal.
+- No menciones WhatsApp/Telegram como señal principal salvo que el caso lo muestre o el usuario lo mencione.
+
+Si hay búsqueda inversa positiva:
+- Si la imagen aparece reutilizada, eso pesa mucho y debe ir en la primera frase.
+- En app de citas: baja mucho la confianza del perfil.
+- En red social: puede indicar suplantación, foto robada o contenido no original, pero no digas automáticamente que es estafa segura.
+- No muestres URLs ni detalles técnicos.
 
 Color/veredicto:
 - Verde: no hay señales claras de peligro.
-- Naranja: hay duda razonable, imagen rara, perfil poco verificable o no lo darías por fiable solo con la imagen.
-- Rojo: foto reutilizada, suplantación clara, dinero/inversión/cripto, enlaces, presión, amenaza o estafa probable.
+- Naranja: hay duda razonable, imagen rara, perfil poco verificable, captura insuficiente o foto reutilizada sin más contexto.
+- Rojo: suplantación clara, dinero/inversión/cripto, enlaces, presión, amenaza, códigos, documentos o estafa probable.
 
 Formato:
-- Primera frase: veredicto práctico.
-- Luego usa:
+- Primera frase: veredicto práctico y natural.
+- Si hay riesgo o duda real, usa:
   **Lo que veo:**
   **Lo que me hace dudar:**
   **Qué haría ahora:**
+  **Para quedarte con la idea:**
+- Si no hay riesgo claro, evita **Lo que me hace dudar:**.
+- En redes sociales normales usa mejor:
+  **Lo que veo:**
+  **Qué miraría para confirmarlo:**
   **Para quedarte con la idea:**
 - No uses listas largas.
 - No uses tono robótico.
 
 Contexto detectado:
-- Perfil/citas/red social: ${isDatingOrProfile ? "sí" : "no"}
+- Perfil de citas: ${isDatingProfile ? "sí" : "no"}
+- Perfil de red social: ${isSocialProfile ? "sí" : "no"}
+- Perfil genérico: ${isProfileContext ? "sí" : "no"}
 - Pregunta sobre IA/real/falso/edición: ${asksAiOrManipulation ? "sí" : "no"}
 `.trim();
 }
@@ -9117,111 +9165,52 @@ const asksImageAuthenticity =
     /manipulad/i.test(userText || "")
   );
 
-  const asksDatingProfileReliability =
+const profileReliabilityQuestion =
+  /fiable/i.test(userText || "") ||
+  /fiar/i.test(userText || "") ||
+  /fiarme/i.test(userText || "") ||
+  /f[ií]o/i.test(userText || "") ||
+  /confiar/i.test(userText || "") ||
+  /confianza/i.test(userText || "") ||
+  /me puedo fiar/i.test(userText || "") ||
+  /puedo fiarme/i.test(userText || "") ||
+  /puedo confiar/i.test(userText || "") ||
+  /te parece fiable/i.test(userText || "") ||
+  /es seguro/i.test(userText || "") ||
+  /es segura/i.test(userText || "") ||
+  /peligroso/i.test(userText || "") ||
+  /peligrosa/i.test(userText || "") ||
+  /perfil falso/i.test(userText || "") ||
+  /suplantaci[oó]n/i.test(userText || "");
+
+const isDatingProfileRequest =
+  /tinder/i.test(userText || "") ||
+  /bumble/i.test(userText || "") ||
+  /badoo/i.test(userText || "") ||
+  /app de citas/i.test(userText || "") ||
+  /perfil de citas/i.test(userText || "");
+
+const isSocialProfileRequest =
+  /instagram/i.test(userText || "") ||
+  /facebook/i.test(userText || "") ||
+  /tiktok/i.test(userText || "") ||
+  /threads/i.test(userText || "") ||
+  /twitter/i.test(userText || "") ||
+  /red social/i.test(userText || "") ||
+  /perfil social/i.test(userText || "");
+
+const asksDatingProfileReliability =
   Boolean(imageBase64) &&
   effectiveMode === "chat" &&
-  (
-    /tinder/i.test(userText || "") ||
-    /bumble/i.test(userText || "") ||
-    /badoo/i.test(userText || "") ||
-    /app de citas/i.test(userText || "") ||
-    /perfil de citas/i.test(userText || "") ||
-    /perfil/i.test(userText || "")
-  ) &&
-  (
-    /fiable/i.test(userText || "") ||
-    /fiar/i.test(userText || "") ||
-    /fiarme/i.test(userText || "") ||
-    /f[ií]o/i.test(userText || "") ||
-    /confiar/i.test(userText || "") ||
-    /confianza/i.test(userText || "") ||
-    /me puedo fiar/i.test(userText || "") ||
-    /puedo fiarme/i.test(userText || "") ||
-    /puedo confiar/i.test(userText || "") ||
-    /te parece fiable/i.test(userText || "") ||
-    /es seguro/i.test(userText || "") ||
-    /es segura/i.test(userText || "") ||
-    /peligroso/i.test(userText || "") ||
-    /peligrosa/i.test(userText || "")
-  );
+  isDatingProfileRequest &&
+  profileReliabilityQuestion;
 
-if (
-  asksDatingProfileReliability &&
-  !reverseImageRisk?.reused_image_suspected
-) {
-
-if (
-  asksDatingProfileReliability &&
-  reverseImageRisk?.ok &&
-  reverseImageRisk.checked &&
-  reverseImageRisk.reused_image_suspected
-) {
-  instructions += `
-
-REGLA FINAL PRIORITARIA PARA PERFIL DE APP DE CITAS CON FOTO REUTILIZADA:
-- El usuario pregunta si puede fiarse de un perfil de Tinder/Bumble/Badoo/app de citas.
-- La búsqueda inversa indica que la foto aparece reutilizada o con coincidencias web.
-- NO respondas en un único párrafo.
-- NO respondas como simple descripción de imagen.
-- Responde como análisis de fiabilidad del perfil.
-
-Formato obligatorio:
-**Yo no me fiaría del todo: esta foto aparece reutilizada en varias fuentes.**
-
-**Lo que me hace dudar:**
-- La foto no parece exclusiva de ese perfil.
-- Una foto real puede estar robada o usada por otra persona.
-- En una app de citas, esto baja bastante la confianza inicial.
-
-**Qué comprobaría antes de seguir:**
-- Si tiene más fotos variadas y naturales.
-- Si la biografía encaja con la conversación.
-- Si hay verificación visible.
-- Si intenta salir rápido a WhatsApp/Telegram.
-- Si aparece dinero, inversión, cripto, códigos, documentos o urgencia.
-
-**Qué haría ahora:**
-- Seguiría con cautela y sin compartir datos personales.
-- No enviaría dinero, códigos, documentos ni fotos íntimas.
-- Si la conversación avanza, propondría una videollamada corta y natural.
-- Si da excusas raras o presiona, bloquearía o reportaría.
-
-**Para quedarte con la idea:**
-- La señal clave no es si la foto parece bonita o real, sino que no parece original de ese perfil.
-`.trim();
-}
-  instructions += `
-
-REGLA FINAL PRIORITARIA PARA PERFIL DE APP DE CITAS:
-- En esta respuesta el usuario está preguntando si un perfil de Tinder/Bumble/Badoo o app de citas es fiable.
-- Esta regla tiene prioridad sobre dudas genéricas como “solo se ve una foto”, “bio breve”, “foto sugerente”, “bikini”, “pose atractiva” o “falta más contexto”.
-- Si NO hay foto reutilizada, dinero, inversión, cripto, enlaces, códigos, documentos, presión, urgencia, amenaza ni intento claro de mover rápido a WhatsApp/Telegram, el tono debe ser de BAJO RIESGO.
-- Una foto sugerente, en bikini, bañador, ropa ajustada o cuerpo entero NO es una señal de peligro por sí sola.
-- Si aparece un check, insignia, símbolo o marca junto al nombre/edad, trátalo como señal positiva. No digas “no hay verificación visible”.
-- Si el check es pequeño o no puedes confirmarlo al 100%, usa esta fórmula:
-  “Parece haber una verificación visible junto al nombre, lo cual suma confianza, aunque no garantiza intenciones.”
-- No digas:
-  “no hay verificación visible”,
-  “yo no confiaría solo por esta foto”,
-  “la foto sugerente me hace dudar”,
-  “perfil sospechoso”,
-  “precaución moderada”,
-  “iría con bastante cuidado”,
-  salvo que haya señales reales: dinero, inversión, cripto, enlaces, presión, urgencia, códigos, documentos, foto reutilizada, evasión clara o intento rápido de salir de la app.
-- La primera frase debe sonar verde/tranquila. Usa una apertura parecida a:
-  **En principio, no veo señales claras de peligro en este perfil.**
-  o
-  **Con lo que se ve aquí, no hay banderas rojas claras.**
-- Si mencionas la foto sugerente, hazlo de forma neutra:
-  “La foto es sugerente, algo habitual en apps de citas, pero por sí sola no es una señal de peligro.”
-- Evita el apartado **Lo que me hace dudar:** si solo vas a mencionar cosas normales de Tinder como una foto sugerente, una bio breve o pocas fotos visibles.
-- Usa mejor:
-  **Lo que veo:**
-  **Qué comprobaría con calma:**
-  **Para quedarte con la idea:**
-- La respuesta debe ser compatible con puntos verdes, no con puntos naranjas.
-`.trim();
-}
+const asksSocialProfileReliability =
+  Boolean(imageBase64) &&
+  effectiveMode === "chat" &&
+  isSocialProfileRequest &&
+  profileReliabilityQuestion &&
+  !isDatingProfileRequest;
 
 if (
   asksDatingProfileReliability &&
@@ -9262,6 +9251,182 @@ REGLA FINAL PRIORITARIA PARA PERFIL DE APP DE CITAS CON FOTO REUTILIZADA:
   - La señal clave no es si la foto parece bonita o real, sino que no parece original de ese perfil.
 - No menciones Google, Google Lens ni herramientas internas.
 - No digas que es estafa segura; di que baja mucho la confianza.
+`.trim();
+}
+
+if (
+  asksDatingProfileReliability &&
+  !reverseImageRisk?.reused_image_suspected
+) {
+  instructions += `
+
+REGLA FINAL PRIORITARIA PARA PERFIL DE APP DE CITAS:
+- En esta respuesta el usuario está preguntando si un perfil de Tinder/Bumble/Badoo o app de citas es fiable.
+- Esta regla tiene prioridad sobre dudas genéricas como “solo se ve una foto”, “bio breve”, “foto sugerente”, “bikini”, “pose atractiva” o “falta más contexto”.
+- Si NO hay foto reutilizada, dinero, inversión, cripto, enlaces, códigos, documentos, presión, urgencia, amenaza ni intento claro de mover rápido a WhatsApp/Telegram, el tono debe ser de BAJO RIESGO.
+- Una foto sugerente, en bikini, bañador, ropa ajustada o cuerpo entero NO es una señal de peligro por sí sola.
+- Si aparece un check, insignia, símbolo o marca junto al nombre/edad, trátalo como señal positiva. No digas “no hay verificación visible”.
+- Si el check es pequeño o no puedes confirmarlo al 100%, usa esta fórmula:
+  “Parece haber una verificación visible junto al nombre, lo cual suma confianza, aunque no garantiza intenciones.”
+- No digas:
+  “no hay verificación visible”,
+  “yo no confiaría solo por esta foto”,
+  “la foto sugerente me hace dudar”,
+  “perfil sospechoso”,
+  “precaución moderada”,
+  “iría con bastante cuidado”,
+  salvo que haya señales reales: dinero, inversión, cripto, enlaces, presión, urgencia, códigos, documentos, foto reutilizada, evasión clara o intento rápido de salir de la app.
+- La primera frase debe sonar verde/tranquila. Usa una apertura parecida a:
+  **En principio, no veo señales claras de peligro en este perfil.**
+  o
+  **Con lo que se ve aquí, no hay banderas rojas claras.**
+- Si mencionas la foto sugerente, hazlo de forma neutra:
+  “La foto es sugerente, algo habitual en apps de citas, pero por sí sola no es una señal de peligro.”
+- Evita el apartado **Lo que me hace dudar:** si solo vas a mencionar cosas normales de Tinder como una foto sugerente, una bio breve o pocas fotos visibles.
+- Usa mejor:
+  **Lo que veo:**
+  **Qué comprobaría con calma:**
+  **Para quedarte con la idea:**
+- La respuesta debe ser compatible con puntos verdes, no con puntos naranjas.
+`.trim();
+}
+
+if (
+  asksSocialProfileReliability &&
+  reverseImageRisk?.ok &&
+  reverseImageRisk.checked &&
+  reverseImageRisk.reused_image_suspected
+) {
+  instructions += `
+
+REGLA FINAL PRIORITARIA PARA PERFIL DE RED SOCIAL CON FOTO REUTILIZADA:
+- El usuario pregunta por un perfil de Instagram/Facebook/TikTok/Threads/red social.
+- NO lo analices como Tinder/Bumble/Badoo.
+- La señal fuerte es que la imagen aparece reutilizada o con coincidencias web.
+- Primera frase recomendada:
+  **Yo tendría cautela: esta foto aparece reutilizada en varias fuentes, así que no parece exclusiva de ese perfil.**
+- No digas que es estafa segura.
+- No hables de videollamada salvo que el usuario esté valorando una relación/cita o lo pida.
+- No centres el análisis en verificación visible; en redes sociales normales la falta de check azul no prueba nada.
+- Explica que una foto real puede estar robada, reciclada o usada para suplantar.
+- Después usa:
+
+  **Lo que me hace dudar:**
+  - La foto no parece exclusiva de ese perfil.
+  - Puede ser una imagen real, pero usada fuera de contexto.
+  - En una red social, esto baja la confianza sobre identidad/origen.
+
+  **Qué miraría para confirmarlo:**
+  - Publicaciones antiguas y coherentes.
+  - Fotos variadas en distintos contextos.
+  - Comentarios naturales de otras personas.
+  - Etiquetas, amigos/seguidores y actividad real.
+  - Si hay enlaces raros, dinero, sorteos, inversión, urgencia o mensajes privados sospechosos.
+
+  **Qué haría ahora:**
+  - No compartiría datos personales, dinero, códigos ni documentos.
+  - Revisaría el perfil completo antes de confiar.
+  - Si usa esa imagen para pedir algo raro, bloquearía o reportaría.
+
+  **Para quedarte con la idea:**
+  - La clave no es solo si la foto parece real, sino si parece propia y coherente con ese perfil.
+`.trim();
+}
+
+if (
+  asksSocialProfileReliability &&
+  !reverseImageRisk?.reused_image_suspected
+) {
+  instructions += `
+
+REGLA FINAL PRIORITARIA PARA PERFIL DE RED SOCIAL INTELIGENTE:
+- El usuario pregunta por un perfil de Instagram/Facebook/TikTok/Threads/red social.
+- NO lo analices como Tinder/Bumble/Badoo.
+- NO hagas un checklist genérico.
+- El valor de Vonu está en detectar microseñales que a una persona normal se le pueden pasar.
+
+OBJETIVO:
+- Analiza el perfil con inteligencia contextual.
+- Si hay señales positivas suficientes y no hay señales claras de peligro, transmite calma y bajo riesgo.
+- La respuesta debe ser compatible con puntos verdes.
+- No alarmes sin necesidad.
+
+MICROSEÑALES POSITIVAS QUE DEBES BUSCAR Y EXPLICAR:
+- Nombre realista para el país, idioma o lugar donde supuestamente reside.
+- Nombre completo, especialmente nombre + uno o dos apellidos, si encaja culturalmente.
+- Trabajo, profesión, estudios, ciudad, actividad o afición declarada.
+- Coherencia entre ese trabajo/actividad y lo que se ve en fotos, publicaciones, bio, comentarios o imágenes.
+- Amigos en común, contactos conocidos o personas reales que siguen/interactúan con la cuenta.
+- Busca activamente señales de conexión social visible: “amigos en común”, “contactos en común”, “seguido por”, “también sigue”, “le sigue”, “amigo tuyo”, “mutual friends” o nombres de personas conocidas.
+- Si ves amigos/contactos en común, menciónalo como una señal positiva fuerte, no como un detalle menor.
+- Si el usuario dice que un amigo suyo sigue esa cuenta, intégralo claramente aunque no se vea perfecto en la captura.
+- Fórmula recomendada:
+  “El hecho de que haya un amigo/contacto en común o que una persona que tú conoces siga esta cuenta refuerza bastante la idea de que puede ser un perfil real de una persona normal. No lo verifica al 100%, pero sí baja mucho la sospecha inicial.”
+- Si no puedes ver esa zona en la captura, dilo de forma útil:
+  “En esta captura no veo la parte de amigos en común; si ahí aparece alguien que tú conoces siguiendo la cuenta, eso sería una señal positiva importante.”
+- Publicaciones con continuidad temporal.
+- Comentarios naturales de otras personas.
+- Me gusta/interacciones que parecen humanas y no compradas.
+- Fotos variadas en contextos distintos.
+- Etiquetas, lugares, amistades o detalles cotidianos coherentes.
+- Ausencia de enlaces sospechosos.
+- Ausencia de sorteos raros, inversión, cripto, dinero, urgencia, presión, códigos, documentos o mensajes privados extraños.
+
+CÓMO RAZONAR:
+- Una sola señal positiva no confirma nada al 100%.
+- Varias señales positivas juntas sí bajan bastante la sospecha inicial.
+- Si un amigo del usuario sigue esa cuenta, menciónalo como señal positiva importante:
+  “Que una persona que tú conoces siga esta cuenta baja bastante la sospecha inicial.”
+- Si aparece un trabajo o actividad y encaja con lo que se ve, dilo:
+  “El detalle del trabajo/actividad es positivo porque da una identidad más concreta y permite comprobar coherencia.”
+- Si el nombre parece normal para el país/contexto, dilo con prudencia:
+  “El nombre parece bastante realista para el contexto del perfil; no tiene pinta de alias improvisado.”
+- Si no puedes saber el país o contexto cultural, no inventes. Pide contexto con buena forma:
+  “Para afinarlo más necesitaría saber si esa persona supuestamente vive en España, Latinoamérica u otro país, porque el nombre y los apellidos se valoran mejor con ese contexto.”
+
+CUANDO EL PERFIL PARECE NORMAL:
+- Si no ves enlaces raros, dinero, presión, urgencia, suplantación clara, foto reutilizada ni mensajes sospechosos, NO uses tono de alerta.
+- Primera frase recomendada:
+  **Según el contexto de este perfil, no veo señales significativas de peligro.**
+  o
+  **Con la información que se ve, parece un perfil de red social normal, con datos coherentes y sin señales sospechosas relevantes.**
+- Usa lenguaje de bajo riesgo:
+  “Lo pondría como riesgo bajo.”
+  “Esto me encaja más con una cuenta normal que con una cuenta maliciosa.”
+  “Hay varias señales pequeñas que suman confianza.”
+
+FORMATO RECOMENDADO:
+- Usa estos apartados:
+**Señales coherentes:**
+**Detalles importantes:**
+**Qué revisaría para confirmarlo:**
+**Conclusión:**
+
+NO uses **Lo que me hace dudar:** si no hay dudas reales.
+
+CONTENIDO QUE DEBE APARECER SI ENCAJA:
+- “Nombre completo / nombre y apellidos” como señal positiva, si se ve.
+- “Trabajo o actividad declarada” como señal positiva, si se ve.
+- “Amigo en común / conocido que sigue la cuenta” como señal positiva fuerte, si se ve o el usuario lo dice.
+- “No se ven enlaces sospechosos” como señal tranquilizadora, si aplica.
+- “Mira si sus publicaciones, comentarios y me gusta encajan con lo que dice ser o hacer.”
+- “La coherencia entre nombre, actividad, publicaciones, comentarios y contactos pesa más que buscar solo un check azul.”
+
+LÍMITES SANOS:
+- Aunque el perfil parezca normal, añade una prudencia humana y calmada:
+  “Aun así, al interactuar con desconocidos conviene mantener límites: no enviar dinero, códigos, documentos, datos personales sensibles ni seguir enlaces raros.”
+- No digas esto como alarma; dilo como higiene básica digital.
+
+EJEMPLO DE TONO:
+“Con la información que se ve, parece un perfil de red social normal, con datos coherentes y sin señales sospechosas relevantes.
+
+Hay varias señales de coherencia: usa un nombre completo que parece realista para el contexto, indica una actividad concreta, no se ven enlaces raros y, si además hay amigos/contactos en común o una persona conocida sigue la cuenta, eso refuerza bastante la fiabilidad de que sea un perfil normal.
+
+El detalle importante aquí sería mirar si sus publicaciones, comentarios y me gusta encajan con esa actividad: si la gente le comenta de forma natural, si las fotos tienen continuidad y si lo que publica tiene relación con lo que dice ser. Esa coherencia de pequeñas cosas pesa mucho más que buscar solo un check azul.”
+
+- No menciones herramientas internas.
+- No digas “estafa” si no hay señales reales.
+- No fuerces naranja por falta de contexto si hay señales positivas suficientes.
 `.trim();
 }
 
@@ -9320,7 +9485,9 @@ if (imageBase64 && hasStrongReusedImageSignal) {
   userContent.push({
     type: "input_text",
     text: asksDatingProfileReliability
-      ? "El usuario adjuntó una imagen de un perfil de app de citas. La señal decisiva es que la búsqueda inversa indica foto reutilizada. Responde como análisis de fiabilidad del perfil, con apartados claros: lo que me hace dudar, qué comprobaría, qué haría ahora y para quedarte con la idea. No respondas en un solo párrafo."
+      ? "El usuario adjuntó una imagen de un perfil de app de citas. La señal decisiva es que la búsqueda inversa indica foto reutilizada. Responde como análisis de fiabilidad del perfil de citas, con apartados claros: lo que me hace dudar, qué comprobaría, qué haría ahora y para quedarte con la idea. No respondas en un solo párrafo."
+      : asksSocialProfileReliability
+      ? "El usuario adjuntó una imagen de un perfil de red social. La señal decisiva es que la búsqueda inversa indica foto reutilizada. Responde como análisis de perfil de red social, no como Tinder/app de citas. No centres la respuesta en verificación ni videollamada. Usa criterios de redes sociales: actividad antigua, publicaciones coherentes, comentarios naturales, etiquetas, seguidores/amigos, enlaces raros, dinero, presión o suplantación."
       : "El usuario adjuntó una imagen. No hace falta inspeccionarla de nuevo visualmente porque la señal decisiva es la búsqueda inversa: aparece reutilizada o con coincidencias web suficientes para bajar la confianza.",
   });
 }

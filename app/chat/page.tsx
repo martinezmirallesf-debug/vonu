@@ -1177,6 +1177,82 @@ if (hasLowRiskSocialProfileVerdict && !hasStrongSocialProfileDanger) {
   return "safe";
 }
 
+const hasClearlyLowRiskSocialProfileVerdict =
+  (
+    t.includes("facebook") ||
+    t.includes("instagram") ||
+    t.includes("tiktok") ||
+    t.includes("threads") ||
+    t.includes("red social") ||
+    t.includes("perfil social") ||
+    t.includes("perfil de red social") ||
+    t.includes("perfil social normal") ||
+    t.includes("perfil de una red social normal")
+  ) &&
+  (
+    t.includes("perfil de red social normal") ||
+    t.includes("perfil social normal") ||
+    t.includes("datos coherentes") ||
+    t.includes("sin señales sospechosas relevantes") ||
+    t.includes("sin senales sospechosas relevantes") ||
+    t.includes("no hay señales significativas de peligro") ||
+    t.includes("no hay senales significativas de peligro") ||
+    t.includes("no veo señales significativas de peligro") ||
+    t.includes("no veo senales significativas de peligro") ||
+    t.includes("señales de coherencia") ||
+    t.includes("senales de coherencia") ||
+    t.includes("baja bastante la sospecha inicial") ||
+    t.includes("bajan bastante la sospecha inicial") ||
+    t.includes("baja mucho la sospecha inicial") ||
+    t.includes("refuerza bastante") ||
+    t.includes("suma confianza") ||
+    t.includes("cuenta normal") ||
+    t.includes("perfil normal")
+  );
+
+const hasExplicitSocialProfileAttack =
+  t.includes("foto reutilizada") ||
+  t.includes("imagen reutilizada") ||
+  t.includes("foto robada") ||
+  t.includes("imagen robada") ||
+  t.includes("suplantación clara") ||
+  t.includes("suplantacion clara") ||
+  t.includes("perfil falso") ||
+  t.includes("catfish") ||
+  t.includes("catfishing") ||
+  t.includes("enlace sospechoso") ||
+  t.includes("enlaces sospechosos") ||
+  t.includes("pide dinero") ||
+  t.includes("pedir dinero") ||
+  t.includes("te pide dinero") ||
+  t.includes("solicita dinero") ||
+  t.includes("pide inversión") ||
+  t.includes("pide inversion") ||
+  t.includes("te habla de inversión") ||
+  t.includes("te habla de inversion") ||
+  t.includes("cripto") ||
+  t.includes("crypto") ||
+  t.includes("te pide códigos") ||
+  t.includes("te pide codigos") ||
+  t.includes("pide códigos") ||
+  t.includes("pide codigos") ||
+  t.includes("te pide documentos") ||
+  t.includes("pide documentos") ||
+  t.includes("urgencia sospechosa") ||
+  t.includes("presión fuerte") ||
+  t.includes("presion fuerte");
+
+// ✅ Importante:
+// En un perfil social normal, una frase final de higiene digital tipo
+// “no enviar dinero, códigos o documentos” NO debe pintar naranja.
+// Solo bloqueamos verde si el texto afirma que el perfil los pide o hay ataque real.
+if (
+  hasClearlyLowRiskSocialProfileVerdict &&
+  !hasExplicitSocialProfileAttack
+) {
+  return "safe";
+}
+
   // ✅ Foto reutilizada: naranja.
   // No la subimos a rojo solo por reutilización.
   if (hasReusedImageSignal) {
