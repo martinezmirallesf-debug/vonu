@@ -1259,6 +1259,71 @@ if (
     return "warning";
   }
 
+  // ✅ Foto de perfil social normal = verde.
+// Si Vonu concluye que una foto de perfil de Facebook/Instagram/red social
+// es normal/natural y sin señales sospechosas, NO debe pintarse naranja
+// por prudencia genérica posterior.
+const hasLowRiskSocialProfilePhotoVerdict =
+  (
+    t.includes("foto de perfil") ||
+    t.includes("imagen de perfil") ||
+    t.includes("perfil de facebook") ||
+    t.includes("perfil de instagram") ||
+    t.includes("facebook") ||
+    t.includes("instagram") ||
+    t.includes("red social")
+  ) &&
+  (
+    t.includes("foto de perfil normal") ||
+    t.includes("foto de perfil normal y natural") ||
+    t.includes("imagen de perfil normal") ||
+    t.includes("parece una foto de perfil normal") ||
+    t.includes("parece una foto de perfil normal y natural") ||
+    t.includes("parece una foto normal") ||
+    t.includes("parece una imagen normal") ||
+    t.includes("parece natural") ||
+    t.includes("normal y natural") ||
+    t.includes("sin señales sospechosas evidentes") ||
+    t.includes("sin senales sospechosas evidentes") ||
+    t.includes("sin señales sospechosas relevantes") ||
+    t.includes("sin senales sospechosas relevantes") ||
+    t.includes("sin señales claras de peligro") ||
+    t.includes("sin senales claras de peligro") ||
+    t.includes("no veo señales claras de peligro") ||
+    t.includes("no veo senales claras de peligro") ||
+    t.includes("no hay señales claras de peligro") ||
+    t.includes("no hay senales claras de peligro")
+  );
+
+const hasHardDangerInSocialProfilePhoto =
+  t.includes("foto reutilizada") ||
+  t.includes("imagen reutilizada") ||
+  t.includes("foto robada") ||
+  t.includes("imagen robada") ||
+  t.includes("perfil falso") ||
+  t.includes("suplantación clara") ||
+  t.includes("suplantacion clara") ||
+  t.includes("catfish") ||
+  t.includes("catfishing") ||
+  t.includes("pide dinero") ||
+  t.includes("te pide dinero") ||
+  t.includes("pide códigos") ||
+  t.includes("pide codigos") ||
+  t.includes("te pide códigos") ||
+  t.includes("te pide codigos") ||
+  t.includes("enlace sospechoso") ||
+  t.includes("enlaces sospechosos") ||
+  t.includes("inversión") ||
+  t.includes("inversion") ||
+  t.includes("cripto") ||
+  t.includes("crypto") ||
+  t.includes("presión fuerte") ||
+  t.includes("presion fuerte");
+
+if (hasLowRiskSocialProfilePhotoVerdict && !hasHardDangerInSocialProfilePhoto) {
+  return "safe";
+}
+
   const hasLowRiskNormalImageTone =
     (
       t.includes("parece una selfie natural") ||
