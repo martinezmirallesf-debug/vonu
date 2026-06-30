@@ -5835,7 +5835,7 @@ const pdfInputRef = useRef<HTMLInputElement | null>(null);
     headerRef.current?.getBoundingClientRect().height ??
     (isDesktopPointer() ? 70 : 58);
 
-  return Math.round(headerHeight + (isDesktopPointer() ? 16 : 10));
+  return Math.round(headerHeight + (isDesktopPointer() ? 14 : 2));
 }
 
 function pinUserMessageNearTop(messageId: string) {
