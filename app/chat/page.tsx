@@ -11277,51 +11277,67 @@ const finalRiskStatus = forceSafeSocialProfilePhotoDots
             ? "safe"
             : assistantRiskStatus ?? userRiskStatus;
 
-const forceGreenForSafeSocialProfilePhoto =
+const socialProfilePhotoPromptForDots =
   (
     previousUserTextForDotsLower.includes("foto de perfil") ||
     previousUserTextForDotsLower.includes("imagen de perfil") ||
+    previousUserTextForDotsLower.includes("foto del perfil") ||
     previousUserTextForDotsLower.includes("perfil de facebook") ||
-    previousUserTextForDotsLower.includes("perfil de instagram")
+    previousUserTextForDotsLower.includes("perfil de instagram") ||
+    previousUserTextForDotsLower.includes("perfil de red social")
   ) &&
   (
     previousUserTextForDotsLower.includes("facebook") ||
     previousUserTextForDotsLower.includes("instagram") ||
+    previousUserTextForDotsLower.includes("tiktok") ||
+    previousUserTextForDotsLower.includes("threads") ||
     previousUserTextForDotsLower.includes("red social") ||
     previousUserTextForDotsLower.includes("perfil")
-  ) &&
-  (
-    assistantTextForDots.includes("foto de perfil normal") ||
-    assistantTextForDots.includes("perfil de red social normal") ||
-    assistantTextForDots.includes("foto de perfil normal y natural") ||
-    assistantTextForDots.includes("parece una foto de perfil normal") ||
-    assistantTextForDots.includes("parece un perfil de red social normal") ||
-    assistantTextForDots.includes("parece una foto normal") ||
-    assistantTextForDots.includes("parece natural") ||
-    assistantTextForDots.includes("sin señales sospechosas evidentes") ||
-    assistantTextForDots.includes("sin senales sospechosas evidentes") ||
-    assistantTextForDots.includes("sin señales sospechosas relevantes") ||
-    assistantTextForDots.includes("sin senales sospechosas relevantes") ||
-    assistantTextForDots.includes("sin señales claras de peligro") ||
-    assistantTextForDots.includes("sin senales claras de peligro")
-  ) &&
-  !assistantTextForDots.includes("foto reutilizada") &&
-  !assistantTextForDots.includes("imagen reutilizada") &&
-  !assistantTextForDots.includes("foto robada") &&
-  !assistantTextForDots.includes("imagen robada") &&
-  !assistantTextForDots.includes("perfil falso") &&
-  !assistantTextForDots.includes("suplantación clara") &&
-  !assistantTextForDots.includes("suplantacion clara") &&
-  !assistantTextForDots.includes("pide dinero") &&
-  !assistantTextForDots.includes("te pide dinero") &&
-  !assistantTextForDots.includes("pide códigos") &&
-  !assistantTextForDots.includes("pide codigos") &&
-  !assistantTextForDots.includes("enlace sospechoso") &&
-  !assistantTextForDots.includes("enlaces sospechosos") &&
-  !assistantTextForDots.includes("inversión") &&
-  !assistantTextForDots.includes("inversion") &&
-  !assistantTextForDots.includes("cripto") &&
-  !assistantTextForDots.includes("crypto");
+  );
+
+const assistantHasRealDangerForSocialPhotoDots =
+  assistantTextForDots.includes("foto reutilizada") ||
+  assistantTextForDots.includes("imagen reutilizada") ||
+  assistantTextForDots.includes("aparece reutilizada") ||
+  assistantTextForDots.includes("aparece en varias fuentes") ||
+  assistantTextForDots.includes("foto robada") ||
+  assistantTextForDots.includes("imagen robada") ||
+  assistantTextForDots.includes("perfil falso") ||
+  assistantTextForDots.includes("suplantación clara") ||
+  assistantTextForDots.includes("suplantacion clara") ||
+  assistantTextForDots.includes("catfish") ||
+  assistantTextForDots.includes("catfishing") ||
+  assistantTextForDots.includes("generada por ia") ||
+  assistantTextForDots.includes("generado por ia") ||
+  assistantTextForDots.includes("señales claras de ia") ||
+  assistantTextForDots.includes("senales claras de ia") ||
+  assistantTextForDots.includes("manipulación fuerte") ||
+  assistantTextForDots.includes("manipulacion fuerte") ||
+  assistantTextForDots.includes("edición fuerte") ||
+  assistantTextForDots.includes("edicion fuerte") ||
+  assistantTextForDots.includes("anomalías claras") ||
+  assistantTextForDots.includes("anomalias claras") ||
+  assistantTextForDots.includes("sombras incoherentes") ||
+  assistantTextForDots.includes("proporciones extrañas") ||
+  assistantTextForDots.includes("proporciones extranas") ||
+  assistantTextForDots.includes("pide dinero") ||
+  assistantTextForDots.includes("te pide dinero") ||
+  assistantTextForDots.includes("pide códigos") ||
+  assistantTextForDots.includes("pide codigos") ||
+  assistantTextForDots.includes("te pide códigos") ||
+  assistantTextForDots.includes("te pide codigos") ||
+  assistantTextForDots.includes("enlace sospechoso") ||
+  assistantTextForDots.includes("enlaces sospechosos") ||
+  assistantTextForDots.includes("inversión") ||
+  assistantTextForDots.includes("inversion") ||
+  assistantTextForDots.includes("cripto") ||
+  assistantTextForDots.includes("crypto") ||
+  assistantTextForDots.includes("presión fuerte") ||
+  assistantTextForDots.includes("presion fuerte");
+
+const forceGreenForSafeSocialProfilePhoto =
+  socialProfilePhotoPromptForDots &&
+  !assistantHasRealDangerForSocialPhotoDots;
 
 const visualRiskStatus = forceGreenForSafeSocialProfilePhoto
   ? "safe"
