@@ -3293,35 +3293,10 @@ setSubscriptionInfo(null);
   }
 }
 
-async function getBrowserAuthSessionWithRetry(
-  maxAttempts = 6
-): Promise<any | null> {
-  for (let i = 0; i < maxAttempts; i += 1) {
-    try {
-      const { data } = await supabaseBrowser.auth.getSession();
-
-      if (data?.session?.user) {
-        return data.session;
-      }
-    } catch (error) {
-      console.warn("[Vonu auth] getSession retry error:", error);
-    }
-
-    if (i < maxAttempts - 1) {
-      await sleep(i === 0 ? 120 : 220);
-    }
-  }
-
-  return null;
-}
-
-  async function refreshAuthSession(options: { retry?: boolean } = {}): Promise<boolean> {
+async function refreshAuthSession(): Promise<boolean> {
   try {
-    const session = options.retry
-      ? await getBrowserAuthSessionWithRetry()
-      : (await supabaseBrowser.auth.getSession()).data?.session;
-
-    const u = session?.user;
+    const { data } = await supabaseBrowser.auth.getSession();
+    const u = data?.session?.user;
 
     if (!u) {
       authUserIdRef.current = null;
@@ -3349,10 +3324,6 @@ async function getBrowserAuthSessionWithRetry(
     setAuthUserEmail(profile.email);
     setAuthUserId(profile.id);
     setAuthUserName(profile.name);
-
-    // Si había modal de login abierto por una carrera de sesión, lo cerramos.
-    setLoginOpen(false);
-    setLoginMsg(null);
 
     return true;
   } catch {
@@ -3527,80 +3498,60 @@ await refreshUsageInfo();
 // Cargar sesión + escuchar cambios
 useEffect(() => {
   let unsub: (() => void) | null = null;
-  let cancelled = false;
-
-  const { data: sub } = supabaseBrowser.auth.onAuthStateChange(
-    async (_event, session) => {
-      if (cancelled) return;
-
-      const u = session?.user;
-
-      setAuthLoading(false);
-
-      if (!u) {
-        authUserIdRef.current = null;
-
-        setAuthUserEmail(null);
-        setAuthUserId(null);
-        setAuthUserName(null);
-        setIsPro(false);
-        setUsageInfo(null);
-        setPayMsg(null);
-        setToastMsg(null);
-        setPendingCheckout(null);
-        setPlan("free");
-        setBilling("monthly");
-        resetVisibleHistoryForLoggedOut();
-        setSubscriptionInfo(null);
-        return;
-      }
-
-      await persistNameIfMissing(u);
-      await ensureProfileExists(u);
-
-      const profile = computeProfileFromUser(u);
-      const previousUserId = authUserIdRef.current;
-
-      authUserIdRef.current = profile.id;
-
-      setAuthUserEmail(profile.email);
-      setAuthUserId(profile.id);
-      setAuthUserName(profile.name);
-
-      setLoginOpen(false);
-      setLoginMsg(null);
-
-      if (profile.id && previousUserId !== profile.id) {
-        cloudHistoryLoadedForUserRef.current = null;
-      }
-
-      setTimeout(() => {
-        refreshProStatus();
-        refreshUsageInfo();
-      }, 80);
-    }
-  );
-
-  unsub = () => sub.subscription.unsubscribe();
 
   (async () => {
     await handleOAuthReturnIfPresent();
+    await refreshAuthSession();
+    await refreshProStatus();
+    await refreshUsageInfo();
 
-    const hasSession = await refreshAuthSession({ retry: true });
+    const { data: sub } = supabaseBrowser.auth.onAuthStateChange(
+      async (_event, session) => {
+        const u = session?.user;
 
-    if (cancelled) return;
+        // ✅ FIX: aseguramos que authLoading se apaga también aquí (evita estados “colgados” tras OAuth)
+        setAuthLoading(false);
 
-    if (hasSession) {
-      await Promise.all([
-        refreshProStatus(),
-        refreshUsageInfo(),
-      ]);
-    }
+        if (!u) {
+          authUserIdRef.current = null;
+
+          setAuthUserEmail(null);
+          setAuthUserId(null);
+          setAuthUserName(null);
+          setIsPro(false);
+          setUsageInfo(null);
+          setPayMsg(null);
+          setToastMsg(null);
+          setPendingCheckout(null);
+          setPlan("free");
+          setBilling("monthly");
+          resetVisibleHistoryForLoggedOut();
+          setSubscriptionInfo(null);
+          return;
+        }
+
+        await persistNameIfMissing(u);
+        await ensureProfileExists(u);
+
+        const profile = computeProfileFromUser(u);
+
+        authUserIdRef.current = profile.id;
+
+        setAuthUserEmail(profile.email);
+        setAuthUserId(profile.id);
+        setAuthUserName(profile.name);
+
+        setTimeout(() => {
+          refreshProStatus();
+          refreshUsageInfo();
+        }, 80);
+      }
+    );
+
+    unsub = () => sub.subscription.unsubscribe();
   })();
 
   return () => {
-    cancelled = true;
-
     try {
       unsub?.();
     } catch {}
