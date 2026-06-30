@@ -10960,20 +10960,33 @@ const assistantClearlyLowRiskSocialProfileForDots =
   (
     assistantTextForDots.includes("perfil de red social normal") ||
     assistantTextForDots.includes("perfil social normal") ||
+    assistantTextForDots.includes("perfil de facebook normal") ||
+    assistantTextForDots.includes("perfil de instagram normal") ||
+    assistantTextForDots.includes("foto de perfil normal") ||
+    assistantTextForDots.includes("foto de perfil de facebook normal") ||
+    assistantTextForDots.includes("foto de perfil de instagram normal") ||
     assistantTextForDots.includes("datos coherentes") ||
     assistantTextForDots.includes("sin señales sospechosas relevantes") ||
     assistantTextForDots.includes("sin senales sospechosas relevantes") ||
+    assistantTextForDots.includes("sin señales sospechosas evidentes") ||
+    assistantTextForDots.includes("sin senales sospechosas evidentes") ||
+    assistantTextForDots.includes("sin señales claras de peligro") ||
+    assistantTextForDots.includes("sin senales claras de peligro") ||
     assistantTextForDots.includes("no hay señales significativas de peligro") ||
     assistantTextForDots.includes("no hay senales significativas de peligro") ||
     assistantTextForDots.includes("no veo señales significativas de peligro") ||
     assistantTextForDots.includes("no veo senales significativas de peligro") ||
+    assistantTextForDots.includes("no detecto señales de peligro") ||
+    assistantTextForDots.includes("no detecto senales de peligro") ||
     assistantTextForDots.includes("señales de coherencia") ||
     assistantTextForDots.includes("senales de coherencia") ||
     assistantTextForDots.includes("bajo riesgo") ||
     assistantTextForDots.includes("no alarmaría") ||
     assistantTextForDots.includes("no alarmaria") ||
     assistantTextForDots.includes("parece normal") ||
-    assistantTextForDots.includes("encaja con un perfil normal")
+    assistantTextForDots.includes("encaja con un perfil normal") ||
+    assistantTextForDots.includes("no se aprecia peligro") ||
+    assistantTextForDots.includes("no se ve peligro")
   ) &&
   !assistantTextForDots.includes("foto reutilizada") &&
   !assistantTextForDots.includes("imagen reutilizada") &&
@@ -10996,7 +11009,6 @@ const assistantClearlyLowRiskSocialProfileForDots =
   !assistantTextForDots.includes("crypto") &&
   !assistantTextForDots.includes("presión fuerte") &&
   !assistantTextForDots.includes("presion fuerte");
-
 const isPhoneAnalysisPromptForDots =
   (
     previousUserTextForDotsLower.includes("número de teléfono") ||
