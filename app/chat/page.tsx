@@ -3293,7 +3293,7 @@ setSubscriptionInfo(null);
   }
 }
 
-async function refreshAuthSession(): Promise<boolean> {
+  async function refreshAuthSession(): Promise<boolean> {
   try {
     const { data } = await supabaseBrowser.auth.getSession();
     const u = data?.session?.user;
@@ -3495,8 +3495,8 @@ await refreshUsageInfo();
   };
 }, []);
 
-// Cargar sesión + escuchar cambios
-useEffect(() => {
+  // Cargar sesión + escuchar cambios
+  useEffect(() => {
   let unsub: (() => void) | null = null;
 
   (async () => {
@@ -3505,60 +3505,57 @@ useEffect(() => {
     await refreshProStatus();
     await refreshUsageInfo();
 
-    const { data: sub } = supabaseBrowser.auth.onAuthStateChange(
-      async (_event, session) => {
+    const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
         const u = session?.user;
 
         // ✅ FIX: aseguramos que authLoading se apaga también aquí (evita estados “colgados” tras OAuth)
         setAuthLoading(false);
 
         if (!u) {
-          authUserIdRef.current = null;
+  authUserIdRef.current = null;
 
-          setAuthUserEmail(null);
-          setAuthUserId(null);
-          setAuthUserName(null);
-          setIsPro(false);
-          setUsageInfo(null);
-          setPayMsg(null);
-          setToastMsg(null);
-          setPendingCheckout(null);
-          setPlan("free");
-          setBilling("monthly");
-          resetVisibleHistoryForLoggedOut();
-          setSubscriptionInfo(null);
-          return;
-        }
+  setAuthUserEmail(null);
+  setAuthUserId(null);
+  setAuthUserName(null);
+  setIsPro(false);
+  setUsageInfo(null);
+  setPayMsg(null);
+  setToastMsg(null);
+  setPendingCheckout(null);
+  setPlan("free");
+  setBilling("monthly");
+  resetVisibleHistoryForLoggedOut();
+  setSubscriptionInfo(null);
+  return;
+}
 
         await persistNameIfMissing(u);
-        await ensureProfileExists(u);
+await ensureProfileExists(u);
 
-        const profile = computeProfileFromUser(u);
+const profile = computeProfileFromUser(u);
 
-        authUserIdRef.current = profile.id;
+authUserIdRef.current = profile.id;
 
-        setAuthUserEmail(profile.email);
-        setAuthUserId(profile.id);
-        setAuthUserName(profile.name);
+setAuthUserEmail(profile.email);
+setAuthUserId(profile.id);
+setAuthUserName(profile.name);
 
         setTimeout(() => {
-          refreshProStatus();
-          refreshUsageInfo();
-        }, 80);
-      }
-    );
+  refreshProStatus();
+  refreshUsageInfo();
+}, 80);
+      });
 
-    unsub = () => sub.subscription.unsubscribe();
-  })();
+      unsub = () => sub.subscription.unsubscribe();
+    })();
 
-  return () => {
-    try {
-      unsub?.();
-    } catch {}
-  };
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, []);
+    return () => {
+      try {
+        unsub?.();
+      } catch {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ✅ FIX: al volver al tab/app, refrescar sesión Y pro
   useEffect(() => {
