@@ -1022,8 +1022,6 @@ function pickPillar(userText: string) {
     t.includes("sextorsion") ||
     t.includes("grooming") ||
     t.includes("love bombing") ||
-    t.includes("perfil falso") ||
-    t.includes("catfishing") ||
     t.includes("me aísla") ||
     t.includes("me aisla") ||
     t.includes("no quiere que vea a mis amigos") ||
@@ -9703,7 +9701,9 @@ NO pongas tono de alarma si no hay caso concreto.
 Usa una estructura clara, pero no repitas siempre los mismos títulos. Varía de forma natural entre estas familias de formato.
 
 Reglas obligatorias:
-- Mantén siempre una primera respuesta clara.
+- La primera respuesta clara debe ir dentro del primer encabezado elegido.
+- No escribas una frase suelta antes del primer título si el primer título ya contiene la respuesta.
+- Evita duplicar aperturas tipo “Sí...” y luego “Sí, pero con matiz”.
 - Explica qué pesa de verdad y qué no.
 - Si es una pregunta general sin captura, no hagas veredicto de un caso concreto.
 - No uses “Lo que veo” si no hay imagen/captura.
