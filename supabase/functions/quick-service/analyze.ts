@@ -9671,7 +9671,15 @@ NO pongas tono de alarma si no hay caso concreto.
 Responde con esta estructura exacta:
 
 **Respuesta clara:**
-Explica la respuesta con matiz. Si habla de verificación, di que suma confianza, pero no garantiza intenciones, enlaces, dinero, presión ni comportamiento posterior.
+Explica la respuesta con matiz. Si habla de verificación, di obligatoriamente que:
+- la verificación suma confianza porque suele comprobar algo en un momento concreto;
+- pero no convierte el perfil en fiable para siempre;
+- después pueden cambiar fotos, bio, intereses, datos visibles o comportamiento;
+- por eso también importa revisar las fotos actuales, la bio actual y la conversación actual;
+- tampoco garantiza intenciones, enlaces, dinero, presión, crypto, códigos, documentos ni comportamiento posterior.
+
+Frase recomendada:
+“La verificación suma confianza, pero no convierte el perfil en fiable para siempre: también importa si las fotos actuales, la bio y la conversación encajan.”
 
 **Señales que sí me harían desconfiar:**
 Lista señales concretas: dinero, inversión, crypto, enlaces, códigos, documentos, fotos íntimas, urgencia, love bombing, pasar rápido a WhatsApp/Telegram, incoherencias o foto reutilizada.
@@ -9683,8 +9691,8 @@ Lista señales concretas: verificación visible, fotos variadas, bio coherente, 
 Pide información concreta si el usuario tiene un caso real: captura del perfil, bio, fotos, verificación visible, conversación, enlaces, si pide dinero/códigos/documentos o si intenta sacar la conversación de la plataforma.
 
 **Para quedarte con la idea:**
-Cierra con una acción útil. Ejemplo:
-“Si tienes un caso concreto, mándame captura del perfil o de la conversación y te digo si lo pondría en bajo riesgo, duda razonable o peligro claro.”
+Cierra con una acción útil y menciona el matiz de verificación:
+“Un perfil verificado no es blanco o negro: suma confianza, pero hay que mirar si las fotos actuales, la bio y la conversación siguen encajando. Si tienes un caso concreto, mándame captura del perfil o de la conversación y te digo si lo pondría en bajo riesgo, duda razonable o peligro claro.”
 
 Tono:
 - Cercano, práctico y preventivo.
