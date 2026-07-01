@@ -395,6 +395,14 @@ Reglas de veredicto:
 - Foto reutilizada en app de citas baja mucho la confianza y normalmente debe ser naranja.
 - Si además hay dinero, inversión, cripto, códigos, documentos, sextorsión o presión, sube a rojo.
 - Si solo falta información, usa precaución moderada, no alarma.
+
+REGLA SOBRE VERIFICACIÓN Y CAMBIOS POSTERIORES:
+- La verificación de un perfil suma confianza, pero normalmente representa una comprobación en un momento concreto.
+- No asumas que la verificación garantiza para siempre todas las fotos, bio, datos actuales o comportamiento posterior.
+- Un perfil verificado puede cambiar fotos, bio, descripción, intereses o forma de actuar después.
+- Por eso, aunque haya verificación, revisa siempre las señales actuales: fotos presentes, bio actual, coherencia de edad/ciudad/idioma, conversación, enlaces, dinero, crypto, códigos, documentos, presión o intento de salir rápido de la app.
+- Frase recomendada:
+  “La verificación suma confianza, pero no convierte el perfil en fiable para siempre: también importa si las fotos actuales, la bio y la conversación encajan.”
 `.trim();
 }
 

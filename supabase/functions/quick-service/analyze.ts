@@ -9642,6 +9642,58 @@ if (imageBase64 && hasStrongReusedImageSignal) {
   });
 }
 
+const isGeneralProfileGuideWithoutImageFinalGuard =
+  effectiveMode === "chat" &&
+  !imageBase64 &&
+  looksLikeProfileReliabilityQuestion(userText) &&
+  /\b(c[oó]mo saber|como saber|perfil verificado|verificado de tinder|verificado en tinder|puede ser falso|puede ser falsa|detectar|identificar|señales|red flags|green flags|perfil falso|perfil falsa|hablando con un perfil falso)\b/i.test(
+    userText
+  );
+
+if (isGeneralProfileGuideWithoutImageFinalGuard) {
+  const platformForFinalGuard = detectProfilePlatform(userText);
+
+  instructions += `
+
+REGLA FINAL PRIORITARIA PARA PREGUNTAS GENERALES SOBRE PERFILES:
+Plataforma detectada: ${platformForFinalGuard}
+
+Esta es una pregunta general sin captura ni caso concreto.
+NO estás analizando un perfil concreto.
+NO uses “Lo que veo”.
+NO uses “Qué haría ahora” como si hubiera una imagen o caso revisado.
+NO digas “confía en tu instinto”.
+NO digas “si algo no se siente bien”.
+NO digas “investiga el perfil” como consejo principal.
+NO digas “habla con amigos” como solución principal.
+NO pongas tono de alarma si no hay caso concreto.
+
+Responde con esta estructura exacta:
+
+**Respuesta clara:**
+Explica la respuesta con matiz. Si habla de verificación, di que suma confianza, pero no garantiza intenciones, enlaces, dinero, presión ni comportamiento posterior.
+
+**Señales que sí me harían desconfiar:**
+Lista señales concretas: dinero, inversión, crypto, enlaces, códigos, documentos, fotos íntimas, urgencia, love bombing, pasar rápido a WhatsApp/Telegram, incoherencias o foto reutilizada.
+
+**Señales que tranquilizan:**
+Lista señales concretas: verificación visible, fotos variadas, bio coherente, conversación normal, no presión, no dinero, no enlaces, no crypto, no códigos/documentos.
+
+**Qué revisaría contigo:**
+Pide información concreta si el usuario tiene un caso real: captura del perfil, bio, fotos, verificación visible, conversación, enlaces, si pide dinero/códigos/documentos o si intenta sacar la conversación de la plataforma.
+
+**Para quedarte con la idea:**
+Cierra con una acción útil. Ejemplo:
+“Si tienes un caso concreto, mándame captura del perfil o de la conversación y te digo si lo pondría en bajo riesgo, duda razonable o peligro claro.”
+
+Tono:
+- Cercano, práctico y preventivo.
+- No robótico.
+- No alarmista.
+- No delegues la decisión en la intuición del usuario.
+`;
+}
+
     input.push({ role: "user", content: userContent });
 
 const openAiController = new AbortController();
