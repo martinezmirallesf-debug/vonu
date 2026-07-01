@@ -8922,15 +8922,47 @@ Mensaje del usuario: ${userText}
 }
 
     // ------------------------- OpenAI normal (no fútbol) -------------------------
-    const modelChat = Deno.env.get("OPENAI_MODEL_CHAT") || "gpt-4o";
-    const modelTutor = Deno.env.get("OPENAI_MODEL_TUTOR") || "gpt-4o";
-    const model = effectiveMode === "tutor" ? modelTutor : (Deno.env.get("OPENAI_MODEL") || modelChat);
+    const modelChat =
+  Deno.env.get("OPENAI_MODEL_CHAT") ||
+  Deno.env.get("OPENAI_MODEL") ||
+  "gpt-4o";
+
+const modelTutor =
+  Deno.env.get("OPENAI_MODEL_TUTOR") ||
+  modelChat;
+
+const modelProfile =
+  Deno.env.get("OPENAI_MODEL_PROFILE") ||
+  modelChat;
+
+const modelVision =
+  Deno.env.get("OPENAI_MODEL_VISION") ||
+  modelProfile;
+
+const isProfileAnalysisForModel =
+  effectiveMode === "chat" &&
+  looksLikeProfileReliabilityQuestion(userText);
+
+const isVisionAnalysisForModel =
+  effectiveMode === "chat" &&
+  Boolean(imageBase64);
+
+const model =
+  effectiveMode === "tutor"
+    ? modelTutor
+    : isVisionAnalysisForModel
+    ? modelVision
+    : isProfileAnalysisForModel
+    ? modelProfile
+    : modelChat;
 
     const max_output_tokens =
   effectiveMode === "tutor"
     ? 1600
     : imageBase64
-    ? 900
+    ? 1200
+    : isProfileAnalysisForModel
+    ? 1200
     : studyMode.active
     ? 700
     : lowContext
@@ -9707,6 +9739,20 @@ Tono:
 const openAiController = new AbortController();
 const openAiTimeout = setTimeout(() => openAiController.abort(), 35000);
 
+const supportsTemperature =
+  !String(model || "").toLowerCase().startsWith("gpt-5");
+
+const openAIRequestBody: Record<string, unknown> = {
+  model,
+  instructions,
+  input,
+  max_output_tokens,
+};
+
+if (supportsTemperature) {
+  openAIRequestBody.temperature = temperature;
+}
+
 const resp = await fetch("https://api.openai.com/v1/responses", {
   method: "POST",
   headers: {
@@ -9714,13 +9760,7 @@ const resp = await fetch("https://api.openai.com/v1/responses", {
     "Content-Type": "application/json",
   },
   signal: openAiController.signal,
-  body: JSON.stringify({
-    model,
-    instructions,
-    input,
-    max_output_tokens,
-    temperature,
-  }),
+  body: JSON.stringify(openAIRequestBody),
 });
 
 clearTimeout(openAiTimeout);
