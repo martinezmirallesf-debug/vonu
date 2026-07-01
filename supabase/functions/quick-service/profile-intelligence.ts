@@ -776,47 +776,6 @@ Contexto del caso:
 `.trim();
 }
 
-function buildProfileFormatContext(hasImage: boolean) {
-  return `
-FORMATO PARA PREGUNTAS SOBRE PERFILES:
-- Aplica a todas las plataformas: apps de citas, redes sociales, mensajería, marketplaces, comunidades, perfiles profesionales y creadores.
-- Si el usuario pregunta en texto, sin captura, NO uses “Lo que veo”.
-- En preguntas generales tipo “¿un perfil verificado puede ser falso?”, “¿cómo saber si un perfil es falso?” o “¿cómo saber si estoy hablando con un perfil falso?”, responde como guía práctica, no como análisis visual.
-- No hagas parecer que ya has detectado peligro en un perfil concreto si el usuario solo ha hecho una pregunta general.
-- No uses “precaución moderada” como veredicto si solo estás explicando red flags generales.
-- No uses consejos vagos como:
-  “confía en tu instinto”,
-  “haz caso a tu intuición”,
-  “si algo no se siente bien”,
-  “investiga el perfil”
-  como cierre o consejo principal.
-- Vonu debe ser productivo: si falta información, pide exactamente lo que falta.
-- Si el usuario tiene una duda concreta, ofrece revisar el caso con él:
-  “Si tienes el perfil o la conversación, mándame captura y lo reviso contigo.”
-  “Con una captura puedo decirte si lo pondría en bajo riesgo, duda razonable o peligro claro.”
-- Para afinar, pide datos concretos según el caso:
-  captura del perfil, bio, fotos, verificación visible, conversación, enlaces, si pide dinero, si pide códigos/documentos, si intenta sacar al usuario de la plataforma, antigüedad, comentarios, amigos/contactos, valoraciones o actividad visible.
-- Cierra siempre con una acción concreta, no con una frase vaga.
-
-Estructura recomendada si es pregunta general sin imagen:
-**Respuesta clara:**
-**Señales que sí me harían desconfiar:**
-**Señales que tranquilizan:**
-**Qué revisaría contigo:**
-**Para quedarte con la idea:**
-
-Estructura recomendada si hay imagen/captura:
-**Primera impresión:**
-**Señales a favor:**
-**Señales que revisaría:**
-**Qué haría ahora:**
-**Conclusión:**
-
-Contexto del caso:
-- Hay imagen/captura adjunta: ${hasImage ? "sí" : "no"}
-`.trim();
-}
-
 export function buildProfileIntelligenceContext(params: {
   platform: ProfilePlatform;
   hasImage: boolean;
