@@ -9697,13 +9697,16 @@ FORMATO OBLIGATORIO PARA ESTA RESPUESTA — VARIANTE A:
 Usa estos bloques, adaptando el contenido a la pregunta:
 
 **Respuesta clara:**
-Responde directamente. Si habla de verificación, explica que suma confianza porque suele comprobar algo en un momento concreto, pero no convierte el perfil en fiable para siempre. Menciona que después pueden cambiar fotos, bio, intereses, datos visibles o comportamiento.
+Responde directamente.
+Si el usuario menciona verificación, perfil verificado, check azul, verified, Tinder verificado o similar, explica que la verificación suma confianza porque suele comprobar algo en un momento concreto, pero no convierte el perfil en fiable para siempre. Menciona que después pueden cambiar fotos, bio, intereses, datos visibles o comportamiento.
+Si el usuario NO menciona verificación, NO hables de verificación en este bloque. Céntrate en comportamiento, coherencia, prisas, excusas y peticiones raras.
 
 **Señales de riesgo reales:**
 Incluye solo señales concretas: dinero, Bizum, inversión, crypto, enlaces, códigos, documentos, fotos íntimas, urgencia, love bombing, pasar rápido a WhatsApp/Telegram, incoherencias o foto reutilizada.
 
 **Señales que tranquilizan:**
-Verificación visible, fotos variadas, bio coherente, conversación normal, no presión, no dinero, no enlaces, no crypto, no códigos ni documentos.
+Fotos variadas, bio coherente, conversación normal, no presión, no dinero, no enlaces, no crypto, no códigos ni documentos.
+Solo si el usuario ha mencionado verificación, añade que una verificación visible suma confianza, pero no garantiza todo.
 
 **Si tienes un caso concreto:**
 Pide captura del perfil o conversación y ofrece clasificarlo como bajo riesgo, duda razonable o peligro claro.
@@ -9800,7 +9803,7 @@ Reglas obligatorias:
 - Si es una pregunta general sin captura, no hagas veredicto de un caso concreto.
 - Si falta información, pide datos concretos.
 - Cierra con una acción útil: ofrecer revisar captura, perfil o conversación.
-- Si habla de verificación, menciona el matiz de que la verificación puede ser de un momento concreto y que después pueden cambiar fotos, bio, datos visibles o comportamiento.
+- Solo menciona verificación si el usuario la menciona directamente: verificación, verificado, perfil verificado, check azul, verified, Tinder verificado o similar. Si el usuario no la menciona, no metas verificación como bloque ni como señal principal.
 
 ${profileVariantInstructions[profileStyleVariant]}
 
