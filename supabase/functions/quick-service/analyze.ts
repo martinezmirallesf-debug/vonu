@@ -9173,13 +9173,19 @@ if (reverseImageRiskContext) {
   instructions += `\n\n${reverseImageRiskContext}`;
 }
 
-if (reverseImageRiskContext) {
-  instructions += `\n\n${reverseImageRiskContext}`;
-}
-
 const profilePlatform = detectProfilePlatform(userText);
+
+const isGeneralProfileGuideWithoutImageForLeanPrompt =
+  effectiveMode === "chat" &&
+  !imageBase64 &&
+  looksLikeProfileReliabilityQuestion(userText) &&
+  /\b(c[oó]mo saber|como saber|perfil verificado|verificado de tinder|verificado en tinder|puede ser falso|puede ser falsa|detectar|identificar|señales|red flags|green flags|perfil falso|perfil falsa|hablando con un perfil falso)\b/i.test(
+    userText
+  );
+
 const shouldUseProfileIntelligence =
-  looksLikeProfileReliabilityQuestion(userText);
+  looksLikeProfileReliabilityQuestion(userText) &&
+  !isGeneralProfileGuideWithoutImageForLeanPrompt;
 
 const profileIntelligenceContext = shouldUseProfileIntelligence
   ? buildProfileIntelligenceContext({
@@ -9673,15 +9679,10 @@ if (imageBase64 && hasStrongReusedImageSignal) {
 }
 
 const isGeneralProfileGuideWithoutImageFinalGuard =
-  effectiveMode === "chat" &&
-  !imageBase64 &&
-  looksLikeProfileReliabilityQuestion(userText) &&
-  /\b(c[oó]mo saber|como saber|perfil verificado|verificado de tinder|verificado en tinder|puede ser falso|puede ser falsa|detectar|identificar|señales|red flags|green flags|perfil falso|perfil falsa|hablando con un perfil falso)\b/i.test(
-    userText
-  );
+  isGeneralProfileGuideWithoutImageForLeanPrompt;
 
 if (isGeneralProfileGuideWithoutImageFinalGuard) {
-  const platformForFinalGuard = detectProfilePlatform(userText);
+  const platformForFinalGuard = profilePlatform;
 
   const profileStyleVariants = ["A", "B", "C", "D"] as const;
   const randomProfileStyleNumber = crypto.getRandomValues(new Uint32Array(1))[0];
