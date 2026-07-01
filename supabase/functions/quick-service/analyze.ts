@@ -8960,7 +8960,7 @@ const model =
     : imageBase64
     ? 1200
     : isProfileAnalysisForModel
-    ? 1200
+    ? 800
     : studyMode.active
     ? 700
     : lowContext
@@ -9683,10 +9683,95 @@ const isGeneralProfileGuideWithoutImageFinalGuard =
 if (isGeneralProfileGuideWithoutImageFinalGuard) {
   const platformForFinalGuard = detectProfilePlatform(userText);
 
+  const profileStyleVariants = ["A", "B", "C", "D"] as const;
+  const randomProfileStyleNumber = crypto.getRandomValues(new Uint32Array(1))[0];
+  const profileStyleVariant =
+    profileStyleVariants[randomProfileStyleNumber % profileStyleVariants.length];
+
+  const profileVariantInstructions: Record<
+    (typeof profileStyleVariants)[number],
+    string
+  > = {
+    A: `
+FORMATO OBLIGATORIO PARA ESTA RESPUESTA — VARIANTE A:
+Usa estos bloques, adaptando el contenido a la pregunta:
+
+**Respuesta clara:**
+Responde directamente. Si habla de verificación, explica que suma confianza porque suele comprobar algo en un momento concreto, pero no convierte el perfil en fiable para siempre. Menciona que después pueden cambiar fotos, bio, intereses, datos visibles o comportamiento.
+
+**Señales de riesgo reales:**
+Incluye solo señales concretas: dinero, Bizum, inversión, crypto, enlaces, códigos, documentos, fotos íntimas, urgencia, love bombing, pasar rápido a WhatsApp/Telegram, incoherencias o foto reutilizada.
+
+**Señales que tranquilizan:**
+Verificación visible, fotos variadas, bio coherente, conversación normal, no presión, no dinero, no enlaces, no crypto, no códigos ni documentos.
+
+**Si tienes un caso concreto:**
+Pide captura del perfil o conversación y ofrece clasificarlo como bajo riesgo, duda razonable o peligro claro.
+`.trim(),
+
+    B: `
+FORMATO OBLIGATORIO PARA ESTA RESPUESTA — VARIANTE B:
+Usa estos bloques, adaptando el contenido a la pregunta:
+
+**Sí, pero con matiz:**
+Explica el matiz principal. Si habla de verificación, di que es un buen punto de partida, pero no una garantía total ni permanente.
+
+**Dónde estaría el riesgo real:**
+Dinero, inversión, crypto, enlaces, códigos, documentos, fotos íntimas, presión, urgencia, amor intenso demasiado rápido, incoherencias o intento rápido de salir de la app.
+
+**Qué señales bajan la sospecha:**
+Datos coherentes, fotos naturales, verificación visible si aplica, conversación tranquila y ausencia de peticiones raras.
+
+**Conclusión práctica:**
+Cierra con una acción útil: mandar captura, bio o conversación para revisarlo juntos.
+`.trim(),
+
+    C: `
+FORMATO OBLIGATORIO PARA ESTA RESPUESTA — VARIANTE C:
+Usa estos bloques, adaptando el contenido a la pregunta:
+
+**La idea principal:**
+Resume el punto clave en lenguaje natural, sin sonar alarmista.
+
+**Lo que no garantiza una verificación:**
+Si la pregunta habla de un perfil verificado, explica que no garantiza para siempre fotos actuales, bio actual, datos actuales, comportamiento posterior, intenciones, enlaces, dinero, crypto, códigos o documentos.
+
+**Banderas rojas importantes:**
+Lista señales concretas de riesgo real.
+
+**Señales positivas:**
+Lista señales que sí bajan la sospecha.
+
+**Lo revisamos mejor si me mandas:**
+Pide captura, bio, fotos, conversación y cualquier enlace o petición rara.
+`.trim(),
+
+    D: `
+FORMATO OBLIGATORIO PARA ESTA RESPUESTA — VARIANTE D:
+Usa estos bloques, adaptando el contenido a la pregunta:
+
+**En corto:**
+Da una respuesta breve y clara.
+
+**El matiz importante:**
+Explica qué detalle suele pasar desapercibido. Si habla de verificación, menciona que puede haber cambios posteriores en fotos, bio, datos visibles o comportamiento.
+
+**Me preocuparía si aparece esto:**
+Lista red flags concretas.
+
+**Me tranquilizaría si veo esto:**
+Lista green flags concretas.
+
+**Siguiente paso útil:**
+Ofrece revisar captura del perfil o conversación y dar una clasificación práctica.
+`.trim(),
+  };
+
   instructions += `
 
 REGLA FINAL PRIORITARIA PARA PREGUNTAS GENERALES SOBRE PERFILES:
 Plataforma detectada: ${platformForFinalGuard}
+Variante de formato elegida: ${profileStyleVariant}
 
 Esta es una pregunta general sin captura ni caso concreto.
 NO estás analizando un perfil concreto.
@@ -9697,86 +9782,18 @@ NO digas “si algo no se siente bien”.
 NO digas “investiga el perfil” como consejo principal.
 NO digas “habla con amigos” como solución principal.
 NO pongas tono de alarma si no hay caso concreto.
-
-Usa una estructura clara, pero no repitas siempre los mismos títulos. Varía de forma natural entre estas familias de formato.
+NO escribas una frase suelta antes del primer encabezado.
+NO mezcles varias variantes en una sola respuesta.
 
 Reglas obligatorias:
 - La primera respuesta clara debe ir dentro del primer encabezado elegido.
-- No escribas una frase suelta antes del primer título si el primer título ya contiene la respuesta.
-- Evita duplicar aperturas tipo “Sí...” y luego “Sí, pero con matiz”.
 - Explica qué pesa de verdad y qué no.
 - Si es una pregunta general sin captura, no hagas veredicto de un caso concreto.
-- No uses “Lo que veo” si no hay imagen/captura.
-- No uses “confía en tu instinto”, “si algo no se siente bien”, “investiga el perfil” ni “habla con amigos” como cierre o consejo principal.
 - Si falta información, pide datos concretos.
 - Cierra con una acción útil: ofrecer revisar captura, perfil o conversación.
+- Si habla de verificación, menciona el matiz de que la verificación puede ser de un momento concreto y que después pueden cambiar fotos, bio, datos visibles o comportamiento.
 
-Familia A:
-**Respuesta clara:**
-Explica la respuesta con matiz. Si habla de verificación, di obligatoriamente que la verificación suma confianza porque suele comprobar algo en un momento concreto, pero no convierte el perfil en fiable para siempre. Después pueden cambiar fotos, bio, intereses, datos visibles o comportamiento. También importa revisar las fotos actuales, la bio actual y la conversación actual.
-
-**Señales que sí me harían desconfiar:**
-Dinero, inversión, crypto, enlaces, códigos, documentos, fotos íntimas, urgencia, love bombing, pasar rápido a WhatsApp/Telegram, incoherencias o foto reutilizada.
-
-**Señales que tranquilizan:**
-Verificación visible, fotos variadas, bio coherente, conversación normal, no presión, no dinero, no enlaces, no crypto, no códigos/documentos.
-
-**Qué revisaría contigo:**
-Pide información concreta si el usuario tiene un caso real: captura del perfil, bio, fotos, verificación visible, conversación, enlaces, si pide dinero/códigos/documentos o si intenta sacar la conversación de la plataforma.
-
-**Para quedarte con la idea:**
-Cierra con una acción útil y menciona el matiz de verificación.
-
-Familia B:
-**Sí, pero con matiz:**
-Explica que puede ser falso o volverse engañoso aunque esté verificado. La verificación suma, pero no garantiza para siempre fotos actuales, bio actual, datos actuales ni comportamiento posterior.
-
-**Dónde estaría el riesgo real:**
-Menciona señales concretas: dinero, crypto, enlaces, códigos, documentos, presión, urgencia, love bombing, pasar rápido fuera de la app, incoherencias o foto reutilizada.
-
-**Qué señales bajan la sospecha:**
-Verificación visible, varias fotos naturales, bio coherente, conversación normal, nada de dinero, nada de enlaces, nada de presión.
-
-**Qué datos me ayudarían a afinar:**
-Pide captura del perfil o conversación y los elementos concretos que habría que mirar.
-
-**Conclusión práctica:**
-Cierra ofreciendo revisar el caso y clasificarlo como bajo riesgo, duda razonable o peligro claro.
-
-Familia C:
-**La idea principal:**
-Resume el punto clave en lenguaje natural: verificado no significa fiable para siempre.
-
-**Lo que no garantiza la verificación:**
-Fotos cambiadas después, bio cambiada después, intereses/datos visibles cambiados, comportamiento posterior, intenciones, enlaces, dinero, presión, crypto, códigos o documentos.
-
-**Banderas rojas importantes:**
-Lista señales concretas de riesgo real.
-
-**Señales positivas:**
-Lista señales que sí tranquilizan.
-
-**Lo revisamos mejor si me mandas:**
-Pide captura, bio, fotos, conversación y señales concretas.
-
-Familia D:
-**En corto:**
-Da una respuesta breve y clara.
-
-**El matiz importante:**
-Explica lo de verificación en un momento concreto y cambios posteriores del perfil.
-
-**Me preocuparía si aparece esto:**
-Lista red flags.
-
-**Me tranquilizaría si veo esto:**
-Lista green flags.
-
-**Siguiente paso útil:**
-Ofrece revisar captura o conversación con el usuario.
-
-No copies siempre los mismos títulos. Escoge una familia y adapta los títulos con naturalidad según la pregunta.
-No mezcles todas las familias en una sola respuesta.
+${profileVariantInstructions[profileStyleVariant]}
 
 Tono:
 - Cercano, práctico y preventivo.
