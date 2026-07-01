@@ -1,5 +1,4 @@
 /// <reference lib="deno.ns" />
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import {
@@ -3974,9 +3973,9 @@ const hasStrongProfileReuseSignal =
   (
     riskyTitleMatches.length > 0 ||
     socialMatches.length > 0 ||
-    topPages.some((p) =>
-      /tinder|badoo|bumble|instagram|threads|facebook|tiktok|catfish|fake|profile|dating|model|leak|pretty|feet/i.test(
-        `${p.title} ${p.url}`,
+    topPages.some((p: { title?: string; url?: string }) =>
+      /tinder|badoo|bumble|instagram|threads|facebook|tiktok|x\.com|twitter/i.test(
+        `${p.title ?? ""} ${p.url ?? ""}`,
       ),
     )
   );
@@ -8208,7 +8207,7 @@ async function savePhoneChatReportIfRelevant(
 }
 
 // ---------- handler ----------
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
   const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -9734,8 +9733,15 @@ Usa estos bloques, adaptando el contenido a la pregunta:
 **La idea principal:**
 Resume el punto clave en lenguaje natural, sin sonar alarmista.
 
+Después elige SOLO UNO de estos dos bloques según la pregunta:
+
+Si el usuario menciona verificación, perfil verificado, check azul, verified, Tinder verificado o similar, usa este título:
 **Lo que no garantiza una verificación:**
-Si la pregunta habla de un perfil verificado, explica que no garantiza para siempre fotos actuales, bio actual, datos actuales, comportamiento posterior, intenciones, enlaces, dinero, crypto, códigos o documentos.
+Explica que una verificación no garantiza para siempre fotos actuales, bio actual, datos actuales, comportamiento posterior, intenciones, enlaces, dinero, crypto, códigos o documentos.
+
+Si el usuario NO menciona verificación, usa este título:
+**Lo que suele delatar un perfil falso:**
+Explica que lo más importante suele ser el conjunto: identidad poco comprobable, prisas, excusas, incoherencias, dinero, enlaces, códigos, documentos, fotos íntimas, presión o intento de mover la conversación rápido a otra app.
 
 **Banderas rojas importantes:**
 Lista señales concretas de riesgo real.
@@ -9745,6 +9751,8 @@ Lista señales que sí bajan la sospecha.
 
 **Lo revisamos mejor si me mandas:**
 Pide captura, bio, fotos, conversación y cualquier enlace o petición rara.
+
+No uses el título “Lo que no garantiza una verificación” si el usuario no ha preguntado por un perfil verificado.
 `.trim(),
 
     D: `
@@ -9807,7 +9815,15 @@ Tono:
     input.push({ role: "user", content: userContent });
 
 const openAiController = new AbortController();
-const openAiTimeout = setTimeout(() => openAiController.abort(), 35000);
+
+const openAiTimeoutMs =
+  imageBase64 || isProfileAnalysisForModel
+    ? 90000
+    : 60000;
+
+const openAiTimeout = setTimeout(() => {
+  openAiController.abort("openai_timeout");
+}, openAiTimeoutMs);
 
 const supportsTemperature =
   !String(model || "").toLowerCase().startsWith("gpt-5");
@@ -10106,12 +10122,39 @@ personalSafetyChatReport:
   200,
 );
   } catch (error) {
+    console.error("[quick-service] handler_error", error);
+
+    const errorText =
+      error instanceof Error ? error.message : String(error);
+
+    const errorName =
+      error instanceof Error ? error.name : "";
+
+    const isAbortOrTimeout =
+      errorName === "AbortError" ||
+      errorText.includes("AbortError") ||
+      errorText.includes("signal is aborted") ||
+      errorText.includes("openai_timeout") ||
+      errorText.includes("aborted");
+
+    if (isAbortOrTimeout) {
+      return json(
+        {
+          error: "La respuesta ha tardado demasiado.",
+          message:
+            "La IA ha tardado más de lo esperado. Prueba otra vez; si era una imagen, perfil o caso complejo, puede necesitar unos segundos más.",
+          code: "openai_timeout",
+        },
+        504
+      );
+    }
+
     return json(
       {
         error: "Error interno del servidor",
-        message: error instanceof Error ? error.message : String(error),
+        message: errorText,
       },
-      500,
+      500
     );
   }
 });
