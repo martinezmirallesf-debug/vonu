@@ -9677,6 +9677,113 @@ if (imageBase64 && hasStrongReusedImageSignal) {
   });
 }
 
+const recentProfileFastPathContext = history
+  .slice(-6)
+  .map((m) => `${m.role}: ${m.content ?? ""}`)
+  .join("\n");
+
+const profileFastPathContextText = `${userText}\n${recentProfileFastPathContext}`;
+
+const hasProfileFastPathContext =
+  /\b(perfil falso|perfil falsa|perfil fake|catfish|catfishing|tinder|bumble|badoo|app de citas|citas|verificad|verficad|check azul|whatsapp|telegram|love bombing|crypto|cripto)\b/i.test(
+    profileFastPathContextText
+  );
+
+const asksHowProfileFakeWorks =
+  effectiveMode === "chat" &&
+  !imageBase64 &&
+  !pdfText &&
+  !footballIntent &&
+  hasProfileFastPathContext &&
+  /\b(c[oó]mo es posible|c[oó]mo pueden|c[oó]mo puede|c[oó]mo logran|c[oó]mo hacen|c[oó]mo se hace|c[oó]mo crear|c[oó]mo hacen un perfil|verificarse|verficarse|se verifican|pueden verificarse|pueden verficarse)\b/i.test(
+    userText
+  );
+
+const asksCutContactAfterProfileDoubt =
+  effectiveMode === "chat" &&
+  !imageBase64 &&
+  !pdfText &&
+  !footballIntent &&
+  hasProfileFastPathContext &&
+  /\b(cortar el contacto|mejor cortar|bloquear|bloqueo|bloquearlo|bloquearla|dejar de hablar|no contestar|eliminar contacto)\b/i.test(
+    userText
+  );
+
+if (asksHowProfileFakeWorks || asksCutContactAfterProfileDoubt) {
+  const profileFollowUpDisabledReport = {
+    saved: false,
+    id: null,
+    reason: "profile_followup_fast_path",
+  };
+
+  const lowerProfileFollowUpText = String(userText || "").toLowerCase();
+
+  const asksVerificationMechanism =
+    /verific|verfic|check azul|verified/i.test(lowerProfileFollowUpText);
+
+  const text = asksCutContactAfterProfileDoubt
+    ? `Sí: si ya tienes dudas reales, cortar el contacto puede ser una decisión prudente, sobre todo si ha habido presión, evasivas, enlaces, dinero, crypto, códigos o intento de sacarte rápido de la app.
+
+**Antes de cortar:**
+Si te ha pedido dinero, datos, fotos íntimas, códigos o documentos, guarda capturas por seguridad. No abras enlaces nuevos y no expliques demasiado: cuanto menos margen le des para convencerte, mejor.
+
+**Qué haría ahora:**
+Bloquearía o dejaría de responder, revisaría si has compartido algo sensible y reportaría el perfil dentro de la app si ves señales claras.
+
+**Para quedarte con la idea:**
+No necesitas demostrar al 100% que sea falso para protegerte. Si el comportamiento te genera desconfianza seria, parar a tiempo es buena decisión.`
+    : asksVerificationMechanism
+    ? `Puede pasar porque la verificación suele comprobar una parte concreta en un momento concreto, no todo el perfil ni sus intenciones.
+
+**Cómo puede parecer verificado y aun así ser problemático:**
+Puede usar fotos reales, pasar una comprobación básica de imagen o identidad, y después cambiar fotos, bio, datos visibles o comportamiento. También puede ser una persona real usando la verificación para generar confianza y luego intentar manipular.
+
+**Dónde estaría el engaño:**
+No siempre está en la foto. Muchas veces está en lo que viene después: dinero, inversión, crypto, enlaces, códigos, documentos, urgencia, love bombing, evasivas o intento rápido de pasar a WhatsApp/Telegram.
+
+**Qué haría yo:**
+No trataría la verificación como garantía total. Miraría si la conversación es coherente, si no hay presión y si no aparece ninguna petición rara. Si tienes captura del perfil o conversación, la reviso y te digo si lo veo bajo riesgo, duda razonable o peligro claro.`
+    : `Puede pasar porque un perfil falso no siempre empieza pareciendo falso. Muchas veces parece normal al principio para ganar confianza.
+
+**Cómo suelen hacerlo sin que se note al principio:**
+Pueden usar fotos reales robadas o reutilizadas, una biografía copiada o muy genérica, datos que parecen coherentes y una conversación amable al inicio. No hace falta que todo sea falso: a veces la foto parece real, pero la intención es engañar.
+
+**Dónde suele aparecer el riesgo:**
+Cuando empiezan las prisas, las excusas, el amor intenso demasiado rápido, los enlaces, el dinero, la inversión, crypto, códigos, documentos, fotos íntimas o el intento de llevarte rápido a WhatsApp/Telegram.
+
+**Para quedarte con la idea:**
+Lo importante no es pillar una señal aislada, sino ver el patrón. Si me mandas captura del perfil o conversación, te digo si lo pondría en bajo riesgo, duda razonable o peligro claro.`;
+
+  return json(
+    {
+      text,
+      mode: effectiveMode,
+      tutorLevel: null,
+      pillar: "ESTAFAS_FRAUDES",
+      model: "local-profile-followup-v1",
+      tokens_used: 0,
+      studyMode: null,
+      usage: null,
+      autoTutor: {
+        active: false,
+        area: "general",
+        level: null,
+        reason: "profile_followup_fast_path",
+      },
+      footballResolved: null,
+      footballReq: null,
+      footballIntent: false,
+      footballSiteUrl: "https://app.vonuai.com",
+      footballError: null,
+      footballPrediction: null,
+      fraudChatReport: profileFollowUpDisabledReport,
+      legalChatReport: profileFollowUpDisabledReport,
+      personalSafetyChatReport: profileFollowUpDisabledReport,
+      phoneChatReport: profileFollowUpDisabledReport,
+    },
+    200
+  );
+}
 if (isGeneralProfileGuideWithoutImageForLeanPrompt) {
   const userMentionedProfileVerification =
     /\b(verificaci[oó]n|verificado|verificada|perfil verificado|check azul|verified|photo verified|id verified|tinder verificado|verificado de tinder|verificado en tinder)\b/i.test(
