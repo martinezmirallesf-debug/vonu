@@ -9682,6 +9682,10 @@ const isGeneralProfileGuideWithoutImageFinalGuard =
 
 if (isGeneralProfileGuideWithoutImageFinalGuard) {
   const platformForFinalGuard = profilePlatform;
+  const userMentionedProfileVerification =
+  /\b(verificaci[oó]n|verificado|verificada|perfil verificado|check azul|verified|photo verified|id verified|tinder verificado|verificado de tinder|verificado en tinder)\b/i.test(
+    userText
+  );
 
   const profileStyleVariants = ["A", "B", "C", "D"] as const;
   const randomProfileStyleNumber = crypto.getRandomValues(new Uint32Array(1))[0];
@@ -9766,16 +9770,18 @@ Usa estos bloques, adaptando el contenido a la pregunta:
 Da una respuesta breve y clara.
 
 **El matiz importante:**
-Explica qué detalle suele pasar desapercibido. Si habla de verificación, menciona que puede haber cambios posteriores en fotos, bio, datos visibles o comportamiento.
+Si el usuario menciona verificación, perfil verificado, check azul, verified, Tinder verificado o similar, explica que la verificación suma confianza, pero no garantiza para siempre fotos actuales, bio actual, datos visibles, comportamiento posterior ni intenciones.
+Si el usuario NO menciona verificación, NO hables de verificación. Explica que lo que más pesa suele ser el comportamiento: prisas, excusas, incoherencias, presión, peticiones raras o intentar sacar la conversación a otra app.
 
 **Me preocuparía si aparece esto:**
-Lista red flags concretas.
+Lista red flags concretas: dinero, Bizum, inversión, crypto, enlaces, códigos, documentos, fotos íntimas, urgencia, love bombing, incoherencias, evasivas o foto reutilizada.
 
 **Me tranquilizaría si veo esto:**
-Lista green flags concretas.
+Lista green flags concretas: fotos variadas y naturales, bio coherente, conversación normal, ausencia de presión, ausencia de dinero, ausencia de enlaces, ausencia de crypto, ausencia de códigos y ausencia de documentos.
+Solo menciona verificación aquí si el usuario la mencionó directamente.
 
 **Siguiente paso útil:**
-Ofrece revisar captura del perfil o conversación y dar una clasificación práctica.
+Ofrece revisar captura del perfil o conversación y dar una clasificación práctica: bajo riesgo, duda razonable o peligro claro.
 `.trim(),
   };
 
@@ -9784,6 +9790,7 @@ Ofrece revisar captura del perfil o conversación y dar una clasificación prác
 REGLA FINAL PRIORITARIA PARA PREGUNTAS GENERALES SOBRE PERFILES:
 Plataforma detectada: ${platformForFinalGuard}
 Variante de formato elegida: ${profileStyleVariant}
+Usuario menciona verificación: ${userMentionedProfileVerification ? "sí" : "no"}
 
 Esta es una pregunta general sin captura ni caso concreto.
 NO estás analizando un perfil concreto.
@@ -9800,6 +9807,8 @@ NO mezcles varias variantes en una sola respuesta.
 Reglas obligatorias:
 - La primera respuesta clara debe ir dentro del primer encabezado elegido.
 - Explica qué pesa de verdad y qué no.
+- Si “Usuario menciona verificación” es “no”, queda prohibido mencionar verificación, verificado, verificada, check azul, verified, photo verified o perfiles verificados. En ese caso habla solo de comportamiento, coherencia, fotos, bio, presión, dinero, enlaces, códigos, documentos, crypto, urgencia, pasar a otra app y foto reutilizada.
+- Si “Usuario menciona verificación” es “sí”, entonces sí puedes explicar el matiz: suma confianza, pero no garantiza intenciones ni que después no cambien fotos, bio, datos visibles o comportamiento.
 - Si es una pregunta general sin captura, no hagas veredicto de un caso concreto.
 - Si falta información, pide datos concretos.
 - Cierra con una acción útil: ofrecer revisar captura, perfil o conversación.
