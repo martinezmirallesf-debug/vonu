@@ -9677,6 +9677,102 @@ if (imageBase64 && hasStrongReusedImageSignal) {
   });
 }
 
+if (isGeneralProfileGuideWithoutImageForLeanPrompt) {
+  const userMentionedProfileVerification =
+    /\b(verificaci[oó]n|verificado|verificada|perfil verificado|check azul|verified|photo verified|id verified|tinder verificado|verificado de tinder|verificado en tinder)\b/i.test(
+      userText
+    );
+
+  const localProfileGuideVariants = userMentionedProfileVerification
+    ? [
+        `Sí, un perfil verificado puede ser falso en cuanto a intenciones. La verificación suma confianza porque suele comprobar algo en un momento concreto, pero no garantiza lo que esa persona hará después.
+
+**Dónde estaría el riesgo real:**
+Dinero, Bizum, inversión, crypto, enlaces, códigos, documentos, fotos íntimas, urgencia, love bombing, incoherencias, evasivas, foto reutilizada o intento rápido de pasar a WhatsApp/Telegram.
+
+**Qué señales bajan la sospecha:**
+Fotos variadas y naturales, bio coherente, conversación normal, ausencia de presión, ausencia de dinero, ausencia de enlaces, ausencia de crypto, ausencia de códigos y ausencia de documentos. La verificación visible suma confianza, pero no lo convierte en seguro al 100%.
+
+**Conclusión práctica:**
+Puedo revisar una captura del perfil o conversación y clasificarlo como bajo riesgo, duda razonable o peligro claro.`,
+        `Sí, puede pasar. Un perfil verificado es mejor punto de partida que uno sin verificar, pero no garantiza intenciones, comportamiento posterior ni cambios futuros en fotos, bio o datos visibles.
+
+**Dónde estaría el riesgo real:**
+Peticiones de dinero, inversión, crypto, Bizum, enlaces, códigos, documentos, fotos íntimas, presión, urgencia, amor intenso demasiado rápido, incoherencias o evasivas.
+
+**Qué señales bajan la sospecha:**
+Conversación tranquila, fotos naturales y variadas, bio coherente, nada de dinero, nada de enlaces raros, nada de códigos y nada de documentos. La verificación ayuda, pero no sustituye mirar el comportamiento.
+
+**Conclusión práctica:**
+Si me mandas captura del perfil o de la conversación, te digo si lo pondría en bajo riesgo, duda razonable o peligro claro.`,
+      ]
+    : [
+        `Lo importante es fijarse en el comportamiento general, no solo en una señal aislada.
+
+**Dónde estaría el riesgo real:**
+Ten cuidado si piden dinero, Bizum, inversiones, criptomonedas, enlaces, códigos, documentos o fotos íntimas. También si hay urgencia, love bombing, intentan pasar rápido a WhatsApp/Telegram, hay incoherencias, evasivas o usan fotos reutilizadas.
+
+**Qué señales bajan la sospecha:**
+Fotos variadas y naturales, una biografía coherente, conversación normal sin presión, y que no pidan dinero, enlaces, crypto, códigos ni documentos.
+
+**Conclusión práctica:**
+Puedo ayudarte a revisar una captura del perfil o conversación para clasificarlo como bajo riesgo, duda razonable o peligro claro.`,
+        `Para detectar un perfil falso, no miraría solo una cosa: miraría el conjunto.
+
+**Dónde estaría el riesgo real:**
+Prisas, excusas raras, mensajes demasiado intensos muy pronto, dinero, inversión, crypto, Bizum, enlaces, códigos, documentos, fotos íntimas, incoherencias o intento rápido de llevarte a otra app.
+
+**Qué señales bajan la sospecha:**
+Fotos naturales y variadas, bio que encaja, conversación tranquila, respuestas coherentes y cero presión para dinero, enlaces, códigos, documentos o crypto.
+
+**Conclusión práctica:**
+Si tienes una captura del perfil o de la conversación, la reviso y te digo si parece bajo riesgo, duda razonable o peligro claro.`,
+      ];
+
+  const randomLocalProfileGuideNumber =
+    crypto.getRandomValues(new Uint32Array(1))[0];
+
+  const text =
+    localProfileGuideVariants[
+      randomLocalProfileGuideNumber % localProfileGuideVariants.length
+    ];
+
+  const disabledReport = {
+    saved: false,
+    id: null,
+    reason: "profile_guide_fast_path",
+  };
+
+  return json(
+    {
+      text,
+      mode: effectiveMode,
+      tutorLevel: null,
+      pillar,
+      model: "local-profile-guide-v1",
+      tokens_used: 0,
+      studyMode: null,
+      usage: null,
+      autoTutor: {
+        active: false,
+        area: "general",
+        level: null,
+        reason: "profile_guide_fast_path",
+      },
+      footballResolved: null,
+      footballReq: null,
+      footballIntent: false,
+      footballSiteUrl: "https://app.vonuai.com",
+      footballError: null,
+      footballPrediction: null,
+      fraudChatReport: disabledReport,
+      legalChatReport: disabledReport,
+      personalSafetyChatReport: disabledReport,
+      phoneChatReport: disabledReport,
+    },
+    200
+  );
+}
 const isGeneralProfileGuideWithoutImageFinalGuard =
   isGeneralProfileGuideWithoutImageForLeanPrompt;
 
