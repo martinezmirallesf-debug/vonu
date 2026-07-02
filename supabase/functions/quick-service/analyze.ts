@@ -9698,22 +9698,23 @@ if (isGeneralProfileGuideWithoutImageFinalGuard) {
   > = {
     A: `
 FORMATO OBLIGATORIO PARA ESTA RESPUESTA — VARIANTE A:
-Usa estos bloques, adaptando el contenido a la pregunta:
+Empieza con una introducción breve SIN título, de 1 o 2 frases, respondiendo directamente a la duda del usuario.
 
-**Respuesta clara:**
-Responde directamente.
-Si el usuario menciona verificación, perfil verificado, check azul, verified, Tinder verificado o similar, explica que la verificación suma confianza porque suele comprobar algo en un momento concreto, pero no convierte el perfil en fiable para siempre. Menciona que después pueden cambiar fotos, bio, intereses, datos visibles o comportamiento.
-Si el usuario NO menciona verificación, NO hables de verificación en este bloque. Céntrate en comportamiento, coherencia, prisas, excusas y peticiones raras.
+Si el usuario menciona verificación, perfil verificado, check azul, verified, Tinder verificado o similar, la introducción debe decir que sí puede haber riesgo, pero con matiz: la verificación suma confianza porque suele comprobar algo en un momento concreto, aunque no garantiza intenciones ni cambios posteriores en fotos, bio, datos visibles o comportamiento.
 
-**Señales de riesgo reales:**
-Incluye solo señales concretas: dinero, Bizum, inversión, crypto, enlaces, códigos, documentos, fotos íntimas, urgencia, love bombing, pasar rápido a WhatsApp/Telegram, incoherencias o foto reutilizada.
+Si el usuario NO menciona verificación, NO hables de verificación en la introducción. Céntrate en que lo importante no es una señal aislada, sino el conjunto: comportamiento, coherencia, prisas, excusas, presión y peticiones raras.
 
-**Señales que tranquilizan:**
-Fotos variadas, bio coherente, conversación normal, no presión, no dinero, no enlaces, no crypto, no códigos ni documentos.
-Solo si el usuario ha mencionado verificación, añade que una verificación visible suma confianza, pero no garantiza todo.
+Después usa estos bloques:
 
-**Si tienes un caso concreto:**
-Pide captura del perfil o conversación y ofrece clasificarlo como bajo riesgo, duda razonable o peligro claro.
+**Dónde estaría el riesgo real:**
+Incluye señales concretas: dinero, Bizum, inversión, crypto, enlaces, códigos, documentos, fotos íntimas, urgencia, love bombing, pasar rápido a WhatsApp/Telegram, incoherencias, evasivas o foto reutilizada.
+
+**Qué señales bajan la sospecha:**
+Fotos variadas y naturales, bio coherente, conversación normal, ausencia de presión, ausencia de dinero, ausencia de enlaces, ausencia de crypto, ausencia de códigos y ausencia de documentos.
+Si el usuario menciona verificación, puedes añadir: “La verificación visible suma confianza, pero no lo convierte en seguro al 100%.”
+
+**Conclusión práctica:**
+Ofrece revisar una captura del perfil o conversación y clasificarlo como bajo riesgo, duda razonable o peligro claro.
 `.trim(),
 
     B: `
@@ -9801,11 +9802,11 @@ NO digas “si algo no se siente bien”.
 NO digas “investiga el perfil” como consejo principal.
 NO digas “habla con amigos” como solución principal.
 NO pongas tono de alarma si no hay caso concreto.
-NO escribas una frase suelta antes del primer encabezado.
+NO escribas una frase suelta antes del primer encabezado, salvo en la Variante A, donde sí debes empezar con una introducción breve sin título.
 NO mezcles varias variantes en una sola respuesta.
 
 Reglas obligatorias:
-- La primera respuesta clara debe ir dentro del primer encabezado elegido.
+- La primera respuesta clara debe ir dentro del primer encabezado elegido, salvo en la Variante A, donde debe ir en una introducción breve sin título antes de los bloques.
 - Explica qué pesa de verdad y qué no.
 - Si “Usuario menciona verificación” es “no”, queda prohibido mencionar verificación, verificado, verificada, check azul, verified, photo verified o perfiles verificados. En ese caso habla solo de comportamiento, coherencia, fotos, bio, presión, dinero, enlaces, códigos, documentos, crypto, urgencia, pasar a otra app y foto reutilizada.
 - Si “Usuario menciona verificación” es “sí”, entonces sí puedes explicar el matiz: suma confianza, pero no garantiza intenciones ni que después no cambien fotos, bio, datos visibles o comportamiento.
