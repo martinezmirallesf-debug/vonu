@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-
 :root {
   --font-sans: var(--font-inter);
   --font-mono: var(--font-mono);
@@ -65,13 +64,13 @@ body {
 
 /* ---------- Animaciones UI Vonu ---------- */
 
-/* Burbuja suave: aparece con opacity + pequeño lift */
 @keyframes bubbleIn {
   0% {
     opacity: 0;
     transform: translateY(10px) scale(0.98);
     filter: blur(2px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -84,19 +83,18 @@ body {
   will-change: transform, opacity, filter;
 }
 
-/* Variante un pelín más lenta para el asistente */
 .bubble-in-slow {
   animation: bubbleIn 520ms cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity, filter;
 }
 
-/* Typing dots (si lo usamos luego) */
 @keyframes dotPulse {
   0%,
   80%,
   100% {
     opacity: 0.25;
   }
+
   40% {
     opacity: 1;
   }
@@ -109,6 +107,7 @@ body {
 }
 
 /* ---- Fix caret streaming (▍) para que no se vaya debajo del último bloque Markdown ---- */
+
 .assistant-md > :last-child {
   display: inline;
 }
@@ -121,21 +120,22 @@ body {
 }
 
 /* ✅ EVITA "MODO CÓDIGO" EN TUTOR/PIZARRA */
+
 .assistant-md pre,
 .assistant-md code {
-  font-family: inherit !important; /* <- adiós monospace */
+  font-family: inherit !important;
 }
 
-/* Y que el bloque no parezca bloque de código */
 .assistant-md pre {
   background: transparent !important;
   padding: 0 !important;
   margin: 0 !important;
   border-radius: 0 !important;
-  white-space: pre-wrap; /* respeta saltos pero no se sale */
+  white-space: pre-wrap;
 }
 
 /* Evita flashes claros dentro del contenedor Excalidraw */
+
 .excalidraw,
 .excalidraw .App-menu_top,
 .excalidraw .layer-ui__wrapper {
@@ -143,9 +143,159 @@ body {
 }
 
 /* Quitar margen superior en títulos del markdown de Vonu */
+
 .assistant-md h1,
 .assistant-md h2,
 .assistant-md h3,
 .assistant-md h4 {
   margin-top: 0 !important;
+}
+
+/* ---------- KaTeX / fórmulas Vonu ---------- */
+
+/*
+  Importante:
+  En app/layout.tsx debe quedar así:
+
+  import "katex/dist/katex.min.css";
+  import "./globals.css";
+
+  Este bloque corrige conflictos con .prose, Tailwind y el chat.
+*/
+
+/* Evita que estilos globales de tipografía rompan las fuentes internas de KaTeX */
+
+.vonu-markdown .katex,
+.vonu-markdown .katex *,
+.assistant-md .katex,
+.assistant-md .katex *,
+.prose .katex,
+.prose .katex * {
+  font-family: KaTeX_Main, "Times New Roman", serif !important;
+}
+
+.vonu-markdown .katex .mathnormal,
+.assistant-md .katex .mathnormal,
+.prose .katex .mathnormal {
+  font-family: KaTeX_Math, KaTeX_Main, "Times New Roman", serif !important;
+  font-style: italic !important;
+}
+
+.vonu-markdown .katex .mathrm,
+.assistant-md .katex .mathrm,
+.prose .katex .mathrm {
+  font-family: KaTeX_Main, "Times New Roman", serif !important;
+  font-style: normal !important;
+}
+
+.vonu-markdown .katex .amsrm,
+.assistant-md .katex .amsrm,
+.prose .katex .amsrm {
+  font-family: KaTeX_AMS, KaTeX_Main, "Times New Roman", serif !important;
+}
+
+.vonu-markdown .katex .mathbf,
+.assistant-md .katex .mathbf,
+.prose .katex .mathbf {
+  font-family: KaTeX_Main, "Times New Roman", serif !important;
+  font-weight: 700 !important;
+}
+
+/* Bloques centrados, limpios y sin romper el móvil */
+
+.vonu-markdown .katex-display,
+.assistant-md .katex-display,
+.prose .katex-display {
+  display: block !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  margin: 0.9rem 0 1rem !important;
+  padding: 0.35rem 0.15rem 0.45rem !important;
+  text-align: center !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Que la fórmula no se parta en mil trozos raros */
+
+.vonu-markdown .katex-display > .katex,
+.assistant-md .katex-display > .katex,
+.prose .katex-display > .katex {
+  display: inline-block !important;
+  max-width: none !important;
+  white-space: nowrap !important;
+  font-size: 1.06em !important;
+  line-height: 1.35 !important;
+}
+
+/* Fórmulas inline */
+
+.vonu-markdown .katex,
+.assistant-md .katex,
+.prose .katex {
+  font-size: 1.03em !important;
+  line-height: normal !important;
+}
+
+/* Evita que el wrapping agresivo del chat afecte a fórmulas */
+
+.vonu-markdown .katex,
+.vonu-markdown .katex *,
+.assistant-md .katex,
+.assistant-md .katex *,
+.prose .katex,
+.prose .katex * {
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+}
+
+/* Separación bonita entre texto y fórmula */
+
+.vonu-markdown p + .katex-display,
+.vonu-markdown .katex-display + p,
+.assistant-md p + .katex-display,
+.assistant-md .katex-display + p,
+.prose p + .katex-display,
+.prose .katex-display + p {
+  margin-top: 0.85rem !important;
+}
+
+/* Evita que fórmulas inline rompan la línea de forma fea */
+
+.vonu-markdown p .katex,
+.assistant-md p .katex,
+.prose p .katex {
+  white-space: nowrap;
+}
+
+/* En bloques largos, permitimos scroll interno antes que romper la página */
+
+.vonu-markdown,
+.assistant-md,
+.prose {
+  max-width: 100%;
+}
+
+/* Móvil: que no se salga, pero sin destrozarla */
+
+@media (max-width: 767px) {
+  .vonu-markdown .katex,
+  .assistant-md .katex,
+  .prose .katex {
+    font-size: 0.96em !important;
+  }
+
+  .vonu-markdown .katex-display,
+  .assistant-md .katex-display,
+  .prose .katex-display {
+    margin: 0.75rem 0 0.9rem !important;
+    padding: 0.28rem 0.05rem 0.38rem !important;
+  }
+
+  .vonu-markdown .katex-display > .katex,
+  .assistant-md .katex-display > .katex,
+  .prose .katex-display > .katex {
+    font-size: 0.86em !important;
+    line-height: 1.32 !important;
+  }
 }
