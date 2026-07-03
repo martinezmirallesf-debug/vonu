@@ -956,6 +956,32 @@ const directTutorTriggers = [
   };
 }
 
+function looksLikeRemoteSupportScamText(text: string) {
+  const t = (text || "").toLowerCase();
+
+  const claimedTechSupport =
+    t.includes("microsoft") ||
+    t.includes("windows") ||
+    t.includes("soporte técnico") ||
+    t.includes("soporte tecnico") ||
+    t.includes("servicio técnico") ||
+    t.includes("servicio tecnico") ||
+    t.includes("técnico de microsoft") ||
+    t.includes("tecnico de microsoft");
+
+  const remoteAccessOrCall =
+    t.includes("anydesk") ||
+    t.includes("rustdesk") ||
+    t.includes("teamviewer") ||
+    t.includes("control remoto") ||
+    t.includes("acceso remoto") ||
+    t.includes("instalar") ||
+    t.includes("me han llamado") ||
+    t.includes("me llamaron") ||
+    t.includes("llamada");
+
+  return claimedTechSupport && remoteAccessOrCall;
+}
 function pickPillar(userText: string) {
   const t = (userText || "").toLowerCase();
 
@@ -1087,7 +1113,8 @@ function pickPillar(userText: string) {
     t.includes("sede electronica") ||
     t.includes("tarjeta") ||
     t.includes("web rara") ||
-    t.includes("web sospechosa") ||
+       t.includes("web sospechosa") ||
+    looksLikeRemoteSupportScamText(userText) ||
     t.includes("no parece del ayuntamiento")
   ) return "ESTAFAS_FRAUDES";
 
@@ -5976,6 +6003,7 @@ function inferMaliciousDomainPatternFromUserText(userText: string) {
 function inferFraudBlockFromUserText(userText: string) {
   const t = (userText || "").toLowerCase();
     if (hasDirectMalwareLikeUrl(userText)) return "malware_link";
+      if (looksLikeRemoteSupportScamText(userText)) return "tech_support_remote_access";
 
   if (t.includes("wallapop") || t.includes("vinted") || t.includes("milanuncios") || t.includes("marketplace")) return "marketplace";
   if (t.includes("tinder") || t.includes("badoo") || t.includes("bumble") || t.includes("app de citas") || t.includes("instagram")) return "social_dating";
@@ -6031,6 +6059,9 @@ function inferPlatformOrAppFromUserText(userText: string) {
   if (t.includes("mercado libre")) return "Mercado Libre";
   if (t.includes("paypal")) return "PayPal";
   if (t.includes("bizum")) return "Bizum";
+    if (t.includes("anydesk")) return "AnyDesk";
+  if (t.includes("teamviewer")) return "TeamViewer";
+  if (t.includes("rustdesk")) return "RustDesk";
 
   return null;
 }
@@ -6039,6 +6070,8 @@ function inferBrandFromUserText(userText: string) {
   const t = (userText || "").toLowerCase();
 
   const brands = [
+        ["microsoft", "Microsoft"],
+    ["windows", "Microsoft"],
     ["correos", "Correos"],
     ["seur", "SEUR"],
     ["dhl", "DHL"],
@@ -6249,11 +6282,13 @@ function buildFraudChatReportPayload(params: {
   const paymentMethod = inferredPaymentMethod || null;
 
   const riskScore =
-    fraudBlock === "malware_link"
-      ? 95
-      : hasReliableInferredFraudBlock
-      ? 75
-      : 60;
+  fraudBlock === "malware_link"
+    ? 95
+    : fraudBlock === "tech_support_remote_access"
+    ? 86
+    : hasReliableInferredFraudBlock
+    ? 75
+    : 60;
 
   const riskLevel = inferRiskLevelFromScore(riskScore);
   const similaritySignature = buildSimilaritySignatureFromText(params.userText, null);
@@ -6308,8 +6343,10 @@ function buildFraudChatReportPayload(params: {
         ? "job_scam"
         : fraudBlock === "sextortion_blackmail"
         ? "sextortion"
-        : fraudBlock === "malware_link"
+                : fraudBlock === "malware_link"
         ? "malware"
+        : fraudBlock === "tech_support_remote_access"
+        ? "tech_support_scam"
         : null,
 
     scam_subcategory:
@@ -6329,8 +6366,10 @@ function buildFraudChatReportPayload(params: {
         ? "task_or_job_scam"
         : fraudBlock === "sextortion_blackmail"
         ? "blackmail"
-        : fraudBlock === "malware_link"
+                : fraudBlock === "malware_link"
         ? "direct_script_download"
+        : fraudBlock === "tech_support_remote_access"
+        ? "remote_access_tool_installation"
         : null,
 
     fraud_block: fraudBlock,
@@ -6395,10 +6434,13 @@ function buildFraudChatReportPayload(params: {
     uses_ai_deception: false,
     uses_deepfake: false,
     uses_session_hijacking: false,
-    uses_remote_access_tool: false,
+    uses_remote_access_tool: fraudBlock === "tech_support_remote_access",
     uses_crypto_wallet: fraudBlock === "crypto_investment",
 
-    remote_access_tool_name: null,
+    remote_access_tool_name:
+  fraudBlock === "tech_support_remote_access"
+    ? inferredPlatformOrApp || null
+    : null,
     ai_impersonation_type: null,
     deepfake_media_type: null,
     business_process_targeted: null,
