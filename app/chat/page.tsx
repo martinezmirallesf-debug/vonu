@@ -1360,6 +1360,23 @@ if (hasLowRiskSocialProfilePhotoVerdict && !hasHardDangerInSocialProfilePhoto) {
   }
 
   const dangerSignals = [
+        "¡alto!",
+    "alto!",
+    "esto es una estafa",
+    "esto es un fraude",
+    "es una estafa",
+    "es un fraude",
+    "no instales",
+    "no instales anydesk",
+    "no instales ningún software",
+    "no instales ningun software",
+    "cuelga la llamada",
+    "cuelga la llamada inmediatamente",
+    "quieren acceso remoto",
+    "acceso remoto a tu dispositivo",
+    "tomar control de tu dispositivo",
+    "robar datos",
+    "robar dinero",
     "riesgo crítico",
     "riesgo critico",
     "riesgo muy alto",
@@ -1405,6 +1422,18 @@ if (hasLowRiskSocialProfilePhotoVerdict && !hasHardDangerInSocialProfilePhoto) {
   }
 
   const highSignals = [
+        "fraude común",
+    "fraude comun",
+    "falso soporte técnico",
+    "falso soporte tecnico",
+    "estafa de soporte técnico",
+    "estafa de soporte tecnico",
+    "control remoto",
+    "acceso remoto",
+    "programas como anydesk",
+    "software como anydesk",
+    "anydesk ni ningún otro software",
+    "anydesk ni ningun otro software",
     "riesgo alto",
     "alto riesgo",
     "intento de estafa",
