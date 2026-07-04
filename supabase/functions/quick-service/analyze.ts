@@ -1284,6 +1284,7 @@ function sanitizeTutorMathOutput(text: string) {
   s = s.replace(/\$[^$\n]+\$/g, protect);
 
   // Limpieza de restos LaTeX que se han quedado fuera de bloques matemáticos.
+  // Importante: NO tocar saltos de línea, porque rompería Markdown.
   s = s
     .replace(/\\tan/g, "tan")
     .replace(/\\sin/g, "sin")
@@ -1306,8 +1307,13 @@ function sanitizeTutorMathOutput(text: string) {
   // Errores típicos de texto pegado que hemos visto en tutor.
   s = s
     .replace(/\bxenelintervalo\b/gi, "x en el intervalo")
-    .replace(/\benelintervalo\b/gi, "en el intervalo")
-    .replace(/\s{2,}/g, " ");
+    .replace(/\benelintervalo\b/gi, "en el intervalo");
+
+  // Limpia espacios dobles SOLO dentro de cada línea, sin borrar saltos de línea.
+  s = s
+    .split("\n")
+    .map((line) => line.replace(/[ \t]{2,}/g, " ").trimEnd())
+    .join("\n");
 
   // Si queda un dólar suelto fuera de fórmulas protegidas, lo quitamos.
   const dollarCount = (s.match(/\$/g) ?? []).length;
@@ -1319,6 +1325,9 @@ function sanitizeTutorMathOutput(text: string) {
   s = s.replace(/@@VONU_PROTECTED_MATH_(\d+)@@/g, (_match, index) => {
     return protectedMathParts[Number(index)] ?? "";
   });
+
+  // Limpieza final de saltos excesivos, sin convertir todo en una sola línea.
+  s = s.replace(/\n{4,}/g, "\n\n\n");
 
   return s.trim();
 }
