@@ -11336,7 +11336,7 @@ if (!visualRiskStatus) return null;
       <>
         <ReactMarkdown
   remarkPlugins={[remarkGfm, remarkMath]}
-  rehypePlugins={[rehypeKatex]}
+  rehypePlugins={[[rehypeKatex, { output: "html" }]]}
           components={makeMdComponents(
             m.boardImageB64,
             m.boardImagePlacement,

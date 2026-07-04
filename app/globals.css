@@ -343,4 +343,18 @@ body {
     font-size: 0.86em !important;
     line-height: 1.32 !important;
   }
+
+  /* ---------- KaTeX hard override: no mostrar MathML duplicado ---------- */
+
+.katex > .katex-mathml,
+.katex > .katex-mathml *,
+.katex annotation {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
 }
