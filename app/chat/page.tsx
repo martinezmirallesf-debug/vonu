@@ -2883,44 +2883,35 @@ function normalizeMathMarkdown(text: string) {
 function normalizeBulletMarkdown(text: string) {
   let s = String(text ?? "");
 
-    // Elimina viñetas vacías que a veces aparecen cuando una fórmula se parte mal.
+  const protectedMathBlocks: string[] = [];
+
+  // Protegemos bloques LaTeX antes de tocar viñetas.
+  // Así evitamos que "$$ ... $$" se rompa por culpa de indentación o bullets.
+  s = s.replace(/\$\$[\s\S]*?\$\$/g, (block) => {
+    const index = protectedMathBlocks.push(block) - 1;
+    return `@@VONU_MATH_BLOCK_${index}@@`;
+  });
+
+  // Elimina viñetas completamente vacías:
+  // •
+  // -
+  // *
   s = s.replace(/^\s*(?:[•●]|[-*])\s*$/gm, "");
 
-  // Convierte viñetas tipo "• texto" o "● texto" a Markdown real.
+  // Convierte SOLO bullets reales tipo "• texto" o "● texto" a Markdown.
+  // No convierte líneas indentadas normales en bullets.
   s = s.replace(/^\s*[•●]\s+/gm, "- ");
 
-  // Convierte falsas listas indentadas a listas reales SOLO cuando hay varias líneas seguidas.
-  const lines = s.split("\n");
-  const out: string[] = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-
-    const prev = lines[i - 1] ?? "";
-    const next = lines[i + 1] ?? "";
-
-    const isIndentedText =
-      /^\s{2,}\S/.test(line) &&
-      !/^\s{2,}[-*+]\s+/.test(line) &&
-      !/^\s{2,}\d+\.\s+/.test(line);
-
-    const hasIndentedNeighbour =
-      /^\s{2,}\S/.test(prev) || /^\s{2,}\S/.test(next);
-
-    const looksLikeHeading =
-      /^\s{2,}.{1,48}:\s*$/.test(line);
-
-    if (isIndentedText && hasIndentedNeighbour && !looksLikeHeading) {
-      out.push(line.replace(/^\s+/, "- "));
-    } else {
-      out.push(line);
-    }
-  }
-
-  s = out.join("\n");
-
-  // Asegura salto antes de listas Markdown.
+  // Asegura separación antes de listas reales, sin tocar fórmulas.
   s = s.replace(/([^\n])\n(-\s+)/g, "$1\n\n$2");
+
+  // Limpia saltos excesivos.
+  s = s.replace(/\n{3,}/g, "\n\n");
+
+  // Restauramos los bloques LaTeX.
+  s = s.replace(/@@VONU_MATH_BLOCK_(\d+)@@/g, (_match, index) => {
+    return protectedMathBlocks[Number(index)] ?? "";
+  });
 
   return s.trim();
 }
