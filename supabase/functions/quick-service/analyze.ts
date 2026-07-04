@@ -3148,7 +3148,7 @@ function instructionsTutor(pillar: string, level: TutorLevel, userText: string) 
       ? "Área detectada: TEORÍA / ESTUDIO. Resume, estructura y explica para entender y recordar."
       : "Área detectada: GENERAL EDUCATIVA. Explica como profesor humano, claro y progresivo.";
 
-  return `Eres **Vonu Tutor**, un profesor excelente, humano y muy claro al explicar.
+    return String.raw`Eres **Vonu Tutor**, un profesor excelente, humano y muy claro al explicar.
 
 ${levelStyle}
 ${areaStyle}
@@ -3597,6 +3597,63 @@ $$
   2. paréntesis y delimitadores que envuelvan bien la fórmula
   3. que no haya duplicados raros
   4. que la explicación se lea natural
+
+  REGLA FINAL PRIORITARIA PARA MATEMÁTICAS Y KATEX:
+- En ejercicios de matemáticas, funciones, derivadas, integrales, límites, trigonometría, matrices, ecuaciones o fracciones, prioriza que las fórmulas se rendericen limpias.
+- No escribas fórmulas importantes dentro de frases normales.
+- No escribas fórmulas importantes dentro de viñetas.
+- No uses $...$ para fórmulas importantes.
+- No uses \( ... \) para fórmulas importantes.
+- No dejes comandos LaTeX sueltos en texto normal, como \tan, \sec, \frac, \pi, \cdot, \left o \right.
+- Si aparece una fórmula con trigonometría, potencias, derivadas, fracciones o intervalos, escríbela SIEMPRE en bloque separado:
+
+$$
+f'(x) = -2x \tan(x) + (1-x^2)\sec^2(x)
+$$
+
+- Si defines funciones auxiliares, no las pongas en una frase larga. Hazlo así:
+
+$$
+u(x)=1-x^2
+$$
+
+$$
+u'(x)=-2x
+$$
+
+$$
+v(x)=\tan(x)
+$$
+
+$$
+v'(x)=\sec^2(x)
+$$
+
+- Para intervalos, usa bloque separado:
+
+$$
+x \in \left[0,\dfrac{\pi}{2}\right]
+$$
+
+- No escribas:
+  "Resolvemos para $x$ en el intervalo $[0, \frac{\pi}{2}]$".
+- Escribe:
+  "Resolvemos la ecuación dentro del intervalo:"
+
+$$
+x \in \left[0,\dfrac{\pi}{2}\right]
+$$
+
+- No escribas texto pegado a fórmulas como:
+  u = 1 - x^2 ) y $u' = -2x
+  v=\tan(x)v = \tan(x)
+  xenelintervalo[0, \frac{\pi}{2}]
+- Si una ecuación no tiene solución exacta sencilla, dilo. No inventes una conclusión.
+- No digas “al evaluar encontramos” si no has evaluado.
+- Para demostrar un máximo relativo, justifica con cambio de signo de la derivada, continuidad o aproximación numérica razonable.
+- En este tipo de ejercicio, una conclusión buena debe incluir algo como:
+  “La derivada pasa de positiva a negativa en el punto crítico, por tanto hay un máximo relativo.”
+
 Ejercicio del usuario: ${userText}`;
 }
 
@@ -3628,11 +3685,24 @@ function buildHistory(messages: any[], maxHistory = 10) {
   for (let i = start; i < (messages?.length ?? 0); i++) {
     const m = messages[i];
     if (!m || (m.role !== "user" && m.role !== "assistant")) continue;
-    const content = typeof m.content === "string" ? m.content.trim() : "";
+
+    const rawContent =
+      typeof m.content === "string"
+        ? m.content
+        : typeof m.text === "string"
+        ? m.text
+        : typeof m.message === "string"
+        ? m.message
+        : "";
+
+    const content = rawContent.trim();
+
     if (content.length < 2) continue;
     if (shouldSkipHistoryMessage(m.role, content)) continue;
+
     relevant.push({ role: m.role, content });
   }
+
   return relevant;
 }
 
@@ -9696,7 +9766,9 @@ if (cleanText) {
   userContent.push({
     type: "input_text",
     text:
-      "Analiza la imagen adjunta con criterio de seguridad práctica. Si es una captura, perfil, conversación, web, QR, documento, anuncio o imagen sospechosa, detecta posibles riesgos, señales de manipulación, estafa, IA/deepfake o engaño, y explica qué harías ahora.",
+      effectiveMode === "tutor"
+        ? "El usuario ha adjuntado una imagen de un ejercicio o material de estudio. Analiza la imagen como profesor. Si es un ejercicio de matemáticas, física, química, idioma o teoría, resuélvelo o explícalo paso a paso. No lo trates como análisis de seguridad salvo que la imagen muestre claramente un riesgo real."
+        : "Analiza la imagen adjunta con criterio de seguridad práctica. Si es una captura, perfil, conversación, web, QR, documento, anuncio o imagen sospechosa, detecta posibles riesgos, señales de manipulación, estafa, IA/deepfake o engaño, y explica qué harías ahora.",
   });
 } else {
   userContent.push({ type: "input_text", text: "Me gustaría tu ayuda con esto." });
