@@ -1265,6 +1265,64 @@ function isLowContext(userText: string, hasImage: boolean) {
   return !situationHints.some((s) => tl.includes(s));
 }
 
+function sanitizeTutorMathOutput(text: string) {
+  let s = String(text ?? "");
+
+  if (!s.trim()) return s;
+
+  const protectedMathParts: string[] = [];
+
+  const protect = (block: string) => {
+    const index = protectedMathParts.push(block) - 1;
+    return `@@VONU_PROTECTED_MATH_${index}@@`;
+  };
+
+  // Protegemos lo que ya está bien en LaTeX.
+  s = s.replace(/\$\$[\s\S]*?\$\$/g, protect);
+  s = s.replace(/\\\[[\s\S]*?\\\]/g, protect);
+  s = s.replace(/\\\([\s\S]*?\\\)/g, protect);
+  s = s.replace(/\$[^$\n]+\$/g, protect);
+
+  // Limpieza de restos LaTeX que se han quedado fuera de bloques matemáticos.
+  s = s
+    .replace(/\\tan/g, "tan")
+    .replace(/\\sin/g, "sin")
+    .replace(/\\cos/g, "cos")
+    .replace(/\\sec/g, "sec")
+    .replace(/\\cot/g, "cot")
+    .replace(/\\ln/g, "ln")
+    .replace(/\\log/g, "log")
+    .replace(/\\pi/g, "π")
+    .replace(/\\cdot/g, "·")
+    .replace(/\\left/g, "")
+    .replace(/\\right/g, "")
+    .replace(/\\,/g, " ")
+    .replace(/\\;/g, " ")
+    .replace(/\\:/g, " ");
+
+  // Fracciones simples que hayan quedado fuera de KaTeX.
+  s = s.replace(/\\d?frac\{([^{}]+)\}\{([^{}]+)\}/g, "$1/$2");
+
+  // Errores típicos de texto pegado que hemos visto en tutor.
+  s = s
+    .replace(/\bxenelintervalo\b/gi, "x en el intervalo")
+    .replace(/\benelintervalo\b/gi, "en el intervalo")
+    .replace(/\s{2,}/g, " ");
+
+  // Si queda un dólar suelto fuera de fórmulas protegidas, lo quitamos.
+  const dollarCount = (s.match(/\$/g) ?? []).length;
+  if (dollarCount % 2 === 1) {
+    s = s.replace(/\$/g, "");
+  }
+
+  // Restauramos las fórmulas protegidas.
+  s = s.replace(/@@VONU_PROTECTED_MATH_(\d+)@@/g, (_match, index) => {
+    return protectedMathParts[Number(index)] ?? "";
+  });
+
+  return s.trim();
+}
+
 function shouldUseCopyableExtraInstructions(userText: string) {
   const t = String(userText ?? "").toLowerCase();
 
@@ -9754,6 +9812,110 @@ REGLA FINAL DE AUTENTICIDAD VISUAL:
 `.trim();
 }
 
+const strictMathTutorContextText = [
+  userText,
+  ...history.map((h) => h.content),
+].join("\n");
+
+const shouldUseStrictMathTutorRules =
+  effectiveMode === "tutor" &&
+  (
+    detectEducationalArea(strictMathTutorContextText) === "math" ||
+    /\b(funci[oó]n|derivada|derivar|m[aá]ximo|m[ií]nimo|punto crítico|puntos críticos|intervalo|tangente|seno|coseno|trigonometr|integral|l[ií]mite|ecuaci[oó]n|fracci[oó]n|matriz|sistema)\b/i.test(
+      strictMathTutorContextText
+    )
+  );
+
+if (shouldUseStrictMathTutorRules) {
+  instructions += String.raw`
+
+REGLA FINAL ABSOLUTA PARA TUTOR DE MATEMÁTICAS:
+Esta regla tiene prioridad sobre cualquier otra regla de estilo.
+
+FORMATO:
+- No escribas fórmulas matemáticas importantes dentro de frases normales.
+- No escribas fórmulas matemáticas importantes dentro de viñetas.
+- No uses LaTeX inline para fórmulas importantes.
+- No uses $...$ dentro de frases.
+- No uses \( ... \) dentro de frases.
+- No dejes comandos LaTeX sueltos en texto normal como \tan, \sec, \frac, \pi, \cdot, \left o \right.
+- Toda fórmula con derivadas, trigonometría, fracciones, potencias, intervalos o ecuaciones debe ir en bloque separado con doble dólar.
+
+EJEMPLO CORRECTO:
+
+Definimos las dos partes:
+
+$$
+u(x)=1-x^2
+$$
+
+$$
+v(x)=\tan(x)
+$$
+
+Derivamos:
+
+$$
+u'(x)=-2x
+$$
+
+$$
+v'(x)=\sec^2(x)
+$$
+
+Aplicamos la regla del producto:
+
+$$
+f'(x)=u'(x)v(x)+u(x)v'(x)
+$$
+
+Sustituimos:
+
+$$
+f'(x)=(-2x)\tan(x)+(1-x^2)\sec^2(x)
+$$
+
+PROHIBIDO escribir cosas como:
+- g(x) = \tan(x)
+- g'(x) = \sec^2(x)
+- Resolvemos para $x$ en el intervalo $[0, \frac{\pi}{2}]$
+- x en el intervalo [0, \frac{\pi}{2}]
+- u = 1 - x^2 ) y $u' = -2x
+- v=\tan(x)v=\tan(x)
+
+INTERVALOS:
+- Si aparece un intervalo, escríbelo siempre en bloque matemático.
+
+Ejemplo:
+
+$$
+x \in \left[0,\dfrac{\pi}{2}\right]
+$$
+
+LECTURA DE IMÁGENES:
+- Si el ejercicio viene de una imagen, lee el enunciado con mucho cuidado.
+- No cambies \pi/2 por 2\pi.
+- Si el intervalo no se ve claro, di: “El intervalo parece ser...” y pide confirmación.
+- Si ves \pi/2, escríbelo como:
+
+$$
+\left[0,\dfrac{\pi}{2}\right]
+$$
+
+RIGOR MATEMÁTICO:
+- No digas “al evaluar encontramos” si no has evaluado.
+- No digas que hay máximo relativo sin justificarlo.
+- Para demostrar un máximo relativo, justifica el cambio de signo de la derivada o usa un argumento correcto.
+- Si una ecuación no se resuelve de forma exacta sencilla, dilo y usa aproximación numérica razonable.
+- En este ejercicio concreto, no basta con derivar. Hay que justificar que la derivada cambia de positiva a negativa en un punto crítico.
+
+ESTILO:
+- Evita el bloque “Donde:” con viñetas si contiene fórmulas.
+- Usa frases cortas y luego fórmulas en bloques separados.
+- Mejor pocas fórmulas limpias que muchas fórmulas mezcladas.
+`;
+}
+
 const input: any[] = [];
     for (const h of history) input.push({ role: h.role, content: h.content });
 
@@ -10240,6 +10402,10 @@ const raw = await resp.text().catch(() => "");
         ? "Perfecte 🙂 Comencem. ¿Cómo se dice en el idioma objetivo la primera palabra de tu lista?"
         : "He recibido una respuesta vacía. ¿Puedes darme un poco más de contexto?";
     }
+
+    if (effectiveMode === "tutor") {
+  text = sanitizeTutorMathOutput(text);
+}
 
     let fraudChatReport: any = {
   saved: false,
