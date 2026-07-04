@@ -265,6 +265,26 @@ function detectEducationalArea(text: string): EducationalArea {
   const t = (text || "").toLowerCase();
 
   const mathSignals = [
+      "mates",
+  "matem",
+  "matemática",
+  "matematica",
+  "matemáticas",
+  "matematicas",
+  "cálculo",
+  "calculo",
+  "máximo",
+  "maximo",
+  "mínimo",
+  "minimo",
+  "punto crítico",
+  "punto critico",
+  "puntos críticos",
+  "puntos criticos",
+  "tangente",
+  "seno",
+  "coseno",
+  "secante",
   "fracción",
   "fracciones",
   "fraccion",
@@ -1283,31 +1303,31 @@ function sanitizeTutorMathOutput(text: string) {
   s = s.replace(/\\\([\s\S]*?\\\)/g, protect);
   s = s.replace(/\$[^$\n]+\$/g, protect);
 
-  // Limpieza de restos LaTeX que se han quedado fuera de bloques matemáticos.
-  // Importante: NO tocar saltos de línea, porque rompería Markdown.
+  // Limpieza de comandos LaTeX que hayan quedado fuera de fórmulas.
+  // Soporta una o varias barras: \tan, \\tan, \\\tan...
   s = s
-    .replace(/\\tan/g, "tan")
-    .replace(/\\sin/g, "sin")
-    .replace(/\\cos/g, "cos")
-    .replace(/\\sec/g, "sec")
-    .replace(/\\cot/g, "cot")
-    .replace(/\\ln/g, "ln")
-    .replace(/\\log/g, "log")
-    .replace(/\\pi/g, "π")
-    .replace(/\\cdot/g, "·")
-    .replace(/\\left/g, "")
-    .replace(/\\right/g, "")
-    .replace(/\\,/g, " ")
-    .replace(/\\;/g, " ")
-    .replace(/\\:/g, " ");
+    .replace(/\\+(tan|sin|cos|sec|cot|ln|log)\b/g, "$1")
+    .replace(/\\+pi\b/g, "π")
+    .replace(/\\+cdot\b/g, "·")
+    .replace(/\\+left\b/g, "")
+    .replace(/\\+right\b/g, "")
+    .replace(/\\+[,;:]/g, " ");
 
-  // Fracciones simples que hayan quedado fuera de KaTeX.
-  s = s.replace(/\\d?frac\{([^{}]+)\}\{([^{}]+)\}/g, "$1/$2");
+  // Fracciones simples fuera de KaTeX: \frac{a}{b} o \\frac{a}{b}
+  s = s.replace(/\\+d?frac\{([^{}]+)\}\{([^{}]+)\}/g, "$1/$2");
+
+  // Potencias simples que queden en texto normal.
+  // Ej: x^2 -> x², sec^2 -> sec²
+  s = s
+    .replace(/\^2\b/g, "²")
+    .replace(/\^3\b/g, "³");
 
   // Errores típicos de texto pegado que hemos visto en tutor.
   s = s
     .replace(/\bxenelintervalo\b/gi, "x en el intervalo")
-    .replace(/\benelintervalo\b/gi, "en el intervalo");
+    .replace(/\benelintervalo\b/gi, "en el intervalo")
+    .replace(/\bπ\s*\/\s*2π\b/g, "π/2")
+    .replace(/\b2π\b/g, "2π");
 
   // Limpia espacios dobles SOLO dentro de cada línea, sin borrar saltos de línea.
   s = s
@@ -9830,7 +9850,7 @@ const shouldUseStrictMathTutorRules =
   effectiveMode === "tutor" &&
   (
     detectEducationalArea(strictMathTutorContextText) === "math" ||
-    /\b(funci[oó]n|derivada|derivar|m[aá]ximo|m[ií]nimo|punto crítico|puntos críticos|intervalo|tangente|seno|coseno|trigonometr|integral|l[ií]mite|ecuaci[oó]n|fracci[oó]n|matriz|sistema)\b/i.test(
+    /\b(mates|matem[aá]ticas?|c[aá]lculo|funci[oó]n|derivada|derivar|m[aá]ximo|m[ií]nimo|punto cr[ií]tico|puntos cr[ií]ticos|intervalo|tangente|seno|coseno|secante|trigonometr|integral|l[ií]mite|ecuaci[oó]n|fracci[oó]n|matriz|sistema)\b/i.test(
       strictMathTutorContextText
     )
   );
