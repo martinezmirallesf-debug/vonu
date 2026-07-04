@@ -3334,13 +3334,21 @@ Si viene de una imagen/pizarra y hay ambigüedad, dilo con suavidad.
 - qué vamos a hacer,
 - cuál es el truco o regla importante.
 
-SI el ejercicio usa una fórmula matemática, física o química, añade OBLIGATORIAMENTE este apartado antes de resolver:
+SI el ejercicio usa una fórmula matemática, física o química, añade este apartado solo si aporta claridad:
 
 ## Fórmulas a aplicar
-- Escribe la fórmula exacta que se va a usar.
-- Explica brevemente qué significa cada símbolo o magnitud.
-- Si solo hay una fórmula, pon solo esa.
-- Si no hace falta ninguna fórmula, NO inventes este apartado.
+- Escribe solo la fórmula o regla principal.
+- No hagas un apartado "Donde:" si eso obliga a meter fórmulas en texto normal.
+- En matemáticas, si necesitas definir funciones auxiliares, hazlo después en "Como en la pizarra", una por una y en bloques separados.
+- No expliques símbolos mezclando texto y fórmula en la misma línea.
+- Si solo hay una regla sencilla, pon solo la regla y pasa al desarrollo.
+- Si no hace falta ninguna fórmula previa, NO inventes este apartado.
+
+Ejemplo correcto para regla del producto:
+
+$$
+(fg)' = f'g + fg'
+$$
 
 Después continúa con esta estructura:
 
@@ -9181,7 +9189,7 @@ const model =
     ? 700
     : 1400;
 
-    const temperature = effectiveMode === "tutor" ? 0.25 : 0.35;
+    const temperature = effectiveMode === "tutor" ? 0.1 : 0.35;
 
     const useCompactChatPrompt = shouldUseCompactChatPrompt({
   userText,
@@ -9937,6 +9945,37 @@ RIGOR MATEMÁTICO:
 - Para demostrar un máximo relativo, justifica el cambio de signo de la derivada o usa un argumento correcto.
 - Si una ecuación no se resuelve de forma exacta sencilla, dilo y usa aproximación numérica razonable.
 - En este ejercicio concreto, no basta con derivar. Hay que justificar que la derivada cambia de positiva a negativa en un punto crítico.
+
+REGLA CONTRA "DONDE" CON FÓRMULAS INLINE:
+- No uses frases como:
+  "Donde f(x)=1-x^2 y g(x)=tan(x)."
+- No uses frases como:
+  "Buscamos dónde f'(x)=0."
+- En vez de eso, separa texto y fórmula.
+
+Correcto:
+
+Definimos las dos partes de la función:
+
+$$
+f_1(x)=1-x^2
+$$
+
+$$
+f_2(x)=\tan(x)
+$$
+
+Buscamos los puntos donde la derivada se anula:
+
+$$
+f'(x)=0
+$$
+
+REGLA DE DEMOSTRACIÓN:
+- Si el ejercicio pide "demuestra", no basta con decir que hay máximo.
+- Debes justificarlo.
+- Para un máximo relativo, explica que la derivada cambia de positiva a negativa.
+- Si usas aproximación numérica, da el valor aproximado del punto crítico.
 
 ESTILO:
 - Evita el bloque “Donde:” con viñetas si contiene fórmulas.
