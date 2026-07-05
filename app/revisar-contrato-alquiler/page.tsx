@@ -377,7 +377,16 @@ export default function RevisarContratoAlquilerPage() {
                   key={item}
                   className="flex gap-3 rounded-[24px] border border-zinc-200 bg-white p-5 text-[15.5px] leading-7 text-zinc-700 shadow-sm"
                 >
-                  <span className="mt-1 h-5 w-5 shrink-0 rounded-full bg-zinc-950" />
+                  <span className="mt-[2px] shrink-0 text-red-600" aria-hidden="true">
+  <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none">
+    <path
+      d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5"
+      stroke="currentColor"
+      strokeWidth="3.2"
+      strokeLinecap="round"
+    />
+  </svg>
+</span>
                   <span>{item}</span>
                 </div>
               ))}

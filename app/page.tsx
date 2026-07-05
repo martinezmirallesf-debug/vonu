@@ -206,15 +206,15 @@ function VoiceBarsIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="h-5 w-5"
+      className="h-6 w-6"
       fill="none"
       aria-hidden="true"
     >
-      <path d="M4.8 12h1.4" stroke="currentColor" strokeWidth="2.35" strokeLinecap="round" />
-      <path d="M8.6 8.8v6.4" stroke="currentColor" strokeWidth="2.35" strokeLinecap="round" />
-      <path d="M12 5.8v12.4" stroke="currentColor" strokeWidth="2.35" strokeLinecap="round" />
-      <path d="M15.4 8.8v6.4" stroke="currentColor" strokeWidth="2.35" strokeLinecap="round" />
-      <path d="M19.2 12h-1.4" stroke="currentColor" strokeWidth="2.35" strokeLinecap="round" />
+      <path d="M5 12v0.01" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" />
+      <path d="M8.5 8.5v7" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
+      <path d="M12 5.8v12.4" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
+      <path d="M15.5 8.5v7" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
+      <path d="M19 12v0.01" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -285,14 +285,14 @@ export default function HomePage() {
 </div>
           </div>
 
-          <div className="mx-auto mt-10 max-w-5xl sm:mt-14">
+                              <div className="mx-auto mt-10 max-w-5xl sm:mt-14">
             <div className="rounded-[38px] border border-zinc-200 bg-white p-3 shadow-[0_0_0_1px_rgba(0,0,0,0.03),0_28px_80px_rgba(0,0,0,0.12)]">
               <div className="rounded-[30px] bg-[#f8f9fa] p-4 sm:p-6">
-                <div className="mb-5 flex items-center justify-between">
+                <div className="mb-6 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-full bg-red-400" />
-                    <div className="h-3 w-3 rounded-full bg-amber-400" />
-                    <div className="h-3 w-3 rounded-full bg-emerald-400" />
+                    <div className="h-3.5 w-3.5 rounded-full bg-orange-400" />
+                    <div className="h-3.5 w-3.5 rounded-full bg-orange-400" />
+                    <div className="h-3.5 w-3.5 rounded-full bg-orange-400" />
                   </div>
 
                   <span className="rounded-full bg-white px-3 py-1 text-[12px] font-medium text-zinc-500 shadow-sm">
@@ -300,70 +300,83 @@ export default function HomePage() {
                   </span>
                 </div>
 
-                <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-                  <div className="rounded-[28px] bg-zinc-950 p-5 text-white">
-                    <p className="text-[13px] font-medium uppercase tracking-[0.16em] text-blue-300">
-                      Consulta
-                    </p>
-
-                    <h2 className="mt-4 text-[34px] font-semibold leading-[0.98] tracking-[-0.055em] sm:text-[44px]">
-                      “Me piden pagar hoy o pierdo la oferta.”
-                    </h2>
-
-                    <p className="mt-5 text-[15px] leading-7 text-zinc-300">
-                      Vonu detecta presión, urgencia, señales de riesgo y te ayuda a decidir
-                      con más calma antes de actuar.
-                    </p>
+                <div className="mx-auto max-w-3xl">
+                  <div className="ml-auto max-w-[88%] rounded-[26px] bg-[#e9edf1] px-5 py-4 text-left text-[16px] leading-7 text-zinc-900 sm:max-w-[78%]">
+                    Me escribe una chica en Tinder. Me manda fotos, dice que le gusto y
+                    ahora quiere que invierta en una criptomoneda. ¿Me puedo fiar?
                   </div>
 
-                  <div className="space-y-5">
-  <div className="ml-auto max-w-[86%] rounded-[24px] bg-[#e9edf1] px-4 py-3 text-[15px] leading-6 text-zinc-900">
-    Me ha llegado una web con un descuento enorme y me piden pagar por transferencia. ¿Lo ves fiable?
-  </div>
+                  <div className="mt-7 flex items-start gap-3 text-left">
+                    <img
+                      src="/logo/vonu-cube-black.png?v=4"
+                      alt=""
+                      className="mt-1 h-6 w-6 shrink-0 object-contain"
+                      aria-hidden="true"
+                    />
 
-  <div className="flex items-start gap-3">
-    <img
-      src="/logo/vonu-cube-black.png?v=4"
-      alt=""
-      className="mt-1 h-5 w-5 shrink-0 object-contain"
-      aria-hidden="true"
-    />
+                    <div className="min-w-0 flex-1 text-[17px] leading-8 text-zinc-900">
+                      <p className="text-[26px] font-semibold leading-[1.08] tracking-[-0.052em] text-zinc-950 sm:text-[34px]">
+                        Yo frenaría: Tinder + inversión + cripto es una señal roja clara.
+                      </p>
 
-    <div className="min-w-0 text-[15px] leading-7 text-zinc-800">
-      <p className="font-semibold text-zinc-950">
-        ⚠️ Riesgo alto
-      </p>
+                      <div className="mt-5">
+                        <p className="font-semibold text-zinc-950">
+                          Lo que me hace dudar:
+                        </p>
 
-      <p className="mt-1 text-zinc-700">
-        Yo no pagaría todavía. Hay varias señales que conviene revisar:
-        urgencia, descuento muy agresivo y un método de pago con poca protección.
-      </p>
+                        <ul className="mt-3 space-y-3 text-zinc-700">
+                          <li className="flex gap-3">
+                            <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" />
+                            <span>La inversión aparece demasiado pronto.</span>
+                          </li>
 
-      <p className="mt-3 font-semibold text-zinc-950">
-        Qué haría ahora
-      </p>
+                          <li className="flex gap-3">
+                            <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" />
+                            <span>Quiere sacarte de la app y llevarte a otro canal.</span>
+                          </li>
 
-      <p className="mt-1 text-zinc-700">
-        Buscaría datos fiscales, opiniones externas, antigüedad del dominio y
-        una forma de pago que te permita reclamar si algo sale mal.
-      </p>
-    </div>
-  </div>
+                          <li className="flex gap-3">
+                            <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" />
+                            <span>
+                              La mezcla de romance, confianza rápida y dinero es un patrón típico de estafa.
+                            </span>
+                          </li>
+                        </ul>
+                      </div>
 
-  <div className="rounded-full border border-zinc-200 bg-white px-3 py-2 shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_0_13px_rgba(0,0,0,0.135),0_3px_8px_rgba(0,0,0,0.085)]">
-                      <div className="flex items-center gap-2">
-                        <div className="grid h-8 w-8 place-items-center rounded-full text-zinc-800">
-                          +
-                        </div>
-                        <div className="min-w-0 flex-1 text-[15px] text-zinc-400">
-                          Pregunta lo que quieras
-                        </div>
-                        <div className="grid h-8 w-8 place-items-center rounded-full bg-zinc-950 text-white">
-                          <VoiceBarsIcon />
-                        </div>
+                      <div className="mt-5">
+                        <p className="font-semibold text-zinc-950">
+                          Qué haría ahora:
+                        </p>
+
+                        <p className="mt-2 text-zinc-700">
+                          No enviaría dinero, códigos, documentos ni fotos íntimas.
+                          Pediría una videollamada corta y natural. Si evita comprobar
+                          quién es o insiste con la inversión, bloquearía/reportaría.
+                        </p>
                       </div>
                     </div>
                   </div>
+
+                  <div className="mt-7 rounded-full border border-zinc-200 bg-white px-3 py-2 shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_0_13px_rgba(0,0,0,0.135),0_3px_8px_rgba(0,0,0,0.085)]">
+                    <div className="flex items-center gap-2">
+                      <div className="grid h-9 w-9 place-items-center rounded-full text-zinc-900">
+                        <span className="text-[25px] leading-none">+</span>
+                      </div>
+
+                      <div className="min-w-0 flex-1 text-left text-[16px] text-zinc-400">
+                        Pregunta lo que quieras
+                      </div>
+
+                      <div className="grid h-10 w-10 place-items-center rounded-full bg-zinc-950 text-white">
+                        <VoiceBarsIcon />
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="mt-2 text-center text-[11.5px] text-zinc-500">
+                    Orientación preventiva · No sustituye profesionales.
+                  </p>
                 </div>
               </div>
             </div>

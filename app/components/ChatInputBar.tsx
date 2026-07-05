@@ -53,7 +53,7 @@ function VoiceBarsIcon({
     <svg
       viewBox="0 0 24 24"
       className={[
-        "h-5 w-5",
+        "h-6 w-6",
         animated ? "animate-[voiceGlyph_1200ms_ease-in-out_infinite]" : "",
         className ?? "",
       ].join(" ")}
@@ -61,33 +61,33 @@ function VoiceBarsIcon({
       aria-hidden="true"
     >
       <path
-        d="M4.8 12h1.4"
+        d="M5 12v0.01"
         stroke="currentColor"
-        strokeWidth="2.35"
+        strokeWidth="3.2"
         strokeLinecap="round"
       />
       <path
-        d="M8.6 8.8v6.4"
+        d="M8.5 8.5v7"
         stroke="currentColor"
-        strokeWidth="2.35"
+        strokeWidth="2.8"
         strokeLinecap="round"
       />
       <path
         d="M12 5.8v12.4"
         stroke="currentColor"
-        strokeWidth="2.35"
+        strokeWidth="2.8"
         strokeLinecap="round"
       />
       <path
-        d="M15.4 8.8v6.4"
+        d="M15.5 8.5v7"
         stroke="currentColor"
-        strokeWidth="2.35"
+        strokeWidth="2.8"
         strokeLinecap="round"
       />
       <path
-        d="M19.2 12h-1.4"
+        d="M19 12v0.01"
         stroke="currentColor"
-        strokeWidth="2.35"
+        strokeWidth="3.2"
         strokeLinecap="round"
       />
     </svg>
@@ -517,6 +517,19 @@ shouldExpand
       opacity: 1;
     }
   }
+
+  @keyframes voiceGlyph {
+  0%,
+  100% {
+    transform: scale(0.96);
+    opacity: 0.82;
+  }
+
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
 
   @keyframes voiceGlyph {
   0%,
