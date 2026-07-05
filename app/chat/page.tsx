@@ -8347,21 +8347,28 @@ if (voiceModeRef.current) {
 
 
     // ✅ Guardamos modo en el thread (así el backend recibe el modo correcto)
-    setThreads((prev) =>
+const now = Date.now();
+
+setThreads((prev) =>
   prev.map((t) => {
     if (t.id !== targetThreadId) return t;
 
-    const shouldAutoTitle = shouldAutoTitleThread(t.title);
+    const nextTitle = shouldAutoTitleThread(t.title)
+      ? makeSmartThreadTitleFromMessage(userMsg)
+      : t.title;
 
     return {
       ...t,
-      title: shouldAutoTitle ? makeSmartThreadTitle(userText) : t.title,
-      updatedAt: Date.now(),
-      mode: modePreset,
-      tutorProfile: t.tutorProfile ?? { level: "adult" },
+      title: nextTitle,
+      updatedAt: now,
+      messages: [...t.messages, userMsg, assistantMsg],
     };
   })
 );
+
+// Guardado inmediato en nube.
+// Así otro dispositivo puede ver el hilo aunque Vonu siga respondiendo.
+queueSaveThreadToCloud(targetThreadId, 1200);
 
     const userMsg: Message = {
   id: crypto.randomUUID(),
