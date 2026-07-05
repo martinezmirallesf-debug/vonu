@@ -4676,29 +4676,41 @@ useEffect(() => {
   if (!authUserId) return;
 
   let cancelled = false;
+  let lastSyncAt = 0;
 
-  const syncNow = () => {
+  const syncNow = (minGapMs = 12000) => {
     if (cancelled) return;
 
     if (typeof document !== "undefined" && document.visibilityState !== "visible") {
       return;
     }
 
+    const now = Date.now();
+
+    // Evita varias llamadas seguidas por focus + visibilitychange + pageshow.
+    if (now - lastSyncAt < minGapMs) return;
+
+    lastSyncAt = now;
+
     void loadCloudThreadsOnce({ force: true });
   };
 
   // Primera recarga rápida al entrar o volver.
-  const firstTimer = window.setTimeout(syncNow, 900);
+  const firstTimer = window.setTimeout(() => {
+    syncNow(0);
+  }, 900);
 
-  // En móvil, focus/visibility puede fallar o no dispararse como esperamos.
-  // Por eso hacemos una sync suave mientras la pestaña está abierta.
-  const interval = window.setInterval(syncNow, 5000);
+  // Sync suave: ya no cada 5s. Esto evita llenar Network.
+  const interval = window.setInterval(() => {
+    syncNow(25000);
+  }, 30000);
 
   const onReturn = () => {
-    syncNow();
+    syncNow(8000);
   };
 
   window.addEventListener("focus", onReturn);
+  window.addEventListener("pageshow", onReturn);
   document.addEventListener("visibilitychange", onReturn);
 
   return () => {
@@ -4706,6 +4718,7 @@ useEffect(() => {
     window.clearTimeout(firstTimer);
     window.clearInterval(interval);
     window.removeEventListener("focus", onReturn);
+    window.removeEventListener("pageshow", onReturn);
     document.removeEventListener("visibilitychange", onReturn);
   };
 
