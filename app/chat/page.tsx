@@ -4578,14 +4578,16 @@ function resetVisibleHistoryForLoggedOut() {
   });
 }
 
-async function loadCloudThreadsOnce() {
+async function loadCloudThreadsOnce(options?: { force?: boolean }) {
   try {
     if (!isLoggedIn) return;
     if (!authUserId) return;
 
-    if (cloudHistoryLoadedForUserRef.current === authUserId) {
-      return;
-    }
+    const force = options?.force === true;
+
+if (!force && cloudHistoryLoadedForUserRef.current === authUserId) {
+  return;
+}
 
     cloudHistoryLoadedForUserRef.current = authUserId;
 
@@ -4649,6 +4651,40 @@ try {
     cloudHistoryLoadedForUserRef.current = null;
   }
 }
+
+useEffect(() => {
+  if (authLoading) return;
+  if (!isLoggedIn) return;
+  if (!authUserId) return;
+
+  let lastRefreshAt = 0;
+
+  const refreshCloudHistory = () => {
+    if (typeof document !== "undefined" && document.visibilityState !== "visible") {
+      return;
+    }
+
+    const now = Date.now();
+
+    // Evita llamadas duplicadas por focus + visibilitychange.
+    if (now - lastRefreshAt < 2500) return;
+
+    lastRefreshAt = now;
+
+    cloudHistoryLoadedForUserRef.current = null;
+    void loadCloudThreadsOnce({ force: true });
+  };
+
+  window.addEventListener("focus", refreshCloudHistory);
+  document.addEventListener("visibilitychange", refreshCloudHistory);
+
+  return () => {
+    window.removeEventListener("focus", refreshCloudHistory);
+    document.removeEventListener("visibilitychange", refreshCloudHistory);
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [authLoading, isLoggedIn, authUserId]);
 
   useEffect(() => {
     if (authLoading) return;
