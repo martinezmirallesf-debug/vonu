@@ -288,17 +288,11 @@ export default function HomePage() {
                               <div className="mx-auto mt-10 max-w-5xl sm:mt-14">
             <div className="rounded-[38px] border border-zinc-200 bg-white p-3 shadow-[0_0_0_1px_rgba(0,0,0,0.03),0_28px_80px_rgba(0,0,0,0.12)]">
               <div className="rounded-[30px] bg-[#f8f9fa] p-4 sm:p-6">
-                <div className="mb-6 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-3.5 w-3.5 rounded-full bg-orange-400" />
-                    <div className="h-3.5 w-3.5 rounded-full bg-orange-400" />
-                    <div className="h-3.5 w-3.5 rounded-full bg-orange-400" />
-                  </div>
-
-                  <span className="rounded-full bg-white px-3 py-1 text-[12px] font-medium text-zinc-500 shadow-sm">
-                    Vonu analiza
-                  </span>
-                </div>
+                <div className="mb-6 flex justify-end">
+  <span className="rounded-full bg-white px-3 py-1 text-[12px] font-medium text-zinc-500 shadow-sm">
+    Vonu analiza
+  </span>
+</div>
 
                 <div className="mx-auto max-w-3xl">
                   <div className="ml-auto max-w-[88%] rounded-[26px] bg-[#e9edf1] px-5 py-4 text-left text-[16px] leading-7 text-zinc-900 sm:max-w-[78%]">
