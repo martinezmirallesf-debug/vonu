@@ -4678,35 +4678,32 @@ useEffect(() => {
   let cancelled = false;
   let lastSyncAt = 0;
 
-  const syncNow = (minGapMs = 12000) => {
+  const syncNow = (minGapMs = 7000) => {
     if (cancelled) return;
-
-    if (typeof document !== "undefined" && document.visibilityState !== "visible") {
-      return;
-    }
 
     const now = Date.now();
 
-    // Evita varias llamadas seguidas por focus + visibilitychange + pageshow.
+    // Evita llamadas dobles por focus + pageshow + interval.
     if (now - lastSyncAt < minGapMs) return;
 
     lastSyncAt = now;
 
+    cloudHistoryLoadedForUserRef.current = null;
     void loadCloudThreadsOnce({ force: true });
   };
 
-  // Primera recarga rápida al entrar o volver.
+  // Carga rápida al montar.
   const firstTimer = window.setTimeout(() => {
     syncNow(0);
   }, 900);
 
-  // Sync suave: ya no cada 5s. Esto evita llenar Network.
+  // Polling sencillo y fiable para móvil/PC.
   const interval = window.setInterval(() => {
-    syncNow(25000);
-  }, 30000);
+    syncNow(7000);
+  }, 10000);
 
   const onReturn = () => {
-    syncNow(8000);
+    syncNow(0);
   };
 
   window.addEventListener("focus", onReturn);
