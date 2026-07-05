@@ -1,6 +1,11 @@
 /// <reference lib="deno.ns" />
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+import {
+  detectProfilePlatform,
+  looksLikeProfileReliabilityQuestion,
+  buildProfileIntelligenceContext,
+} from "./profile-intelligence.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -260,6 +265,46 @@ function detectEducationalArea(text: string): EducationalArea {
   const t = (text || "").toLowerCase();
 
   const mathSignals = [
+      "mates",
+  "matem",
+  "matemática",
+  "matematica",
+  "matemáticas",
+  "matematicas",
+  "cálculo",
+  "calculo",
+  "máximo",
+  "maximo",
+  "mínimo",
+  "minimo",
+  "punto crítico",
+  "punto critico",
+  "puntos críticos",
+  "puntos criticos",
+  "tangente",
+  "seno",
+  "coseno",
+  "secante",
+      "mates",
+  "matem",
+  "matemática",
+  "matematica",
+  "matemáticas",
+  "matematicas",
+  "cálculo",
+  "calculo",
+  "máximo",
+  "maximo",
+  "mínimo",
+  "minimo",
+  "punto crítico",
+  "punto critico",
+  "puntos críticos",
+  "puntos criticos",
+  "tangente",
+  "seno",
+  "coseno",
+  "secante",
   "fracción",
   "fracciones",
   "fraccion",
@@ -951,6 +996,32 @@ const directTutorTriggers = [
   };
 }
 
+function looksLikeRemoteSupportScamText(text: string) {
+  const t = (text || "").toLowerCase();
+
+  const claimedTechSupport =
+    t.includes("microsoft") ||
+    t.includes("windows") ||
+    t.includes("soporte técnico") ||
+    t.includes("soporte tecnico") ||
+    t.includes("servicio técnico") ||
+    t.includes("servicio tecnico") ||
+    t.includes("técnico de microsoft") ||
+    t.includes("tecnico de microsoft");
+
+  const remoteAccessOrCall =
+    t.includes("anydesk") ||
+    t.includes("rustdesk") ||
+    t.includes("teamviewer") ||
+    t.includes("control remoto") ||
+    t.includes("acceso remoto") ||
+    t.includes("instalar") ||
+    t.includes("me han llamado") ||
+    t.includes("me llamaron") ||
+    t.includes("llamada");
+
+  return claimedTechSupport && remoteAccessOrCall;
+}
 function pickPillar(userText: string) {
   const t = (userText || "").toLowerCase();
 
@@ -1016,8 +1087,6 @@ function pickPillar(userText: string) {
     t.includes("sextorsion") ||
     t.includes("grooming") ||
     t.includes("love bombing") ||
-    t.includes("perfil falso") ||
-    t.includes("catfishing") ||
     t.includes("me aísla") ||
     t.includes("me aisla") ||
     t.includes("no quiere que vea a mis amigos") ||
@@ -1084,7 +1153,8 @@ function pickPillar(userText: string) {
     t.includes("sede electronica") ||
     t.includes("tarjeta") ||
     t.includes("web rara") ||
-    t.includes("web sospechosa") ||
+       t.includes("web sospechosa") ||
+    looksLikeRemoteSupportScamText(userText) ||
     t.includes("no parece del ayuntamiento")
   ) return "ESTAFAS_FRAUDES";
 
@@ -1233,6 +1303,73 @@ function isLowContext(userText: string, hasImage: boolean) {
     "situacion",
   ];
   return !situationHints.some((s) => tl.includes(s));
+}
+
+function sanitizeTutorMathOutput(text: string) {
+  let s = String(text ?? "");
+
+  if (!s.trim()) return s;
+
+  const protectedMathParts: string[] = [];
+
+  const protect = (block: string) => {
+    const index = protectedMathParts.push(block) - 1;
+    return `@@VONU_PROTECTED_MATH_${index}@@`;
+  };
+
+  // Protegemos lo que ya está bien en LaTeX.
+  s = s.replace(/\$\$[\s\S]*?\$\$/g, protect);
+  s = s.replace(/\\\[[\s\S]*?\\\]/g, protect);
+  s = s.replace(/\\\([\s\S]*?\\\)/g, protect);
+  s = s.replace(/\$[^$\n]+\$/g, protect);
+
+  // Limpieza de comandos LaTeX que hayan quedado fuera de fórmulas.
+  // Soporta una o varias barras: \tan, \\tan, \\\tan...
+  s = s
+    .replace(/\\+(tan|sin|cos|sec|cot|ln|log)\b/g, "$1")
+    .replace(/\\+pi\b/g, "π")
+    .replace(/\\+cdot\b/g, "·")
+    .replace(/\\+left\b/g, "")
+    .replace(/\\+right\b/g, "")
+    .replace(/\\+[,;:]/g, " ");
+
+  // Fracciones simples fuera de KaTeX: \frac{a}{b} o \\frac{a}{b}
+  s = s.replace(/\\+d?frac\{([^{}]+)\}\{([^{}]+)\}/g, "$1/$2");
+
+  // Potencias simples que queden en texto normal.
+  // Ej: x^2 -> x², sec^2 -> sec²
+  s = s
+    .replace(/\^2\b/g, "²")
+    .replace(/\^3\b/g, "³");
+
+  // Errores típicos de texto pegado que hemos visto en tutor.
+  s = s
+    .replace(/\bxenelintervalo\b/gi, "x en el intervalo")
+    .replace(/\benelintervalo\b/gi, "en el intervalo")
+    .replace(/\bπ\s*\/\s*2π\b/g, "π/2")
+    .replace(/\b2π\b/g, "2π");
+
+  // Limpia espacios dobles SOLO dentro de cada línea, sin borrar saltos de línea.
+  s = s
+    .split("\n")
+    .map((line) => line.replace(/[ \t]{2,}/g, " ").trimEnd())
+    .join("\n");
+
+  // Si queda un dólar suelto fuera de fórmulas protegidas, lo quitamos.
+  const dollarCount = (s.match(/\$/g) ?? []).length;
+  if (dollarCount % 2 === 1) {
+    s = s.replace(/\$/g, "");
+  }
+
+  // Restauramos las fórmulas protegidas.
+  s = s.replace(/@@VONU_PROTECTED_MATH_(\d+)@@/g, (_match, index) => {
+    return protectedMathParts[Number(index)] ?? "";
+  });
+
+  // Limpieza final de saltos excesivos, sin convertir todo en una sola línea.
+  s = s.replace(/\n{4,}/g, "\n\n\n");
+
+  return s.trim();
 }
 
 function shouldUseCopyableExtraInstructions(userText: string) {
@@ -1652,6 +1789,16 @@ Objetivo:
 - No digas que has hecho búsqueda inversa salvo que el contexto de búsqueda inversa aparezca después.
 - No conviertas una simple imagen normal en análisis de fraude si el usuario no pregunta por riesgo.
 
+REGLA ANTI-FALSO POSITIVO EN FOTOS NORMALES:
+- Si la imagen parece una selfie normal, foto social normal, story de red social o foto cotidiana, y no hay dinero, enlaces, presión, urgencia, crypto, códigos, documentos, suplantación clara, perfil desconocido sospechoso ni búsqueda inversa positiva, transmite calma.
+- No abras con frases como “no la daría por real”, “me hace dudar” o “precaución moderada” salvo que haya anomalías visuales claras y concretas.
+- No menciones manos, dedos, proporciones corporales o errores anatómicos si no se ven con suficiente detalle.
+- No uses “piel demasiado uniforme”, “rostro demasiado perfecto” o “parece de IA” como señal fuerte si también puede explicarse por filtro, cámara frontal, compresión de story o iluminación.
+- En fotos normales de redes sociales, si solo hay estética cuidada, filtro suave o buena cámara, di que puede haber retoque/filtro, pero no lo conviertas en sospecha de IA.
+- Si no puedes señalar una anomalía concreta visible, la respuesta debe ser de riesgo bajo.
+- Fórmula preferida:
+  “No veo señales claras de IA; parece una foto normal, quizá con algo de filtro o compresión.”
+
 Si la pregunta va sobre IA, edición o si la imagen es real:
 - Distingue entre:
   1. imagen generada por IA;
@@ -1979,6 +2126,12 @@ REGLA DE CALMA Y NO ALARMISMO:
   - “Aun así, no garantiza intenciones ni descarta engaño si luego aparecen dinero, enlaces, presión o manipulación.”
 - Si el perfil no está verificado, usa un tono moderado:
   - “No veo verificación visible; eso me hace mantener algo de cautela, pero por sí solo no demuestra nada malo.”
+
+  REGLA ANTI-FALSO POSITIVO EN SELFIES / STORIES:
+- Una selfie normal, story de Facebook/Instagram, foto cotidiana o foto con camiseta actual/evento reciente NO debe tratarse como sospechosa por defecto.
+- No menciones dedos, manos o anatomía si no se ven claramente.
+- No digas que una imagen “podría ser IA” solo por piel suave, buena iluminación, filtros, compresión o estética cuidada.
+- Si no hay anomalías claras, búsqueda inversa positiva, contexto de perfil sospechoso, dinero, enlaces, urgencia, crypto, códigos, documentos o presión, responde con calma: riesgo bajo.
 
 CHECKLIST VISUAL AVANZADA PARA SELFIES, PERFILES Y FOTOS SOSPECHOSAS:
 
@@ -3102,7 +3255,7 @@ function instructionsTutor(pillar: string, level: TutorLevel, userText: string) 
       ? "Área detectada: TEORÍA / ESTUDIO. Resume, estructura y explica para entender y recordar."
       : "Área detectada: GENERAL EDUCATIVA. Explica como profesor humano, claro y progresivo.";
 
-  return `Eres **Vonu Tutor**, un profesor excelente, humano y muy claro al explicar.
+    return String.raw`Eres **Vonu Tutor**, un profesor excelente, humano y muy claro al explicar.
 
 ${levelStyle}
 ${areaStyle}
@@ -3201,13 +3354,21 @@ Si viene de una imagen/pizarra y hay ambigüedad, dilo con suavidad.
 - qué vamos a hacer,
 - cuál es el truco o regla importante.
 
-SI el ejercicio usa una fórmula matemática, física o química, añade OBLIGATORIAMENTE este apartado antes de resolver:
+SI el ejercicio usa una fórmula matemática, física o química, añade este apartado solo si aporta claridad:
 
 ## Fórmulas a aplicar
-- Escribe la fórmula exacta que se va a usar.
-- Explica brevemente qué significa cada símbolo o magnitud.
-- Si solo hay una fórmula, pon solo esa.
-- Si no hace falta ninguna fórmula, NO inventes este apartado.
+- Escribe solo la fórmula o regla principal.
+- No hagas un apartado "Donde:" si eso obliga a meter fórmulas en texto normal.
+- En matemáticas, si necesitas definir funciones auxiliares, hazlo después en "Como en la pizarra", una por una y en bloques separados.
+- No expliques símbolos mezclando texto y fórmula en la misma línea.
+- Si solo hay una regla sencilla, pon solo la regla y pasa al desarrollo.
+- Si no hace falta ninguna fórmula previa, NO inventes este apartado.
+
+Ejemplo correcto para regla del producto:
+
+$$
+(fg)' = f'g + fg'
+$$
 
 Después continúa con esta estructura:
 
@@ -3551,6 +3712,63 @@ $$
   2. paréntesis y delimitadores que envuelvan bien la fórmula
   3. que no haya duplicados raros
   4. que la explicación se lea natural
+
+  REGLA FINAL PRIORITARIA PARA MATEMÁTICAS Y KATEX:
+- En ejercicios de matemáticas, funciones, derivadas, integrales, límites, trigonometría, matrices, ecuaciones o fracciones, prioriza que las fórmulas se rendericen limpias.
+- No escribas fórmulas importantes dentro de frases normales.
+- No escribas fórmulas importantes dentro de viñetas.
+- No uses $...$ para fórmulas importantes.
+- No uses \( ... \) para fórmulas importantes.
+- No dejes comandos LaTeX sueltos en texto normal, como \tan, \sec, \frac, \pi, \cdot, \left o \right.
+- Si aparece una fórmula con trigonometría, potencias, derivadas, fracciones o intervalos, escríbela SIEMPRE en bloque separado:
+
+$$
+f'(x) = -2x \tan(x) + (1-x^2)\sec^2(x)
+$$
+
+- Si defines funciones auxiliares, no las pongas en una frase larga. Hazlo así:
+
+$$
+u(x)=1-x^2
+$$
+
+$$
+u'(x)=-2x
+$$
+
+$$
+v(x)=\tan(x)
+$$
+
+$$
+v'(x)=\sec^2(x)
+$$
+
+- Para intervalos, usa bloque separado:
+
+$$
+x \in \left[0,\dfrac{\pi}{2}\right]
+$$
+
+- No escribas:
+  "Resolvemos para $x$ en el intervalo $[0, \frac{\pi}{2}]$".
+- Escribe:
+  "Resolvemos la ecuación dentro del intervalo:"
+
+$$
+x \in \left[0,\dfrac{\pi}{2}\right]
+$$
+
+- No escribas texto pegado a fórmulas como:
+  u = 1 - x^2 ) y $u' = -2x
+  v=\tan(x)v = \tan(x)
+  xenelintervalo[0, \frac{\pi}{2}]
+- Si una ecuación no tiene solución exacta sencilla, dilo. No inventes una conclusión.
+- No digas “al evaluar encontramos” si no has evaluado.
+- Para demostrar un máximo relativo, justifica con cambio de signo de la derivada, continuidad o aproximación numérica razonable.
+- En este tipo de ejercicio, una conclusión buena debe incluir algo como:
+  “La derivada pasa de positiva a negativa en el punto crítico, por tanto hay un máximo relativo.”
+
 Ejercicio del usuario: ${userText}`;
 }
 
@@ -3582,11 +3800,24 @@ function buildHistory(messages: any[], maxHistory = 10) {
   for (let i = start; i < (messages?.length ?? 0); i++) {
     const m = messages[i];
     if (!m || (m.role !== "user" && m.role !== "assistant")) continue;
-    const content = typeof m.content === "string" ? m.content.trim() : "";
+
+    const rawContent =
+      typeof m.content === "string"
+        ? m.content
+        : typeof m.text === "string"
+        ? m.text
+        : typeof m.message === "string"
+        ? m.message
+        : "";
+
+    const content = rawContent.trim();
+
     if (content.length < 2) continue;
     if (shouldSkipHistoryMessage(m.role, content)) continue;
+
     relevant.push({ role: m.role, content });
   }
+
   return relevant;
 }
 
@@ -3970,9 +4201,9 @@ const hasStrongProfileReuseSignal =
   (
     riskyTitleMatches.length > 0 ||
     socialMatches.length > 0 ||
-    topPages.some((p) =>
-      /tinder|badoo|bumble|instagram|threads|facebook|tiktok|catfish|fake|profile|dating|model|leak|pretty|feet/i.test(
-        `${p.title} ${p.url}`,
+    topPages.some((p: { title?: string; url?: string }) =>
+      /tinder|badoo|bumble|instagram|threads|facebook|tiktok|x\.com|twitter/i.test(
+        `${p.title ?? ""} ${p.url ?? ""}`,
       ),
     )
   );
@@ -5973,6 +6204,7 @@ function inferMaliciousDomainPatternFromUserText(userText: string) {
 function inferFraudBlockFromUserText(userText: string) {
   const t = (userText || "").toLowerCase();
     if (hasDirectMalwareLikeUrl(userText)) return "malware_link";
+      if (looksLikeRemoteSupportScamText(userText)) return "tech_support_remote_access";
 
   if (t.includes("wallapop") || t.includes("vinted") || t.includes("milanuncios") || t.includes("marketplace")) return "marketplace";
   if (t.includes("tinder") || t.includes("badoo") || t.includes("bumble") || t.includes("app de citas") || t.includes("instagram")) return "social_dating";
@@ -6028,6 +6260,9 @@ function inferPlatformOrAppFromUserText(userText: string) {
   if (t.includes("mercado libre")) return "Mercado Libre";
   if (t.includes("paypal")) return "PayPal";
   if (t.includes("bizum")) return "Bizum";
+    if (t.includes("anydesk")) return "AnyDesk";
+  if (t.includes("teamviewer")) return "TeamViewer";
+  if (t.includes("rustdesk")) return "RustDesk";
 
   return null;
 }
@@ -6036,6 +6271,8 @@ function inferBrandFromUserText(userText: string) {
   const t = (userText || "").toLowerCase();
 
   const brands = [
+        ["microsoft", "Microsoft"],
+    ["windows", "Microsoft"],
     ["correos", "Correos"],
     ["seur", "SEUR"],
     ["dhl", "DHL"],
@@ -6246,11 +6483,13 @@ function buildFraudChatReportPayload(params: {
   const paymentMethod = inferredPaymentMethod || null;
 
   const riskScore =
-    fraudBlock === "malware_link"
-      ? 95
-      : hasReliableInferredFraudBlock
-      ? 75
-      : 60;
+  fraudBlock === "malware_link"
+    ? 95
+    : fraudBlock === "tech_support_remote_access"
+    ? 86
+    : hasReliableInferredFraudBlock
+    ? 75
+    : 60;
 
   const riskLevel = inferRiskLevelFromScore(riskScore);
   const similaritySignature = buildSimilaritySignatureFromText(params.userText, null);
@@ -6305,8 +6544,10 @@ function buildFraudChatReportPayload(params: {
         ? "job_scam"
         : fraudBlock === "sextortion_blackmail"
         ? "sextortion"
-        : fraudBlock === "malware_link"
+                : fraudBlock === "malware_link"
         ? "malware"
+        : fraudBlock === "tech_support_remote_access"
+        ? "tech_support_scam"
         : null,
 
     scam_subcategory:
@@ -6326,8 +6567,10 @@ function buildFraudChatReportPayload(params: {
         ? "task_or_job_scam"
         : fraudBlock === "sextortion_blackmail"
         ? "blackmail"
-        : fraudBlock === "malware_link"
+                : fraudBlock === "malware_link"
         ? "direct_script_download"
+        : fraudBlock === "tech_support_remote_access"
+        ? "remote_access_tool_installation"
         : null,
 
     fraud_block: fraudBlock,
@@ -6392,10 +6635,13 @@ function buildFraudChatReportPayload(params: {
     uses_ai_deception: false,
     uses_deepfake: false,
     uses_session_hijacking: false,
-    uses_remote_access_tool: false,
+    uses_remote_access_tool: fraudBlock === "tech_support_remote_access",
     uses_crypto_wallet: fraudBlock === "crypto_investment",
 
-    remote_access_tool_name: null,
+    remote_access_tool_name:
+  fraudBlock === "tech_support_remote_access"
+    ? inferredPlatformOrApp || null
+    : null,
     ai_impersonation_type: null,
     deepfake_media_type: null,
     business_process_targeted: null,
@@ -8204,7 +8450,7 @@ async function savePhoneChatReportIfRelevant(
 }
 
 // ---------- handler ----------
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
   const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -8250,11 +8496,17 @@ const earlyIsShortGreeting =
     earlyClean,
   );
 
+  const earlyIsShortOperationalFollowup =
+  earlyClean.length <= 40 &&
+  /^(vale seguimos|seguimos|continuamos|continua|continúa|siguiente|vamos|vamos a ello|dale|ok seguimos|perfecto seguimos|y ahora|y ahora\?|qué hacemos|que hacemos|qué sigue|que sigue|qué sigue ahora|que sigue ahora)$/i.test(
+    earlyClean,
+  );
+
 if (
   earlyRequestedMode === "chat" &&
   !earlyImageBase64 &&
   !earlyPdfText &&
-  earlyIsShortGreeting
+  (earlyIsShortGreeting || earlyIsShortOperationalFollowup)
 ) {
   console.log("[quick-service] openai_light_greeting");
 
@@ -8265,14 +8517,17 @@ if (
 
   return json(
     {
-      text: lightGreeting.text,
-      model: lightGreeting.model,
+     text: earlyIsShortOperationalFollowup
+  ? "Perfecto, seguimos. Mándame lo siguiente que quieras revisar o dime por dónde vamos y lo vemos con calma."
+  : lightGreeting.text,
       pillar: "CONVERSACION_GENERAL",
       mode: "chat",
       tutorLevel: null,
       studyMode: null,
       tokens_used: lightGreeting.tokens_used,
-      lightPath: "openai_light_greeting",
+      lightPath: earlyIsShortOperationalFollowup
+  ? "operational_followup"
+  : "openai_light_greeting",
     },
     200,
   );
@@ -8907,22 +9162,54 @@ Mensaje del usuario: ${userText}
 }
 
     // ------------------------- OpenAI normal (no fútbol) -------------------------
-    const modelChat = Deno.env.get("OPENAI_MODEL_CHAT") || "gpt-4o";
-    const modelTutor = Deno.env.get("OPENAI_MODEL_TUTOR") || "gpt-4o";
-    const model = effectiveMode === "tutor" ? modelTutor : (Deno.env.get("OPENAI_MODEL") || modelChat);
+    const modelChat =
+  Deno.env.get("OPENAI_MODEL_CHAT") ||
+  Deno.env.get("OPENAI_MODEL") ||
+  "gpt-4o";
+
+const modelTutor =
+  Deno.env.get("OPENAI_MODEL_TUTOR") ||
+  modelChat;
+
+const modelProfile =
+  Deno.env.get("OPENAI_MODEL_PROFILE") ||
+  modelChat;
+
+const modelVision =
+  Deno.env.get("OPENAI_MODEL_VISION") ||
+  modelProfile;
+
+const isProfileAnalysisForModel =
+  effectiveMode === "chat" &&
+  looksLikeProfileReliabilityQuestion(userText);
+
+const isVisionAnalysisForModel =
+  effectiveMode === "chat" &&
+  Boolean(imageBase64);
+
+const model =
+  effectiveMode === "tutor"
+    ? modelTutor
+    : isVisionAnalysisForModel
+    ? modelVision
+    : isProfileAnalysisForModel
+    ? modelProfile
+    : modelChat;
 
     const max_output_tokens =
   effectiveMode === "tutor"
     ? 1600
     : imageBase64
-    ? 900
+    ? 1200
+    : isProfileAnalysisForModel
+    ? 800
     : studyMode.active
     ? 700
     : lowContext
     ? 700
     : 1400;
 
-    const temperature = effectiveMode === "tutor" ? 0.25 : 0.35;
+    const temperature = effectiveMode === "tutor" ? 0.1 : 0.35;
 
     const useCompactChatPrompt = shouldUseCompactChatPrompt({
   userText,
@@ -9126,6 +9413,31 @@ const reverseImageRiskContext =
 
 if (reverseImageRiskContext) {
   instructions += `\n\n${reverseImageRiskContext}`;
+}
+
+const profilePlatform = detectProfilePlatform(userText);
+
+const isGeneralProfileGuideWithoutImageForLeanPrompt =
+  effectiveMode === "chat" &&
+  !imageBase64 &&
+  looksLikeProfileReliabilityQuestion(userText) &&
+  /\b(c[oó]mo saber|como saber|perfil verificado|verificado de tinder|verificado en tinder|puede ser falso|puede ser falsa|detectar|identificar|señales|red flags|green flags|perfil falso|perfil falsa|hablando con un perfil falso)\b/i.test(
+    userText
+  );
+
+const shouldUseProfileIntelligence =
+  looksLikeProfileReliabilityQuestion(userText) &&
+  !isGeneralProfileGuideWithoutImageForLeanPrompt;
+
+const profileIntelligenceContext = shouldUseProfileIntelligence
+  ? buildProfileIntelligenceContext({
+      platform: profilePlatform,
+      hasImage: Boolean(imageBase64),
+    })
+  : "";
+
+if (profileIntelligenceContext) {
+  instructions += `\n\n${profileIntelligenceContext}`;
 }
 
 const hasStrongReusedImageSignal =
@@ -9389,6 +9701,41 @@ FOTO DE PERFIL AISLADA EN FACEBOOK / INSTAGRAM / RED SOCIAL:
 
 - La respuesta debe sonar de bajo riesgo y ser compatible con puntos verdes cuando no haya señales reales.
 
+PERFILES SOCIALES CON POCA INFORMACIÓN O INFORMACIÓN CAPADA:
+- Si el perfil de Facebook/Instagram/red social tiene poca información visible, está privado, tiene pocos datos, pocas publicaciones, no muestra amigos/contactos, no muestra familiares, no muestra actividad clara o solo se ve una foto, NO lo marques como peligroso automáticamente.
+- Diferencia entre:
+  1. “perfil peligroso”;
+  2. “perfil poco verificable”;
+  3. “perfil normal con información limitada”.
+- La falta de información no prueba estafa.
+- Pero si no hay señales positivas suficientes, tampoco lo pongas como confianza alta.
+- Usa un tono de precaución moderada, no de alarma.
+
+Apertura recomendada:
+“Con lo que se ve, no diría que sea un perfil peligroso, pero sí es un perfil poco verificable porque muestra poca información útil.”
+
+O:
+“No veo una señal clara de estafa, pero con tan poco contexto no lo daría por confirmado.”
+
+MICROSEÑALES DE POCA VERIFICABILIDAD:
+- perfil privado o muy limitado;
+- pocas publicaciones visibles;
+- sin amigos/contactos en común visibles;
+- sin familiares visibles;
+- sin trabajo, ciudad, estudios o actividad clara;
+- foto única o muy genérica;
+- nombre poco coherente para el país/contexto;
+- bio vacía o demasiado genérica;
+- ausencia de comentarios naturales;
+- actividad muy reciente o sin continuidad aparente.
+
+CÓMO RESPONDER:
+- No uses rojo salvo que haya señales reales: dinero, enlaces, presión, suplantación, foto robada/reutilizada fuerte, cripto, códigos, documentos o urgencia.
+- Si solo falta información, usa naranja suave/precaución moderada.
+- Explica que el motivo no es “peligro detectado”, sino “falta de contexto verificable”.
+- Recomienda pedir/ver más contexto de forma natural:
+  publicaciones antiguas, comentarios, amigos en común, familiares, etiquetas, coherencia de ciudad/trabajo/actividad y si hay interacciones reales.
+
 OBJETIVO:
 - Analiza el perfil con inteligencia contextual.
 - Si hay señales positivas suficientes y no hay señales claras de peligro, transmite calma y bajo riesgo.
@@ -9522,6 +9869,141 @@ REGLA FINAL DE AUTENTICIDAD VISUAL:
 `.trim();
 }
 
+const strictMathTutorContextText = [
+  userText,
+  ...history.map((h) => h.content),
+].join("\n");
+
+const shouldUseStrictMathTutorRules =
+  effectiveMode === "tutor" &&
+  (
+    detectEducationalArea(strictMathTutorContextText) === "math" ||
+    /\b(mates|matem[aá]ticas?|c[aá]lculo|funci[oó]n|derivada|derivar|m[aá]ximo|m[ií]nimo|punto cr[ií]tico|puntos cr[ií]ticos|intervalo|tangente|seno|coseno|secante|trigonometr|integral|l[ií]mite|ecuaci[oó]n|fracci[oó]n|matriz|sistema)\b/i.test(
+      strictMathTutorContextText
+    )
+  );
+
+if (shouldUseStrictMathTutorRules) {
+  instructions += String.raw`
+
+REGLA FINAL ABSOLUTA PARA TUTOR DE MATEMÁTICAS:
+Esta regla tiene prioridad sobre cualquier otra regla de estilo.
+
+FORMATO:
+- No escribas fórmulas matemáticas importantes dentro de frases normales.
+- No escribas fórmulas matemáticas importantes dentro de viñetas.
+- No uses LaTeX inline para fórmulas importantes.
+- No uses $...$ dentro de frases.
+- No uses \( ... \) dentro de frases.
+- No dejes comandos LaTeX sueltos en texto normal como \tan, \sec, \frac, \pi, \cdot, \left o \right.
+- Toda fórmula con derivadas, trigonometría, fracciones, potencias, intervalos o ecuaciones debe ir en bloque separado con doble dólar.
+
+EJEMPLO CORRECTO:
+
+Definimos las dos partes:
+
+$$
+u(x)=1-x^2
+$$
+
+$$
+v(x)=\tan(x)
+$$
+
+Derivamos:
+
+$$
+u'(x)=-2x
+$$
+
+$$
+v'(x)=\sec^2(x)
+$$
+
+Aplicamos la regla del producto:
+
+$$
+f'(x)=u'(x)v(x)+u(x)v'(x)
+$$
+
+Sustituimos:
+
+$$
+f'(x)=(-2x)\tan(x)+(1-x^2)\sec^2(x)
+$$
+
+PROHIBIDO escribir cosas como:
+- g(x) = \tan(x)
+- g'(x) = \sec^2(x)
+- Resolvemos para $x$ en el intervalo $[0, \frac{\pi}{2}]$
+- x en el intervalo [0, \frac{\pi}{2}]
+- u = 1 - x^2 ) y $u' = -2x
+- v=\tan(x)v=\tan(x)
+
+INTERVALOS:
+- Si aparece un intervalo, escríbelo siempre en bloque matemático.
+
+Ejemplo:
+
+$$
+x \in \left[0,\dfrac{\pi}{2}\right]
+$$
+
+LECTURA DE IMÁGENES:
+- Si el ejercicio viene de una imagen, lee el enunciado con mucho cuidado.
+- No cambies \pi/2 por 2\pi.
+- Si el intervalo no se ve claro, di: “El intervalo parece ser...” y pide confirmación.
+- Si ves \pi/2, escríbelo como:
+
+$$
+\left[0,\dfrac{\pi}{2}\right]
+$$
+
+RIGOR MATEMÁTICO:
+- No digas “al evaluar encontramos” si no has evaluado.
+- No digas que hay máximo relativo sin justificarlo.
+- Para demostrar un máximo relativo, justifica el cambio de signo de la derivada o usa un argumento correcto.
+- Si una ecuación no se resuelve de forma exacta sencilla, dilo y usa aproximación numérica razonable.
+- En este ejercicio concreto, no basta con derivar. Hay que justificar que la derivada cambia de positiva a negativa en un punto crítico.
+
+REGLA CONTRA "DONDE" CON FÓRMULAS INLINE:
+- No uses frases como:
+  "Donde f(x)=1-x^2 y g(x)=tan(x)."
+- No uses frases como:
+  "Buscamos dónde f'(x)=0."
+- En vez de eso, separa texto y fórmula.
+
+Correcto:
+
+Definimos las dos partes de la función:
+
+$$
+f_1(x)=1-x^2
+$$
+
+$$
+f_2(x)=\tan(x)
+$$
+
+Buscamos los puntos donde la derivada se anula:
+
+$$
+f'(x)=0
+$$
+
+REGLA DE DEMOSTRACIÓN:
+- Si el ejercicio pide "demuestra", no basta con decir que hay máximo.
+- Debes justificarlo.
+- Para un máximo relativo, explica que la derivada cambia de positiva a negativa.
+- Si usas aproximación numérica, da el valor aproximado del punto crítico.
+
+ESTILO:
+- Evita el bloque “Donde:” con viñetas si contiene fórmulas.
+- Usa frases cortas y luego fórmulas en bloques separados.
+- Mejor pocas fórmulas limpias que muchas fórmulas mezcladas.
+`;
+}
+
 const input: any[] = [];
     for (const h of history) input.push({ role: h.role, content: h.content });
 
@@ -9534,7 +10016,9 @@ if (cleanText) {
   userContent.push({
     type: "input_text",
     text:
-      "Analiza la imagen adjunta con criterio de seguridad práctica. Si es una captura, perfil, conversación, web, QR, documento, anuncio o imagen sospechosa, detecta posibles riesgos, señales de manipulación, estafa, IA/deepfake o engaño, y explica qué harías ahora.",
+      effectiveMode === "tutor"
+        ? "El usuario ha adjuntado una imagen de un ejercicio o material de estudio. Analiza la imagen como profesor. Si es un ejercicio de matemáticas, física, química, idioma o teoría, resuélvelo o explícalo paso a paso. No lo trates como análisis de seguridad salvo que la imagen muestre claramente un riesgo real."
+        : "Analiza la imagen adjunta con criterio de seguridad práctica. Si es una captura, perfil, conversación, web, QR, documento, anuncio o imagen sospechosa, detecta posibles riesgos, señales de manipulación, estafa, IA/deepfake o engaño, y explica qué harías ahora.",
   });
 } else {
   userContent.push({ type: "input_text", text: "Me gustaría tu ayuda con esto." });
@@ -9573,10 +10057,383 @@ if (imageBase64 && hasStrongReusedImageSignal) {
   });
 }
 
+const recentProfileFastPathContext = history
+  .slice(-6)
+  .map((m) => `${m.role}: ${m.content ?? ""}`)
+  .join("\n");
+
+const profileFastPathContextText = `${userText}\n${recentProfileFastPathContext}`;
+
+const hasProfileFastPathContext =
+  /\b(perfil falso|perfil falsa|perfil fake|catfish|catfishing|tinder|bumble|badoo|app de citas|citas|verificad|verficad|check azul|whatsapp|telegram|love bombing|crypto|cripto)\b/i.test(
+    profileFastPathContextText
+  );
+
+const asksHowProfileFakeWorks =
+  effectiveMode === "chat" &&
+  !imageBase64 &&
+  !pdfText &&
+  !footballIntent &&
+  hasProfileFastPathContext &&
+  /\b(c[oó]mo es posible|c[oó]mo pueden|c[oó]mo puede|c[oó]mo logran|c[oó]mo hacen|c[oó]mo se hace|c[oó]mo crear|c[oó]mo hacen un perfil|verificarse|verficarse|se verifican|pueden verificarse|pueden verficarse)\b/i.test(
+    userText
+  );
+
+const asksCutContactAfterProfileDoubt =
+  effectiveMode === "chat" &&
+  !imageBase64 &&
+  !pdfText &&
+  !footballIntent &&
+  hasProfileFastPathContext &&
+  /\b(cortar el contacto|mejor cortar|bloquear|bloqueo|bloquearlo|bloquearla|dejar de hablar|no contestar|eliminar contacto)\b/i.test(
+    userText
+  );
+
+if (asksHowProfileFakeWorks || asksCutContactAfterProfileDoubt) {
+  const profileFollowUpDisabledReport = {
+    saved: false,
+    id: null,
+    reason: "profile_followup_fast_path",
+  };
+
+  const lowerProfileFollowUpText = String(userText || "").toLowerCase();
+
+  const asksVerificationMechanism =
+    /verific|verfic|check azul|verified/i.test(lowerProfileFollowUpText);
+
+  const text = asksCutContactAfterProfileDoubt
+    ? `Sí: si ya tienes dudas reales, cortar el contacto puede ser una decisión prudente, sobre todo si ha habido presión, evasivas, enlaces, dinero, crypto, códigos o intento de sacarte rápido de la app.
+
+**Antes de cortar:**
+Si te ha pedido dinero, datos, fotos íntimas, códigos o documentos, guarda capturas por seguridad. No abras enlaces nuevos y no expliques demasiado: cuanto menos margen le des para convencerte, mejor.
+
+**Qué haría ahora:**
+Bloquearía o dejaría de responder, revisaría si has compartido algo sensible y reportaría el perfil dentro de la app si ves señales claras.
+
+**Para quedarte con la idea:**
+No necesitas demostrar al 100% que sea falso para protegerte. Si el comportamiento te genera desconfianza seria, parar a tiempo es buena decisión.`
+    : asksVerificationMechanism
+    ? `Puede pasar porque la verificación suele comprobar una parte concreta en un momento concreto, no todo el perfil ni sus intenciones.
+
+**Cómo puede parecer verificado y aun así ser problemático:**
+Puede usar fotos reales, pasar una comprobación básica de imagen o identidad, y después cambiar fotos, bio, datos visibles o comportamiento. También puede ser una persona real usando la verificación para generar confianza y luego intentar manipular.
+
+**Dónde estaría el engaño:**
+No siempre está en la foto. Muchas veces está en lo que viene después: dinero, inversión, crypto, enlaces, códigos, documentos, urgencia, love bombing, evasivas o intento rápido de pasar a WhatsApp/Telegram.
+
+**Qué haría yo:**
+No trataría la verificación como garantía total. Miraría si la conversación es coherente, si no hay presión y si no aparece ninguna petición rara. Si tienes captura del perfil o conversación, la reviso y te digo si lo veo bajo riesgo, duda razonable o peligro claro.`
+    : `Puede pasar porque un perfil falso no siempre empieza pareciendo falso. Muchas veces parece normal al principio para ganar confianza.
+
+**Cómo suelen hacerlo sin que se note al principio:**
+Pueden usar fotos reales robadas o reutilizadas, una biografía copiada o muy genérica, datos que parecen coherentes y una conversación amable al inicio. No hace falta que todo sea falso: a veces la foto parece real, pero la intención es engañar.
+
+**Dónde suele aparecer el riesgo:**
+Cuando empiezan las prisas, las excusas, el amor intenso demasiado rápido, los enlaces, el dinero, la inversión, crypto, códigos, documentos, fotos íntimas o el intento de llevarte rápido a WhatsApp/Telegram.
+
+**Para quedarte con la idea:**
+Lo importante no es pillar una señal aislada, sino ver el patrón. Si me mandas captura del perfil o conversación, te digo si lo pondría en bajo riesgo, duda razonable o peligro claro.`;
+
+  return json(
+    {
+      text,
+      mode: effectiveMode,
+      tutorLevel: null,
+      pillar: "ESTAFAS_FRAUDES",
+      model: "local-profile-followup-v1",
+      tokens_used: 0,
+      studyMode: null,
+      usage: null,
+      autoTutor: {
+        active: false,
+        area: "general",
+        level: null,
+        reason: "profile_followup_fast_path",
+      },
+      footballResolved: null,
+      footballReq: null,
+      footballIntent: false,
+      footballSiteUrl: "https://app.vonuai.com",
+      footballError: null,
+      footballPrediction: null,
+      fraudChatReport: profileFollowUpDisabledReport,
+      legalChatReport: profileFollowUpDisabledReport,
+      personalSafetyChatReport: profileFollowUpDisabledReport,
+      phoneChatReport: profileFollowUpDisabledReport,
+    },
+    200
+  );
+}
+if (isGeneralProfileGuideWithoutImageForLeanPrompt) {
+  const userMentionedProfileVerification =
+    /\b(verificaci[oó]n|verificado|verificada|perfil verificado|check azul|verified|photo verified|id verified|tinder verificado|verificado de tinder|verificado en tinder)\b/i.test(
+      userText
+    );
+
+  const localProfileGuideVariants = userMentionedProfileVerification
+    ? [
+        `Sí, un perfil verificado puede ser falso en cuanto a intenciones. La verificación suma confianza porque suele comprobar algo en un momento concreto, pero no garantiza lo que esa persona hará después.
+
+**Dónde estaría el riesgo real:**
+Dinero, Bizum, inversión, crypto, enlaces, códigos, documentos, fotos íntimas, urgencia, love bombing, incoherencias, evasivas, foto reutilizada o intento rápido de pasar a WhatsApp/Telegram.
+
+**Qué señales bajan la sospecha:**
+Fotos variadas y naturales, bio coherente, conversación normal, ausencia de presión, ausencia de dinero, ausencia de enlaces, ausencia de crypto, ausencia de códigos y ausencia de documentos. La verificación visible suma confianza, pero no lo convierte en seguro al 100%.
+
+**Conclusión práctica:**
+Puedo revisar una captura del perfil o conversación y clasificarlo como bajo riesgo, duda razonable o peligro claro.`,
+        `Sí, puede pasar. Un perfil verificado es mejor punto de partida que uno sin verificar, pero no garantiza intenciones, comportamiento posterior ni cambios futuros en fotos, bio o datos visibles.
+
+**Dónde estaría el riesgo real:**
+Peticiones de dinero, inversión, crypto, Bizum, enlaces, códigos, documentos, fotos íntimas, presión, urgencia, amor intenso demasiado rápido, incoherencias o evasivas.
+
+**Qué señales bajan la sospecha:**
+Conversación tranquila, fotos naturales y variadas, bio coherente, nada de dinero, nada de enlaces raros, nada de códigos y nada de documentos. La verificación ayuda, pero no sustituye mirar el comportamiento.
+
+**Conclusión práctica:**
+Si me mandas captura del perfil o de la conversación, te digo si lo pondría en bajo riesgo, duda razonable o peligro claro.`,
+      ]
+    : [
+        `Lo importante es fijarse en el comportamiento general, no solo en una señal aislada.
+
+**Dónde estaría el riesgo real:**
+Ten cuidado si piden dinero, Bizum, inversiones, criptomonedas, enlaces, códigos, documentos o fotos íntimas. También si hay urgencia, love bombing, intentan pasar rápido a WhatsApp/Telegram, hay incoherencias, evasivas o usan fotos reutilizadas.
+
+**Qué señales bajan la sospecha:**
+Fotos variadas y naturales, una biografía coherente, conversación normal sin presión, y que no pidan dinero, enlaces, crypto, códigos ni documentos.
+
+**Conclusión práctica:**
+Puedo ayudarte a revisar una captura del perfil o conversación para clasificarlo como bajo riesgo, duda razonable o peligro claro.`,
+        `Para detectar un perfil falso, no miraría solo una cosa: miraría el conjunto.
+
+**Dónde estaría el riesgo real:**
+Prisas, excusas raras, mensajes demasiado intensos muy pronto, dinero, inversión, crypto, Bizum, enlaces, códigos, documentos, fotos íntimas, incoherencias o intento rápido de llevarte a otra app.
+
+**Qué señales bajan la sospecha:**
+Fotos naturales y variadas, bio que encaja, conversación tranquila, respuestas coherentes y cero presión para dinero, enlaces, códigos, documentos o crypto.
+
+**Conclusión práctica:**
+Si tienes una captura del perfil o de la conversación, la reviso y te digo si parece bajo riesgo, duda razonable o peligro claro.`,
+      ];
+
+  const randomLocalProfileGuideNumber =
+    crypto.getRandomValues(new Uint32Array(1))[0];
+
+  const text =
+    localProfileGuideVariants[
+      randomLocalProfileGuideNumber % localProfileGuideVariants.length
+    ];
+
+  const disabledReport = {
+    saved: false,
+    id: null,
+    reason: "profile_guide_fast_path",
+  };
+
+  return json(
+    {
+      text,
+      mode: effectiveMode,
+      tutorLevel: null,
+      pillar,
+      model: "local-profile-guide-v1",
+      tokens_used: 0,
+      studyMode: null,
+      usage: null,
+      autoTutor: {
+        active: false,
+        area: "general",
+        level: null,
+        reason: "profile_guide_fast_path",
+      },
+      footballResolved: null,
+      footballReq: null,
+      footballIntent: false,
+      footballSiteUrl: "https://app.vonuai.com",
+      footballError: null,
+      footballPrediction: null,
+      fraudChatReport: disabledReport,
+      legalChatReport: disabledReport,
+      personalSafetyChatReport: disabledReport,
+      phoneChatReport: disabledReport,
+    },
+    200
+  );
+}
+const isGeneralProfileGuideWithoutImageFinalGuard =
+  isGeneralProfileGuideWithoutImageForLeanPrompt;
+
+if (isGeneralProfileGuideWithoutImageFinalGuard) {
+  const platformForFinalGuard = profilePlatform;
+  const userMentionedProfileVerification =
+  /\b(verificaci[oó]n|verificado|verificada|perfil verificado|check azul|verified|photo verified|id verified|tinder verificado|verificado de tinder|verificado en tinder)\b/i.test(
+    userText
+  );
+
+  const profileStyleVariants = ["A", "B", "C", "D"] as const;
+  const randomProfileStyleNumber = crypto.getRandomValues(new Uint32Array(1))[0];
+  const profileStyleVariant =
+    profileStyleVariants[randomProfileStyleNumber % profileStyleVariants.length];
+
+  const profileVariantInstructions: Record<
+    (typeof profileStyleVariants)[number],
+    string
+  > = {
+    A: `
+FORMATO OBLIGATORIO PARA ESTA RESPUESTA — VARIANTE A:
+Empieza con una introducción breve SIN título, de 1 o 2 frases, respondiendo directamente a la duda del usuario.
+
+Si el usuario menciona verificación, perfil verificado, check azul, verified, Tinder verificado o similar, la introducción debe decir que sí puede haber riesgo, pero con matiz: la verificación suma confianza porque suele comprobar algo en un momento concreto, aunque no garantiza intenciones ni cambios posteriores en fotos, bio, datos visibles o comportamiento.
+
+Si el usuario NO menciona verificación, NO hables de verificación en la introducción. Céntrate en que lo importante no es una señal aislada, sino el conjunto: comportamiento, coherencia, prisas, excusas, presión y peticiones raras.
+
+Después usa estos bloques:
+
+**Dónde estaría el riesgo real:**
+Incluye señales concretas: dinero, Bizum, inversión, crypto, enlaces, códigos, documentos, fotos íntimas, urgencia, love bombing, pasar rápido a WhatsApp/Telegram, incoherencias, evasivas o foto reutilizada.
+
+**Qué señales bajan la sospecha:**
+Fotos variadas y naturales, bio coherente, conversación normal, ausencia de presión, ausencia de dinero, ausencia de enlaces, ausencia de crypto, ausencia de códigos y ausencia de documentos.
+Si el usuario menciona verificación, puedes añadir: “La verificación visible suma confianza, pero no lo convierte en seguro al 100%.”
+
+**Conclusión práctica:**
+Ofrece revisar una captura del perfil o conversación y clasificarlo como bajo riesgo, duda razonable o peligro claro.
+`.trim(),
+
+    B: `
+FORMATO OBLIGATORIO PARA ESTA RESPUESTA — VARIANTE B:
+Usa estos bloques, adaptando el contenido a la pregunta:
+
+**Sí, pero con matiz:**
+Explica el matiz principal. Si habla de verificación, di que es un buen punto de partida, pero no una garantía total ni permanente.
+
+**Dónde estaría el riesgo real:**
+Dinero, inversión, crypto, enlaces, códigos, documentos, fotos íntimas, presión, urgencia, amor intenso demasiado rápido, incoherencias o intento rápido de salir de la app.
+
+**Qué señales bajan la sospecha:**
+Datos coherentes, fotos naturales, verificación visible si aplica, conversación tranquila y ausencia de peticiones raras.
+
+**Conclusión práctica:**
+Cierra con una acción útil: mandar captura, bio o conversación para revisarlo juntos.
+`.trim(),
+
+    C: `
+FORMATO OBLIGATORIO PARA ESTA RESPUESTA — VARIANTE C:
+Usa estos bloques, adaptando el contenido a la pregunta:
+
+**La idea principal:**
+Resume el punto clave en lenguaje natural, sin sonar alarmista.
+
+Después elige SOLO UNO de estos dos bloques según la pregunta:
+
+Si el usuario menciona verificación, perfil verificado, check azul, verified, Tinder verificado o similar, usa este título:
+**Lo que no garantiza una verificación:**
+Explica que una verificación no garantiza para siempre fotos actuales, bio actual, datos actuales, comportamiento posterior, intenciones, enlaces, dinero, crypto, códigos o documentos.
+
+Si el usuario NO menciona verificación, usa este título:
+**Lo que suele delatar un perfil falso:**
+Explica que lo más importante suele ser el conjunto: identidad poco comprobable, prisas, excusas, incoherencias, dinero, enlaces, códigos, documentos, fotos íntimas, presión o intento de mover la conversación rápido a otra app.
+
+**Banderas rojas importantes:**
+Lista señales concretas de riesgo real.
+
+**Señales positivas:**
+Lista señales que sí bajan la sospecha.
+
+**Lo revisamos mejor si me mandas:**
+Pide captura, bio, fotos, conversación y cualquier enlace o petición rara.
+
+No uses el título “Lo que no garantiza una verificación” si el usuario no ha preguntado por un perfil verificado.
+`.trim(),
+
+    D: `
+FORMATO OBLIGATORIO PARA ESTA RESPUESTA — VARIANTE D:
+Usa estos bloques, adaptando el contenido a la pregunta:
+
+**En corto:**
+Da una respuesta breve y clara.
+
+**El matiz importante:**
+Si el usuario menciona verificación, perfil verificado, check azul, verified, Tinder verificado o similar, explica que la verificación suma confianza, pero no garantiza para siempre fotos actuales, bio actual, datos visibles, comportamiento posterior ni intenciones.
+Si el usuario NO menciona verificación, NO hables de verificación. Explica que lo que más pesa suele ser el comportamiento: prisas, excusas, incoherencias, presión, peticiones raras o intentar sacar la conversación a otra app.
+
+**Me preocuparía si aparece esto:**
+Lista red flags concretas: dinero, Bizum, inversión, crypto, enlaces, códigos, documentos, fotos íntimas, urgencia, love bombing, incoherencias, evasivas o foto reutilizada.
+
+**Me tranquilizaría si veo esto:**
+Lista green flags concretas: fotos variadas y naturales, bio coherente, conversación normal, ausencia de presión, ausencia de dinero, ausencia de enlaces, ausencia de crypto, ausencia de códigos y ausencia de documentos.
+Solo menciona verificación aquí si el usuario la mencionó directamente.
+
+**Siguiente paso útil:**
+Ofrece revisar captura del perfil o conversación y dar una clasificación práctica: bajo riesgo, duda razonable o peligro claro.
+`.trim(),
+  };
+
+  instructions += `
+
+REGLA FINAL PRIORITARIA PARA PREGUNTAS GENERALES SOBRE PERFILES:
+Plataforma detectada: ${platformForFinalGuard}
+Variante de formato elegida: ${profileStyleVariant}
+Usuario menciona verificación: ${userMentionedProfileVerification ? "sí" : "no"}
+
+Esta es una pregunta general sin captura ni caso concreto.
+NO estás analizando un perfil concreto.
+NO uses “Lo que veo”.
+NO uses “Qué haría ahora” como si hubiera una imagen o caso revisado.
+NO digas “confía en tu instinto”.
+NO digas “si algo no se siente bien”.
+NO digas “investiga el perfil” como consejo principal.
+NO digas “habla con amigos” como solución principal.
+NO pongas tono de alarma si no hay caso concreto.
+NO escribas una frase suelta antes del primer encabezado, salvo en la Variante A, donde sí debes empezar con una introducción breve sin título.
+NO mezcles varias variantes en una sola respuesta.
+
+Reglas obligatorias:
+- La primera respuesta clara debe ir dentro del primer encabezado elegido, salvo en la Variante A, donde debe ir en una introducción breve sin título antes de los bloques.
+- Explica qué pesa de verdad y qué no.
+- Si “Usuario menciona verificación” es “no”, queda prohibido mencionar verificación, verificado, verificada, check azul, verified, photo verified o perfiles verificados. En ese caso habla solo de comportamiento, coherencia, fotos, bio, presión, dinero, enlaces, códigos, documentos, crypto, urgencia, pasar a otra app y foto reutilizada.
+- Si “Usuario menciona verificación” es “sí”, entonces sí puedes explicar el matiz: suma confianza, pero no garantiza intenciones ni que después no cambien fotos, bio, datos visibles o comportamiento.
+- Si es una pregunta general sin captura, no hagas veredicto de un caso concreto.
+- Si falta información, pide datos concretos.
+- Cierra con una acción útil: ofrecer revisar captura, perfil o conversación.
+- Solo menciona verificación si el usuario la menciona directamente: verificación, verificado, perfil verificado, check azul, verified, Tinder verificado o similar. Si el usuario no la menciona, no metas verificación como bloque ni como señal principal.
+
+${profileVariantInstructions[profileStyleVariant]}
+
+Tono:
+- Cercano, práctico y preventivo.
+- No robótico.
+- No alarmista.
+- No delegues la decisión en la intuición del usuario.
+`;
+}
+
     input.push({ role: "user", content: userContent });
 
 const openAiController = new AbortController();
-const openAiTimeout = setTimeout(() => openAiController.abort(), 35000);
+
+const openAiTimeoutMs =
+  imageBase64 || isProfileAnalysisForModel
+    ? 90000
+    : 60000;
+
+const openAiTimeout = setTimeout(() => {
+  openAiController.abort("openai_timeout");
+}, openAiTimeoutMs);
+
+const supportsTemperature =
+  !String(model || "").toLowerCase().startsWith("gpt-5");
+
+const openAIRequestBody: Record<string, unknown> = {
+  model,
+  instructions,
+  input,
+  max_output_tokens,
+};
+
+if (supportsTemperature) {
+  openAIRequestBody.temperature = temperature;
+}
 
 const resp = await fetch("https://api.openai.com/v1/responses", {
   method: "POST",
@@ -9585,13 +10442,7 @@ const resp = await fetch("https://api.openai.com/v1/responses", {
     "Content-Type": "application/json",
   },
   signal: openAiController.signal,
-  body: JSON.stringify({
-    model,
-    instructions,
-    input,
-    max_output_tokens,
-    temperature,
-  }),
+  body: JSON.stringify(openAIRequestBody),
 });
 
 clearTimeout(openAiTimeout);
@@ -9639,6 +10490,10 @@ const raw = await resp.text().catch(() => "");
         ? "Perfecte 🙂 Comencem. ¿Cómo se dice en el idioma objetivo la primera palabra de tu lista?"
         : "He recibido una respuesta vacía. ¿Puedes darme un poco más de contexto?";
     }
+
+    if (effectiveMode === "tutor") {
+  text = sanitizeTutorMathOutput(text);
+}
 
     let fraudChatReport: any = {
   saved: false,
@@ -9867,12 +10722,39 @@ personalSafetyChatReport:
   200,
 );
   } catch (error) {
+    console.error("[quick-service] handler_error", error);
+
+    const errorText =
+      error instanceof Error ? error.message : String(error);
+
+    const errorName =
+      error instanceof Error ? error.name : "";
+
+    const isAbortOrTimeout =
+      errorName === "AbortError" ||
+      errorText.includes("AbortError") ||
+      errorText.includes("signal is aborted") ||
+      errorText.includes("openai_timeout") ||
+      errorText.includes("aborted");
+
+    if (isAbortOrTimeout) {
+      return json(
+        {
+          error: "La respuesta ha tardado demasiado.",
+          message:
+            "La IA ha tardado más de lo esperado. Prueba otra vez; si era una imagen, perfil o caso complejo, puede necesitar unos segundos más.",
+          code: "openai_timeout",
+        },
+        504
+      );
+    }
+
     return json(
       {
         error: "Error interno del servidor",
-        message: error instanceof Error ? error.message : String(error),
+        message: errorText,
       },
-      500,
+      500
     );
   }
 });

@@ -1360,6 +1360,23 @@ if (hasLowRiskSocialProfilePhotoVerdict && !hasHardDangerInSocialProfilePhoto) {
   }
 
   const dangerSignals = [
+        "¡alto!",
+    "alto!",
+    "esto es una estafa",
+    "esto es un fraude",
+    "es una estafa",
+    "es un fraude",
+    "no instales",
+    "no instales anydesk",
+    "no instales ningún software",
+    "no instales ningun software",
+    "cuelga la llamada",
+    "cuelga la llamada inmediatamente",
+    "quieren acceso remoto",
+    "acceso remoto a tu dispositivo",
+    "tomar control de tu dispositivo",
+    "robar datos",
+    "robar dinero",
     "riesgo crítico",
     "riesgo critico",
     "riesgo muy alto",
@@ -1405,6 +1422,18 @@ if (hasLowRiskSocialProfilePhotoVerdict && !hasHardDangerInSocialProfilePhoto) {
   }
 
   const highSignals = [
+        "fraude común",
+    "fraude comun",
+    "falso soporte técnico",
+    "falso soporte tecnico",
+    "estafa de soporte técnico",
+    "estafa de soporte tecnico",
+    "control remoto",
+    "acceso remoto",
+    "programas como anydesk",
+    "software como anydesk",
+    "anydesk ni ningún otro software",
+    "anydesk ni ningun otro software",
     "riesgo alto",
     "alto riesgo",
     "intento de estafa",
@@ -1812,6 +1841,30 @@ function shouldAutoTitleThread(title: string) {
   );
 }
 
+function makeSmartThreadTitleFromMessage(message?: Message | null) {
+  if (!message) return "Nueva consulta";
+
+  const text = String(message.text ?? "").trim();
+  const hasImage = typeof message.imageThumb === "string" && message.imageThumb.length > 0;
+
+  if (
+    hasImage &&
+    (!text || text.toLowerCase() === "he adjuntado una imagen.")
+  ) {
+    return "Imagen adjunta";
+  }
+
+  if (text) {
+    return makeSmartThreadTitle(text);
+  }
+
+  if (hasImage) {
+    return "Imagen adjunta";
+  }
+
+  return "Nueva consulta";
+}
+
 const STORAGE_KEY = "vonu_threads_v2";
 const STORAGE_BACKUP_KEY = "vonu_threads_v2_backup";
 const STORAGE_LAST_GOOD_KEY = "vonu_threads_v2_last_good";
@@ -1967,13 +2020,14 @@ function normalizeRemoteThreadForClient(raw: any): ChatThread | null {
       ? raw.title.trim()
       : "Nueva consulta";
 
-  const firstUserText =
-    messages.find((m) => m.role === "user" && typeof m.text === "string" && m.text.trim())
-      ?.text ?? "";
+    const firstUserMessageForTitle =
+    messages.find((m) => m.role === "user") ?? null;
+
+  const smartRemoteTitle = makeSmartThreadTitleFromMessage(firstUserMessageForTitle);
 
   const title =
-    shouldAutoTitleThread(rawTitle) && firstUserText.trim()
-      ? makeSmartThreadTitle(firstUserText)
+    shouldAutoTitleThread(rawTitle) && smartRemoteTitle
+      ? smartRemoteTitle
       : rawTitle;
 
   const updatedAt =
@@ -2854,44 +2908,35 @@ function normalizeMathMarkdown(text: string) {
 function normalizeBulletMarkdown(text: string) {
   let s = String(text ?? "");
 
-    // Elimina viñetas vacías que a veces aparecen cuando una fórmula se parte mal.
+  const protectedMathBlocks: string[] = [];
+
+  // Protegemos bloques LaTeX antes de tocar viñetas.
+  // Así evitamos que "$$ ... $$" se rompa por culpa de indentación o bullets.
+  s = s.replace(/\$\$[\s\S]*?\$\$/g, (block) => {
+    const index = protectedMathBlocks.push(block) - 1;
+    return `@@VONU_MATH_BLOCK_${index}@@`;
+  });
+
+  // Elimina viñetas completamente vacías:
+  // •
+  // -
+  // *
   s = s.replace(/^\s*(?:[•●]|[-*])\s*$/gm, "");
 
-  // Convierte viñetas tipo "• texto" o "● texto" a Markdown real.
+  // Convierte SOLO bullets reales tipo "• texto" o "● texto" a Markdown.
+  // No convierte líneas indentadas normales en bullets.
   s = s.replace(/^\s*[•●]\s+/gm, "- ");
 
-  // Convierte falsas listas indentadas a listas reales SOLO cuando hay varias líneas seguidas.
-  const lines = s.split("\n");
-  const out: string[] = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-
-    const prev = lines[i - 1] ?? "";
-    const next = lines[i + 1] ?? "";
-
-    const isIndentedText =
-      /^\s{2,}\S/.test(line) &&
-      !/^\s{2,}[-*+]\s+/.test(line) &&
-      !/^\s{2,}\d+\.\s+/.test(line);
-
-    const hasIndentedNeighbour =
-      /^\s{2,}\S/.test(prev) || /^\s{2,}\S/.test(next);
-
-    const looksLikeHeading =
-      /^\s{2,}.{1,48}:\s*$/.test(line);
-
-    if (isIndentedText && hasIndentedNeighbour && !looksLikeHeading) {
-      out.push(line.replace(/^\s+/, "- "));
-    } else {
-      out.push(line);
-    }
-  }
-
-  s = out.join("\n");
-
-  // Asegura salto antes de listas Markdown.
+  // Asegura separación antes de listas reales, sin tocar fórmulas.
   s = s.replace(/([^\n])\n(-\s+)/g, "$1\n\n$2");
+
+  // Limpia saltos excesivos.
+  s = s.replace(/\n{3,}/g, "\n\n");
+
+  // Restauramos los bloques LaTeX.
+  s = s.replace(/@@VONU_MATH_BLOCK_(\d+)@@/g, (_match, index) => {
+    return protectedMathBlocks[Number(index)] ?? "";
+  });
 
   return s.trim();
 }
@@ -4404,16 +4449,16 @@ async function saveThreadToCloud(thread?: ChatThread | null) {
     const hasUserMessage = safeThread.messages.some((m) => m.role === "user");
     if (!hasUserMessage) return;
 
-    const firstUserTextForTitle =
-  safeThread.messages.find(
-    (m) => m.role === "user" && typeof m.text === "string" && m.text.trim()
-  )?.text ?? "";
+    const firstUserMessageForTitle =
+  safeThread.messages.find((m) => m.role === "user") ?? null;
+
+const smartCloudTitle = makeSmartThreadTitleFromMessage(firstUserMessageForTitle);
 
 const threadForCloud = {
   ...safeThread,
   title:
-    shouldAutoTitleThread(safeThread.title) && firstUserTextForTitle.trim()
-      ? makeSmartThreadTitle(firstUserTextForTitle)
+    shouldAutoTitleThread(safeThread.title) && smartCloudTitle
+      ? smartCloudTitle
       : safeThread.title,
 };
 
@@ -4533,12 +4578,14 @@ function resetVisibleHistoryForLoggedOut() {
   });
 }
 
-async function loadCloudThreadsOnce() {
+async function loadCloudThreadsOnce(options?: { force?: boolean }) {
   try {
     if (!isLoggedIn) return;
     if (!authUserId) return;
 
-    if (cloudHistoryLoadedForUserRef.current === authUserId) {
+    const force = options?.force === true;
+
+    if (!force && cloudHistoryLoadedForUserRef.current === authUserId) {
       return;
     }
 
@@ -4551,7 +4598,12 @@ async function loadCloudThreadsOnce() {
       return;
     }
 
-    const res = await fetch("/api/chat-history", {
+    console.log("[Vonu history] GET /api/chat-history START", {
+      force,
+      authUserId,
+    });
+
+    const res = await fetch(`/api/chat-history?t=${Date.now()}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -4561,6 +4613,17 @@ async function loadCloudThreadsOnce() {
 
     const json = await res.json().catch(() => null);
 
+    console.log("[Vonu history] GET /api/chat-history END", {
+      force,
+      status: res.status,
+      ok: res.ok,
+      apiOk: json?.ok,
+      count: Array.isArray(json?.threads) ? json.threads.length : 0,
+      titles: Array.isArray(json?.threads)
+        ? json.threads.slice(0, 5).map((t: any) => t?.title)
+        : [],
+    });
+
     if (!res.ok || !json?.ok) {
       console.warn("[Vonu] No se pudo cargar historial remoto:", json);
       cloudHistoryLoadedForUserRef.current = null;
@@ -4568,20 +4631,22 @@ async function loadCloudThreadsOnce() {
     }
 
     const remoteThreads = Array.isArray(json.threads)
-      ? json.threads.map(normalizeRemoteThreadForClient).filter(Boolean) as ChatThread[]
+      ? (json.threads
+          .map(normalizeRemoteThreadForClient)
+          .filter(Boolean) as ChatThread[])
       : [];
 
     if (!remoteThreads.length) return;
 
     let nextActiveId = activeThreadIdRef.current;
 
-try {
-  const returnThreadId = window.localStorage.getItem(CHECKOUT_RETURN_THREAD_KEY);
+    try {
+      const returnThreadId = window.localStorage.getItem(CHECKOUT_RETURN_THREAD_KEY);
 
-  if (returnThreadId) {
-    nextActiveId = returnThreadId;
-  }
-} catch {}
+      if (returnThreadId) {
+        nextActiveId = returnThreadId;
+      }
+    } catch {}
 
     setThreads((prev) => {
       const merged = mergeLocalAndCloudThreads(prev, remoteThreads);
@@ -4594,16 +4659,102 @@ try {
     });
 
     window.setTimeout(() => {
-  if (nextActiveId) {
-    activeThreadIdRef.current = nextActiveId;
-    setActiveThreadId(nextActiveId);
-  }
-}, 0);
+      if (nextActiveId) {
+        activeThreadIdRef.current = nextActiveId;
+        setActiveThreadId(nextActiveId);
+      }
+    }, 0);
   } catch (error) {
     console.warn("[Vonu] Error cargando historial remoto:", error);
     cloudHistoryLoadedForUserRef.current = null;
   }
 }
+
+useEffect(() => {
+  if (authLoading) return;
+  if (!isLoggedIn) return;
+  if (!authUserId) return;
+
+  let cancelled = false;
+  let lastSyncAt = 0;
+
+  const syncNow = (minGapMs = 7000) => {
+    if (cancelled) return;
+
+    const now = Date.now();
+
+    // Evita llamadas dobles por focus + pageshow + interval.
+    if (now - lastSyncAt < minGapMs) return;
+
+    lastSyncAt = now;
+
+    cloudHistoryLoadedForUserRef.current = null;
+    void loadCloudThreadsOnce({ force: true });
+  };
+
+  // Carga rápida al montar.
+  const firstTimer = window.setTimeout(() => {
+    syncNow(0);
+  }, 900);
+
+  // Polling sencillo y fiable para móvil/PC.
+  const interval = window.setInterval(() => {
+    syncNow(7000);
+  }, 10000);
+
+  const onReturn = () => {
+    syncNow(0);
+  };
+
+  window.addEventListener("focus", onReturn);
+  window.addEventListener("pageshow", onReturn);
+  document.addEventListener("visibilitychange", onReturn);
+
+  return () => {
+    cancelled = true;
+    window.clearTimeout(firstTimer);
+    window.clearInterval(interval);
+    window.removeEventListener("focus", onReturn);
+    window.removeEventListener("pageshow", onReturn);
+    document.removeEventListener("visibilitychange", onReturn);
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [authLoading, isLoggedIn, authUserId]);
+
+useEffect(() => {
+  if (authLoading) return;
+  if (!isLoggedIn) return;
+  if (!authUserId) return;
+
+  let lastRefreshAt = 0;
+
+  const refreshCloudHistory = () => {
+    if (typeof document !== "undefined" && document.visibilityState !== "visible") {
+      return;
+    }
+
+    const now = Date.now();
+
+    // Evita llamadas duplicadas por focus + visibilitychange.
+    if (now - lastRefreshAt < 2500) return;
+
+    lastRefreshAt = now;
+
+    cloudHistoryLoadedForUserRef.current = null;
+    void loadCloudThreadsOnce({ force: true });
+  };
+
+  window.addEventListener("focus", refreshCloudHistory);
+  document.addEventListener("visibilitychange", refreshCloudHistory);
+
+  return () => {
+    window.removeEventListener("focus", refreshCloudHistory);
+    document.removeEventListener("visibilitychange", refreshCloudHistory);
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [authLoading, isLoggedIn, authUserId]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -8206,21 +8357,28 @@ if (voiceModeRef.current) {
 
 
     // ✅ Guardamos modo en el thread (así el backend recibe el modo correcto)
-    setThreads((prev) =>
+const now = Date.now();
+
+setThreads((prev) =>
   prev.map((t) => {
     if (t.id !== targetThreadId) return t;
 
-    const shouldAutoTitle = shouldAutoTitleThread(t.title);
+    const nextTitle = shouldAutoTitleThread(t.title)
+      ? makeSmartThreadTitleFromMessage(userMsg)
+      : t.title;
 
     return {
       ...t,
-      title: shouldAutoTitle ? makeSmartThreadTitle(userText) : t.title,
-      updatedAt: Date.now(),
-      mode: modePreset,
-      tutorProfile: t.tutorProfile ?? { level: "adult" },
+      title: nextTitle,
+      updatedAt: now,
+      messages: [...t.messages, userMsg, assistantMsg],
     };
   })
 );
+
+// Guardado inmediato en nube.
+// Así otro dispositivo puede ver el hilo aunque Vonu siga respondiendo.
+queueSaveThreadToCloud(targetThreadId, 1200);
 
     const userMsg: Message = {
   id: crypto.randomUUID(),
@@ -8788,17 +8946,29 @@ const assistantMsg: Message = {
   boardImagePlacement: null,
 };
 
-    setThreads((prev) =>
+    const now = Date.now();
+
+setThreads((prev) =>
   prev.map((t) => {
     if (t.id !== targetThreadId) return t;
 
+    const nextTitle = shouldAutoTitleThread(t.title)
+      ? makeSmartThreadTitleFromMessage(userMsg)
+      : t.title;
+
     return {
       ...t,
-      updatedAt: Date.now(),
+      title: nextTitle,
+      updatedAt: now,
+      mode: nextMode,
+      tutorProfile: { level: nextTutorLevel },
       messages: [...t.messages, userMsg, assistantMsg],
     };
   })
 );
+
+// Guardado rápido en nube: así el hilo aparece en otro dispositivo aunque Vonu siga pensando.
+queueSaveThreadToCloud(targetThreadId, 350);
 
 pinUserMessageNearTop(userMsg.id);
 
@@ -11316,7 +11486,7 @@ if (!visualRiskStatus) return null;
       <>
         <ReactMarkdown
   remarkPlugins={[remarkGfm, remarkMath]}
-  rehypePlugins={[rehypeKatex]}
+  rehypePlugins={[[rehypeKatex, { output: "html" }]]}
           components={makeMdComponents(
             m.boardImageB64,
             m.boardImagePlacement,
