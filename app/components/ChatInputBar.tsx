@@ -49,18 +49,48 @@ function VoiceBarsIcon({
   className?: string;
   animated?: boolean;
 }) {
-  const base = "w-[2px] rounded-full bg-current";
-
   return (
-    <span
-      className={["flex h-5 w-5 items-center justify-center gap-[2px]", className ?? ""].join(" ")}
+    <svg
+      viewBox="0 0 24 24"
+      className={[
+        "h-5 w-5",
+        animated ? "animate-[voiceGlyph_1200ms_ease-in-out_infinite]" : "",
+        className ?? "",
+      ].join(" ")}
+      fill="none"
       aria-hidden="true"
     >
-      <span className={[base, "h-[8px]", animated ? "animate-[voiceBar_850ms_ease-in-out_infinite]" : ""].join(" ")} />
-<span className={[base, "h-[14px]", animated ? "animate-[voiceBar_850ms_ease-in-out_120ms_infinite]" : ""].join(" ")} />
-<span className={[base, "h-[8px]", animated ? "animate-[voiceBar_850ms_ease-in-out_240ms_infinite]" : ""].join(" ")} />
-<span className={[base, "h-[12px]", animated ? "animate-[voiceBar_850ms_ease-in-out_360ms_infinite]" : ""].join(" ")} />
-    </span>
+      <path
+        d="M4.8 12h1.4"
+        stroke="currentColor"
+        strokeWidth="2.35"
+        strokeLinecap="round"
+      />
+      <path
+        d="M8.6 8.8v6.4"
+        stroke="currentColor"
+        strokeWidth="2.35"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12 5.8v12.4"
+        stroke="currentColor"
+        strokeWidth="2.35"
+        strokeLinecap="round"
+      />
+      <path
+        d="M15.4 8.8v6.4"
+        stroke="currentColor"
+        strokeWidth="2.35"
+        strokeLinecap="round"
+      />
+      <path
+        d="M19.2 12h-1.4"
+        stroke="currentColor"
+        strokeWidth="2.35"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 
@@ -487,6 +517,19 @@ shouldExpand
       opacity: 1;
     }
   }
+
+  @keyframes voiceGlyph {
+  0%,
+  100% {
+    transform: scale(0.96);
+    opacity: 0.78;
+  }
+
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
 
   @keyframes vonuInputGlowBlueSoft {
     0%,

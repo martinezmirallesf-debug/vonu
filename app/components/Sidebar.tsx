@@ -1159,17 +1159,17 @@ const planIsCanceledAtPeriodEnd =
               <>
                 <div className="shrink-0">
                   <button
-                    onClick={handleCreateThread}
-                    className="flex w-full items-center gap-4 rounded-[24px] bg-transparent py-3 text-left transition active:scale-[0.99] md:gap-3 md:py-2.5"
-                  >
-                    <span className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-950 md:h-10 md:w-10">
-                      <PlusIcon className="h-6 w-6 md:h-5 md:w-5" />
-                    </span>
+  onClick={handleCreateThread}
+  className="flex w-full items-center gap-3 rounded-[20px] bg-transparent py-2 text-left transition active:scale-[0.99] md:gap-2.5 md:py-2"
+>
+  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-950 md:h-9 md:w-9">
+    <PlusIcon className="h-5 w-5 md:h-[18px] md:w-[18px]" />
+  </span>
 
-                    <span className="text-[24px] font-semibold leading-none tracking-[-0.05em] text-zinc-950 md:text-[16px] md:tracking-[-0.025em]">
-                      Nueva conversación
-                    </span>
-                  </button>
+  <span className="text-[20px] font-semibold leading-none tracking-[-0.045em] text-zinc-950 md:text-[15px] md:tracking-[-0.025em]">
+    Nueva conversación
+  </span>
+</button>
 
                   <div className="mt-3 flex items-center gap-3 rounded-full border border-zinc-200 bg-white px-4 py-3 shadow-sm md:px-3 md:py-2.5">
                     <SearchIcon className="h-5 w-5 shrink-0 text-zinc-400 md:h-4 md:w-4" />

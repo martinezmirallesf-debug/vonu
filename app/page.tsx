@@ -204,12 +204,18 @@ function CheckIcon() {
 
 function VoiceBarsIcon() {
   return (
-    <span className="flex h-5 w-5 items-center justify-center gap-[2px]" aria-hidden="true">
-      <span className="h-[8px] w-[2px] rounded-full bg-current" />
-<span className="h-[14px] w-[2px] rounded-full bg-current" />
-<span className="h-[8px] w-[2px] rounded-full bg-current" />
-<span className="h-[12px] w-[2px] rounded-full bg-current" />
-    </span>
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path d="M4.8 12h1.4" stroke="currentColor" strokeWidth="2.35" strokeLinecap="round" />
+      <path d="M8.6 8.8v6.4" stroke="currentColor" strokeWidth="2.35" strokeLinecap="round" />
+      <path d="M12 5.8v12.4" stroke="currentColor" strokeWidth="2.35" strokeLinecap="round" />
+      <path d="M15.4 8.8v6.4" stroke="currentColor" strokeWidth="2.35" strokeLinecap="round" />
+      <path d="M19.2 12h-1.4" stroke="currentColor" strokeWidth="2.35" strokeLinecap="round" />
+    </svg>
   );
 }
 

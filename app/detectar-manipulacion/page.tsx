@@ -369,7 +369,19 @@ export default function DetectarManipulacionPage() {
                   key={item}
                   className="flex gap-3 rounded-[24px] border border-zinc-200 bg-white p-5 text-[15.5px] leading-7 text-zinc-700 shadow-sm"
                 >
-                  <span className="mt-1 h-5 w-5 shrink-0 rounded-full bg-zinc-950" />
+                  <span
+  className="mt-1 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-red-50 text-red-600 ring-1 ring-red-100"
+  aria-hidden="true"
+>
+  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none">
+    <path
+      d="M7 7l10 10M17 7 7 17"
+      stroke="currentColor"
+      strokeWidth="2.8"
+      strokeLinecap="round"
+    />
+  </svg>
+</span>
                   <span>{item}</span>
                 </div>
               ))}
