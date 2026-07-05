@@ -4585,9 +4585,9 @@ async function loadCloudThreadsOnce(options?: { force?: boolean }) {
 
     const force = options?.force === true;
 
-if (!force && cloudHistoryLoadedForUserRef.current === authUserId) {
-  return;
-}
+    if (!force && cloudHistoryLoadedForUserRef.current === authUserId) {
+      return;
+    }
 
     cloudHistoryLoadedForUserRef.current = authUserId;
 
@@ -4598,7 +4598,12 @@ if (!force && cloudHistoryLoadedForUserRef.current === authUserId) {
       return;
     }
 
-    const res = await fetch("/api/chat-history", {
+    console.log("[Vonu history] GET /api/chat-history START", {
+      force,
+      authUserId,
+    });
+
+    const res = await fetch(`/api/chat-history?t=${Date.now()}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -4608,6 +4613,17 @@ if (!force && cloudHistoryLoadedForUserRef.current === authUserId) {
 
     const json = await res.json().catch(() => null);
 
+    console.log("[Vonu history] GET /api/chat-history END", {
+      force,
+      status: res.status,
+      ok: res.ok,
+      apiOk: json?.ok,
+      count: Array.isArray(json?.threads) ? json.threads.length : 0,
+      titles: Array.isArray(json?.threads)
+        ? json.threads.slice(0, 5).map((t: any) => t?.title)
+        : [],
+    });
+
     if (!res.ok || !json?.ok) {
       console.warn("[Vonu] No se pudo cargar historial remoto:", json);
       cloudHistoryLoadedForUserRef.current = null;
@@ -4615,20 +4631,22 @@ if (!force && cloudHistoryLoadedForUserRef.current === authUserId) {
     }
 
     const remoteThreads = Array.isArray(json.threads)
-      ? json.threads.map(normalizeRemoteThreadForClient).filter(Boolean) as ChatThread[]
+      ? (json.threads
+          .map(normalizeRemoteThreadForClient)
+          .filter(Boolean) as ChatThread[])
       : [];
 
     if (!remoteThreads.length) return;
 
     let nextActiveId = activeThreadIdRef.current;
 
-try {
-  const returnThreadId = window.localStorage.getItem(CHECKOUT_RETURN_THREAD_KEY);
+    try {
+      const returnThreadId = window.localStorage.getItem(CHECKOUT_RETURN_THREAD_KEY);
 
-  if (returnThreadId) {
-    nextActiveId = returnThreadId;
-  }
-} catch {}
+      if (returnThreadId) {
+        nextActiveId = returnThreadId;
+      }
+    } catch {}
 
     setThreads((prev) => {
       const merged = mergeLocalAndCloudThreads(prev, remoteThreads);
@@ -4641,16 +4659,58 @@ try {
     });
 
     window.setTimeout(() => {
-  if (nextActiveId) {
-    activeThreadIdRef.current = nextActiveId;
-    setActiveThreadId(nextActiveId);
-  }
-}, 0);
+      if (nextActiveId) {
+        activeThreadIdRef.current = nextActiveId;
+        setActiveThreadId(nextActiveId);
+      }
+    }, 0);
   } catch (error) {
     console.warn("[Vonu] Error cargando historial remoto:", error);
     cloudHistoryLoadedForUserRef.current = null;
   }
 }
+
+useEffect(() => {
+  if (authLoading) return;
+  if (!isLoggedIn) return;
+  if (!authUserId) return;
+
+  let cancelled = false;
+
+  const syncNow = () => {
+    if (cancelled) return;
+
+    if (typeof document !== "undefined" && document.visibilityState !== "visible") {
+      return;
+    }
+
+    void loadCloudThreadsOnce({ force: true });
+  };
+
+  // Primera recarga rápida al entrar o volver.
+  const firstTimer = window.setTimeout(syncNow, 900);
+
+  // En móvil, focus/visibility puede fallar o no dispararse como esperamos.
+  // Por eso hacemos una sync suave mientras la pestaña está abierta.
+  const interval = window.setInterval(syncNow, 5000);
+
+  const onReturn = () => {
+    syncNow();
+  };
+
+  window.addEventListener("focus", onReturn);
+  document.addEventListener("visibilitychange", onReturn);
+
+  return () => {
+    cancelled = true;
+    window.clearTimeout(firstTimer);
+    window.clearInterval(interval);
+    window.removeEventListener("focus", onReturn);
+    document.removeEventListener("visibilitychange", onReturn);
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [authLoading, isLoggedIn, authUserId]);
 
 useEffect(() => {
   if (authLoading) return;
