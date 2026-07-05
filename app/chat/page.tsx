@@ -1841,6 +1841,30 @@ function shouldAutoTitleThread(title: string) {
   );
 }
 
+function makeSmartThreadTitleFromMessage(message?: Message | null) {
+  if (!message) return "Nueva consulta";
+
+  const text = String(message.text ?? "").trim();
+  const hasImage = typeof message.imageThumb === "string" && message.imageThumb.length > 0;
+
+  if (
+    hasImage &&
+    (!text || text.toLowerCase() === "he adjuntado una imagen.")
+  ) {
+    return "Imagen adjunta";
+  }
+
+  if (text) {
+    return makeSmartThreadTitle(text);
+  }
+
+  if (hasImage) {
+    return "Imagen adjunta";
+  }
+
+  return "Nueva consulta";
+}
+
 const STORAGE_KEY = "vonu_threads_v2";
 const STORAGE_BACKUP_KEY = "vonu_threads_v2_backup";
 const STORAGE_LAST_GOOD_KEY = "vonu_threads_v2_last_good";
@@ -1996,13 +2020,14 @@ function normalizeRemoteThreadForClient(raw: any): ChatThread | null {
       ? raw.title.trim()
       : "Nueva consulta";
 
-  const firstUserText =
-    messages.find((m) => m.role === "user" && typeof m.text === "string" && m.text.trim())
-      ?.text ?? "";
+    const firstUserMessageForTitle =
+    messages.find((m) => m.role === "user") ?? null;
+
+  const smartRemoteTitle = makeSmartThreadTitleFromMessage(firstUserMessageForTitle);
 
   const title =
-    shouldAutoTitleThread(rawTitle) && firstUserText.trim()
-      ? makeSmartThreadTitle(firstUserText)
+    shouldAutoTitleThread(rawTitle) && smartRemoteTitle
+      ? smartRemoteTitle
       : rawTitle;
 
   const updatedAt =
@@ -4424,16 +4449,16 @@ async function saveThreadToCloud(thread?: ChatThread | null) {
     const hasUserMessage = safeThread.messages.some((m) => m.role === "user");
     if (!hasUserMessage) return;
 
-    const firstUserTextForTitle =
-  safeThread.messages.find(
-    (m) => m.role === "user" && typeof m.text === "string" && m.text.trim()
-  )?.text ?? "";
+    const firstUserMessageForTitle =
+  safeThread.messages.find((m) => m.role === "user") ?? null;
+
+const smartCloudTitle = makeSmartThreadTitleFromMessage(firstUserMessageForTitle);
 
 const threadForCloud = {
   ...safeThread,
   title:
-    shouldAutoTitleThread(safeThread.title) && firstUserTextForTitle.trim()
-      ? makeSmartThreadTitle(firstUserTextForTitle)
+    shouldAutoTitleThread(safeThread.title) && smartCloudTitle
+      ? smartCloudTitle
       : safeThread.title,
 };
 
@@ -8808,17 +8833,29 @@ const assistantMsg: Message = {
   boardImagePlacement: null,
 };
 
-    setThreads((prev) =>
+    const now = Date.now();
+
+setThreads((prev) =>
   prev.map((t) => {
     if (t.id !== targetThreadId) return t;
 
+    const nextTitle = shouldAutoTitleThread(t.title)
+      ? makeSmartThreadTitleFromMessage(userMsg)
+      : t.title;
+
     return {
       ...t,
-      updatedAt: Date.now(),
+      title: nextTitle,
+      updatedAt: now,
+      mode: nextMode,
+      tutorProfile: { level: nextTutorLevel },
       messages: [...t.messages, userMsg, assistantMsg],
     };
   })
 );
+
+// Guardado rápido en nube: así el hilo aparece en otro dispositivo aunque Vonu siga pensando.
+queueSaveThreadToCloud(targetThreadId, 350);
 
 pinUserMessageNearTop(userMsg.id);
 
