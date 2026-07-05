@@ -306,15 +306,14 @@ export default function HomePage() {
                     ahora quiere que invierta en una criptomoneda. ¿Me puedo fiar?
                   </div>
 
-                  <div className="mt-7 flex items-start gap-3 text-left">
-                    <img
-                      src="/logo/vonu-cube-black.png?v=4"
-                      alt=""
-                      className="mt-1 h-6 w-6 shrink-0 object-contain"
-                      aria-hidden="true"
-                    />
+                  <div className="mt-7 text-left">
+  <div className="mb-4 flex items-center gap-2">
+    <span className="h-3.5 w-3.5 rounded-full bg-orange-400" />
+    <span className="h-3.5 w-3.5 rounded-full bg-orange-400" />
+    <span className="h-3.5 w-3.5 rounded-full bg-orange-400" />
+  </div>
 
-                    <div className="min-w-0 flex-1 text-[17px] leading-8 text-zinc-900">
+  <div className="min-w-0 text-[17px] leading-8 text-zinc-900">
                       <p className="text-[26px] font-semibold leading-[1.08] tracking-[-0.052em] text-zinc-950 sm:text-[34px]">
                         Yo frenaría: Tinder + inversión + cripto es una señal roja clara.
                       </p>

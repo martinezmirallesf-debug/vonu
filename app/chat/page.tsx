@@ -8782,6 +8782,9 @@ if (isDesktopPointer()) {
   if (exampleAutoSentRef.current) return;
   if (typeof window === "undefined") return;
 
+  let cancelled = false;
+  let timer: number | null = null;
+
   try {
     const url = new URL(window.location.href);
     const example = url.searchParams.get("example");
@@ -8790,8 +8793,31 @@ if (isDesktopPointer()) {
 
     const cleanExample = example.trim();
 
-    exampleAutoSentRef.current = true;
+    // Protección extra contra bucles o remounts raros al llegar desde landings.
+    const exampleKey = `vonu_example_autosent_v1:${cleanExample}`;
+    const previousRaw = window.sessionStorage.getItem(exampleKey);
+    const previousAt = previousRaw ? Number(previousRaw) : 0;
+    const now = Date.now();
 
+    if (Number.isFinite(previousAt) && now - previousAt < 30000) {
+      exampleAutoSentRef.current = true;
+
+      url.searchParams.delete("example");
+      window.history.replaceState(
+        {},
+        "",
+        `${url.pathname}${
+          url.searchParams.toString() ? `?${url.searchParams.toString()}` : ""
+        }`
+      );
+
+      return;
+    }
+
+    exampleAutoSentRef.current = true;
+    window.sessionStorage.setItem(exampleKey, String(now));
+
+    // Limpiamos la URL ANTES de enviar, para que refrescar o remount no reenvíe.
     url.searchParams.delete("example");
     window.history.replaceState(
       {},
@@ -8816,13 +8842,23 @@ if (isDesktopPointer()) {
       return;
     }
 
-    setTimeout(() => {
+    timer = window.setTimeout(() => {
+      if (cancelled) return;
       sendQuickMessage(cleanExample, "chat");
     }, 180);
   } catch {
     setIsTyping(false);
     sendGuardRef.current.busy = false;
   }
+
+  return () => {
+    cancelled = true;
+
+    if (timer !== null) {
+      window.clearTimeout(timer);
+    }
+  };
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [mounted, authLoading, activeThread?.id, isLoggedIn]);
 
