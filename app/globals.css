@@ -622,4 +622,161 @@ body {
   background-clip: text;
   color: transparent;
 }
+/* ---------- Vonu voice bars icon ---------- */
+
+.voice-bars-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 28px;
+  height: 28px;
+  color: currentColor;
+}
+
+.voice-bars-icon-bar {
+  display: block;
+  width: 3px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.98;
+  transform-origin: center;
+}
+
+/* Reposo: pequeño · medio · grande · medio · pequeño */
+.voice-bars-icon-bar-1,
+.voice-bars-icon-bar-5 {
+  height: 8px;
+}
+
+.voice-bars-icon-bar-2,
+.voice-bars-icon-bar-4 {
+  height: 14px;
+}
+
+.voice-bars-icon-bar-3 {
+  height: 20px;
+}
+
+/* Activo: cada barra va a su bola */
+.voice-bars-icon-active .voice-bars-icon-bar-1 {
+  animation: vonuVoiceBar1 920ms ease-in-out infinite;
+}
+
+.voice-bars-icon-active .voice-bars-icon-bar-2 {
+  animation: vonuVoiceBar2 780ms ease-in-out infinite;
+}
+
+.voice-bars-icon-active .voice-bars-icon-bar-3 {
+  animation: vonuVoiceBar3 840ms ease-in-out infinite;
+}
+
+.voice-bars-icon-active .voice-bars-icon-bar-4 {
+  animation: vonuVoiceBar4 880ms ease-in-out infinite;
+}
+
+.voice-bars-icon-active .voice-bars-icon-bar-5 {
+  animation: vonuVoiceBar5 760ms ease-in-out infinite;
+}
+
+@keyframes vonuVoiceBar1 {
+  0%,
+  100% {
+    height: 8px;
+  }
+
+  30% {
+    height: 13px;
+  }
+
+  58% {
+    height: 17px;
+  }
+
+  78% {
+    height: 10px;
+  }
+}
+
+@keyframes vonuVoiceBar2 {
+  0%,
+  100% {
+    height: 14px;
+  }
+
+  24% {
+    height: 9px;
+  }
+
+  52% {
+    height: 19px;
+  }
+
+  76% {
+    height: 12px;
+  }
+}
+
+@keyframes vonuVoiceBar3 {
+  0%,
+  100% {
+    height: 20px;
+  }
+
+  22% {
+    height: 13px;
+  }
+
+  48% {
+    height: 23px;
+  }
+
+  80% {
+    height: 15px;
+  }
+}
+
+@keyframes vonuVoiceBar4 {
+  0%,
+  100% {
+    height: 14px;
+  }
+
+  26% {
+    height: 20px;
+  }
+
+  54% {
+    height: 10px;
+  }
+
+  82% {
+    height: 16px;
+  }
+}
+
+@keyframes vonuVoiceBar5 {
+  0%,
+  100% {
+    height: 8px;
+  }
+
+  28% {
+    height: 15px;
+  }
+
+  56% {
+    height: 11px;
+  }
+
+  84% {
+    height: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-bars-icon-active .voice-bars-icon-bar {
+    animation: none;
+  }
+}
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useLayoutEffect } from "react";
+import VoiceBarsIcon from "@/app/components/VoiceBarsIcon";
 
 type RealtimeVoiceStatus =
   | "idle"
@@ -41,58 +42,6 @@ type ChatInputBarProps = {
   clearImagePreview: () => void;
   clearPdfPreview: () => void;
 };
-
-function VoiceBarsIcon({
-  className,
-  animated = false,
-}: {
-  className?: string;
-  animated?: boolean;
-}) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={[
-        "h-6 w-6",
-        animated ? "animate-[voiceGlyph_1200ms_ease-in-out_infinite]" : "",
-        className ?? "",
-      ].join(" ")}
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M5 12v0.01"
-        stroke="currentColor"
-        strokeWidth="3.2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M8.5 8.5v7"
-        stroke="currentColor"
-        strokeWidth="2.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M12 5.8v12.4"
-        stroke="currentColor"
-        strokeWidth="2.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M15.5 8.5v7"
-        stroke="currentColor"
-        strokeWidth="2.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M19 12v0.01"
-        stroke="currentColor"
-        strokeWidth="3.2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
 
 function PlusIcon({ className }: { className?: string }) {
   return (
@@ -488,7 +437,7 @@ shouldExpand
                       {mainButtonIsSend ? (
                         <ArrowUpIcon className="h-[20px] w-[20px]" />
                       ) : (
-                        <VoiceBarsIcon animated={voiceMode} />
+                        <VoiceBarsIcon active={voiceMode} />
                       )}
                     </span>
                   </button>
@@ -506,17 +455,7 @@ shouldExpand
       </div>
 
       <style jsx>{`
-  @keyframes voiceBar {
-    0%,
-    100% {
-      transform: scaleY(0.55);
-      opacity: 0.72;
-    }
-    50% {
-      transform: scaleY(1);
-      opacity: 1;
-    }
-  }
+      
 
   @keyframes voiceGlyph {
   0%,

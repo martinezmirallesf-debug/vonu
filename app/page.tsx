@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import HomeHeader from "./components/HomeHeader";
 import HomeFooter from "./components/HomeFooter";
 import ResourceSignup from "./components/ResourceSignup";
+import VoiceBarsIcon from "./components/VoiceBarsIcon";
 
 const siteUrl = "https://vonuai.com";
 
@@ -190,17 +191,7 @@ function CheckIcon() {
   );
 }
 
-function VoiceBarsIcon() {
-  return (
-    <svg viewBox="0 0 28 28" className="h-7 w-7" fill="none" aria-hidden="true">
-      <path d="M4.8 14v0.01" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" />
-      <path d="M9.4 10.2v7.6" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <path d="M14 5.8v16.4" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <path d="M18.6 9v10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <path d="M23.2 12.2v3.6" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-    </svg>
-  );
-}
+
 
 type GradientTone =
   | "blueGreen"
