@@ -192,13 +192,53 @@ function CheckIcon() {
 
 function VoiceBarsIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden="true">
-      <path d="M5 12v0.01" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" />
-      <path d="M8.5 8.5v7" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
-      <path d="M12 5.8v12.4" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
-      <path d="M15.5 8.5v7" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
-      <path d="M19 12v0.01" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" />
+    <svg viewBox="0 0 28 28" className="h-7 w-7" fill="none" aria-hidden="true">
+      <path d="M4.8 14v0.01" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" />
+      <path d="M9.4 10.2v7.6" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M14 5.8v16.4" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M18.6 9v10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M23.2 12.2v3.6" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
     </svg>
+  );
+}
+
+type GradientTone =
+  | "blueGreen"
+  | "blueCyan"
+  | "green"
+  | "orangeRed"
+  | "purplePink"
+  | "amberOrange";
+
+const gradientMap: Record<GradientTone, string> = {
+  blueGreen: "linear-gradient(90deg, #0A84FF 0%, #22C55E 100%)",
+  blueCyan: "linear-gradient(90deg, #1A73E8 0%, #06B6D4 100%)",
+  green: "linear-gradient(90deg, #0A8F3C 0%, #34D399 100%)",
+  orangeRed: "linear-gradient(90deg, #F97316 0%, #EF4444 100%)",
+  purplePink: "linear-gradient(90deg, #7C3AED 0%, #EC4899 100%)",
+  amberOrange: "linear-gradient(90deg, #F59E0B 0%, #F97316 100%)",
+};
+
+function GradientText({
+  children,
+  tone,
+}: {
+  children: React.ReactNode;
+  tone: GradientTone;
+}) {
+  return (
+    <span
+      className="inline-block"
+      style={{
+        backgroundImage: gradientMap[tone],
+        WebkitBackgroundClip: "text",
+        backgroundClip: "text",
+        color: "transparent",
+        WebkitTextFillColor: "transparent",
+      }}
+    >
+      {children}
+    </span>
   );
 }
 
@@ -206,7 +246,7 @@ function PrincipleText({ text }: { text: string }) {
   if (text === "No decidas bajo presión.") {
     return (
       <>
-        No decidas <span className="gradient-text-orange-red">bajo presión</span>.
+        No decidas <GradientText tone="orangeRed">bajo presión</GradientText>.
       </>
     );
   }
@@ -214,7 +254,7 @@ function PrincipleText({ text }: { text: string }) {
   if (text === "No firmes sin entender.") {
     return (
       <>
-        No firmes <span className="gradient-text-blue-cyan">sin entender</span>.
+        No firmes <GradientText tone="blueCyan">sin entender</GradientText>.
       </>
     );
   }
@@ -222,7 +262,7 @@ function PrincipleText({ text }: { text: string }) {
   if (text === "No pagues sin comprobar.") {
     return (
       <>
-        No pagues <span className="gradient-text-green">sin comprobar</span>.
+        No pagues <GradientText tone="green">sin comprobar</GradientText>.
       </>
     );
   }
@@ -230,7 +270,7 @@ function PrincipleText({ text }: { text: string }) {
   if (text === "No contestes si algo no encaja.") {
     return (
       <>
-        No contestes si algo <span className="gradient-text-purple-pink">no encaja</span>.
+        No contestes si algo <GradientText tone="purplePink">no encaja</GradientText>.
       </>
     );
   }
@@ -242,7 +282,7 @@ function UseCaseTitle({ title }: { title: string }) {
   if (title === "Posibles estafas") {
     return (
       <>
-        Posibles <span className="gradient-text-orange-red">estafas</span>
+        Posibles <GradientText tone="orangeRed">estafas</GradientText>
       </>
     );
   }
@@ -250,7 +290,7 @@ function UseCaseTitle({ title }: { title: string }) {
   if (title === "Webs y compras online") {
     return (
       <>
-        Webs y <span className="gradient-text-blue-green">compras online</span>
+        Webs y <GradientText tone="blueGreen">compras online</GradientText>
       </>
     );
   }
@@ -258,7 +298,7 @@ function UseCaseTitle({ title }: { title: string }) {
   if (title === "Documentos y PDFs") {
     return (
       <>
-        Documentos y <span className="gradient-text-blue-cyan">PDFs</span>
+        Documentos y <GradientText tone="blueCyan">PDFs</GradientText>
       </>
     );
   }
@@ -266,7 +306,7 @@ function UseCaseTitle({ title }: { title: string }) {
   if (title === "Contratos y decisiones") {
     return (
       <>
-        Contratos y <span className="gradient-text-amber-orange">decisiones</span>
+        Contratos y <GradientText tone="amberOrange">decisiones</GradientText>
       </>
     );
   }
@@ -274,7 +314,7 @@ function UseCaseTitle({ title }: { title: string }) {
   if (title === "Presión o manipulación") {
     return (
       <>
-        Presión o <span className="gradient-text-purple-pink">manipulación</span>
+        Presión o <GradientText tone="purplePink">manipulación</GradientText>
       </>
     );
   }
@@ -282,7 +322,7 @@ function UseCaseTitle({ title }: { title: string }) {
   if (title === "Tutor y estudio") {
     return (
       <>
-        Tutor y <span className="gradient-text-green">estudio</span>
+        Tutor y <GradientText tone="green">estudio</GradientText>
       </>
     );
   }
@@ -295,7 +335,7 @@ function FeatureText({ text }: { text: string }) {
     return (
       <>
         Analiza mensajes, enlaces y{" "}
-        <span className="gradient-text-orange-red">situaciones sospechosas</span>.
+        <GradientText tone="orangeRed">situaciones sospechosas</GradientText>.
       </>
     );
   }
@@ -303,7 +343,7 @@ function FeatureText({ text }: { text: string }) {
   if (text === "Lee documentos, PDFs, facturas y contratos.") {
     return (
       <>
-        Lee <span className="gradient-text-blue-cyan">documentos, PDFs</span>, facturas y contratos.
+        Lee <GradientText tone="blueCyan">documentos y PDFs</GradientText>, facturas y contratos.
       </>
     );
   }
@@ -311,7 +351,7 @@ function FeatureText({ text }: { text: string }) {
   if (text === "Puede revisar imágenes y capturas.") {
     return (
       <>
-        Puede revisar <span className="gradient-text-purple-pink">imágenes y capturas</span>.
+        Puede revisar <GradientText tone="purplePink">imágenes y capturas</GradientText>.
       </>
     );
   }
@@ -319,7 +359,7 @@ function FeatureText({ text }: { text: string }) {
   if (text === "Conversa por voz cuando necesitas explicarte mejor.") {
     return (
       <>
-        Conversa por <span className="gradient-text-blue-green">voz</span> cuando necesitas explicarte mejor.
+        Conversa por <GradientText tone="blueGreen">voz</GradientText> cuando necesitas explicarte mejor.
       </>
     );
   }
@@ -327,7 +367,7 @@ function FeatureText({ text }: { text: string }) {
   if (text === "Te dice qué haría ahora, no solo qué ve.") {
     return (
       <>
-        Te dice <span className="gradient-text-green">qué haría ahora</span>, no solo qué ve.
+        Te dice <GradientText tone="green">qué haría ahora</GradientText>, no solo qué ve.
       </>
     );
   }
@@ -339,7 +379,7 @@ function ConfidenceText({ text }: { text: string }) {
   if (text === "No pide contraseñas, códigos ni datos bancarios completos.") {
     return (
       <>
-        No pide <span className="gradient-text-orange-red">contraseñas, códigos</span> ni datos bancarios completos.
+        No pide <GradientText tone="orangeRed">contraseñas ni códigos</GradientText> ni datos bancarios completos.
       </>
     );
   }
@@ -347,7 +387,7 @@ function ConfidenceText({ text }: { text: string }) {
   if (text === "No sustituye a profesionales cualificados.") {
     return (
       <>
-        No sustituye a <span className="gradient-text-blue-cyan">profesionales cualificados</span>.
+        No sustituye a <GradientText tone="blueCyan">profesionales cualificados</GradientText>.
       </>
     );
   }
@@ -355,7 +395,7 @@ function ConfidenceText({ text }: { text: string }) {
   if (text === "Te orienta con pasos concretos, no con respuestas vacías.") {
     return (
       <>
-        Te orienta con <span className="gradient-text-green">pasos concretos</span>, no con respuestas vacías.
+        Te orienta con <GradientText tone="green">pasos concretos</GradientText>, no con respuestas vacías.
       </>
     );
   }
@@ -363,7 +403,7 @@ function ConfidenceText({ text }: { text: string }) {
   if (text === "Está pensado para situaciones sensibles, dudas y prevención.") {
     return (
       <>
-        Está pensado para <span className="gradient-text-purple-pink">situaciones sensibles</span>, dudas y prevención.
+        Está pensado para <GradientText tone="purplePink">situaciones sensibles</GradientText>, dudas y prevención.
       </>
     );
   }
@@ -495,9 +535,9 @@ export default function HomePage() {
                         <span className="text-[25px] leading-none">+</span>
                       </div>
 
-                      <div className="min-w-0 flex-1 text-left text-[16px] text-zinc-400">
-                        Pregunta lo que quieras
-                      </div>
+                      <div className="min-w-0 flex-1 truncate whitespace-nowrap text-left text-[13.5px] text-zinc-400 sm:text-[16px]">
+  Pregunta lo que quieras
+</div>
 
                       <div className="grid h-10 w-10 place-items-center rounded-full bg-zinc-950 text-white">
                         <VoiceBarsIcon />
