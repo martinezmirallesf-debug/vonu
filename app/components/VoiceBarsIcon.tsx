@@ -22,10 +22,13 @@ export default function VoiceBarsIcon({
 
       <style jsx>{`
         .vonu-voice-icon {
+          --bar-width: 3px;
+          --bar-gap: 3px;
+
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 3.4px;
+          gap: var(--bar-gap);
           width: 28px;
           height: 28px;
           color: currentColor;
@@ -33,7 +36,10 @@ export default function VoiceBarsIcon({
 
         .vonu-voice-bar {
           display: block;
-          width: 3.2px;
+          flex: 0 0 var(--bar-width);
+          width: var(--bar-width);
+          min-width: var(--bar-width);
+          max-width: var(--bar-width);
           border-radius: 999px;
           background: currentColor;
           opacity: 1;
@@ -41,10 +47,10 @@ export default function VoiceBarsIcon({
         }
 
         /* Reposo: punto · barra corta · barra central larga · barra corta · punto */
+        /* Mismo grosor y misma separación siempre. Solo cambia la altura. */
         .vonu-voice-bar-1,
         .vonu-voice-bar-5 {
-          width: 4.2px;
-          height: 4.2px;
+          height: var(--bar-width);
         }
 
         .vonu-voice-bar-2,
@@ -80,11 +86,13 @@ export default function VoiceBarsIcon({
         @keyframes vonuVoiceDotLeft {
           0%,
           100% {
-            height: 4.2px;
+            height: 3px;
           }
+
           35% {
             height: 9px;
           }
+
           62% {
             height: 5px;
           }
@@ -95,9 +103,11 @@ export default function VoiceBarsIcon({
           100% {
             height: 11px;
           }
+
           32% {
             height: 17px;
           }
+
           70% {
             height: 8px;
           }
@@ -108,12 +118,15 @@ export default function VoiceBarsIcon({
           100% {
             height: 22px;
           }
+
           28% {
             height: 14px;
           }
+
           55% {
             height: 24px;
           }
+
           82% {
             height: 18px;
           }
@@ -124,12 +137,15 @@ export default function VoiceBarsIcon({
           100% {
             height: 11px;
           }
+
           25% {
             height: 7px;
           }
+
           55% {
             height: 18px;
           }
+
           80% {
             height: 12px;
           }
@@ -138,11 +154,13 @@ export default function VoiceBarsIcon({
         @keyframes vonuVoiceDotRight {
           0%,
           100% {
-            height: 4.2px;
+            height: 3px;
           }
+
           30% {
             height: 8px;
           }
+
           64% {
             height: 12px;
           }
