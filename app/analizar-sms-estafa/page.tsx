@@ -243,7 +243,7 @@ export default function AnalizarSmsEstafaPage() {
                 </p>
 
                 <h2 className="mt-3 text-[42px] font-semibold leading-[0.98] tracking-[-0.06em] text-zinc-950 sm:text-[64px]">
-                  Si duda, frena.
+                  Antes de pulsar, verifica.
                 </h2>
 
                 <p className="mt-5 text-[17px] leading-8 text-zinc-600">
