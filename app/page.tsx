@@ -202,6 +202,175 @@ function VoiceBarsIcon() {
   );
 }
 
+function PrincipleText({ text }: { text: string }) {
+  if (text === "No decidas bajo presión.") {
+    return (
+      <>
+        No decidas <span className="gradient-text-orange-red">bajo presión</span>.
+      </>
+    );
+  }
+
+  if (text === "No firmes sin entender.") {
+    return (
+      <>
+        No firmes <span className="gradient-text-blue-cyan">sin entender</span>.
+      </>
+    );
+  }
+
+  if (text === "No pagues sin comprobar.") {
+    return (
+      <>
+        No pagues <span className="gradient-text-green">sin comprobar</span>.
+      </>
+    );
+  }
+
+  if (text === "No contestes si algo no encaja.") {
+    return (
+      <>
+        No contestes si algo <span className="gradient-text-purple-pink">no encaja</span>.
+      </>
+    );
+  }
+
+  return <>{text}</>;
+}
+
+function UseCaseTitle({ title }: { title: string }) {
+  if (title === "Posibles estafas") {
+    return (
+      <>
+        Posibles <span className="gradient-text-orange-red">estafas</span>
+      </>
+    );
+  }
+
+  if (title === "Webs y compras online") {
+    return (
+      <>
+        Webs y <span className="gradient-text-blue-green">compras online</span>
+      </>
+    );
+  }
+
+  if (title === "Documentos y PDFs") {
+    return (
+      <>
+        Documentos y <span className="gradient-text-blue-cyan">PDFs</span>
+      </>
+    );
+  }
+
+  if (title === "Contratos y decisiones") {
+    return (
+      <>
+        Contratos y <span className="gradient-text-amber-orange">decisiones</span>
+      </>
+    );
+  }
+
+  if (title === "Presión o manipulación") {
+    return (
+      <>
+        Presión o <span className="gradient-text-purple-pink">manipulación</span>
+      </>
+    );
+  }
+
+  if (title === "Tutor y estudio") {
+    return (
+      <>
+        Tutor y <span className="gradient-text-green">estudio</span>
+      </>
+    );
+  }
+
+  return <>{title}</>;
+}
+
+function FeatureText({ text }: { text: string }) {
+  if (text === "Analiza mensajes, enlaces y situaciones sospechosas.") {
+    return (
+      <>
+        Analiza mensajes, enlaces y{" "}
+        <span className="gradient-text-orange-red">situaciones sospechosas</span>.
+      </>
+    );
+  }
+
+  if (text === "Lee documentos, PDFs, facturas y contratos.") {
+    return (
+      <>
+        Lee <span className="gradient-text-blue-cyan">documentos, PDFs</span>, facturas y contratos.
+      </>
+    );
+  }
+
+  if (text === "Puede revisar imágenes y capturas.") {
+    return (
+      <>
+        Puede revisar <span className="gradient-text-purple-pink">imágenes y capturas</span>.
+      </>
+    );
+  }
+
+  if (text === "Conversa por voz cuando necesitas explicarte mejor.") {
+    return (
+      <>
+        Conversa por <span className="gradient-text-blue-green">voz</span> cuando necesitas explicarte mejor.
+      </>
+    );
+  }
+
+  if (text === "Te dice qué haría ahora, no solo qué ve.") {
+    return (
+      <>
+        Te dice <span className="gradient-text-green">qué haría ahora</span>, no solo qué ve.
+      </>
+    );
+  }
+
+  return <>{text}</>;
+}
+
+function ConfidenceText({ text }: { text: string }) {
+  if (text === "No pide contraseñas, códigos ni datos bancarios completos.") {
+    return (
+      <>
+        No pide <span className="gradient-text-orange-red">contraseñas, códigos</span> ni datos bancarios completos.
+      </>
+    );
+  }
+
+  if (text === "No sustituye a profesionales cualificados.") {
+    return (
+      <>
+        No sustituye a <span className="gradient-text-blue-cyan">profesionales cualificados</span>.
+      </>
+    );
+  }
+
+  if (text === "Te orienta con pasos concretos, no con respuestas vacías.") {
+    return (
+      <>
+        Te orienta con <span className="gradient-text-green">pasos concretos</span>, no con respuestas vacías.
+      </>
+    );
+  }
+
+  if (text === "Está pensado para situaciones sensibles, dudas y prevención.") {
+    return (
+      <>
+        Está pensado para <span className="gradient-text-purple-pink">situaciones sensibles</span>, dudas y prevención.
+      </>
+    );
+  }
+
+  return <>{text}</>;
+}
+
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#f5f5f7] text-zinc-950">
@@ -359,8 +528,8 @@ export default function HomePage() {
                 </p>
 
                 <p className="mt-10 text-[28px] font-semibold leading-[1.03] tracking-[-0.055em] text-zinc-950 sm:text-[34px]">
-                  {item}
-                </p>
+  <PrincipleText text={item} />
+</p>
               </div>
             ))}
           </div>
@@ -398,8 +567,8 @@ export default function HomePage() {
                 </p>
 
                 <h3 className="mt-16 text-[34px] font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950">
-                  {item.title}
-                </h3>
+  <UseCaseTitle title={item.title} />
+</h3>
 
                 <p className="mt-4 text-[15.5px] leading-7 text-zinc-600">
                   {item.text}
@@ -449,8 +618,8 @@ export default function HomePage() {
                 </span>
 
                 <p className="text-[18px] font-medium leading-7 tracking-[-0.025em] text-zinc-800">
-                  {feature}
-                </p>
+  <FeatureText text={feature} />
+</p>
               </div>
             ))}
           </div>
@@ -486,7 +655,9 @@ export default function HomePage() {
                     <span className="shrink-0 text-zinc-950">
                       <CheckIcon />
                     </span>
-                    <span>{item}</span>
+                    <span>
+  <ConfidenceText text={item} />
+</span>
                   </div>
                 ))}
               </div>

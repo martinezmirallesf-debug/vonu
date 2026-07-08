@@ -586,4 +586,40 @@ body {
     transform: none;
   }
 }
+/* ---------- Gradientes tipo Apple para palabras clave ---------- */
+
+.gradient-text-blue {
+  background: linear-gradient(90deg, #0a84ff 0%, #32d74b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.gradient-text-green {
+  background: linear-gradient(90deg, #16a34a 0%, #34d399 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.gradient-text-orange {
+  background: linear-gradient(90deg, #ff7a18 0%, #ff4d6d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.gradient-text-purple {
+  background: linear-gradient(90deg, #7c3aed 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.gradient-text-cyan {
+  background: linear-gradient(90deg, #0891b2 0%, #22c55e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
 }
