@@ -219,7 +219,7 @@ function GradientText({
 }) {
   return (
     <span
-      className="inline-block"
+      className="inline-block whitespace-nowrap align-baseline"
       style={{
         backgroundImage: gradientMap[tone],
         WebkitBackgroundClip: "text",
@@ -237,7 +237,7 @@ function PrincipleText({ text }: { text: string }) {
   if (text === "No decidas bajo presión.") {
     return (
       <>
-        No decidas <GradientText tone="orangeRed">bajo presión</GradientText>.
+        No decidas <GradientText tone="orangeRed">bajo presión.</GradientText>
       </>
     );
   }
@@ -245,7 +245,7 @@ function PrincipleText({ text }: { text: string }) {
   if (text === "No firmes sin entender.") {
     return (
       <>
-        No firmes <GradientText tone="blueCyan">sin entender</GradientText>.
+        No firmes <GradientText tone="blueCyan">sin entender.</GradientText>
       </>
     );
   }
@@ -253,7 +253,7 @@ function PrincipleText({ text }: { text: string }) {
   if (text === "No pagues sin comprobar.") {
     return (
       <>
-        No pagues <GradientText tone="green">sin comprobar</GradientText>.
+        No pagues <GradientText tone="green">sin comprobar.</GradientText>
       </>
     );
   }
@@ -261,7 +261,7 @@ function PrincipleText({ text }: { text: string }) {
   if (text === "No contestes si algo no encaja.") {
     return (
       <>
-        No contestes si algo <GradientText tone="purplePink">no encaja</GradientText>.
+        No contestes si algo <GradientText tone="purplePink">no encaja.</GradientText>
       </>
     );
   }
