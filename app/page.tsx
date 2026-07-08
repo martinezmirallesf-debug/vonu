@@ -190,11 +190,11 @@ function ArrowIcon() {
 
 function CheckIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden="true">
       <path
         d="m5 12.5 4.2 4.2L19 7"
         stroke="currentColor"
-        strokeWidth="2.5"
+        strokeWidth="2.8"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -221,7 +221,7 @@ function VoiceBarsIcon() {
 
 export default function HomePage() {
   return (
-  <main className="min-h-screen bg-[#f8f9fa] text-zinc-950">
+  <main className="min-h-screen vonu-premium-page text-zinc-950">
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -229,7 +229,7 @@ export default function HomePage() {
 
     <HomeHeader />
 
-      <section className="relative overflow-hidden bg-white">
+      <section className="relative overflow-hidden bg-[#f5f5f7]">
   <div
   className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[320px]"
   style={{
@@ -238,9 +238,7 @@ export default function HomePage() {
   }}
 />
 
-<div className="absolute left-1/2 top-[74px] h-[620px] w-[620px] -translate-x-1/2 rounded-full bg-blue-500/16 blur-3xl" />
-        <div className="absolute right-[-160px] top-[340px] h-[340px] w-[340px] rounded-full bg-emerald-400/12 blur-3xl" />
-<div className="absolute left-[-160px] top-[500px] h-[340px] w-[340px] rounded-full bg-amber-300/18 blur-3xl" />
+<div className="absolute left-1/2 top-[74px] h-[620px] w-[620px] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl" />
 
         <div className="relative mx-auto max-w-[1500px] px-4 pb-12 pt-8 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8">
           <div className="mx-auto max-w-[1180px] text-center">
@@ -377,20 +375,25 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-zinc-950 text-white">
-        <div className="mx-auto grid max-w-[1500px] gap-4 px-4 py-8 sm:px-6 md:grid-cols-4 lg:px-8">
-          {principles.map((item) => (
-            <div
-              key={item}
-              className="rounded-[28px] border border-white/10 bg-white/[0.06] px-5 py-6 text-[28px] font-semibold leading-[1.05] tracking-[-0.048em] text-white sm:text-[34px]"
-            >
-              {item}
-            </div>
-          ))}
+            <section className="bg-[#f5f5f7]">
+        <div className="vonu-premium-container px-4 py-8 sm:px-6 lg:px-8">
+          <div className="grid gap-4 md:grid-cols-4">
+            {principles.map((item, index) => (
+              <div key={item} className="vonu-premium-card p-6 sm:p-7">
+                <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-zinc-400">
+                  0{index + 1}
+                </p>
+
+                <p className="mt-10 text-[28px] font-semibold leading-[1.03] tracking-[-0.055em] text-zinc-950 sm:text-[34px]">
+                  {item}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section id="casos" className="bg-white">
+            <section id="casos" className="bg-[#f5f5f7]">
         <div className="mx-auto max-w-[1500px] px-4 py-16 sm:px-6 lg:px-8">
           <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
@@ -412,7 +415,7 @@ export default function HomePage() {
             {useCases.map((item) => (
               <article
                 key={item.title}
-                className="group min-h-[290px] rounded-[34px] border border-zinc-200 bg-[#f8f9fa] p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-[0_24px_55px_rgba(0,0,0,0.08)]"
+                className="group min-h-[290px] vonu-premium-card p-6"
               >
                 <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
                   {item.kicker}
@@ -464,9 +467,9 @@ export default function HomePage() {
                 key={feature}
                 className="flex items-center gap-4 rounded-[28px] border border-zinc-200 bg-white p-5 shadow-sm"
               >
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-blue-50 text-blue-600">
-                  <CheckIcon />
-                </div>
+                <span className="mt-1 shrink-0 text-zinc-950">
+  <CheckIcon />
+</span>
                 <p className="text-[18px] font-medium leading-7 tracking-[-0.025em] text-zinc-850">
                   {feature}
                 </p>
@@ -518,13 +521,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="faq" className="bg-white">
+            <section id="faq" className="bg-[#f5f5f7]">
         <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="mb-9 text-center">
-            <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-600">
+            <p className="vonu-premium-kicker">
               Ayuda
             </p>
-            <h2 className="mt-3 text-[42px] font-semibold tracking-[-0.06em] text-zinc-950 sm:text-[58px]">
+
+            <h2 className="mx-auto mt-3 max-w-3xl vonu-premium-title-section text-zinc-950">
               Preguntas frecuentes
             </h2>
           </div>
@@ -533,18 +537,21 @@ export default function HomePage() {
             {faqs.map((faq) => (
               <details
                 key={faq.q}
-                className="group rounded-[26px] border border-zinc-200 bg-[#f8f9fa] p-5 shadow-sm"
+                className="group vonu-faq-card p-5 sm:p-6"
               >
-                <summary className="cursor-pointer list-none text-[18px] font-semibold tracking-[-0.025em] text-zinc-950">
-                  <div className="flex items-center justify-between gap-4">
-                    <span>{faq.q}</span>
-                    <span className="text-zinc-400 transition group-open:rotate-45">
+                <summary className="cursor-pointer list-none">
+                  <div className="flex items-center justify-between gap-5">
+                    <span className="text-[19px] font-semibold leading-tight tracking-[-0.035em] text-zinc-950 sm:text-[21px]">
+                      {faq.q}
+                    </span>
+
+                    <span className="vonu-faq-plus">
                       +
                     </span>
                   </div>
                 </summary>
 
-                <p className="mt-3 text-[15.5px] leading-7 text-zinc-600">
+                <p className="mt-4 text-[15.5px] leading-7 text-zinc-600">
                   {faq.a}
                 </p>
               </details>
