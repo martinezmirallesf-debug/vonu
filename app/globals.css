@@ -356,5 +356,234 @@ body {
   overflow: hidden !important;
   pointer-events: none !important;
 }
+/* =========================================================
+   VonuAI Premium Visual System
+   Fondo gris suave + tarjetas blancas + sombras tipo Apple
+   ========================================================= */
 
+.vonu-premium-page {
+  background: #f5f5f7;
+  color: #111113;
+}
+
+.vonu-premium-section {
+  padding: 64px 16px;
+}
+
+.vonu-premium-container {
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.vonu-premium-card {
+  border: 1px solid rgba(228, 228, 231, 0.9);
+  background: #ffffff;
+  border-radius: 34px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.035),
+    0 16px 40px rgba(0, 0, 0, 0.055);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.vonu-premium-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212, 212, 216, 0.95);
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.045),
+    0 24px 58px rgba(0, 0, 0, 0.075);
+}
+
+.vonu-premium-card-soft {
+  border: 1px solid rgba(228, 228, 231, 0.9);
+  background: #ffffff;
+  border-radius: 30px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    0 12px 30px rgba(0, 0, 0, 0.045);
+}
+
+.vonu-premium-card-flat {
+  border: 1px solid rgba(228, 228, 231, 0.9);
+  background: #ffffff;
+  border-radius: 30px;
+}
+
+.vonu-premium-kicker {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #1a73e8;
+}
+
+.vonu-premium-title-xl {
+  font-size: clamp(52px, 7vw, 112px);
+  line-height: 0.94;
+  letter-spacing: -0.075em;
+  font-weight: 650;
+}
+
+.vonu-premium-title-section {
+  font-size: clamp(42px, 5vw, 74px);
+  line-height: 0.96;
+  letter-spacing: -0.065em;
+  font-weight: 650;
+}
+
+.vonu-premium-muted {
+  color: #6e6e73;
+}
+
+.vonu-premium-lead {
+  font-size: 19px;
+  line-height: 1.7;
+  color: #5f6368;
+}
+
+.vonu-premium-blue {
+  color: #1a73e8;
+}
+
+.vonu-premium-green {
+  color: #0a8f3c;
+}
+
+.vonu-premium-orange {
+  color: #f97316;
+}
+
+.vonu-premium-red {
+  color: #dc2626;
+}
+
+.vonu-clean-check {
+  width: 26px;
+  height: 26px;
+  color: #111113;
+  flex-shrink: 0;
+}
+
+.vonu-clean-red-x {
+  width: 30px;
+  height: 30px;
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+.vonu-premium-grid-2 {
+  display: grid;
+  gap: 24px;
+}
+
+.vonu-premium-grid-3 {
+  display: grid;
+  gap: 24px;
+}
+
+.vonu-premium-grid-4 {
+  display: grid;
+  gap: 24px;
+}
+
+.vonu-faq-card {
+  border: 1px solid rgba(228, 228, 231, 0.95);
+  background: #ffffff;
+  border-radius: 28px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.035),
+    0 10px 26px rgba(0, 0, 0, 0.045);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.vonu-faq-card:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.045),
+    0 16px 36px rgba(0, 0, 0, 0.06);
+}
+
+.vonu-faq-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 300;
+  color: #6e6e73;
+  transition:
+    transform 180ms ease,
+    color 180ms ease;
+}
+
+.group[open] .vonu-faq-plus {
+  transform: rotate(45deg);
+  color: #111113;
+}
+
+@media (min-width: 768px) {
+  .vonu-premium-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .vonu-premium-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .vonu-premium-grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .vonu-premium-grid-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .vonu-premium-section {
+    padding: 48px 16px;
+  }
+
+  .vonu-premium-title-xl {
+    font-size: clamp(48px, 15vw, 72px);
+    line-height: 0.92;
+    letter-spacing: -0.078em;
+  }
+
+  .vonu-premium-title-section {
+    font-size: clamp(40px, 12vw, 58px);
+    line-height: 0.92;
+    letter-spacing: -0.074em;
+  }
+
+  .vonu-premium-lead {
+    font-size: 17px;
+    line-height: 1.65;
+  }
+
+  .vonu-faq-plus {
+    font-size: 36px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vonu-premium-card,
+  .vonu-faq-card,
+  .vonu-faq-plus {
+    transition: none;
+  }
+
+  .vonu-premium-card:hover,
+  .vonu-faq-card:hover {
+    transform: none;
+  }
+}
 }
