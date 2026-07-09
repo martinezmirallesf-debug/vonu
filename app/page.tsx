@@ -547,9 +547,16 @@ export default function HomePage() {
       </section>
 
       <section className="bg-[#f5f5f7]">
-        <div className="mx-auto max-w-[1500px] px-4 py-10 sm:px-6 lg:px-8">
-          <div className="grid gap-5 md:grid-cols-4">
-            {principles.map((item, index) => (
+  <div className="mx-auto max-w-[1500px] px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+    <div className="mb-8 sm:mb-10">
+      <h2 className="max-w-4xl text-[44px] font-semibold leading-[0.98] tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
+        Las 4 reglas
+        <span className="block text-zinc-500">para no caer.</span>
+      </h2>
+    </div>
+
+    <div className="grid gap-5 md:grid-cols-4">
+      {principles.map((item, index) => (
               <div
                 key={item}
                 className="rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)] transition hover:-translate-y-1 hover:shadow-[0_2px_5px_rgba(0,0,0,0.045),0_24px_58px_rgba(0,0,0,0.075)]"
@@ -558,7 +565,7 @@ export default function HomePage() {
                   0{index + 1}
                 </p>
 
-                <p className="mt-10 text-[28px] font-semibold leading-[1.03] tracking-[-0.055em] text-zinc-950 sm:text-[34px]">
+                <p className="mt-10 max-w-[430px] text-[40px] font-semibold leading-[0.98] tracking-[-0.07em] text-zinc-950 sm:text-[44px] md:text-[34px]">
   <PrincipleText text={item} />
 </p>
               </div>
