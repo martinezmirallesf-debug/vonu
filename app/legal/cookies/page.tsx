@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import HomeHeader from "../../components/HomeHeader";
 import HomeFooter from "../../components/HomeFooter";
 import LegalPage from "../../components/LegalPage";
@@ -28,10 +29,120 @@ export const metadata: Metadata = {
   },
 };
 
-export default function CookiesPage() {
+type GradientTone = "blueCyan" | "blueGreen" | "purplePink" | "amberOrange";
+
+const gradientMap: Record<GradientTone, string> = {
+  blueCyan: "linear-gradient(90deg, #1A73E8 0%, #06B6D4 100%)",
+  blueGreen: "linear-gradient(90deg, #0A84FF 0%, #22C55E 100%)",
+  purplePink: "linear-gradient(90deg, #7C3AED 0%, #EC4899 100%)",
+  amberOrange: "linear-gradient(90deg, #F59E0B 0%, #F97316 100%)",
+};
+
+function GradientText({
+  children,
+  tone,
+}: {
+  children: ReactNode;
+  tone: GradientTone;
+}) {
   return (
-    <main className="min-h-screen bg-[#f8f9fa] text-zinc-950">
+    <span
+      className="inline-block whitespace-nowrap align-baseline"
+      style={{
+        backgroundImage: gradientMap[tone],
+        WebkitBackgroundClip: "text",
+        backgroundClip: "text",
+        color: "transparent",
+        WebkitTextFillColor: "transparent",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+const cookieHighlights = [
+  {
+    title: "Cookies necesarias",
+    tone: "blueCyan" as const,
+    text: "Permiten que la web, la sesión, la seguridad y las funciones básicas funcionen correctamente.",
+  },
+  {
+    title: "Preferencias y medición",
+    tone: "blueGreen" as const,
+    text: "Pueden ayudar a recordar ajustes y entender cómo se usa VonuAI para mejorar la experiencia.",
+  },
+  {
+    title: "Control del usuario",
+    tone: "purplePink" as const,
+    text: "El usuario puede gestionar cookies desde el navegador y, cuando esté disponible, desde el panel de configuración.",
+  },
+];
+
+export default function CookiesPage() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${siteUrl}/legal/cookies#webpage`,
+    url: `${siteUrl}/legal/cookies`,
+    name: "Política de cookies — VonuAI",
+    description:
+      "Política de cookies de VonuAI: qué son las cookies, qué tipos pueden utilizarse, cómo gestionarlas y cómo retirar el consentimiento.",
+    inLanguage: "es-ES",
+    isPartOf: {
+      "@type": "WebSite",
+      name: "VonuAI",
+      url: siteUrl,
+    },
+  };
+
+  return (
+    <main className="min-h-screen bg-[#f5f5f7] text-zinc-950">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <HomeHeader />
+
+      <section className="bg-[#f5f5f7]">
+        <div className="mx-auto max-w-[1500px] px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12 lg:px-8">
+          <div className="mx-auto max-w-[1120px] text-center">
+            <p className="text-[14px] font-semibold uppercase tracking-[0.18em] text-blue-600">
+              Legal
+            </p>
+
+            <h1 className="mx-auto mt-4 max-w-[1040px] text-[54px] font-semibold leading-[0.92] tracking-[-0.078em] text-zinc-950 sm:text-[86px] lg:text-[118px]">
+              Política de
+              <span className="block text-zinc-500">
+                <GradientText tone="amberOrange">cookies.</GradientText>
+              </span>
+            </h1>
+
+            <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
+              Información sobre el uso de cookies y tecnologías similares en
+              VonuAI, qué tipos pueden utilizarse y cómo puedes gestionarlas.
+            </p>
+          </div>
+
+          <div className="mx-auto mt-10 grid max-w-6xl gap-5 sm:mt-14 md:grid-cols-3">
+            {cookieHighlights.map((item) => (
+              <article
+                key={item.title}
+                className="rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)]"
+              >
+                <h2 className="text-[30px] font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950">
+                  <GradientText tone={item.tone}>{item.title}</GradientText>
+                </h2>
+
+                <p className="mt-5 text-[15px] leading-7 text-zinc-600">
+                  {item.text}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <LegalPage
         title="Política de cookies"
@@ -71,7 +182,8 @@ export default function CookiesPage() {
             <strong>Email privacidad:</strong> privacy@vonuai.com
           </li>
           <li>
-            <strong>Dominios asociados:</strong> vonuai.com y sus subdominios asociados
+            <strong>Dominios asociados:</strong> vonuai.com y sus subdominios
+            asociados
           </li>
         </ul>
 

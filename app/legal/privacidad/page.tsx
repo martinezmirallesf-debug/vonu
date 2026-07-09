@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import HomeHeader from "../../components/HomeHeader";
 import HomeFooter from "../../components/HomeFooter";
 import LegalPage from "../../components/LegalPage";
@@ -28,10 +29,126 @@ export const metadata: Metadata = {
   },
 };
 
-export default function PrivacidadPage() {
+type GradientTone = "blueCyan" | "blueGreen" | "purplePink" | "amberOrange";
+
+const gradientMap: Record<GradientTone, string> = {
+  blueCyan: "linear-gradient(90deg, #1A73E8 0%, #06B6D4 100%)",
+  blueGreen: "linear-gradient(90deg, #0A84FF 0%, #22C55E 100%)",
+  purplePink: "linear-gradient(90deg, #7C3AED 0%, #EC4899 100%)",
+  amberOrange: "linear-gradient(90deg, #F59E0B 0%, #F97316 100%)",
+};
+
+function GradientText({
+  children,
+  tone,
+}: {
+  children: ReactNode;
+  tone: GradientTone;
+}) {
   return (
-    <main className="min-h-screen bg-[#f8f9fa] text-zinc-950">
+    <span
+      className="inline-block whitespace-nowrap align-baseline"
+      style={{
+        backgroundImage: gradientMap[tone],
+        WebkitBackgroundClip: "text",
+        backgroundClip: "text",
+        color: "transparent",
+        WebkitTextFillColor: "transparent",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+const privacyHighlights = [
+  {
+    title: "Datos tratados",
+    tone: "blueCyan" as const,
+    text: "Explica qué datos pueden tratarse cuando usas el chat, formularios, recursos, cuenta, pagos o archivos.",
+  },
+  {
+    title: "Finalidades",
+    tone: "blueGreen" as const,
+    text: "Detalla para qué se usan los datos: prestar el servicio, seguridad, soporte, pagos, recursos y mejora del producto.",
+  },
+  {
+    title: "IA y proveedores",
+    tone: "purplePink" as const,
+    text: "Aclara que el contenido puede procesarse con proveedores tecnológicos y modelos de IA para generar respuestas.",
+  },
+  {
+    title: "Tus derechos",
+    tone: "amberOrange" as const,
+    text: "Recoge cómo ejercer derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad.",
+  },
+];
+
+export default function PrivacidadPage() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${siteUrl}/legal/privacidad#webpage`,
+    url: `${siteUrl}/legal/privacidad`,
+    name: "Política de privacidad — VonuAI",
+    description:
+      "Política de privacidad de VonuAI: datos tratados, finalidades, bases legales, conservación, proveedores, derechos y contacto.",
+    inLanguage: "es-ES",
+    isPartOf: {
+      "@type": "WebSite",
+      name: "VonuAI",
+      url: siteUrl,
+    },
+  };
+
+  return (
+    <main className="min-h-screen bg-[#f5f5f7] text-zinc-950">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <HomeHeader />
+
+      <section className="bg-[#f5f5f7]">
+        <div className="mx-auto max-w-[1500px] px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12 lg:px-8">
+          <div className="mx-auto max-w-[1120px] text-center">
+            <p className="text-[14px] font-semibold uppercase tracking-[0.18em] text-blue-600">
+              Legal
+            </p>
+
+            <h1 className="mx-auto mt-4 max-w-[1040px] text-[54px] font-semibold leading-[0.92] tracking-[-0.078em] text-zinc-950 sm:text-[86px] lg:text-[118px]">
+              Política de
+              <span className="block text-zinc-500">
+                <GradientText tone="blueGreen">privacidad.</GradientText>
+              </span>
+            </h1>
+
+            <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
+              Cómo tratamos los datos personales cuando usas VonuAI, contactas
+              con nosotros, subes contenido para analizar o te apuntas a
+              recursos.
+            </p>
+          </div>
+
+          <div className="mx-auto mt-10 grid max-w-7xl gap-5 sm:mt-14 md:grid-cols-2 xl:grid-cols-4">
+            {privacyHighlights.map((item) => (
+              <article
+                key={item.title}
+                className="rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)]"
+              >
+                <h2 className="text-[30px] font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950">
+                  <GradientText tone={item.tone}>{item.title}</GradientText>
+                </h2>
+
+                <p className="mt-5 text-[15px] leading-7 text-zinc-600">
+                  {item.text}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <LegalPage
         title="Política de privacidad"
@@ -63,7 +180,8 @@ export default function PrivacidadPage() {
             <strong>Email privacidad:</strong> privacy@vonuai.com
           </li>
           <li>
-            <strong>Dominios asociados:</strong> vonuai.com y sus subdominios asociados
+            <strong>Dominios asociados:</strong> vonuai.com y sus subdominios
+            asociados
           </li>
         </ul>
 
@@ -182,10 +300,10 @@ export default function PrivacidadPage() {
 
         <p>
           Para prestar VonuAI podemos utilizar proveedores tecnológicos que
-          actúan como encargados del tratamiento o prestadores de servicios. Entre
-          ellos pueden encontrarse proveedores de infraestructura, base de datos,
-          autenticación, pagos, correo electrónico, analítica técnica y modelos
-          de inteligencia artificial.
+          actúan como encargados del tratamiento o prestadores de servicios.
+          Entre ellos pueden encontrarse proveedores de infraestructura, base de
+          datos, autenticación, pagos, correo electrónico, analítica técnica y
+          modelos de inteligencia artificial.
         </p>
 
         <p>
@@ -205,8 +323,9 @@ export default function PrivacidadPage() {
         <p>
           Cuando utilizas VonuAI, el contenido que introduces puede ser enviado a
           proveedores de inteligencia artificial para generar respuestas,
-          explicaciones, análisis o resúmenes. Esto puede incluir texto, imágenes,
-          archivos, transcripciones o información contextual que decidas aportar.
+          explicaciones, análisis o resúmenes. Esto puede incluir texto,
+          imágenes, archivos, transcripciones o información contextual que
+          decidas aportar.
         </p>
 
         <p>
@@ -219,46 +338,47 @@ export default function PrivacidadPage() {
 
         <h2>8. Casos, patrones anonimizados y mejora de la detección</h2>
 
-<p>
-  Cuando utilizas VonuAI para analizar posibles fraudes, mensajes
-  sospechosos, webs, contratos, facturas, situaciones de presión,
-  manipulación u otros riesgos, el sistema puede generar registros internos
-  de revisión para mejorar la seguridad, calidad y utilidad del servicio.
-</p>
+        <p>
+          Cuando utilizas VonuAI para analizar posibles fraudes, mensajes
+          sospechosos, webs, contratos, facturas, situaciones de presión,
+          manipulación u otros riesgos, el sistema puede generar registros
+          internos de revisión para mejorar la seguridad, calidad y utilidad del
+          servicio.
+        </p>
 
-<p>
-  Estos registros no tienen como finalidad identificar al usuario, sino
-  detectar señales repetidas, patrones de riesgo, abusos, errores, campañas
-  fraudulentas o casos similares. Para ello, VonuAI puede aplicar procesos
-  automáticos de revisión, limpieza, anonimización, deduplicación y
-  clasificación antes de conservar o reutilizar información como patrón
-  interno.
-</p>
+        <p>
+          Estos registros no tienen como finalidad identificar al usuario, sino
+          detectar señales repetidas, patrones de riesgo, abusos, errores,
+          campañas fraudulentas o casos similares. Para ello, VonuAI puede
+          aplicar procesos automáticos de revisión, limpieza, anonimización,
+          deduplicación y clasificación antes de conservar o reutilizar
+          información como patrón interno.
+        </p>
 
-<p>
-  En la medida de lo posible, VonuAI evita conservar información sensible
-  innecesaria como contraseñas, códigos de verificación, datos bancarios
-  completos, documentos identificativos completos, información médica
-  detallada, datos de menores o datos de terceros que no sean necesarios para
-  entender el riesgo.
-</p>
+        <p>
+          En la medida de lo posible, VonuAI evita conservar información
+          sensible innecesaria como contraseñas, códigos de verificación, datos
+          bancarios completos, documentos identificativos completos, información
+          médica detallada, datos de menores o datos de terceros que no sean
+          necesarios para entender el riesgo.
+        </p>
 
-<p>
-  Algunas señales anonimizadas o agregadas pueden utilizarse para mejorar la
-  detección de fraudes, riesgos legales o de consumo, patrones de presión
-  emocional, seguridad personal u otras situaciones similares. Este uso ayuda
-  a que VonuAI pueda reconocer mejor casos parecidos en el futuro, sin vender
-  datos personales ni convertir la información original del usuario en una
-  base pública.
-</p>
+        <p>
+          Algunas señales anonimizadas o agregadas pueden utilizarse para
+          mejorar la detección de fraudes, riesgos legales o de consumo,
+          patrones de presión emocional, seguridad personal u otras situaciones
+          similares. Este uso ayuda a que VonuAI pueda reconocer mejor casos
+          parecidos en el futuro, sin vender datos personales ni convertir la
+          información original del usuario en una base pública.
+        </p>
 
         <h2>9. Conservación de los datos</h2>
 
         <p>
           Los datos se conservarán durante el tiempo necesario para cumplir la
           finalidad para la que fueron recogidos, prestar el servicio, gestionar
-          solicitudes, mantener seguridad, cumplir obligaciones legales o resolver
-          posibles responsabilidades.
+          solicitudes, mantener seguridad, cumplir obligaciones legales o
+          resolver posibles responsabilidades.
         </p>
 
         <p>
@@ -281,11 +401,12 @@ export default function PrivacidadPage() {
         <h2>11. Transferencias internacionales</h2>
 
         <p>
-          Algunos proveedores tecnológicos pueden estar ubicados fuera del Espacio
-          Económico Europeo o tratar datos desde otros países. En esos casos, se
-          procurará que existan garantías adecuadas conforme a la normativa
-          aplicable, como cláusulas contractuales tipo, decisiones de adecuación u
-          otros mecanismos reconocidos por la normativa de protección de datos.
+          Algunos proveedores tecnológicos pueden estar ubicados fuera del
+          Espacio Económico Europeo o tratar datos desde otros países. En esos
+          casos, se procurará que existan garantías adecuadas conforme a la
+          normativa aplicable, como cláusulas contractuales tipo, decisiones de
+          adecuación u otros mecanismos reconocidos por la normativa de
+          protección de datos.
         </p>
 
         <h2>12. Derechos de las personas usuarias</h2>
@@ -313,10 +434,10 @@ export default function PrivacidadPage() {
         <h2>13. Seguridad</h2>
 
         <p>
-          VonuAI aplica medidas técnicas y organizativas razonables para proteger
-          la información frente a accesos no autorizados, pérdida, alteración o
-          uso indebido. Aun así, ningún sistema conectado a Internet puede
-          garantizar una seguridad absoluta.
+          VonuAI aplica medidas técnicas y organizativas razonables para
+          proteger la información frente a accesos no autorizados, pérdida,
+          alteración o uso indebido. Aun así, ningún sistema conectado a
+          Internet puede garantizar una seguridad absoluta.
         </p>
 
         <h2>14. Menores de edad</h2>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import HomeHeader from "../../components/HomeHeader";
 import HomeFooter from "../../components/HomeFooter";
 import LegalPage from "../../components/LegalPage";
@@ -15,8 +16,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Términos y condiciones — VonuAI",
-    description:
-      "Condiciones generales de uso del servicio VonuAI.",
+    description: "Condiciones generales de uso del servicio VonuAI.",
     url: `${siteUrl}/legal/terminos`,
     siteName: "VonuAI",
     locale: "es_ES",
@@ -28,10 +28,125 @@ export const metadata: Metadata = {
   },
 };
 
-export default function TerminosPage() {
+type GradientTone = "blueCyan" | "blueGreen" | "purplePink" | "amberOrange";
+
+const gradientMap: Record<GradientTone, string> = {
+  blueCyan: "linear-gradient(90deg, #1A73E8 0%, #06B6D4 100%)",
+  blueGreen: "linear-gradient(90deg, #0A84FF 0%, #22C55E 100%)",
+  purplePink: "linear-gradient(90deg, #7C3AED 0%, #EC4899 100%)",
+  amberOrange: "linear-gradient(90deg, #F59E0B 0%, #F97316 100%)",
+};
+
+function GradientText({
+  children,
+  tone,
+}: {
+  children: ReactNode;
+  tone: GradientTone;
+}) {
   return (
-    <main className="min-h-screen bg-[#f8f9fa] text-zinc-950">
+    <span
+      className="inline-block whitespace-nowrap align-baseline"
+      style={{
+        backgroundImage: gradientMap[tone],
+        WebkitBackgroundClip: "text",
+        backgroundClip: "text",
+        color: "transparent",
+        WebkitTextFillColor: "transparent",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+const termsHighlights = [
+  {
+    title: "Uso responsable",
+    tone: "blueCyan" as const,
+    text: "Define cómo debe utilizarse VonuAI, qué usos están permitidos y qué usos quedan prohibidos.",
+  },
+  {
+    title: "Servicio orientativo",
+    tone: "blueGreen" as const,
+    text: "Aclara que VonuAI ayuda a ganar claridad, pero no sustituye a profesionales cualificados.",
+  },
+  {
+    title: "Planes y pagos",
+    tone: "amberOrange" as const,
+    text: "Recoge condiciones sobre planes gratuitos, suscripciones, recargas, límites y cancelación.",
+  },
+  {
+    title: "Responsabilidad",
+    tone: "purplePink" as const,
+    text: "Explica los límites del servicio, la disponibilidad y la responsabilidad del usuario al decidir.",
+  },
+];
+
+export default function TerminosPage() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${siteUrl}/legal/terminos#webpage`,
+    url: `${siteUrl}/legal/terminos`,
+    name: "Términos y condiciones — VonuAI",
+    description:
+      "Términos y condiciones de uso de VonuAI: acceso, uso responsable, planes, pagos, límites, propiedad intelectual y responsabilidades.",
+    inLanguage: "es-ES",
+    isPartOf: {
+      "@type": "WebSite",
+      name: "VonuAI",
+      url: siteUrl,
+    },
+  };
+
+  return (
+    <main className="min-h-screen bg-[#f5f5f7] text-zinc-950">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <HomeHeader />
+
+      <section className="bg-[#f5f5f7]">
+        <div className="mx-auto max-w-[1500px] px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12 lg:px-8">
+          <div className="mx-auto max-w-[1120px] text-center">
+            <p className="text-[14px] font-semibold uppercase tracking-[0.18em] text-blue-600">
+              Legal
+            </p>
+
+            <h1 className="mx-auto mt-4 max-w-[1040px] text-[54px] font-semibold leading-[0.92] tracking-[-0.078em] text-zinc-950 sm:text-[86px] lg:text-[118px]">
+              Términos y
+              <span className="block text-zinc-500">
+                <GradientText tone="blueCyan">condiciones.</GradientText>
+              </span>
+            </h1>
+
+            <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
+              Condiciones generales para acceder y usar VonuAI de forma segura,
+              responsable y transparente.
+            </p>
+          </div>
+
+          <div className="mx-auto mt-10 grid max-w-7xl gap-5 sm:mt-14 md:grid-cols-2 xl:grid-cols-4">
+            {termsHighlights.map((item) => (
+              <article
+                key={item.title}
+                className="rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)]"
+              >
+                <h2 className="text-[30px] font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950">
+                  <GradientText tone={item.tone}>{item.title}</GradientText>
+                </h2>
+
+                <p className="mt-5 text-[15px] leading-7 text-zinc-600">
+                  {item.text}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <LegalPage
         title="Términos y condiciones"
@@ -60,7 +175,8 @@ export default function TerminosPage() {
             <strong>Email legal:</strong> legal@vonuai.com
           </li>
           <li>
-            <strong>Dominios asociados:</strong> vonuai.com y sus subdominios asociados
+            <strong>Dominios asociados:</strong> vonuai.com y sus subdominios
+            asociados
           </li>
         </ul>
 
@@ -104,10 +220,10 @@ export default function TerminosPage() {
         </p>
 
         <p>
-          En situaciones de urgencia, riesgo inmediato, emergencia médica, posible
-          delito, amenaza, pérdida económica relevante o conflicto legal
-          importante, debes contactar con los servicios de emergencia, autoridades
-          competentes, tu banco o el profesional adecuado.
+          En situaciones de urgencia, riesgo inmediato, emergencia médica,
+          posible delito, amenaza, pérdida económica relevante o conflicto legal
+          importante, debes contactar con los servicios de emergencia,
+          autoridades competentes, tu banco o el profesional adecuado.
         </p>
 
         <h2>5. Registro y cuenta de usuario</h2>
@@ -187,27 +303,27 @@ export default function TerminosPage() {
 
         <h2>9. Registros internos, seguridad y mejora del servicio</h2>
 
-<p>
-  Para mejorar la seguridad, detectar abusos, reducir errores y reconocer
-  patrones de riesgo, VonuAI puede generar registros internos derivados del
-  uso del servicio. Estos registros pueden incluir señales generales del caso,
-  tipo de riesgo, canal, categoría, nivel estimado, acciones recomendadas o
-  patrones técnicos relevantes.
-</p>
+        <p>
+          Para mejorar la seguridad, detectar abusos, reducir errores y reconocer
+          patrones de riesgo, VonuAI puede generar registros internos derivados
+          del uso del servicio. Estos registros pueden incluir señales generales
+          del caso, tipo de riesgo, canal, categoría, nivel estimado, acciones
+          recomendadas o patrones técnicos relevantes.
+        </p>
 
-<p>
-  Cuando estos registros se utilicen para mejorar la detección o alimentar
-  bases internas de patrones, VonuAI procurará aplicar procesos de revisión,
-  limpieza, anonimización, deduplicación y minimización de datos, evitando
-  conservar información sensible innecesaria.
-</p>
+        <p>
+          Cuando estos registros se utilicen para mejorar la detección o
+          alimentar bases internas de patrones, VonuAI procurará aplicar procesos
+          de revisión, limpieza, anonimización, deduplicación y minimización de
+          datos, evitando conservar información sensible innecesaria.
+        </p>
 
-<p>
-  Este tratamiento no convierte el contenido del usuario en una base pública,
-  no implica la venta de datos personales y no autoriza a VonuAI a usar datos
-  sensibles más allá de lo necesario para prestar, proteger y mejorar el
-  servicio conforme a la política de privacidad.
-</p>
+        <p>
+          Este tratamiento no convierte el contenido del usuario en una base
+          pública, no implica la venta de datos personales y no autoriza a VonuAI
+          a usar datos sensibles más allá de lo necesario para prestar, proteger y
+          mejorar el servicio conforme a la política de privacidad.
+        </p>
 
         <h2>10. Respuestas generadas por VonuAI</h2>
 
@@ -251,8 +367,8 @@ export default function TerminosPage() {
         <p>
           Los pagos, suscripciones y recargas pueden gestionarse mediante
           proveedores externos de pago. VonuAI no almacena los datos completos de
-          tarjetas bancarias. La gestión de cobros, facturación técnica y
-          métodos de pago puede realizarse a través de plataformas especializadas.
+          tarjetas bancarias. La gestión de cobros, facturación técnica y métodos
+          de pago puede realizarse a través de plataformas especializadas.
         </p>
 
         <p>
@@ -265,10 +381,10 @@ export default function TerminosPage() {
 
         <p>
           El usuario podrá cancelar su suscripción desde la zona de usuario, el
-          portal de pagos o los medios habilitados en cada momento. La cancelación
-          evitará futuras renovaciones, sin perjuicio del acceso que pueda quedar
-          disponible hasta el final del periodo ya abonado, salvo que se indique
-          otra cosa durante el proceso.
+          portal de pagos o los medios habilitados en cada momento. La
+          cancelación evitará futuras renovaciones, sin perjuicio del acceso que
+          pueda quedar disponible hasta el final del periodo ya abonado, salvo
+          que se indique otra cosa durante el proceso.
         </p>
 
         <h2>14. Disponibilidad del servicio</h2>
