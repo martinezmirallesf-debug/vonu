@@ -112,7 +112,7 @@ export default function CookiesPage() {
               Legal
             </p>
 
-            <h1 className="mx-auto mt-4 max-w-[1040px] text-[54px] font-semibold leading-[0.92] tracking-[-0.078em] text-zinc-950 sm:text-[86px] lg:text-[118px]">
+            <h1 className="mx-auto mt-4 max-w-[1040px] text-[52px] font-semibold leading-[1.02] tracking-[-0.064em] text-zinc-950 sm:text-[86px] sm:leading-[0.94] sm:tracking-[-0.078em] lg:text-[118px]">
               Política de
               <span className="block text-zinc-500">
                 <GradientText tone="amberOrange">cookies.</GradientText>

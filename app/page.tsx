@@ -222,7 +222,7 @@ function GradientText({
 }) {
   return (
     <span
-      className="inline-block whitespace-nowrap align-baseline"
+      className="inline align-baseline"
       style={{
         backgroundImage: gradientMap[tone],
         WebkitBackgroundClip: "text",
@@ -553,7 +553,7 @@ no compraría.
       <section className="bg-[#f5f5f7]">
   <div className="mx-auto max-w-[1500px] px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
     <div className="mb-8 sm:mb-10">
-      <h2 className="max-w-4xl text-[44px] font-semibold leading-[0.98] tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
+      <h2 className="max-w-4xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
         Las 4 reglas
         <span className="block text-zinc-500">para no caer.</span>
       </h2>
@@ -586,7 +586,7 @@ no compraría.
                 Casos de uso
               </p>
 
-              <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[0.98] tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
+              <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
                 Para cuando
                 <span className="text-zinc-500"> un error sale caro.</span>
               </h2>
@@ -628,7 +628,7 @@ no compraría.
               Producto
             </p>
 
-            <h2 className="mt-5 text-[44px] font-semibold leading-[0.98] tracking-[-0.065em] sm:text-[72px]">
+            <h2 className="mt-5 text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] sm:text-[72px]">
               Un chat, sí.
               <span className="block text-zinc-400">Pero pensado para prevenir errores.</span>
             </h2>
@@ -677,7 +677,7 @@ no compraría.
                   Confianza
                 </p>
 
-                <h2 className="mt-4 text-[44px] font-semibold leading-[0.98] tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
+                <h2 className="mt-4 text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
                   Claridad antes
                   <span className="text-zinc-500"> de la acción.</span>
                 </h2>

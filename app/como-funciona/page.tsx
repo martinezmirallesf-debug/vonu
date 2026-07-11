@@ -196,7 +196,7 @@ function GradientText({
 }) {
   return (
     <span
-      className="inline-block whitespace-nowrap align-baseline"
+      className="inline align-baseline"
       style={{
         backgroundImage: gradientMap[tone],
         WebkitBackgroundClip: "text",
@@ -373,7 +373,7 @@ export default function HelpPage() {
       <section className="relative overflow-hidden bg-[#f5f5f7]">
         <div className="mx-auto max-w-[1500px] px-4 pb-12 pt-8 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8">
           <div className="mx-auto max-w-[1120px] text-center">
-            <h1 className="mx-auto max-w-[1040px] text-[54px] font-semibold leading-[0.92] tracking-[-0.078em] text-zinc-950 sm:text-[86px] lg:text-[118px]">
+            <h1 className="mx-auto max-w-[1040px] text-[52px] font-semibold leading-[1.02] tracking-[-0.064em] text-zinc-950 sm:text-[86px] sm:leading-[0.94] sm:tracking-[-0.078em] lg:text-[118px]">
               Cómo funciona
               <span className="block text-zinc-500">
                 <GradientText tone="blueCyan">VonuAI.</GradientText>
@@ -439,7 +439,7 @@ export default function HelpPage() {
                       {section.label}
                     </p>
 
-                    <h2 className="mt-4 text-[44px] font-semibold leading-[0.98] tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
+                    <h2 className="mt-4 text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
                       <SectionHeading id={section.id} />
                     </h2>
                   </div>

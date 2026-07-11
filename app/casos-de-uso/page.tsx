@@ -168,7 +168,7 @@ function GradientText({
 }) {
   return (
     <span
-      className="inline-block whitespace-nowrap align-baseline"
+      className="inline align-baseline"
       style={{
         backgroundImage: gradientMap[tone],
         WebkitBackgroundClip: "text",
@@ -397,7 +397,7 @@ export default function CasosDeUsoPage() {
               <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-zinc-400">
                 Antes de pagar
               </p>
-              <p className="mt-12 text-[34px] font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950">
+              <p className="mt-12 text-[34px] font-semibold leading-[1.08] tracking-[-0.045em] text-zinc-950">
                 Comprueba <GradientText tone="blueGreen">webs</GradientText>.
               </p>
             </div>
@@ -406,7 +406,7 @@ export default function CasosDeUsoPage() {
               <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-zinc-400">
                 Antes de contestar
               </p>
-              <p className="mt-12 text-[34px] font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950">
+              <p className="mt-12 text-[34px] font-semibold leading-[1.08] tracking-[-0.045em] text-zinc-950">
                 Revisa <GradientText tone="orangeRed">mensajes</GradientText>.
               </p>
             </div>
@@ -415,7 +415,7 @@ export default function CasosDeUsoPage() {
               <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-zinc-400">
                 Antes de firmar
               </p>
-              <p className="mt-12 text-[34px] font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950">
+              <p className="mt-12 text-[34px] font-semibold leading-[1.08] tracking-[-0.045em] text-zinc-950">
                 Entiende <GradientText tone="amberOrange">contratos</GradientText>.
               </p>
             </div>
@@ -431,7 +431,7 @@ export default function CasosDeUsoPage() {
                 Casos principales
               </p>
 
-              <h2 className="mt-3 max-w-4xl text-[44px] font-semibold leading-[0.98] tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
+              <h2 className="mt-3 max-w-4xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
                 Para cuando algo no encaja
                 <span className="block text-zinc-500">
                   y prefieres <GradientText tone="blueGreen">revisar antes.</GradientText>
@@ -456,7 +456,7 @@ export default function CasosDeUsoPage() {
                   {item.eyebrow}
                 </p>
 
-                <h3 className="mt-12 text-[34px] font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950">
+                <h3 className="mt-12 text-[34px] font-semibold leading-[1.08] tracking-[-0.045em] text-zinc-950">
                   <MainCaseTitle title={item.title} />
                 </h3>
 
@@ -481,7 +481,7 @@ export default function CasosDeUsoPage() {
               Más situaciones
             </p>
 
-            <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[0.98] tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
+            <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
               No todo es fraude.
               <span className="block text-zinc-500">
                 A veces solo necesitas <GradientText tone="purplePink">claridad.</GradientText>

@@ -157,7 +157,7 @@ function GradientText({
 }) {
   return (
     <span
-      className="inline-block whitespace-nowrap align-baseline"
+      className="inline align-baseline"
       style={{
         backgroundImage: gradientMap[tone],
         WebkitBackgroundClip: "text",
@@ -375,7 +375,7 @@ export default function DetectarPerfilFalsoPage() {
       <section className="relative overflow-hidden bg-[#f5f5f7]">
         <div className="mx-auto max-w-[1500px] px-4 pb-12 pt-8 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8">
           <div className="mx-auto max-w-[1120px] text-center">
-            <h1 className="mx-auto max-w-[1080px] text-[54px] font-semibold leading-[0.92] tracking-[-0.078em] text-zinc-950 sm:text-[86px] lg:text-[118px]">
+            <h1 className="mx-auto max-w-[1080px] text-[52px] font-semibold leading-[1.02] tracking-[-0.064em] text-zinc-950 sm:text-[86px] sm:leading-[0.94] sm:tracking-[-0.078em] lg:text-[118px]">
               Cómo detectar un{" "}
               <GradientText tone="purplePink">perfil falso.</GradientText>
               <span className="block text-zinc-500">Antes de confiar.</span>
@@ -508,7 +508,7 @@ export default function DetectarPerfilFalsoPage() {
                   Respuesta rápida
                 </p>
 
-                <h2 className="mt-4 text-[44px] font-semibold leading-[0.98] tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
+                <h2 className="mt-4 text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
                   Una foto bonita
                   <span className="block text-zinc-500">
                     no confirma una <GradientText tone="purplePink">identidad.</GradientText>
@@ -549,7 +549,7 @@ export default function DetectarPerfilFalsoPage() {
                 Qué puedes revisar
               </p>
 
-              <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[0.98] tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
+              <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
                 Señales que conviene mirar
                 <span className="block text-zinc-500">
                   antes de <GradientText tone="blueCyan">confiar.</GradientText>
@@ -570,7 +570,7 @@ export default function DetectarPerfilFalsoPage() {
                 key={item.title}
                 className="min-h-[320px] rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)] transition hover:-translate-y-1 hover:shadow-[0_2px_5px_rgba(0,0,0,0.045),0_24px_58px_rgba(0,0,0,0.075)]"
               >
-                <h3 className="mt-12 text-[34px] font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950">
+                <h3 className="mt-12 text-[34px] font-semibold leading-[1.08] tracking-[-0.045em] text-zinc-950">
                   <UseCaseTitle title={item.title} />
                 </h3>
 
@@ -610,7 +610,7 @@ export default function DetectarPerfilFalsoPage() {
                 key={item.title}
                 className="rounded-[30px] border border-white/10 bg-white/[0.06] p-6 shadow-[0_18px_44px_rgba(0,0,0,0.18)]"
               >
-                <h3 className="text-[26px] font-semibold leading-tight tracking-[-0.045em] text-white">
+                <h3 className="text-[26px] font-semibold leading-[1.12] tracking-[-0.04em] text-white">
                   <WarningTitle title={item.title} />
                 </h3>
 
@@ -631,7 +631,7 @@ export default function DetectarPerfilFalsoPage() {
                 Errores a evitar
               </p>
 
-              <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[0.98] tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
+              <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
                 No investigues con miedo.
                 <span className="block text-zinc-500">
                   Revisa con <GradientText tone="green">calma.</GradientText>

@@ -295,7 +295,7 @@ export default function ProductoPage() {
       <section className="relative overflow-hidden bg-[#f5f5f7]">
         <div className="mx-auto max-w-[1500px] px-4 pb-12 pt-8 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8">
           <div className="mx-auto max-w-[1160px] text-center">
-            <h1 className="mx-auto max-w-[1120px] text-[54px] font-semibold leading-[0.92] tracking-[-0.078em] text-zinc-950 sm:text-[86px] lg:text-[118px]">
+            <h1 className="mx-auto max-w-[1120px] text-[52px] font-semibold leading-[1.02] tracking-[-0.064em] text-zinc-950 sm:text-[86px] sm:leading-[0.94] sm:tracking-[-0.078em] lg:text-[118px]">
               Un asistente para revisar
               <span className="block text-zinc-500">
                 lo importante antes de <GradientText tone="blueGreen">decidir.</GradientText>
@@ -450,7 +450,7 @@ export default function ProductoPage() {
                 Qué puede revisar
               </p>
 
-              <h2 className="mt-3 max-w-4xl text-[44px] font-semibold leading-[0.98] tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
+              <h2 className="mt-3 max-w-4xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
                 Vonu entiende problemas reales,
                 <span className="block text-zinc-500">
                   no solo preguntas <GradientText tone="blueCyan">sueltas.</GradientText>
@@ -471,7 +471,7 @@ export default function ProductoPage() {
                 href={item.href}
                 className="group min-h-[330px] rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)] transition hover:-translate-y-1 hover:shadow-[0_2px_5px_rgba(0,0,0,0.045),0_24px_58px_rgba(0,0,0,0.075)]"
               >
-                <h3 className="mt-12 text-[34px] font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950">
+                <h3 className="mt-12 text-[34px] font-semibold leading-[1.08] tracking-[-0.045em] text-zinc-950">
                   <CapabilityTitle title={item.title} />
                 </h3>
 
@@ -534,7 +534,7 @@ export default function ProductoPage() {
               Uso responsable
             </p>
 
-            <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[0.98] tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
+            <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
               Ayuda práctica,
               <span className="block text-zinc-500">
                 con límites <GradientText tone="purplePink">claros.</GradientText>
