@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
 import ResourceSignup from "../components/ResourceSignup";
+import VoiceBarsIcon from "../components/VoiceBarsIcon";
 
 const siteUrl = "https://vonuai.com";
 

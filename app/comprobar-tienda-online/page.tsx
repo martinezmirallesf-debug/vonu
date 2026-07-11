@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
 import ResourceSignup from "../components/ResourceSignup";
+import VoiceBarsIcon from "../components/VoiceBarsIcon";
 
 const siteUrl = "https://vonuai.com";
 
@@ -455,9 +456,7 @@ export default function ComprobarTiendaOnlinePage() {
                       </div>
 
                       <div className="grid h-10 w-10 place-items-center rounded-full bg-zinc-950 text-white">
-                        <span className="text-[18px] font-semibold leading-none">
-                          →
-                        </span>
+                        <VoiceBarsIcon />
                       </div>
                     </div>
                   </div>
