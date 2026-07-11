@@ -7,9 +7,6 @@ import ResourceSignup from "../components/ResourceSignup";
 
 const siteUrl = "https://vonuai.com";
 
-const screenshotExample =
-  "Voy a subir una captura de pantalla para que la revises. Puede ser un mensaje, perfil, factura, web o conversación, y quiero que me ayudes a entender qué debería comprobar antes de actuar.";
-
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Analizar captura de pantalla online — Revisa SMS, chats, webs y perfiles",
@@ -321,7 +318,6 @@ function WarningTitle({ title }: { title: string }) {
 }
 
 export default function AnalizarCapturaPantallaPage() {
-  const chatHref = `/chat?example=${encodeURIComponent(screenshotExample)}`;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -376,7 +372,7 @@ export default function AnalizarCapturaPantallaPage() {
 
             <div className="mt-7 flex flex-row justify-center gap-2.5 sm:mt-9 sm:gap-3">
               <Link
-                href={chatHref}
+                href="/chat"
                 className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] transition hover:scale-[1.02] active:scale-[0.99] sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-[15px]"
               >
                 <span className="truncate">Analizar captura</span>
@@ -699,7 +695,7 @@ export default function AnalizarCapturaPantallaPage() {
           </p>
 
           <Link
-            href={chatHref}
+            href="/chat"
             className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
           >
             Analizar captura con Vonu

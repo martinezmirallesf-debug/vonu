@@ -7,9 +7,6 @@ import ResourceSignup from "../components/ResourceSignup";
 
 const siteUrl = "https://vonuai.com";
 
-const storeExample =
-  "Ahora te voy a pasar una tienda online para comprobar si parece fiable antes de comprar o meter mis datos.";
-
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Cómo saber si una tienda online es fiable — Compruébala con VonuAI",
@@ -313,7 +310,6 @@ function CommonCaseTitle({ title }: { title: string }) {
 }
 
 export default function ComprobarTiendaOnlinePage() {
-  const chatHref = `/chat?example=${encodeURIComponent(storeExample)}`;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -368,7 +364,7 @@ export default function ComprobarTiendaOnlinePage() {
 
             <div className="mt-7 flex flex-row justify-center gap-2.5 sm:mt-9 sm:gap-3">
               <Link
-                href={chatHref}
+                href="/chat"
                 className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] transition hover:scale-[1.02] active:scale-[0.99] sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-[15px]"
               >
                 <span className="truncate">Comprobar tienda</span>
@@ -690,7 +686,7 @@ export default function ComprobarTiendaOnlinePage() {
           </p>
 
           <Link
-            href={chatHref}
+            href="/chat"
             className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
           >
             Comprobar tienda con Vonu

@@ -439,53 +439,54 @@ export default function RecursosPage() {
             </div>
           </div>
 
-          <div className="mx-auto mt-10 max-w-5xl sm:mt-14">
-            <div className="rounded-[38px] border border-zinc-200 bg-white p-3 shadow-[0_2px_5px_rgba(0,0,0,0.04),0_28px_80px_rgba(0,0,0,0.12)]">
-              <div className="rounded-[30px] bg-[#f5f5f7] p-5 sm:p-7">
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="rounded-[28px] bg-white p-6 shadow-sm">
-                    <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
-                      Seguridad
-                    </p>
-                    <p className="mt-4 text-[38px] font-semibold leading-none tracking-[-0.07em] text-zinc-950">
-                      Estafas
-                    </p>
-                    <p className="mt-4 text-[15px] leading-7 text-zinc-600">
-                      SMS, email, llamadas, webs, tiendas y perfiles falsos.
-                    </p>
-                  </div>
+          <div className="mx-auto mt-10 grid max-w-5xl gap-5 sm:mt-14 md:grid-cols-3">
+            <div className="rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)]">
+              <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                Seguridad
+              </p>
 
-                  <div className="rounded-[28px] bg-zinc-950 p-6 text-white shadow-[0_20px_50px_rgba(0,0,0,0.16)]">
-                    <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-blue-300">
-                      Decisiones
-                    </p>
-                    <p className="mt-4 text-[38px] font-semibold leading-none tracking-[-0.07em]">
-                      Claridad
-                    </p>
-                    <p className="mt-4 text-[15px] leading-7 text-zinc-300">
-                      Contratos, facturas, manipulación y próximos pasos.
-                    </p>
-                  </div>
+              <p className="mt-5 text-[42px] font-semibold leading-none tracking-[-0.075em] text-zinc-950">
+                <GradientText tone="orangeRed">Estafas</GradientText>
+              </p>
 
-                  <div className="rounded-[28px] bg-white p-6 shadow-sm">
-                    <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
-                      Producto
-                    </p>
-                    <p className="mt-4 text-[38px] font-semibold leading-none tracking-[-0.07em] text-zinc-950">
-                      Vonu
-                    </p>
-                    <p className="mt-4 text-[15px] leading-7 text-zinc-600">
-                      Guías, avances y formas de usarlo mejor.
-                    </p>
-                  </div>
-                </div>
+              <p className="mt-5 text-[16px] leading-7 text-zinc-600">
+                SMS, email, llamadas, webs, tiendas y perfiles falsos.
+              </p>
+            </div>
 
-                <p className="mt-5 text-center text-[12px] leading-6 text-zinc-500">
-                  Un centro vivo para revisar antes de firmar, pagar, contestar o decidir.
-                </p>
-              </div>
+            <div className="rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)]">
+              <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-blue-600">
+                Decisiones
+              </p>
+
+              <p className="mt-5 text-[42px] font-semibold leading-none tracking-[-0.075em] text-zinc-950">
+                <GradientText tone="blueGreen">Claridad</GradientText>
+              </p>
+
+              <p className="mt-5 text-[16px] leading-7 text-zinc-600">
+                Contratos, facturas, manipulación y próximos pasos.
+              </p>
+            </div>
+
+            <div className="rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)]">
+              <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                Producto
+              </p>
+
+              <p className="mt-5 text-[42px] font-semibold leading-none tracking-[-0.075em] text-zinc-950">
+                <GradientText tone="purplePink">Vonu</GradientText>
+              </p>
+
+              <p className="mt-5 text-[16px] leading-7 text-zinc-600">
+                Guías, avances y formas de usarlo mejor.
+              </p>
             </div>
           </div>
+
+          <p className="mx-auto mt-7 max-w-2xl text-center text-[14px] leading-7 text-zinc-500">
+            Un centro vivo para revisar antes de firmar, pagar, contestar o
+            decidir.
+          </p>
         </div>
       </section>
 

@@ -7,9 +7,6 @@ import ResourceSignup from "../components/ResourceSignup";
 
 const siteUrl = "https://vonuai.com";
 
-const cryptoExample =
-  "Me han ofrecido una inversión en criptomonedas por WhatsApp o Telegram. Prometen beneficios altos y me piden registrarme o ingresar dinero. Quiero saber si puede ser una estafa.";
-
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Estafas con criptomonedas — Cómo detectar una inversión falsa",
@@ -314,7 +311,6 @@ function ExampleTitle({ title }: { title: string }) {
 }
 
 export default function EstafasCriptomonedasPage() {
-  const chatHref = `/chat?example=${encodeURIComponent(cryptoExample)}`;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -369,7 +365,7 @@ export default function EstafasCriptomonedasPage() {
 
             <div className="mt-7 flex flex-row justify-center gap-2.5 sm:mt-9 sm:gap-3">
               <Link
-                href={chatHref}
+                href="/chat"
                 className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] transition hover:scale-[1.02] active:scale-[0.99] sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-[15px]"
               >
                 <span className="truncate">Revisar inversión</span>
@@ -694,7 +690,7 @@ export default function EstafasCriptomonedasPage() {
           </p>
 
           <Link
-            href={chatHref}
+            href="/chat"
             className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
           >
             Revisar con Vonu

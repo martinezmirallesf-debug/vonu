@@ -46,7 +46,7 @@ function GradientText({
 }) {
   return (
     <span
-      className="inline-block whitespace-nowrap align-baseline"
+      className="inline align-baseline"
       style={{
         backgroundImage: gradientMap[tone],
         WebkitBackgroundClip: "text",

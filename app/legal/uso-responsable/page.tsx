@@ -47,7 +47,7 @@ function GradientText({
 }) {
   return (
     <span
-      className="inline-block whitespace-nowrap align-baseline"
+      className="inline align-baseline"
       style={{
         backgroundImage: gradientMap[tone],
         WebkitBackgroundClip: "text",
@@ -102,7 +102,7 @@ export default function UsoResponsablePage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f5f7] text-zinc-950">
+    <main className="min-h-screen overflow-x-hidden bg-[#f5f5f7] text-zinc-950">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

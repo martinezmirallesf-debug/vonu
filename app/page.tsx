@@ -7,6 +7,9 @@ import VoiceBarsIcon from "./components/VoiceBarsIcon";
 
 const siteUrl = "https://vonuai.com";
 
+const homeExample =
+  "¿Es fiable esta web? He encontrado una tienda online con un precio muy barato y no sé si pagar.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "VonuAI — Antes de firmar, pagar, contestar o decidir… consúltalo con Vonu",
@@ -427,7 +430,7 @@ export default function HomePage() {
 
             <div className="mt-7 flex flex-row justify-center gap-2.5 sm:mt-9 sm:gap-3">
               <Link
-                href="/chat"
+                href={`/chat?example=${encodeURIComponent(homeExample)}`}
                 className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] transition hover:scale-[1.02] active:scale-[0.99] sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-[15px]"
               >
                 <span className="truncate">Analizar ahora</span>
@@ -467,8 +470,9 @@ export default function HomePage() {
 
                 <div className="mx-auto max-w-3xl">
                   <div className="ml-auto max-w-[88%] rounded-[26px] bg-[#e9edf1] px-5 py-4 text-left text-[16px] leading-7 text-zinc-900 sm:max-w-[78%]">
-                    Me escribe una chica en Tinder. Me manda fotos, dice que le gusto y
-                    ahora quiere que invierta en una criptomoneda. ¿Me puedo fiar?
+                    He encontrado una tienda online con unas zapatillas mucho más baratas
+que en otros sitios. La web parece profesional, pero no sé si es fiable.
+¿La revisas antes de pagar?
                   </div>
 
                   <div className="mt-7 text-left">
@@ -480,7 +484,7 @@ export default function HomePage() {
 
                     <div className="text-[17px] leading-8 text-zinc-900">
                       <p className="text-[28px] font-semibold leading-[1.05] tracking-[-0.055em] text-zinc-950 sm:text-[38px]">
-                        Yo frenaría: Tinder + inversión + cripto es una señal roja clara.
+                        Yo no pagaría todavía. Precio muy bajo + tienda desconocida es una combinación que conviene revisar.
                       </p>
 
                       <div className="mt-5">
@@ -491,16 +495,16 @@ export default function HomePage() {
                         <ul className="mt-3 space-y-3 text-zinc-700">
                           <li className="flex gap-3">
                             <span className="mt-[11px] h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" />
-                            <span>La inversión aparece demasiado pronto.</span>
+                            <span>El precio parece demasiado bueno comparado con tiendas conocidas.</span>
                           </li>
                           <li className="flex gap-3">
                             <span className="mt-[11px] h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" />
-                            <span>Quiere sacarte de la app y llevarte a otro canal.</span>
+                            <span>Hay que comprobar quién está detrás de la tienda y si tiene datos legales claros.</span>
                           </li>
                           <li className="flex gap-3">
                             <span className="mt-[11px] h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" />
                             <span>
-                              La mezcla de romance, confianza rápida y dinero es un patrón típico de estafa.
+                              Antes de meter tarjeta conviene revisar métodos de pago, devoluciones y opiniones externas.
                             </span>
                           </li>
                         </ul>
@@ -512,9 +516,9 @@ export default function HomePage() {
                         </p>
 
                         <p className="mt-2 text-zinc-700">
-                          No enviaría dinero, códigos, documentos ni fotos íntimas.
-                          Pediría una videollamada corta y natural. Si evita comprobar
-                          quién es o insiste con la inversión, bloquearía/reportaría.
+                          Buscaría el nombre de la tienda fuera de su propia web, revisaría aviso legal,
+devoluciones y métodos de pago. Si solo acepta transferencia o no hay datos claros,
+no compraría.
                         </p>
                       </div>
                     </div>

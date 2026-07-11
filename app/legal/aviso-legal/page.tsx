@@ -46,7 +46,7 @@ function GradientText({
 }) {
   return (
     <span
-      className="inline-block whitespace-nowrap align-baseline"
+      className="inline align-baseline"
       style={{
         backgroundImage: gradientMap[tone],
         WebkitBackgroundClip: "text",
@@ -108,7 +108,7 @@ export default function AvisoLegalPage() {
               Legal
             </p>
 
-            <h1 className="mx-auto mt-4 max-w-[1040px] text-[54px] font-semibold leading-[0.92] tracking-[-0.078em] text-zinc-950 sm:text-[86px] lg:text-[118px]">
+            <h1 className="mx-auto mt-4 max-w-[1040px] text-[48px] font-semibold leading-[1.02] tracking-[-0.065em] text-zinc-950 sm:text-[86px] sm:leading-[0.94] sm:tracking-[-0.078em] lg:text-[118px]">
               Aviso
               <span className="block text-zinc-500">
                 <GradientText tone="blueCyan">legal.</GradientText>
