@@ -233,7 +233,31 @@ function CheckIcon() {
 }
 
 function ResourceTitle({ title }: { title: string }) {
-  if (title.includes("SMS")) {
+  if (title === "¿Es fiable? Compruébalo antes de actuar") {
+    return (
+      <>
+        ¿Es <GradientText tone="blueGreen">fiable</GradientText>? Compruébalo antes de actuar
+      </>
+    );
+  }
+
+  if (title === "Analizar link sospechoso") {
+    return (
+      <>
+        Analizar link <GradientText tone="orangeRed">sospechoso</GradientText>
+      </>
+    );
+  }
+
+  if (title === "Comprobar si una inversión es estafa") {
+    return (
+      <>
+        Comprobar si una inversión es <GradientText tone="purplePink">estafa</GradientText>
+      </>
+    );
+  }
+
+  if (title === "Cómo saber si un SMS puede ser una estafa") {
     return (
       <>
         SMS puede ser una <GradientText tone="orangeRed">estafa</GradientText>
@@ -241,7 +265,7 @@ function ResourceTitle({ title }: { title: string }) {
     );
   }
 
-  if (title.includes("web es fiable")) {
+  if (title === "Cómo comprobar si una web es fiable") {
     return (
       <>
         Comprobar si una web es <GradientText tone="blueCyan">fiable</GradientText>
@@ -249,7 +273,7 @@ function ResourceTitle({ title }: { title: string }) {
     );
   }
 
-  if (title.includes("firmar un contrato")) {
+  if (title === "Qué mirar antes de firmar un contrato") {
     return (
       <>
         Antes de firmar un <GradientText tone="purplePink">contrato</GradientText>
@@ -257,7 +281,7 @@ function ResourceTitle({ title }: { title: string }) {
     );
   }
 
-  if (title.includes("banco")) {
+  if (title === "Me llama el banco y me pide un código SMS") {
     return (
       <>
         Banco y código <GradientText tone="orangeRed">SMS</GradientText>
@@ -265,7 +289,7 @@ function ResourceTitle({ title }: { title: string }) {
     );
   }
 
-  if (title.includes("criptomonedas")) {
+  if (title === "Estafas con criptomonedas") {
     return (
       <>
         Estafas con <GradientText tone="green">criptomonedas</GradientText>
@@ -273,7 +297,7 @@ function ResourceTitle({ title }: { title: string }) {
     );
   }
 
-  if (title.includes("Email")) {
+  if (title === "Email sospechoso o phishing") {
     return (
       <>
         Email sospechoso o <GradientText tone="orangeRed">phishing</GradientText>
@@ -281,7 +305,7 @@ function ResourceTitle({ title }: { title: string }) {
     );
   }
 
-  if (title.includes("factura")) {
+  if (title === "Cómo comprobar si una factura está bien") {
     return (
       <>
         Comprobar una <GradientText tone="amberOrange">factura</GradientText>
@@ -289,7 +313,7 @@ function ResourceTitle({ title }: { title: string }) {
     );
   }
 
-  if (title.includes("manipulación")) {
+  if (title === "Cómo detectar manipulación emocional") {
     return (
       <>
         Detectar <GradientText tone="purplePink">manipulación</GradientText>
@@ -297,7 +321,7 @@ function ResourceTitle({ title }: { title: string }) {
     );
   }
 
-  if (title.includes("tienda online")) {
+  if (title === "Cómo comprobar si una tienda online es fiable") {
     return (
       <>
         Tienda online <GradientText tone="blueCyan">fiable</GradientText>
@@ -305,7 +329,7 @@ function ResourceTitle({ title }: { title: string }) {
     );
   }
 
-  if (title.includes("captura")) {
+  if (title === "Analizar captura de pantalla online") {
     return (
       <>
         Analizar <GradientText tone="blueGreen">captura</GradientText>
@@ -313,7 +337,7 @@ function ResourceTitle({ title }: { title: string }) {
     );
   }
 
-  if (title.includes("perfil falso")) {
+  if (title === "Cómo detectar un perfil falso") {
     return (
       <>
         Detectar perfil <GradientText tone="orangeRed">falso</GradientText>
@@ -321,7 +345,15 @@ function ResourceTitle({ title }: { title: string }) {
     );
   }
 
-  if (title.includes("alquiler")) {
+  if (title === "Cómo detectar un perfil falso") {
+    return (
+      <>
+        Detectar perfil <GradientText tone="orangeRed">falso</GradientText>
+      </>
+    );
+  }
+
+  if (title === "Revisar contrato de alquiler online") {
     return (
       <>
         Contrato de <GradientText tone="purplePink">alquiler</GradientText>
