@@ -36,6 +36,24 @@ export const metadata: Metadata = {
 };
 
 const featuredResources = [
+    {
+    title: "¿Es fiable? Compruébalo antes de actuar",
+    category: "Fiabilidad",
+    text: "Revisa webs, tiendas, mensajes, perfiles, facturas, contratos u ofertas antes de pagar, firmar, contestar o compartir datos.",
+    href: "/es-fiable",
+  },
+  {
+    title: "Analizar link sospechoso",
+    category: "Enlaces sospechosos",
+    text: "Comprueba enlaces recibidos por SMS, WhatsApp, email, redes sociales o códigos QR antes de pulsar o introducir datos.",
+    href: "/analizar-link-sospechoso",
+  },
+  {
+    title: "Comprobar si una inversión es estafa",
+    category: "Inversiones",
+    text: "Revisa propuestas de trading, criptomonedas, plataformas raras o beneficios rápidos antes de enviar dinero.",
+    href: "/comprobar-inversion-estafa",
+  },
   {
     title: "Cómo saber si un SMS puede ser una estafa",
     category: "Estafas",
@@ -524,7 +542,7 @@ export default function RecursosPage() {
                   {item.category}
                 </p>
 
-                <h3 className="mt-12 text-[34px] font-semibold leading-[1.08] tracking-[-0.045em] text-zinc-950">
+                <h3 className="mt-12 text-[32px] font-semibold leading-[1.08] tracking-[-0.045em] text-zinc-950">
                   <ResourceTitle title={item.title} />
                 </h3>
 
