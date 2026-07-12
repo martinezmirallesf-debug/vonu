@@ -7,9 +7,6 @@ import VoiceBarsIcon from "./components/VoiceBarsIcon";
 
 const siteUrl = "https://vonuai.com";
 
-const homeExample =
-  "¿Es fiable esta web? He encontrado una tienda online con un precio muy barato y no sé si pagar.";
-
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "VonuAI — Antes de firmar, pagar, contestar o decidir… consúltalo con Vonu",
@@ -430,7 +427,7 @@ export default function HomePage() {
 
             <div className="mt-7 flex flex-row justify-center gap-2.5 sm:mt-9 sm:gap-3">
               <Link
-                href={`/chat?example=${encodeURIComponent(homeExample)}`}
+  href="/chat"
                 className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] transition hover:scale-[1.02] active:scale-[0.99] sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-[15px]"
               >
                 <span className="truncate">Analizar ahora</span>
@@ -449,8 +446,8 @@ export default function HomePage() {
             <div className="mx-auto mt-6 flex max-w-3xl flex-wrap justify-center gap-2.5 sm:mt-8 sm:gap-3.5">
               {quickPrompts.map((prompt) => (
                 <Link
-                  key={prompt}
-                  href={`/chat?example=${encodeURIComponent(prompt)}`}
+  key={prompt}
+  href="/chat"
                   className="rounded-full border border-zinc-200 bg-white px-3.5 py-2 text-[13.5px] font-medium text-zinc-600 shadow-sm transition hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-950 hover:shadow-md sm:px-4 sm:py-2.5 sm:text-[14px]"
                 >
                   {prompt}
