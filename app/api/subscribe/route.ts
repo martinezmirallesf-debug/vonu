@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
 
     const email = cleanText(body?.email, 180).toLowerCase();
     const page = cleanText(body?.page, 180);
+    const source = cleanText(body?.source, 120) || "resource_signup";
 
     if (!email || !isValidEmail(email)) {
       return json(
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
       {
         email,
         page: page || null,
-        source: "resource_signup",
+        source,
       },
       {
         onConflict: "email",
@@ -90,14 +91,13 @@ export async function POST(req: NextRequest) {
       },
       200
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("SUBSCRIBE_INTERNAL_ERROR", error);
 
     return json(
       {
         ok: false,
         error: "Error interno guardando el email.",
-        message: error?.message ?? String(error),
       },
       500
     );
