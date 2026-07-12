@@ -1,9 +1,43 @@
 import Link from "next/link";
 
+const productLinks = [
+  { label: "Producto", href: "/producto" },
+  { label: "Casos de uso", href: "/casos-de-uso" },
+  { label: "Precios", href: "/precios" },
+  { label: "Cómo funciona", href: "/como-funciona" },
+  { label: "Contacto", href: "/contacto" },
+];
+
+const resourceLinks = [
+  { label: "Recursos Vonu", href: "/recursos" },
+  { label: "¿Es fiable?", href: "/es-fiable" },
+  { label: "Analizar link sospechoso", href: "/analizar-link-sospechoso" },
+  { label: "Comprobar inversión", href: "/comprobar-inversion-estafa" },
+  { label: "Analizar SMS sospechoso", href: "/analizar-sms-estafa" },
+  { label: "Email sospechoso", href: "/email-sospechoso-estafa" },
+  { label: "Comprobar web fiable", href: "/comprobar-web-fiable" },
+  { label: "Comprobar tienda online", href: "/comprobar-tienda-online" },
+  { label: "Comprobar factura", href: "/comprobar-factura" },
+  { label: "Revisar contrato", href: "/revisar-contrato" },
+  { label: "Revisar contrato de alquiler", href: "/revisar-contrato-alquiler" },
+  { label: "Detectar manipulación", href: "/detectar-manipulacion" },
+  { label: "Detectar perfil falso", href: "/detectar-perfil-falso" },
+  { label: "Analizar captura de pantalla", href: "/analizar-captura-pantalla" },
+  { label: "Estafas con criptomonedas", href: "/estafas-criptomonedas" },
+];
+
+const legalLinks = [
+  { label: "Aviso legal", href: "/legal/aviso-legal" },
+  { label: "Privacidad", href: "/legal/privacidad" },
+  { label: "Términos", href: "/legal/terminos" },
+  { label: "Cookies", href: "/legal/cookies" },
+  { label: "Uso responsable", href: "/legal/uso-responsable" },
+];
+
 export default function HomeFooter() {
   return (
     <footer className="border-t border-zinc-200 bg-[#f8f9fa]">
-      <div className="mx-auto grid max-w-[1500px] gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.1fr_0.9fr_0.9fr_0.9fr] lg:px-8">
+      <div className="mx-auto grid max-w-[1500px] gap-10 px-4 py-10 sm:px-6 md:grid-cols-[1.05fr_0.75fr_1.45fr_0.75fr] lg:px-8">
         <div>
           <span className="text-[20px] font-semibold tracking-[-0.045em] text-zinc-950">
             VonuAI
@@ -15,13 +49,13 @@ export default function HomeFooter() {
           </p>
 
           <div className="mt-5 flex flex-wrap gap-2">
-  <Link
-    href="/chat"
-    className="inline-flex rounded-full bg-zinc-950 px-4 py-2 text-[14px] font-semibold text-white shadow-sm transition hover:scale-[1.02] active:scale-[0.99]"
-  >
-    Probar Vonu
-  </Link>
-</div>
+            <Link
+              href="/chat"
+              className="inline-flex rounded-full bg-zinc-950 px-4 py-2 text-[14px] font-semibold text-white shadow-sm transition hover:scale-[1.02] active:scale-[0.99]"
+            >
+              Probar Vonu
+            </Link>
+          </div>
         </div>
 
         <div>
@@ -30,21 +64,15 @@ export default function HomeFooter() {
           </h3>
 
           <div className="mt-4 grid gap-3 text-[14px] text-zinc-600">
-            <Link href="/producto" className="hover:text-zinc-950">
-  Producto
-</Link>
-<Link href="/casos-de-uso" className="hover:text-zinc-950">
-  Casos de uso
-</Link>
-            <Link href="/precios" className="hover:text-zinc-950">
-              Precios
-            </Link>
-            <Link href="/como-funciona" className="hover:text-zinc-950">
-  Cómo funciona
-</Link>
-            <Link href="/contacto" className="hover:text-zinc-950">
-  Contacto
-</Link>
+            {productLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="hover:text-zinc-950"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
 
@@ -53,40 +81,16 @@ export default function HomeFooter() {
             Recursos
           </h3>
 
-          <div className="mt-4 grid gap-3 text-[14px] text-zinc-600">
-            <Link href="/recursos" className="hover:text-zinc-950">
-              Recursos Vonu
-            </Link>
-            <Link href="/analizar-sms-estafa" className="hover:text-zinc-950">
-              Analizar SMS sospechoso
-            </Link>
-            <Link href="/comprobar-web-fiable" className="hover:text-zinc-950">
-              Comprobar web fiable
-            </Link>
-            <Link href="/revisar-contrato" className="hover:text-zinc-950">
-              Revisar contrato
-            </Link>
-            <Link href="/revisar-contrato-alquiler" className="hover:text-zinc-950">
-  Revisar contrato de alquiler
-</Link>
-            <Link href="/comprobar-factura" className="hover:text-zinc-950">
-              Comprobar factura
-            </Link>
-            <Link href="/detectar-manipulacion" className="hover:text-zinc-950">
-  Detectar manipulación
-</Link>
-
-<Link href="/comprobar-tienda-online" className="hover:text-zinc-950">
-  Comprobar tienda online
-</Link>
-
-<Link href="/analizar-captura-pantalla" className="hover:text-zinc-950">
-  Analizar captura de pantalla
-</Link>
-
-<Link href="/detectar-perfil-falso" className="hover:text-zinc-950">
-  Detectar perfil falso
-</Link>
+          <div className="mt-4 grid gap-3 text-[14px] text-zinc-600 sm:grid-cols-2 sm:gap-x-8">
+            {resourceLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="hover:text-zinc-950"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
 
@@ -96,27 +100,22 @@ export default function HomeFooter() {
           </h3>
 
           <div className="mt-4 grid gap-3 text-[14px] text-zinc-600">
-            <Link href="/legal/aviso-legal" className="hover:text-zinc-950">
-              Aviso legal
-            </Link>
-            <Link href="/legal/privacidad" className="hover:text-zinc-950">
-              Privacidad
-            </Link>
-            <Link href="/legal/terminos" className="hover:text-zinc-950">
-              Términos
-            </Link>
-            <Link href="/legal/cookies" className="hover:text-zinc-950">
-              Cookies
-            </Link>
-            <Link href="/legal/uso-responsable" className="hover:text-zinc-950">
-              Uso responsable
-            </Link>
+            {legalLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="hover:text-zinc-950"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>
 
       <div className="border-t border-zinc-200 px-4 py-5 text-center text-[13px] text-zinc-500">
-        © {new Date().getFullYear()} VonuAI. Orientación preventiva. No sustituye profesionales.
+        © {new Date().getFullYear()} VonuAI. Orientación preventiva. No
+        sustituye profesionales.
       </div>
     </footer>
   );
