@@ -6047,19 +6047,51 @@ const [urlInputOpen, setUrlInputOpen] = useState(false);
 const [urlDraft, setUrlDraft] = useState("");
 const [phoneInputOpen, setPhoneInputOpen] = useState(false);
 const [phoneDraft, setPhoneDraft] = useState("");
+const toolSubmitLockRef = useRef(false);
+
+function releaseToolSubmitLock() {
+  window.setTimeout(() => {
+    toolSubmitLockRef.current = false;
+  }, 1200);
+}
 function submitPhoneAnalysis() {
   const clean = phoneDraft.trim();
   if (!clean) return;
 
+  if (toolSubmitLockRef.current) return;
+  toolSubmitLockRef.current = true;
+
   setPhoneInputOpen(false);
   setPhoneDraft("");
+  setPendingFileType(null);
 
   sendQuickMessage(
-  `Analiza este número de teléfono o llamada sospechosa: ${clean}
+    `Analiza este número de teléfono o llamada sospechosa: ${clean}
 
 Dime si ves señales de riesgo y qué harías antes de devolver la llamada, responder por WhatsApp o compartir datos.`,
-  "chat"
-);
+    "chat"
+  );
+
+  releaseToolSubmitLock();
+}
+
+function submitUrlAnalysis() {
+  const clean = urlDraft.trim();
+  if (!clean) return;
+
+  if (toolSubmitLockRef.current) return;
+  toolSubmitLockRef.current = true;
+
+  setUrlInputOpen(false);
+  setUrlDraft("");
+  setPendingFileType(null);
+
+  sendQuickMessage(
+    `Quiero que analices este enlace y me digas si ves algo sospechoso o importante: ${clean}`,
+    activeThread?.mode ?? "chat"
+  );
+
+  releaseToolSubmitLock();
 }
 
   const [usageInfo, setUsageInfo] = useState<{
@@ -10732,7 +10764,10 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 >
     <div
       className="absolute inset-0 bg-black/25 backdrop-blur-[6px]"
-      onClick={() => setUrlInputOpen(false)}
+      onClick={() => {
+  setUrlInputOpen(false);
+  setPendingFileType(null);
+}}
       aria-hidden="true"
     />
 
@@ -10774,23 +10809,12 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
           </button>
 
           <button
-            type="button"
-            onClick={() => {
-              const clean = urlDraft.trim();
-              if (!clean) return;
-
-              setUrlInputOpen(false);
-              setUrlDraft("");
-
-              sendQuickMessage(
-                `Quiero que analices este enlace y me digas si ves algo sospechoso o importante: ${clean}`,
-                activeThread?.mode ?? "chat"
-              );
-            }}
-            className="flex-1 h-11 rounded-full bg-[#1a73e8] hover:bg-[#1669c1] text-white text-[14px] font-semibold transition-colors cursor-pointer"
-          >
-            Analizar
-          </button>
+  type="button"
+  onClick={submitUrlAnalysis}
+  className="flex-1 h-11 rounded-full bg-[#1a73e8] hover:bg-[#1669c1] text-white text-[14px] font-semibold transition-colors cursor-pointer"
+>
+  Analizar
+</button>
         </div>
       </div>
     </div>
@@ -10824,28 +10848,29 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 
         <div className="p-4">
           <input
-  value={phoneDraft}
-  onChange={(e) => setPhoneDraft(e.target.value)}
+  value={urlDraft}
+  onChange={(e) => setUrlDraft(e.target.value)}
   onKeyDown={(e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      submitPhoneAnalysis();
+      submitUrlAnalysis();
     }
   }}
-  placeholder="+34 600 000 000"
-            className="w-full h-12 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-[16px] text-zinc-900 placeholder:text-zinc-500 outline-none focus:border-zinc-300"
-            autoFocus
-            inputMode="tel"
-          />
+  placeholder="https://."
+  className="w-full h-12 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-[16px] text-zinc-900 placeholder:text-zinc-500 outline-none focus:border-zinc-300"
+  autoFocus
+  inputMode="url"
+/>
         </div>
 
         <div className="px-4 pb-4 flex gap-2">
           <button
             type="button"
             onClick={() => {
-              setPhoneInputOpen(false);
-              setPhoneDraft("");
-            }}
+  setUrlInputOpen(false);
+  setUrlDraft("");
+  setPendingFileType(null);
+}}
             className="flex-1 h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-[14px] font-semibold text-zinc-800 transition-colors cursor-pointer"
           >
             Cancelar
