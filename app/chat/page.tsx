@@ -8065,6 +8065,7 @@ const hiddenPdfContext =
   `- Si el usuario pregunta si el documento está correcto, revisa lo visible y responde de forma práctica: qué parece correcto, qué habría que comprobar y qué harías ahora.\n` +
   `- Si detectas que es una factura, contrato, declaración, recibo, justificante o documento fiscal/legal, sé prudente: explica el riesgo o punto importante en lenguaje común y recomienda verificarlo con asesor/profesional solo cuando tenga sentido.\n` +
   `- No añadas apartados que no aplican. Por ejemplo, si es una factura, no hables de material de estudio.\n` +
+  `- Si detectas que es un informe de notas, boletín escolar, evaluación académica o documento educativo, resume el rendimiento, puntos fuertes, áreas a mejorar y próximos pasos útiles para la familia. No lo trates como perfil falso, Tinder, fraude o imagen sospechosa.\n` +
   `- La respuesta debe sonar natural, concreta, cercana y útil, como si estuvieras ayudando a revisar el documento de verdad.\n\n` +
   `CONTENIDO EXTRAÍDO DEL PDF:\n\n${json.text}`;
 
@@ -8387,31 +8388,6 @@ if (voiceModeRef.current) {
   stopConversationModeBeforeTypedSend();
 }
 
-
-    // ✅ Guardamos modo en el thread (así el backend recibe el modo correcto)
-const now = Date.now();
-
-setThreads((prev) =>
-  prev.map((t) => {
-    if (t.id !== targetThreadId) return t;
-
-    const nextTitle = shouldAutoTitleThread(t.title)
-      ? makeSmartThreadTitleFromMessage(userMsg)
-      : t.title;
-
-    return {
-      ...t,
-      title: nextTitle,
-      updatedAt: now,
-      messages: [...t.messages, userMsg, assistantMsg],
-    };
-  })
-);
-
-// Guardado inmediato en nube.
-// Así otro dispositivo puede ver el hilo aunque Vonu siga respondiendo.
-queueSaveThreadToCloud(targetThreadId, 1200);
-
     const userMsg: Message = {
   id: crypto.randomUUID(),
   role: "user",
@@ -8461,10 +8437,14 @@ const assistantMsg: Message = {
       ...t,
       title: shouldAutoTitle ? makeSmartThreadTitle(titleSource) : t.title,
       updatedAt: Date.now(),
-      messages: [...t.messages, userMsg],
+      mode: modePreset,
+      tutorProfile: t.tutorProfile ?? { level: "adult" },
+      messages: [...t.messages, userMsg, assistantMsg],
     };
   })
 );
+
+queueSaveThreadToCloud(targetThreadId, 350);
 
 pinUserMessageNearTop(userMsg.id);
 
@@ -8481,27 +8461,10 @@ function scrollToBottomNow(behavior: ScrollBehavior = "smooth") {
   shouldStickToBottomRef.current = true;
 }
 
-requestAnimationFrame(() => {
-  requestAnimationFrame(() => {
-    setThreads((prev) =>
-      prev.map((t) => {
-        if (t.id !== targetThreadId) return t;
-
-        const alreadyExists = t.messages.some((m) => m.id === assistantId);
-        if (alreadyExists) return t;
-
-        return {
-          ...t,
-          updatedAt: Date.now(),
-          messages: [...t.messages, assistantMsg],
-        };
-      })
-    );
-  });
-});
-
     setInput(""); // por si había algo escrito
 setImagePreview(null);
+setPdfPreview(null);
+setPendingFileType(null);
 setIsTyping(true);
 
 if (!isDesktopPointer()) {
@@ -8993,8 +8956,8 @@ const userMsg: Message = {
         (imageBase64
           ? "He adjuntado una imagen."
           : pdfAttachment
-          ? `He adjuntado un PDF: ${pdfAttachment.filename}`
-          : undefined),
+? `He adjuntado un PDF/documento: ${pdfAttachment.filename}. Analízalo como documento. Si es un informe de notas, boletín escolar o documento académico, haz un resumen claro, destaca lo importante y explica qué conviene revisar. No lo trates como perfil, imagen de citas ni fraude salvo que el propio documento lo indique.`
+: undefined),
   image: imageBase64 || undefined,
   imageThumb: imageThumb || undefined,
 };
@@ -9043,6 +9006,7 @@ pinUserMessageNearTop(userMsg.id);
 setInput("");
 setImagePreview(null);
 setPdfPreview(null);
+setPendingFileType(null);
 setIsTyping(true);
 
 if (!isDesktopPointer()) {
@@ -10766,6 +10730,7 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
       className="absolute inset-0 bg-black/25 backdrop-blur-[6px]"
       onClick={() => {
   setUrlInputOpen(false);
+  setUrlDraft("");
   setPendingFileType(null);
 }}
       aria-hidden="true"
@@ -10787,13 +10752,19 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 
         <div className="p-4">
           <input
-            value={urlDraft}
-            onChange={(e) => setUrlDraft(e.target.value)}
-            placeholder="https://..."
-            className="w-full h-12 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-[16px] text-zinc-900 placeholder:text-zinc-500 outline-none focus:border-zinc-300"
-            autoFocus
-            inputMode="url"
-          />
+  value={urlDraft}
+  onChange={(e) => setUrlDraft(e.target.value)}
+  onKeyDown={(e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      submitUrlAnalysis();
+    }
+  }}
+  placeholder="https://..."
+  className="w-full h-12 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-[16px] text-zinc-900 placeholder:text-zinc-500 outline-none focus:border-zinc-300"
+  autoFocus
+  inputMode="url"
+/>
         </div>
 
         <div className="px-4 pb-4 flex gap-2">
@@ -10823,19 +10794,23 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 
 {phoneInputOpen && (
   <div
-  className="fixed inset-0 z-[116] overflow-hidden overscroll-none touch-none"
-  style={{ WebkitOverflowScrolling: "auto" }}
->
+    className="fixed inset-0 z-[116] overflow-hidden overscroll-none touch-none"
+    style={{ WebkitOverflowScrolling: "auto" }}
+  >
     <div
       className="absolute inset-0 bg-black/25 backdrop-blur-[6px]"
-      onClick={() => setPhoneInputOpen(false)}
+      onClick={() => {
+        setPhoneInputOpen(false);
+        setPhoneDraft("");
+        setPendingFileType(null);
+      }}
       aria-hidden="true"
     />
 
     <div
-  className="absolute inset-0 flex items-start justify-center px-3 pt-[12vh] md:items-center md:px-6 md:pt-0 overflow-hidden overscroll-none touch-none"
-  style={{ WebkitOverflowScrolling: "auto" }}
->
+      className="absolute inset-0 flex items-start justify-center px-3 pt-[12vh] md:items-center md:px-6 md:pt-0 overflow-hidden overscroll-none touch-none"
+      style={{ WebkitOverflowScrolling: "auto" }}
+    >
       <div
         className="w-full max-w-[520px] rounded-[30px] border border-zinc-200 bg-white/94 backdrop-blur-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -10848,37 +10823,37 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 
         <div className="p-4">
           <input
-  value={urlDraft}
-  onChange={(e) => setUrlDraft(e.target.value)}
-  onKeyDown={(e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      submitUrlAnalysis();
-    }
-  }}
-  placeholder="https://."
-  className="w-full h-12 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-[16px] text-zinc-900 placeholder:text-zinc-500 outline-none focus:border-zinc-300"
-  autoFocus
-  inputMode="url"
-/>
+            value={phoneDraft}
+            onChange={(e) => setPhoneDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                submitPhoneAnalysis();
+              }
+            }}
+            placeholder="+34 600 000 000"
+            className="w-full h-12 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-[16px] text-zinc-900 placeholder:text-zinc-500 outline-none focus:border-zinc-300"
+            autoFocus
+            inputMode="tel"
+          />
         </div>
 
         <div className="px-4 pb-4 flex gap-2">
           <button
             type="button"
             onClick={() => {
-  setUrlInputOpen(false);
-  setUrlDraft("");
-  setPendingFileType(null);
-}}
+              setPhoneInputOpen(false);
+              setPhoneDraft("");
+              setPendingFileType(null);
+            }}
             className="flex-1 h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-[14px] font-semibold text-zinc-800 transition-colors cursor-pointer"
           >
             Cancelar
           </button>
 
           <button
-  type="button"
-  onClick={submitPhoneAnalysis}
+            type="button"
+            onClick={submitPhoneAnalysis}
             className="flex-1 h-11 rounded-full bg-[#1a73e8] hover:bg-[#1669c1] text-white text-[14px] font-semibold transition-colors cursor-pointer"
           >
             Analizar
