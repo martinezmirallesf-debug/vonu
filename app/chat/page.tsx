@@ -1774,7 +1774,7 @@ function initialAssistantMessage(): Message {
     role: "assistant",
     text:
       "Hola 👋 Soy **Vonu**.\n\n" +
-      "Cuéntame tu situación (o adjunta una captura) y te digo **qué pinta tiene**, el **riesgo real** y **qué haría ahora** para decidir con calma.\n\n" +
+      "Cuéntame tu situación (o adjunta una captura) y te digo **qué pinta tiene**, el **riesgo real\n\n" +
       "_Importante: no compartas contraseñas, códigos ni datos bancarios._",
   };
 }
