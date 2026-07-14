@@ -602,12 +602,6 @@ if (shouldForceTutorModeFromText) {
   }
 }
 
-if (normalized.mode === "tutor") {
-  normalized.userText = `${tutorMathMobileFormattingInstruction}
-
-${normalized.userText}`;
-}
-
 const phoneIntelInstruction =
   normalized.mode !== "tutor" && looksLikePhoneSafetyIntent(normalized.userText)
     ? buildPhoneIntelInstruction(normalized.userText)
@@ -712,6 +706,8 @@ REGLAS DE ESTILO:
 const edgePayload = {
   ...normalized,
   extraInstructions: copyableResponseBlockInstruction,
+  tutorMathMobileFormattingInstruction:
+    normalized.mode === "tutor" ? tutorMathMobileFormattingInstruction : "",
 };
 
     // ==========================================================

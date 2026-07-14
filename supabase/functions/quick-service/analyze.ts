@@ -60,6 +60,7 @@ async function runOpenAILightGreeting(params: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${params.openaiApiKey}`,
       },
+      
       body: JSON.stringify({
         model,
         temperature: 0.6,
@@ -8578,6 +8579,11 @@ if (token && !isGuest) {
         ? body.name
         : "";
 
+        const tutorMathMobileFormattingInstruction =
+  typeof body?.tutorMathMobileFormattingInstruction === "string"
+    ? body.tutorMathMobileFormattingInstruction.trim()
+    : "";
+
     const messages = Array.isArray(body?.messages) ? body.messages : [];
     const imageBase64 = typeof body?.imageBase64 === "string" ? body.imageBase64 : null;
     const pdfText = typeof body?.pdfText === "string" ? body.pdfText : null;
@@ -10424,9 +10430,16 @@ const openAiTimeout = setTimeout(() => {
 const supportsTemperature =
   !String(model || "").toLowerCase().startsWith("gpt-5");
 
+const finalInstructions = [
+  instructions,
+  effectiveMode === "tutor" ? tutorMathMobileFormattingInstruction : "",
+]
+  .filter(Boolean)
+  .join("\n\n");
+
 const openAIRequestBody: Record<string, unknown> = {
   model,
-  instructions,
+  instructions: finalInstructions,
   input,
   max_output_tokens,
 };
