@@ -73,6 +73,12 @@ type Message = {
   boardImageB64?: string | null;
   boardImagePlacement?: { x: number; y: number; w: number; h: number } | null;
   revealMs?: number;
+
+  // Estado visual de los puntos de Vonu:
+  // - undefined = mensajes antiguos: se infiere como hasta ahora.
+  // - null = no pintar puntos.
+  // - safe/warning/high/danger = pintar ese color.
+  riskStatus?: "safe" | "warning" | "high" | "danger" | null;
 };
 
 type ThreadMode = "chat" | "tutor";
@@ -1692,6 +1698,139 @@ function inferRiskStatusFromUserText(text: string): "safe" | "warning" | "high" 
   return null;
 }
 
+function normalizeRiskStatusValue(value: unknown): RiskStatus | null {
+  const v = String(value ?? "").toLowerCase().trim();
+
+  if (v === "safe" || v === "low" || v === "green" || v === "verde") {
+    return "safe";
+  }
+
+  if (
+    v === "warning" ||
+    v === "medium" ||
+    v === "moderate" ||
+    v === "orange" ||
+    v === "naranja"
+  ) {
+    return "warning";
+  }
+
+  if (v === "high" || v === "alto") {
+    return "high";
+  }
+
+  if (
+    v === "danger" ||
+    v === "critical" ||
+    v === "critico" ||
+    v === "crítico" ||
+    v === "red" ||
+    v === "rojo"
+  ) {
+    return "danger";
+  }
+
+  return null;
+}
+
+function looksLikeGeneralVonuProductQuestion(text: string) {
+  const t = normalizeRiskText(text);
+
+  return (
+    /\b(que es vonu|qué es vonu|explicame que es vonu|explicame qué es vonu|me explicas que es vonu|me explicas qué es vonu)\b/i.test(t) ||
+    /\b(para que sirve vonu|para qué sirve vonu|como funciona vonu|cómo funciona vonu|que puede hacer vonu|qué puede hacer vonu)\b/i.test(t) ||
+    /\b(quien eres|quién eres|que eres|qué eres)\b/i.test(t)
+  );
+}
+
+function looksLikePracticalRiskPrompt(text: string) {
+  const t = normalizeRiskText(text);
+
+  if (!t.trim()) return false;
+
+  const hasDomain = /\b[a-z0-9-]+\.[a-z]{2,}\b/i.test(t);
+
+  const asksRiskQuestion =
+    t.includes("me puedo fiar") ||
+    t.includes("puedo fiarme") ||
+    t.includes("es fiable") ||
+    t.includes("parece fiable") ||
+    t.includes("es seguro") ||
+    t.includes("es segura") ||
+    t.includes("es una estafa") ||
+    t.includes("puede ser estafa") ||
+    t.includes("sospechoso") ||
+    t.includes("sospechosa") ||
+    t.includes("fake") ||
+    t.includes("falso") ||
+    t.includes("falsa") ||
+    t.includes("real o falso") ||
+    t.includes("es real");
+
+  const practicalContext =
+    /\b(sms|whatsapp|telegram|correo|email|enlace|link|url|web|dominio|qr|banco|bizum|tarjeta|pago|pagar|transferencia|contrato|clausula|factura|cobro|suscripcion|llamada|telefono|numero|perfil|tinder|bumble|badoo|instagram|facebook|foto|imagen|ia|deepfake|dni|documento|cripto|crypto|bitcoin|trading|inversion|manipula|presiona|amenaza|chantaje|sextorsion)\b/i.test(
+      t
+    );
+
+  const actionContext =
+    /\b(revisa|analiza|comprueba|comprobar|mira esto|que hago|qué hago|me han|me pide|me llama|he recibido|he adjuntado|adjunto)\b/i.test(
+      t
+    );
+
+  return (
+    hasDomain ||
+    (asksRiskQuestion && practicalContext) ||
+    (practicalContext && actionContext)
+  );
+}
+
+function getAssistantVisualRiskStatusFromApi(
+  data: any,
+  assistantText: string,
+  userText: string,
+  hasAttachment: boolean
+): RiskStatus | null {
+  const mode = String(data?.mode ?? "").toLowerCase();
+  const pillar = String(data?.pillar ?? "").toUpperCase();
+  const model = String(data?.model ?? "").toLowerCase();
+
+  if (model === "usage-limit-guard") return null;
+  if (mode === "tutor" || data?.autoTutor?.active === true) return null;
+
+  // Preguntas normales sobre Vonu/producto: nunca deben pintar puntos de riesgo.
+  if (looksLikeGeneralVonuProductQuestion(userText)) {
+    return null;
+  }
+
+  const directStatus = normalizeRiskStatusValue(
+    data?.visualRiskStatus ??
+      data?.riskStatus ??
+      data?.risk_status ??
+      data?.riskLevel ??
+      data?.risk_level
+  );
+
+  if (directStatus) return directStatus;
+
+  const practicalRiskPrompt = looksLikePracticalRiskPrompt(userText);
+
+  // Si el backend dice conversación general y el usuario no ha traído un caso práctico,
+  // no inferimos riesgo por palabras sueltas de la respuesta.
+  if (
+    pillar === "CONVERSACION_GENERAL" &&
+    !data?.footballIntent &&
+    !hasAttachment &&
+    !practicalRiskPrompt
+  ) {
+    return null;
+  }
+
+  const assistantRiskStatus = inferRiskStatusFromAssistantText(assistantText);
+  const userRiskStatus = inferRiskStatusFromUserText(userText);
+
+  return assistantRiskStatus ?? userRiskStatus;
+}
+
 function looksLikeNeutralIdentityLookupFromUserText(text: string): boolean {
   const t = String(text ?? "")
     .toLowerCase()
@@ -1774,8 +1913,9 @@ function initialAssistantMessage(): Message {
     role: "assistant",
     text:
       "Hola 👋 Soy **Vonu**.\n\n" +
-      "Cuéntame tu situación (o adjunta una captura) y te digo **qué pinta tiene**, el **riesgo real\n\n" +
+      "Cuéntame qué quieres revisar —un mensaje, una web, una captura, un PDF o simplemente lo que te ha pasado— y lo miramos con calma antes de que hagas nada importante.\n\n" +
       "_Importante: no compartas contraseñas, códigos ni datos bancarios._",
+    riskStatus: null,
   };
 }
 
@@ -8525,6 +8665,13 @@ const fullText =
     ? data.text
     : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
 
+    const visualRiskStatus = getAssistantVisualRiskStatusFromApi(
+  data,
+  fullText,
+  userText,
+  Boolean(hiddenPdfText)
+);
+
 if (isUsageLimitGuard) {
   setThreads((prev) =>
     prev.map((t) => {
@@ -8538,10 +8685,11 @@ if (isUsageLimitGuard) {
             ? {
                 ...m,
                 text: fullText,
-                streaming: false,
-                pizarra: null,
-                boardImageB64: null,
-                boardImagePlacement: null,
+streaming: false,
+pizarra: pizarraJson,
+boardImageB64,
+boardImagePlacement,
+riskStatus: null,
               }
             : m
         ),
@@ -8680,11 +8828,12 @@ if (isDesktopPointer()) setTimeout(() => textareaRef.current?.focus(), 60);
               ? {
                   ...m,
                   text: built,
-                  streaming: i < chunks.length - 1,
-                  pizarra: pizarraJson,
-                  boardImageB64,
-                  boardImagePlacement,
-                  revealMs,
+streaming: false,
+pizarra: pizarraJson,
+boardImageB64,
+boardImagePlacement,
+revealMs,
+riskStatus: visualRiskStatus,
                 }
               : m
           ),
@@ -9209,6 +9358,13 @@ body: JSON.stringify({
   typeof data?.text === "string" && data.text.trim()
     ? data.text
     : "He recibido una respuesta vacía. ¿Puedes repetirlo con un poco más de contexto?";
+
+    const visualRiskStatus = getAssistantVisualRiskStatusFromApi(
+  data,
+  fullText,
+  userText,
+  Boolean(imageBase64 || pdfAttachment?.pdfText)
+);
 
 if (voiceModeRef.current && imageBase64 && fullText.trim()) {
   try {
@@ -11177,6 +11333,13 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 
     const previousUserMessage = getPreviousUserMessage(messages, i);
 
+    if (m.riskStatus === null) return null;
+
+const storedRiskStatus =
+  typeof m.riskStatus === "undefined"
+    ? undefined
+    : normalizeRiskStatusValue(m.riskStatus) ?? undefined;
+
     const previousUserTextForDots = previousUserMessage?.text ?? "";
 
 const isAcademicFinanceContextForDots =
@@ -11474,19 +11637,21 @@ const assistantClearlyLowRiskDating =
   !assistantTextForDots.includes("amenaza") &&
   !assistantTextForDots.includes("chantaje");
 
-const finalRiskStatus = forceSafeSocialProfilePhotoDots
-  ? "safe"
-  : hasStrongPhoneFraudContextForDots
-    ? "high"
-    : neutralIdentityLookup
-      ? "safe"
-      : assistantClearlyLowRiskDating
+const finalRiskStatus =
+  storedRiskStatus ??
+  (forceSafeSocialProfilePhotoDots
+    ? "safe"
+    : hasStrongPhoneFraudContextForDots
+      ? "high"
+      : neutralIdentityLookup
         ? "safe"
-        : assistantClearlyLowRiskSocialProfileForDots
+        : assistantClearlyLowRiskDating
           ? "safe"
-          : assistantClearlyLowRiskPhoneForDots
+          : assistantClearlyLowRiskSocialProfileForDots
             ? "safe"
-            : assistantRiskStatus ?? userRiskStatus;
+            : assistantClearlyLowRiskPhoneForDots
+              ? "safe"
+              : assistantRiskStatus ?? userRiskStatus);
 
 const visualRiskStatus = finalRiskStatus;
 
