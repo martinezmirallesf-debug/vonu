@@ -85,9 +85,16 @@ export function detectProfilePlatform(userText: string): ProfilePlatform {
   if (t.includes("plenty of fish") || /\bpof\b/.test(t)) return "pof";
   if (t.includes("happn")) return "happn";
   if (t.includes("grindr")) return "grindr";
-  if (t.includes("facebook dating") || t.includes("parejas de facebook")) {
-    return "facebook_dating";
-  }
+  if (
+  t.includes("facebook dating") ||
+  t.includes("facebook parejas") ||
+  t.includes("facebook pareja") ||
+  t.includes("parejas de facebook") ||
+  t.includes("pareja de facebook") ||
+  t.includes("dating de facebook")
+) {
+  return "facebook_dating";
+}
 
   // Social
   if (t.includes("facebook marketplace")) return "facebook_marketplace";
@@ -372,6 +379,25 @@ Green flags suaves:
 - Foto atractiva, de cuerpo entero, bikini, playa, gimnasio o pose cuidada: NO es riesgo por sí sola.
 - Bio breve: puede ser normal en apps de citas; solo pesa si se combina con otras señales malas.
 - No tener verificación visible: no prueba estafa.
+
+Consejo prudente antes de avanzar:
+- Aunque el perfil no parezca sospechoso, recomienda avanzar con calma.
+- No aconsejes dar el número de teléfono demasiado pronto.
+- Si la conversación va bien, es preferible seguir primero dentro de la app o, si ambas personas lo ven natural, contrastar por una red social normal antes de pasar a WhatsApp o llamadas personales.
+- Revisar redes sociales puede ser una buena forma de comprobar coherencia sin ponerse paranoico:
+  - publicaciones antiguas;
+  - reels o stories coherentes;
+  - comentarios naturales de otras personas;
+  - seguidores y seguidos razonables;
+  - amigos o contactos en común;
+  - familiares visibles o interacciones familiares normales;
+  - fotos variadas en distintos momentos;
+  - ciudad, trabajo, estudios o intereses que encajen;
+  - ausencia de enlaces raros, inversión, crypto, dinero, urgencia o presión.
+- Presenta esto como prudencia normal, no como interrogatorio.
+- Frase recomendada:
+  “Antes de dar tu número, yo intentaría seguir un poco en la app o contrastar alguna red social normal para ver si la persona tiene actividad coherente, comentarios reales y señales humanas.”
+- Si el perfil no tiene redes o no quiere darlas, no digas automáticamente que sea estafa. Puede ser privacidad. Pero si además presiona para WhatsApp, evita videollamada, pide dinero, manda enlaces o cuenta historias raras, sube la precaución.
 
 Red flags fuertes:
 - Foto reutilizada con otra identidad o en fuentes ajenas.
