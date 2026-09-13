@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import CheckClient from "./CheckClient";
+import LanguageSelectorCustom from "./LanguageSelectorCustom";
 import "./check.css";
 import "./check-polish.css";
 import "./language-tight.css";
+import "./language-custom.css";
 import { isSupportedLocale, supportedLocales } from "@/lib/vonu-check/i18n";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 
@@ -83,5 +85,10 @@ export default async function LocalizedCheckPage({ params }: Props) {
   const { locale } = await params;
   if (!isSupportedLocale(locale)) notFound();
 
-  return <CheckClient locale={locale} />;
+  return (
+    <>
+      <CheckClient locale={locale} />
+      <LanguageSelectorCustom locale={locale} />
+    </>
+  );
 }
