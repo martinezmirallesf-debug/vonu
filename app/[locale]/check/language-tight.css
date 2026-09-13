@@ -45,8 +45,27 @@
     padding: 0 !important;
     margin: 0 !important;
     border: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
     opacity: 0 !important;
     cursor: pointer !important;
+    color-scheme: dark;
+  }
+
+  nav select[aria-label="Language"]:focus,
+  nav select[aria-label="Language"]:focus-visible,
+  nav select[aria-label="Language"]:active {
+    border: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+  }
+
+  nav select[aria-label="Language"] option {
+    border: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+    background: #0b0e17 !important;
+    color: rgb(226 232 240) !important;
   }
 
   nav select[aria-label="Language"] + span {
