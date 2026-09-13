@@ -9,11 +9,9 @@
     overflow: visible !important;
   }
 
-  .language-custom-root > .language-custom-menu {
-    position: absolute !important;
-    top: calc(100% + 7px) !important;
-    right: 0 !important;
-    z-index: 10050 !important;
+  .language-custom-floating-menu {
+    position: fixed !important;
+    z-index: 2147483000 !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
@@ -32,7 +30,7 @@
     pointer-events: auto !important;
   }
 
-  .language-custom-root > .language-custom-menu > button {
+  .language-custom-floating-menu > button {
     display: flex !important;
     flex: 0 0 auto !important;
     width: 100% !important;
@@ -59,8 +57,8 @@
     pointer-events: auto !important;
   }
 
-  .language-custom-root > .language-custom-menu > button:hover,
-  .language-custom-root > .language-custom-menu > button.is-active {
+  .language-custom-floating-menu > button:hover,
+  .language-custom-floating-menu > button.is-active {
     background: rgba(52,211,153,.10) !important;
     color: rgb(167 243 208) !important;
   }
