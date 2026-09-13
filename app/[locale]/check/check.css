@@ -1,72 +1,210 @@
-/* Vonu Check: focused visual refinements for the one-screen scanner */
+/* Vonu Check — approved desktop composition
+   The idle home is intentionally treated as a one-screen product surface. */
 
 @media (min-width: 768px) {
-  /* Keep the scanner footprint stable so switching modes never moves the hero/footer. */
+  /* Stable footprint: switching URL / Capture / Text must never move the hero or footer. */
   section[class*="max-w-[850px]"] > div:last-child {
-    height: 234px;
+    height: 242px;
+    min-height: 242px;
   }
 
-  section[class*="max-w-[850px]"] > div:last-child > :first-child {
-    min-height: 138px !important;
-    height: 138px !important;
-  }
-
+  section[class*="max-w-[850px]"] > div:last-child > :first-child,
   section[class*="max-w-[850px]"] > div:last-child > textarea:first-child {
-    min-height: 138px !important;
-    height: 138px !important;
+    min-height: 142px !important;
+    height: 142px !important;
   }
 
-  /* Let validation messages expand naturally without breaking normal mode switching. */
   section[class*="max-w-[850px]"] > div:last-child:has(> p) {
-    height: auto;
-    min-height: 234px;
+    min-height: 242px;
   }
 
-  /* Compact language selector: chevron sits visually next to the locale. */
+  /* Compact language pill, matching the reference. */
   nav select[aria-label="Language"] {
-    padding-inline-start: 0.72rem !important;
-    padding-inline-end: 1.45rem !important;
+    height: 36px !important;
+    min-width: 68px;
+    padding-inline-start: 14px !important;
+    padding-inline-end: 27px !important;
+    border-color: rgba(255,255,255,.10) !important;
+    background: rgba(255,255,255,.025) !important;
+    font-weight: 700 !important;
   }
 
   nav select[aria-label="Language"] + span {
-    inset-inline-end: 0.48rem !important;
+    inset-inline-end: 9px !important;
+    font-size: 15px !important;
+    line-height: 1 !important;
+    color: rgba(226,232,240,.86) !important;
   }
 }
 
 @media (min-width: 1024px) {
-  /* Subtle security/data ornaments inspired by the visual direction, kept behind the scanner. */
-  section[class*="max-w-[850px]"] {
+  /* Header proportions from the approved reference. */
+  header > div:first-child {
+    height: 76px !important;
+    max-width: 1450px !important;
+    padding-inline: 34px !important;
+  }
+
+  header nav {
+    gap: 34px !important;
+    font-size: 14px !important;
+  }
+
+  /* Desktop one-screen composition. */
+  header + main:has(> section.text-center) {
     position: relative;
     isolation: isolate;
-    overflow: visible;
+    max-width: none !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+    padding: 98px 28px 28px !important;
+    overflow: hidden;
   }
 
-  section[class*="max-w-[850px]"]::before,
-  section[class*="max-w-[850px]"]::after {
+  header + main:has(> section.text-center) > section:first-child {
+    position: relative;
+    z-index: 2;
+  }
+
+  header + main:has(> section.text-center) > section:first-child h1 {
+    max-width: 920px !important;
+    font-size: clamp(56px, 3.75vw, 64px) !important;
+    line-height: .995 !important;
+    letter-spacing: -.058em !important;
+  }
+
+  header + main:has(> section.text-center) > section:first-child p {
+    max-width: 760px !important;
+    margin-top: 18px !important;
+    font-size: 18px !important;
+    line-height: 1.55 !important;
+    color: rgb(148 163 184 / .92) !important;
+  }
+
+  /* Scanner card geometry — this is the visual anchor of the page. */
+  header + main:has(> section.text-center) > section:nth-of-type(2) {
+    position: relative;
+    z-index: 3;
+    width: min(966px, calc(100vw - 180px)) !important;
+    max-width: 966px !important;
+    height: 312px;
+    margin-top: 30px !important;
+    overflow: hidden;
+    border: 1px solid rgba(148,163,184,.28);
+    border-radius: 25px !important;
+    background: linear-gradient(180deg, rgba(18,25,39,.82), rgba(18,25,39,.68)) !important;
+    box-shadow: 0 28px 80px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.015) !important;
+    backdrop-filter: blur(10px);
+  }
+
+  /* Tabs. */
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child {
+    height: 69px;
+    padding: 0 22px !important;
+  }
+
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button {
+    height: 69px !important;
+    font-size: 16px !important;
+    gap: 10px !important;
+  }
+
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button > span:last-child {
+    bottom: 0 !important;
+    height: 3px !important;
+    inset-inline: 24% !important;
+  }
+
+  /* Content area stays exactly the same size in every mode. */
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:last-child {
+    box-sizing: border-box;
+    height: 242px !important;
+    min-height: 242px !important;
+    padding: 26px 30px 25px !important;
+  }
+
+  /* URL: one clean, shallow line inside the stable scanner. */
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:last-child > div:first-child:not([class*="grid"]) {
+    min-height: 72px !important;
+    height: 72px !important;
+    border-radius: 18px !important;
+    background: rgba(7,12,24,.56) !important;
+    box-shadow: none !important;
+  }
+
+  header + main:has(> section.text-center) input[inputmode="url"] {
+    padding-block: 0 !important;
+    font-size: 17px !important;
+  }
+
+  /* Capture: vertical centering exactly like the approved mockup. */
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:last-child > div.grid.min-h-\[138px\] {
+    height: 142px !important;
+    min-height: 142px !important;
+    padding-block: 6px !important;
+  }
+
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:last-child > div.grid.min-h-\[138px\] p:first-child {
+    font-size: 18px !important;
+  }
+
+  /* Text mode gets the same internal height as capture. */
+  header + main:has(> section.text-center) textarea {
+    height: 142px !important;
+    min-height: 142px !important;
+    max-height: 142px !important;
+  }
+
+  /* Footer proportions from the reference. */
+  footer {
+    height: 84px !important;
+    background: rgba(7,12,22,.44) !important;
+  }
+
+  footer > div {
+    height: 84px !important;
+    max-width: 1450px !important;
+    padding-inline: 34px !important;
+    font-size: 12px !important;
+  }
+
+  /* Side ornaments: curved dotted data waves, deliberately outside the content column. */
+  header + main:has(> section.text-center)::before,
+  header + main:has(> section.text-center)::after {
     content: "";
     position: absolute;
-    top: 50%;
-    width: min(28vw, 360px);
-    height: 270px;
+    z-index: 1;
+    top: 78px;
+    width: 405px;
+    height: 570px;
     pointer-events: none;
-    z-index: -1;
-    opacity: 0.42;
-    background-image:
-      radial-gradient(circle, rgba(45, 212, 191, 0.82) 0 1.05px, transparent 1.2px),
-      radial-gradient(ellipse at 50% 50%, rgba(45, 212, 191, 0.14), transparent 62%);
-    background-size: 12px 12px, 100% 100%;
-    filter: drop-shadow(0 0 18px rgba(45, 212, 191, 0.08));
-    -webkit-mask-image: radial-gradient(ellipse at center, #000 20%, rgba(0,0,0,.82) 48%, transparent 74%);
-    mask-image: radial-gradient(ellipse at center, #000 20%, rgba(0,0,0,.82) 48%, transparent 74%);
+    opacity: .88;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    filter: drop-shadow(0 0 18px rgba(45,212,191,.10));
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='405' height='570' viewBox='0 0 405 570'%3E%3Cg fill='none' stroke='%232dd4bf' stroke-linecap='round'%3E%3Cpath d='M-35 92 C 80 16 170 58 255 140 S 390 228 455 168' stroke-width='1.3' opacity='.95'/%3E%3Cpath d='M-38 118 C 76 40 168 74 252 156 S 390 244 458 188' stroke-width='1' opacity='.42' stroke-dasharray='1 8'/%3E%3Cpath d='M-40 135 C 70 62 162 92 246 171 S 386 258 456 207' stroke-width='1' opacity='.48' stroke-dasharray='1 7'/%3E%3Cpath d='M-45 153 C 64 82 154 110 239 186 S 380 272 452 228' stroke-width='1' opacity='.55' stroke-dasharray='1 7'/%3E%3Cpath d='M-48 172 C 58 104 148 126 233 202 S 374 286 448 249' stroke-width='1' opacity='.62' stroke-dasharray='1 7'/%3E%3Cpath d='M-52 192 C 52 126 142 143 227 219 S 368 302 444 271' stroke-width='1' opacity='.68' stroke-dasharray='1 7'/%3E%3Cpath d='M-56 213 C 48 150 137 162 222 237 S 363 319 440 294' stroke-width='1' opacity='.72' stroke-dasharray='1 7'/%3E%3Cpath d='M-58 236 C 44 177 134 183 219 255 S 358 337 435 318' stroke-width='1' opacity='.76' stroke-dasharray='1 7'/%3E%3Cpath d='M-62 260 C 40 205 130 205 214 274 S 352 354 431 342' stroke-width='1' opacity='.72' stroke-dasharray='1 7'/%3E%3Cpath d='M-64 285 C 37 235 126 227 210 294 S 346 371 428 367' stroke-width='1' opacity='.66' stroke-dasharray='1 7'/%3E%3Cpath d='M-66 311 C 34 266 122 250 207 314 S 342 389 425 393' stroke-width='1' opacity='.58' stroke-dasharray='1 7'/%3E%3Cpath d='M-70 338 C 30 297 117 273 202 335 S 337 408 422 420' stroke-width='1' opacity='.50' stroke-dasharray='1 7'/%3E%3Cpath d='M-72 366 C 28 330 113 297 199 356 S 333 428 420 448' stroke-width='1' opacity='.42' stroke-dasharray='1 8'/%3E%3Cpath d='M-76 395 C 24 363 110 322 196 378 S 330 449 418 477' stroke-width='1' opacity='.34' stroke-dasharray='1 8'/%3E%3Cpath d='M-80 426 C 20 398 106 348 192 401 S 327 471 416 507' stroke-width='1' opacity='.26' stroke-dasharray='1 9'/%3E%3Cpath d='M-86 458 C 15 433 101 374 189 425 S 324 493 415 538' stroke-width='1' opacity='.18' stroke-dasharray='1 10'/%3E%3C/g%3E%3C/svg%3E");
   }
 
-  section[class*="max-w-[850px]"]::before {
-    left: clamp(-340px, -24vw, -245px);
-    transform: translateY(-50%) rotate(-8deg) scaleY(0.62);
+  header + main:has(> section.text-center)::before {
+    left: -82px;
+    transform: rotate(3deg);
   }
 
-  section[class*="max-w-[850px]"]::after {
-    right: clamp(-340px, -24vw, -245px);
-    transform: translateY(-50%) rotate(8deg) scaleY(0.62);
+  header + main:has(> section.text-center)::after {
+    right: -82px;
+    transform: scaleX(-1) rotate(3deg);
+  }
+}
+
+@media (min-width: 1500px) {
+  header + main:has(> section.text-center)::before { left: -20px; }
+  header + main:has(> section.text-center)::after { right: -20px; }
+}
+
+/* Mobile remains functional and intentionally simpler than the desktop master composition. */
+@media (max-width: 767px) {
+  section[class*="max-w-[850px]"] > div:last-child {
+    min-height: 0;
   }
 }
