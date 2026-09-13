@@ -72,7 +72,7 @@
     box-shadow: 0 12px 30px rgba(0,0,0,.34);
   }
 
-  .language-custom-menu button {
+  .language-custom-menu a {
     display: block;
     width: 100%;
     padding: 7px 9px;
@@ -80,17 +80,19 @@
     outline: 0 !important;
     border-radius: 6px;
     background: transparent;
-    color: rgb(203 213 225);
+    color: rgb(203 213 225) !important;
     text-align: start;
-    font-size: 13px;
+    text-decoration: none;
+    font-size: 13px !important;
     line-height: 1.2;
+    font-weight: 500 !important;
     cursor: pointer;
   }
 
-  .language-custom-menu button:hover,
-  .language-custom-menu button.is-active {
+  .language-custom-menu a:hover,
+  .language-custom-menu a.is-active {
     background: rgba(52,211,153,.10);
-    color: rgb(167 243 208);
+    color: rgb(167 243 208) !important;
   }
 }
 
@@ -216,25 +218,28 @@ html[lang^="es"] main > section.text-center > h1::after {
     overflow: hidden;
   }
 
-  .language-mobile-menu button {
-    display: block;
-    width: 100%;
-    padding: 9px 8px;
+  .language-mobile-menu a {
+    display: block !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    padding: 9px 8px !important;
     border: 0 !important;
     outline: 0 !important;
-    border-radius: 0;
-    background: transparent;
+    border-radius: 0 !important;
+    background: transparent !important;
     box-shadow: none !important;
-    color: rgb(203 213 225);
-    text-align: start;
-    font-size: 15px;
-    line-height: 1.15;
+    color: rgb(203 213 225) !important;
+    text-align: start !important;
+    text-decoration: none !important;
+    font-size: 15px !important;
+    line-height: 1.15 !important;
+    font-weight: 500 !important;
     cursor: pointer;
   }
 
-  .language-mobile-menu button:hover,
-  .language-mobile-menu button.is-active {
-    background: rgba(52,211,153,.10);
-    color: rgb(167 243 208);
+  .language-mobile-menu a:hover,
+  .language-mobile-menu a.is-active {
+    background: rgba(52,211,153,.10) !important;
+    color: rgb(167 243 208) !important;
   }
 }
