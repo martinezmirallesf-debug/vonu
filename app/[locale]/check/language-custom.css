@@ -93,3 +93,148 @@
     color: rgb(167 243 208);
   }
 }
+
+/* The page uses locale htmlLang values such as es-ES. Match the language prefix
+   so the original hero text collapses and only one accented title is rendered. */
+html[lang^="es"] main > section.text-center > h1 {
+  font-size: 0 !important;
+}
+
+html[lang^="es"] main > section.text-center > h1::before,
+html[lang^="es"] main > section.text-center > h1::after {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.055em;
+}
+
+html[lang^="es"] main > section.text-center > h1::before {
+  content: "Detecta estafas, phishing y perfiles falsos ";
+  color: #fff;
+}
+
+html[lang^="es"] main > section.text-center > h1::after {
+  content: "en segundos";
+  color: rgb(52 211 153);
+}
+
+@media (min-width: 640px) {
+  html[lang^="es"] main > section.text-center > h1::before,
+  html[lang^="es"] main > section.text-center > h1::after {
+    font-size: 48px;
+  }
+}
+
+@media (min-width: 1024px) {
+  html[lang^="es"] main > section.text-center > h1::before,
+  html[lang^="es"] main > section.text-center > h1::after {
+    font-size: 56px;
+  }
+}
+
+@media (min-width: 1280px) {
+  html[lang^="es"] main > section.text-center > h1::before,
+  html[lang^="es"] main > section.text-center > h1::after {
+    font-size: 60px;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Remove all separator rules from the fullscreen menu. */
+  header:has(> div:nth-child(2)) > div:first-child,
+  header:has(> div:nth-child(2)) > div:nth-child(2),
+  header:has(> div:nth-child(2)) > div:nth-child(2) a {
+    border-color: transparent !important;
+    border-bottom: 0 !important;
+    border-top: 0 !important;
+  }
+
+  /* Never expose the browser-native mobile select. */
+  header > div:nth-child(2) select {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .language-mobile-root {
+    position: relative;
+    display: flex;
+    width: fit-content;
+    margin-top: auto;
+    padding: 18px 2px 4px;
+    align-items: center;
+  }
+
+  .language-mobile-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-height: 36px;
+    padding: 0;
+    border: 0 !important;
+    outline: 0 !important;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none !important;
+    color: rgb(226 232 240);
+    font-size: 16px;
+    line-height: 1;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .language-mobile-trigger:focus,
+  .language-mobile-trigger:focus-visible {
+    border: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .language-mobile-chevron {
+    display: inline-block;
+    margin-inline-start: 0;
+    font-size: 14px;
+    line-height: 1;
+    font-weight: 900;
+    color: rgb(203 213 225);
+    transform: translateY(-1px);
+  }
+
+  .language-mobile-menu {
+    position: absolute;
+    inset-inline-start: 0;
+    bottom: calc(100% + 4px);
+    z-index: 10020;
+    width: 124px;
+    max-width: calc(100vw - 48px);
+    padding: 4px 0;
+    border: 0 !important;
+    outline: 0 !important;
+    border-radius: 0;
+    background: #0b0e17;
+    box-shadow: 0 16px 34px rgba(0,0,0,.28);
+    overflow: hidden;
+  }
+
+  .language-mobile-menu button {
+    display: block;
+    width: 100%;
+    padding: 9px 8px;
+    border: 0 !important;
+    outline: 0 !important;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none !important;
+    color: rgb(203 213 225);
+    text-align: start;
+    font-size: 15px;
+    line-height: 1.15;
+    cursor: pointer;
+  }
+
+  .language-mobile-menu button:hover,
+  .language-mobile-menu button.is-active {
+    background: rgba(52,211,153,.10);
+    color: rgb(167 243 208);
+  }
+}
