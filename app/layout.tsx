@@ -29,68 +29,59 @@ const playfairDisplay = Playfair_Display({
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
-
   title: {
-    default: "VonuAI — Antes de actuar, pregúntale a Vonu",
-    template: "%s | VonuAI",
+    default: "Vonu — Comprueba antes de confiar",
+    template: "%s | Vonu",
   },
-
   description:
-    "VonuAI te ayuda a revisar mensajes, webs, contratos, facturas, documentos y situaciones delicadas antes de firmar, pagar, contestar o decidir.",
-
-  applicationName: "VonuAI",
-
+    "Vonu analiza URLs, capturas de pantalla y mensajes sospechosos para detectar señales de phishing, fraude y suplantación antes de que pagues, respondas o compartas datos.",
+  applicationName: "Vonu",
   keywords: [
-    "VonuAI",
     "Vonu",
+    "Vonu Check",
     "comprobar web fiable",
     "detectar estafa",
+    "analizar link sospechoso",
     "analizar SMS sospechoso",
-    "revisar contrato",
-    "comprobar factura",
-    "detectar manipulación",
-    "asistente decisiones seguras",
+    "phishing",
+    "perfil falso",
+    "captura de pantalla estafa",
+    "tienda online fiable",
   ],
-
-  authors: [{ name: "VonuAI" }],
-  creator: "VonuAI",
-  publisher: "VonuAI",
-
+  authors: [{ name: "Vonu" }],
+  creator: "Vonu",
+  publisher: "Vonu",
   alternates: {
     canonical: "/",
   },
-
   icons: {
     icon: "/icon.png",
     apple: "/apple-touch-icon.png",
   },
-
   openGraph: {
     type: "website",
     locale: "es_ES",
     url: BASE_URL,
-    siteName: "VonuAI",
-    title: "VonuAI — Antes de actuar, pregúntale a Vonu",
+    siteName: "Vonu",
+    title: "Vonu — Comprueba antes de confiar",
     description:
-      "Revisa mensajes, webs, contratos, facturas, documentos y situaciones delicadas antes de firmar, pagar, contestar o decidir.",
+      "Analiza URLs, capturas y mensajes sospechosos para detectar señales de riesgo antes de actuar.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "VonuAI — Antes de actuar, pregúntale a Vonu",
+        alt: "Vonu — Comprueba antes de confiar",
       },
     ],
   },
-
   twitter: {
     card: "summary_large_image",
-    title: "VonuAI — Antes de actuar, pregúntale a Vonu",
+    title: "Vonu — Comprueba antes de confiar",
     description:
-      "Analiza dudas, riesgos y señales de alerta antes de firmar, pagar, contestar o decidir.",
+      "Analiza URLs, capturas y mensajes sospechosos para detectar señales de riesgo antes de actuar.",
     images: ["/og-image.png"],
   },
-
   robots: {
     index: true,
     follow: true,
@@ -113,8 +104,8 @@ export const viewport: Viewport = {
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "VonuAI",
-  alternateName: "Vonu",
+  name: "Vonu",
+  alternateName: "VonuAI",
   url: BASE_URL,
   logo: `${BASE_URL}/icon.png`,
   email: "hello@vonuai.com",
@@ -124,17 +115,12 @@ const organizationJsonLd = {
 const websiteJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "VonuAI",
-  alternateName: "Vonu",
+  name: "Vonu",
+  alternateName: "VonuAI",
   url: BASE_URL,
   description:
-    "VonuAI te ayuda a revisar mensajes, webs, contratos, facturas, documentos y situaciones delicadas antes de firmar, pagar, contestar o decidir.",
-  inLanguage: "es",
-  potentialAction: {
-    "@type": "SearchAction",
-    target: `${BASE_URL}/recursos?q={search_term_string}`,
-    "query-input": "required name=search_term_string",
-  },
+    "Herramienta para analizar URLs, capturas de pantalla y mensajes sospechosos y detectar señales de phishing, fraude y suplantación.",
+  inLanguage: ["es", "en", "fr", "de", "ar"],
 };
 
 export default function RootLayout({
@@ -160,7 +146,7 @@ export default function RootLayout({
             __html: JSON.stringify(websiteJsonLd),
           }}
         />
-               {children}
+        {children}
         <Analytics />
         <SpeedInsights />
       </body>
