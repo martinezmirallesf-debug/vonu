@@ -130,50 +130,6 @@
   }
 }
 
-/* Spanish hero accent: keep the semantic h1 text intact, but render the final phrase in Vonu green. */
-html[lang="es"] main > section.text-center > h1 {
-  font-size: 0 !important;
-}
-
-html[lang="es"] main > section.text-center > h1::before,
-html[lang="es"] main > section.text-center > h1::after {
-  font-size: 36px;
-  font-weight: 700;
-  line-height: 1.02;
-  letter-spacing: -0.055em;
-}
-
-html[lang="es"] main > section.text-center > h1::before {
-  content: "Detecta estafas, phishing y perfiles falsos ";
-  color: #fff;
-}
-
-html[lang="es"] main > section.text-center > h1::after {
-  content: "en segundos";
-  color: rgb(52 211 153);
-}
-
-@media (min-width: 640px) {
-  html[lang="es"] main > section.text-center > h1::before,
-  html[lang="es"] main > section.text-center > h1::after {
-    font-size: 48px;
-  }
-}
-
-@media (min-width: 1024px) {
-  html[lang="es"] main > section.text-center > h1::before,
-  html[lang="es"] main > section.text-center > h1::after {
-    font-size: 56px;
-  }
-}
-
-@media (min-width: 1280px) {
-  html[lang="es"] main > section.text-center > h1::before,
-  html[lang="es"] main > section.text-center > h1::after {
-    font-size: 60px;
-  }
-}
-
 @media (max-width: 767px) {
   main > section[class*="max-w-[850px]"] {
     background: transparent !important;
