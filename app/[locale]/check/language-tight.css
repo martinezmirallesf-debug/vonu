@@ -1,0 +1,19 @@
+@media (min-width: 768px) {
+  nav select[aria-label="Language"] {
+    width: 48px !important;
+    min-width: 48px !important;
+    padding-inline-start: 0 !important;
+    padding-inline-end: 13px !important;
+  }
+
+  nav select[aria-label="Language"] + span {
+    inset-inline-end: 1px !important;
+    font-size: 16px !important;
+  }
+
+  html[lang="ar"] nav select[aria-label="Language"] {
+    width: 72px !important;
+    min-width: 72px !important;
+    padding-inline-end: 14px !important;
+  }
+}
