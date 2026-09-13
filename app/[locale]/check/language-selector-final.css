@@ -6,6 +6,7 @@
     display: inline-flex !important;
     align-items: center !important;
     flex: 0 0 auto !important;
+    overflow: visible !important;
   }
 
   .language-custom-root > .language-custom-menu {
@@ -28,9 +29,10 @@
     background: #0b0e17 !important;
     box-shadow: 0 12px 30px rgba(0,0,0,.34) !important;
     overflow: hidden !important;
+    pointer-events: auto !important;
   }
 
-  .language-custom-root > .language-custom-menu > button {
+  .language-custom-root > .language-custom-menu > a {
     display: flex !important;
     flex: 0 0 auto !important;
     width: 100% !important;
@@ -48,15 +50,18 @@
     box-shadow: none !important;
     color: rgb(203 213 225) !important;
     text-align: left !important;
+    text-decoration: none !important;
     white-space: nowrap !important;
     font-size: 13px !important;
     line-height: 1 !important;
     font-weight: 500 !important;
     letter-spacing: 0 !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
   }
 
-  .language-custom-root > .language-custom-menu > button:hover,
-  .language-custom-root > .language-custom-menu > button.is-active {
+  .language-custom-root > .language-custom-menu > a:hover,
+  .language-custom-root > .language-custom-menu > a.is-active {
     background: rgba(52,211,153,.10) !important;
     color: rgb(167 243 208) !important;
   }
