@@ -8,17 +8,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const BASE_URL = "https://vonuai.com";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
-
-const spaceMono = Space_Mono({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-mono",
-});
-
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const spaceMono = Space_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-mono" });
 const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -51,12 +42,11 @@ export const metadata: Metadata = {
   authors: [{ name: "Vonu" }],
   creator: "Vonu",
   publisher: "Vonu",
-  alternates: {
-    canonical: "/",
-  },
+  alternates: { canonical: "/" },
   icons: {
-    icon: "/icon.png",
-    apple: "/apple-touch-icon.png",
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: "/icon.svg",
+    apple: "/icon.png",
   },
   openGraph: {
     type: "website",
@@ -64,11 +54,10 @@ export const metadata: Metadata = {
     url: BASE_URL,
     siteName: "Vonu",
     title: "Vonu — Comprueba antes de confiar",
-    description:
-      "Analiza URLs, capturas y mensajes sospechosos para detectar señales de riesgo antes de actuar.",
+    description: "Analiza URLs, capturas y mensajes sospechosos para detectar señales de riesgo antes de actuar.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/api/og",
         width: 1200,
         height: 630,
         alt: "Vonu — Comprueba antes de confiar",
@@ -78,9 +67,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Vonu — Comprueba antes de confiar",
-    description:
-      "Analiza URLs, capturas y mensajes sospechosos para detectar señales de riesgo antes de actuar.",
-    images: ["/og-image.png"],
+    description: "Analiza URLs, capturas y mensajes sospechosos para detectar señales de riesgo antes de actuar.",
+    images: ["/api/og"],
   },
   robots: {
     index: true,
@@ -99,6 +87,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#0b0e17",
 };
 
 const organizationJsonLd = {
@@ -107,7 +96,7 @@ const organizationJsonLd = {
   name: "Vonu",
   alternateName: "VonuAI",
   url: BASE_URL,
-  logo: `${BASE_URL}/icon.png`,
+  logo: `${BASE_URL}/icon.svg`,
   email: "hello@vonuai.com",
   sameAs: [],
 };
@@ -123,29 +112,12 @@ const websiteJsonLd = {
   inLanguage: ["es", "en", "fr", "de", "ar"],
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="es"
-      className={`${inter.variable} ${spaceMono.variable} ${playfairDisplay.variable}`}
-    >
+    <html lang="es" className={`${inter.variable} ${spaceMono.variable} ${playfairDisplay.variable}`}>
       <body className="font-sans">
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationJsonLd),
-          }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(websiteJsonLd),
-          }}
-        />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
         {children}
         <Analytics />
         <SpeedInsights />
