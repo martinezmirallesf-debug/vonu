@@ -7,8 +7,11 @@ import type { SupportedLocale } from "@/lib/vonu-check/types";
 
 export default function LanguageSelectorCustom({ locale }: { locale: SupportedLocale }) {
   const [host, setHost] = useState<HTMLElement | null>(null);
+  const [mobileHost, setMobileHost] = useState<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const mobileRootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const select = document.querySelector<HTMLSelectElement>('nav select[aria-label="Language"]');
@@ -24,49 +27,110 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
   }, []);
 
   useEffect(() => {
-    if (!open) return;
+    const locateMobileHost = () => {
+      const select = document.querySelector<HTMLSelectElement>('header > div:nth-child(2) select');
+      const parent = select?.parentElement ?? null;
+      setMobileHost(parent);
+      if (!parent) setMobileOpen(false);
+    };
+
+    locateMobileHost();
+    const observer = new MutationObserver(locateMobileHost);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!open && !mobileOpen) return;
     const onPointerDown = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (open && !rootRef.current?.contains(target)) setOpen(false);
+      if (mobileOpen && !mobileRootRef.current?.contains(target)) setMobileOpen(false);
     };
     window.addEventListener("pointerdown", onPointerDown);
     return () => window.removeEventListener("pointerdown", onPointerDown);
-  }, [open]);
+  }, [open, mobileOpen]);
 
-  if (!host) return null;
+  function goToLocale(item: SupportedLocale) {
+    setOpen(false);
+    setMobileOpen(false);
+    if (item !== locale) window.location.href = `/${item}/check`;
+  }
 
-  return createPortal(
-    <div ref={rootRef} className="language-custom-root">
-      <button
-        type="button"
-        className="language-custom-trigger"
-        aria-label="Language"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-      >
-        <span>{localeMeta[locale].label}</span>
-        <span className="language-custom-chevron" aria-hidden="true">⌄</span>
-      </button>
+  const desktopSelector = host
+    ? createPortal(
+        <div ref={rootRef} className="language-custom-root">
+          <button
+            type="button"
+            className="language-custom-trigger"
+            aria-label="Language"
+            aria-haspopup="menu"
+            aria-expanded={open}
+            onClick={() => setOpen((value) => !value)}
+          >
+            <span>{localeMeta[locale].label}</span>
+            <span className="language-custom-chevron" aria-hidden="true">⌄</span>
+          </button>
 
-      {open && (
-        <div className="language-custom-menu" role="menu">
-          {supportedLocales.map((item) => (
-            <button
-              key={item}
-              type="button"
-              role="menuitem"
-              className={item === locale ? "is-active" : ""}
-              onClick={() => {
-                setOpen(false);
-                if (item !== locale) window.location.href = `/${item}/check`;
-              }}
-            >
-              {localeMeta[item].label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>,
-    host,
+          {open && (
+            <div className="language-custom-menu" role="menu">
+              {supportedLocales.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  role="menuitem"
+                  className={item === locale ? "is-active" : ""}
+                  onClick={() => goToLocale(item)}
+                >
+                  {localeMeta[item].label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>,
+        host,
+      )
+    : null;
+
+  const mobileSelector = mobileHost
+    ? createPortal(
+        <div ref={mobileRootRef} className="language-mobile-root">
+          <button
+            type="button"
+            className="language-mobile-trigger"
+            aria-label="Language"
+            aria-haspopup="menu"
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen((value) => !value)}
+          >
+            <span>{localeMeta[locale].label}</span>
+            <span className="language-mobile-chevron" aria-hidden="true">⌄</span>
+          </button>
+
+          {mobileOpen && (
+            <div className="language-mobile-menu" role="menu">
+              {supportedLocales.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  role="menuitem"
+                  className={item === locale ? "is-active" : ""}
+                  onClick={() => goToLocale(item)}
+                >
+                  {localeMeta[item].label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>,
+        mobileHost,
+      )
+    : null;
+
+  return (
+    <>
+      {desktopSelector}
+      {mobileSelector}
+    </>
   );
 }
