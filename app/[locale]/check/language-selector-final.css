@@ -1,4 +1,4 @@
-/* Final authority for the language selector. Desktop uses a custom details dropdown; mobile keeps the compact custom menu. */
+/* Final authority for the language selector. Keep desktop and mobile isolated from legacy selector rules. */
 
 @media (min-width: 768px) {
   nav select[aria-label="Language"],
@@ -8,7 +8,7 @@
     pointer-events: none !important;
   }
 
-  nav .language-desktop-host {
+  nav .vonu-language-desktop-host {
     position: relative !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -18,7 +18,7 @@
     overflow: visible !important;
   }
 
-  .language-desktop-details {
+  .vonu-language-desktop-root {
     position: relative !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -28,7 +28,7 @@
     padding: 0 !important;
   }
 
-  .language-desktop-trigger {
+  .vonu-language-desktop-trigger {
     display: inline-flex !important;
     align-items: center !important;
     gap: 2px !important;
@@ -44,28 +44,25 @@
     line-height: 1 !important;
     font-weight: 800 !important;
     cursor: pointer !important;
-    list-style: none !important;
   }
 
-  .language-desktop-trigger::-webkit-details-marker {
-    display: none !important;
+  .vonu-language-desktop-trigger:focus,
+  .vonu-language-desktop-trigger:focus-visible {
+    outline: 0 !important;
+    box-shadow: none !important;
   }
 
-  .language-desktop-trigger::marker {
-    content: "" !important;
-  }
-
-  .language-desktop-chevron {
+  .vonu-language-desktop-chevron {
     display: inline-block !important;
     margin: 0 !important;
-    font-size: 14px !important;
+    font-size: 13px !important;
     line-height: 1 !important;
     font-weight: 900 !important;
     color: rgb(203 213 225) !important;
     transform: translateY(-1px) !important;
   }
 
-  .language-desktop-menu {
+  .vonu-language-desktop-menu {
     position: absolute !important;
     top: calc(100% + 7px) !important;
     right: 0 !important;
@@ -87,10 +84,9 @@
     overflow: hidden !important;
   }
 
-  .language-desktop-menu > a {
+  .vonu-language-desktop-menu > a {
     display: flex !important;
     width: 100% !important;
-    min-width: 0 !important;
     height: 30px !important;
     align-items: center !important;
     justify-content: flex-start !important;
@@ -112,8 +108,8 @@
     cursor: pointer !important;
   }
 
-  .language-desktop-menu > a:hover,
-  .language-desktop-menu > a.is-active {
+  .vonu-language-desktop-menu > a:hover,
+  .vonu-language-desktop-menu > a.is-active {
     background: rgba(52,211,153,.10) !important;
     color: rgb(167 243 208) !important;
   }
