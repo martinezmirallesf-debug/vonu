@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import CheckClient from "./CheckClient";
-import LanguageSelectorCustom from "./LanguageSelectorCustom";
 import SubmissionNotice from "./SubmissionNotice";
 import "./check.css";
 import "./check-polish.css";
@@ -62,7 +61,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       canonical: `/${locale}/check`,
       languages: {
         ...languages,
-        "x-default": `${siteUrl}/es/check`,
+        "x-default": `${siteUrl}/check`,
       },
     },
     openGraph: {
@@ -91,7 +90,6 @@ export default async function LocalizedCheckPage({ params }: Props) {
   return (
     <div className="vonu-check-page">
       <CheckClient locale={locale} />
-      <LanguageSelectorCustom locale={locale} />
       <SubmissionNotice locale={locale} />
     </div>
   );
