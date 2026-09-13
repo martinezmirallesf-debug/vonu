@@ -5,15 +5,22 @@ import { createPortal } from "react-dom";
 import { localeMeta, supportedLocales } from "@/lib/vonu-check/i18n";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 
+type MenuPosition = { top: number; left: number };
+
 export default function LanguageSelectorCustom({ locale }: { locale: SupportedLocale }) {
   const [host, setHost] = useState<HTMLElement | null>(null);
   const [mobileHost, setMobileHost] = useState<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null);
+  const [mounted, setMounted] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const desktopMenuRef = useRef<HTMLDivElement>(null);
   const mobileRootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setMounted(true);
+
     const select = document.querySelector<HTMLSelectElement>('nav select[aria-label="Language"]');
     const parent = select?.parentElement ?? null;
     if (!parent) return;
@@ -42,14 +49,43 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
 
   useEffect(() => {
     if (!open && !mobileOpen) return;
+
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
-      if (open && !rootRef.current?.contains(target)) setOpen(false);
+      if (
+        open &&
+        !rootRef.current?.contains(target) &&
+        !desktopMenuRef.current?.contains(target)
+      ) {
+        setOpen(false);
+      }
       if (mobileOpen && !mobileRootRef.current?.contains(target)) setMobileOpen(false);
     };
+
     window.addEventListener("pointerdown", onPointerDown);
     return () => window.removeEventListener("pointerdown", onPointerDown);
   }, [open, mobileOpen]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const syncPosition = () => {
+      const rect = rootRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setMenuPosition({
+        top: rect.bottom + 7,
+        left: Math.max(8, rect.right - 92),
+      });
+    };
+
+    syncPosition();
+    window.addEventListener("resize", syncPosition);
+    window.addEventListener("scroll", syncPosition, true);
+    return () => {
+      window.removeEventListener("resize", syncPosition);
+      window.removeEventListener("scroll", syncPosition, true);
+    };
+  }, [open]);
 
   function goToLocale(item: SupportedLocale) {
     setOpen(false);
@@ -61,7 +97,7 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
     window.location.assign(next.toString());
   }
 
-  const desktopSelector = host
+  const desktopTrigger = host
     ? createPortal(
         <div ref={rootRef} className="language-custom-root">
           <button
@@ -75,29 +111,33 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
             <span>{localeMeta[locale].label}</span>
             <span className="language-custom-chevron" aria-hidden="true">⌄</span>
           </button>
-
-          {open && (
-            <div className="language-custom-menu" role="menu">
-              {supportedLocales.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  role="menuitem"
-                  className={item === locale ? "is-active" : ""}
-                  aria-current={item === locale ? "page" : undefined}
-                  onPointerDown={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    goToLocale(item);
-                  }}
-                >
-                  {localeMeta[item].label}
-                </button>
-              ))}
-            </div>
-          )}
         </div>,
         host,
+      )
+    : null;
+
+  const desktopMenu = mounted && open && menuPosition
+    ? createPortal(
+        <div
+          ref={desktopMenuRef}
+          className="language-custom-floating-menu"
+          role="menu"
+          style={{ top: menuPosition.top, left: menuPosition.left }}
+        >
+          {supportedLocales.map((item) => (
+            <button
+              key={item}
+              type="button"
+              role="menuitem"
+              className={item === locale ? "is-active" : ""}
+              aria-current={item === locale ? "page" : undefined}
+              onClick={() => goToLocale(item)}
+            >
+              {localeMeta[item].label}
+            </button>
+          ))}
+        </div>,
+        document.body,
       )
     : null;
 
@@ -139,7 +179,8 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
 
   return (
     <>
-      {desktopSelector}
+      {desktopTrigger}
+      {desktopMenu}
       {mobileSelector}
     </>
   );
