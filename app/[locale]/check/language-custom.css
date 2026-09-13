@@ -1,0 +1,92 @@
+@media (min-width: 768px) {
+  nav .language-custom-host {
+    width: auto !important;
+    min-width: 0 !important;
+    height: 32px !important;
+    overflow: visible !important;
+  }
+
+  nav .language-custom-host::before,
+  nav .language-custom-host::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  nav .language-custom-host > select[aria-label="Language"],
+  nav .language-custom-host > select[aria-label="Language"] + span {
+    display: none !important;
+  }
+
+  .language-custom-root {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .language-custom-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    box-shadow: none;
+    color: rgb(226 232 240);
+    font-size: 14px;
+    line-height: 1;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .language-custom-trigger:focus,
+  .language-custom-trigger:focus-visible {
+    outline: 0;
+    box-shadow: none;
+  }
+
+  .language-custom-chevron {
+    display: inline-block;
+    font-size: 14px;
+    line-height: 1;
+    font-weight: 900;
+    color: rgb(203 213 225);
+    transform: translateY(-1px);
+  }
+
+  .language-custom-menu {
+    position: absolute;
+    z-index: 100;
+    top: calc(100% + 7px);
+    right: 0;
+    min-width: 74px;
+    padding: 4px;
+    border: 0;
+    outline: 0;
+    border-radius: 8px;
+    background: #0b0e17;
+    box-shadow: 0 12px 30px rgba(0,0,0,.34);
+  }
+
+  .language-custom-menu button {
+    display: block;
+    width: 100%;
+    padding: 7px 9px;
+    border: 0;
+    outline: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: rgb(203 213 225);
+    text-align: start;
+    font-size: 13px;
+    line-height: 1.2;
+    cursor: pointer;
+  }
+
+  .language-custom-menu button:hover,
+  .language-custom-menu button.is-active {
+    background: rgba(52,211,153,.10);
+    color: rgb(167 243 208);
+  }
+}
