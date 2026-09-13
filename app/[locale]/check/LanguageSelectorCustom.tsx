@@ -51,6 +51,16 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
     return () => window.removeEventListener("pointerdown", onPointerDown);
   }, [open, mobileOpen]);
 
+  function goToLocale(item: SupportedLocale) {
+    setOpen(false);
+    setMobileOpen(false);
+    if (item === locale) return;
+
+    const next = new URL(window.location.href);
+    next.pathname = `/${item}/check`;
+    window.location.assign(next.toString());
+  }
+
   const desktopSelector = host
     ? createPortal(
         <div ref={rootRef} className="language-custom-root">
@@ -69,15 +79,16 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
           {open && (
             <div className="language-custom-menu" role="menu">
               {supportedLocales.map((item) => (
-                <a
+                <button
                   key={item}
-                  href={`/${item}/check`}
+                  type="button"
                   role="menuitem"
                   className={item === locale ? "is-active" : ""}
                   aria-current={item === locale ? "page" : undefined}
+                  onClick={() => goToLocale(item)}
                 >
                   {localeMeta[item].label}
-                </a>
+                </button>
               ))}
             </div>
           )}
@@ -104,15 +115,16 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
           {mobileOpen && (
             <div className="language-mobile-menu" role="menu">
               {supportedLocales.map((item) => (
-                <a
+                <button
                   key={item}
-                  href={`/${item}/check`}
+                  type="button"
                   role="menuitem"
                   className={item === locale ? "is-active" : ""}
                   aria-current={item === locale ? "page" : undefined}
+                  onClick={() => goToLocale(item)}
                 >
                   {localeMeta[item].label}
-                </a>
+                </button>
               ))}
             </div>
           )}
