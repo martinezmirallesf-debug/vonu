@@ -2,7 +2,6 @@
    Loaded after check.css: keep this file small, explicit and conflict-free. */
 
 @media (min-width: 768px) {
-  /* No outer scanner card. Tabs + content float directly on the page. */
   section[class*="max-w-[850px]"] {
     background: transparent !important;
     border: 0 !important;
@@ -12,7 +11,6 @@
     -webkit-backdrop-filter: none !important;
   }
 
-  /* A compact but absolutely stable footprint in every mode. */
   section[class*="max-w-[850px]"] > div:last-child {
     position: relative !important;
     height: 178px !important;
@@ -28,7 +26,6 @@
     min-height: 208px !important;
   }
 
-  /* URL stays as a shallow single-line field. */
   section[class*="max-w-[850px]"] > div:last-child > div:first-child:has(input[inputmode="url"]) {
     min-height: 50px !important;
     height: 50px !important;
@@ -42,7 +39,6 @@
     padding-bottom: 0 !important;
   }
 
-  /* Capture and text reserve the same visual region. */
   section[class*="max-w-[850px]"] > div:last-child > textarea:first-child {
     min-height: 92px !important;
     height: 92px !important;
@@ -57,7 +53,6 @@
     padding-bottom: 0 !important;
   }
 
-  /* Desktop/tablet: trust row + CTA use fixed coordinates, independent of mode content. */
   section[class*="max-w-[850px]"] > div:last-child > div:last-child {
     position: absolute !important;
     inset-inline: 24px !important;
@@ -68,7 +63,6 @@
     align-items: center !important;
   }
 
-  /* Thinner footer = more usable home height. */
   footer {
     height: 48px !important;
     min-height: 48px !important;
@@ -81,8 +75,6 @@
 }
 
 @media (min-width: 1024px) {
-  /* Move the whole composition up through real spacing, not relative offset,
-     so the CTA can never slide behind the footer. */
   header + main:has(> section.text-center) {
     position: relative !important;
     top: 0 !important;
@@ -90,7 +82,6 @@
     padding-bottom: 12px !important;
   }
 
-  /* No decorative side artwork. */
   header + main:has(> section.text-center)::before,
   header + main:has(> section.text-center)::after,
   section[class*="max-w-[850px]"]::before,
@@ -105,7 +96,6 @@
     filter: none !important;
   }
 
-  /* Reinforce removal of every legacy scanner shell. */
   header + main:has(> section.text-center) > section:nth-of-type(2) {
     height: auto !important;
     min-height: 0 !important;
@@ -118,7 +108,6 @@
     overflow: visible !important;
   }
 
-  /* Icon + label are a fixed centered pair in all three desktop tabs. */
   header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button {
     align-items: center !important;
   }
@@ -141,8 +130,6 @@
   }
 }
 
-/* Mobile mirrors the desktop product language: borderless shell, fixed layout,
-   only the mode content changes. Keep touch targets comfortably large. */
 @media (max-width: 767px) {
   main > section[class*="max-w-[850px]"] {
     background: transparent !important;
@@ -160,7 +147,6 @@
     display: none !important;
   }
 
-  /* Tabs never shift when the selected mode changes. */
   main > section[class*="max-w-[850px]"] > div:first-child {
     height: 54px !important;
     min-height: 54px !important;
@@ -170,7 +156,6 @@
     height: 54px !important;
   }
 
-  /* Spanish mobile labels stay compact: Enlace / Captura / Mensaje. */
   html[lang="es"] main > section[class*="max-w-[850px]"] > div:first-child button:first-child > span:nth-child(2),
   html[lang="es"] main > section[class*="max-w-[850px]"] > div:first-child button:nth-child(3) > span:nth-child(2) {
     font-size: 0 !important;
@@ -186,7 +171,6 @@
     font-size: 12px;
   }
 
-  /* Fixed mobile scanner body. */
   main > section[class*="max-w-[850px]"] > div:last-child {
     box-sizing: border-box !important;
     height: 250px !important;
@@ -196,7 +180,6 @@
     padding: 12px 4px 8px !important;
   }
 
-  /* URL: simple one-line input. */
   main > section[class*="max-w-[850px]"] > div:last-child > div:first-child:has(input[inputmode="url"]) {
     min-height: 56px !important;
     height: 56px !important;
@@ -209,7 +192,6 @@
     padding-block: 0 !important;
   }
 
-  /* Text and capture use the same reserved content height. */
   main > section[class*="max-w-[850px]"] textarea:first-child {
     min-height: 126px !important;
     height: 126px !important;
@@ -223,18 +205,15 @@
     padding-block: 2px !important;
   }
 
-  /* The Ctrl+V hint is desktop-oriented; remove it and keep the whitespace clean. */
   main > section[class*="max-w-[850px]"] > div:last-child > div:first-child:has(input[type="file"]) > div > p:last-child {
     display: none !important;
   }
 
-  /* CTA/trust row lands at the exact same place for all three modes. */
   main > section[class*="max-w-[850px]"] > div:last-child > div:last-child {
     margin-top: auto !important;
     margin-bottom: 0 !important;
   }
 
-  /* Trust messages centered on mobile. */
   main > section[class*="max-w-[850px]"] > div:last-child > div:last-child > div:first-child {
     width: 100% !important;
     justify-content: center !important;
@@ -247,10 +226,10 @@
     height: 42px !important;
   }
 
-  /* Mobile burger menu: same Vonu behaviour, updated visual language. */
+  /* Fullscreen mobile navigation: preserve the existing Vonu pattern. */
   header {
     position: relative !important;
-    z-index: 50 !important;
+    z-index: 80 !important;
   }
 
   header > div:first-child > button[aria-label] {
@@ -264,55 +243,57 @@
   }
 
   header > div:nth-child(2) {
-    position: absolute !important;
-    inset-inline: 0 !important;
-    top: 100% !important;
-    z-index: 60 !important;
-    padding: 10px 20px 16px !important;
-    border-top: 1px solid rgba(255,255,255,.055) !important;
-    border-bottom: 1px solid rgba(255,255,255,.07) !important;
-    background: rgba(11,14,23,.985) !important;
-    box-shadow: 0 24px 48px rgba(0,0,0,.30) !important;
+    position: fixed !important;
+    inset: 58px 0 0 0 !important;
+    z-index: 79 !important;
+    height: calc(100dvh - 58px) !important;
+    min-height: calc(100dvh - 58px) !important;
+    overflow-y: auto !important;
+    padding: 22px 22px 28px !important;
+    border-top: 1px solid rgba(255,255,255,.07) !important;
+    background: linear-gradient(180deg, rgba(11,14,23,.995), rgba(13,16,27,.995)) !important;
     backdrop-filter: blur(18px) !important;
     -webkit-backdrop-filter: blur(18px) !important;
   }
 
   header > div:nth-child(2) > div {
+    display: flex !important;
+    min-height: 100% !important;
+    flex-direction: column !important;
     gap: 0 !important;
+    padding: 0 !important;
   }
 
   header > div:nth-child(2) a {
     display: flex !important;
-    min-height: 52px !important;
+    min-height: 62px !important;
     align-items: center !important;
-    padding: 0 2px !important;
-    border-bottom: 1px solid rgba(255,255,255,.055) !important;
+    padding: 0 4px !important;
+    border-bottom: 1px solid rgba(255,255,255,.065) !important;
     border-radius: 0 !important;
     background: transparent !important;
-    color: rgb(203 213 225) !important;
-    font-size: 15px !important;
-    font-weight: 600 !important;
-    letter-spacing: -.01em !important;
+    font-size: 20px !important;
+    font-weight: 650 !important;
+    letter-spacing: -.025em !important;
+    color: rgb(241 245 249) !important;
   }
 
   header > div:nth-child(2) a:hover,
   header > div:nth-child(2) a:active {
-    background: transparent !important;
     color: rgb(110 231 183) !important;
   }
 
   header > div:nth-child(2) select {
     width: 100% !important;
-    min-height: 46px !important;
-    margin-top: 10px !important;
-    padding: 0 2px !important;
+    margin-top: auto !important;
     border: 0 !important;
+    border-top: 1px solid rgba(255,255,255,.07) !important;
     border-radius: 0 !important;
-    outline: 0 !important;
     background: transparent !important;
-    box-shadow: none !important;
-    color: rgb(203 213 225) !important;
+    padding: 18px 4px 8px !important;
     font-size: 14px !important;
-    font-weight: 700 !important;
+    font-weight: 650 !important;
+    color: rgb(203 213 225) !important;
+    outline: none !important;
   }
 }
