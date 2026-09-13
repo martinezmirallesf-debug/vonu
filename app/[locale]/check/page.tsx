@@ -4,10 +4,9 @@ import CheckClient from "./CheckClient";
 import SubmissionNotice from "./SubmissionNotice";
 import "./check.css";
 import "./check-polish.css";
-import "./language-custom.css";
 import "./hero-title-fix.css";
-import "./language-selector-final.css";
 import "./submission-notice.css";
+import "./mobile-header-fix.css";
 import { isSupportedLocale, supportedLocales } from "@/lib/vonu-check/i18n";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 
