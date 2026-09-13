@@ -1,36 +1,42 @@
-/* Final authority for the language selector. Desktop uses the native select in the header; mobile keeps the compact custom menu. */
+/* Final authority for the language selector. Desktop uses a custom details dropdown; mobile keeps the compact custom menu. */
 
 @media (min-width: 768px) {
-  .language-custom-root,
-  .language-custom-floating-menu {
+  nav select[aria-label="Language"],
+  nav select[aria-label="Language"] + span {
     display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
   }
 
-  nav div.relative:has(select[aria-label="Language"]) {
+  nav .language-desktop-host {
     position: relative !important;
     display: inline-flex !important;
     align-items: center !important;
-    width: 44px !important;
+    width: auto !important;
+    min-width: 0 !important;
     height: 32px !important;
     overflow: visible !important;
   }
 
-  nav select[aria-label="Language"] {
-    display: block !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
+  .language-desktop-details {
     position: relative !important;
-    inset: auto !important;
-    width: 44px !important;
-    min-width: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    width: auto !important;
     height: 32px !important;
     margin: 0 !important;
-    padding: 0 14px 0 0 !important;
+    padding: 0 !important;
+  }
+
+  .language-desktop-trigger {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    height: 32px !important;
+    margin: 0 !important;
+    padding: 0 !important;
     border: 0 !important;
     outline: 0 !important;
-    border-radius: 0 !important;
-    appearance: none !important;
-    -webkit-appearance: none !important;
     background: transparent !important;
     box-shadow: none !important;
     color: rgb(226 232 240) !important;
@@ -38,33 +44,78 @@
     line-height: 1 !important;
     font-weight: 800 !important;
     cursor: pointer !important;
+    list-style: none !important;
   }
 
-  nav select[aria-label="Language"]:focus,
-  nav select[aria-label="Language"]:focus-visible,
-  nav select[aria-label="Language"]:active {
-    border: 0 !important;
-    outline: 0 !important;
-    box-shadow: none !important;
+  .language-desktop-trigger::-webkit-details-marker {
+    display: none !important;
   }
 
-  nav select[aria-label="Language"] + span {
-    display: block !important;
-    visibility: visible !important;
-    pointer-events: none !important;
-    position: absolute !important;
-    right: 0 !important;
-    top: 50% !important;
-    transform: translateY(-52%) !important;
-    color: rgb(203 213 225) !important;
+  .language-desktop-trigger::marker {
+    content: "" !important;
+  }
+
+  .language-desktop-chevron {
+    display: inline-block !important;
+    margin: 0 !important;
     font-size: 14px !important;
     line-height: 1 !important;
     font-weight: 900 !important;
+    color: rgb(203 213 225) !important;
+    transform: translateY(-1px) !important;
   }
 
-  nav select[aria-label="Language"] option {
+  .language-desktop-menu {
+    position: absolute !important;
+    top: calc(100% + 7px) !important;
+    right: 0 !important;
+    z-index: 10050 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    width: 92px !important;
+    min-width: 92px !important;
+    max-width: 92px !important;
+    padding: 4px !important;
+    margin: 0 !important;
+    border: 0 !important;
+    outline: 0 !important;
+    border-radius: 8px !important;
     background: #0b0e17 !important;
-    color: rgb(226 232 240) !important;
+    box-shadow: 0 12px 30px rgba(0,0,0,.34) !important;
+    overflow: hidden !important;
+  }
+
+  .language-desktop-menu > a {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 30px !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 0 8px !important;
+    margin: 0 !important;
+    border: 0 !important;
+    outline: 0 !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: rgb(203 213 225) !important;
+    text-align: left !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    font-size: 13px !important;
+    line-height: 1 !important;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+    cursor: pointer !important;
+  }
+
+  .language-desktop-menu > a:hover,
+  .language-desktop-menu > a.is-active {
+    background: rgba(52,211,153,.10) !important;
+    color: rgb(167 243 208) !important;
   }
 }
 
