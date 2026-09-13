@@ -1,4 +1,12 @@
 @media (min-width: 768px) {
+  /* The browser-native select popup must never be reachable on desktop. */
+  nav select[aria-label="Language"],
+  nav select[aria-label="Language"] + span {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
   nav .language-custom-host {
     width: auto !important;
     min-width: 0 !important;
@@ -9,11 +17,6 @@
   nav .language-custom-host::before,
   nav .language-custom-host::after {
     content: none !important;
-    display: none !important;
-  }
-
-  nav .language-custom-host > select[aria-label="Language"],
-  nav .language-custom-host > select[aria-label="Language"] + span {
     display: none !important;
   }
 
@@ -62,8 +65,8 @@
     right: 0;
     min-width: 74px;
     padding: 4px;
-    border: 0;
-    outline: 0;
+    border: 0 !important;
+    outline: 0 !important;
     border-radius: 8px;
     background: #0b0e17;
     box-shadow: 0 12px 30px rgba(0,0,0,.34);
@@ -73,8 +76,8 @@
     display: block;
     width: 100%;
     padding: 7px 9px;
-    border: 0;
-    outline: 0;
+    border: 0 !important;
+    outline: 0 !important;
     border-radius: 6px;
     background: transparent;
     color: rgb(203 213 225);
