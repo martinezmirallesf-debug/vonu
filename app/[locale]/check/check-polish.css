@@ -246,4 +246,73 @@
     min-height: 42px !important;
     height: 42px !important;
   }
+
+  /* Mobile burger menu: same Vonu behaviour, updated visual language. */
+  header {
+    position: relative !important;
+    z-index: 50 !important;
+  }
+
+  header > div:first-child > button[aria-label] {
+    width: 40px !important;
+    height: 40px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: rgb(241 245 249) !important;
+  }
+
+  header > div:nth-child(2) {
+    position: absolute !important;
+    inset-inline: 0 !important;
+    top: 100% !important;
+    z-index: 60 !important;
+    padding: 10px 20px 16px !important;
+    border-top: 1px solid rgba(255,255,255,.055) !important;
+    border-bottom: 1px solid rgba(255,255,255,.07) !important;
+    background: rgba(11,14,23,.985) !important;
+    box-shadow: 0 24px 48px rgba(0,0,0,.30) !important;
+    backdrop-filter: blur(18px) !important;
+    -webkit-backdrop-filter: blur(18px) !important;
+  }
+
+  header > div:nth-child(2) > div {
+    gap: 0 !important;
+  }
+
+  header > div:nth-child(2) a {
+    display: flex !important;
+    min-height: 52px !important;
+    align-items: center !important;
+    padding: 0 2px !important;
+    border-bottom: 1px solid rgba(255,255,255,.055) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: rgb(203 213 225) !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    letter-spacing: -.01em !important;
+  }
+
+  header > div:nth-child(2) a:hover,
+  header > div:nth-child(2) a:active {
+    background: transparent !important;
+    color: rgb(110 231 183) !important;
+  }
+
+  header > div:nth-child(2) select {
+    width: 100% !important;
+    min-height: 46px !important;
+    margin-top: 10px !important;
+    padding: 0 2px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: rgb(203 213 225) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+  }
 }
