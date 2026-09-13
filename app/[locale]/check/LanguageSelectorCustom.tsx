@@ -51,12 +51,6 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
     return () => window.removeEventListener("pointerdown", onPointerDown);
   }, [open, mobileOpen]);
 
-  function goToLocale(item: SupportedLocale) {
-    setOpen(false);
-    setMobileOpen(false);
-    if (item !== locale) window.location.href = `/${item}/check`;
-  }
-
   const desktopSelector = host
     ? createPortal(
         <div ref={rootRef} className="language-custom-root">
@@ -75,15 +69,15 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
           {open && (
             <div className="language-custom-menu" role="menu">
               {supportedLocales.map((item) => (
-                <button
+                <a
                   key={item}
-                  type="button"
+                  href={`/${item}/check`}
                   role="menuitem"
                   className={item === locale ? "is-active" : ""}
-                  onClick={() => goToLocale(item)}
+                  aria-current={item === locale ? "page" : undefined}
                 >
                   {localeMeta[item].label}
-                </button>
+                </a>
               ))}
             </div>
           )}
@@ -110,15 +104,15 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
           {mobileOpen && (
             <div className="language-mobile-menu" role="menu">
               {supportedLocales.map((item) => (
-                <button
+                <a
                   key={item}
-                  type="button"
+                  href={`/${item}/check`}
                   role="menuitem"
                   className={item === locale ? "is-active" : ""}
-                  onClick={() => goToLocale(item)}
+                  aria-current={item === locale ? "page" : undefined}
                 >
                   {localeMeta[item].label}
-                </button>
+                </a>
               ))}
             </div>
           )}
