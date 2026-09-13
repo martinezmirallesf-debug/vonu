@@ -1,31 +1,22 @@
-/* Final authority for the language selector. Keep desktop and mobile isolated from legacy selector rules. */
+/* Final authority for the language selector. Desktop mounts directly in nav; mobile keeps its working custom menu. */
 
 @media (min-width: 768px) {
-  nav select[aria-label="Language"],
-  nav select[aria-label="Language"] + span {
+  nav .vonu-language-native-hidden {
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
-  }
-
-  nav .vonu-language-desktop-host {
-    position: relative !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    width: auto !important;
-    min-width: 0 !important;
-    height: 32px !important;
-    overflow: visible !important;
   }
 
   .vonu-language-desktop-root {
     position: relative !important;
     display: inline-flex !important;
     align-items: center !important;
+    flex: 0 0 auto !important;
     width: auto !important;
     height: 32px !important;
     margin: 0 !important;
     padding: 0 !important;
+    overflow: visible !important;
   }
 
   .vonu-language-desktop-trigger {
@@ -44,6 +35,7 @@
     line-height: 1 !important;
     font-weight: 800 !important;
     cursor: pointer !important;
+    pointer-events: auto !important;
   }
 
   .vonu-language-desktop-trigger:focus,
@@ -82,9 +74,10 @@
     background: #0b0e17 !important;
     box-shadow: 0 12px 30px rgba(0,0,0,.34) !important;
     overflow: hidden !important;
+    pointer-events: auto !important;
   }
 
-  .vonu-language-desktop-menu > a {
+  .vonu-language-desktop-menu > button {
     display: flex !important;
     width: 100% !important;
     height: 30px !important;
@@ -99,17 +92,17 @@
     box-shadow: none !important;
     color: rgb(203 213 225) !important;
     text-align: left !important;
-    text-decoration: none !important;
     white-space: nowrap !important;
     font-size: 13px !important;
     line-height: 1 !important;
     font-weight: 500 !important;
     letter-spacing: 0 !important;
     cursor: pointer !important;
+    pointer-events: auto !important;
   }
 
-  .vonu-language-desktop-menu > a:hover,
-  .vonu-language-desktop-menu > a.is-active {
+  .vonu-language-desktop-menu > button:hover,
+  .vonu-language-desktop-menu > button.is-active {
     background: rgba(52,211,153,.10) !important;
     color: rgb(167 243 208) !important;
   }
