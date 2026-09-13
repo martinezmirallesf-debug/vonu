@@ -1,19 +1,55 @@
 @media (min-width: 768px) {
+  /* Keep the native select for behaviour, but replace its visible chrome with a custom label. */
+  nav div.relative:has(select[aria-label="Language"]) {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    width: 42px;
+    height: 32px;
+    cursor: pointer;
+  }
+
+  nav div.relative:has(select[aria-label="Language"])::before {
+    content: "ES";
+    font-size: 14px;
+    line-height: 1;
+    font-weight: 800;
+    color: rgb(226 232 240);
+  }
+
+  nav div.relative:has(select[aria-label="Language"])::after {
+    content: "⌄";
+    font-size: 14px;
+    line-height: 1;
+    font-weight: 900;
+    color: rgb(203 213 225);
+    transform: translateY(-1px);
+  }
+
+  html[lang="en"] nav div.relative:has(select[aria-label="Language"])::before { content: "EN"; }
+  html[lang="fr"] nav div.relative:has(select[aria-label="Language"])::before { content: "FR"; }
+  html[lang="de"] nav div.relative:has(select[aria-label="Language"])::before { content: "DE"; }
+  html[lang="ar"] nav div.relative:has(select[aria-label="Language"]) {
+    width: auto;
+    min-width: 70px;
+  }
+  html[lang="ar"] nav div.relative:has(select[aria-label="Language"])::before { content: "العربية"; }
+
   nav select[aria-label="Language"] {
-    width: 48px !important;
-    min-width: 48px !important;
-    padding-inline-start: 0 !important;
-    padding-inline-end: 13px !important;
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    cursor: pointer !important;
   }
 
   nav select[aria-label="Language"] + span {
-    inset-inline-end: 16px !important;
-    font-size: 16px !important;
-  }
-
-  html[lang="ar"] nav select[aria-label="Language"] {
-    width: 72px !important;
-    min-width: 72px !important;
-    padding-inline-end: 14px !important;
+    display: none !important;
   }
 }
