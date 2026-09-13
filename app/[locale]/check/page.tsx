@@ -7,6 +7,7 @@ import "./check.css";
 import "./check-polish.css";
 import "./language-tight.css";
 import "./language-custom.css";
+import "./hero-title-fix.css";
 import { isSupportedLocale, supportedLocales } from "@/lib/vonu-check/i18n";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 
