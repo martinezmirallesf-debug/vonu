@@ -10,10 +10,13 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
   const [mobileHost, setMobileHost] = useState<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [currentSearch, setCurrentSearch] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
   const mobileRootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setCurrentSearch(window.location.search || "");
+
     const select = document.querySelector<HTMLSelectElement>('nav select[aria-label="Language"]');
     const parent = select?.parentElement ?? null;
     if (!parent) return;
@@ -52,7 +55,6 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
   }, [open, mobileOpen]);
 
   function goToLocale(item: SupportedLocale) {
-    setOpen(false);
     setMobileOpen(false);
     if (item === locale) return;
 
@@ -79,16 +81,16 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
           {open && (
             <div className="language-custom-menu" role="menu">
               {supportedLocales.map((item) => (
-                <button
+                <a
                   key={item}
-                  type="button"
+                  href={`/${item}/check${currentSearch}`}
                   role="menuitem"
                   className={item === locale ? "is-active" : ""}
                   aria-current={item === locale ? "page" : undefined}
-                  onClick={() => goToLocale(item)}
+                  onClick={() => setOpen(false)}
                 >
                   {localeMeta[item].label}
-                </button>
+                </a>
               ))}
             </div>
           )}
