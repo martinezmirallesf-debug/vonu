@@ -8,8 +8,10 @@ import type { SupportedLocale } from "@/lib/vonu-check/types";
 export default function LanguageSelectorCustom({ locale }: { locale: SupportedLocale }) {
   const [desktopHost, setDesktopHost] = useState<HTMLElement | null>(null);
   const [mobileHost, setMobileHost] = useState<HTMLElement | null>(null);
+  const [desktopOpen, setDesktopOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [currentSearch, setCurrentSearch] = useState("");
+  const desktopRootRef = useRef<HTMLDivElement>(null);
   const mobileRootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -19,11 +21,11 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
     const parent = select?.parentElement ?? null;
     if (!parent) return;
 
-    parent.classList.add("language-desktop-host");
+    parent.classList.add("vonu-language-desktop-host");
     setDesktopHost(parent);
 
     return () => {
-      parent.classList.remove("language-desktop-host");
+      parent.classList.remove("vonu-language-desktop-host");
     };
   }, []);
 
@@ -42,16 +44,20 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
   }, []);
 
   useEffect(() => {
-    if (!mobileOpen) return;
+    if (!desktopOpen && !mobileOpen) return;
+
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
-      if (!mobileRootRef.current?.contains(target)) setMobileOpen(false);
+      if (desktopOpen && !desktopRootRef.current?.contains(target)) setDesktopOpen(false);
+      if (mobileOpen && !mobileRootRef.current?.contains(target)) setMobileOpen(false);
     };
+
     window.addEventListener("pointerdown", onPointerDown);
     return () => window.removeEventListener("pointerdown", onPointerDown);
-  }, [mobileOpen]);
+  }, [desktopOpen, mobileOpen]);
 
   function goToLocale(item: SupportedLocale) {
+    setDesktopOpen(false);
     setMobileOpen(false);
     if (item === locale) return;
 
@@ -62,24 +68,36 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
 
   const desktopSelector = desktopHost
     ? createPortal(
-        <details className="language-desktop-details">
-          <summary className="language-desktop-trigger" aria-label="Language">
+        <div ref={desktopRootRef} className="vonu-language-desktop-root">
+          <button
+            type="button"
+            className="vonu-language-desktop-trigger"
+            aria-label="Language"
+            aria-haspopup="menu"
+            aria-expanded={desktopOpen}
+            onClick={() => setDesktopOpen((value) => !value)}
+          >
             <span>{localeMeta[locale].label}</span>
-            <span className="language-desktop-chevron" aria-hidden="true">⌄</span>
-          </summary>
-          <div className="language-desktop-menu">
-            {supportedLocales.map((item) => (
-              <a
-                key={item}
-                href={`/${item}/check${currentSearch}`}
-                className={item === locale ? "is-active" : ""}
-                aria-current={item === locale ? "page" : undefined}
-              >
-                {localeMeta[item].label}
-              </a>
-            ))}
-          </div>
-        </details>,
+            <span className="vonu-language-desktop-chevron" aria-hidden="true">⌄</span>
+          </button>
+
+          {desktopOpen && (
+            <div className="vonu-language-desktop-menu" role="menu">
+              {supportedLocales.map((item) => (
+                <a
+                  key={item}
+                  href={`/${item}/check${currentSearch}`}
+                  role="menuitem"
+                  className={item === locale ? "is-active" : ""}
+                  aria-current={item === locale ? "page" : undefined}
+                  onClick={() => setDesktopOpen(false)}
+                >
+                  {localeMeta[item].label}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>,
         desktopHost,
       )
     : null;
