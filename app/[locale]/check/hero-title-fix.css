@@ -1,0 +1,28 @@
+/* Final hero-title authority. Loaded last to neutralize legacy pseudo-content. */
+html[lang^="es"] main > section.text-center > h1::before,
+html[lang^="es"] main > section.text-center > h1::after {
+  content: none !important;
+  display: none !important;
+}
+
+html[lang^="es"] main > section.text-center > h1 {
+  font-size: 36px !important;
+}
+
+@media (min-width: 640px) {
+  html[lang^="es"] main > section.text-center > h1 {
+    font-size: 48px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  html[lang^="es"] main > section.text-center > h1 {
+    font-size: 56px !important;
+  }
+}
+
+@media (min-width: 1280px) {
+  html[lang^="es"] main > section.text-center > h1 {
+    font-size: 60px !important;
+  }
+}
