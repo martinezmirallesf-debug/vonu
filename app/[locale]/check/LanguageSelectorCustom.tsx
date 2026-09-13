@@ -6,28 +6,26 @@ import { localeMeta, supportedLocales } from "@/lib/vonu-check/i18n";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 
 export default function LanguageSelectorCustom({ locale }: { locale: SupportedLocale }) {
+  const [desktopHost, setDesktopHost] = useState<HTMLElement | null>(null);
   const [mobileHost, setMobileHost] = useState<HTMLElement | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [currentSearch, setCurrentSearch] = useState("");
   const mobileRootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setCurrentSearch(window.location.search || "");
+
     const select = document.querySelector<HTMLSelectElement>('nav select[aria-label="Language"]');
-    if (!select) return;
+    const parent = select?.parentElement ?? null;
+    if (!parent) return;
 
-    const onChange = (event: Event) => {
-      const target = event.target as HTMLSelectElement;
-      const nextLocale = target.value as SupportedLocale;
-      if (!supportedLocales.includes(nextLocale) || nextLocale === locale) return;
+    parent.classList.add("language-desktop-host");
+    setDesktopHost(parent);
 
-      event.stopImmediatePropagation();
-      const next = new URL(window.location.href);
-      next.pathname = `/${nextLocale}/check`;
-      window.location.assign(next.toString());
+    return () => {
+      parent.classList.remove("language-desktop-host");
     };
-
-    select.addEventListener("change", onChange, true);
-    return () => select.removeEventListener("change", onChange, true);
-  }, [locale]);
+  }, []);
 
   useEffect(() => {
     const locateMobileHost = () => {
@@ -61,6 +59,30 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
     next.pathname = `/${item}/check`;
     window.location.assign(next.toString());
   }
+
+  const desktopSelector = desktopHost
+    ? createPortal(
+        <details className="language-desktop-details">
+          <summary className="language-desktop-trigger" aria-label="Language">
+            <span>{localeMeta[locale].label}</span>
+            <span className="language-desktop-chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <div className="language-desktop-menu">
+            {supportedLocales.map((item) => (
+              <a
+                key={item}
+                href={`/${item}/check${currentSearch}`}
+                className={item === locale ? "is-active" : ""}
+                aria-current={item === locale ? "page" : undefined}
+              >
+                {localeMeta[item].label}
+              </a>
+            ))}
+          </div>
+        </details>,
+        desktopHost,
+      )
+    : null;
 
   const mobileSelector = mobileHost
     ? createPortal(
@@ -98,5 +120,10 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
       )
     : null;
 
-  return mobileSelector;
+  return (
+    <>
+      {desktopSelector}
+      {mobileSelector}
+    </>
+  );
 }
