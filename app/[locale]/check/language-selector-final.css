@@ -32,7 +32,7 @@
     pointer-events: auto !important;
   }
 
-  .language-custom-root > .language-custom-menu > a {
+  .language-custom-root > .language-custom-menu > button {
     display: flex !important;
     flex: 0 0 auto !important;
     width: 100% !important;
@@ -50,7 +50,6 @@
     box-shadow: none !important;
     color: rgb(203 213 225) !important;
     text-align: left !important;
-    text-decoration: none !important;
     white-space: nowrap !important;
     font-size: 13px !important;
     line-height: 1 !important;
@@ -60,8 +59,8 @@
     pointer-events: auto !important;
   }
 
-  .language-custom-root > .language-custom-menu > a:hover,
-  .language-custom-root > .language-custom-menu > a.is-active {
+  .language-custom-root > .language-custom-menu > button:hover,
+  .language-custom-root > .language-custom-menu > button.is-active {
     background: rgba(52,211,153,.10) !important;
     color: rgb(167 243 208) !important;
   }
