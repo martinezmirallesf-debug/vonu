@@ -62,32 +62,6 @@
     margin-bottom: 7px !important;
   }
 
-  /* Every desktop mode tab uses the exact same icon/text baseline, active or not. */
-  section[class*="max-w-[850px]"] > div:first-child button {
-    align-items: center !important;
-    line-height: 1 !important;
-  }
-
-  section[class*="max-w-[850px]"] > div:first-child button > span:first-child {
-    display: inline-flex !important;
-    width: 20px !important;
-    height: 20px !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex: 0 0 20px !important;
-    line-height: 1 !important;
-    vertical-align: middle !important;
-    transform: none !important;
-  }
-
-  section[class*="max-w-[850px]"] > div:first-child button > span:nth-child(2) {
-    display: inline-flex !important;
-    height: 20px !important;
-    align-items: center !important;
-    line-height: 20px !important;
-    vertical-align: middle !important;
-  }
-
   /* Thinner footer = more usable home height. */
   footer {
     height: 48px !important;
@@ -137,6 +111,28 @@
     -webkit-backdrop-filter: none !important;
     overflow: visible !important;
   }
+
+  /* Icon + label are a fixed centered pair in all three desktop tabs. */
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button {
+    align-items: center !important;
+  }
+
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button > span:first-child {
+    display: inline-flex !important;
+    width: 20px !important;
+    min-width: 20px !important;
+    height: 20px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 20px !important;
+  }
+
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button > span:nth-child(2) {
+    display: inline-flex !important;
+    align-items: center !important;
+    min-height: 20px !important;
+    line-height: 20px !important;
+  }
 }
 
 /* Mobile mirrors the desktop product language: borderless shell, fixed layout,
@@ -166,41 +162,23 @@
 
   main > section[class*="max-w-[850px]"] > div:first-child button {
     height: 54px !important;
-    align-items: center !important;
-    line-height: 1 !important;
   }
 
-  main > section[class*="max-w-[850px]"] > div:first-child button > span:first-child {
-    display: inline-flex !important;
-    width: 18px !important;
-    height: 18px !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex: 0 0 18px !important;
-    line-height: 1 !important;
-  }
-
-  main > section[class*="max-w-[850px]"] > div:first-child button > span:nth-child(2) {
-    display: inline-flex !important;
-    align-items: center !important;
-    line-height: 18px !important;
-  }
-
-  /* Mobile keeps the third tab short: Message instead of Message or text. */
-  main > section[class*="max-w-[850px]"] > div:first-child button:nth-child(3) > span:nth-child(2) {
+  /* Spanish mobile labels stay compact: Enlace / Captura / Mensaje. */
+  html[lang="es"] main > section[class*="max-w-[850px]"] > div:first-child button:first-child > span:nth-child(2),
+  html[lang="es"] main > section[class*="max-w-[850px]"] > div:first-child button:nth-child(3) > span:nth-child(2) {
     font-size: 0 !important;
   }
 
-  main > section[class*="max-w-[850px]"] > div:first-child button:nth-child(3) > span:nth-child(2)::after {
+  html[lang="es"] main > section[class*="max-w-[850px]"] > div:first-child button:first-child > span:nth-child(2)::after {
+    content: "Enlace";
     font-size: 12px;
-    line-height: 18px;
   }
 
-  html[lang="es"] main > section[class*="max-w-[850px]"] > div:first-child button:nth-child(3) > span:nth-child(2)::after { content: "Mensaje"; }
-  html[lang="en"] main > section[class*="max-w-[850px]"] > div:first-child button:nth-child(3) > span:nth-child(2)::after { content: "Message"; }
-  html[lang="fr"] main > section[class*="max-w-[850px]"] > div:first-child button:nth-child(3) > span:nth-child(2)::after { content: "Message"; }
-  html[lang="de"] main > section[class*="max-w-[850px]"] > div:first-child button:nth-child(3) > span:nth-child(2)::after { content: "Nachricht"; }
-  html[lang="ar"] main > section[class*="max-w-[850px]"] > div:first-child button:nth-child(3) > span:nth-child(2)::after { content: "رسالة"; }
+  html[lang="es"] main > section[class*="max-w-[850px]"] > div:first-child button:nth-child(3) > span:nth-child(2)::after {
+    content: "Mensaje";
+    font-size: 12px;
+  }
 
   /* Fixed mobile scanner body. */
   main > section[class*="max-w-[850px]"] > div:last-child {
@@ -239,13 +217,18 @@
     padding-block: 2px !important;
   }
 
+  /* The Ctrl+V hint is desktop-oriented; remove it and keep the whitespace clean. */
+  main > section[class*="max-w-[850px]"] > div:last-child > div:first-child:has(input[type="file"]) > div > p:last-child {
+    display: none !important;
+  }
+
   /* CTA/trust row lands at the exact same place for all three modes. */
   main > section[class*="max-w-[850px]"] > div:last-child > div:last-child {
     margin-top: auto !important;
     margin-bottom: 0 !important;
   }
 
-  /* Trust copy is visually centered on mobile. */
+  /* Trust messages centered on mobile. */
   main > section[class*="max-w-[850px]"] > div:last-child > div:last-child > div:first-child {
     width: 100% !important;
     justify-content: center !important;
