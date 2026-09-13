@@ -130,6 +130,50 @@
   }
 }
 
+/* Spanish hero accent: keep the semantic h1 text intact, but render the final phrase in Vonu green. */
+html[lang="es"] main > section.text-center > h1 {
+  font-size: 0 !important;
+}
+
+html[lang="es"] main > section.text-center > h1::before,
+html[lang="es"] main > section.text-center > h1::after {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.055em;
+}
+
+html[lang="es"] main > section.text-center > h1::before {
+  content: "Detecta estafas, phishing y perfiles falsos ";
+  color: #fff;
+}
+
+html[lang="es"] main > section.text-center > h1::after {
+  content: "en segundos";
+  color: rgb(52 211 153);
+}
+
+@media (min-width: 640px) {
+  html[lang="es"] main > section.text-center > h1::before,
+  html[lang="es"] main > section.text-center > h1::after {
+    font-size: 48px;
+  }
+}
+
+@media (min-width: 1024px) {
+  html[lang="es"] main > section.text-center > h1::before,
+  html[lang="es"] main > section.text-center > h1::after {
+    font-size: 56px;
+  }
+}
+
+@media (min-width: 1280px) {
+  html[lang="es"] main > section.text-center > h1::before,
+  html[lang="es"] main > section.text-center > h1::after {
+    font-size: 60px;
+  }
+}
+
 @media (max-width: 767px) {
   main > section[class*="max-w-[850px]"] {
     background: transparent !important;
@@ -226,74 +270,78 @@
     height: 42px !important;
   }
 
-  /* Fullscreen mobile navigation: preserve the existing Vonu pattern. */
-  header {
+  /* True fullscreen mobile navigation. The normal header row stays above the overlay,
+     giving us the close control while the menu covers the entire viewport underneath. */
+  header:has(> div:nth-child(2)) {
     position: relative !important;
-    z-index: 80 !important;
+    z-index: 10000 !important;
   }
 
-  header > div:first-child > button[aria-label] {
-    width: 40px !important;
-    height: 40px !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    color: rgb(241 245 249) !important;
-  }
-
-  header > div:nth-child(2) {
+  header:has(> div:nth-child(2)) > div:first-child {
     position: fixed !important;
-    inset: 58px 0 0 0 !important;
-    z-index: 79 !important;
-    height: calc(100dvh - 58px) !important;
-    min-height: calc(100dvh - 58px) !important;
-    overflow-y: auto !important;
-    padding: 22px 22px 28px !important;
-    border-top: 1px solid rgba(255,255,255,.07) !important;
-    background: linear-gradient(180deg, rgba(11,14,23,.995), rgba(13,16,27,.995)) !important;
-    backdrop-filter: blur(18px) !important;
-    -webkit-backdrop-filter: blur(18px) !important;
+    inset: 0 0 auto 0 !important;
+    z-index: 10002 !important;
+    height: 58px !important;
+    background: #0b0e17 !important;
+    border-bottom: 1px solid rgba(255,255,255,.07) !important;
   }
 
-  header > div:nth-child(2) > div {
+  header:has(> div:nth-child(2)) > div:nth-child(2) {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 10001 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    overflow-y: auto !important;
+    padding: 82px 24px 26px !important;
+    border: 0 !important;
+    background: linear-gradient(180deg, #0b0e17 0%, #0d101b 100%) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  header:has(> div:nth-child(2)) > div:nth-child(2) > div {
     display: flex !important;
-    min-height: 100% !important;
+    width: 100% !important;
+    min-height: calc(100dvh - 108px) !important;
     flex-direction: column !important;
     gap: 0 !important;
     padding: 0 !important;
   }
 
-  header > div:nth-child(2) a {
+  header:has(> div:nth-child(2)) > div:nth-child(2) a {
     display: flex !important;
-    min-height: 62px !important;
+    min-height: 64px !important;
     align-items: center !important;
-    padding: 0 4px !important;
-    border-bottom: 1px solid rgba(255,255,255,.065) !important;
+    padding: 0 2px !important;
+    border-bottom: 1px solid rgba(255,255,255,.06) !important;
     border-radius: 0 !important;
     background: transparent !important;
-    font-size: 20px !important;
-    font-weight: 650 !important;
-    letter-spacing: -.025em !important;
-    color: rgb(241 245 249) !important;
+    color: rgb(248 250 252) !important;
+    font-size: 21px !important;
+    font-weight: 700 !important;
+    letter-spacing: -.03em !important;
   }
 
-  header > div:nth-child(2) a:hover,
-  header > div:nth-child(2) a:active {
-    color: rgb(110 231 183) !important;
+  header:has(> div:nth-child(2)) > div:nth-child(2) a:hover,
+  header:has(> div:nth-child(2)) > div:nth-child(2) a:active {
+    color: rgb(52 211 153) !important;
   }
 
-  header > div:nth-child(2) select {
+  header:has(> div:nth-child(2)) > div:nth-child(2) select {
     width: 100% !important;
     margin-top: auto !important;
+    padding: 18px 2px 6px !important;
     border: 0 !important;
     border-top: 1px solid rgba(255,255,255,.07) !important;
     border-radius: 0 !important;
+    outline: 0 !important;
     background: transparent !important;
-    padding: 18px 4px 8px !important;
-    font-size: 14px !important;
-    font-weight: 650 !important;
+    box-shadow: none !important;
     color: rgb(203 213 225) !important;
-    outline: none !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
   }
 }
