@@ -1,0 +1,59 @@
+/* Mobile header hardening: no locale controls, no invisible overlays, large reliable touch target. */
+
+.vonu-check-page header select,
+.vonu-check-page header [aria-label="Language"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.vonu-check-page header nav > div:has(select) {
+  display: none !important;
+}
+
+@media (max-width: 767px) {
+  .vonu-check-page header {
+    position: relative !important;
+    z-index: 1000 !important;
+    isolation: isolate !important;
+    pointer-events: auto !important;
+  }
+
+  .vonu-check-page header > div:first-child {
+    position: relative !important;
+    z-index: 1002 !important;
+    pointer-events: auto !important;
+  }
+
+  .vonu-check-page header > div:first-child > button[aria-expanded] {
+    position: relative !important;
+    z-index: 1004 !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    margin-inline-end: -6px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+
+  .vonu-check-page header > div:first-child > button[aria-expanded]::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 12px;
+  }
+
+  /* When the menu is open, keep the top bar and close button above the fullscreen panel. */
+  .vonu-check-page header:has(> div:nth-child(2)) > div:first-child {
+    z-index: 10020 !important;
+  }
+
+  .vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) {
+    z-index: 10010 !important;
+  }
+}
