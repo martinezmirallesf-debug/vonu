@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import CheckClient from "./CheckClient";
 import LanguageSelectorCustom from "./LanguageSelectorCustom";
-import HeroTitleAccent from "./HeroTitleAccent";
+import SubmissionNotice from "./SubmissionNotice";
 import "./check.css";
 import "./check-polish.css";
 import "./language-custom.css";
 import "./hero-title-fix.css";
 import "./language-selector-final.css";
+import "./submission-notice.css";
 import { isSupportedLocale, supportedLocales } from "@/lib/vonu-check/i18n";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 
@@ -88,10 +89,10 @@ export default async function LocalizedCheckPage({ params }: Props) {
   if (!isSupportedLocale(locale)) notFound();
 
   return (
-    <>
+    <div className="vonu-check-page">
       <CheckClient locale={locale} />
       <LanguageSelectorCustom locale={locale} />
-      <HeroTitleAccent locale={locale} />
-    </>
+      <SubmissionNotice locale={locale} />
+    </div>
   );
 }
