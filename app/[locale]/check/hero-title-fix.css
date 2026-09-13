@@ -16,6 +16,12 @@ html[lang^="es"] main > section.text-center > h1 {
 }
 
 @media (min-width: 1024px) {
+  main > section.text-center > h1 {
+    width: min(966px, calc(100vw - 180px)) !important;
+    max-width: 966px !important;
+    text-wrap: wrap !important;
+  }
+
   html[lang^="es"] main > section.text-center > h1 {
     font-size: 56px !important;
   }
