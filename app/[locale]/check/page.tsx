@@ -5,7 +5,6 @@ import LanguageSelectorCustom from "./LanguageSelectorCustom";
 import HeroTitleAccent from "./HeroTitleAccent";
 import "./check.css";
 import "./check-polish.css";
-import "./language-tight.css";
 import "./language-custom.css";
 import "./hero-title-fix.css";
 import { isSupportedLocale, supportedLocales } from "@/lib/vonu-check/i18n";
