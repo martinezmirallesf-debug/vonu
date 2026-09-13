@@ -10,22 +10,20 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
   const [mobileHost, setMobileHost] = useState<HTMLElement | null>(null);
   const [desktopOpen, setDesktopOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [currentSearch, setCurrentSearch] = useState("");
   const desktopRootRef = useRef<HTMLDivElement>(null);
   const mobileRootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setCurrentSearch(window.location.search || "");
+    const nav = document.querySelector<HTMLElement>("header nav");
+    const select = nav?.querySelector<HTMLSelectElement>('select[aria-label="Language"]');
+    const nativeWrapper = select?.parentElement ?? null;
+    if (!nav || !nativeWrapper) return;
 
-    const select = document.querySelector<HTMLSelectElement>('nav select[aria-label="Language"]');
-    const parent = select?.parentElement ?? null;
-    if (!parent) return;
-
-    parent.classList.add("vonu-language-desktop-host");
-    setDesktopHost(parent);
+    nativeWrapper.classList.add("vonu-language-native-hidden");
+    setDesktopHost(nav);
 
     return () => {
-      parent.classList.remove("vonu-language-desktop-host");
+      nativeWrapper.classList.remove("vonu-language-native-hidden");
     };
   }, []);
 
@@ -84,16 +82,16 @@ export default function LanguageSelectorCustom({ locale }: { locale: SupportedLo
           {desktopOpen && (
             <div className="vonu-language-desktop-menu" role="menu">
               {supportedLocales.map((item) => (
-                <a
+                <button
                   key={item}
-                  href={`/${item}/check${currentSearch}`}
+                  type="button"
                   role="menuitem"
                   className={item === locale ? "is-active" : ""}
                   aria-current={item === locale ? "page" : undefined}
-                  onClick={() => setDesktopOpen(false)}
+                  onClick={() => goToLocale(item)}
                 >
                   {localeMeta[item].label}
-                </a>
+                </button>
               ))}
             </div>
           )}
