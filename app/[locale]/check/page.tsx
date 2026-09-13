@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import CheckClient from "./CheckClient";
 import LanguageSelectorCustom from "./LanguageSelectorCustom";
+import HeroTitleAccent from "./HeroTitleAccent";
 import "./check.css";
 import "./check-polish.css";
 import "./language-tight.css";
@@ -89,6 +90,7 @@ export default async function LocalizedCheckPage({ params }: Props) {
     <>
       <CheckClient locale={locale} />
       <LanguageSelectorCustom locale={locale} />
+      <HeroTitleAccent locale={locale} />
     </>
   );
 }
