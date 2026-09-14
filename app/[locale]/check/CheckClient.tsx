@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { localeMeta, supportedLocales } from "@/lib/vonu-check/i18n";
+import HomeHeader from "@/app/components/HomeHeader";
+import { localeMeta } from "@/lib/vonu-check/i18n";
 import type { CaptureCheckResult } from "@/lib/vonu-check/capture-types";
 import type { TextCheckResult } from "@/lib/vonu-check/text-types";
 import type { RiskLevel, SignalTone, SupportedLocale, WebCheckResult } from "@/lib/vonu-check/types";
@@ -42,10 +43,6 @@ type UiCopy = {
   actions: string;
   limitations: string;
   newCheck: string;
-  method: string;
-  privacyMenu: string;
-  pricing: string;
-  menu: string;
   invalidUrl: string;
   invalidText: string;
   invalidImage: string;
@@ -69,6 +66,7 @@ type UiCopy = {
   emails: string;
   brands: string;
   legal: string;
+  privacyMenu: string;
 };
 
 const UI: Record<SupportedLocale, UiCopy> = {
@@ -104,10 +102,6 @@ const UI: Record<SupportedLocale, UiCopy> = {
     actions: "Qué hacer ahora",
     limitations: "Límites del análisis",
     newCheck: "Nueva comprobación",
-    method: "Metodología",
-    privacyMenu: "Privacidad",
-    pricing: "Precios",
-    menu: "Menú",
     invalidUrl: "Introduce una URL válida.",
     invalidText: "Pega un mensaje o texto para analizar.",
     invalidImage: "Sube una imagen PNG, JPG o WEBP de tamaño razonable.",
@@ -131,6 +125,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
     emails: "Emails",
     brands: "Marcas",
     legal: "Legal",
+    privacyMenu: "Privacidad",
   },
   en: {
     hero: "Detect scams, phishing and fake profiles in seconds",
@@ -164,10 +159,6 @@ const UI: Record<SupportedLocale, UiCopy> = {
     actions: "What to do now",
     limitations: "Analysis limits",
     newCheck: "New check",
-    method: "Method",
-    privacyMenu: "Privacy",
-    pricing: "Pricing",
-    menu: "Menu",
     invalidUrl: "Enter a valid URL.",
     invalidText: "Paste a message or text to analyse.",
     invalidImage: "Upload a reasonable-size PNG, JPG or WEBP image.",
@@ -191,6 +182,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
     emails: "Emails",
     brands: "Brands",
     legal: "Legal",
+    privacyMenu: "Privacy",
   },
   fr: {
     hero: "Détectez les arnaques, le phishing et les faux profils en quelques secondes",
@@ -224,10 +216,6 @@ const UI: Record<SupportedLocale, UiCopy> = {
     actions: "Que faire maintenant",
     limitations: "Limites de l’analyse",
     newCheck: "Nouvelle vérification",
-    method: "Méthode",
-    privacyMenu: "Confidentialité",
-    pricing: "Tarifs",
-    menu: "Menu",
     invalidUrl: "Saisissez une URL valide.",
     invalidText: "Collez un message ou un texte à analyser.",
     invalidImage: "Importez une image PNG, JPG ou WEBP de taille raisonnable.",
@@ -251,6 +239,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
     emails: "Emails",
     brands: "Marques",
     legal: "Mentions légales",
+    privacyMenu: "Confidentialité",
   },
   de: {
     hero: "Betrug, Phishing und Fake-Profile in Sekunden erkennen",
@@ -284,10 +273,6 @@ const UI: Record<SupportedLocale, UiCopy> = {
     actions: "Was jetzt zu tun ist",
     limitations: "Grenzen der Analyse",
     newCheck: "Neue Prüfung",
-    method: "Methodik",
-    privacyMenu: "Datenschutz",
-    pricing: "Preise",
-    menu: "Menü",
     invalidUrl: "Gib eine gültige URL ein.",
     invalidText: "Füge eine Nachricht oder Text zur Analyse ein.",
     invalidImage: "Lade ein PNG-, JPG- oder WEBP-Bild in angemessener Größe hoch.",
@@ -311,6 +296,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
     emails: "E-Mails",
     brands: "Marken",
     legal: "Impressum",
+    privacyMenu: "Datenschutz",
   },
   ar: {
     hero: "اكتشف الاحتيال والتصيد والملفات المزيفة خلال ثوانٍ",
@@ -344,10 +330,6 @@ const UI: Record<SupportedLocale, UiCopy> = {
     actions: "ماذا تفعل الآن",
     limitations: "حدود التحليل",
     newCheck: "فحص جديد",
-    method: "المنهجية",
-    privacyMenu: "الخصوصية",
-    pricing: "الأسعار",
-    menu: "القائمة",
     invalidUrl: "أدخل رابطاً صالحاً.",
     invalidText: "الصق رسالة أو نصاً للتحليل.",
     invalidImage: "ارفع صورة PNG أو JPG أو WEBP بحجم مناسب.",
@@ -371,18 +353,68 @@ const UI: Record<SupportedLocale, UiCopy> = {
     emails: "البريد",
     brands: "العلامات",
     legal: "قانوني",
+    privacyMenu: "الخصوصية",
+  },
+};
+
+const unknownSummary: Record<SupportedLocale, string> = {
+  es: "No hemos podido inspeccionar suficiente contenido para emitir un veredicto fiable. Esto no es una señal de fraude: algunos servicios bloquean las comprobaciones automatizadas.",
+  en: "We could not inspect enough content to produce a reliable verdict. This is not a fraud signal: some services block automated checks.",
+  fr: "Nous n’avons pas pu inspecter assez de contenu pour fournir un verdict fiable. Ce n’est pas un signal de fraude : certains services bloquent les vérifications automatisées.",
+  de: "Wir konnten nicht genug Inhalt prüfen, um ein verlässliches Urteil abzugeben. Das ist kein Betrugssignal: Manche Dienste blockieren automatisierte Prüfungen.",
+  ar: "لم نتمكن من فحص محتوى كافٍ لإصدار نتيجة موثوقة. هذا ليس مؤشر احتيال؛ بعض الخدمات تمنع الفحوصات الآلية.",
+};
+
+const subjectCopy: Record<SupportedLocale, { analysed: string; url: string; capture: string; text: string }> = {
+  es: { analysed: "Analizado", url: "URL analizada", capture: "Captura analizada", text: "Mensaje analizado" },
+  en: { analysed: "Analysed", url: "Analysed URL", capture: "Analysed screenshot", text: "Analysed message" },
+  fr: { analysed: "Analysé", url: "URL analysée", capture: "Capture analysée", text: "Message analysé" },
+  de: { analysed: "Analysiert", url: "Analysierte URL", capture: "Analysierter Screenshot", text: "Analysierte Nachricht" },
+  ar: { analysed: "تم التحليل", url: "الرابط الذي تم تحليله", capture: "لقطة الشاشة التي تم تحليلها", text: "الرسالة التي تم تحليلها" },
+};
+
+const limitationCopy: Record<SupportedLocale, Record<string, string>> = {
+  es: {
+    "technical-signals-only": "Esta versión usa todavía una capa técnica inicial.",
+    "no-reputation-layer-yet": "La reputación externa todavía no se contrasta en este informe.",
+    "no-business-identity-layer-yet": "La identidad empresarial todavía no se verifica en esta versión.",
+    "no-domain-age-layer-yet": "La antigüedad y registro del dominio todavía no se incorporan.",
+    "page-content-not-inspectable": "El servidor no permitió inspeccionar el contenido completo de la página.",
+  },
+  en: {
+    "technical-signals-only": "This version still uses an initial technical layer.",
+    "no-reputation-layer-yet": "External reputation is not yet cross-checked in this report.",
+    "no-business-identity-layer-yet": "Business identity is not yet verified in this version.",
+    "no-domain-age-layer-yet": "Domain age and registration are not yet included.",
+    "page-content-not-inspectable": "The server did not allow the full page content to be inspected.",
+  },
+  fr: {
+    "technical-signals-only": "Cette version utilise encore une première couche technique.",
+    "no-reputation-layer-yet": "La réputation externe n’est pas encore recoupée dans ce rapport.",
+    "no-business-identity-layer-yet": "L’identité de l’entreprise n’est pas encore vérifiée dans cette version.",
+    "no-domain-age-layer-yet": "L’ancienneté et l’enregistrement du domaine ne sont pas encore inclus.",
+    "page-content-not-inspectable": "Le serveur n’a pas permis d’inspecter tout le contenu de la page.",
+  },
+  de: {
+    "technical-signals-only": "Diese Version nutzt noch eine erste technische Ebene.",
+    "no-reputation-layer-yet": "Externe Reputation wird in diesem Bericht noch nicht abgeglichen.",
+    "no-business-identity-layer-yet": "Die Unternehmensidentität wird in dieser Version noch nicht verifiziert.",
+    "no-domain-age-layer-yet": "Domainalter und Registrierung sind noch nicht enthalten.",
+    "page-content-not-inspectable": "Der Server erlaubte keine vollständige Prüfung des Seiteninhalts.",
+  },
+  ar: {
+    "technical-signals-only": "لا يزال هذا الإصدار يستخدم طبقة تقنية أولية.",
+    "no-reputation-layer-yet": "لم تتم بعد مقارنة السمعة الخارجية في هذا التقرير.",
+    "no-business-identity-layer-yet": "لم يتم بعد التحقق من هوية الشركة في هذا الإصدار.",
+    "no-domain-age-layer-yet": "لم تتم بعد إضافة عمر النطاق وبيانات تسجيله.",
+    "page-content-not-inspectable": "لم يسمح الخادم بفحص محتوى الصفحة بالكامل.",
   },
 };
 
 function VonuMark() {
   return (
-    <svg viewBox="0 0 40 40" className="h-8 w-8 shrink-0" fill="none" aria-hidden="true">
-      <path
-        d="M20 3.8 33.8 11v18L20 36.2 6.2 29V11L20 3.8Z"
-        stroke="rgb(52 211 153)"
-        strokeWidth="2.35"
-        strokeLinejoin="round"
-      />
+    <svg viewBox="0 0 40 40" className="h-5 w-5 shrink-0" fill="none" aria-hidden="true">
+      <path d="M20 3.8 33.8 11v18L20 36.2 6.2 29V11L20 3.8Z" stroke="rgb(52 211 153)" strokeWidth="2.35" strokeLinejoin="round" />
       <path d="M13.2 11.2 20 7.7l6.8 3.5M9.7 17.2 20 12l10.3 5.2M9.7 22.8 20 28l10.3-5.2M13.2 28.8 20 32.3l6.8-3.5" stroke="rgba(52,211,153,.38)" strokeWidth="1" />
     </svg>
   );
@@ -431,7 +463,6 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [scanIndex, setScanIndex] = useState(0);
-  const [mobileMenu, setMobileMenu] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -537,12 +568,6 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
     setScanIndex(0);
   }
 
-  function changeLocale(next: string) {
-    if (supportedLocales.includes(next as SupportedLocale)) {
-      window.location.href = `/${next}/check`;
-    }
-  }
-
   const steps = mode === "url" ? t.scanUrl : mode === "capture" ? t.scanCapture : t.scanText;
   const activeStep = steps[scanIndex % steps.length];
   const risk = result?.risk;
@@ -570,9 +595,79 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
         ? t.highSummary
         : result.risk.level === "caution"
           ? t.cautionSummary
-          : t.lowSummary
+          : result.risk.level === "unknown"
+            ? unknownSummary[locale]
+            : t.lowSummary
       : result.summary;
   const idle = !result && !loading;
+
+  const subject = (() => {
+    if (result?.version === "vonu-check-v1") {
+      return {
+        label: subjectCopy[locale].url,
+        primary: result.facts.hostname,
+        detail: result.facts.finalUrl,
+        image: null as string | null,
+        icon: "◎",
+      };
+    }
+    if (result?.version === "vonu-capture-v1" || mode === "capture") {
+      return {
+        label: subjectCopy[locale].capture,
+        primary: imageName || subjectCopy[locale].capture,
+        detail: result?.version === "vonu-capture-v1" ? contextLabel(result.kind, locale) : t.dropHint,
+        image: imageData,
+        icon: "▣",
+      };
+    }
+    if (result?.version === "vonu-text-v1" || mode === "text") {
+      const preview = text.trim().replace(/\s+/g, " ");
+      return {
+        label: subjectCopy[locale].text,
+        primary: preview.slice(0, 72) || subjectCopy[locale].text,
+        detail: preview.length > 72 ? `${preview.slice(72, 150)}…` : "",
+        image: null as string | null,
+        icon: "≡",
+      };
+    }
+    const cleanUrl = url.trim();
+    let host = cleanUrl;
+    try {
+      host = new URL(/^https?:\/\//i.test(cleanUrl) ? cleanUrl : `https://${cleanUrl}`).hostname;
+    } catch {
+      // Keep the submitted value as the visible subject.
+    }
+    return {
+      label: subjectCopy[locale].url,
+      primary: host || subjectCopy[locale].url,
+      detail: cleanUrl,
+      image: null as string | null,
+      icon: "◎",
+    };
+  })();
+
+  function SubjectCard({ completed = false }: { completed?: boolean }) {
+    return (
+      <section className="mb-5 flex items-center gap-3 rounded-[18px] border border-white/[0.075] bg-[#111725]/88 p-3.5 shadow-[0_16px_40px_rgba(0,0,0,.18)]">
+        {subject.image ? (
+          <img src={subject.image} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover ring-1 ring-white/10" />
+        ) : (
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-emerald-400/[0.08] text-[20px] text-emerald-300 ring-1 ring-emerald-400/20">{subject.icon}</div>
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">{subject.label}</p>
+          <p className="mt-1 truncate text-[14px] font-semibold text-slate-100">{subject.primary}</p>
+          {subject.detail && <p className="mt-0.5 truncate text-[11px] text-slate-500">{subject.detail}</p>}
+        </div>
+        {completed && (
+          <span className="hidden shrink-0 items-center gap-1.5 rounded-full bg-emerald-400/[0.08] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.10em] text-emerald-300 ring-1 ring-emerald-400/20 sm:inline-flex">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            {subjectCopy[locale].analysed}
+          </span>
+        )}
+      </section>
+    );
+  }
 
   return (
     <div
@@ -587,87 +682,20 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
           "radial-gradient(circle at 50% 44%, rgba(16,185,129,.07), transparent 28%), radial-gradient(circle at 88% 68%, rgba(56,189,248,.035), transparent 24%), linear-gradient(180deg,#0b0e17 0%,#111523 100%)",
       }}
     >
-      <header className="shrink-0 border-b border-white/[0.07] bg-[#0b0e17]/94 backdrop-blur-xl">
-        <div className="mx-auto flex h-[58px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href={`/${locale}/check`} className="flex items-center gap-2.5" aria-label="VonuAI">
-            <VonuMark />
-            <span className="text-[21px] font-bold tracking-[-0.045em] text-white">VonuAI</span>
-          </Link>
-
-          <nav className="hidden items-center gap-7 text-[13px] font-medium text-slate-300 md:flex">
-            <Link href="/como-funciona" className="transition hover:text-white">{t.method}</Link>
-            <Link href="/precios" className="transition hover:text-white">{t.pricing}</Link>
-            <Link href="/legal/privacidad" className="transition hover:text-white">{t.privacyMenu}</Link>
-            <div className="relative">
-              <select
-                value={locale}
-                onChange={(event) => changeLocale(event.target.value)}
-                className="h-9 appearance-none rounded-full border border-white/10 bg-white/[0.035] py-0 ps-3 pe-7 text-[13px] font-semibold text-slate-200 outline-none"
-                aria-label="Language"
-              >
-                {supportedLocales.map((item) => (
-                  <option key={item} value={item} className="bg-[#111523]">{localeMeta[item].label}</option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute end-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">⌄</span>
-            </div>
-          </nav>
-
-          <button
-            type="button"
-            onClick={() => setMobileMenu((value) => !value)}
-            className="grid h-9 w-9 place-items-center rounded-lg text-white md:hidden"
-            aria-label={t.menu}
-            aria-expanded={mobileMenu}
-          >
-            <span className="text-[22px] leading-none">{mobileMenu ? "×" : "☰"}</span>
-          </button>
-        </div>
-
-        {mobileMenu && (
-          <div className="border-t border-white/[0.07] bg-[#0b0e17] px-4 py-3 md:hidden">
-            <div className="mx-auto grid max-w-[1320px] gap-1 text-sm text-slate-300">
-              <Link href="/como-funciona" className="rounded-xl px-3 py-2.5 hover:bg-white/[0.04]">{t.method}</Link>
-              <Link href="/precios" className="rounded-xl px-3 py-2.5 hover:bg-white/[0.04]">{t.pricing}</Link>
-              <Link href="/legal/privacidad" className="rounded-xl px-3 py-2.5 hover:bg-white/[0.04]">{t.privacyMenu}</Link>
-              <select
-                value={locale}
-                onChange={(event) => changeLocale(event.target.value)}
-                className="mt-1 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-slate-200 outline-none"
-              >
-                {supportedLocales.map((item) => (
-                  <option key={item} value={item} className="bg-[#111523]">{localeMeta[item].label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
-      </header>
+      <HomeHeader />
 
       {idle && (
         <>
           <main className="mx-auto flex w-full max-w-[1080px] flex-1 flex-col justify-center px-4 py-5 sm:px-6 md:min-h-0 md:py-3 lg:px-8">
             <section className="text-center">
-              <h1 className="mx-auto max-w-[900px] text-balance text-[36px] font-bold leading-[1.02] tracking-[-0.055em] text-white sm:text-[48px] lg:text-[56px] xl:text-[60px]">
-                {t.hero}
-              </h1>
-              <p className="mx-auto mt-3 max-w-[720px] text-[15px] leading-6 text-slate-400 sm:text-[16px] lg:text-[17px]">
-                {t.sub}
-              </p>
+              <h1 className="mx-auto max-w-[900px] text-balance text-[36px] font-bold leading-[1.02] tracking-[-0.055em] text-white sm:text-[48px] lg:text-[56px] xl:text-[60px]">{t.hero}</h1>
+              <p className="mx-auto mt-3 max-w-[720px] text-[15px] leading-6 text-slate-400 sm:text-[16px] lg:text-[17px]">{t.sub}</p>
             </section>
 
             <section className="mx-auto mt-5 w-full max-w-[850px] rounded-[22px] bg-[#141927]/72 shadow-[0_26px_70px_rgba(0,0,0,.24)] backdrop-blur-sm sm:mt-6">
               <div className="grid grid-cols-3 px-2 pt-1">
                 {(["url", "capture", "text"] as Mode[]).map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => switchMode(item)}
-                    className={[
-                      "relative flex h-[52px] items-center justify-center gap-2 px-2 text-[12px] font-semibold transition sm:text-[14px]",
-                      mode === item ? "text-emerald-300" : "text-slate-400 hover:text-slate-200",
-                    ].join(" ")}
-                  >
+                  <button key={item} type="button" onClick={() => switchMode(item)} className={["relative flex h-[52px] items-center justify-center gap-2 px-2 text-[12px] font-semibold transition sm:text-[14px]", mode === item ? "text-emerald-300" : "text-slate-400 hover:text-slate-200"].join(" ")}>
                     <ModeIcon mode={item} />
                     <span>{item === "url" ? t.url : item === "capture" ? t.capture : t.text}</span>
                     {mode === item && <span className="absolute inset-x-[18%] bottom-0 h-[2px] rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,.45)]" />}
@@ -679,39 +707,16 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
                 {mode === "url" && (
                   <div className="flex min-h-[72px] items-center rounded-[18px] bg-[#0d1220] px-4 ring-1 ring-white/[0.07] transition focus-within:ring-emerald-400/35">
                     <span className="me-3 text-emerald-300">⌕</span>
-                    <input
-                      value={url}
-                      onChange={(event) => setUrl(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") void analyze();
-                      }}
-                      placeholder={t.urlPlaceholder}
-                      inputMode="url"
-                      autoCapitalize="none"
-                      autoCorrect="off"
-                      className="w-full bg-transparent py-5 text-[15px] text-white outline-none placeholder:text-slate-600 sm:text-[16px]"
-                    />
+                    <input value={url} onChange={(event) => setUrl(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void analyze(); }} placeholder={t.urlPlaceholder} inputMode="url" autoCapitalize="none" autoCorrect="off" className="w-full bg-transparent py-5 text-[15px] text-white outline-none placeholder:text-slate-600 sm:text-[16px]" />
                   </div>
                 )}
 
                 {mode === "text" && (
-                  <textarea
-                    value={text}
-                    onChange={(event) => setText(event.target.value)}
-                    placeholder={t.textPlaceholder}
-                    className="min-h-[118px] w-full resize-none rounded-[18px] bg-[#0d1220] p-4 text-[15px] leading-6 text-white outline-none ring-1 ring-white/[0.07] transition placeholder:text-slate-600 focus:ring-emerald-400/35 sm:min-h-[128px]"
-                  />
+                  <textarea value={text} onChange={(event) => setText(event.target.value)} placeholder={t.textPlaceholder} className="min-h-[118px] w-full resize-none rounded-[18px] bg-[#0d1220] p-4 text-[15px] leading-6 text-white outline-none ring-1 ring-white/[0.07] transition placeholder:text-slate-600 focus:ring-emerald-400/35 sm:min-h-[128px]" />
                 )}
 
                 {mode === "capture" && (
-                  <div
-                    onDragOver={(event) => event.preventDefault()}
-                    onDrop={(event) => {
-                      event.preventDefault();
-                      void handleFile(event.dataTransfer.files?.[0] || null);
-                    }}
-                    className="grid min-h-[138px] place-items-center px-3 py-2 text-center"
-                  >
+                  <div onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); void handleFile(event.dataTransfer.files?.[0] || null); }} className="grid min-h-[138px] place-items-center px-3 py-2 text-center">
                     {imageData ? (
                       <div className="grid w-full gap-3 sm:grid-cols-[110px_1fr] sm:items-center sm:text-start">
                         <img src={imageData} alt="Preview" className="mx-auto max-h-[112px] max-w-[110px] rounded-lg object-contain" />
@@ -729,39 +734,28 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
                         <p className="mt-2 text-[11px] text-slate-600">{t.pasteImage}</p>
                       </div>
                     )}
-                    <input
-                      ref={fileRef}
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      className="hidden"
-                      onChange={(event) => void handleFile(event.target.files?.[0] || null)}
-                    />
+                    <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(event) => void handleFile(event.target.files?.[0] || null)} />
                   </div>
                 )}
 
                 {error && <p className="mt-3 rounded-lg bg-rose-400/[0.07] px-4 py-2.5 text-sm text-rose-200 ring-1 ring-rose-400/20">{error}</p>}
 
                 <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500 sm:text-xs">
-                    <span>● {t.privacy}</span>
+                  <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-slate-500 sm:text-xs">
                     <span>✓ {t.firstFree}</span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => void analyze()}
-                    className="inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-400 px-5 text-[13px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:bg-emerald-300 active:scale-[.99] sm:min-w-[160px]"
-                  >
-                    {t.analyze}
-                  </button>
+                  <button type="button" onClick={() => void analyze()} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-400 px-5 text-[13px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:bg-emerald-300 active:scale-[.99] sm:min-w-[160px]">{t.analyze}</button>
                 </div>
               </div>
             </section>
           </main>
 
           <footer className="shrink-0 border-t border-white/[0.055] bg-[#0b0e17]/55">
-            <div className="mx-auto flex h-9 max-w-[1320px] items-center justify-between px-4 text-[11px] text-slate-600 sm:px-6 lg:px-8">
-              <span>© {new Date().getFullYear()} VonuAI</span>
-              <div className="flex items-center gap-4">
+            <div className="mx-auto flex min-h-11 max-w-[1320px] items-center justify-between gap-3 px-4 text-[11px] text-slate-600 sm:px-6 lg:px-8">
+              <div className="flex items-center gap-2 text-slate-500"><VonuMark /><span className="font-semibold tracking-[0.08em] text-slate-400">VONU</span></div>
+              <div className="flex items-center gap-3 sm:gap-4">
+                <Link href="/producto" className="hidden hover:text-slate-400 sm:inline">Producto</Link>
+                <Link href="/casos-de-uso" className="hidden hover:text-slate-400 sm:inline">Casos de uso</Link>
                 <Link href="/legal/aviso-legal" className="hover:text-slate-400">{t.legal}</Link>
                 <Link href="/legal/privacidad" className="hover:text-slate-400">{t.privacyMenu}</Link>
               </div>
@@ -771,19 +765,20 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
       )}
 
       {loading && (
-        <main className="mx-auto grid min-h-[calc(100dvh-58px)] w-full max-w-[900px] place-items-center px-4 py-10">
-          <section className="w-full rounded-[26px] bg-[#141927]/86 p-6 text-center shadow-[0_30px_80px_rgba(0,0,0,.34)] ring-1 ring-white/[0.08] sm:p-9">
-            <div className="relative mx-auto h-40 w-40">
-              <div className="absolute inset-0 rounded-full border border-emerald-400/15" />
-              <div className="absolute inset-5 rounded-full border border-emerald-400/20" />
-              <div className="absolute inset-10 rounded-full border border-emerald-400/25" />
-              <div className="absolute left-1/2 top-1/2 h-px w-[72px] origin-left -translate-y-1/2 bg-gradient-to-r from-emerald-300 to-transparent animate-[spin_1.45s_linear_infinite]" />
-              <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-400 shadow-[0_0_22px_rgba(52,211,153,.85)]" />
-            </div>
-            <h2 className="mt-6 text-[24px] font-bold tracking-[-0.035em] text-white">{t.scanning}</h2>
-            <p className="mt-3 min-h-6 text-sm text-emerald-200/85">{activeStep}</p>
-            <div className="mx-auto mt-6 h-1 max-w-sm overflow-hidden rounded-full bg-white/[0.06]">
-              <div className="h-full w-1/2 animate-[pulse_1.1s_ease-in-out_infinite] rounded-full bg-emerald-400" />
+        <main className="mx-auto grid min-h-[calc(100dvh-68px)] w-full max-w-[900px] place-items-center px-4 py-10">
+          <section className="w-full">
+            <SubjectCard />
+            <div className="rounded-[26px] bg-[#141927]/86 p-6 text-center shadow-[0_30px_80px_rgba(0,0,0,.34)] ring-1 ring-white/[0.08] sm:p-9">
+              <div className="relative mx-auto h-40 w-40">
+                <div className="absolute inset-0 rounded-full border border-emerald-400/15" />
+                <div className="absolute inset-5 rounded-full border border-emerald-400/20" />
+                <div className="absolute inset-10 rounded-full border border-emerald-400/25" />
+                <div className="absolute left-1/2 top-1/2 h-px w-[72px] origin-left -translate-y-1/2 bg-gradient-to-r from-emerald-300 to-transparent animate-[spin_1.45s_linear_infinite]" />
+                <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-400 shadow-[0_0_22px_rgba(52,211,153,.85)]" />
+              </div>
+              <h2 className="mt-6 text-[24px] font-bold tracking-[-0.035em] text-white">{t.scanning}</h2>
+              <p className="mt-3 min-h-6 text-sm text-emerald-200/85">{activeStep}</p>
+              <div className="mx-auto mt-6 h-1 max-w-sm overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full w-1/2 animate-[pulse_1.1s_ease-in-out_infinite] rounded-full bg-emerald-400" /></div>
             </div>
           </section>
         </main>
@@ -791,10 +786,9 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
 
       {result && (
         <main className="mx-auto w-full max-w-[1080px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
-          <section
-            className="rounded-[28px] p-5 shadow-[0_30px_90px_rgba(0,0,0,.35)] ring-1 sm:p-8"
-            style={{ background: `linear-gradient(180deg, ${styles.bg}, rgba(20,25,39,.94))`, borderColor: styles.border }}
-          >
+          <SubjectCard completed />
+
+          <section className="rounded-[28px] p-5 shadow-[0_30px_90px_rgba(0,0,0,.35)] ring-1 sm:p-8" style={{ background: `linear-gradient(180deg, ${styles.bg}, rgba(20,25,39,.94))`, borderColor: styles.border }}>
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">{t.report}</p>
@@ -802,7 +796,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
                 <p className="mt-3 max-w-2xl text-[15px] leading-7 text-slate-300">{summary}</p>
               </div>
               <div className="flex min-w-[190px] items-center gap-4 rounded-2xl bg-black/15 p-4 ring-1 ring-white/[0.07]">
-                <div className="text-[42px] font-bold tracking-[-0.06em] text-white">{risk?.score ?? 0}</div>
+                <div className="text-[42px] font-bold tracking-[-0.06em] text-white">{risk?.level === "unknown" ? "—" : risk?.score ?? 0}</div>
                 <div className="text-xs leading-5 text-slate-400"><div>{t.cautionIndex}</div><div className="mt-1 text-slate-300">{t.confidence}: {confidenceLabel}</div></div>
               </div>
             </div>
@@ -861,7 +855,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
           {result.limitations.length > 0 && (
             <section className="mt-5 rounded-[22px] bg-white/[0.025] p-5 ring-1 ring-white/[0.06]">
               <h2 className="text-[14px] font-semibold text-slate-300">{t.limitations}</h2>
-              <ul className="mt-2 grid gap-1 text-[12px] leading-5 text-slate-500">{result.limitations.map((item, index) => <li key={`${item}-${index}`}>• {item}</li>)}</ul>
+              <ul className="mt-2 grid gap-1.5 text-[12px] leading-5 text-slate-500">{result.limitations.map((item, index) => <li key={`${item}-${index}`}>• {limitationCopy[locale][item] || item}</li>)}</ul>
             </section>
           )}
 
