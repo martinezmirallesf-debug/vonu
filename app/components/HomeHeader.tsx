@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import VonuMark from "./VonuMark";
 
@@ -31,8 +32,10 @@ const secondaryLinks = [
 ];
 
 export default function HomeHeader() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [casesOpen, setCasesOpen] = useState(false);
+  const isCheckHome = pathname === "/check" || /^\/(es|en|fr|de|ar)\/check$/.test(pathname);
 
   function closeMenu() {
     setOpen(false);
@@ -44,7 +47,7 @@ export default function HomeHeader() {
       <div className="mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/check" className="flex items-center gap-3" aria-label="Vonu inicio">
           <VonuMark className="h-7 w-7" framed />
-          <span className="text-[21px] font-bold tracking-[-0.045em]">VONU</span>
+          <span className="text-[21px] font-semibold tracking-[-0.045em]">VONU</span>
         </Link>
 
         <nav className="hidden items-center gap-7 text-[14px] font-medium text-slate-300 md:flex">
@@ -74,12 +77,14 @@ export default function HomeHeader() {
           )}
         </nav>
 
-        <Link
-          href="/check"
-          className="hidden rounded-xl bg-emerald-400 px-4 py-2.5 text-[14px] font-bold text-[#07110d] transition hover:bg-emerald-300 md:inline-flex"
-        >
-          Analizar ahora
-        </Link>
+        {!isCheckHome && (
+          <Link
+            href="/check"
+            className="hidden rounded-xl bg-emerald-400 px-4 py-2.5 text-[14px] font-bold text-[#07110d] transition hover:bg-emerald-300 md:inline-flex"
+          >
+            Analizar ahora
+          </Link>
+        )}
 
         <button
           type="button"
