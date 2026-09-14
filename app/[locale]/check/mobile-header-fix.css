@@ -101,7 +101,11 @@
   .vonu-check-page main:has(> section.text-center) > section:nth-of-type(2) {
     width: 100% !important;
     max-width: 360px !important;
+    height: 366px !important;
+    min-height: 366px !important;
+    flex: 0 0 366px !important;
     margin: 18px auto 0 !important;
+    overflow: visible !important;
   }
 
   /* Keep tabs centered and evenly spaced. */
@@ -118,7 +122,7 @@
     padding-inline: 2px !important;
   }
 
-  /* Let each mode use the height it actually needs instead of a forced 250px box. */
+  /* Let each mode use the height it actually needs inside a stable scanner footprint. */
   .vonu-check-page main:has(> section.text-center) > section:nth-of-type(2) > div:last-child {
     width: 100% !important;
     height: auto !important;
