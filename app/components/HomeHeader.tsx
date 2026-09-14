@@ -45,10 +45,10 @@ export default function HomeHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-[#0b0e17]/95 text-white backdrop-blur-xl">
       <div className="mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/check" className="flex items-center gap-3" aria-label="Vonu inicio">
+        <a href="/" className="flex items-center gap-3" aria-label="Vonu inicio">
           <VonuMark className="h-7 w-7" framed />
           <span className="text-[21px] font-semibold tracking-[-0.045em]">VONU</span>
-        </Link>
+        </a>
 
         <nav className="hidden items-center gap-7 text-[14px] font-medium text-slate-300 md:flex">
           {mainLinks.map((item) =>
