@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { collectWebSignals } from "@/lib/vonu-check/web-signals";
+import { enrichWebResult } from "@/lib/vonu-check/web-enrichment";
 import { isSupportedLocale } from "@/lib/vonu-check/i18n";
 
 export const runtime = "nodejs";
@@ -17,7 +18,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "invalid_url" }, { status: 400 });
     }
 
-    const result = await collectWebSignals(url, locale);
+    const baseResult = await collectWebSignals(url, locale);
+    const result = await enrichWebResult(baseResult);
     return NextResponse.json(result, {
       status: 200,
       headers: {
