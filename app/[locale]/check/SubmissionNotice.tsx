@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 
 type NoticeCopy = {
@@ -60,8 +64,18 @@ const copy: Record<SupportedLocale, NoticeCopy> = {
 
 export default function SubmissionNotice({ locale }: { locale: SupportedLocale }) {
   const t = copy[locale];
+  const [target, setTarget] = useState<HTMLElement | null>(null);
 
-  return (
+  useEffect(() => {
+    const ctaStack = document.querySelector<HTMLElement>(
+      '.vonu-check-page main:has(> section.text-center) section[class*="max-w-[850px]"] > div:last-child > div:last-child',
+    );
+    setTarget(ctaStack);
+  }, []);
+
+  if (!target) return null;
+
+  return createPortal(
     <p className="vonu-submission-notice">
       {t.beforeTerms}
       <Link href="/legal/terminos">{t.terms}</Link>
@@ -69,6 +83,7 @@ export default function SubmissionNotice({ locale }: { locale: SupportedLocale }
       <Link href="/legal/privacidad">{t.privacy}</Link>
       {t.afterPrivacy}
       <Link href="/legal/privacidad">{t.learn}</Link>.
-    </p>
+    </p>,
+    target,
   );
 }
