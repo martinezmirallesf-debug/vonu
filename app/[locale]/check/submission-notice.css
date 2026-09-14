@@ -25,7 +25,7 @@
   margin-top: 0 !important;
 }
 
-/* Let the scanner use only the height it needs so the notice can sit directly below it. */
+/* Mobile keeps its existing composition. Desktop becomes the flexible viewport area. */
 .vonu-check-page:has(main > section.text-center) > div:first-of-type {
   min-height: 0 !important;
   height: auto !important;
@@ -38,8 +38,7 @@
   display: none !important;
 }
 
-/* CTA: one compact vertical stack in every mode and viewport.
-   This avoids the capture-mode overlap caused by the old absolute desktop positioning. */
+/* CTA: one compact vertical stack in every mode and viewport. */
 .vonu-check-page main:has(> section.text-center)
   section[class*="max-w-[850px]"]
   > div:last-child
@@ -70,7 +69,7 @@
   font-size: 0 !important;
 }
 
-/* Replace the old reassurance with a shorter, calmer label while preserving locale. */
+/* Replace the old reassurance with the shorter label. */
 .vonu-check-page main:has(> section.text-center)
   section[class*="max-w-[850px]"]
   > div:last-child
@@ -111,7 +110,7 @@ html[lang="ar"] .vonu-check-page main:has(> section.text-center) section[class*=
   section[class*="max-w-[850px]"]
   > div:last-child
   > div:last-child
-  > button:last-child {
+  > button {
   position: static !important;
   min-width: 176px !important;
   margin: 0 auto !important;
@@ -123,11 +122,11 @@ html[lang="ar"] .vonu-check-page main:has(> section.text-center) section[class*=
   display: none;
 }
 
-/* Disclaimer: visually belongs to the CTA, not to the footer. */
+/* The notice is now physically rendered inside the CTA stack. */
 .vonu-check-page:has(main > section.text-center) .vonu-submission-notice {
   display: block;
   width: min(760px, calc(100vw - 38px));
-  margin: -10px auto 10px;
+  margin: 5px auto 0;
   padding: 0;
   text-align: center;
   font-size: 9.5px;
@@ -150,11 +149,10 @@ html[lang="ar"] .vonu-check-page main:has(> section.text-center) section[class*=
 .vonu-check-page:has(main > section.text-center) .vonu-check-compact-footer {
   display: block;
   flex: 0 0 auto;
-  margin-top: auto;
 }
 
 @media (max-width: 767px) {
-  /* Keep the mobile composition that was already working. */
+  /* Preserve the mobile composition that was already working. */
   .vonu-check-page main:has(> section.text-center) {
     position: relative !important;
     top: -18px !important;
@@ -178,15 +176,18 @@ html[lang="ar"] .vonu-check-page main:has(> section.text-center) section[class*=
 
   .vonu-check-page:has(main > section.text-center) .vonu-submission-notice {
     width: min(620px, calc(100vw - 38px));
-    margin-top: -16px;
-    margin-bottom: 10px;
+    margin-top: 5px;
     font-size: 9px;
     line-height: 1.42;
   }
 }
 
 @media (min-width: 768px) {
-  /* Restore enough internal height for capture/text + centered CTA; no absolute overlap. */
+  /* The app area fills the viewport above the single compact footer. */
+  .vonu-check-page:has(main > section.text-center) > div:first-of-type {
+    flex: 1 1 auto !important;
+  }
+
   .vonu-check-page main:has(> section.text-center)
     section[class*="max-w-[850px]"]
     > div:last-child {
@@ -196,7 +197,6 @@ html[lang="ar"] .vonu-check-page main:has(> section.text-center) section[class*=
 }
 
 @media (min-width: 1024px) {
-  /* Lift the desktop product surface only a little, as requested. */
   .vonu-check-page main:has(> section.text-center) {
     position: relative !important;
     top: -8px !important;
@@ -230,12 +230,12 @@ html[lang="ar"] .vonu-check-page main:has(> section.text-center) section[class*=
     padding: 8px 18px 4px !important;
   }
 
-  /* Capture needs a little more vertical room so the helper text and CTA never collide. */
+  /* Capture gets extra room so helper copy, free-analysis label and CTA never collide. */
   .vonu-check-page main:has(> section.text-center)
     > section:nth-of-type(2)
     > div:last-child:has(input[type="file"]) {
-    height: 198px !important;
-    min-height: 198px !important;
+    height: 214px !important;
+    min-height: 214px !important;
   }
 
   .vonu-check-page main:has(> section.text-center)
@@ -257,8 +257,7 @@ html[lang="ar"] .vonu-check-page main:has(> section.text-center) section[class*=
 
   .vonu-check-page:has(main > section.text-center) .vonu-submission-notice {
     width: min(820px, calc(100vw - 80px));
-    margin-top: -8px;
-    margin-bottom: 10px;
+    margin-top: 5px;
     font-size: 9.5px;
     line-height: 1.48;
   }
