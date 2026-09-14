@@ -152,32 +152,63 @@ html[lang="ar"] .vonu-check-page main:has(> section.text-center) section[class*=
 }
 
 @media (max-width: 767px) {
-  /* Preserve the mobile composition that was already working. */
+  /* Mobile only: let the app body fill the screen so the compact footer stays at the bottom. */
+  .vonu-check-page:has(main > section.text-center) > div:first-of-type {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Restore the clean mobile composition below the header; never pull content underneath it. */
   .vonu-check-page main:has(> section.text-center) {
     position: relative !important;
-    top: -18px !important;
-    padding-bottom: 24px !important;
+    top: 0 !important;
+    justify-content: flex-start !important;
+    min-height: 0 !important;
+    padding: 14px 16px 18px !important;
   }
 
   .vonu-check-page main:has(> section.text-center) > section.text-center > p {
-    max-width: 620px !important;
-    padding-inline: 10px !important;
-    font-size: 15px !important;
-    line-height: 1.55 !important;
+    max-width: 340px !important;
+    padding-inline: 6px !important;
+    font-size: 14px !important;
+    line-height: 1.45 !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center) > section:nth-of-type(2) {
+    margin-top: 14px !important;
   }
 
   .vonu-check-page main:has(> section.text-center)
     section[class*="max-w-[850px]"]
     > div:last-child
     > div:last-child {
-    margin-top: 10px !important;
+    margin-top: 12px !important;
     gap: 6px !important;
   }
 
+  /* Capture needs a little more vertical room on phones so helper copy and CTA never overlap. */
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    > div:first-child:has(input[type="file"]) {
+    min-height: 170px !important;
+    padding-top: 12px !important;
+    padding-bottom: 10px !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    > div:last-child {
+    margin-top: 14px !important;
+  }
+
   .vonu-check-page:has(main > section.text-center) .vonu-submission-notice {
-    width: min(620px, calc(100vw - 38px));
-    margin-top: 5px;
-    font-size: 9px;
+    width: min(340px, calc(100vw - 48px));
+    margin-top: 7px;
+    font-size: 8.5px;
     line-height: 1.42;
   }
 }
