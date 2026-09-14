@@ -11,7 +11,8 @@ const signalCopy: Record<SupportedLocale, Record<string, [string, string]>> = {
     https: ["Conexión HTTPS", "La URL final utiliza HTTPS. Esto cifra la conexión, aunque por sí solo no demuestra que la web sea legítima."],
     noHttps: ["Sin HTTPS", "La URL final no utiliza HTTPS. No introduzcas contraseñas, tarjetas ni datos sensibles."],
     status: ["Respuesta de la web", "La web respondió correctamente a la comprobación."],
-    badStatus: ["Respuesta HTTP anómala", "La web respondió con un estado HTTP que merece revisión."],
+    protected: ["Acceso protegido por el servidor", "El servidor ha limitado la comprobación automatizada. Esto es habitual en bancos y servicios con protección anti-bot y no es una señal de fraude por sí sola."],
+    badStatus: ["Respuesta HTTP no estándar", "La web devolvió un estado HTTP distinto del habitual. Esto describe cómo respondió el servidor, pero por sí solo no indica fraude."],
     redirects: ["Varias redirecciones", "La URL pasa por varias redirecciones antes de llegar al destino final."],
     password: ["Formulario de contraseña", "La página contiene un campo de contraseña. Comprueba muy bien el dominio antes de introducir credenciales."],
     externalForm: ["Formulario envía datos a otro dominio", "Se ha detectado al menos un formulario cuyo destino está en un dominio diferente."],
@@ -27,7 +28,8 @@ const signalCopy: Record<SupportedLocale, Record<string, [string, string]>> = {
     https: ["HTTPS connection", "The final URL uses HTTPS. This encrypts the connection, but does not by itself prove the site is legitimate."],
     noHttps: ["No HTTPS", "The final URL does not use HTTPS. Do not enter passwords, card details or sensitive data."],
     status: ["Website response", "The website responded normally to the check."],
-    badStatus: ["Unusual HTTP response", "The website returned an HTTP status that deserves review."],
+    protected: ["Server-protected access", "The server limited the automated check. This is common on banks and anti-bot protected services and is not, by itself, a fraud signal."],
+    badStatus: ["Non-standard HTTP response", "The website returned a different HTTP status than usual. This describes the server response but does not by itself indicate fraud."],
     redirects: ["Multiple redirects", "The URL goes through several redirects before reaching the final destination."],
     password: ["Password form", "The page contains a password field. Verify the domain carefully before entering credentials."],
     externalForm: ["Form sends data to another domain", "At least one form appears to submit data to a different domain."],
@@ -43,7 +45,8 @@ const signalCopy: Record<SupportedLocale, Record<string, [string, string]>> = {
     https: ["Connexion HTTPS", "L’URL finale utilise HTTPS. La connexion est chiffrée, mais cela ne prouve pas à lui seul que le site est légitime."],
     noHttps: ["Pas de HTTPS", "L’URL finale n’utilise pas HTTPS. N’entrez pas de mot de passe, carte ou donnée sensible."],
     status: ["Réponse du site", "Le site a répondu normalement à la vérification."],
-    badStatus: ["Réponse HTTP inhabituelle", "Le site a renvoyé un statut HTTP qui mérite une vérification."],
+    protected: ["Accès protégé par le serveur", "Le serveur a limité la vérification automatisée. C’est fréquent pour les banques et les services anti-bot et ce n’est pas, à lui seul, un signal de fraude."],
+    badStatus: ["Réponse HTTP non standard", "Le site a renvoyé un statut HTTP différent de l’habituel. Cela décrit la réponse du serveur mais n’indique pas, à lui seul, une fraude."],
     redirects: ["Plusieurs redirections", "L’URL passe par plusieurs redirections avant la destination finale."],
     password: ["Formulaire de mot de passe", "La page contient un champ de mot de passe. Vérifiez soigneusement le domaine avant de saisir vos identifiants."],
     externalForm: ["Formulaire vers un autre domaine", "Au moins un formulaire semble envoyer des données vers un autre domaine."],
@@ -59,7 +62,8 @@ const signalCopy: Record<SupportedLocale, Record<string, [string, string]>> = {
     https: ["HTTPS-Verbindung", "Die endgültige URL verwendet HTTPS. Das verschlüsselt die Verbindung, beweist aber allein nicht die Seriosität der Website."],
     noHttps: ["Kein HTTPS", "Die endgültige URL verwendet kein HTTPS. Gib keine Passwörter, Kartendaten oder sensiblen Daten ein."],
     status: ["Antwort der Website", "Die Website hat normal auf die Prüfung reagiert."],
-    badStatus: ["Ungewöhnliche HTTP-Antwort", "Die Website hat einen HTTP-Status zurückgegeben, der geprüft werden sollte."],
+    protected: ["Servergeschützter Zugriff", "Der Server hat die automatisierte Prüfung begrenzt. Das ist bei Banken und Anti-Bot-geschützten Diensten üblich und allein kein Betrugssignal."],
+    badStatus: ["Nicht standardmäßige HTTP-Antwort", "Die Website hat einen anderen HTTP-Status als üblich zurückgegeben. Das beschreibt die Serverantwort, weist aber allein nicht auf Betrug hin."],
     redirects: ["Mehrere Weiterleitungen", "Die URL durchläuft mehrere Weiterleitungen bis zum endgültigen Ziel."],
     password: ["Passwortformular", "Die Seite enthält ein Passwortfeld. Prüfe die Domain sorgfältig, bevor du Zugangsdaten eingibst."],
     externalForm: ["Formular sendet an andere Domain", "Mindestens ein Formular scheint Daten an eine andere Domain zu senden."],
@@ -75,7 +79,8 @@ const signalCopy: Record<SupportedLocale, Record<string, [string, string]>> = {
     https: ["اتصال HTTPS", "يستخدم الرابط النهائي HTTPS. هذا يشفر الاتصال لكنه لا يثبت وحده أن الموقع شرعي."],
     noHttps: ["بدون HTTPS", "الرابط النهائي لا يستخدم HTTPS. لا تدخل كلمات مرور أو بيانات بطاقة أو معلومات حساسة."],
     status: ["استجابة الموقع", "استجاب الموقع بشكل طبيعي للفحص."],
-    badStatus: ["استجابة HTTP غير معتادة", "أعاد الموقع حالة HTTP تستحق المراجعة."],
+    protected: ["وصول محمي من الخادم", "قيّد الخادم الفحص الآلي. هذا شائع لدى البنوك والخدمات المحمية ضد الروبوتات ولا يعد وحده إشارة احتيال."],
+    badStatus: ["استجابة HTTP غير قياسية", "أعاد الموقع حالة HTTP مختلفة عن المعتاد. هذا يصف استجابة الخادم ولا يدل وحده على الاحتيال."],
     redirects: ["عمليات إعادة توجيه متعددة", "يمر الرابط بعدة عمليات إعادة توجيه قبل الوصول إلى الوجهة النهائية."],
     password: ["نموذج كلمة مرور", "تحتوي الصفحة على حقل كلمة مرور. تحقق من النطاق بعناية قبل إدخال بيانات الدخول."],
     externalForm: ["نموذج يرسل البيانات إلى نطاق آخر", "يبدو أن نموذجًا واحدًا على الأقل يرسل البيانات إلى نطاق مختلف."],
@@ -238,6 +243,8 @@ export async function collectWebSignals(input: string, locale: SupportedLocale):
   const legalTextDetected = /(aviso legal|legal notice|mentions légales|impressum|terms (of|and) conditions|términos y condiciones|conditions générales|datenschutz|privacy policy|política de privacidad|سياسة الخصوصية)/i.test(lower);
   const contactTextDetected = /(contacto|contact us|contactez|kontakt|contáctanos|customer service|service client|kundenservice|اتصل بنا|تواصل معنا)/i.test(lower);
   const paymentRiskTextDetected = /(bank transfer|wire transfer|transferencia bancaria|virement bancaire|überweisung|bitcoin|cryptocurrency|crypto|criptomoneda|kryptowährung|bizum|عملة مشفرة|تحويل بنكي)/i.test(lower);
+  const accessProtected = [401, 403, 429].includes(response.status);
+  const contentInspectable = html.trim().length > 0;
 
   const signals: WebCheckSignal[] = [];
   let score = 0;
@@ -245,26 +252,49 @@ export async function collectWebSignals(input: string, locale: SupportedLocale):
   if (usesHttps) signals.push(signal(locale, 'https', 'positive', 0));
   else { signals.push(signal(locale, 'noHttps', 'negative', 30)); score += 30; }
 
-  if (response.status >= 200 && response.status < 400) signals.push(signal(locale, 'status', 'positive', 0, ` (${response.status})`));
-  else { signals.push(signal(locale, 'badStatus', 'warning', 12, ` (${response.status})`)); score += 12; }
+  if (response.status >= 200 && response.status < 400) {
+    signals.push(signal(locale, 'status', 'positive', 0, ` (${response.status})`));
+  } else if (accessProtected) {
+    signals.push(signal(locale, 'protected', 'neutral', 0, ` (${response.status})`));
+  } else {
+    signals.push(signal(locale, 'badStatus', 'neutral', 0, ` (${response.status})`));
+  }
 
   if (redirects >= 3) { signals.push(signal(locale, 'redirects', 'warning', 6, ` (${redirects})`)); score += 6; }
   if (hasPasswordField) { signals.push(signal(locale, 'password', 'neutral', 4)); score += usesHttps ? 4 : 12; }
   if (extForms > 0) { signals.push(signal(locale, 'externalForm', 'warning', 16, ` (${extForms})`)); score += 16; }
 
-  if (legalTextDetected) signals.push(signal(locale, 'legal', 'positive', 0));
-  else { signals.push(signal(locale, 'noLegal', 'warning', 8)); score += 8; }
+  // Only infer absence of legal/contact information when the page body was actually inspectable.
+  if (contentInspectable) {
+    if (legalTextDetected) signals.push(signal(locale, 'legal', 'positive', 0));
+    else { signals.push(signal(locale, 'noLegal', 'warning', 8)); score += 8; }
 
-  if (contactTextDetected) signals.push(signal(locale, 'contact', 'positive', 0));
-  else { signals.push(signal(locale, 'noContact', 'warning', 5)); score += 5; }
+    if (contactTextDetected) signals.push(signal(locale, 'contact', 'positive', 0));
+    else { signals.push(signal(locale, 'noContact', 'warning', 5)); score += 5; }
 
-  if (paymentRiskTextDetected) { signals.push(signal(locale, 'payment', 'warning', 7)); score += 7; }
+    if (paymentRiskTextDetected) { signals.push(signal(locale, 'payment', 'warning', 7)); score += 7; }
+  }
+
   if (finalUrl.hostname.includes('xn--')) { signals.push(signal(locale, 'punycode', 'warning', 7)); score += 7; }
   const hyphenCount = (finalUrl.hostname.match(/-/g) || []).length;
   if (hyphenCount >= 3) { signals.push(signal(locale, 'hyphens', 'warning', 5, ` (${hyphenCount})`)); score += 5; }
 
   score = Math.max(0, Math.min(100, score));
-  const level = score >= 45 ? 'high' : score >= 20 ? 'caution' : 'low';
+  const level = accessProtected && score < 20
+    ? 'unknown'
+    : score >= 45
+      ? 'high'
+      : score >= 20
+        ? 'caution'
+        : 'low';
+
+  const limitations = [
+    'technical-signals-only',
+    'no-reputation-layer-yet',
+    'no-business-identity-layer-yet',
+    'no-domain-age-layer-yet',
+  ];
+  if (!contentInspectable) limitations.unshift('page-content-not-inspectable');
 
   return {
     version: 'vonu-check-v1',
@@ -287,11 +317,6 @@ export async function collectWebSignals(input: string, locale: SupportedLocale):
       paymentRiskTextDetected,
     },
     signals,
-    limitations: [
-      'technical-signals-only',
-      'no-reputation-layer-yet',
-      'no-business-identity-layer-yet',
-      'no-domain-age-layer-yet',
-    ],
+    limitations,
   };
 }
