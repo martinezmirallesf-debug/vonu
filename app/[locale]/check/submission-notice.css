@@ -15,16 +15,7 @@
   margin-top: 0 !important;
 }
 
-/* Keep just the free-analysis reassurance. */
-.vonu-check-page main:has(> section.text-center)
-  section[class*="max-w-[850px]"]
-  > div:last-child
-  > div:last-child
-  > div:first-child
-  > span:first-child {
-  display: none !important;
-}
-
+/* The scanner now renders only the reassurance we want to keep. */
 .vonu-check-page main:has(> section.text-center)
   section[class*="max-w-[850px]"]
   > div:last-child
@@ -100,7 +91,7 @@ html[dir="rtl"] .vonu-check-page:has(main > section.text-center) .vonu-submissio
     padding-bottom: 92px !important;
   }
 
-  /* Center the remaining reassurance while preserving the CTA on the right. */
+  /* Center the reassurance while preserving the CTA on the right. */
   .vonu-check-page main:has(> section.text-center)
     section[class*="max-w-[850px]"]
     > div:last-child
