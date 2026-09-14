@@ -36,7 +36,7 @@ export default function HomeFooter() {
         <div>
           <div className="flex items-center gap-3">
             <VonuMark className="h-7 w-7" framed />
-            <span className="text-[20px] font-bold tracking-[-0.04em] text-white">VONU</span>
+            <span className="text-[20px] font-semibold tracking-[-0.04em] text-white">VONU</span>
           </div>
           <p className="mt-4 max-w-sm text-[14px] leading-7 text-slate-500">
             Comprueba webs, capturas y mensajes antes de pagar, responder o compartir datos.
