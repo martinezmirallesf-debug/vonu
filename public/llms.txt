@@ -1,0 +1,55 @@
+# Vonu
+
+> Vonu is a preventive online-safety analysis tool for suspicious websites, links, screenshots and messages. Its purpose is to surface risk signals before a user pays, replies, shares data or takes another sensitive action.
+
+## Core product
+
+- https://vonuai.com/check — automatic language entry point for Vonu Check.
+- https://vonuai.com/es/check — Spanish Vonu Check.
+- https://vonuai.com/en/check — English Vonu Check.
+- https://vonuai.com/fr/check — French Vonu Check.
+- https://vonuai.com/de/check — German Vonu Check.
+- https://vonuai.com/ar/check — Arabic Vonu Check.
+
+## Main use cases
+
+- https://vonuai.com/comprobar-web-fiable — check whether a website shows relevant risk signals.
+- https://vonuai.com/comprobar-tienda-online — review an online store before paying or sharing data.
+- https://vonuai.com/analizar-link-sospechoso — analyse a suspicious link or redirect chain.
+- https://vonuai.com/analizar-captura-pantalla — analyse a screenshot of a message, profile, website or payment screen.
+- https://vonuai.com/analizar-sms-estafa — analyse suspicious SMS or WhatsApp content.
+- https://vonuai.com/email-sospechoso-estafa — analyse a suspicious email.
+- https://vonuai.com/detectar-perfil-falso — review signals associated with suspicious or fake profiles.
+- https://vonuai.com/comprobar-inversion-estafa — review warning signals around suspicious investment propositions.
+
+## How Vonu works
+
+Vonu combines deterministic technical checks with contextual analysis. Depending on the input, it can inspect HTTPS and response behaviour, redirects, DNS and security configuration, visible content, extracted URLs, suspicious language, urgency, impersonation patterns and other relevant signals. Additional reputation, business-identity and domain-history layers may be used as the product evolves.
+
+Vonu reports risk signals and analysis confidence separately. A low-risk result is not a certification of legitimacy, and a warning signal does not by itself prove fraud.
+
+## Important safety and interpretation notes
+
+- Vonu is a preventive analysis tool, not a legal authority or fraud-certification service.
+- Users should not submit passwords, authentication codes, full card details or other highly sensitive information.
+- Results should be interpreted together with the evidence and confidence shown in the report.
+- If a service blocks automated inspection, Vonu should distinguish that limitation from an actual fraud signal.
+
+## Product and trust information
+
+- https://vonuai.com/producto
+- https://vonuai.com/como-funciona
+- https://vonuai.com/casos-de-uso
+- https://vonuai.com/recursos
+- https://vonuai.com/precios
+
+## Policies
+
+- https://vonuai.com/legal/privacidad
+- https://vonuai.com/legal/terminos
+- https://vonuai.com/legal/uso-responsable
+- https://vonuai.com/legal/aviso-legal
+
+## Languages
+
+Vonu currently supports Spanish, English, French, German and Arabic interfaces for Vonu Check.
