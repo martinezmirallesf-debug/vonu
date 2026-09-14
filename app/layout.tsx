@@ -27,22 +27,11 @@ export const metadata: Metadata = {
   description:
     "Vonu analiza URLs, capturas de pantalla y mensajes sospechosos para detectar señales de phishing, fraude y suplantación antes de que pagues, respondas o compartas datos.",
   applicationName: "Vonu",
-  keywords: [
-    "Vonu",
-    "Vonu Check",
-    "comprobar web fiable",
-    "detectar estafa",
-    "analizar link sospechoso",
-    "analizar SMS sospechoso",
-    "phishing",
-    "perfil falso",
-    "captura de pantalla estafa",
-    "tienda online fiable",
-  ],
-  authors: [{ name: "Vonu" }],
+  authors: [{ name: "Vonu", url: BASE_URL }],
   creator: "Vonu",
   publisher: "Vonu",
-  alternates: { canonical: "/" },
+  category: "security",
+  referrer: "origin-when-cross-origin",
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
     shortcut: "/icon.svg",
@@ -90,34 +79,57 @@ export const viewport: Viewport = {
   themeColor: "#0b0e17",
 };
 
-const organizationJsonLd = {
+const entityGraph = {
   "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "Vonu",
-  alternateName: "VonuAI",
-  url: BASE_URL,
-  logo: `${BASE_URL}/icon.svg`,
-  email: "hello@vonuai.com",
-  sameAs: [],
-};
-
-const websiteJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: "Vonu",
-  alternateName: "VonuAI",
-  url: BASE_URL,
-  description:
-    "Herramienta para analizar URLs, capturas de pantalla y mensajes sospechosos y detectar señales de phishing, fraude y suplantación.",
-  inLanguage: ["es", "en", "fr", "de", "ar"],
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${BASE_URL}/#organization`,
+      name: "Vonu",
+      alternateName: "VonuAI",
+      url: BASE_URL,
+      description:
+        "Vonu desarrolla herramientas preventivas para analizar señales de riesgo en webs, enlaces, capturas y mensajes sospechosos.",
+      logo: {
+        "@type": "ImageObject",
+        "@id": `${BASE_URL}/#logo`,
+        url: `${BASE_URL}/icon.svg`,
+        contentUrl: `${BASE_URL}/icon.svg`,
+        caption: "Vonu",
+      },
+      email: "hello@vonuai.com",
+      knowsAbout: [
+        "phishing",
+        "online fraud",
+        "website risk analysis",
+        "suspicious links",
+        "smishing",
+        "impersonation scams",
+        "fake profiles",
+      ],
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${BASE_URL}/#website`,
+      name: "Vonu",
+      alternateName: "VonuAI",
+      url: BASE_URL,
+      description:
+        "Herramienta para analizar URLs, capturas de pantalla y mensajes sospechosos y detectar señales de phishing, fraude y suplantación.",
+      publisher: { "@id": `${BASE_URL}/#organization` },
+      inLanguage: ["es", "en", "fr", "de", "ar"],
+    },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" className={`${inter.variable} ${spaceMono.variable} ${playfairDisplay.variable}`}>
       <body className="font-sans">
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(entityGraph) }}
+        />
         {children}
         <Analytics />
         <SpeedInsights />
