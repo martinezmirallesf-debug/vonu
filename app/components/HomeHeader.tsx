@@ -44,13 +44,13 @@ export default function HomeHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-[#0b0e17]/95 text-white backdrop-blur-xl">
-      <div className="mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className={["mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8", isCheckHome ? "relative" : ""].join(" ")}>
         <a href="/" className="flex items-center gap-3" aria-label="Vonu inicio">
           <VonuMark className="h-7 w-7" framed />
           <span className="text-[21px] font-semibold tracking-[-0.045em]">VONU</span>
         </a>
 
-        <nav className="hidden items-center gap-7 text-[14px] font-medium text-slate-300 md:flex">
+        <nav className={["hidden items-center gap-7 text-[14px] font-medium text-slate-300 md:flex", isCheckHome ? "md:absolute md:left-1/2 md:-translate-x-1/2" : ""].join(" ")}>
           {mainLinks.map((item) =>
             item.hasMenu ? (
               <div key={item.href} className="group relative py-5">
