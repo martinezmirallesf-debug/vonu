@@ -1,0 +1,42 @@
+/* Desktop-only breathing room for the Capture flow.
+   URL and Message layouts are intentionally untouched. */
+@media (min-width: 1024px) {
+  /* Give the capture state a calmer vertical canvas. */
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"]) {
+    height: 292px !important;
+    min-height: 292px !important;
+    padding-top: 14px !important;
+    padding-bottom: 12px !important;
+  }
+
+  /* Let upload copy + picker breathe as one unit. */
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    > div:first-child:has(input[type="file"]) {
+    min-height: 166px !important;
+    padding-top: 14px !important;
+    padding-bottom: 14px !important;
+  }
+
+  /* Separate the reassurance/CTA from the upload helper copy. */
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    > div:last-child {
+    margin-top: 28px !important;
+    gap: 10px !important;
+  }
+
+  /* The legal notice is a third, quieter layer below the primary action. */
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    .vonu-submission-notice {
+    margin-top: 13px !important;
+    max-width: 720px !important;
+    line-height: 1.55 !important;
+  }
+}
