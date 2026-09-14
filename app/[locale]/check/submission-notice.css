@@ -1,9 +1,12 @@
-/* Vonu Check final idle-home simplification.
-   Loaded last so it can safely override legacy hero rules without touching reports. */
+/* Vonu Check idle-home layout: keep the scanner, disclaimer and compact footer
+   in normal document flow. This avoids footer overlap and phantom content below it. */
 
 .vonu-check-page {
   position: relative;
+  display: flex;
   min-height: 100dvh;
+  flex-direction: column;
+  background: #0d101b;
 }
 
 /* The product is the scanner: remove the large marketing headline. */
@@ -15,7 +18,22 @@
   margin-top: 0 !important;
 }
 
-/* The scanner now renders only the reassurance we want to keep. */
+/* On the idle screen, the outer page owns the viewport height. The CheckClient
+   no longer needs to reserve a second full viewport for itself. */
+.vonu-check-page:has(main > section.text-center) > div:first-child {
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+  flex: 1 1 auto !important;
+}
+
+/* Hide the legacy footer embedded inside CheckClient; the compact footer below
+   is now the single footer for the idle home. */
+.vonu-check-page:has(main > section.text-center) > div:first-child > footer {
+  display: none !important;
+}
+
+/* Keep the remaining reassurance centered. */
 .vonu-check-page main:has(> section.text-center)
   section[class*="max-w-[850px]"]
   > div:last-child
@@ -25,28 +43,26 @@
   text-align: center !important;
 }
 
-.vonu-submission-notice {
+.vonu-submission-notice,
+.vonu-check-compact-footer {
   display: none;
 }
 
-/* Only show the submission notice on the idle scanner screen. */
+/* The disclaimer is a real block before the footer, never absolutely positioned. */
 .vonu-check-page:has(main > section.text-center) .vonu-submission-notice {
-  position: absolute;
-  z-index: 20;
-  inset-inline-start: 50%;
-  bottom: 52px;
   display: block;
-  width: min(760px, calc(100vw - 34px));
-  margin: 0;
-  transform: translateX(-50%);
+  width: min(760px, calc(100vw - 38px));
+  margin: 0 auto;
+  padding: 2px 0 14px;
   text-align: center;
   font-size: 10px;
   line-height: 1.45;
   color: rgb(100 116 139 / .82);
 }
 
-html[dir="rtl"] .vonu-check-page:has(main > section.text-center) .vonu-submission-notice {
-  transform: translateX(50%);
+.vonu-check-page:has(main > section.text-center) .vonu-check-compact-footer {
+  display: block;
+  flex: 0 0 auto;
 }
 
 .vonu-submission-notice a {
@@ -62,11 +78,10 @@ html[dir="rtl"] .vonu-check-page:has(main > section.text-center) .vonu-submissio
 }
 
 @media (max-width: 767px) {
-  /* Lift the scanner enough to leave breathing room for the legal notice. */
   .vonu-check-page main:has(> section.text-center) {
     position: relative !important;
-    top: -34px !important;
-    padding-bottom: 118px !important;
+    top: -18px !important;
+    padding-bottom: 24px !important;
   }
 
   .vonu-check-page main:has(> section.text-center) > section.text-center > p {
@@ -77,21 +92,20 @@ html[dir="rtl"] .vonu-check-page:has(main > section.text-center) .vonu-submissio
   }
 
   .vonu-check-page:has(main > section.text-center) .vonu-submission-notice {
-    bottom: 50px;
     width: min(620px, calc(100vw - 38px));
+    padding-bottom: 12px;
     font-size: 9.5px;
-    line-height: 1.4;
+    line-height: 1.42;
   }
 }
 
 @media (min-width: 768px) {
   .vonu-check-page main:has(> section.text-center) {
     position: relative !important;
-    top: -18px !important;
-    padding-bottom: 92px !important;
+    top: -10px !important;
+    padding-bottom: 30px !important;
   }
 
-  /* Center the reassurance while preserving the CTA on the right. */
   .vonu-check-page main:has(> section.text-center)
     section[class*="max-w-[850px]"]
     > div:last-child
