@@ -1,6 +1,21 @@
-/* Desktop-only breathing room for the Capture flow.
-   URL and Message layouts are intentionally untouched. */
+/* Desktop spacing for the idle Check home.
+   The interaction frame has a fixed height so the selector stays anchored across modes. */
 @media (min-width: 1024px) {
+  /* Center the complete home composition between header and footer. */
+  .vonu-check-page main:has(> section.text-center) {
+    top: 0 !important;
+    justify-content: center !important;
+  }
+
+  /* Keep the mode canvas the same height in URL, Capture and Message.
+     This prevents the fixed selector from moving when the mode changes. */
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child {
+    height: 292px !important;
+    min-height: 292px !important;
+  }
+
   /* Give the capture state a calmer vertical canvas. */
   .vonu-check-page main:has(> section.text-center)
     > section:nth-of-type(2)
