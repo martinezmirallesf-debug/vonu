@@ -1,5 +1,4 @@
-/* Vonu Check idle-home layout: keep the scanner, disclaimer and compact footer
-   in normal document flow. This avoids footer overlap and phantom content below it. */
+/* Vonu Check idle-home layout. Keep these rules narrowly scoped to the idle home. */
 
 .vonu-check-page {
   position: relative;
@@ -26,29 +25,97 @@
   margin-top: 0 !important;
 }
 
-/* On the idle screen, the outer page owns the viewport height. The CheckClient
-   no longer needs to reserve a second full viewport for itself. */
+/* Let the scanner use only the height it needs so the notice can sit directly below it. */
 .vonu-check-page:has(main > section.text-center) > div:first-child {
   min-height: 0 !important;
   height: auto !important;
   overflow: visible !important;
-  flex: 1 1 auto !important;
+  flex: 0 0 auto !important;
 }
 
-/* Hide the legacy footer embedded inside CheckClient; the compact footer below
-   is now the single footer for the idle home. */
+/* Hide the legacy footer embedded inside CheckClient. */
 .vonu-check-page:has(main > section.text-center) > div:first-child > footer {
   display: none !important;
 }
 
-/* Keep the remaining reassurance centered. */
+/* CTA: one compact vertical stack in every mode and viewport.
+   This avoids the capture-mode overlap caused by the old absolute desktop positioning. */
+.vonu-check-page main:has(> section.text-center)
+  section[class*="max-w-[850px]"]
+  > div:last-child
+  > div:last-child {
+  position: static !important;
+  inset: auto !important;
+  display: flex !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 12px 0 0 !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  text-align: center !important;
+}
+
 .vonu-check-page main:has(> section.text-center)
   section[class*="max-w-[850px]"]
   > div:last-child
   > div:last-child
   > div:first-child {
+  display: flex !important;
+  width: 100% !important;
   justify-content: center !important;
   text-align: center !important;
+  font-size: 0 !important;
+}
+
+/* Replace the old reassurance with a shorter, calmer label while preserving locale. */
+.vonu-check-page main:has(> section.text-center)
+  section[class*="max-w-[850px]"]
+  > div:last-child
+  > div:last-child
+  > div:first-child
+  > span {
+  font-size: 0 !important;
+}
+
+.vonu-check-page main:has(> section.text-center)
+  section[class*="max-w-[850px]"]
+  > div:last-child
+  > div:last-child
+  > div:first-child
+  > span::after {
+  font-size: 11px !important;
+  font-weight: 500;
+  color: rgb(100 116 139);
+}
+
+html[lang="es"] .vonu-check-page main:has(> section.text-center) section[class*="max-w-[850px]"] > div:last-child > div:last-child > div:first-child > span::after {
+  content: "1 análisis gratuito";
+}
+html[lang="en"] .vonu-check-page main:has(> section.text-center) section[class*="max-w-[850px]"] > div:last-child > div:last-child > div:first-child > span::after {
+  content: "1 free analysis";
+}
+html[lang="fr"] .vonu-check-page main:has(> section.text-center) section[class*="max-w-[850px]"] > div:last-child > div:last-child > div:first-child > span::after {
+  content: "1 analyse gratuite";
+}
+html[lang="de"] .vonu-check-page main:has(> section.text-center) section[class*="max-w-[850px]"] > div:last-child > div:last-child > div:first-child > span::after {
+  content: "1 kostenlose Analyse";
+}
+html[lang="ar"] .vonu-check-page main:has(> section.text-center) section[class*="max-w-[850px]"] > div:last-child > div:last-child > div:first-child > span::after {
+  content: "تحليل مجاني واحد";
+}
+
+.vonu-check-page main:has(> section.text-center)
+  section[class*="max-w-[850px]"]
+  > div:last-child
+  > div:last-child
+  > button:last-child {
+  position: static !important;
+  min-width: 176px !important;
+  margin: 0 auto !important;
+  align-self: center !important;
 }
 
 .vonu-submission-notice,
@@ -56,21 +123,16 @@
   display: none;
 }
 
-/* The disclaimer is a real block before the footer, never absolutely positioned. */
+/* Disclaimer: visually belongs to the CTA, not to the footer. */
 .vonu-check-page:has(main > section.text-center) .vonu-submission-notice {
   display: block;
   width: min(760px, calc(100vw - 38px));
-  margin: 0 auto;
-  padding: 2px 0 14px;
+  margin: -10px auto 10px;
+  padding: 0;
   text-align: center;
-  font-size: 10px;
+  font-size: 9.5px;
   line-height: 1.45;
   color: rgb(100 116 139 / .82);
-}
-
-.vonu-check-page:has(main > section.text-center) .vonu-check-compact-footer {
-  display: block;
-  flex: 0 0 auto;
 }
 
 .vonu-submission-notice a {
@@ -85,7 +147,14 @@
   color: rgb(167 243 208);
 }
 
+.vonu-check-page:has(main > section.text-center) .vonu-check-compact-footer {
+  display: block;
+  flex: 0 0 auto;
+  margin-top: auto;
+}
+
 @media (max-width: 767px) {
+  /* Keep the mobile composition that was already working. */
   .vonu-check-page main:has(> section.text-center) {
     position: relative !important;
     top: -18px !important;
@@ -99,50 +168,41 @@
     line-height: 1.55 !important;
   }
 
+  .vonu-check-page main:has(> section.text-center)
+    section[class*="max-w-[850px]"]
+    > div:last-child
+    > div:last-child {
+    margin-top: 10px !important;
+    gap: 6px !important;
+  }
+
   .vonu-check-page:has(main > section.text-center) .vonu-submission-notice {
     width: min(620px, calc(100vw - 38px));
-    padding-bottom: 12px;
-    font-size: 9.5px;
+    margin-top: -16px;
+    margin-bottom: 10px;
+    font-size: 9px;
     line-height: 1.42;
   }
 }
 
 @media (min-width: 768px) {
+  /* Restore enough internal height for capture/text + centered CTA; no absolute overlap. */
   .vonu-check-page main:has(> section.text-center)
     section[class*="max-w-[850px]"]
-    > div:last-child
     > div:last-child {
-    display: grid !important;
-    grid-template-columns: 1fr auto 1fr !important;
-  }
-
-  .vonu-check-page main:has(> section.text-center)
-    section[class*="max-w-[850px]"]
-    > div:last-child
-    > div:last-child
-    > div:first-child {
-    grid-column: 2 !important;
-    justify-self: center !important;
-  }
-
-  .vonu-check-page main:has(> section.text-center)
-    section[class*="max-w-[850px]"]
-    > div:last-child
-    > div:last-child
-    > button:last-child {
-    grid-column: 3 !important;
-    justify-self: end !important;
+    height: 178px !important;
+    min-height: 178px !important;
   }
 }
 
-/* Desktop: treat the page like a compact product surface, not a stretched landing page. */
 @media (min-width: 1024px) {
+  /* Lift the desktop product surface only a little, as requested. */
   .vonu-check-page main:has(> section.text-center) {
     position: relative !important;
-    top: 0 !important;
+    top: -8px !important;
     justify-content: center !important;
     min-height: 0 !important;
-    padding: 10px 28px 20px !important;
+    padding: 10px 28px 14px !important;
   }
 
   .vonu-check-page main:has(> section.text-center) > section.text-center > p {
@@ -165,8 +225,8 @@
   }
 
   .vonu-check-page main:has(> section.text-center) > section:nth-of-type(2) > div:last-child {
-    height: 142px !important;
-    min-height: 142px !important;
+    height: 178px !important;
+    min-height: 178px !important;
     padding: 8px 18px 4px !important;
   }
 
@@ -180,20 +240,11 @@
     border-radius: 15px !important;
   }
 
-  .vonu-check-page main:has(> section.text-center)
-    > section:nth-of-type(2)
-    > div:last-child
-    > div:last-child {
-    inset-inline: 18px !important;
-    bottom: 2px !important;
-    min-height: 46px !important;
-    height: 46px !important;
-  }
-
   .vonu-check-page:has(main > section.text-center) .vonu-submission-notice {
-    width: min(860px, calc(100vw - 80px));
-    padding: 8px 0 12px;
-    font-size: 10.5px;
-    line-height: 1.5;
+    width: min(820px, calc(100vw - 80px));
+    margin-top: -8px;
+    margin-bottom: 10px;
+    font-size: 9.5px;
+    line-height: 1.48;
   }
 }
