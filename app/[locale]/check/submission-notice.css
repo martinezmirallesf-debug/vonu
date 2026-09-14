@@ -26,7 +26,7 @@
 }
 
 /* Let the scanner use only the height it needs so the notice can sit directly below it. */
-.vonu-check-page:has(main > section.text-center) > div:first-child {
+.vonu-check-page:has(main > section.text-center) > div:first-of-type {
   min-height: 0 !important;
   height: auto !important;
   overflow: visible !important;
@@ -34,7 +34,7 @@
 }
 
 /* Hide the legacy footer embedded inside CheckClient. */
-.vonu-check-page:has(main > section.text-center) > div:first-child > footer {
+.vonu-check-page:has(main > section.text-center) > div:first-of-type > footer {
   display: none !important;
 }
 
@@ -228,6 +228,21 @@ html[lang="ar"] .vonu-check-page main:has(> section.text-center) section[class*=
     height: 178px !important;
     min-height: 178px !important;
     padding: 8px 18px 4px !important;
+  }
+
+  /* Capture needs a little more vertical room so the helper text and CTA never collide. */
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"]) {
+    height: 198px !important;
+    min-height: 198px !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    > div:last-child {
+    margin-top: 20px !important;
   }
 
   .vonu-check-page main:has(> section.text-center)
