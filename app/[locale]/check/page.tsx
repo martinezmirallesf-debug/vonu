@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import CheckClient from "./CheckClient";
 import SubmissionNotice from "./SubmissionNotice";
+import CheckCompactFooter from "./CheckCompactFooter";
 import "./check.css";
 import "./check-polish.css";
 import "./hero-title-fix.css";
@@ -90,6 +91,7 @@ export default async function LocalizedCheckPage({ params }: Props) {
     <div className="vonu-check-page">
       <CheckClient locale={locale} />
       <SubmissionNotice locale={locale} />
+      <CheckCompactFooter locale={locale} />
     </div>
   );
 }
