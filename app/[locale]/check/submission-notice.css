@@ -197,10 +197,12 @@ html[lang="ar"] .vonu-check-page main:has(> section.text-center) section[class*=
 }
 
 @media (min-width: 1024px) {
+  /* Anchor the desktop surface from the top instead of vertically re-centering it.
+     This keeps subtitle + selector perfectly fixed while mode content changes below. */
   .vonu-check-page main:has(> section.text-center) {
     position: relative !important;
     top: -8px !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
     min-height: 0 !important;
     padding: 10px 28px 14px !important;
   }
