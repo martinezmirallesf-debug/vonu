@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
 import ResourceSignup from "../components/ResourceSignup";
-import VoiceBarsIcon from "../components/VoiceBarsIcon";
 
 const siteUrl = "https://vonuai.com";
 
@@ -64,6 +63,7 @@ const sections = [
   {
     id: "primeros-pasos",
     label: "Primeros pasos",
+    heading: "Empieza con una duda real.",
     questions: [
       {
         q: "¿Qué es VonuAI?",
@@ -82,6 +82,7 @@ const sections = [
   {
     id: "archivos",
     label: "Archivos y documentos",
+    heading: "Sube capturas, PDFs y documentos.",
     questions: [
       {
         q: "¿Qué archivos puedo subir?",
@@ -100,6 +101,7 @@ const sections = [
   {
     id: "voz",
     label: "Voz y conversación",
+    heading: "Habla cuando escribir se queda corto.",
     questions: [
       {
         q: "¿Para qué sirve el modo conversación?",
@@ -118,6 +120,7 @@ const sections = [
   {
     id: "planes",
     label: "Planes y uso",
+    heading: "Uso claro, sin complicarte.",
     questions: [
       {
         q: "¿Puedo usar Vonu gratis?",
@@ -136,6 +139,7 @@ const sections = [
   {
     id: "privacidad-patrones",
     label: "Privacidad y patrones",
+    heading: "Aprende de señales, no de datos sensibles.",
     questions: [
       {
         q: "¿VonuAI aprende de los casos que analiza?",
@@ -154,6 +158,7 @@ const sections = [
   {
     id: "limites",
     label: "Límites responsables",
+    heading: "Orientación responsable, no sustitución profesional.",
     questions: [
       {
         q: "¿Vonu sustituye a profesionales?",
@@ -171,35 +176,13 @@ const sections = [
   },
 ];
 
-type GradientTone =
-  | "blueGreen"
-  | "blueCyan"
-  | "green"
-  | "orangeRed"
-  | "purplePink"
-  | "amberOrange";
-
-const gradientMap: Record<GradientTone, string> = {
-  blueGreen: "linear-gradient(90deg, #0A84FF 0%, #22C55E 100%)",
-  blueCyan: "linear-gradient(90deg, #1A73E8 0%, #06B6D4 100%)",
-  green: "linear-gradient(90deg, #0A8F3C 0%, #34D399 100%)",
-  orangeRed: "linear-gradient(90deg, #F97316 0%, #EF4444 100%)",
-  purplePink: "linear-gradient(90deg, #7C3AED 0%, #EC4899 100%)",
-  amberOrange: "linear-gradient(90deg, #F59E0B 0%, #F97316 100%)",
-};
-
-function GradientText({
-  children,
-  tone,
-}: {
-  children: ReactNode;
-  tone: GradientTone;
-}) {
+function GradientText({ children }: { children: ReactNode }) {
   return (
     <span
-      className="inline align-baseline"
+      className="inline"
       style={{
-        backgroundImage: gradientMap[tone],
+        backgroundImage:
+          "linear-gradient(92deg, #60A5FA 0%, #38BDF8 35%, #34D399 100%)",
         WebkitBackgroundClip: "text",
         backgroundClip: "text",
         color: "transparent",
@@ -214,122 +197,10 @@ function GradientText({
 function ArrowIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
-      <path d="M5 12h13" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-      <path
-        d="m13 6 6 6-6 6"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M5 12h13" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="m13 6 6 6-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
-
-function HelpBlockTitle({ title }: { title: string }) {
-  if (title === "Primeros pasos") {
-    return (
-      <>
-        Primeros <GradientText tone="blueCyan">pasos</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Archivos y documentos") {
-    return (
-      <>
-        Archivos y <GradientText tone="blueGreen">documentos</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Voz y conversación") {
-    return (
-      <>
-        Voz y <GradientText tone="purplePink">conversación</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Planes y uso") {
-    return (
-      <>
-        Planes y <GradientText tone="amberOrange">uso</GradientText>
-      </>
-    );
-  }
-
-  return <>{title}</>;
-}
-
-function SectionHeading({ id }: { id: string }) {
-  if (id === "primeros-pasos") {
-    return (
-      <>
-        Empieza con una
-        <span className="block text-zinc-500">
-          <GradientText tone="blueCyan">duda real.</GradientText>
-        </span>
-      </>
-    );
-  }
-
-  if (id === "archivos") {
-    return (
-      <>
-        Sube capturas, PDFs
-        <span className="block text-zinc-500">
-          y <GradientText tone="blueGreen">documentos.</GradientText>
-        </span>
-      </>
-    );
-  }
-
-  if (id === "voz") {
-    return (
-      <>
-        Habla cuando escribir
-        <span className="block text-zinc-500">
-          se queda <GradientText tone="purplePink">corto.</GradientText>
-        </span>
-      </>
-    );
-  }
-
-  if (id === "planes") {
-    return (
-      <>
-        Uso claro,
-        <span className="block text-zinc-500">
-          sin <GradientText tone="amberOrange">complicarte.</GradientText>
-        </span>
-      </>
-    );
-  }
-
-  if (id === "privacidad-patrones") {
-    return (
-      <>
-        Aprende de señales,
-        <span className="block text-zinc-500">
-          no de <GradientText tone="green">datos sensibles.</GradientText>
-        </span>
-      </>
-    );
-  }
-
-  if (id === "limites") {
-    return (
-      <>
-        Orientación responsable,
-        <span className="block text-zinc-500">
-          no <GradientText tone="orangeRed">sustitución profesional.</GradientText>
-        </span>
-      </>
-    );
-  }
-
-  return null;
 }
 
 export default function HelpPage() {
@@ -363,140 +234,90 @@ export default function HelpPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f5f7] text-zinc-950">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-
+    <main className="min-h-screen overflow-hidden bg-[#080b12] text-slate-100">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <HomeHeader />
 
-      <section className="relative overflow-hidden bg-[#f5f5f7]">
-        <div className="mx-auto max-w-[1500px] px-4 pb-12 pt-8 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8">
-          <div className="mx-auto max-w-[1120px] text-center">
-            <h1 className="mx-auto max-w-[1040px] text-[52px] font-semibold leading-[1.02] tracking-[-0.064em] text-zinc-950 sm:text-[86px] sm:leading-[0.94] sm:tracking-[-0.078em] lg:text-[118px]">
-              Cómo funciona
-              <span className="block text-zinc-500">
-                <GradientText tone="blueCyan">VonuAI.</GradientText>
-              </span>
+      <section className="relative isolate overflow-hidden border-b border-white/[0.06]">
+        <div className="pointer-events-none absolute inset-0 -z-20 bg-[#080b12]" />
+        <div className="pointer-events-none absolute left-1/2 top-[-190px] -z-10 h-[620px] w-[900px] -translate-x-1/2 rounded-full bg-sky-500/[0.10] blur-[120px]" />
+        <div className="pointer-events-none absolute right-[-180px] top-[320px] -z-10 h-[460px] w-[460px] rounded-full bg-emerald-400/[0.07] blur-[120px]" />
+        <div className="mx-auto max-w-[1320px] px-4 pb-20 pt-14 sm:px-6 sm:pb-28 sm:pt-20 lg:px-8 lg:pt-24">
+          <div className="mx-auto max-w-[1020px] text-center">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Cómo funciona</p>
+            <h1 className="mx-auto mt-5 max-w-[1020px] text-[50px] font-semibold leading-[0.98] tracking-[-0.065em] text-white sm:text-[76px] sm:leading-[0.94] lg:text-[92px]">
+              Empieza con una duda.
+              <span className="block text-slate-400">Vonu te ayuda a <GradientText>ordenarla.</GradientText></span>
             </h1>
-
-            <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
-              Entiende cómo Vonu analiza mensajes, archivos, voz y situaciones
-              delicadas para ayudarte a decidir con más claridad.
+            <p className="mx-auto mt-7 max-w-[760px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">
+              Texto, voz, capturas o documentos. El objetivo es el mismo: entender mejor qué tienes delante antes de actuar.
             </p>
-
-            <div className="mt-7 flex flex-row justify-center gap-2.5 sm:mt-9 sm:gap-3">
-              <Link
-                href="/chat"
-                className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] transition hover:scale-[1.02] active:scale-[0.99] sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-[15px]"
-              >
-                <span className="truncate">Probar Vonu</span>
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link href="/chat" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:-translate-y-0.5 hover:bg-emerald-300 active:translate-y-0">
+                Probar Vonu
                 <ArrowIcon />
               </Link>
-
-              <a
-                href="#primeros-pasos"
-                className="inline-flex min-w-0 flex-1 items-center justify-center rounded-full border border-zinc-200 bg-white px-4 py-3 text-[14px] font-semibold text-zinc-800 shadow-sm transition hover:-translate-y-[1px] hover:shadow-md sm:flex-none sm:px-7 sm:py-3.5 sm:text-[15px]"
-              >
-                <span className="sm:hidden">Ver ayuda</span>
-                <span className="hidden sm:inline">Ver cómo funciona</span>
+              <a href="#primeros-pasos" className="inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.045] px-6 text-[14px] font-semibold text-slate-200 transition hover:-translate-y-0.5 hover:bg-white/[0.07] active:translate-y-0">
+                Ver cómo funciona
               </a>
             </div>
           </div>
 
-          <div className="mx-auto mt-10 grid max-w-6xl gap-5 sm:mt-14 md:grid-cols-2 lg:grid-cols-4">
-            {helpBlocks.map((block) => (
-              <a
-                key={block.title}
-                href={block.href}
-                className="rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)] transition hover:-translate-y-1 hover:shadow-[0_2px_5px_rgba(0,0,0,0.045),0_24px_58px_rgba(0,0,0,0.075)]"
-              >
-                <h2 className="text-[28px] font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950">
-                  <HelpBlockTitle title={block.title} />
-                </h2>
-
-                <p className="mt-5 text-[15px] leading-7 text-zinc-600">
-                  {block.text}
-                </p>
+          <div className="mx-auto mt-14 grid max-w-[1040px] gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {helpBlocks.map((item, index) => (
+              <a key={item.title} href={item.href} className="group min-h-[230px] rounded-[24px] border border-white/[0.07] bg-white/[0.035] p-6 transition hover:border-white/[0.12] hover:bg-white/[0.05]">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-emerald-300">0{index + 1}</span>
+                  <ArrowIcon />
+                </div>
+                <h2 className="mt-10 text-[24px] font-semibold leading-[1.03] tracking-[-0.04em] text-white">{item.title}</h2>
+                <p className="mt-4 text-[13px] leading-6 text-slate-400">{item.text}</p>
               </a>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="bg-[#f5f5f7]">
-        <div className="mx-auto max-w-[1500px] px-4 py-16 sm:px-6 lg:px-8">
-          <div className="space-y-8">
-            {sections.map((section) => (
-              <section
-                key={section.id}
-                id={section.id}
-                className="scroll-mt-24 rounded-[42px] border border-zinc-200 bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_44px_rgba(0,0,0,0.055)] sm:p-10 lg:p-14"
-              >
-                <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-                  <div>
-                    <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-600">
-                      {section.label}
-                    </p>
-
-                    <h2 className="mt-4 text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
-                      <SectionHeading id={section.id} />
-                    </h2>
-                  </div>
-
-                  <div className="space-y-4">
-                    {section.questions.map((item) => (
-                      <details
-                        key={item.q}
-                        className="group rounded-[30px] border border-zinc-200 bg-[#f5f5f7] p-6 transition hover:-translate-y-[2px] hover:shadow-[0_2px_5px_rgba(0,0,0,0.045),0_18px_40px_rgba(0,0,0,0.06)]"
-                      >
-                        <summary className="cursor-pointer list-none">
-                          <div className="flex items-center justify-between gap-5">
-                            <span className="text-[20px] font-semibold leading-tight tracking-[-0.04em] text-zinc-950 sm:text-[24px]">
-                              {item.q}
-                            </span>
-
-                            <span className="text-[38px] font-light leading-none text-zinc-500 transition group-open:rotate-45 group-open:text-zinc-950 sm:text-[44px]">
-                              +
-                            </span>
-                          </div>
-                        </summary>
-
-                        <p className="mt-4 text-[15.5px] leading-7 text-zinc-600">
-                          {item.a}
-                        </p>
-                      </details>
-                    ))}
-                  </div>
-                </div>
-              </section>
-            ))}
+      {sections.map((section, index) => (
+        <section key={section.id} id={section.id} className={["border-b border-white/[0.06]", index % 2 === 0 ? "bg-[#0a0d15]" : "bg-[#080b12]"].join(" ")}>
+          <div className="mx-auto grid max-w-[1320px] gap-10 px-4 py-20 sm:px-6 sm:py-24 lg:grid-cols-[0.82fr_1.18fr] lg:px-8">
+            <div>
+              <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">{section.label}</p>
+              <h2 className="mt-4 max-w-[600px] text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">{section.heading}</h2>
+            </div>
+            <div className="space-y-3">
+              {section.questions.map((item) => (
+                <details key={item.q} className="group rounded-[22px] border border-white/[0.07] bg-white/[0.03] px-5 py-4 transition hover:border-white/[0.12] hover:bg-white/[0.045]">
+                  <summary className="cursor-pointer list-none">
+                    <div className="flex items-center justify-between gap-5">
+                      <span className="text-[17px] font-semibold leading-tight tracking-[-0.025em] text-slate-100 sm:text-[19px]">{item.q}</span>
+                      <span className="text-[30px] font-light leading-none text-slate-500 transition group-open:rotate-45 group-open:text-emerald-300">+</span>
+                    </div>
+                  </summary>
+                  <p className="mt-4 text-[14px] leading-7 text-slate-400">{item.a}</p>
+                </details>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ))}
 
       <ResourceSignup page="como-funciona" />
 
-      <section className="bg-zinc-950 text-white">
-        <div className="mx-auto max-w-[1500px] px-4 py-16 text-center sm:px-6 lg:px-8">
-          <h2 className="mx-auto max-w-5xl text-[48px] font-semibold leading-[0.98] tracking-[-0.064em] sm:text-[82px]">
-            ¿Tienes una situación concreta?
-          </h2>
-
-          <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
-            La forma más rápida de entender Vonu es probarlo con una duda real:
-            un mensaje, una web, una factura, un contrato o una decisión que no
-            tienes clara.
-          </p>
-
-          <Link
-            href="/chat"
-            className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
-          >
-            Abrir Vonu
-            <ArrowIcon />
-          </Link>
+      <section className="relative overflow-hidden bg-[#0a0d15]">
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500/[0.08] blur-[120px]" />
+        <div className="relative mx-auto max-w-[1320px] px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+          <div className="mx-auto max-w-[900px] text-center">
+            <h2 className="text-[44px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[70px]">
+              La forma más fácil de entenderlo
+              <span className="block text-slate-500">es probarlo con algo real.</span>
+            </h2>
+            <p className="mx-auto mt-6 max-w-[640px] text-[16px] leading-8 text-slate-400">Escribe una duda, pega un enlace o explica una situación concreta y comprueba cómo Vonu organiza las señales y los siguientes pasos.</p>
+            <Link href="/chat" className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:-translate-y-0.5 hover:bg-emerald-300 active:translate-y-0">
+              Probar Vonu
+              <ArrowIcon />
+            </Link>
+          </div>
         </div>
       </section>
 
