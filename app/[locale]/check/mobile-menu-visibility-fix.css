@@ -7,13 +7,18 @@
     -webkit-backdrop-filter: none !important;
   }
 
-  /* Shorter lower burger stroke while closed. Keep the outer/right edge
-     aligned with the upper stroke so the shorter side points inward, toward the logo.
-     Restore equal strokes when open so the close X stays perfectly balanced. */
+  /* Slightly shorten both burger strokes while closed, preserving the outer/right
+     alignment and the current stroke thickness. Keep the open X untouched. */
+  .vonu-check-page header > div:first-child > button[aria-expanded="false"] > span > span:first-child {
+    left: auto !important;
+    right: 0 !important;
+    width: 28px !important;
+  }
+
   .vonu-check-page header > div:first-child > button[aria-expanded="false"] > span > span:last-child {
     left: auto !important;
     right: 0 !important;
-    width: 24px !important;
+    width: 22px !important;
   }
 
   .vonu-check-page header > div:first-child > button[aria-expanded="true"] > span > span:last-child {
