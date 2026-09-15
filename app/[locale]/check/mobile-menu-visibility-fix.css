@@ -1,0 +1,18 @@
+/* Final mobile-menu visibility fix. Keep the panel anchored to the header itself
+   so backdrop-filter/sticky positioning cannot trap a fixed descendant. */
+@media (max-width: 767px) {
+  .vonu-check-page header {
+    overflow: visible !important;
+  }
+
+  .vonu-check-page header > div:nth-child(2) {
+    position: absolute !important;
+    inset: auto 0 auto 0 !important;
+    top: 68px !important;
+    width: 100vw !important;
+    height: calc(100dvh - 68px) !important;
+    min-height: calc(100dvh - 68px) !important;
+    z-index: 10010 !important;
+    overflow: hidden !important;
+  }
+}
