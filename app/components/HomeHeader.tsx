@@ -43,8 +43,8 @@ export default function HomeHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-[#0b0e17]/95 text-white backdrop-blur-xl">
-      <div className={["mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8", isCheckHome ? "relative" : ""].join(" ")}>
+    <header className="sticky top-0 z-50 isolate overflow-visible border-b border-white/[0.08] bg-[#0b0e17]/95 text-white backdrop-blur-xl max-md:backdrop-blur-none">
+      <div className={["relative z-[10020] mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8", isCheckHome ? "relative" : ""].join(" ")}>
         <a href="/" className="flex items-center gap-3" aria-label="Vonu inicio">
           <VonuMark className="h-7 w-7" framed />
           <span className="text-[21px] font-semibold tracking-[-0.045em]">VONU</span>
@@ -89,21 +89,25 @@ export default function HomeHeader() {
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className="group relative z-[70] grid h-12 w-12 touch-manipulation place-items-center border-0 bg-transparent p-0 md:hidden"
+          className="group relative z-[10040] grid h-12 w-12 min-w-12 touch-manipulation place-items-center border-0 bg-transparent p-0 md:hidden"
           aria-label={open ? "Cerrar menú" : "Abrir menú"}
           aria-expanded={open}
         >
           <span className="relative block h-6 w-8" aria-hidden="true">
             <span
               className={[
-                "absolute left-0 top-[7px] h-[2px] w-8 rounded-full bg-emerald-300 transition-transform duration-300 ease-out",
-                open ? "translate-y-[5px] rotate-45" : "translate-y-0 rotate-0",
+                "absolute top-[7px] h-[2px] rounded-full bg-emerald-300 transition-transform duration-300 ease-out",
+                open
+                  ? "left-0 w-8 translate-y-[5px] rotate-45"
+                  : "right-0 w-[28px] translate-y-0 rotate-0",
               ].join(" ")}
             />
             <span
               className={[
-                "absolute left-0 top-[17px] h-[2px] w-8 rounded-full bg-emerald-300 transition-transform duration-300 ease-out",
-                open ? "-translate-y-[5px] -rotate-45" : "translate-y-0 rotate-0",
+                "absolute top-[17px] h-[2px] rounded-full bg-emerald-300 transition-transform duration-300 ease-out",
+                open
+                  ? "left-0 w-8 -translate-y-[5px] -rotate-45"
+                  : "right-0 w-[22px] translate-y-0 rotate-0",
               ].join(" ")}
             />
           </span>
@@ -112,13 +116,13 @@ export default function HomeHeader() {
 
       <div
         className={[
-          "fixed inset-x-0 bottom-0 top-[68px] z-[60] overflow-hidden bg-[#0b0e17] transition-[opacity,transform] duration-300 ease-out md:hidden",
+          "fixed inset-0 z-[10010] h-[100dvh] min-h-[100dvh] w-screen overflow-hidden bg-[#0b0e17] transition-[opacity,transform] duration-300 ease-out md:hidden",
           open
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none -translate-y-5 opacity-0",
         ].join(" ")}
       >
-        <div className="flex h-full flex-col overflow-y-auto px-6 pb-6 pt-5">
+        <div className="flex h-full min-h-full w-full flex-col overflow-y-auto px-6 pb-6 pt-[88px]">
           <nav className="grid gap-0">
             {mainLinks.map((item) =>
               item.hasMenu ? (
@@ -130,7 +134,7 @@ export default function HomeHeader() {
                     aria-expanded={casesOpen}
                   >
                     <span>{item.label}</span>
-                    <span className="text-[26px] font-light text-emerald-300">{casesOpen ? "−" : "+"}</span>
+                    <span className="text-[26px] font-light leading-none text-emerald-300">{casesOpen ? "−" : "+"}</span>
                   </button>
                   {casesOpen && (
                     <div className="mb-3 grid gap-0 border-l border-emerald-400/25 pl-3">
