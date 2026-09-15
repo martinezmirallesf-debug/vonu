@@ -1,0 +1,5 @@
+/* Only enlarge the search icon inside the URL input. */
+section[class*="max-w-[850px]"] > div:last-child > div:first-child:has(input[inputmode="url"]) > span:first-child {
+  font-size: 24px !important;
+  line-height: 1 !important;
+}
