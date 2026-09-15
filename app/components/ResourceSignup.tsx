@@ -30,9 +30,10 @@ function CheckIcon() {
 function GradientText({ children }: { children: React.ReactNode }) {
   return (
     <span
-      className="inline align-baseline"
+      className="inline"
       style={{
-        backgroundImage: "linear-gradient(90deg, #1A73E8 0%, #22C55E 100%)",
+        backgroundImage:
+          "linear-gradient(92deg, #60A5FA 0%, #38BDF8 35%, #34D399 100%)",
         WebkitBackgroundClip: "text",
         backgroundClip: "text",
         color: "transparent",
@@ -110,32 +111,31 @@ export default function ResourceSignup({ page = "unknown" }: { page?: string }) 
   const isSending = state === "sending";
 
   return (
-    <section className="bg-[#f5f5f7]">
-      <div className="mx-auto grid max-w-[1500px] gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+    <section className="border-b border-white/[0.06] bg-[#080b12]">
+      <div className="mx-auto grid max-w-[1320px] gap-10 px-4 py-20 sm:px-6 sm:py-24 lg:grid-cols-[0.82fr_1.18fr] lg:px-8">
         <div>
-          <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-600">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">
             Recursos Vonu
           </p>
 
-          <h2 className="mt-3 max-w-2xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] text-zinc-950 sm:text-[64px] sm:leading-[0.98] sm:tracking-[-0.065em]">
-            Guías y avances para decidir{" "}
-            <GradientText>mejor.</GradientText>
+          <h2 className="mt-4 max-w-[620px] text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">
+            Guías y avances para decidir <GradientText>mejor.</GradientText>
           </h2>
 
-          <p className="mt-5 max-w-xl text-[17px] leading-8 text-zinc-600">
+          <p className="mt-6 max-w-[560px] text-[16px] leading-8 text-slate-400">
             Recibe contenido útil sobre decisiones digitales, seguridad,
             documentos, voz, estudio, nuevas funciones y formas de usar Vonu con
             más claridad.
           </p>
         </div>
 
-        <div className="rounded-[38px] bg-zinc-950 p-6 text-white shadow-[0_18px_48px_rgba(0,0,0,0.16)] sm:p-8 lg:p-10">
-          <h3 className="text-[30px] font-semibold leading-[1.05] tracking-[-0.055em] sm:text-[36px]">
+        <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.035] p-6 shadow-[0_28px_80px_rgba(0,0,0,.22)] sm:p-8">
+          <h3 className="text-[30px] font-semibold leading-[1.05] tracking-[-0.05em] text-white sm:text-[36px]">
             Recursos útiles,
-            <span className="block text-zinc-400">no ruido.</span>
+            <span className="block text-slate-500">no ruido.</span>
           </h3>
 
-          <p className="mt-4 text-[16px] leading-7 text-zinc-300">
+          <p className="mt-4 text-[15px] leading-7 text-slate-400">
             Guías breves, casos prácticos y avances de producto para revisar
             mejor lo importante antes de actuar.
           </p>
@@ -144,9 +144,9 @@ export default function ResourceSignup({ page = "unknown" }: { page?: string }) 
             {resourceTopics.map((topic) => (
               <div
                 key={topic}
-                className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-[14px] text-zinc-200"
+                className="flex items-center gap-3 rounded-[16px] border border-white/[0.07] bg-white/[0.03] px-4 py-3 text-[13px] text-slate-300"
               >
-                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white text-zinc-950">
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-400/[0.10] text-emerald-300">
                   <CheckIcon />
                 </span>
                 {topic}
@@ -166,17 +166,17 @@ export default function ResourceSignup({ page = "unknown" }: { page?: string }) 
               autoComplete="email"
               placeholder="tu@email.com"
               aria-label="Email para recibir recursos de Vonu"
-              className="h-[50px] w-full min-w-0 rounded-full border border-white/10 bg-white px-5 text-[15px] text-zinc-950 outline-none placeholder:text-zinc-400 focus:ring-4 focus:ring-blue-400/20"
+              className="h-[50px] w-full min-w-0 rounded-xl border border-white/[0.08] bg-[#070a11] px-4 text-[14px] text-white outline-none placeholder:text-slate-600 focus:border-emerald-400/35 focus:ring-4 focus:ring-emerald-400/10"
             />
 
             <button
               type="submit"
               disabled={isSending}
               className={[
-                "h-[50px] w-full rounded-full px-5 text-[15px] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.22)] transition active:scale-[0.99]",
+                "h-[50px] w-full rounded-xl px-5 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition active:scale-[0.99]",
                 isSending
-                  ? "cursor-wait bg-blue-500"
-                  : "bg-[#1a73e8] hover:scale-[1.01]",
+                  ? "cursor-wait bg-emerald-300/80"
+                  : "bg-emerald-400 hover:bg-emerald-300",
               ].join(" ")}
             >
               {isSending ? "Guardando..." : "Recibir recursos"}
@@ -188,7 +188,7 @@ export default function ResourceSignup({ page = "unknown" }: { page?: string }) 
               role="status"
               aria-live="polite"
               className={[
-                "mt-4 rounded-2xl px-4 py-3 text-[13.5px] leading-6",
+                "mt-4 rounded-[16px] px-4 py-3 text-[13px] leading-6",
                 state === "success"
                   ? "border border-emerald-400/20 bg-emerald-400/10 text-emerald-100"
                   : "border border-red-400/20 bg-red-400/10 text-red-100",
@@ -198,7 +198,7 @@ export default function ResourceSignup({ page = "unknown" }: { page?: string }) 
             </div>
           )}
 
-          <p className="mt-4 text-[12.5px] leading-5 text-zinc-400">
+          <p className="mt-4 text-[12px] leading-5 text-slate-500">
             Sin spam. Solo contenido útil sobre decisiones seguras, producto y
             nuevas funciones. Puedes darte de baja cuando quieras.
           </p>
