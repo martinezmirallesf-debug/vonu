@@ -295,7 +295,16 @@ export default function ProductoPage() {
                       <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Resultado</p>
                       <h2 className="mt-2 text-[26px] font-semibold tracking-[-0.045em] text-white sm:text-[30px]">Precaución antes de continuar</h2>
                     </div>
-                    <span className="rounded-full border border-amber-300/20 bg-amber-300/[0.09] px-3 py-1.5 text-[11px] font-semibold text-amber-200">62 / 100</span>
+                    <div className="min-w-[94px] shrink-0 rounded-[18px] border border-amber-300/20 bg-gradient-to-b from-amber-300/[0.12] to-amber-300/[0.035] px-3.5 py-3 shadow-[0_10px_30px_rgba(251,191,36,0.08)]">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-amber-200/65">Score</p>
+                      <div className="mt-1 flex items-end gap-1 leading-none">
+                        <span className="text-[29px] font-semibold tracking-[-0.055em] text-amber-200">62</span>
+                        <span className="pb-1 text-[10px] font-semibold text-amber-100/55">/100</span>
+                      </div>
+                      <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-white/[0.08]">
+                        <div className="h-full w-[62%] rounded-full bg-gradient-to-r from-amber-300 to-yellow-200" />
+                      </div>
+                    </div>
                   </div>
 
                   <div className="mt-6 space-y-3">
