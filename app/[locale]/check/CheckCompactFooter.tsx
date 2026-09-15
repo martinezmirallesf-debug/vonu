@@ -18,6 +18,22 @@ const legalLabel: Record<SupportedLocale, string> = {
   ar: "قانوني",
 };
 
+const cookiesLabel: Record<SupportedLocale, string> = {
+  es: "Cookies",
+  en: "Cookies",
+  fr: "Cookies",
+  de: "Cookies",
+  ar: "ملفات الارتباط",
+};
+
+const termsLabel: Record<SupportedLocale, string> = {
+  es: "Términos",
+  en: "Terms",
+  fr: "Conditions",
+  de: "Bedingungen",
+  ar: "الشروط",
+};
+
 export default function CheckCompactFooter({ locale }: { locale: SupportedLocale }) {
   return (
     <footer className="vonu-check-compact-footer border-t border-white/[0.055] bg-[#0b0e17]/72">
@@ -29,6 +45,8 @@ export default function CheckCompactFooter({ locale }: { locale: SupportedLocale
         <div className="flex items-center gap-4">
           <Link href="/legal/aviso-legal" className="transition hover:text-slate-400">{legalLabel[locale]}</Link>
           <Link href="/legal/privacidad" className="transition hover:text-slate-400">{privacyLabel[locale]}</Link>
+          <Link href="/legal/cookies" className="transition hover:text-slate-400">{cookiesLabel[locale]}</Link>
+          <Link href="/legal/terminos" className="transition hover:text-slate-400">{termsLabel[locale]}</Link>
         </div>
       </div>
     </footer>
