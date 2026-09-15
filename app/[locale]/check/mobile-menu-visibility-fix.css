@@ -7,13 +7,18 @@
     -webkit-backdrop-filter: none !important;
   }
 
-  /* Slightly shorter lower burger stroke while closed; restore equal strokes
-     when open so the close X stays perfectly balanced. */
+  /* Slightly shorter lower burger stroke while closed. Keep the outer/right edge
+     aligned with the upper stroke so the shorter side points inward, toward the logo.
+     Restore equal strokes when open so the close X stays perfectly balanced. */
   .vonu-check-page header > div:first-child > button[aria-expanded="false"] > span > span:last-child {
+    left: auto !important;
+    right: 0 !important;
     width: 28px !important;
   }
 
   .vonu-check-page header > div:first-child > button[aria-expanded="true"] > span > span:last-child {
+    left: 0 !important;
+    right: auto !important;
     width: 32px !important;
   }
 
@@ -36,5 +41,16 @@
     min-height: 100% !important;
     padding: 88px 24px 24px !important;
     overflow-y: auto !important;
+  }
+
+  /* Match the mobile menu CTA corner radius to the home CTA instead of a pill. */
+  .vonu-check-page header > div:nth-child(2) > div > div:last-child > a:last-child {
+    border-radius: 12px !important;
+  }
+
+  /* Give the expandable-section + / − a touch more visual weight. */
+  .vonu-check-page header > div:nth-child(2) nav > div > button > span:last-child {
+    font-size: 24px !important;
+    line-height: 1 !important;
   }
 }
