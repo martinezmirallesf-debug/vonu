@@ -45,9 +45,8 @@
     min-height: 48px !important;
   }
 
-  /* Critical desktop rule: anchor the composition from the top instead of
-     vertically centering it. Capture is taller than URL/Message; centering the
-     whole composition made the subtitle and tabs jump when modes changed. */
+  /* Anchor the desktop composition from the top so the tabs never move between modes.
+     The larger top padding intentionally lowers the whole PC composition. */
   .vonu-check-page:has(> div:first-of-type > header + main > section.text-center) > div:first-of-type > header + main {
     position: relative !important;
     top: 0 !important;
@@ -58,7 +57,7 @@
     min-height: 0 !important;
     flex: 1 1 auto !important;
     justify-content: flex-start !important;
-    padding: 24px 28px 18px !important;
+    padding: 78px 28px 18px !important;
     overflow: hidden !important;
   }
 
@@ -70,26 +69,71 @@
     transform: none !important;
   }
 
-  /* Fixed breathing rhythm above the selector. This value is mode-independent,
-     so URL, Capture and Message always keep the three tabs on the same baseline. */
   .vonu-check-page:has(> div:first-of-type > header + main > section.text-center) > div:first-of-type > header + main > section:first-child > p {
     margin-top: 0 !important;
   }
 
+  /* Mode selector stays on one fixed baseline in URL, Capture and Message. */
   .vonu-check-page:has(> div:first-of-type > header + main > section.text-center) > div:first-of-type > header + main > section:nth-of-type(2) {
     margin-top: 30px !important;
+  }
+
+  /* Message only: lower and separate the content beneath the fixed tabs. */
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(> textarea:first-child) {
+    height: 238px !important;
+    min-height: 238px !important;
+    padding-top: 18px !important;
+    padding-bottom: 6px !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(> textarea:first-child)
+    > textarea:first-child {
+    margin-top: 10px !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(> textarea:first-child)
+    > div:last-child {
+    margin-top: 22px !important;
+    gap: 9px !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(> textarea:first-child)
+    .vonu-submission-notice {
+    margin-top: 9px !important;
   }
 }
 
 @media (min-width: 1024px) and (max-height: 760px) {
-  /* Short desktop screens: preserve exactly the same anchoring model while
-     reclaiming a little vertical room below the fixed tabs. */
+  /* Short desktop screens keep the same fixed-tab model, just slightly tighter. */
   .vonu-check-page:has(> div:first-of-type > header + main > section.text-center) > div:first-of-type > header + main {
-    padding-top: 16px !important;
+    padding-top: 56px !important;
     padding-bottom: 10px !important;
   }
 
   .vonu-check-page:has(> div:first-of-type > header + main > section.text-center) > div:first-of-type > header + main > section:nth-of-type(2) {
     margin-top: 24px !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(> textarea:first-child) {
+    height: 218px !important;
+    min-height: 218px !important;
+    padding-top: 12px !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(> textarea:first-child)
+    > div:last-child {
+    margin-top: 16px !important;
   }
 }
