@@ -5,6 +5,7 @@ import SubmissionNotice from "./SubmissionNotice";
 import CheckCompactFooter from "./CheckCompactFooter";
 import "./check.css";
 import "./check-polish.css";
+import "./url-search-icon-size.css";
 import "./hero-title-fix.css";
 import "./submission-notice.css";
 import "./capture-breathe.css";
