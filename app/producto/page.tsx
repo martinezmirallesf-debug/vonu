@@ -379,7 +379,7 @@ export default function ProductoPage() {
           <div>
             <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Uso responsable</p>
             <h2 className="mt-4 max-w-[580px] text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">
-              Útil porque también sabe decir <GradientText>“no lo sé”.</GradientText>
+              Más criterio cuando hay <GradientText>incertidumbre.</GradientText>
             </h2>
             <p className="mt-6 max-w-[560px] text-[16px] leading-8 text-slate-400">
               Un producto de seguridad no debería fingir certeza. Vonu está diseñado para mostrar límites, separar hechos de inferencias y recomendar comprobaciones adicionales cuando hacen falta.
