@@ -98,24 +98,6 @@ const capabilities = [
   },
 ];
 
-const workflow = [
-  {
-    step: "01",
-    title: "Pega o sube",
-    text: "Introduce la URL, pega el mensaje o sube una captura. No necesitas empezar una conversación ni explicar el caso perfecto.",
-  },
-  {
-    step: "02",
-    title: "Vonu contrasta",
-    text: "Combina señales técnicas y contextuales para separar hechos, indicios y elementos que todavía no pueden verificarse.",
-  },
-  {
-    step: "03",
-    title: "Decide después",
-    text: "Obtienes una lectura clara del riesgo y una secuencia de comprobaciones útiles antes de pagar, responder o compartir información.",
-  },
-];
-
 const principles = [
   "No certificamos que una web, persona o mensaje sea legítimo o fraudulento.",
   "No necesitas compartir contraseñas, códigos SMS ni datos bancarios completos.",
@@ -255,12 +237,7 @@ export default function ProductoPage() {
 
         <div className="mx-auto max-w-[1320px] px-4 pb-20 pt-14 sm:px-6 sm:pb-28 sm:pt-20 lg:px-8 lg:pt-24">
           <div className="mx-auto max-w-[1020px] text-center">
-            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.045] px-3.5 py-2 text-[12px] font-semibold tracking-[0.02em] text-slate-300 shadow-[0_12px_40px_rgba(0,0,0,0.16)]">
-              <span className="text-emerald-300"><ShieldIcon /></span>
-              Vonu · análisis preventivo
-            </div>
-
-            <h1 className="mx-auto mt-7 max-w-[1020px] text-[50px] font-semibold leading-[0.98] tracking-[-0.065em] text-white sm:text-[76px] sm:leading-[0.94] lg:text-[92px]">
+            <h1 className="mx-auto max-w-[1020px] text-[50px] font-semibold leading-[0.98] tracking-[-0.065em] text-white sm:text-[76px] sm:leading-[0.94] lg:text-[92px]">
               Antes de actuar,
               <span className="block text-slate-400">
                 entiende qué tienes <GradientText>delante.</GradientText>
@@ -327,7 +304,7 @@ export default function ProductoPage() {
 
                   <button
                     type="button"
-                    className="mt-4 h-12 w-full rounded-xl bg-gradient-to-r from-sky-500 to-emerald-400 text-[14px] font-bold text-[#071018] shadow-[0_12px_30px_rgba(14,165,233,0.16)]"
+                    className="mt-4 h-12 w-full rounded-xl bg-emerald-400 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:bg-emerald-300 active:scale-[.99]"
                   >
                     Analizar ahora
                   </button>
@@ -422,29 +399,6 @@ export default function ProductoPage() {
         </div>
       </section>
 
-      <section className="border-b border-white/[0.06] bg-[#0c1019]">
-        <div className="mx-auto max-w-[1320px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
-          <div className="mx-auto max-w-[850px] text-center">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-sky-300">Cómo funciona</p>
-            <h2 className="mt-4 text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">
-              Comprueba primero.
-              <span className="block text-slate-500">Decide después.</span>
-            </h2>
-          </div>
-
-          <div className="relative mt-12 grid gap-4 lg:grid-cols-3">
-            <div className="pointer-events-none absolute left-[16%] right-[16%] top-[25px] hidden h-px bg-gradient-to-r from-transparent via-white/[0.12] to-transparent lg:block" />
-            {workflow.map((item) => (
-              <article key={item.step} className="relative rounded-[24px] border border-white/[0.07] bg-[#080b12] p-6 sm:p-7">
-                <div className="grid h-12 w-12 place-items-center rounded-full border border-sky-300/20 bg-sky-300/[0.07] text-[12px] font-bold text-sky-200">{item.step}</div>
-                <h3 className="mt-8 text-[28px] font-semibold tracking-[-0.045em] text-white">{item.title}</h3>
-                <p className="mt-4 text-[14px] leading-7 text-slate-400 sm:text-[15px]">{item.text}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section className="border-b border-white/[0.06] bg-[#080b12]">
         <div className="mx-auto grid max-w-[1320px] gap-10 px-4 py-20 sm:px-6 sm:py-24 lg:grid-cols-[0.85fr_1.15fr] lg:px-8">
           <div>
@@ -486,7 +440,7 @@ export default function ProductoPage() {
             </p>
             <Link
               href="/es/check"
-              className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 text-[14px] font-semibold text-[#0b0e17] transition hover:-translate-y-0.5 hover:bg-slate-100 active:translate-y-0"
+              className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:-translate-y-0.5 hover:bg-emerald-300 active:translate-y-0"
             >
               Analizar ahora
               <ArrowIcon />
