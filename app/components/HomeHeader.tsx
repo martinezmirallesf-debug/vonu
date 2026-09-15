@@ -98,7 +98,7 @@ export default function HomeHeader() {
               className={[
                 "absolute top-[7px] h-[2px] rounded-full bg-emerald-300 transition-transform duration-300 ease-out",
                 open
-                  ? "left-0 w-8 translate-y-[5px] rotate-45"
+                  ? "left-[2px] w-[28px] translate-y-[5px] rotate-45"
                   : "right-0 w-[28px] translate-y-0 rotate-0",
               ].join(" ")}
             />
@@ -106,7 +106,7 @@ export default function HomeHeader() {
               className={[
                 "absolute top-[17px] h-[2px] rounded-full bg-emerald-300 transition-transform duration-300 ease-out",
                 open
-                  ? "left-0 w-8 -translate-y-[5px] -rotate-45"
+                  ? "left-[2px] w-[28px] -translate-y-[5px] -rotate-45"
                   : "right-0 w-[22px] translate-y-0 rotate-0",
               ].join(" ")}
             />
