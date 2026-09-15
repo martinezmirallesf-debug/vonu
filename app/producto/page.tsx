@@ -138,26 +138,6 @@ function ArrowIcon() {
   );
 }
 
-function ShieldIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
-      <path
-        d="M12 3 19 6v5.1c0 4.6-2.9 8.2-7 9.9-4.1-1.7-7-5.3-7-9.9V6l7-3Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <path
-        d="m8.8 12 2 2 4.5-4.6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function CheckIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
@@ -251,7 +231,7 @@ export default function ProductoPage() {
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 href="/es/check"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 text-[14px] font-semibold text-[#0b0e17] shadow-[0_14px_40px_rgba(255,255,255,0.10)] transition hover:-translate-y-0.5 hover:bg-slate-100 active:translate-y-0"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:-translate-y-0.5 hover:bg-emerald-300 active:translate-y-0"
               >
                 Probar Vonu Check
                 <ArrowIcon />
@@ -275,12 +255,7 @@ export default function ProductoPage() {
 
           <div className="mx-auto mt-14 max-w-[1040px] sm:mt-18">
             <div className="relative overflow-hidden rounded-[28px] border border-white/[0.09] bg-white/[0.045] shadow-[0_35px_100px_rgba(0,0,0,0.38)] backdrop-blur-xl">
-              <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-3 sm:px-6">
-                <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-rose-400/80" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-amber-300/80" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
-                </div>
+              <div className="flex items-center justify-end border-b border-white/[0.07] px-4 py-3 sm:px-6">
                 <span className="text-[11px] font-medium tracking-[0.06em] text-slate-500">VONU CHECK</span>
               </div>
 
@@ -428,10 +403,7 @@ export default function ProductoPage() {
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500/[0.08] blur-[120px]" />
         <div className="relative mx-auto max-w-[1320px] px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-[900px] text-center">
-            <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl border border-white/[0.08] bg-white/[0.05] text-emerald-300">
-              <ShieldIcon />
-            </div>
-            <h2 className="mt-7 text-[44px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[70px]">
+            <h2 className="text-[44px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[70px]">
               Si algo no te cuadra,
               <span className="block text-slate-500">compruébalo antes de confiar.</span>
             </h2>
