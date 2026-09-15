@@ -320,7 +320,7 @@ export default function ProductoPage() {
       <section className="relative border-b border-white/[0.06] bg-[#0a0d15]">
         <div className="mx-auto max-w-[1320px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
           <div className="max-w-[760px]">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-sky-300">Qué hace Vonu</p>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Qué hace Vonu</p>
             <h2 className="mt-4 text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">
               Menos intuición.
               <span className="block text-slate-500">Más señales útiles.</span>
