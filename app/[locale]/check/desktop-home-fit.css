@@ -1,6 +1,7 @@
 /* Desktop-only idle home fit.
-   Keep the entire Vonu Check home inside one viewport and give the hero
-   a real breathing zone below the header. Mobile and result states are untouched. */
+   Keep the entire Vonu Check home inside one viewport and keep the desktop
+   subtitle + mode selector anchored at the same vertical position in every mode.
+   Mobile and result states are untouched. */
 
 @media (min-width: 1024px) {
   .vonu-check-page:has(> div:first-of-type > header + main > section.text-center) {
@@ -20,7 +21,7 @@
     overflow: hidden !important;
   }
 
-  /* Reserve the header footprint explicitly so the hero can never slide underneath it. */
+  /* Reserve the header footprint explicitly so the home can never slide underneath it. */
   .vonu-check-page:has(> div:first-of-type > header + main > section.text-center) > div:first-of-type > header {
     height: 76px !important;
     min-height: 76px !important;
@@ -44,8 +45,9 @@
     min-height: 48px !important;
   }
 
-  /* Center the full home surface inside the space left between header and footer.
-     A small downward bias gives the hero breathing room without introducing scroll. */
+  /* Critical desktop rule: anchor the composition from the top instead of
+     vertically centering it. Capture is taller than URL/Message; centering the
+     whole composition made the subtitle and tabs jump when modes changed. */
   .vonu-check-page:has(> div:first-of-type > header + main > section.text-center) > div:first-of-type > header + main {
     position: relative !important;
     top: 0 !important;
@@ -55,8 +57,8 @@
     max-width: none !important;
     min-height: 0 !important;
     flex: 1 1 auto !important;
-    justify-content: center !important;
-    padding: 34px 28px 22px !important;
+    justify-content: flex-start !important;
+    padding: 24px 28px 18px !important;
     overflow: hidden !important;
   }
 
@@ -68,28 +70,26 @@
     transform: none !important;
   }
 
-  /* Give the hero copy a little more air without changing typography. */
+  /* Fixed breathing rhythm above the selector. This value is mode-independent,
+     so URL, Capture and Message always keep the three tabs on the same baseline. */
   .vonu-check-page:has(> div:first-of-type > header + main > section.text-center) > div:first-of-type > header + main > section:first-child > p {
-    margin-top: 22px !important;
+    margin-top: 0 !important;
   }
 
-  /* More separation between message and scanner; scanner internals stay untouched. */
   .vonu-check-page:has(> div:first-of-type > header + main > section.text-center) > div:first-of-type > header + main > section:nth-of-type(2) {
-    margin-top: clamp(34px, 4.4vh, 46px) !important;
+    margin-top: 30px !important;
   }
 }
 
 @media (min-width: 1024px) and (max-height: 760px) {
+  /* Short desktop screens: preserve exactly the same anchoring model while
+     reclaiming a little vertical room below the fixed tabs. */
   .vonu-check-page:has(> div:first-of-type > header + main > section.text-center) > div:first-of-type > header + main {
-    padding-top: 22px !important;
-    padding-bottom: 12px !important;
-  }
-
-  .vonu-check-page:has(> div:first-of-type > header + main > section.text-center) > div:first-of-type > header + main > section:first-child > p {
-    margin-top: 16px !important;
+    padding-top: 16px !important;
+    padding-bottom: 10px !important;
   }
 
   .vonu-check-page:has(> div:first-of-type > header + main > section.text-center) > div:first-of-type > header + main > section:nth-of-type(2) {
-    margin-top: 28px !important;
+    margin-top: 24px !important;
   }
 }
