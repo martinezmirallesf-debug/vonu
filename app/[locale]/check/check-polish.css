@@ -1,6 +1,39 @@
 /* Final visual authority for the Vonu Check idle home.
    Loaded after check.css: keep this file small, explicit and conflict-free. */
 
+/* Keep the three input-mode icons identical to the approved Producto preview.
+   Masks inherit the tab currentColor, so active/inactive states remain untouched. */
+section[class*="max-w-[850px]"] > div:first-child button > span:first-child {
+  display: inline-block !important;
+  width: 20px !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  background-color: currentColor !important;
+  -webkit-mask-position: center !important;
+  mask-position: center !important;
+  -webkit-mask-repeat: no-repeat !important;
+  mask-repeat: no-repeat !important;
+  -webkit-mask-size: contain !important;
+  mask-size: contain !important;
+}
+
+section[class*="max-w-[850px]"] > div:first-child button:first-child > span:first-child {
+  -webkit-mask-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+PHBhdGggZD0iTTEwIDEzYTUgNSAwIDAgMCA3LjU0LjU0bDMtM2E1IDUgMCAwIDAtNy4wNy03LjA3bC0xLjcyIDEuNzEiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMS45IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTQgMTFhNSA1IDAgMCAwLTcuNTQtLjU0bC0zIDNhNSA1IDAgMCAwIDcuMDcgNy4wN2wxLjcxLTEuNzEiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMS45IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=") !important;
+  mask-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+PHBhdGggZD0iTTEwIDEzYTUgNSAwIDAgMCA3LjU0LjU0bDMtM2E1IDUgMCAwIDAtNy4wNy03LjA3bC0xLjcyIDEuNzEiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMS45IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTQgMTFhNSA1IDAgMCAwLTcuNTQtLjU0bC0zIDNhNSA1IDAgMCAwIDcuMDcgNy4wN2wxLjcxLTEuNzEiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMS45IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=") !important;
+}
+
+section[class*="max-w-[850px]"] > div:first-child button:nth-child(2) > span:first-child {
+  -webkit-mask-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMi41IiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjEuOSIvPjxjaXJjbGUgY3g9IjguNSIgY3k9IjguNSIgcj0iMS41IiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjEuOCIvPjxwYXRoIGQ9Im0yMSAxNS01LTVMNSAyMSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIxLjkiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==") !important;
+  mask-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMi41IiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjEuOSIvPjxjaXJjbGUgY3g9IjguNSIgY3k9IjguNSIgcj0iMS41IiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjEuOCIvPjxwYXRoIGQ9Im0yMSAxNS01LTVMNSAyMSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIxLjkiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==") !important;
+}
+
+section[class*="max-w-[850px]"] > div:first-child button:nth-child(3) > span:first-child {
+  -webkit-mask-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+PHBhdGggZD0iTTIxIDE1YTQgNCAwIDAgMS00IDRIOGwtNSAzVjdhNCA0IDAgMCAxIDQtNGgxMGE0IDQgMCAwIDEgNCA0djhaIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjEuOSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PHBhdGggZD0iTTcuNSA4LjVoOU03LjUgMTIuNWg2IiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjEuOSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+") !important;
+  mask-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+PHBhdGggZD0iTTIxIDE1YTQgNCAwIDAgMS00IDRIOGwtNSAzVjdhNCA0IDAgMCAxIDQtNGgxMGE0IDQgMCAwIDEgNCA0djhaIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjEuOSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PHBhdGggZD0iTTcuNSA4LjVoOU03LjUgMTIuNWg2IiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjEuOSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+") !important;
+}
+
 @media (min-width: 768px) {
   section[class*="max-w-[850px]"] {
     background: transparent !important;
