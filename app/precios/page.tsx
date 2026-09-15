@@ -157,35 +157,13 @@ const responsibleItems = [
   "Está pensado para darte claridad sin sustituir a profesionales cuando el caso lo requiera.",
 ];
 
-type GradientTone =
-  | "blueGreen"
-  | "blueCyan"
-  | "green"
-  | "orangeRed"
-  | "purplePink"
-  | "amberOrange";
-
-const gradientMap: Record<GradientTone, string> = {
-  blueGreen: "linear-gradient(90deg, #0A84FF 0%, #22C55E 100%)",
-  blueCyan: "linear-gradient(90deg, #1A73E8 0%, #06B6D4 100%)",
-  green: "linear-gradient(90deg, #0A8F3C 0%, #34D399 100%)",
-  orangeRed: "linear-gradient(90deg, #F97316 0%, #EF4444 100%)",
-  purplePink: "linear-gradient(90deg, #7C3AED 0%, #EC4899 100%)",
-  amberOrange: "linear-gradient(90deg, #F59E0B 0%, #F97316 100%)",
-};
-
-function GradientText({
-  children,
-  tone,
-}: {
-  children: ReactNode;
-  tone: GradientTone;
-}) {
+function GradientText({ children }: { children: ReactNode }) {
   return (
     <span
-      className="inline align-baseline"
+      className="inline"
       style={{
-        backgroundImage: gradientMap[tone],
+        backgroundImage:
+          "linear-gradient(92deg, #60A5FA 0%, #38BDF8 35%, #34D399 100%)",
         WebkitBackgroundClip: "text",
         backgroundClip: "text",
         color: "transparent",
@@ -200,74 +178,18 @@ function GradientText({
 function ArrowIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
-      <path d="M5 12h13" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-      <path
-        d="m13 6 6 6-6 6"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M5 12h13" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="m13 6 6 6-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
 function CheckIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" aria-hidden="true">
-      <path
-        d="m5 12.5 4.2 4.2L19 7"
-        stroke="currentColor"
-        strokeWidth="2.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
+      <path d="m5 12.5 4.2 4.2L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
-
-function PlanName({ name }: { name: string }) {
-  if (name === "Free") {
-    return <GradientText tone="blueCyan">Free</GradientText>;
-  }
-
-  if (name === "Plus") {
-    return <GradientText tone="blueGreen">Plus</GradientText>;
-  }
-
-  if (name === "Max") {
-    return <GradientText tone="purplePink">Max</GradientText>;
-  }
-
-  return <>{name}</>;
-}
-
-function TopupName({ name }: { name: string }) {
-  if (name === "Recarga básica") {
-    return (
-      <>
-        Recarga <GradientText tone="blueCyan">básica</GradientText>
-      </>
-    );
-  }
-
-  if (name === "Recarga media") {
-    return (
-      <>
-        Recarga <GradientText tone="blueGreen">media</GradientText>
-      </>
-    );
-  }
-
-  if (name === "Recarga grande") {
-    return (
-      <>
-        Recarga <GradientText tone="purplePink">grande</GradientText>
-      </>
-    );
-  }
-
-  return <>{name}</>;
 }
 
 export default function PricingPage() {
@@ -299,213 +221,69 @@ export default function PricingPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f5f7] text-zinc-950">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-
+    <main className="min-h-screen overflow-hidden bg-[#080b12] text-slate-100">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <HomeHeader />
 
-      <section className="relative overflow-hidden bg-[#f5f5f7]">
-        <div className="mx-auto max-w-[1500px] px-4 pb-12 pt-8 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8">
-          <div className="mx-auto max-w-[1120px] text-center">
-            <h1 className="mx-auto max-w-[1080px] text-[52px] font-semibold leading-[1.02] tracking-[-0.064em] text-zinc-950 sm:text-[86px] sm:leading-[0.94] sm:tracking-[-0.078em] lg:text-[118px]">
-              Elige cómo quieres
-              <span className="block text-zinc-500">
-                usar <GradientText tone="blueGreen">Vonu.</GradientText>
-              </span>
+      <section className="relative isolate overflow-hidden border-b border-white/[0.06]">
+        <div className="pointer-events-none absolute inset-0 -z-20 bg-[#080b12]" />
+        <div className="pointer-events-none absolute left-1/2 top-[-190px] -z-10 h-[620px] w-[900px] -translate-x-1/2 rounded-full bg-sky-500/[0.10] blur-[120px]" />
+        <div className="pointer-events-none absolute right-[-180px] top-[320px] -z-10 h-[460px] w-[460px] rounded-full bg-emerald-400/[0.07] blur-[120px]" />
+        <div className="mx-auto max-w-[1320px] px-4 pb-20 pt-14 sm:px-6 sm:pb-28 sm:pt-20 lg:px-8 lg:pt-24">
+          <div className="mx-auto max-w-[1020px] text-center">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Precios</p>
+            <h1 className="mx-auto mt-5 max-w-[1020px] text-[50px] font-semibold leading-[0.98] tracking-[-0.065em] text-white sm:text-[76px] sm:leading-[0.94] lg:text-[92px]">
+              Empieza gratis.
+              <span className="block text-slate-400">Amplía cuando <GradientText>lo necesites.</GradientText></span>
             </h1>
-
-            <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
-              Empieza gratis y mejora cuando necesites más mensajes, voz,
-              análisis de archivos y margen para decisiones importantes.
+            <p className="mx-auto mt-7 max-w-[760px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">
+              Elige el margen que necesitas para mensajes, voz, documentos y análisis sin pagar más de la cuenta desde el principio.
             </p>
-
-            <div className="mt-7 flex flex-row justify-center gap-2.5 sm:mt-9 sm:gap-3">
-              <Link
-                href="/chat"
-                className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] transition hover:scale-[1.02] active:scale-[0.99] sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-[15px]"
-              >
-                <span className="truncate">Probar Vonu</span>
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link href="/chat" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:-translate-y-0.5 hover:bg-emerald-300 active:translate-y-0">
+                Probar Vonu
                 <ArrowIcon />
               </Link>
-
-              <a
-                href="#planes"
-                className="inline-flex min-w-0 flex-1 items-center justify-center rounded-full border border-zinc-200 bg-white px-4 py-3 text-[14px] font-semibold text-zinc-800 shadow-sm transition hover:-translate-y-[1px] hover:shadow-md sm:flex-none sm:px-7 sm:py-3.5 sm:text-[15px]"
-              >
+              <a href="#planes" className="inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.045] px-6 text-[14px] font-semibold text-slate-200 transition hover:-translate-y-0.5 hover:bg-white/[0.07] active:translate-y-0">
                 Ver planes
               </a>
-            </div>
-          </div>
-
-          <div className="mx-auto mt-10 max-w-5xl sm:mt-14">
-            <div className="rounded-[38px] border border-zinc-200 bg-white p-3 shadow-[0_2px_5px_rgba(0,0,0,0.04),0_28px_80px_rgba(0,0,0,0.12)]">
-              <div className="rounded-[30px] bg-[#f5f5f7] p-5 sm:p-7">
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="rounded-[28px] bg-white p-6 shadow-sm">
-                    <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
-                      Empieza
-                    </p>
-                    <p className="mt-4 text-[38px] font-semibold leading-none tracking-[-0.07em] text-zinc-950">
-                      Gratis
-                    </p>
-                    <p className="mt-4 text-[15px] leading-7 text-zinc-600">
-                      Prueba Vonu con una duda real antes de elegir plan.
-                    </p>
-                  </div>
-
-                  <div className="rounded-[28px] bg-zinc-950 p-6 text-white shadow-[0_20px_50px_rgba(0,0,0,0.16)]">
-                    <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-blue-300">
-                      Más usado
-                    </p>
-                    <p className="mt-4 text-[38px] font-semibold leading-none tracking-[-0.07em]">
-                      Plus
-                    </p>
-                    <p className="mt-4 text-[15px] leading-7 text-zinc-300">
-                      Más mensajes, voz y margen para revisar lo importante.
-                    </p>
-                  </div>
-
-                  <div className="rounded-[28px] bg-white p-6 shadow-sm">
-                    <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
-                      Extra
-                    </p>
-                    <p className="mt-4 text-[38px] font-semibold leading-none tracking-[-0.07em] text-zinc-950">
-                      Recargas
-                    </p>
-                    <p className="mt-4 text-[15px] leading-7 text-zinc-600">
-                      Añade margen puntual sin cambiar de plan mensual.
-                    </p>
-                  </div>
-                </div>
-
-                <p className="mt-5 text-center text-[12px] leading-6 text-zinc-500">
-                  Los límites concretos de mensajes, voz y archivos se muestran durante
-                  el proceso de contratación o dentro de tu zona de usuario.
-                </p>
-              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="planes" className="bg-[#f5f5f7]">
-        <div className="mx-auto max-w-[1500px] px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
-          <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+      <section id="planes" className="border-b border-white/[0.06] bg-[#0a0d15]">
+        <div className="mx-auto max-w-[1320px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
             <div>
-              <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-600">
-                Planes
-              </p>
-
-              <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
-                Empieza gratis.
-                <span className="block text-zinc-500">
-                  Amplía cuando lo <GradientText tone="blueGreen">necesites.</GradientText>
-                </span>
+              <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Planes</p>
+              <h2 className="mt-4 max-w-[700px] text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">
+                Tres niveles.
+                <span className="block text-slate-500">La misma idea: claridad.</span>
               </h2>
             </div>
-
-            <p className="max-w-md text-[17px] leading-8 text-zinc-600">
-              Elige el nivel de uso según cuántas decisiones, documentos,
-              mensajes o conversaciones quieras revisar durante el mes.
-            </p>
+            <p className="max-w-xl text-[16px] leading-8 text-slate-400 lg:justify-self-end">Empieza por lo que necesitas hoy y cambia de nivel cuando el uso real te lo pida.</p>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-3">
+          <div className="mt-10 grid gap-4 lg:grid-cols-3">
             {plans.map((plan) => (
-              <article
-                key={plan.name}
-                className={[
-                  "relative flex h-full flex-col overflow-hidden rounded-[38px] border p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)] transition hover:-translate-y-1 hover:shadow-[0_2px_5px_rgba(0,0,0,0.045),0_24px_58px_rgba(0,0,0,0.075)]",
-                  plan.highlighted
-                    ? "border-zinc-900 bg-zinc-950 text-white"
-                    : "border-zinc-200 bg-white text-zinc-950",
-                ].join(" ")}
-              >
-                {plan.highlighted && (
-                  <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-blue-500/30 blur-3xl" />
-                )}
-
-                <div className="relative flex items-start justify-between gap-4">
-                  <div>
-                    <h3
-                      className={[
-                        "text-[42px] font-semibold leading-none tracking-[-0.07em]",
-                        plan.highlighted ? "text-white" : "text-zinc-950",
-                      ].join(" ")}
-                    >
-                      <PlanName name={plan.name} />
-                    </h3>
-
-                    <p
-                      className={[
-                        "mt-4 text-[15.5px] leading-7",
-                        plan.highlighted ? "text-zinc-300" : "text-zinc-600",
-                      ].join(" ")}
-                    >
-                      {plan.description}
-                    </p>
-                  </div>
-
-                  {plan.badge && (
-                    <span className="rounded-full bg-white px-3 py-1 text-[12px] font-semibold text-zinc-950 shadow-sm">
-                      {plan.badge}
-                    </span>
-                  )}
+              <article key={plan.name} className={["relative flex min-h-[520px] flex-col rounded-[26px] border p-6 transition", plan.highlighted ? "border-emerald-400/30 bg-emerald-400/[0.055] shadow-[0_26px_80px_rgba(16,185,129,.08)]" : "border-white/[0.07] bg-white/[0.03]"].join(" ")}>
+                {plan.badge && <span className="absolute right-5 top-5 rounded-full border border-emerald-300/20 bg-emerald-400/[0.10] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-200">{plan.badge}</span>}
+                <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">{plan.name}</p>
+                <div className="mt-8 flex items-end gap-2">
+                  <span className="text-[54px] font-semibold leading-none tracking-[-0.07em] text-white">{plan.price}</span>
+                  <span className="pb-1 text-[13px] text-slate-500">{plan.period}</span>
                 </div>
-
-                <div className="relative mt-8 flex items-end gap-1">
-                  <span
-                    className={[
-                      "text-[58px] font-semibold leading-none tracking-[-0.078em]",
-                      plan.highlighted ? "text-white" : "text-zinc-950",
-                    ].join(" ")}
-                  >
-                    {plan.price}
-                  </span>
-                  <span
-                    className={[
-                      "pb-2 text-[14px]",
-                      plan.highlighted ? "text-zinc-400" : "text-zinc-500",
-                    ].join(" ")}
-                  >
-                    {plan.period}
-                  </span>
-                </div>
-
-                <div className="relative mt-8 flex-1 space-y-4">
+                <p className="mt-4 min-h-[56px] text-[14px] leading-7 text-slate-400">{plan.description}</p>
+                <div className="mt-7 space-y-3">
                   {plan.features.map((feature) => (
-                    <div
-                      key={feature}
-                      className={[
-                        "flex gap-4 text-[15.5px] leading-7",
-                        plan.highlighted ? "text-zinc-200" : "text-zinc-700",
-                      ].join(" ")}
-                    >
-                      <span
-                        className={[
-                          "shrink-0",
-                          plan.highlighted ? "text-white" : "text-zinc-950",
-                        ].join(" ")}
-                      >
-                        <CheckIcon />
-                      </span>
+                    <div key={feature} className="flex items-center gap-3 text-[13px] leading-6 text-slate-300">
+                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-400/[0.10] text-emerald-300"><CheckIcon /></span>
                       <span>{feature}</span>
                     </div>
                   ))}
                 </div>
-
-                <Link
-                  href="/chat"
-                  className={[
-                    "relative mt-9 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-[15px] font-semibold transition hover:scale-[1.01] active:scale-[0.99]",
-                    plan.highlighted
-                      ? "bg-white text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)]"
-                      : "bg-zinc-950 text-white shadow-sm",
-                  ].join(" ")}
-                >
+                <Link href="/chat" className={["mt-auto inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl px-5 text-[14px] font-bold transition", plan.highlighted ? "bg-emerald-400 text-[#07110d] hover:bg-emerald-300" : "border border-white/[0.10] bg-white/[0.045] text-white hover:bg-white/[0.07]"].join(" ")}>
                   {plan.cta}
                   <ArrowIcon />
                 </Link>
@@ -515,84 +293,34 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <section className="bg-[#f5f5f7]">
-        <div className="mx-auto max-w-[1500px] px-4 py-16 sm:px-6 lg:px-8">
-          <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+      <section className="border-b border-white/[0.06] bg-[#080b12]">
+        <div className="mx-auto max-w-[1320px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
             <div>
-              <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-600">
-                Recargas
-              </p>
-
-              <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
-                Cuando necesitas
-                <span className="block text-zinc-500">
-                  seguir usando <GradientText tone="purplePink">Vonu.</GradientText>
-                </span>
+              <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Recargas</p>
+              <h2 className="mt-4 max-w-[700px] text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">
+                ¿Necesitas un extra?
+                <span className="block text-slate-500">Sin cambiar de plan.</span>
               </h2>
             </div>
-
-            <p className="max-w-md text-[17px] leading-8 text-zinc-600">
-              Si agotas tu plan mensual, podrás añadir mensajes o minutos extra
-              sin tener que esperar al siguiente ciclo.
-            </p>
+            <p className="max-w-xl text-[16px] leading-8 text-slate-400 lg:justify-self-end">Añade margen puntual si ese mes tienes más documentos, mensajes o decisiones de lo habitual.</p>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-3">
+          <div className="mt-10 grid gap-4 lg:grid-cols-3">
             {topups.map((topup) => (
-              <article
-                key={topup.name}
-                className={[
-                  "flex h-full flex-col rounded-[38px] border p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)] transition hover:-translate-y-1 hover:shadow-[0_2px_5px_rgba(0,0,0,0.045),0_24px_58px_rgba(0,0,0,0.075)]",
-                  topup.highlighted
-                    ? "border-blue-200 bg-white"
-                    : "border-zinc-200 bg-white",
-                ].join(" ")}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="text-[34px] font-semibold leading-[0.98] tracking-[-0.06em] text-zinc-950">
-                      <TopupName name={topup.name} />
-                    </h3>
-
-                    <p className="mt-4 text-[15.5px] leading-7 text-zinc-600">
-                      {topup.description}
-                    </p>
-                  </div>
-
-                  {topup.highlighted && (
-                    <span className="rounded-full bg-[#1a73e8] px-3 py-1 text-[12px] font-semibold text-white shadow-sm">
-                      Equilibrada
-                    </span>
-                  )}
-                </div>
-
-                <div className="mt-8 text-[52px] font-semibold leading-none tracking-[-0.075em] text-zinc-950">
-                  {topup.price}
-                </div>
-
-                <div className="mt-8 flex-1 space-y-4">
+              <article key={topup.name} className={["flex min-h-[390px] flex-col rounded-[24px] border p-6", topup.highlighted ? "border-sky-400/25 bg-sky-400/[0.045]" : "border-white/[0.07] bg-white/[0.03]"].join(" ")}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-emerald-300">{topup.name}</p>
+                <p className="mt-7 text-[44px] font-semibold leading-none tracking-[-0.06em] text-white">{topup.price}</p>
+                <p className="mt-4 text-[14px] leading-7 text-slate-400">{topup.description}</p>
+                <div className="mt-6 space-y-3">
                   {topup.features.map((feature) => (
-                    <div
-                      key={feature}
-                      className="flex gap-4 text-[15.5px] leading-7 text-zinc-700"
-                    >
-                      <span className="shrink-0 text-zinc-950">
-                        <CheckIcon />
-                      </span>
+                    <div key={feature} className="flex items-start gap-3 text-[13px] leading-6 text-slate-300">
+                      <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-400/[0.10] text-emerald-300"><CheckIcon /></span>
                       <span>{feature}</span>
                     </div>
                   ))}
                 </div>
-
-                <Link
-                  href="/chat"
-                  className={[
-                    "mt-9 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-[15px] font-semibold transition hover:scale-[1.01] active:scale-[0.99]",
-                    topup.highlighted
-                      ? "bg-[#1a73e8] text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)]"
-                      : "bg-zinc-950 text-white shadow-sm",
-                  ].join(" ")}
-                >
+                <Link href="/chat" className="mt-auto inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.045] px-5 text-[13px] font-semibold text-white transition hover:bg-white/[0.07]">
                   {topup.cta}
                   <ArrowIcon />
                 </Link>
@@ -602,30 +330,20 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <section className="bg-zinc-950 text-white">
-        <div className="mx-auto grid max-w-[1500px] gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
+      <section className="border-b border-white/[0.06] bg-[#0a0d15]">
+        <div className="mx-auto grid max-w-[1320px] gap-10 px-4 py-20 sm:px-6 sm:py-24 lg:grid-cols-[0.85fr_1.15fr] lg:px-8">
           <div>
-            <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-300">
-              Uso responsable
-            </p>
-
-            <h2 className="mt-3 text-[44px] font-semibold leading-[0.96] tracking-[-0.065em] sm:text-[72px]">
-              Claridad cuando más
-              <span className="block text-zinc-400">
-                cuesta <GradientText tone="blueCyan">decidir.</GradientText>
-              </span>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Uso responsable</p>
+            <h2 className="mt-4 max-w-[600px] text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">
+              Paga por más margen,
+              <span className="block text-slate-500">no por falsas certezas.</span>
             </h2>
+            <p className="mt-6 max-w-[560px] text-[16px] leading-8 text-slate-400">Los planes amplían capacidad y formatos. No cambian los límites responsables de Vonu ni sustituyen a profesionales.</p>
           </div>
-
-          <div className="grid gap-4">
+          <div className="grid gap-3">
             {responsibleItems.map((item) => (
-              <div
-                key={item}
-                className="flex gap-4 rounded-[30px] border border-white/10 bg-white/[0.06] p-6 text-[15.5px] leading-7 text-zinc-200 shadow-[0_18px_44px_rgba(0,0,0,0.18)]"
-              >
-                <span className="shrink-0 text-white">
-                  <CheckIcon />
-                </span>
+              <div key={item} className="flex gap-4 rounded-[22px] border border-white/[0.07] bg-white/[0.03] p-5 text-[14px] leading-7 text-slate-300">
+                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-400/[0.10] text-emerald-300"><CheckIcon /></span>
                 <span>{item}</span>
               </div>
             ))}
@@ -633,40 +351,22 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <section className="bg-[#f5f5f7]">
-        <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="mb-10 text-center">
-            <p className="text-[14px] font-semibold uppercase tracking-[0.18em] text-blue-600">
-              Dudas frecuentes
-            </p>
-
-            <h2 className="mx-auto mt-3 max-w-3xl text-[54px] font-semibold leading-[0.9] tracking-[-0.075em] text-zinc-950 sm:text-[82px]">
-              Precios y
-              <span className="block text-zinc-500">suscripción</span>
-            </h2>
+      <section className="border-b border-white/[0.06] bg-[#080b12]">
+        <div className="mx-auto max-w-[900px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+          <div className="text-center">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Preguntas frecuentes</p>
+            <h2 className="mx-auto mt-4 max-w-[760px] text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">Antes de elegir <span className="text-slate-500">tu plan.</span></h2>
           </div>
-
-          <div className="space-y-4">
+          <div className="mt-10 space-y-3">
             {faqs.map((faq) => (
-              <details
-                key={faq.q}
-                className="group rounded-[30px] border border-zinc-200 bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_12px_30px_rgba(0,0,0,0.045)] transition hover:-translate-y-[2px] hover:shadow-[0_2px_5px_rgba(0,0,0,0.045),0_18px_40px_rgba(0,0,0,0.06)]"
-              >
+              <details key={faq.q} className="group rounded-[22px] border border-white/[0.07] bg-white/[0.03] px-5 py-4 transition hover:border-white/[0.12] hover:bg-white/[0.045]">
                 <summary className="cursor-pointer list-none">
                   <div className="flex items-center justify-between gap-5">
-                    <span className="text-[20px] font-semibold leading-tight tracking-[-0.04em] text-zinc-950 sm:text-[24px]">
-                      {faq.q}
-                    </span>
-
-                    <span className="text-[38px] font-light leading-none text-zinc-500 transition group-open:rotate-45 group-open:text-zinc-950 sm:text-[44px]">
-                      +
-                    </span>
+                    <span className="text-[17px] font-semibold leading-tight tracking-[-0.025em] text-slate-100 sm:text-[19px]">{faq.q}</span>
+                    <span className="text-[30px] font-light leading-none text-slate-500 transition group-open:rotate-45 group-open:text-emerald-300">+</span>
                   </div>
                 </summary>
-
-                <p className="mt-4 text-[15.5px] leading-7 text-zinc-600">
-                  {faq.a}
-                </p>
+                <p className="mt-4 max-w-[760px] text-[14px] leading-7 text-slate-400">{faq.a}</p>
               </details>
             ))}
           </div>
@@ -675,25 +375,17 @@ export default function PricingPage() {
 
       <ResourceSignup page="precios" />
 
-      <section className="bg-zinc-950 text-white">
-        <div className="mx-auto max-w-[1500px] px-4 py-16 text-center sm:px-6 lg:px-8">
-          <h2 className="mx-auto max-w-5xl text-[48px] font-semibold leading-[0.98] tracking-[-0.064em] sm:text-[82px]">
-            Empieza gratis. Desbloquea más cuando lo necesites.
-          </h2>
-
-          <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
-            Prueba Vonu con una duda real. Si te ayuda a ganar claridad, puedes
-            ampliar mensajes, voz y análisis para seguir revisando lo importante
-            con más calma.
-          </p>
-
-          <Link
-            href="/chat"
-            className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
-          >
-            Probar Vonu
-            <ArrowIcon />
-          </Link>
+      <section className="relative overflow-hidden bg-[#0a0d15]">
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500/[0.08] blur-[120px]" />
+        <div className="relative mx-auto max-w-[1320px] px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+          <div className="mx-auto max-w-[900px] text-center">
+            <h2 className="text-[44px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[70px]">Empieza sin compromiso.<span className="block text-slate-500">Decide después con uso real.</span></h2>
+            <p className="mx-auto mt-6 max-w-[640px] text-[16px] leading-8 text-slate-400">Prueba Vonu con una duda concreta y comprueba si te aporta claridad antes de elegir un plan.</p>
+            <Link href="/chat" className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:-translate-y-0.5 hover:bg-emerald-300 active:translate-y-0">
+              Probar Vonu
+              <ArrowIcon />
+            </Link>
+          </div>
         </div>
       </section>
 
