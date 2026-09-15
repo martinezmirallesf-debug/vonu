@@ -20,8 +20,14 @@ const survivingCases = [
   { label: "Analizar captura", href: "/analizar-captura-pantalla", hint: "WhatsApp, SMS, perfiles y pantallas" },
   { label: "Analizar SMS o WhatsApp", href: "/analizar-sms-estafa", hint: "Urgencia, suplantación y enlaces" },
   { label: "Analizar email sospechoso", href: "/email-sospechoso-estafa", hint: "Remitente, presión y phishing" },
+  { label: "Llamada del banco y código SMS", href: "/llamada-banco-codigo-sms", hint: "Vishing, códigos y suplantación bancaria" },
   { label: "Detectar perfil falso", href: "/detectar-perfil-falso", hint: "Perfiles, vendedores y señales de riesgo" },
   { label: "Comprobar inversión", href: "/comprobar-inversion-estafa", hint: "Promesas, presión y señales de fraude" },
+  { label: "Estafas con criptomonedas", href: "/estafas-criptomonedas", hint: "Trading, plataformas y falsas oportunidades" },
+  { label: "Revisar contrato", href: "/revisar-contrato", hint: "Cláusulas, obligaciones y penalizaciones" },
+  { label: "Revisar contrato de alquiler", href: "/revisar-contrato-alquiler", hint: "Fianza, gastos y condiciones delicadas" },
+  { label: "Comprobar factura", href: "/comprobar-factura", hint: "Cargos, conceptos e importes dudosos" },
+  { label: "Detectar manipulación", href: "/detectar-manipulacion", hint: "Presión, culpa, urgencia y confusión" },
 ];
 
 const secondaryLinks = [
