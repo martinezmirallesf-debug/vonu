@@ -210,3 +210,108 @@
     height: 42px !important;
   }
 }
+
+/* Final authority for the mobile navigation on Check. This intentionally changes
+   only the menu overlay; the settled home/scanner layout above remains untouched. */
+@media (max-width: 767px) {
+  .vonu-check-page header:has(> div:nth-child(2)) > div:first-child {
+    position: relative !important;
+    inset: auto !important;
+    height: 68px !important;
+    min-height: 68px !important;
+    background: #0b0e17 !important;
+    border-bottom: 0 !important;
+  }
+
+  .vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) {
+    position: fixed !important;
+    inset: 68px 0 0 0 !important;
+    width: 100vw !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: #0b0e17 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) > div {
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    overflow-y: auto !important;
+    padding: 20px 24px 24px !important;
+  }
+
+  .vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) nav > a,
+  .vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) nav > div > button {
+    display: flex !important;
+    min-height: 60px !important;
+    align-items: center !important;
+    padding: 12px 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: rgb(248 250 252) !important;
+    font-size: 26px !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    letter-spacing: -.045em !important;
+  }
+
+  .vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) nav > a:hover,
+  .vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) nav > div > button:hover {
+    color: rgb(110 231 183) !important;
+  }
+
+  .vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) nav > div > div a {
+    display: flex !important;
+    min-height: 0 !important;
+    align-items: center !important;
+    padding: 10px 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: rgb(148 163 184) !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+  }
+
+  .vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) > div > div:last-child a {
+    min-height: 0 !important;
+    border: 0 !important;
+  }
+
+  .vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) > div > div:last-child > div a {
+    display: block !important;
+    padding: 0 !important;
+    background: transparent !important;
+    color: rgb(100 116 139) !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+  }
+
+  .vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) > div > div:last-child > a:last-child {
+    display: inline-flex !important;
+    min-height: 48px !important;
+    width: 100% !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 20px !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: rgb(52 211 153) !important;
+    color: #07110d !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0 !important;
+  }
+}
