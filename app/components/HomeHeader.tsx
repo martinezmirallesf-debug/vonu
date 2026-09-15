@@ -89,38 +89,58 @@ export default function HomeHeader() {
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className="relative z-[70] grid h-12 w-12 touch-manipulation place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-xl md:hidden"
+          className="group relative z-[70] grid h-12 w-12 touch-manipulation place-items-center border-0 bg-transparent p-0 md:hidden"
           aria-label={open ? "Cerrar menú" : "Abrir menú"}
           aria-expanded={open}
         >
-          {open ? "×" : "☰"}
+          <span className="relative block h-6 w-8" aria-hidden="true">
+            <span
+              className={[
+                "absolute left-0 top-[7px] h-[2px] w-8 rounded-full bg-emerald-300 transition-transform duration-300 ease-out",
+                open ? "translate-y-[5px] rotate-45" : "translate-y-0 rotate-0",
+              ].join(" ")}
+            />
+            <span
+              className={[
+                "absolute left-0 top-[17px] h-[2px] w-8 rounded-full bg-emerald-300 transition-transform duration-300 ease-out",
+                open ? "-translate-y-[5px] -rotate-45" : "translate-y-0 rotate-0",
+              ].join(" ")}
+            />
+          </span>
         </button>
       </div>
 
       <div
         className={[
-          "fixed inset-x-0 top-[68px] z-[60] bg-[#0b0e17] transition-all duration-200 md:hidden",
-          open ? "pointer-events-auto h-[calc(100dvh-68px)] opacity-100" : "pointer-events-none h-0 opacity-0",
+          "fixed inset-x-0 bottom-0 top-[68px] z-[60] overflow-hidden bg-[#0b0e17] transition-[opacity,transform] duration-300 ease-out md:hidden",
+          open
+            ? "pointer-events-auto translate-y-0 opacity-100"
+            : "pointer-events-none -translate-y-5 opacity-0",
         ].join(" ")}
       >
-        <div className="flex h-full flex-col overflow-y-auto px-5 pb-8 pt-4">
-          <nav className="grid gap-1">
+        <div className="flex h-full flex-col overflow-y-auto px-6 pb-6 pt-5">
+          <nav className="grid gap-0">
             {mainLinks.map((item) =>
               item.hasMenu ? (
                 <div key={item.href}>
                   <button
                     type="button"
                     onClick={() => setCasesOpen((value) => !value)}
-                    className="flex w-full items-center justify-between rounded-2xl py-3 text-left text-[27px] font-semibold leading-none tracking-[-0.05em] text-white"
+                    className="flex min-h-[60px] w-full items-center justify-between py-3 text-left text-[26px] font-semibold leading-none tracking-[-0.045em] text-white"
                     aria-expanded={casesOpen}
                   >
                     <span>{item.label}</span>
-                    <span className="text-[18px] font-normal text-slate-500">{casesOpen ? "−" : "+"}</span>
+                    <span className="text-[20px] font-light text-emerald-300">{casesOpen ? "−" : "+"}</span>
                   </button>
                   {casesOpen && (
-                    <div className="mb-3 grid gap-1 border-l border-emerald-400/20 pl-3">
+                    <div className="mb-3 grid gap-0 border-l border-emerald-400/25 pl-3">
                       {survivingCases.map((caseItem) => (
-                        <Link key={caseItem.href} href={caseItem.href} onClick={closeMenu} className="rounded-xl px-2 py-2.5 text-[15px] font-medium text-slate-300 hover:bg-white/[0.04]">
+                        <Link
+                          key={caseItem.href}
+                          href={caseItem.href}
+                          onClick={closeMenu}
+                          className="py-2.5 text-[14px] font-medium text-slate-400 transition hover:text-emerald-300"
+                        >
                           {caseItem.label}
                         </Link>
                       ))}
@@ -128,23 +148,38 @@ export default function HomeHeader() {
                   )}
                 </div>
               ) : (
-                <Link key={item.href} href={item.href} onClick={closeMenu} className="rounded-2xl py-3 text-[27px] font-semibold leading-none tracking-[-0.05em] text-white">
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMenu}
+                  className="flex min-h-[60px] items-center py-3 text-[26px] font-semibold leading-none tracking-[-0.045em] text-white transition hover:text-emerald-300"
+                >
                   {item.label}
                 </Link>
               ),
             )}
           </nav>
 
-          <div className="mt-auto pt-8">
-            <div className="mb-5 grid gap-3 border-t border-white/[0.08] pt-5">
+          <div className="mt-auto pt-7">
+            <div className="mb-6 grid gap-4 border-t border-white/[0.10] pt-6">
               {secondaryLinks.map((item) => (
-                <Link key={item.href} href={item.href} onClick={closeMenu} className="text-[14px] font-medium text-slate-500 hover:text-slate-300">
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMenu}
+                  className="text-[14px] font-medium text-slate-500 transition hover:text-emerald-300"
+                >
                   {item.label}
                 </Link>
               ))}
             </div>
-            <Link href="/check" onClick={closeMenu} className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-400 px-5 py-3.5 text-[15px] font-bold text-[#07110d]">
-              Analizar ahora
+            <Link
+              href="/check"
+              onClick={closeMenu}
+              className="inline-flex min-h-[48px] w-full items-center justify-center gap-3 rounded-full bg-emerald-400 px-5 text-[15px] font-bold text-[#07110d] shadow-[0_10px_30px_rgba(52,211,153,.16)] transition hover:bg-emerald-300"
+            >
+              <span>Probar Vonu</span>
+              <span aria-hidden="true">→</span>
             </Link>
           </div>
         </div>
