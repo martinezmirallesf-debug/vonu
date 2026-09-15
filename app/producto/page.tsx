@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
-import ResourceSignup from "../components/ResourceSignup";
 
 const siteUrl = "https://vonuai.com";
 
@@ -11,14 +10,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Producto — VonuAI",
   description:
-    "VonuAI es un asistente para tomar decisiones seguras antes de firmar, pagar, contestar o decidir. Revisa mensajes, webs, contratos, facturas, documentos y situaciones delicadas.",
+    "VonuAI analiza URLs, capturas y mensajes sospechosos para ayudarte a detectar señales de fraude, phishing y suplantación antes de actuar.",
   alternates: {
     canonical: "/producto",
   },
   openGraph: {
     title: "Producto — VonuAI",
     description:
-      "Descubre cómo funciona VonuAI: análisis de mensajes, webs, contratos, facturas, documentos, situaciones sensibles y decisiones importantes.",
+      "Comprueba señales de riesgo en URLs, capturas y mensajes antes de pagar, responder o compartir datos.",
     url: `${siteUrl}/producto`,
     siteName: "VonuAI",
     locale: "es_ES",
@@ -27,7 +26,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Producto — VonuAI",
-    description: "VonuAI te ayuda a revisar lo importante antes de actuar.",
+    description:
+      "Detecta señales de fraude, phishing y suplantación antes de actuar.",
   },
   robots: {
     index: true,
@@ -35,108 +35,101 @@ export const metadata: Metadata = {
   },
 };
 
-const productPillars = [
+const pillars = [
   {
-    title: "Revisa antes de actuar",
-    text: "Pega un mensaje, enlace, cláusula, factura o situación y Vonu te ayuda a detectar señales importantes antes de responder, pagar o firmar.",
+    number: "01",
+    title: "Detecta señales",
+    text: "Vonu revisa contexto, urgencia, identidad aparente, enlaces, dominios y patrones habituales de fraude sin convertir una sola señal en una sentencia.",
   },
   {
-    title: "Entiende mejor el riesgo",
-    text: "Vonu no solo dice si algo parece raro. Te explica qué señales ve, por qué importan y qué conviene comprobar antes de decidir.",
+    number: "02",
+    title: "Entiende el riesgo",
+    text: "No te devuelve solo un semáforo. Te explica qué ha encontrado, qué pesa de verdad y qué parte sigue siendo incierta.",
   },
   {
-    title: "Decide con más calma",
-    text: "Cuando hay presión, urgencia o dudas, Vonu te ayuda a ordenar la información y preparar el siguiente paso con más claridad.",
+    number: "03",
+    title: "Actúa con criterio",
+    text: "Recibes próximos pasos concretos: qué no hacer todavía, qué comprobar por otra vía y cómo reducir el riesgo antes de continuar.",
   },
 ];
 
 const capabilities = [
   {
-    title: "Mensajes sospechosos",
-    text: "SMS, WhatsApp, emails, enlaces raros, supuestos bancos, paquetería, Hacienda, Bizum o compras entre particulares.",
-    href: "/analizar-sms-estafa",
-  },
-  {
-    title: "Webs y tiendas online",
-    text: "Revisa si una web parece fiable antes de pagar, meter tarjeta, dejar datos o confiar en una oferta demasiado buena.",
+    eyebrow: "URL",
+    title: "Webs y enlaces",
+    text: "Dominios, redirecciones, HTTPS, formularios y señales visibles que merecen revisión antes de introducir datos o pagar.",
     href: "/comprobar-web-fiable",
+    accent: "from-sky-400 to-cyan-300",
   },
   {
-    title: "Contratos y documentos",
-    text: "Entiende cláusulas, obligaciones, permanencias, penalizaciones, renovaciones y puntos delicados antes de firmar.",
-    href: "/revisar-contrato",
+    eyebrow: "Captura",
+    title: "Pantallas sospechosas",
+    text: "SMS, WhatsApp, emails, perfiles, vendedores o pantallas de pago cuando lo importante está en una imagen.",
+    href: "/analizar-captura-pantalla",
+    accent: "from-violet-400 to-fuchsia-300",
   },
   {
-    title: "Facturas y cobros",
-    text: "Detecta conceptos raros, cargos duplicados, servicios no contratados o importes que no cuadran.",
-    href: "/comprobar-factura",
+    eyebrow: "Mensaje",
+    title: "Texto y conversaciones",
+    text: "Presión, urgencia, suplantación, peticiones extrañas y patrones típicos de ingeniería social antes de responder.",
+    href: "/analizar-sms-estafa",
+    accent: "from-emerald-400 to-cyan-300",
   },
   {
-    title: "Presión y manipulación",
-    text: "Analiza mensajes o situaciones donde sientes culpa, urgencia, ansiedad, presión o confusión antes de contestar.",
-    href: "/detectar-manipulacion",
+    eyebrow: "Identidad",
+    title: "Perfiles falsos",
+    text: "Señales que pueden indicar una identidad inventada, una cuenta clonada o una persona que no es quien dice ser.",
+    href: "/detectar-perfil-falso",
+    accent: "from-amber-300 to-orange-400",
   },
   {
-    title: "Estudio y explicación",
-    text: "Vonu también puede ayudarte a entender ejercicios, resumir apuntes, estudiar mejor y preparar explicaciones claras.",
-    href: "/chat",
+    eyebrow: "Dinero",
+    title: "Inversiones y cobros",
+    text: "Promesas de rentabilidad, presión para transferir, facturas dudosas y situaciones donde equivocarse puede salir caro.",
+    href: "/comprobar-inversion-estafa",
+    accent: "from-lime-300 to-emerald-400",
+  },
+  {
+    eyebrow: "Cripto",
+    title: "Estafas cripto",
+    text: "Wallets, oportunidades irreales, soportes falsos, recuperadores de fondos y mensajes diseñados para provocar una acción rápida.",
+    href: "/estafas-criptomonedas",
+    accent: "from-orange-400 to-rose-400",
   },
 ];
 
 const workflow = [
   {
     step: "01",
-    title: "Cuéntale qué pasa",
-    text: "Escribe la situación, pega el mensaje o comparte el enlace. No hace falta que lo expliques perfecto: Vonu te ayuda a ordenar el caso.",
+    title: "Pega o sube",
+    text: "Introduce la URL, pega el mensaje o sube una captura. No necesitas empezar una conversación ni explicar el caso perfecto.",
   },
   {
     step: "02",
-    title: "Vonu revisa señales",
-    text: "Analiza contexto, tono, urgencia, datos, posibles contradicciones, señales de riesgo y qué puntos conviene comprobar.",
+    title: "Vonu contrasta",
+    text: "Combina señales técnicas y contextuales para separar hechos, indicios y elementos que todavía no pueden verificarse.",
   },
   {
     step: "03",
-    title: "Recibes próximos pasos",
-    text: "No solo una respuesta. Vonu te propone qué mirar, qué evitar, qué preguntar y cómo avanzar con más seguridad.",
+    title: "Decide después",
+    text: "Obtienes una lectura clara del riesgo y una secuencia de comprobaciones útiles antes de pagar, responder o compartir información.",
   },
 ];
 
 const principles = [
-  "No sustituye a profesionales cuando el caso requiere ayuda legal, médica, psicológica o financiera cualificada.",
-  "No necesitas compartir contraseñas, códigos, datos bancarios completos ni información innecesariamente sensible.",
-  "Está pensado para ayudarte a frenar, entender y decidir mejor antes de cometer un error importante.",
-  "Combina análisis práctico, tono cercano y orientación responsable para situaciones reales.",
+  "No certificamos que una web, persona o mensaje sea legítimo o fraudulento.",
+  "No necesitas compartir contraseñas, códigos SMS ni datos bancarios completos.",
+  "Diferenciamos señales observadas de conclusiones que no pueden demostrarse.",
+  "Cuando el caso lo exige, recomendamos verificar por una segunda vía o acudir a un profesional.",
 ];
 
-type GradientTone =
-  | "blueGreen"
-  | "blueCyan"
-  | "green"
-  | "orangeRed"
-  | "purplePink"
-  | "amberOrange";
-
-const gradientMap: Record<GradientTone, string> = {
-  blueGreen: "linear-gradient(90deg, #0A84FF 0%, #22C55E 100%)",
-  blueCyan: "linear-gradient(90deg, #1A73E8 0%, #06B6D4 100%)",
-  green: "linear-gradient(90deg, #0A8F3C 0%, #34D399 100%)",
-  orangeRed: "linear-gradient(90deg, #F97316 0%, #EF4444 100%)",
-  purplePink: "linear-gradient(90deg, #7C3AED 0%, #EC4899 100%)",
-  amberOrange: "linear-gradient(90deg, #F59E0B 0%, #F97316 100%)",
-};
-
-function GradientText({
-  children,
-  tone,
-}: {
-  children: ReactNode;
-  tone: GradientTone;
-}) {
+function GradientText({ children }: { children: ReactNode }) {
   return (
     <span
-      className="inline align-baseline"
+      className="inline"
       style={{
-        backgroundImage: gradientMap[tone],
+        backgroundImage:
+          "linear-gradient(92deg, #60A5FA 0%, #38BDF8 35%, #34D399 100%)",
         WebkitBackgroundClip: "text",
         backgroundClip: "text",
         color: "transparent",
@@ -151,11 +144,31 @@ function GradientText({
 function ArrowIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
-      <path d="M5 12h13" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M5 12h13" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
       <path
         d="m13 6 6 6-6 6"
         stroke="currentColor"
-        strokeWidth="2.4"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ShieldIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
+      <path
+        d="M12 3 19 6v5.1c0 4.6-2.9 8.2-7 9.9-4.1-1.7-7-5.3-7-9.9V6l7-3Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="m8.8 12 2 2 4.5-4.6"
+        stroke="currentColor"
+        strokeWidth="1.8"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -165,11 +178,11 @@ function ArrowIcon() {
 
 function CheckIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
       <path
         d="m5 12.5 4.2 4.2L19 7"
         stroke="currentColor"
-        strokeWidth="2.9"
+        strokeWidth="2.4"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -177,93 +190,36 @@ function CheckIcon() {
   );
 }
 
-function PillarTitle({ title }: { title: string }) {
-  if (title === "Revisa antes de actuar") {
-    return (
-      <>
-        Revisa antes
-        <span className="block">
-          de <GradientText tone="blueCyan">actuar</GradientText>
-        </span>
-      </>
-    );
-  }
-
-  if (title === "Entiende mejor el riesgo") {
-    return (
-      <>
-        Entiende mejor
-        <span className="block">
-          el <GradientText tone="orangeRed">riesgo</GradientText>
-        </span>
-      </>
-    );
-  }
-
-  if (title === "Decide con más calma") {
-    return (
-      <>
-        Decide con
-        <span className="block">
-          más <GradientText tone="green">calma</GradientText>
-        </span>
-      </>
-    );
-  }
-
-  return <>{title}</>;
+function UrlIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
+      <path
+        d="M9.7 14.3 14.3 9.7M8.1 16.7l-1.2 1.2a3.4 3.4 0 0 1-4.8-4.8l3.6-3.6a3.4 3.4 0 0 1 4.8 0M15.9 7.3l1.2-1.2a3.4 3.4 0 0 1 4.8 4.8l-3.6 3.6a3.4 3.4 0 0 1-4.8 0"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
 }
 
-function CapabilityTitle({ title }: { title: string }) {
-  if (title === "Mensajes sospechosos") {
-    return (
-      <>
-        Mensajes <GradientText tone="orangeRed">sospechosos</GradientText>
-      </>
-    );
-  }
+function CaptureIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
+      <rect x="3.5" y="5" width="17" height="14" rx="3" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="9" cy="10" r="1.5" stroke="currentColor" strokeWidth="1.6" />
+      <path d="m5.5 17 4.2-4 3.1 2.7 2.3-2 3.4 3.3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
-  if (title === "Webs y tiendas online") {
-    return (
-      <>
-        Webs y tiendas <GradientText tone="blueCyan">online</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Contratos y documentos") {
-    return (
-      <>
-        Contratos y <GradientText tone="purplePink">documentos</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Facturas y cobros") {
-    return (
-      <>
-        Facturas y <GradientText tone="amberOrange">cobros</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Presión y manipulación") {
-    return (
-      <>
-        Presión y <GradientText tone="orangeRed">manipulación</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Estudio y explicación") {
-    return (
-      <>
-        Estudio y <GradientText tone="green">explicación</GradientText>
-      </>
-    );
-  }
-
-  return <>{title}</>;
+function MessageIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
+      <path d="M5 5.5h14v10H9l-4 3v-13Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M8 9h8M8 12h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
 }
 
 export default function ProductoPage() {
@@ -274,7 +230,7 @@ export default function ProductoPage() {
     url: `${siteUrl}/producto`,
     name: "Producto — VonuAI",
     description:
-      "VonuAI es un asistente para revisar mensajes, webs, contratos, facturas, documentos y situaciones delicadas antes de firmar, pagar, contestar o decidir.",
+      "VonuAI analiza URLs, capturas y mensajes sospechosos para detectar señales de fraude, phishing y suplantación antes de actuar.",
     inLanguage: "es-ES",
     isPartOf: {
       "@type": "WebSite",
@@ -284,7 +240,7 @@ export default function ProductoPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f5f7] text-zinc-950">
+    <main className="min-h-screen overflow-hidden bg-[#080b12] text-slate-100">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -292,127 +248,115 @@ export default function ProductoPage() {
 
       <HomeHeader />
 
-      <section className="relative overflow-hidden bg-[#f5f5f7]">
-        <div className="mx-auto max-w-[1500px] px-4 pb-12 pt-8 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8">
-          <div className="mx-auto max-w-[1160px] text-center">
-            <h1 className="mx-auto max-w-[1120px] text-[52px] font-semibold leading-[1.02] tracking-[-0.064em] text-zinc-950 sm:text-[86px] sm:leading-[0.94] sm:tracking-[-0.078em] lg:text-[118px]">
-              Un asistente para revisar
-              <span className="block text-zinc-500">
-                lo importante antes de <GradientText tone="blueGreen">decidir.</GradientText>
+      <section className="relative isolate overflow-hidden border-b border-white/[0.06]">
+        <div className="pointer-events-none absolute inset-0 -z-20 bg-[#080b12]" />
+        <div className="pointer-events-none absolute left-1/2 top-[-180px] -z-10 h-[620px] w-[900px] -translate-x-1/2 rounded-full bg-sky-500/[0.10] blur-[120px]" />
+        <div className="pointer-events-none absolute right-[-180px] top-[320px] -z-10 h-[480px] w-[480px] rounded-full bg-emerald-400/[0.07] blur-[120px]" />
+
+        <div className="mx-auto max-w-[1320px] px-4 pb-20 pt-14 sm:px-6 sm:pb-28 sm:pt-20 lg:px-8 lg:pt-24">
+          <div className="mx-auto max-w-[1020px] text-center">
+            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.045] px-3.5 py-2 text-[12px] font-semibold tracking-[0.02em] text-slate-300 shadow-[0_12px_40px_rgba(0,0,0,0.16)]">
+              <span className="text-emerald-300"><ShieldIcon /></span>
+              Vonu · análisis preventivo
+            </div>
+
+            <h1 className="mx-auto mt-7 max-w-[1020px] text-[50px] font-semibold leading-[0.98] tracking-[-0.065em] text-white sm:text-[76px] sm:leading-[0.94] lg:text-[92px]">
+              Antes de actuar,
+              <span className="block text-slate-400">
+                entiende qué tienes <GradientText>delante.</GradientText>
               </span>
             </h1>
 
-            <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
-              VonuAI te ayuda a analizar mensajes, webs, contratos, facturas,
-              documentos y situaciones delicadas antes de firmar, pagar,
-              contestar o tomar una decisión importante.
+            <p className="mx-auto mt-7 max-w-[760px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">
+              Vonu analiza URLs, capturas y mensajes sospechosos para separar señales reales de ruido y ayudarte a decidir qué comprobar antes de pagar, responder o compartir datos.
             </p>
 
-            <div className="mt-7 flex flex-row justify-center gap-2.5 sm:mt-9 sm:gap-3">
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
-                href="/chat"
-                className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] transition hover:scale-[1.02] active:scale-[0.99] sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-[15px]"
+                href="/es/check"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 text-[14px] font-semibold text-[#0b0e17] shadow-[0_14px_40px_rgba(255,255,255,0.10)] transition hover:-translate-y-0.5 hover:bg-slate-100 active:translate-y-0"
               >
-                <span className="truncate">Probar Vonu</span>
+                Probar Vonu Check
                 <ArrowIcon />
               </Link>
-
               <Link
-                href="/recursos"
-                className="inline-flex min-w-0 flex-1 items-center justify-center rounded-full border border-zinc-200 bg-white px-4 py-3 text-[14px] font-semibold text-zinc-800 shadow-sm transition hover:-translate-y-[1px] hover:shadow-md sm:flex-none sm:px-7 sm:py-3.5 sm:text-[15px]"
+                href="/casos-de-uso"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.045] px-6 text-[14px] font-semibold text-slate-200 transition hover:-translate-y-0.5 hover:bg-white/[0.07] active:translate-y-0"
               >
-                Ver recursos
+                Ver casos de uso
               </Link>
+            </div>
+
+            <div className="mx-auto mt-8 flex max-w-[720px] flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[12px] text-slate-500">
+              <span>Sin registro</span>
+              <span className="h-1 w-1 rounded-full bg-slate-700" />
+              <span>Primer análisis gratuito</span>
+              <span className="h-1 w-1 rounded-full bg-slate-700" />
+              <span>No certifica legitimidad</span>
             </div>
           </div>
 
-          <div className="mx-auto mt-10 max-w-5xl sm:mt-14">
-            <div className="rounded-[38px] border border-zinc-200 bg-white p-3 shadow-[0_2px_5px_rgba(0,0,0,0.04),0_28px_80px_rgba(0,0,0,0.12)]">
-              <div className="rounded-[30px] bg-[#f5f5f7] p-4 sm:p-6">
-                <div className="mb-6 flex justify-end">
-                  <span className="rounded-full bg-white px-3 py-1 text-[12px] font-medium text-zinc-500 shadow-sm">
-                    Análisis preventivo
-                  </span>
+          <div className="mx-auto mt-14 max-w-[1040px] sm:mt-18">
+            <div className="relative overflow-hidden rounded-[28px] border border-white/[0.09] bg-white/[0.045] shadow-[0_35px_100px_rgba(0,0,0,0.38)] backdrop-blur-xl">
+              <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-3 sm:px-6">
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-rose-400/80" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-300/80" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
+                </div>
+                <span className="text-[11px] font-medium tracking-[0.06em] text-slate-500">VONU CHECK</span>
+              </div>
+
+              <div className="grid lg:grid-cols-[1.05fr_0.95fr]">
+                <div className="border-b border-white/[0.07] p-5 sm:p-7 lg:border-b-0 lg:border-r">
+                  <div className="grid grid-cols-3 border-b border-white/[0.07] text-[12px] font-semibold text-slate-500 sm:text-[13px]">
+                    <div className="flex items-center justify-center gap-2 border-b-2 border-sky-400 px-2 pb-4 text-slate-100">
+                      <UrlIcon /> <span>Enlace</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 px-2 pb-4">
+                      <CaptureIcon /> <span>Captura</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 px-2 pb-4">
+                      <MessageIcon /> <span>Mensaje</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 rounded-2xl border border-white/[0.08] bg-[#070a11] px-4 py-4 text-left text-[14px] text-slate-500 shadow-inner">
+                    https://ejemplo.com/enlace-sospechoso
+                  </div>
+
+                  <button
+                    type="button"
+                    className="mt-4 h-12 w-full rounded-xl bg-gradient-to-r from-sky-500 to-emerald-400 text-[14px] font-bold text-[#071018] shadow-[0_12px_30px_rgba(14,165,233,0.16)]"
+                  >
+                    Analizar ahora
+                  </button>
+
+                  <p className="mt-4 text-center text-[11px] leading-5 text-slate-600">
+                    Ejemplo visual · El análisis real se realiza en Vonu Check.
+                  </p>
                 </div>
 
-                <div className="mx-auto max-w-3xl">
-                  <div className="ml-auto max-w-[88%] rounded-[26px] bg-[#e9edf1] px-5 py-4 text-left text-[16px] leading-7 text-zinc-900 sm:max-w-[78%]">
-                    Me han enviado una web, una factura y un mensaje raro. No sé
-                    si responder, pagar o esperar. ¿Lo revisas?
+                <div className="p-5 sm:p-7">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Resultado</p>
+                      <h2 className="mt-2 text-[26px] font-semibold tracking-[-0.045em] text-white sm:text-[30px]">Precaución antes de continuar</h2>
+                    </div>
+                    <span className="rounded-full border border-amber-300/20 bg-amber-300/[0.09] px-3 py-1.5 text-[11px] font-semibold text-amber-200">62 / 100</span>
                   </div>
 
-                  <div className="mt-7 text-left">
-                    <div className="mb-4 flex items-center gap-2">
-                      <span className="h-3.5 w-3.5 rounded-full bg-orange-400" />
-                      <span className="h-3.5 w-3.5 rounded-full bg-orange-400" />
-                      <span className="h-3.5 w-3.5 rounded-full bg-orange-400" />
-                    </div>
-
-                    <div className="text-[17px] leading-8 text-zinc-900">
-                      <p className="text-[28px] font-semibold leading-[1.05] tracking-[-0.055em] text-zinc-950 sm:text-[38px]">
-                        Antes de actuar, yo revisaría señales de riesgo, contexto,
-                        urgencia y próximos pasos seguros.
-                      </p>
-
-                      <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                        {["Fraude", "Contrato", "Decisión"].map((item) => (
-                          <div
-                            key={item}
-                            className="rounded-[24px] border border-zinc-200 bg-white p-4 shadow-sm"
-                          >
-                            <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-                              Revisión
-                            </p>
-                            <p className="mt-2 text-[24px] font-semibold tracking-[-0.055em] text-zinc-950">
-                              {item}
-                            </p>
-                          </div>
-                        ))}
+                  <div className="mt-6 space-y-3">
+                    {["Dominio reciente o poco establecido", "La urgencia del mensaje merece verificación", "No hay evidencia suficiente para certificar fraude"].map((item, index) => (
+                      <div key={item} className="flex gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.035] px-4 py-3.5 text-left text-[13px] leading-6 text-slate-300">
+                        <span className={index === 2 ? "mt-1.5 h-2 w-2 shrink-0 rounded-full bg-slate-500" : "mt-1.5 h-2 w-2 shrink-0 rounded-full bg-amber-300"} />
+                        <span>{item}</span>
                       </div>
-
-                      <div className="mt-6">
-                        <p className="font-semibold text-zinc-950">
-                          Qué devuelve Vonu:
-                        </p>
-
-                        <ul className="mt-3 space-y-3 text-zinc-700">
-                          <li className="flex gap-3">
-                            <span className="mt-[11px] h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" />
-                            <span>Qué señales importan y cuáles no son concluyentes.</span>
-                          </li>
-                          <li className="flex gap-3">
-                            <span className="mt-[11px] h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" />
-                            <span>Qué evitar mientras compruebas la situación.</span>
-                          </li>
-                          <li className="flex gap-3">
-                            <span className="mt-[11px] h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" />
-                            <span>Qué siguiente paso tiene más sentido.</span>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
+                    ))}
                   </div>
 
-                  <div className="mt-7 rounded-full border border-zinc-200 bg-white px-3 py-2 shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_0_13px_rgba(0,0,0,0.135),0_3px_8px_rgba(0,0,0,0.085)]">
-                    <div className="flex items-center gap-2">
-                      <div className="grid h-9 w-9 place-items-center rounded-full text-zinc-900">
-                        <span className="text-[25px] leading-none">+</span>
-                      </div>
-
-                      <div className="min-w-0 flex-1 truncate whitespace-nowrap text-left text-[13.5px] text-zinc-400 sm:text-[16px]">
-                        Pega un mensaje, web, factura o contrato
-                      </div>
-
-                      <div className="grid h-10 w-10 place-items-center rounded-full bg-zinc-950 text-white">
-                        <span className="text-[18px] font-semibold leading-none">
-                          →
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="mt-2 text-center text-[11.5px] text-zinc-500">
-                    Orientación preventiva · No sustituye profesionales.
+                  <p className="mt-5 text-left text-[13px] leading-6 text-slate-500">
+                    Siguiente paso: entra por tu cuenta en la web oficial de la entidad y verifica la solicitud desde allí.
                   </p>
                 </div>
               </div>
@@ -421,139 +365,102 @@ export default function ProductoPage() {
         </div>
       </section>
 
-      <section className="bg-[#f5f5f7]">
-        <div className="mx-auto max-w-[1500px] px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
-          <div className="grid gap-5 lg:grid-cols-3">
-            {productPillars.map((item) => (
-              <article
-                key={item.title}
-                className="min-h-[300px] rounded-[38px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)]"
-              >
-                <h2 className="mt-12 text-[38px] font-semibold leading-[0.98] tracking-[-0.065em] text-zinc-950 sm:text-[44px]">
-                  <PillarTitle title={item.title} />
-                </h2>
+      <section className="relative border-b border-white/[0.06] bg-[#0a0d15]">
+        <div className="mx-auto max-w-[1320px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+          <div className="max-w-[760px]">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-sky-300">Qué hace Vonu</p>
+            <h2 className="mt-4 text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">
+              Menos intuición.
+              <span className="block text-slate-500">Más señales útiles.</span>
+            </h2>
+          </div>
 
-                <p className="mt-5 text-[15.5px] leading-7 text-zinc-600">
-                  {item.text}
-                </p>
+          <div className="mt-10 grid gap-4 lg:grid-cols-3">
+            {pillars.map((item) => (
+              <article key={item.number} className="group min-h-[300px] rounded-[26px] border border-white/[0.07] bg-white/[0.035] p-6 transition hover:border-white/[0.12] hover:bg-white/[0.05] sm:p-7">
+                <p className="text-[12px] font-semibold text-sky-300">{item.number}</p>
+                <h3 className="mt-14 text-[30px] font-semibold leading-[1.02] tracking-[-0.045em] text-white sm:text-[34px]">{item.title}</h3>
+                <p className="mt-4 text-[14px] leading-7 text-slate-400 sm:text-[15px]">{item.text}</p>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="bg-[#f5f5f7]">
-        <div className="mx-auto max-w-[1500px] px-4 py-16 sm:px-6 lg:px-8">
-          <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+      <section className="relative border-b border-white/[0.06] bg-[#080b12]">
+        <div className="pointer-events-none absolute left-[-220px] top-[180px] h-[420px] w-[420px] rounded-full bg-blue-500/[0.05] blur-[120px]" />
+        <div className="mx-auto max-w-[1320px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
             <div>
-              <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-600">
-                Qué puede revisar
-              </p>
-
-              <h2 className="mt-3 max-w-4xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
-                Vonu entiende problemas reales,
-                <span className="block text-zinc-500">
-                  no solo preguntas <GradientText tone="blueCyan">sueltas.</GradientText>
-                </span>
+              <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Qué puede revisar</p>
+              <h2 className="mt-4 max-w-[680px] text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">
+                Un único punto de entrada para <GradientText>muchas dudas.</GradientText>
               </h2>
             </div>
-
-            <p className="max-w-md text-[17px] leading-8 text-zinc-600">
-              Puedes usarlo cuando algo no encaja, cuando tienes prisa, cuando
-              te presionan o cuando necesitas entender mejor antes de actuar.
+            <p className="max-w-xl text-[16px] leading-8 text-slate-400 lg:justify-self-end">
+              El formato cambia, pero la pregunta es la misma: ¿hay algo aquí que debería comprobar antes de confiar?
             </p>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {capabilities.map((item) => (
               <Link
                 key={item.title}
                 href={item.href}
-                className="group min-h-[330px] rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)] transition hover:-translate-y-1 hover:shadow-[0_2px_5px_rgba(0,0,0,0.045),0_24px_58px_rgba(0,0,0,0.075)]"
+                className="group relative min-h-[260px] overflow-hidden rounded-[24px] border border-white/[0.07] bg-white/[0.03] p-6 transition duration-300 hover:-translate-y-1 hover:border-white/[0.12] hover:bg-white/[0.05]"
               >
-                <h3 className="mt-12 text-[34px] font-semibold leading-[1.08] tracking-[-0.045em] text-zinc-950">
-                  <CapabilityTitle title={item.title} />
-                </h3>
-
-                <p className="mt-5 text-[15.5px] leading-7 text-zinc-600">
-                  {item.text}
-                </p>
-
-                <div className="mt-8 inline-flex items-center gap-2 text-[15px] font-semibold text-zinc-950">
-                  Ver más
+                <div className={`h-1 w-10 rounded-full bg-gradient-to-r ${item.accent}`} />
+                <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">{item.eyebrow}</p>
+                <h3 className="mt-2 text-[26px] font-semibold tracking-[-0.045em] text-white">{item.title}</h3>
+                <p className="mt-4 text-[14px] leading-7 text-slate-400">{item.text}</p>
+                <span className="absolute bottom-6 right-6 grid h-9 w-9 place-items-center rounded-full border border-white/[0.08] bg-white/[0.035] text-slate-400 transition group-hover:border-white/[0.14] group-hover:text-white">
                   <ArrowIcon />
-                </div>
+                </span>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="bg-zinc-950 text-white">
-        <div className="mx-auto max-w-[1500px] px-4 py-16 sm:px-6 lg:px-8">
-          <div className="mb-10 max-w-4xl">
-            <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-300">
-              Cómo funciona
-            </p>
-
-            <h2 className="mt-3 text-[44px] font-semibold leading-[0.96] tracking-[-0.065em] sm:text-[72px]">
-              De una duda confusa
-              <span className="block text-zinc-400">
-                a un siguiente paso <GradientText tone="blueGreen">más claro.</GradientText>
-              </span>
+      <section className="border-b border-white/[0.06] bg-[#0c1019]">
+        <div className="mx-auto max-w-[1320px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+          <div className="mx-auto max-w-[850px] text-center">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-sky-300">Cómo funciona</p>
+            <h2 className="mt-4 text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">
+              Comprueba primero.
+              <span className="block text-slate-500">Decide después.</span>
             </h2>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-3">
+          <div className="relative mt-12 grid gap-4 lg:grid-cols-3">
+            <div className="pointer-events-none absolute left-[16%] right-[16%] top-[25px] hidden h-px bg-gradient-to-r from-transparent via-white/[0.12] to-transparent lg:block" />
             {workflow.map((item) => (
-              <article
-                key={item.step}
-                className="min-h-[320px] rounded-[34px] border border-white/10 bg-white/[0.06] p-7 shadow-[0_18px_44px_rgba(0,0,0,0.18)]"
-              >
-                <p className="text-[14px] font-semibold text-blue-300">
-                  {item.step}
-                </p>
-
-                <h3 className="mt-12 text-[34px] font-semibold leading-[0.98] tracking-[-0.055em] text-white">
-                  {item.title}
-                </h3>
-
-                <p className="mt-5 text-[15.5px] leading-7 text-zinc-300">
-                  {item.text}
-                </p>
+              <article key={item.step} className="relative rounded-[24px] border border-white/[0.07] bg-[#080b12] p-6 sm:p-7">
+                <div className="grid h-12 w-12 place-items-center rounded-full border border-sky-300/20 bg-sky-300/[0.07] text-[12px] font-bold text-sky-200">{item.step}</div>
+                <h3 className="mt-8 text-[28px] font-semibold tracking-[-0.045em] text-white">{item.title}</h3>
+                <p className="mt-4 text-[14px] leading-7 text-slate-400 sm:text-[15px]">{item.text}</p>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="bg-[#f5f5f7]">
-        <div className="mx-auto grid max-w-[1500px] gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+      <section className="border-b border-white/[0.06] bg-[#080b12]">
+        <div className="mx-auto grid max-w-[1320px] gap-10 px-4 py-20 sm:px-6 sm:py-24 lg:grid-cols-[0.85fr_1.15fr] lg:px-8">
           <div>
-            <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-600">
-              Uso responsable
-            </p>
-
-            <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
-              Ayuda práctica,
-              <span className="block text-zinc-500">
-                con límites <GradientText tone="purplePink">claros.</GradientText>
-              </span>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Uso responsable</p>
+            <h2 className="mt-4 max-w-[580px] text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">
+              Útil porque también sabe decir <GradientText>“no lo sé”.</GradientText>
             </h2>
-
-            <p className="mt-5 max-w-xl text-[17px] leading-8 text-zinc-600">
-              Vonu está pensado para ayudarte a ganar claridad, no para sustituir
-              decisiones profesionales cuando hay consecuencias importantes.
+            <p className="mt-6 max-w-[560px] text-[16px] leading-8 text-slate-400">
+              Un producto de seguridad no debería fingir certeza. Vonu está diseñado para mostrar límites, separar hechos de inferencias y recomendar comprobaciones adicionales cuando hacen falta.
             </p>
           </div>
 
-          <div className="grid gap-4">
+          <div className="grid gap-3">
             {principles.map((item) => (
-              <div
-                key={item}
-                className="flex gap-4 rounded-[30px] border border-zinc-200 bg-white p-5 text-[15.5px] leading-7 text-zinc-700 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_12px_30px_rgba(0,0,0,0.045)]"
-              >
-                <span className="shrink-0 text-zinc-950">
+              <div key={item} className="flex gap-4 rounded-[22px] border border-white/[0.07] bg-white/[0.03] p-5 text-[14px] leading-7 text-slate-300 sm:text-[15px]">
+                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-400/[0.10] text-emerald-300">
                   <CheckIcon />
                 </span>
                 <span>{item}</span>
@@ -563,26 +470,28 @@ export default function ProductoPage() {
         </div>
       </section>
 
-      <ResourceSignup page="producto" />
-
-      <section className="bg-zinc-950 text-white">
-        <div className="mx-auto max-w-[1500px] px-4 py-16 text-center sm:px-6 lg:px-8">
-          <h2 className="mx-auto max-w-5xl text-[48px] font-semibold leading-[0.98] tracking-[-0.064em] sm:text-[82px]">
-            Antes de firmar, pagar, contestar o decidir… consúltalo con Vonu.
-          </h2>
-
-          <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
-            Abre el chat, cuenta qué pasa y revisa la situación con más calma
-            antes de dar el siguiente paso.
-          </p>
-
-          <Link
-            href="/chat"
-            className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
-          >
-            Abrir Vonu
-            <ArrowIcon />
-          </Link>
+      <section className="relative overflow-hidden bg-[#0a0d15]">
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500/[0.08] blur-[120px]" />
+        <div className="relative mx-auto max-w-[1320px] px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+          <div className="mx-auto max-w-[900px] text-center">
+            <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl border border-white/[0.08] bg-white/[0.05] text-emerald-300">
+              <ShieldIcon />
+            </div>
+            <h2 className="mt-7 text-[44px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[70px]">
+              Si algo no te cuadra,
+              <span className="block text-slate-500">compruébalo antes de confiar.</span>
+            </h2>
+            <p className="mx-auto mt-6 max-w-[640px] text-[16px] leading-8 text-slate-400">
+              Una URL, una captura o un mensaje bastan para empezar. Vonu te ayuda a revisar señales de riesgo antes de que la urgencia decida por ti.
+            </p>
+            <Link
+              href="/es/check"
+              className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 text-[14px] font-semibold text-[#0b0e17] transition hover:-translate-y-0.5 hover:bg-slate-100 active:translate-y-0"
+            >
+              Analizar ahora
+              <ArrowIcon />
+            </Link>
+          </div>
         </div>
       </section>
 
