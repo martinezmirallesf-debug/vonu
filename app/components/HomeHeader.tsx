@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import VonuMark from "./VonuMark";
+import "./use-case-product-theme.css";
 
 const mainLinks = [
   { label: "Producto", href: "/producto" },
@@ -20,15 +21,11 @@ const survivingCases = [
   { label: "Analizar captura", href: "/analizar-captura-pantalla", hint: "WhatsApp, SMS, perfiles y pantallas" },
   { label: "Analizar SMS o WhatsApp", href: "/analizar-sms-estafa", hint: "Urgencia, suplantación y enlaces" },
   { label: "Analizar email sospechoso", href: "/email-sospechoso-estafa", hint: "Remitente, presión y phishing" },
-  { label: "Llamada del banco y código SMS", href: "/llamada-banco-codigo-sms", hint: "Vishing, códigos y suplantación bancaria" },
   { label: "Detectar perfil falso", href: "/detectar-perfil-falso", hint: "Perfiles, vendedores y señales de riesgo" },
   { label: "Comprobar inversión", href: "/comprobar-inversion-estafa", hint: "Promesas, presión y señales de fraude" },
-  { label: "Estafas con criptomonedas", href: "/estafas-criptomonedas", hint: "Trading, plataformas y falsas oportunidades" },
-  { label: "Revisar contrato", href: "/revisar-contrato", hint: "Cláusulas, obligaciones y penalizaciones" },
-  { label: "Revisar contrato de alquiler", href: "/revisar-contrato-alquiler", hint: "Fianza, gastos y condiciones delicadas" },
-  { label: "Comprobar factura", href: "/comprobar-factura", hint: "Cargos, conceptos e importes dudosos" },
-  { label: "Detectar manipulación", href: "/detectar-manipulacion", hint: "Presión, culpa, urgencia y confusión" },
 ];
+
+const coreUseCasePaths = new Set(survivingCases.map((item) => item.href));
 
 const secondaryLinks = [
   { label: "Privacidad", href: "/legal/privacidad" },
@@ -42,6 +39,7 @@ export default function HomeHeader() {
   const [open, setOpen] = useState(false);
   const [casesOpen, setCasesOpen] = useState(false);
   const isCheckHome = pathname === "/check" || /^\/(es|en|fr|de|ar)\/check$/.test(pathname);
+  const isCoreUseCase = coreUseCasePaths.has(pathname);
 
   function closeMenu() {
     setOpen(false);
@@ -49,7 +47,10 @@ export default function HomeHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 isolate overflow-visible border-b border-white/[0.08] bg-[#0b0e17]/95 text-white backdrop-blur-xl max-md:backdrop-blur-none">
+    <header
+      data-vonu-use-case={isCoreUseCase ? "core" : undefined}
+      className="sticky top-0 z-50 isolate overflow-visible border-b border-white/[0.08] bg-[#0b0e17]/95 text-white backdrop-blur-xl max-md:backdrop-blur-none"
+    >
       <div className={["relative z-[10020] mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8", isCheckHome ? "relative" : ""].join(" ")}>
         <a href="/" className="flex items-center gap-3" aria-label="Vonu inicio">
           <VonuMark className="h-7 w-7" framed />
