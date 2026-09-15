@@ -8,7 +8,7 @@
   }
 
   /* Slightly shorten both burger strokes while closed, preserving the outer/right
-     alignment and the current stroke thickness. Keep the open X untouched. */
+     alignment and the current stroke thickness. */
   .vonu-check-page header > div:first-child > button[aria-expanded="false"] > span > span:first-child {
     left: auto !important;
     right: 0 !important;
@@ -21,10 +21,11 @@
     width: 22px !important;
   }
 
+  /* Keep the open X consistent with the shared HomeHeader on Check too. */
   .vonu-check-page header > div:first-child > button[aria-expanded="true"] > span > span:last-child {
-    left: 0 !important;
+    left: 2px !important;
     right: auto !important;
-    width: 32px !important;
+    width: 28px !important;
   }
 
   /* Full-screen mobile menu. The top bar remains above it via the existing
