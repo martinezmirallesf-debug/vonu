@@ -1,5 +1,6 @@
 /* Desktop spacing for the idle Check home.
-   The interaction frame has a fixed height so the selector stays anchored across modes. */
+   Capture only: keep the selector anchored while distributing the upload flow
+   vertically so helper copy, CTA and legal notice never collide. */
 @media (min-width: 1024px) {
   /* Center the complete home composition between header and footer. */
   .vonu-check-page main:has(> section.text-center) {
@@ -7,8 +8,7 @@
     justify-content: center !important;
   }
 
-  /* Keep the mode canvas the same height in URL, Capture and Message.
-     This prevents the fixed selector from moving when the mode changes. */
+  /* Keep the mode canvas stable. */
   .vonu-check-page main:has(> section.text-center)
     > section:nth-of-type(2)
     > div:last-child {
@@ -16,42 +16,77 @@
     min-height: 292px !important;
   }
 
-  /* Give the capture state a calmer vertical canvas. */
+  /* Capture gets one fixed desktop canvas. */
   .vonu-check-page main:has(> section.text-center)
     > section:nth-of-type(2)
     > div:last-child:has(input[type="file"]) {
+    position: relative !important;
     height: 292px !important;
     min-height: 292px !important;
-    padding-top: 14px !important;
-    padding-bottom: 12px !important;
+    padding-top: 18px !important;
+    padding-bottom: 10px !important;
   }
 
-  /* Let upload copy + picker breathe as one unit. */
+  /* Upload copy + picker stay together in the upper half, with real breathing room. */
   .vonu-check-page main:has(> section.text-center)
     > section:nth-of-type(2)
     > div:last-child:has(input[type="file"])
     > div:first-child:has(input[type="file"]) {
-    min-height: 166px !important;
-    padding-top: 14px !important;
-    padding-bottom: 14px !important;
+    min-height: 164px !important;
+    height: 164px !important;
+    padding-top: 16px !important;
+    padding-bottom: 10px !important;
   }
 
-  /* Separate the reassurance/CTA from the upload helper copy. */
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    > div:first-child:has(input[type="file"]) > div > p:first-child {
+    margin-bottom: 10px !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    > div:first-child:has(input[type="file"]) > div > button {
+    margin-top: 14px !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    > div:first-child:has(input[type="file"]) > div > p:last-child {
+    margin-top: 9px !important;
+  }
+
+  /* Anchor the reassurance + CTA + legal copy in the lower part of the canvas.
+     This removes the collision visible in capture mode without making the page taller. */
   .vonu-check-page main:has(> section.text-center)
     > section:nth-of-type(2)
     > div:last-child:has(input[type="file"])
     > div:last-child {
-    margin-top: 28px !important;
-    gap: 10px !important;
+    position: absolute !important;
+    inset-inline: 18px !important;
+    bottom: 7px !important;
+    width: auto !important;
+    margin: 0 !important;
+    gap: 11px !important;
   }
 
-  /* The legal notice is a third, quieter layer below the primary action. */
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    > div:last-child > div:first-child {
+    margin: 0 !important;
+  }
+
+  /* The legal notice becomes a clearly separate, quiet final layer. */
   .vonu-check-page main:has(> section.text-center)
     > section:nth-of-type(2)
     > div:last-child:has(input[type="file"])
     .vonu-submission-notice {
-    margin-top: 13px !important;
-    max-width: 720px !important;
+    margin-top: 8px !important;
+    max-width: 760px !important;
     line-height: 1.55 !important;
   }
 }
