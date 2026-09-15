@@ -130,7 +130,7 @@ export default function HomeHeader() {
                     aria-expanded={casesOpen}
                   >
                     <span>{item.label}</span>
-                    <span className="text-[20px] font-light text-emerald-300">{casesOpen ? "−" : "+"}</span>
+                    <span className="text-[26px] font-light text-emerald-300">{casesOpen ? "−" : "+"}</span>
                   </button>
                   {casesOpen && (
                     <div className="mb-3 grid gap-0 border-l border-emerald-400/25 pl-3">
@@ -176,7 +176,7 @@ export default function HomeHeader() {
             <Link
               href="/check"
               onClick={closeMenu}
-              className="inline-flex min-h-[48px] w-full items-center justify-center gap-3 rounded-full bg-emerald-400 px-5 text-[15px] font-bold text-[#07110d] shadow-[0_10px_30px_rgba(52,211,153,.16)] transition hover:bg-emerald-300"
+              className="inline-flex min-h-[48px] w-full items-center justify-center gap-3 rounded-xl bg-emerald-400 px-5 text-[15px] font-bold text-[#07110d] shadow-[0_10px_30px_rgba(52,211,153,.16)] transition hover:bg-emerald-300"
             >
               <span>Probar Vonu</span>
               <span aria-hidden="true">→</span>
