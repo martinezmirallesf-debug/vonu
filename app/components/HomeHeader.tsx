@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import CoreUseCaseCheckDemo from "./CoreUseCaseCheckDemo";
 import VonuMark from "./VonuMark";
 import "./use-case-product-theme.css";
 
@@ -195,6 +196,8 @@ export default function HomeHeader() {
           </div>
         </div>
       </div>
+
+      <CoreUseCaseCheckDemo pathname={pathname} />
     </header>
   );
 }
