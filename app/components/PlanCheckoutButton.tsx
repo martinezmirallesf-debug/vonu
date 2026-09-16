@@ -36,7 +36,7 @@ export default function PlanCheckoutButton({
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ plan, billing: "monthly" }),
+        body: JSON.stringify({ plan, billing: "monthly", locale }),
       });
 
       if (response.status === 401) {
