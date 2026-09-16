@@ -5,9 +5,9 @@ import {
   checkPath,
   getTopic,
   navCopy,
-  publicPath,
   templateCopy,
 } from "@/lib/vonu-global/i18n";
+import { localizedPublicPath } from "@/lib/vonu-global/routes";
 import GlobalPublicHeader from "./GlobalPublicHeader";
 import FunnelLink from "./FunnelLink";
 import PlanCheckoutButton from "./PlanCheckoutButton";
@@ -50,7 +50,7 @@ export default function LocalizedPublicPage({
   const topic = getTopic(locale, slug);
   const t = templateCopy[locale];
   const nav = navCopy[locale];
-  const pageUrl = `${SITE_URL}${publicPath(locale, slug)}`;
+  const pageUrl = `${SITE_URL}${localizedPublicPath(locale, slug)}`;
   const isPricing = slug === "precios";
 
   const jsonLd = {
@@ -121,7 +121,7 @@ export default function LocalizedPublicPage({
               </FunnelLink>
               {!isPricing && (
                 <FunnelLink
-                  href={publicPath(locale, "precios")}
+                  href={localizedPublicPath(locale, "precios")}
                   event="localized_pricing_cta"
                   properties={{ locale, slug }}
                   className="inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.045] px-6 text-[14px] font-semibold text-slate-200 transition hover:bg-white/[0.07]"
@@ -267,7 +267,7 @@ export default function LocalizedPublicPage({
             <Link href="/legal/aviso-legal" className="transition hover:text-slate-400">{nav.legal}</Link>
             <Link href="/legal/privacidad" className="transition hover:text-slate-400">{nav.privacy}</Link>
             <Link href="/legal/terminos" className="transition hover:text-slate-400">{nav.terms}</Link>
-            <Link href={publicPath(locale, "contacto")} className="transition hover:text-slate-400">{nav.contact}</Link>
+            <Link href={localizedPublicPath(locale, "contacto")} className="transition hover:text-slate-400">{nav.contact}</Link>
           </div>
         </div>
       </footer>
