@@ -15,7 +15,6 @@ const module = { exports: {} };
 const context = {
   module,
   exports: module.exports,
-  require,
   console,
   Number,
   Math,
