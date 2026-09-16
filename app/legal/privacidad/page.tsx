@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
 import HomeHeader from "../../components/HomeHeader";
 import HomeFooter from "../../components/HomeFooter";
 import LegalPage from "../../components/LegalPage";
@@ -8,81 +7,20 @@ const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Política de privacidad — VonuAI",
+  title: "Política de privacidad — Vonu",
   description:
-    "Política de privacidad de VonuAI: datos tratados, finalidades, bases legales, conservación, proveedores, derechos y contacto.",
-  alternates: {
-    canonical: "/legal/privacidad",
-  },
+    "Política de privacidad de Vonu: datos tratados, análisis con IA, comprobación de enlaces, proveedores, conservación y derechos.",
+  alternates: { canonical: "/legal/privacidad" },
   openGraph: {
-    title: "Política de privacidad — VonuAI",
-    description:
-      "Información sobre cómo VonuAI trata los datos personales y cómo puedes ejercer tus derechos.",
+    title: "Política de privacidad — Vonu",
+    description: "Cómo trata Vonu los datos personales y el contenido enviado para análisis.",
     url: `${siteUrl}/legal/privacidad`,
-    siteName: "VonuAI",
+    siteName: "Vonu",
     locale: "es_ES",
     type: "website",
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  robots: { index: true, follow: true },
 };
-
-type GradientTone = "blueCyan" | "blueGreen" | "purplePink" | "amberOrange";
-
-const gradientMap: Record<GradientTone, string> = {
-  blueCyan: "linear-gradient(90deg, #1A73E8 0%, #06B6D4 100%)",
-  blueGreen: "linear-gradient(90deg, #0A84FF 0%, #22C55E 100%)",
-  purplePink: "linear-gradient(90deg, #7C3AED 0%, #EC4899 100%)",
-  amberOrange: "linear-gradient(90deg, #F59E0B 0%, #F97316 100%)",
-};
-
-function GradientText({
-  children,
-  tone,
-}: {
-  children: ReactNode;
-  tone: GradientTone;
-}) {
-  return (
-    <span
-      className="inline align-baseline"
-      style={{
-        backgroundImage: gradientMap[tone],
-        WebkitBackgroundClip: "text",
-        backgroundClip: "text",
-        color: "transparent",
-        WebkitTextFillColor: "transparent",
-      }}
-    >
-      {children}
-    </span>
-  );
-}
-
-const privacyHighlights = [
-  {
-    title: "Datos tratados",
-    tone: "blueCyan" as const,
-    text: "Explica qué datos pueden tratarse cuando usas el chat, formularios, recursos, cuenta, pagos o archivos.",
-  },
-  {
-    title: "Finalidades",
-    tone: "blueGreen" as const,
-    text: "Detalla para qué se usan los datos: prestar el servicio, seguridad, soporte, pagos, recursos y mejora del producto.",
-  },
-  {
-    title: "IA y proveedores",
-    tone: "purplePink" as const,
-    text: "Aclara que el contenido puede procesarse con proveedores tecnológicos y modelos de IA para generar respuestas.",
-  },
-  {
-    title: "Tus derechos",
-    tone: "amberOrange" as const,
-    text: "Recoge cómo ejercer derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad.",
-  },
-];
 
 export default function PrivacidadPage() {
   const jsonLd = {
@@ -90,371 +28,145 @@ export default function PrivacidadPage() {
     "@type": "WebPage",
     "@id": `${siteUrl}/legal/privacidad#webpage`,
     url: `${siteUrl}/legal/privacidad`,
-    name: "Política de privacidad — VonuAI",
-    description:
-      "Política de privacidad de VonuAI: datos tratados, finalidades, bases legales, conservación, proveedores, derechos y contacto.",
+    name: "Política de privacidad — Vonu",
+    description: "Cómo trata Vonu los datos personales y el contenido enviado para análisis.",
     inLanguage: "es-ES",
-    isPartOf: {
-      "@type": "WebSite",
-      name: "VonuAI",
-      url: siteUrl,
-    },
+    isPartOf: { "@type": "WebSite", name: "Vonu", url: siteUrl },
   };
 
   return (
     <main className="min-h-screen bg-[#f5f5f7] text-zinc-950">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <HomeHeader />
 
       <section className="bg-[#f5f5f7]">
         <div className="mx-auto max-w-[1500px] px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12 lg:px-8">
-          <div className="mx-auto max-w-[1120px] text-center">
-            <p className="text-[14px] font-semibold uppercase tracking-[0.18em] text-blue-600">
-              Legal
-            </p>
-
-            <h1 className="mx-auto mt-4 max-w-[1040px] text-[52px] font-semibold leading-[1.02] tracking-[-0.064em] text-zinc-950 sm:text-[86px] sm:leading-[0.94] sm:tracking-[-0.078em] lg:text-[118px]">
-              Política de
-              <span className="block text-zinc-500">
-                <GradientText tone="blueGreen">privacidad.</GradientText>
-              </span>
-            </h1>
-
+          <div className="mx-auto max-w-[980px] text-center">
+            <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Privacidad</p>
+            <h1 className="mt-4 text-[50px] font-semibold leading-[0.98] tracking-[-0.06em] text-zinc-950 sm:text-[82px]">Política de privacidad.</h1>
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
-              Cómo tratamos los datos personales cuando usas VonuAI, contactas
-              con nosotros, subes contenido para analizar o te apuntas a
-              recursos.
+              Qué recibe Vonu cuando haces una comprobación, para qué se utiliza y qué control tienes sobre tus datos.
             </p>
-          </div>
-
-          <div className="mx-auto mt-10 grid max-w-7xl gap-5 sm:mt-14 md:grid-cols-2 xl:grid-cols-4">
-            {privacyHighlights.map((item) => (
-              <article
-                key={item.title}
-                className="rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)]"
-              >
-                <h2 className="text-[30px] font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950">
-                  <GradientText tone={item.tone}>{item.title}</GradientText>
-                </h2>
-
-                <p className="mt-5 text-[15px] leading-7 text-zinc-600">
-                  {item.text}
-                </p>
-              </article>
-            ))}
+            <p className="mt-5 text-[13px] text-zinc-500">Última actualización: 16 de septiembre de 2026</p>
           </div>
         </div>
       </section>
 
-      <LegalPage
-        title="Política de privacidad"
-        description="Cómo tratamos los datos personales cuando usas VonuAI, contactas con nosotros o te apuntas a recursos."
-      >
+      <LegalPage title="Política de privacidad" description="Información sobre el tratamiento de datos personales y contenido en Vonu.">
         <h2>1. Responsable del tratamiento</h2>
-
         <p>
-          El responsable del tratamiento de los datos personales tratados a
-          través de VonuAI es <strong>Francisco Luis Martínez Miralles</strong>,
-          actuando bajo el nombre comercial <strong>VonuAI</strong>.
+          El responsable del tratamiento es <strong>Francisco Luis Martínez Miralles</strong>, titular de Vonu y del dominio vonuai.com.
         </p>
-
         <ul>
-          <li>
-            <strong>Nombre comercial:</strong> VonuAI
-          </li>
-          <li>
-            <strong>Responsable:</strong> Francisco Luis Martínez Miralles
-          </li>
-          <li>
-            <strong>Domicilio de contacto:</strong> Calle Velarde, 55, 03203
-            Elche, Alicante, España
-          </li>
-          <li>
-            <strong>Email general:</strong> hello@vonuai.com
-          </li>
-          <li>
-            <strong>Email privacidad:</strong> privacy@vonuai.com
-          </li>
-          <li>
-            <strong>Dominios asociados:</strong> vonuai.com y sus subdominios
-            asociados
-          </li>
+          <li><strong>Domicilio de contacto:</strong> Calle Velarde, 55, 03203 Elche, Alicante, España</li>
+          <li><strong>Email general:</strong> hello@vonuai.com</li>
+          <li><strong>Email de privacidad:</strong> privacy@vonuai.com</li>
         </ul>
 
-        <h2>2. Qué datos podemos tratar</h2>
-
-        <p>
-          Los datos tratados dependen de cómo uses VonuAI. Podemos tratar las
-          siguientes categorías de información:
-        </p>
-
+        <h2>2. Qué datos puede tratar Vonu</h2>
+        <p>Dependiendo de la función que utilices, podemos tratar:</p>
         <ul>
-          <li>
-            <strong>Datos de contacto:</strong> nombre, email, motivo de
-            contacto y mensaje enviado mediante formularios.
-          </li>
-          <li>
-            <strong>Datos de suscripción a recursos:</strong> email y página
-            desde la que se solicitó recibir recursos o novedades.
-          </li>
-          <li>
-            <strong>Datos de cuenta:</strong> información necesaria para crear,
-            autenticar o gestionar una cuenta de usuario cuando esa función esté
-            disponible.
-          </li>
-          <li>
-            <strong>Datos de uso:</strong> información técnica básica sobre el
-            uso del servicio, límites, plan contratado, consumo de mensajes,
-            recargas o minutos de voz.
-          </li>
-          <li>
-            <strong>Contenido enviado por el usuario:</strong> mensajes,
-            consultas, archivos, imágenes, PDFs, textos, capturas, documentos u
-            otra información que el usuario decida introducir o subir para su
-            análisis.
-          </li>
-          <li>
-            <strong>Datos de pago:</strong> información necesaria para gestionar
-            suscripciones, pagos o recargas. Los datos completos de tarjeta o
-            medios de pago son gestionados por proveedores de pago externos.
-          </li>
+          <li><strong>Contenido de una comprobación:</strong> texto, mensajes, capturas o imágenes, URL y los datos visibles que contengan.</li>
+          <li><strong>Datos técnicos de análisis:</strong> tipo de comprobación, señales detectadas, puntuación de riesgo, tiempos de respuesta, estado técnico de una URL y datos públicos del dominio.</li>
+          <li><strong>Datos de cuenta:</strong> identificador de usuario, email y datos necesarios para autenticación, plan y uso cuando utilizas una cuenta.</li>
+          <li><strong>Contacto:</strong> nombre, email, motivo y mensaje cuando utilizas el formulario de contacto.</li>
+          <li><strong>Newsletter o recursos:</strong> email, página de origen y fuente del alta cuando solicitas recibir recursos o novedades.</li>
+          <li><strong>Pagos:</strong> identificadores de cliente, suscripción, plan, estado de pago y datos de facturación necesarios. Vonu no necesita almacenar el número completo de tu tarjeta.</li>
+          <li><strong>Medición agregada:</strong> páginas visitadas, eventos de producto y datos técnicos agregados mediante herramientas de analítica respetuosas con la privacidad.</li>
         </ul>
 
-        <h2>3. Para qué usamos los datos</h2>
-
-        <p>Tratamos los datos personales con estas finalidades:</p>
-
+        <h2>3. Finalidades y bases jurídicas</h2>
+        <p>Tratamos los datos, según el caso, para:</p>
         <ul>
-          <li>Prestar el servicio de chat, análisis y orientación de VonuAI.</li>
-          <li>Responder consultas enviadas mediante formularios de contacto.</li>
-          <li>
-            Gestionar solicitudes de recursos, guías, avances de producto o
-            comunicaciones similares.
-          </li>
-          <li>Gestionar cuentas, acceso, planes, límites de uso y recargas.</li>
-          <li>Procesar pagos, facturación y suscripciones cuando proceda.</li>
-          <li>
-            Mejorar la seguridad, prevenir abusos, detectar errores y mantener
-            el correcto funcionamiento del servicio.
-          </li>
-          <li>
-            Mejorar la experiencia de usuario, la calidad de las respuestas y
-            la utilidad del producto.
-          </li>
-          <li>
-            Cumplir obligaciones legales, fiscales, contables o de seguridad
-            aplicables.
-          </li>
+          <li>prestar la comprobación solicitada y mostrar el resultado;</li>
+          <li>gestionar cuentas, límites, planes, suscripciones y soporte;</li>
+          <li>responder a mensajes de contacto;</li>
+          <li>enviar recursos o novedades cuando lo hayas solicitado;</li>
+          <li>mantener la seguridad, prevenir abusos y diagnosticar errores;</li>
+          <li>medir de forma agregada el funcionamiento y uso del producto;</li>
+          <li>cumplir obligaciones legales, contables o fiscales cuando proceda.</li>
+        </ul>
+        <p>
+          Las bases jurídicas pueden ser la ejecución del servicio o de medidas precontractuales, tu consentimiento, el cumplimiento de obligaciones legales y, cuando proceda y tras valorar los derechos de los usuarios, el interés legítimo en proteger y mejorar el servicio.
+        </p>
+
+        <h2>4. Análisis con inteligencia artificial</h2>
+        <p>
+          Las comprobaciones de texto o imagen pueden requerir que el contenido se procese mediante proveedores de modelos de inteligencia artificial. Actualmente la infraestructura de Vonu puede utilizar servicios de <strong>OpenAI</strong> y <strong>Google Gemini</strong>, según la función y configuración activa.
+        </p>
+        <p>
+          Vonu pide a estos sistemas una evaluación estructurada de señales de riesgo y aplica después reglas propias de calibración. La puntuación final es un índice orientativo de riesgo, no una probabilidad de fraude ni una decisión con efectos jurídicos sobre el usuario.
+        </p>
+
+        <h2>5. Comprobación técnica de enlaces y webs</h2>
+        <p>
+          Cuando introduces una URL, Vonu puede solicitar la página desde su infraestructura para revisar señales técnicas como HTTPS, redirecciones, formularios o determinados patrones visibles. El servidor del sitio analizado puede recibir datos técnicos propios de esa conexión, pero no necesita recibir la identidad de tu cuenta de Vonu.
+        </p>
+        <p>
+          Para algunas comprobaciones de reputación o antigüedad, la URL o el dominio pueden consultarse mediante servicios externos como <strong>URLhaus de abuse.ch</strong> y servicios públicos de <strong>RDAP</strong>. Por este motivo, evita incluir en la URL tokens, contraseñas o parámetros secretos que no sean necesarios para el análisis.
+        </p>
+
+        <h2>6. Proveedores</h2>
+        <p>Según las funciones activas, Vonu utiliza categorías de proveedores como:</p>
+        <ul>
+          <li><strong>Vercel:</strong> alojamiento, ejecución y analítica web agregada.</li>
+          <li><strong>Supabase:</strong> base de datos, autenticación y funciones de backend.</li>
+          <li><strong>OpenAI y Google:</strong> procesamiento mediante modelos de IA.</li>
+          <li><strong>Stripe:</strong> pagos y suscripciones cuando estén habilitados.</li>
+          <li><strong>Resend:</strong> entrega de mensajes relacionados con el formulario de contacto.</li>
+          <li><strong>abuse.ch/URLhaus y servicios RDAP:</strong> inteligencia técnica y datos públicos de dominios para determinadas comprobaciones de URL.</li>
+        </ul>
+        <p>
+          Cuando un proveedor actúe como encargado del tratamiento, se utilizará para las funciones necesarias del servicio y bajo las condiciones y garantías aplicables.
+        </p>
+
+        <h2>7. Transferencias internacionales</h2>
+        <p>
+          Algunos proveedores tecnológicos pueden tratar datos fuera del Espacio Económico Europeo. Cuando resulte aplicable, dichas transferencias deberán apoyarse en los mecanismos reconocidos por la normativa de protección de datos, como decisiones de adecuación o cláusulas contractuales tipo.
+        </p>
+
+        <h2>8. Conservación</h2>
+        <p>
+          Conservamos los datos solo durante el tiempo necesario para la finalidad correspondiente y para atender obligaciones legales o posibles responsabilidades.
+        </p>
+        <ul>
+          <li>Los datos de contacto se conservan mientras sea necesario atender y documentar la solicitud.</li>
+          <li>El email de recursos se conserva hasta que solicites la baja o deje de ser necesario para esa finalidad.</li>
+          <li>Los datos de cuenta se conservan mientras la cuenta esté activa y posteriormente durante los plazos legalmente necesarios.</li>
+          <li>Los datos vinculados a pagos y facturación se conservan durante los plazos exigidos por la normativa aplicable.</li>
+          <li>El contenido enviado a una comprobación se procesa para generar el resultado. Si una función concreta ofrece historial o guardado asociado a cuenta, se indicará en la propia función y quedará sujeto a esta política.</li>
         </ul>
 
-        <h2>4. Base jurídica del tratamiento</h2>
-
+        <h2>9. Analítica y eventos de producto</h2>
         <p>
-          Según el caso, el tratamiento de datos puede basarse en una o varias
-          de estas bases:
+          La web utiliza Vercel Web Analytics y eventos de producto para conocer de forma agregada qué páginas o funciones funcionan mejor. No enviamos el texto, la imagen, la URL analizada ni tu email como propiedad de esos eventos.
+        </p>
+        <p>
+          En la configuración pública actual no utilizamos Google Analytics ni cookies publicitarias. Si esto cambia, se actualizará la información y se solicitará consentimiento cuando sea necesario.
         </p>
 
-        <ul>
-          <li>
-            <strong>Ejecución de un contrato o medidas precontractuales:</strong>{" "}
-            para prestar el servicio solicitado, gestionar una cuenta o tramitar
-            una suscripción.
-          </li>
-          <li>
-            <strong>Consentimiento:</strong> para recibir recursos,
-            comunicaciones o enviar información mediante formularios cuando sea
-            necesario.
-          </li>
-          <li>
-            <strong>Interés legítimo:</strong> para mejorar el servicio,
-            prevenir fraude, mantener seguridad, analizar errores y responder a
-            solicitudes.
-          </li>
-          <li>
-            <strong>Obligación legal:</strong> para cumplir obligaciones
-            fiscales, contables, administrativas o requerimientos legalmente
-            exigibles.
-          </li>
-        </ul>
-
-        <h2>5. Contenido sensible y responsabilidad del usuario</h2>
-
+        <h2>10. Datos sensibles y de terceros</h2>
         <p>
-          VonuAI puede analizar mensajes, documentos o situaciones delicadas. El
-          usuario debe evitar compartir información que no sea necesaria para el
-          análisis, especialmente contraseñas, códigos de verificación, datos
-          bancarios completos, datos de salud extremadamente sensibles o
-          información de terceros sin base legítima.
+          No compartas contraseñas, códigos de verificación, números completos de tarjeta, documentos identificativos completos, datos médicos innecesarios ni otra información especialmente sensible si no es imprescindible. Si una captura contiene datos ajenos al análisis, ocúltalos antes de subirla.
+        </p>
+        <p>
+          Si introduces datos de otra persona, eres responsable de contar con una base legítima para hacerlo y de limitar la información a lo estrictamente necesario.
         </p>
 
+        <h2>11. Tus derechos</h2>
         <p>
-          Si necesitas analizar una situación sensible, procura eliminar o tapar
-          datos innecesarios antes de enviar capturas, documentos o textos.
+          Puedes solicitar acceso, rectificación, supresión, portabilidad, limitación u oposición cuando proceda, y retirar un consentimiento sin que ello afecte a la licitud del tratamiento previo. Escribe a <strong>privacy@vonuai.com</strong> indicando tu solicitud y la información necesaria para identificar los datos afectados.
+        </p>
+        <p>
+          También puedes presentar una reclamación ante la Agencia Española de Protección de Datos u otra autoridad de control competente.
         </p>
 
-        <h2>6. Proveedores y encargados del tratamiento</h2>
-
+        <h2>12. Seguridad y cambios</h2>
         <p>
-          Para prestar VonuAI podemos utilizar proveedores tecnológicos que
-          actúan como encargados del tratamiento o prestadores de servicios.
-          Entre ellos pueden encontrarse proveedores de infraestructura, base de
-          datos, autenticación, pagos, correo electrónico, analítica técnica y
-          modelos de inteligencia artificial.
+          Aplicamos medidas técnicas y organizativas razonables para proteger la información y reducir el acceso no autorizado, pérdida o uso indebido. Ningún sistema conectado a Internet puede garantizar seguridad absoluta.
         </p>
-
         <p>
-          Actualmente, el servicio puede apoyarse en proveedores como Supabase,
-          Vercel, Stripe, Google Workspace, Resend y OpenAI, entre otros, según
-          las funciones disponibles en cada momento.
-        </p>
-
-        <p>
-          Estos proveedores solo deben tratar los datos conforme a las
-          instrucciones necesarias para prestar el servicio y bajo sus propias
-          condiciones de seguridad y tratamiento.
-        </p>
-
-        <h2>7. Inteligencia artificial y análisis de contenido</h2>
-
-        <p>
-          Cuando utilizas VonuAI, el contenido que introduces puede ser enviado a
-          proveedores de inteligencia artificial para generar respuestas,
-          explicaciones, análisis o resúmenes. Esto puede incluir texto,
-          imágenes, archivos, transcripciones o información contextual que
-          decidas aportar.
-        </p>
-
-        <p>
-          VonuAI está diseñado para ayudarte a entender riesgos, ordenar
-          información y preparar próximos pasos, pero sus respuestas tienen
-          carácter orientativo y deben ser revisadas por el usuario,
-          especialmente en asuntos legales, médicos, psicológicos, financieros o
-          de seguridad.
-        </p>
-
-        <h2>8. Casos, patrones anonimizados y mejora de la detección</h2>
-
-        <p>
-          Cuando utilizas VonuAI para analizar posibles fraudes, mensajes
-          sospechosos, webs, contratos, facturas, situaciones de presión,
-          manipulación u otros riesgos, el sistema puede generar registros
-          internos de revisión para mejorar la seguridad, calidad y utilidad del
-          servicio.
-        </p>
-
-        <p>
-          Estos registros no tienen como finalidad identificar al usuario, sino
-          detectar señales repetidas, patrones de riesgo, abusos, errores,
-          campañas fraudulentas o casos similares. Para ello, VonuAI puede
-          aplicar procesos automáticos de revisión, limpieza, anonimización,
-          deduplicación y clasificación antes de conservar o reutilizar
-          información como patrón interno.
-        </p>
-
-        <p>
-          En la medida de lo posible, VonuAI evita conservar información
-          sensible innecesaria como contraseñas, códigos de verificación, datos
-          bancarios completos, documentos identificativos completos, información
-          médica detallada, datos de menores o datos de terceros que no sean
-          necesarios para entender el riesgo.
-        </p>
-
-        <p>
-          Algunas señales anonimizadas o agregadas pueden utilizarse para
-          mejorar la detección de fraudes, riesgos legales o de consumo,
-          patrones de presión emocional, seguridad personal u otras situaciones
-          similares. Este uso ayuda a que VonuAI pueda reconocer mejor casos
-          parecidos en el futuro, sin vender datos personales ni convertir la
-          información original del usuario en una base pública.
-        </p>
-
-        <h2>9. Conservación de los datos</h2>
-
-        <p>
-          Los datos se conservarán durante el tiempo necesario para cumplir la
-          finalidad para la que fueron recogidos, prestar el servicio, gestionar
-          solicitudes, mantener seguridad, cumplir obligaciones legales o
-          resolver posibles responsabilidades.
-        </p>
-
-        <p>
-          Los mensajes de contacto y suscripciones a recursos podrán conservarse
-          mientras exista una relación o interés legítimo en atender la solicitud
-          o mantener la comunicación, salvo que el usuario solicite su supresión
-          cuando proceda.
-        </p>
-
-        <h2>10. Comunicación de datos a terceros</h2>
-
-        <p>
-          No vendemos tus datos personales a terceros. Podemos comunicar datos a
-          proveedores necesarios para prestar el servicio, a administraciones
-          públicas cuando exista obligación legal, a entidades de pago para
-          gestionar transacciones o a terceros cuando sea necesario para proteger
-          derechos, seguridad o prevenir fraude.
-        </p>
-
-        <h2>11. Transferencias internacionales</h2>
-
-        <p>
-          Algunos proveedores tecnológicos pueden estar ubicados fuera del
-          Espacio Económico Europeo o tratar datos desde otros países. En esos
-          casos, se procurará que existan garantías adecuadas conforme a la
-          normativa aplicable, como cláusulas contractuales tipo, decisiones de
-          adecuación u otros mecanismos reconocidos por la normativa de
-          protección de datos.
-        </p>
-
-        <h2>12. Derechos de las personas usuarias</h2>
-
-        <p>
-          Puedes ejercer los derechos reconocidos por la normativa de protección
-          de datos, incluyendo acceso, rectificación, supresión, oposición,
-          limitación del tratamiento, portabilidad y, cuando proceda, retirada
-          del consentimiento.
-        </p>
-
-        <p>
-          Para ejercer tus derechos, escribe a{" "}
-          <strong>privacy@vonuai.com</strong> indicando el derecho que deseas
-          ejercer y aportando la información necesaria para identificar tu
-          solicitud.
-        </p>
-
-        <p>
-          También puedes presentar una reclamación ante la Agencia Española de
-          Protección de Datos si consideras que el tratamiento de tus datos no se
-          ajusta a la normativa aplicable.
-        </p>
-
-        <h2>13. Seguridad</h2>
-
-        <p>
-          VonuAI aplica medidas técnicas y organizativas razonables para
-          proteger la información frente a accesos no autorizados, pérdida,
-          alteración o uso indebido. Aun así, ningún sistema conectado a
-          Internet puede garantizar una seguridad absoluta.
-        </p>
-
-        <h2>14. Menores de edad</h2>
-
-        <p>
-          VonuAI puede utilizarse para apoyo educativo o de estudio, pero el uso
-          por menores debe realizarse bajo supervisión de padres, madres, tutores
-          o responsables legales cuando proceda. No está pensado para que menores
-          faciliten datos personales sensibles sin acompañamiento adulto.
-        </p>
-
-        <h2>15. Cambios en esta política</h2>
-
-        <p>
-          Esta política de privacidad podrá actualizarse para reflejar cambios
-          normativos, técnicos, operativos o de producto. La versión vigente será
-          siempre la publicada en esta página.
+          Esta política puede actualizarse cuando cambien el producto, sus proveedores o la normativa. La fecha de la versión vigente aparecerá en la parte superior.
         </p>
       </LegalPage>
 
