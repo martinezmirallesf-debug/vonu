@@ -58,6 +58,7 @@ export default function PrivacidadPage() {
           El responsable del tratamiento es <strong>Francisco Luis Martínez Miralles</strong>, titular de Vonu y del dominio vonuai.com.
         </p>
         <ul>
+          <li><strong>NIF:</strong> 74235561W</li>
           <li><strong>Domicilio de contacto:</strong> Calle Velarde, 55, 03203 Elche, Alicante, España</li>
           <li><strong>Email general:</strong> hello@vonuai.com</li>
           <li><strong>Email de privacidad:</strong> privacy@vonuai.com</li>
