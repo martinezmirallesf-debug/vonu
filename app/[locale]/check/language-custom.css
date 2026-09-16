@@ -67,7 +67,7 @@
     border: 0 !important;
     outline: 0 !important;
     border-radius: 8px;
-    background: #0b0e17;
+    background: #020b24;
     box-shadow: 0 12px 30px rgba(0,0,0,.34);
   }
 
@@ -90,8 +90,8 @@
 
   .language-custom-menu button:hover,
   .language-custom-menu button.is-active {
-    background: rgba(52,211,153,.10);
-    color: rgb(167 243 208) !important;
+    background: rgba(123,183,255,.12);
+    color: #a3ceff !important;
   }
 }
 
@@ -116,7 +116,7 @@ html[lang^="es"] main > section.text-center > h1::before {
 
 html[lang^="es"] main > section.text-center > h1::after {
   content: "en segundos";
-  color: rgb(52 211 153);
+  color: #7bb7ff;
 }
 
 @media (min-width: 640px) {
@@ -210,7 +210,7 @@ html[lang^="es"] main > section.text-center > h1::after {
     border: 0 !important;
     outline: 0 !important;
     border-radius: 8px;
-    background: #0b0e17;
+    background: #020b24;
     box-shadow: 0 12px 28px rgba(0,0,0,.28);
     overflow: hidden;
   }
@@ -236,7 +236,7 @@ html[lang^="es"] main > section.text-center > h1::after {
 
   .language-mobile-menu button:hover,
   .language-mobile-menu button.is-active {
-    background: rgba(52,211,153,.10) !important;
-    color: rgb(167 243 208) !important;
+    background: rgba(123,183,255,.12) !important;
+    color: #a3ceff !important;
   }
 }
