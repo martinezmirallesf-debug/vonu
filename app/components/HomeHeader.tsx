@@ -10,12 +10,11 @@ import {
   checkPath,
   getTopic,
   isGlobalLocale,
-  isIndexedPublicSlug,
   localeInfo,
   navCopy,
-  publicPath,
   type IndexedPublicSlug,
 } from "@/lib/vonu-global/i18n";
+import { localizedPublicPath, resolveInternalSlug } from "@/lib/vonu-global/routes";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 import "./use-case-product-theme.css";
 
@@ -45,8 +44,8 @@ export default function HomeHeader() {
   const isCoreUseCase = coreUseCasePaths.has(pathname);
 
   const pathParts = pathname.split("/").filter(Boolean);
-  const currentSlugCandidate = (isGlobalLocale(pathParts[0] || "") ? pathParts[1] : pathParts[0]) || "";
-  const currentSlug = isIndexedPublicSlug(currentSlugCandidate) ? currentSlugCandidate : null;
+  const currentRouteSlug = (isGlobalLocale(pathParts[0] || "") ? pathParts[1] : pathParts[0]) || "";
+  const currentSlug = currentRouteSlug ? resolveInternalSlug(locale, currentRouteSlug) : null;
 
   const mainLinks = [
     { label: t.product, slug: "producto" as const },
@@ -60,12 +59,12 @@ export default function HomeHeader() {
     { label: t.privacy, href: "/legal/privacidad" },
     { label: t.terms, href: "/legal/terminos" },
     { label: t.responsible, href: "/legal/uso-responsable" },
-    { label: t.contact, href: publicPath(locale, "contacto") },
+    { label: t.contact, href: localizedPublicPath(locale, "contacto") },
   ];
 
   function localeTarget(next: SupportedLocale) {
     if (isCheckHome) return checkPath(next);
-    if (currentSlug) return publicPath(next, currentSlug);
+    if (currentSlug) return localizedPublicPath(next, currentSlug);
     return checkPath(next);
   }
 
@@ -90,7 +89,7 @@ export default function HomeHeader() {
           {mainLinks.map((item) =>
             item.hasMenu ? (
               <div key={item.slug} className="group relative py-5">
-                <Link href={publicPath(locale, item.slug)} className="inline-flex items-center gap-1.5 transition hover:text-white group-focus-within:text-white">
+                <Link href={localizedPublicPath(locale, item.slug)} className="inline-flex items-center gap-1.5 transition hover:text-white group-focus-within:text-white">
                   {item.label}
                   <span className="text-[10px] text-slate-500">⌄</span>
                 </Link>
@@ -99,7 +98,7 @@ export default function HomeHeader() {
                     {caseSlugs.map((caseSlug) => {
                       const topic = getTopic(locale, caseSlug);
                       return (
-                        <Link key={caseSlug} href={publicPath(locale, caseSlug)} className="rounded-2xl px-4 py-3 transition hover:bg-white/[0.045]">
+                        <Link key={caseSlug} href={localizedPublicPath(locale, caseSlug)} className="rounded-2xl px-4 py-3 transition hover:bg-white/[0.045]">
                           <span className="block text-[14px] font-semibold text-slate-100">{topic.eyebrow}</span>
                           <span className="mt-1 block text-[12px] leading-5 text-slate-500">{topic.hero}</span>
                         </Link>
@@ -109,7 +108,7 @@ export default function HomeHeader() {
                 </div>
               </div>
             ) : (
-              <Link key={item.slug} href={publicPath(locale, item.slug)} className="transition hover:text-white">
+              <Link key={item.slug} href={localizedPublicPath(locale, item.slug)} className="transition hover:text-white">
                 {item.label}
               </Link>
             ),
@@ -144,10 +143,7 @@ export default function HomeHeader() {
           </div>
 
           {!isCheckHome && (
-            <Link
-              href={checkPath(locale)}
-              className="rounded-xl bg-emerald-400 px-4 py-2.5 text-[14px] font-bold text-[#07110d] transition hover:bg-emerald-300"
-            >
+            <Link href={checkPath(locale)} className="rounded-xl bg-emerald-400 px-4 py-2.5 text-[14px] font-bold text-[#07110d] transition hover:bg-emerald-300">
               {t.analyze}
             </Link>
           )}
@@ -161,51 +157,26 @@ export default function HomeHeader() {
           aria-expanded={open}
         >
           <span className="relative block h-6 w-8" aria-hidden="true">
-            <span
-              className={[
-                "absolute top-[7px] h-[2px] rounded-full bg-emerald-300 transition-transform duration-300 ease-out",
-                open ? "left-[2px] w-[28px] translate-y-[5px] rotate-45" : "right-0 w-[28px] translate-y-0 rotate-0",
-              ].join(" ")}
-            />
-            <span
-              className={[
-                "absolute top-[17px] h-[2px] rounded-full bg-emerald-300 transition-transform duration-300 ease-out",
-                open ? "left-[2px] w-[28px] -translate-y-[5px] -rotate-45" : "right-0 w-[22px] translate-y-0 rotate-0",
-              ].join(" ")}
-            />
+            <span className={["absolute top-[7px] h-[2px] rounded-full bg-emerald-300 transition-transform duration-300 ease-out", open ? "left-[2px] w-[28px] translate-y-[5px] rotate-45" : "right-0 w-[28px] translate-y-0 rotate-0"].join(" ")} />
+            <span className={["absolute top-[17px] h-[2px] rounded-full bg-emerald-300 transition-transform duration-300 ease-out", open ? "left-[2px] w-[28px] -translate-y-[5px] -rotate-45" : "right-0 w-[22px] translate-y-0 rotate-0"].join(" ")} />
           </span>
         </button>
       </div>
 
-      <div
-        className={[
-          "fixed inset-0 z-[10010] h-[100dvh] min-h-[100dvh] w-screen overflow-hidden bg-[#0b0e17] transition-[opacity,transform] duration-300 ease-out md:hidden",
-          open ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none -translate-y-5 opacity-0",
-        ].join(" ")}
-      >
+      <div className={["fixed inset-0 z-[10010] h-[100dvh] min-h-[100dvh] w-screen overflow-hidden bg-[#0b0e17] transition-[opacity,transform] duration-300 ease-out md:hidden", open ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none -translate-y-5 opacity-0"].join(" ")}>
         <div className="flex h-full min-h-full w-full flex-col overflow-y-auto px-6 pb-6 pt-[88px]">
           <nav className="grid gap-0">
             {mainLinks.map((item) =>
               item.hasMenu ? (
                 <div key={item.slug}>
-                  <button
-                    type="button"
-                    onClick={() => setCasesOpen((value) => !value)}
-                    className="flex min-h-[60px] w-full items-center justify-between py-3 text-left text-[26px] font-semibold leading-none tracking-[-0.045em] text-white"
-                    aria-expanded={casesOpen}
-                  >
+                  <button type="button" onClick={() => setCasesOpen((value) => !value)} className="flex min-h-[60px] w-full items-center justify-between py-3 text-left text-[26px] font-semibold leading-none tracking-[-0.045em] text-white" aria-expanded={casesOpen}>
                     <span>{item.label}</span>
                     <span className="text-[26px] font-light leading-none text-emerald-300">{casesOpen ? "−" : "+"}</span>
                   </button>
                   {casesOpen && (
                     <div className="mb-3 grid gap-0 border-l border-emerald-400/25 pl-3">
                       {caseSlugs.map((caseSlug) => (
-                        <Link
-                          key={caseSlug}
-                          href={publicPath(locale, caseSlug)}
-                          onClick={closeMenu}
-                          className="py-2.5 text-[14px] font-medium text-slate-400 transition hover:text-emerald-300"
-                        >
+                        <Link key={caseSlug} href={localizedPublicPath(locale, caseSlug)} onClick={closeMenu} className="py-2.5 text-[14px] font-medium text-slate-400 transition hover:text-emerald-300">
                           {getTopic(locale, caseSlug).eyebrow}
                         </Link>
                       ))}
@@ -213,12 +184,7 @@ export default function HomeHeader() {
                   )}
                 </div>
               ) : (
-                <Link
-                  key={item.slug}
-                  href={publicPath(locale, item.slug)}
-                  onClick={closeMenu}
-                  className="flex min-h-[60px] items-center py-3 text-[26px] font-semibold leading-none tracking-[-0.045em] text-white transition hover:text-emerald-300"
-                >
+                <Link key={item.slug} href={localizedPublicPath(locale, item.slug)} onClick={closeMenu} className="flex min-h-[60px] items-center py-3 text-[26px] font-semibold leading-none tracking-[-0.045em] text-white transition hover:text-emerald-300">
                   {item.label}
                 </Link>
               ),
@@ -227,27 +193,14 @@ export default function HomeHeader() {
 
           <div className="mt-auto pt-7">
             <div className="mb-5 border-t border-white/[0.10] pt-5">
-              <button
-                type="button"
-                onClick={() => setLanguageOpen((value) => !value)}
-                className="flex w-full items-center justify-between py-2 text-[14px] font-semibold text-slate-400"
-                aria-expanded={languageOpen}
-              >
+              <button type="button" onClick={() => setLanguageOpen((value) => !value)} className="flex w-full items-center justify-between py-2 text-[14px] font-semibold text-slate-400" aria-expanded={languageOpen}>
                 <span>{t.language}</span>
                 <span className="text-emerald-300">{localeInfo[locale].label}</span>
               </button>
               {languageOpen && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {GLOBAL_LOCALES.map((item) => (
-                    <Link
-                      key={item}
-                      href={localeTarget(item)}
-                      onClick={closeMenu}
-                      className={[
-                        "rounded-xl border px-3 py-2 text-[12px] font-bold",
-                        item === locale ? "border-emerald-400/30 bg-emerald-400/[0.10] text-emerald-200" : "border-white/[0.08] text-slate-500",
-                      ].join(" ")}
-                    >
+                    <Link key={item} href={localeTarget(item)} onClick={closeMenu} className={["rounded-xl border px-3 py-2 text-[12px] font-bold", item === locale ? "border-emerald-400/30 bg-emerald-400/[0.10] text-emerald-200" : "border-white/[0.08] text-slate-500"].join(" ")}>
                       {localeInfo[item].label}
                     </Link>
                   ))}
@@ -257,23 +210,13 @@ export default function HomeHeader() {
 
             <div className="mb-6 grid gap-4 border-t border-white/[0.10] pt-6">
               {secondaryLinks.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={closeMenu}
-                  className="text-[14px] font-medium text-slate-500 transition hover:text-emerald-300"
-                >
+                <Link key={item.href} href={item.href} onClick={closeMenu} className="text-[14px] font-medium text-slate-500 transition hover:text-emerald-300">
                   {item.label}
                 </Link>
               ))}
             </div>
-            <Link
-              href={checkPath(locale)}
-              onClick={closeMenu}
-              className="inline-flex min-h-[48px] w-full items-center justify-center gap-3 rounded-xl bg-emerald-400 px-5 text-[15px] font-bold text-[#07110d] shadow-[0_10px_30px_rgba(52,211,153,.16)] transition hover:bg-emerald-300"
-            >
-              <span>{t.analyze}</span>
-              <span aria-hidden="true">→</span>
+            <Link href={checkPath(locale)} onClick={closeMenu} className="inline-flex min-h-[48px] w-full items-center justify-center gap-3 rounded-xl bg-emerald-400 px-5 text-[15px] font-bold text-[#07110d] shadow-[0_10px_30px_rgba(52,211,153,.16)] transition hover:bg-emerald-300">
+              <span>{t.analyze}</span><span aria-hidden="true">→</span>
             </Link>
           </div>
         </div>
