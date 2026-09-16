@@ -162,6 +162,28 @@ a:focus-visible {
   color: var(--vonu-accent-hover) !important;
 }
 
+/* The old inline result palette used green for a low-risk result. Blue now
+   carries that positive state while warning/high-risk colors stay semantic. */
+.vonu-check-page section[style*="rgba(16,185,129"] {
+  background: linear-gradient(180deg, rgb(123 183 255 / 0.10), rgb(13 27 61 / 0.94)) !important;
+  border-color: rgb(123 183 255 / 0.30) !important;
+}
+
+.vonu-check-page [style*="#34d399"],
+.vonu-check-page [style*="rgb(52 211 153)"] {
+  color: var(--vonu-accent) !important;
+}
+
+/* CheckClient still contains one small legacy SVG mark in its internal footer.
+   Recolor the paths without changing that component's geometry. */
+.vonu-check-page footer svg path:first-child {
+  stroke: var(--vonu-accent) !important;
+}
+
+.vonu-check-page footer svg path:nth-child(2) {
+  stroke: rgb(142 194 255 / 0.58) !important;
+}
+
 @media (max-width: 767px) {
   .vonu-check-page.vonu-check-page header:has(> div:nth-child(2)) > div:first-child,
   .vonu-check-page.vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2),
