@@ -143,7 +143,7 @@ export default function HomeHeader() {
           </div>
 
           {!isCheckHome && (
-            <Link href={checkPath(locale)} className="rounded-xl bg-emerald-400 px-4 py-2.5 text-[14px] font-bold text-[#07110d] transition hover:bg-emerald-300">
+            <Link href={checkPath(locale)} className="rounded-xl bg-[#7bb7ff] px-4 py-2.5 text-[14px] font-bold text-[#07142f] transition hover:bg-[#a3ceff]">
               {t.analyze}
             </Link>
           )}
@@ -164,7 +164,7 @@ export default function HomeHeader() {
       </div>
 
       <div className={["fixed inset-0 z-[10010] h-[100dvh] min-h-[100dvh] w-screen overflow-hidden bg-[#0b0e17] transition-[opacity,transform] duration-300 ease-out md:hidden", open ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none -translate-y-5 opacity-0"].join(" ")}>
-        <div className="flex h-full min-h-full w-full flex-col overflow-y-auto px-6 pb-6 pt-[88px]">
+        <div className="flex h-full min-h-full w-full flex-col overflow-y-auto overscroll-contain px-6 pb-5 pt-[88px]">
           <nav className="grid gap-0">
             {mainLinks.map((item) =>
               item.hasMenu ? (
@@ -191,33 +191,46 @@ export default function HomeHeader() {
             )}
           </nav>
 
-          <div className="mt-auto pt-7">
-            <div className="mb-5 border-t border-white/[0.10] pt-5">
-              <button type="button" onClick={() => setLanguageOpen((value) => !value)} className="flex w-full items-center justify-between py-2 text-[14px] font-semibold text-slate-400" aria-expanded={languageOpen}>
-                <span>{t.language}</span>
-                <span className="text-emerald-300">{localeInfo[locale].label}</span>
-              </button>
-              {languageOpen && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {GLOBAL_LOCALES.map((item) => (
-                    <Link key={item} href={localeTarget(item)} onClick={closeMenu} className={["rounded-xl border px-3 py-2 text-[12px] font-bold", item === locale ? "border-emerald-400/30 bg-emerald-400/[0.10] text-emerald-200" : "border-white/[0.08] text-slate-500"].join(" ")}>
-                      {localeInfo[item].label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="mb-6 grid gap-4 border-t border-white/[0.10] pt-6">
+          <div className="mt-auto border-t border-white/[0.10] pt-5">
+            <div className="mb-5 grid grid-cols-2 gap-x-5 gap-y-3">
               {secondaryLinks.map((item) => (
-                <Link key={item.href} href={item.href} onClick={closeMenu} className="text-[14px] font-medium text-slate-500 transition hover:text-emerald-300">
+                <Link key={item.href} href={item.href} onClick={closeMenu} className="text-[13px] font-medium text-slate-500 transition hover:text-emerald-300">
                   {item.label}
                 </Link>
               ))}
             </div>
-            <Link href={checkPath(locale)} onClick={closeMenu} className="inline-flex min-h-[48px] w-full items-center justify-center gap-3 rounded-xl bg-emerald-400 px-5 text-[15px] font-bold text-[#07110d] shadow-[0_10px_30px_rgba(52,211,153,.16)] transition hover:bg-emerald-300">
+
+            <Link href={checkPath(locale)} onClick={closeMenu} className="inline-flex min-h-[48px] w-full items-center justify-center gap-3 rounded-xl bg-[#7bb7ff] px-5 text-[15px] font-bold text-[#07142f] shadow-[0_10px_30px_rgba(123,183,255,.22)] transition hover:bg-[#a3ceff]">
               <span>{t.analyze}</span><span aria-hidden="true">→</span>
             </Link>
+
+            <div className="vonu-mobile-language mt-4 border-t border-white/[0.10] pt-3">
+              {languageOpen && (
+                <div className="vonu-mobile-language-popover grid gap-1 p-2">
+                  {GLOBAL_LOCALES.map((item) => (
+                    <Link
+                      key={item}
+                      href={localeTarget(item)}
+                      onClick={closeMenu}
+                      data-active={item === locale ? "true" : "false"}
+                      className="flex min-h-[42px] items-center justify-between rounded-xl border border-transparent px-3 text-[13px] font-semibold text-slate-300 transition hover:bg-white/[0.05] hover:text-white"
+                    >
+                      <span>{localeInfo[item].native}</span>
+                      <span className="text-[11px] font-bold text-slate-500">{localeInfo[item].label}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setLanguageOpen((value) => !value)}
+                className="flex min-h-[38px] w-full items-center justify-between text-[13px] font-semibold text-slate-500"
+                aria-expanded={languageOpen}
+              >
+                <span>{t.language}</span>
+                <span className="text-[#8ec2ff]">{localeInfo[locale].label} {languageOpen ? "⌃" : "⌄"}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
