@@ -26,6 +26,8 @@ export default function PlanCheckoutButton({
   label,
   className,
 }: {
+  plan?: "plus" | "max"; // temporary compatibility while localized pricing copy is migrated
+  billing?: "monthly" | "yearly";
   locale: SupportedLocale;
   label: string;
   className?: string;
