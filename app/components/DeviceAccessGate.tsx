@@ -6,6 +6,14 @@ import type { SupportedLocale } from "@/lib/vonu-check/types";
 
 type PaymentState = "idle" | "activating" | "ready" | "delayed";
 
+const analyzeLabels = new Set([
+  "Analizar ahora",
+  "Analyse now",
+  "Analyser",
+  "Jetzt analysieren",
+  "حلّل الآن",
+]);
+
 const copy: Record<SupportedLocale, {
   eyebrow: string;
   title: string;
@@ -85,13 +93,16 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
 
   useEffect(() => {
     let cancelled = false;
+    let replayingAnalysisClick = false;
+    let entitlementCheckPending = false;
+    const originalFetch = window.fetch.bind(window);
 
     async function confirmCredits() {
       setPaymentState("activating");
 
       for (let attempt = 0; attempt < 12 && !cancelled; attempt += 1) {
         try {
-          const response = await fetch("/api/check/entitlement", {
+          const response = await originalFetch("/api/check/entitlement", {
             method: "GET",
             cache: "no-store",
           });
@@ -115,12 +126,61 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
       if (!cancelled) setPaymentState("delayed");
     }
 
+    async function preflightAnalysis(event: MouseEvent) {
+      const origin = event.target;
+      const button = origin instanceof Element ? origin.closest("button") : null;
+      if (!button || !analyzeLabels.has((button.textContent || "").trim())) return;
+
+      if (replayingAnalysisClick) {
+        replayingAnalysisClick = false;
+        return;
+      }
+
+      // Stop the React onClick until we know whether this browser/device can
+      // consume an analysis. This avoids showing a generic analysis error when
+      // the correct UX is the €3.99 pack wall.
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      if (entitlementCheckPending) return;
+      entitlementCheckPending = true;
+
+      let shouldOpenPaywall = false;
+      try {
+        const response = await originalFetch("/api/check/entitlement", {
+          method: "GET",
+          cache: "no-store",
+        });
+        const data = await response.json().catch(() => null);
+        if (response.ok && data) {
+          const freeUsed = Boolean(data.free_used);
+          const creditsRemaining = Number(data.credits_remaining || 0);
+          shouldOpenPaywall = freeUsed && creditsRemaining <= 0;
+        }
+      } catch {
+        // Fail open: the metered endpoint remains the source of truth and the
+        // fetch interceptor below still catches a 402 if entitlement changed.
+      } finally {
+        entitlementCheckPending = false;
+      }
+
+      if (shouldOpenPaywall) {
+        setOpen(true);
+        return;
+      }
+
+      replayingAnalysisClick = true;
+      button.click();
+    }
+
     const params = new URLSearchParams(window.location.search);
     if (params.get("checkout") === "success" && params.get("pack") === "3") {
       void confirmCredits();
     }
 
-    const originalFetch = window.fetch.bind(window);
+    // Keep the server response as a second line of defence for races, Enter-key
+    // submissions and any future analysis trigger that does not use the CTA.
     window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const response = await originalFetch(input, init);
       const url = typeof input === "string" ? input : input instanceof URL ? input.pathname : input.url;
@@ -130,8 +190,11 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
       return response;
     };
 
+    document.addEventListener("click", preflightAnalysis, true);
+
     return () => {
       cancelled = true;
+      document.removeEventListener("click", preflightAnalysis, true);
       window.fetch = originalFetch;
     };
   }, []);
