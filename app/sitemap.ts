@@ -1,10 +1,9 @@
 import type { MetadataRoute } from "next";
+import { GLOBAL_LOCALES, INDEXED_PUBLIC_SLUGS } from "@/lib/vonu-global/i18n";
 import {
-  GLOBAL_LOCALES,
-  INDEXED_PUBLIC_SLUGS,
-  languageAlternates,
-  publicPath,
-} from "@/lib/vonu-global/i18n";
+  localizedLanguageAlternates,
+  localizedPublicPath,
+} from "@/lib/vonu-global/routes";
 
 const BASE_URL = "https://vonuai.com";
 const UPDATED_AT = new Date("2026-09-16T00:00:00.000Z");
@@ -28,7 +27,7 @@ const localizedCheckRoutes: MetadataRoute.Sitemap = GLOBAL_LOCALES.map((locale) 
 
 const publicRoutes: MetadataRoute.Sitemap = INDEXED_PUBLIC_SLUGS.flatMap((slug) =>
   GLOBAL_LOCALES.map((locale) => ({
-    url: `${BASE_URL}${publicPath(locale, slug)}`,
+    url: `${BASE_URL}${localizedPublicPath(locale, slug)}`,
     lastModified: UPDATED_AT,
     changeFrequency: slug === "recursos" ? ("weekly" as const) : ("monthly" as const),
     priority:
@@ -37,7 +36,7 @@ const publicRoutes: MetadataRoute.Sitemap = INDEXED_PUBLIC_SLUGS.flatMap((slug) 
         : slug === "producto" || slug === "casos-de-uso" || slug === "precios"
           ? 0.9
           : 0.82,
-    alternates: { languages: languageAlternates(slug) },
+    alternates: { languages: localizedLanguageAlternates(slug) },
   })),
 );
 
