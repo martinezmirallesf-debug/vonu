@@ -60,6 +60,56 @@ function normalizeTone(value: unknown): SignalTone {
   return "neutral";
 }
 
+function repairJsonCandidate(value: string) {
+  let output = "";
+  let inString = false;
+  let escaped = false;
+
+  for (let index = 0; index < value.length; index += 1) {
+    const char = value[index];
+
+    if (inString) {
+      if (escaped) {
+        output += char;
+        escaped = false;
+        continue;
+      }
+      if (char === "\\") {
+        output += char;
+        escaped = true;
+        continue;
+      }
+      if (char === '"') {
+        output += char;
+        inString = false;
+        continue;
+      }
+      if (char === "\n") {
+        output += "\\n";
+        continue;
+      }
+      if (char === "\r") {
+        output += "\\r";
+        continue;
+      }
+      if (char === "\t") {
+        output += "\\t";
+        continue;
+      }
+      if (char.charCodeAt(0) < 0x20) continue;
+      output += char;
+      continue;
+    }
+
+    if (char === '"') inString = true;
+    output += char;
+  }
+
+  // Vision models occasionally leave a trailing comma before a closing
+  // bracket/object even when explicitly asked for strict JSON.
+  return output.replace(/,\s*([}\]])/g, "$1");
+}
+
 function parseJsonText(text: string) {
   const clean = text
     .trim()
@@ -67,14 +117,24 @@ function parseJsonText(text: string) {
     .replace(/\s*```$/i, "")
     .trim();
 
-  try {
-    return JSON.parse(clean);
-  } catch {
-    const first = clean.indexOf("{");
-    const last = clean.lastIndexOf("}");
-    if (first >= 0 && last > first) return JSON.parse(clean.slice(first, last + 1));
-    throw new Error("invalid_model_json");
+  const first = clean.indexOf("{");
+  const last = clean.lastIndexOf("}");
+  const objectOnly = first >= 0 && last > first ? clean.slice(first, last + 1) : clean;
+  const candidates = Array.from(new Set([clean, objectOnly])).filter(Boolean);
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      try {
+        return JSON.parse(repairJsonCandidate(candidate));
+      } catch {
+        // Try the next candidate before giving up.
+      }
+    }
   }
+
+  throw new Error("invalid_model_json");
 }
 
 function promptFor(locale: SupportedLocale) {
