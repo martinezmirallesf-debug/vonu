@@ -5,10 +5,13 @@ import {
   INDEXED_PUBLIC_SLUGS,
   getTopic,
   isGlobalLocale,
-  isIndexedPublicSlug,
-  languageAlternates,
-  publicPath,
 } from "@/lib/vonu-global/i18n";
+import {
+  localizedLanguageAlternates,
+  localizedPublicPath,
+  localizedRouteSlug,
+  resolveInternalSlug,
+} from "@/lib/vonu-global/routes";
 
 const SITE_URL = "https://vonuai.com";
 const NON_SPANISH = ["en", "fr", "de", "ar"] as const;
@@ -21,16 +24,22 @@ export const dynamicParams = false;
 
 export function generateStaticParams() {
   return NON_SPANISH.flatMap((locale) =>
-    INDEXED_PUBLIC_SLUGS.map((slug) => ({ locale, slug })),
+    INDEXED_PUBLIC_SLUGS.map((slug) => ({
+      locale,
+      slug: localizedRouteSlug(locale, slug),
+    })),
   );
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale, slug } = await params;
-  if (!isGlobalLocale(locale) || locale === "es" || !isIndexedPublicSlug(slug)) return {};
+  const { locale, slug: routeSlug } = await params;
+  if (!isGlobalLocale(locale) || locale === "es") return {};
+
+  const slug = resolveInternalSlug(locale, routeSlug);
+  if (!slug) return {};
 
   const topic = getTopic(locale, slug);
-  const canonical = publicPath(locale, slug);
+  const canonical = localizedPublicPath(locale, slug);
   const ogLocale = locale === "en" ? "en_US" : locale === "fr" ? "fr_FR" : locale === "de" ? "de_DE" : "ar";
 
   return {
@@ -39,7 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: topic.description,
     alternates: {
       canonical,
-      languages: languageAlternates(slug),
+      languages: localizedLanguageAlternates(slug),
     },
     openGraph: {
       type: "website",
@@ -71,11 +80,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function GlobalLocalizedPage({ params }: Props) {
-  const { locale, slug } = await params;
+  const { locale, slug: routeSlug } = await params;
 
-  if (!isGlobalLocale(locale) || locale === "es" || !isIndexedPublicSlug(slug)) {
+  if (!isGlobalLocale(locale) || locale === "es") {
     notFound();
   }
+
+  const slug = resolveInternalSlug(locale, routeSlug);
+  if (!slug) notFound();
 
   return <LocalizedPublicPage locale={locale} slug={slug} />;
 }
