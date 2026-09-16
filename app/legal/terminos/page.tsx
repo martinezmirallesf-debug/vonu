@@ -8,12 +8,11 @@ const siteUrl = "https://vonuai.com";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Términos y condiciones — Vonu",
-  description:
-    "Términos de Vonu: uso del servicio, comprobaciones de riesgo, cuentas, planes, pagos, cancelación y límites de responsabilidad.",
+  description: "Términos de Vonu: uso del servicio, análisis gratuito por dispositivo, packs de análisis, pagos y límites de responsabilidad.",
   alternates: { canonical: "/legal/terminos" },
   openGraph: {
     title: "Términos y condiciones — Vonu",
-    description: "Condiciones generales de uso del servicio Vonu.",
+    description: "Condiciones generales de uso y compra de análisis en Vonu.",
     url: `${siteUrl}/legal/terminos`,
     siteName: "Vonu",
     locale: "es_ES",
@@ -29,7 +28,7 @@ export default function TerminosPage() {
     "@id": `${siteUrl}/legal/terminos#webpage`,
     url: `${siteUrl}/legal/terminos`,
     name: "Términos y condiciones — Vonu",
-    description: "Condiciones generales de uso del servicio Vonu.",
+    description: "Condiciones generales de uso y compra de análisis en Vonu.",
     inLanguage: "es-ES",
     isPartOf: { "@type": "WebSite", name: "Vonu", url: siteUrl },
   };
@@ -45,7 +44,7 @@ export default function TerminosPage() {
             <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Condiciones</p>
             <h1 className="mt-4 text-[50px] font-semibold leading-[0.98] tracking-[-0.06em] text-zinc-950 sm:text-[82px]">Términos y condiciones.</h1>
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
-              Reglas claras para utilizar Vonu y entender qué significa una comprobación de riesgo.
+              Reglas claras para utilizar Vonu, comprar análisis y entender los límites de una comprobación de riesgo.
             </p>
             <p className="mt-5 text-[13px] text-zinc-500">Última actualización: 16 de septiembre de 2026</p>
           </div>
@@ -87,56 +86,72 @@ export default function TerminosPage() {
           Las amenazas cambian con rapidez, los datos externos pueden ser incompletos y los modelos automáticos pueden equivocarse. Antes de enviar dinero, credenciales o documentación sensible, utiliza también canales oficiales de verificación cuando el contexto lo aconseje.
         </p>
 
-        <h2>6. Cuentas y seguridad</h2>
+        <h2>6. Acceso sin cuenta e identificación del dispositivo</h2>
         <p>
-          Algunas funciones pueden requerir una cuenta. Eres responsable de proteger tus credenciales y de avisarnos si detectas acceso no autorizado. Podemos limitar temporalmente el acceso cuando sea necesario para prevenir abuso, fraude, sobrecarga o riesgos de seguridad.
+          La versión actual de Vonu Check no exige crear una cuenta. Para aplicar el análisis gratuito y mantener el saldo de análisis comprados, Vonu asigna al navegador o dispositivo un identificador aleatorio pseudónimo mediante almacenamiento técnico del navegador.
+        </p>
+        <p>
+          Ese identificador no pretende revelar tu identidad real ni sustituye a una cuenta de usuario. Si borras cookies o datos del navegador, utilizas navegación privada, cambias de navegador o cambias de dispositivo, Vonu puede dejar de reconocer el saldo asociado anteriormente.
         </p>
 
-        <h2>7. Planes y límites</h2>
+        <h2>7. Análisis gratuito y packs</h2>
         <p>
-          Vonu puede ofrecer un nivel gratuito y planes de pago con límites, capacidades o funcionalidades diferentes. Las características vigentes, el precio, la periodicidad y los límites aplicables serán los mostrados en la página de precios y en la pantalla de contratación antes de confirmar el pago.
+          En el lanzamiento, Vonu ofrece <strong>un análisis gratuito por navegador o dispositivo</strong>. Una vez utilizado, puedes adquirir packs de <strong>3 análisis adicionales por 3,99 €</strong>, salvo que la página de precios muestre una oferta posterior diferente antes de la compra.
         </p>
         <p>
-          Podemos cambiar la oferta para nuevas contrataciones. Los cambios que afecten a una suscripción ya contratada se comunicarán cuando la normativa o la naturaleza del cambio lo exijan.
-        </p>
-
-        <h2>8. Pagos, renovación y cancelación</h2>
-        <p>
-          Cuando estén habilitados los planes de pago, los cobros se procesarán mediante un proveedor especializado como Stripe. Vonu no necesita almacenar el número completo de tu tarjeta. Antes del pago se mostrará el importe, la periodicidad y la información fiscal aplicable.
-        </p>
-        <p>
-          Las suscripciones periódicas se renovarán conforme al ciclo indicado en la contratación hasta que sean canceladas. La cancelación impedirá futuras renovaciones y, salvo que se indique otra cosa o resulte exigible legalmente, el acceso de pago continuará hasta el final del periodo ya abonado.
+          Los packs son créditos de uso del servicio: cada comprobación realizada consume un análisis disponible. Los packs adquiridos se acumulan en el navegador o dispositivo reconocido por Vonu.
         </p>
 
-        <h2>9. Desistimiento y reembolsos de consumidores</h2>
+        <h2>8. Pago único y Stripe</h2>
         <p>
-          Si contratas como consumidor a distancia, dispondrás de los derechos de desistimiento y reembolso que establezca la normativa aplicable. Con carácter general en España y la Unión Europea, determinados contratos de servicios cuentan con un plazo legal de desistimiento, salvo las excepciones y condiciones previstas por la ley.
+          El pack de análisis se cobra mediante <strong>Stripe</strong>. Es un <strong>pago único</strong>: no crea una suscripción, no se renueva automáticamente y no genera cobros recurrentes por parte de Vonu.
         </p>
         <p>
-          La información concreta sobre inicio inmediato del servicio, desistimiento, reembolso y cualquier consentimiento que sea necesario se mostrará en el proceso de contratación. Estos términos no limitan derechos imperativos del consumidor.
+          Antes de confirmar el pago se muestra el importe. Stripe procesa los datos necesarios para el cobro y puede solicitar un email para el recibo. Vonu no necesita almacenar el número completo de tu tarjeta.
         </p>
 
-        <h2>10. Disponibilidad y cambios técnicos</h2>
+        <h2>9. Activación, incidencias y justificante de compra</h2>
+        <p>
+          Tras la confirmación del pago, Vonu añade los análisis comprados al identificador de dispositivo asociado a la operación. La integración utiliza controles de idempotencia para evitar conceder el mismo pack varias veces si Stripe reenvía una notificación técnica.
+        </p>
+        <p>
+          Conserva el justificante o recibo de Stripe. Si el navegador pierde su identificador técnico después de una compra, el recibo puede ser necesario para revisar la incidencia y valorar la restauración del saldo pendiente.
+        </p>
+
+        <h2>10. Desistimiento y reembolsos de consumidores</h2>
+        <p>
+          Si contratas como consumidor a distancia, se aplicarán los derechos de desistimiento y reembolso que correspondan conforme a la normativa aplicable y a las circunstancias concretas de la prestación digital. La información exigible sobre ejecución inmediata del servicio y cualquier consentimiento o reconocimiento legalmente necesario se mostrará cuando proceda durante la contratación.
+        </p>
+        <p>
+          Estos términos no limitan derechos imperativos del consumidor. Para solicitar ayuda sobre una compra, escribe a <strong>hello@vonuai.com</strong> incluyendo el justificante de pago y la información necesaria para localizar la operación.
+        </p>
+
+        <h2>11. Disponibilidad y cambios técnicos</h2>
         <p>
           Podemos modificar, mantener, sustituir o retirar funciones por motivos de seguridad, calidad, costes, proveedores o evolución del producto. Intentaremos evitar interrupciones innecesarias, pero no garantizamos disponibilidad ininterrumpida.
         </p>
 
-        <h2>11. Propiedad intelectual</h2>
+        <h2>12. Prevención de abuso</h2>
+        <p>
+          Podemos aplicar límites técnicos razonables para impedir automatización abusiva, fraude de pagos, elusión sistemática del límite gratuito, sobrecarga o uso que comprometa la seguridad del servicio. Estas medidas no deben interpretarse como una garantía de identificación única de cada dispositivo.
+        </p>
+
+        <h2>13. Propiedad intelectual</h2>
         <p>
           La marca Vonu, el diseño, software, reglas internas, estructura, textos propios y demás elementos originales del servicio pertenecen a sus respectivos titulares y están protegidos por la normativa aplicable.
         </p>
 
-        <h2>12. Limitación de responsabilidad</h2>
+        <h2>14. Limitación de responsabilidad</h2>
         <p>
           Vonu no será responsable de decisiones adoptadas ignorando información relevante disponible fuera del servicio, de un uso contrario a estos términos o de daños atribuibles exclusivamente a servicios de terceros fuera de nuestro control. Nada de lo anterior excluye responsabilidad que legalmente no pueda excluirse.
         </p>
 
-        <h2>13. Legislación y resolución de conflictos</h2>
+        <h2>15. Legislación y resolución de conflictos</h2>
         <p>
           Estos términos se interpretarán conforme a la normativa aplicable en España, sin perjuicio de las normas imperativas del país de residencia del consumidor cuando correspondan y de los fueros legalmente reconocidos a los consumidores.
         </p>
 
-        <h2>14. Contacto y modificaciones</h2>
+        <h2>16. Contacto y modificaciones</h2>
         <p>
           Puedes contactar con nosotros en <strong>legal@vonuai.com</strong>. La versión vigente de estos términos será la publicada en esta página con su fecha de actualización.
         </p>
