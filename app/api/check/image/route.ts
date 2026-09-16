@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { collectWebSignals } from "@/lib/vonu-check/web-signals";
+import { enrichWebResult } from "@/lib/vonu-check/web-enrichment";
+import { pickEmbeddedUrls } from "@/lib/vonu-check/embedded-url";
+import { extractReverseImageEvidence, reverseImageSignal } from "@/lib/vonu-check/reverse-image";
 import { isSupportedLocale } from "@/lib/vonu-check/i18n";
 import type { CaptureCheckResult, CaptureKind } from "@/lib/vonu-check/capture-types";
 import type { RiskLevel, SignalTone, SupportedLocale } from "@/lib/vonu-check/types";
@@ -23,6 +26,14 @@ function riskFromScore(score: number): RiskLevel {
   if (score >= 70) return "high";
   if (score >= 35) return "caution";
   return "low";
+}
+
+function combineIndependentScores(a: number, b: number) {
+  if (a <= 0) return clampScore(b);
+  if (b <= 0) return clampScore(a);
+  const strongest = Math.max(a, b);
+  const supporting = Math.min(a, b);
+  return clampScore(strongest + Math.round(supporting * 0.2));
 }
 
 function safeString(value: unknown, max = 800) {
@@ -94,7 +105,7 @@ Important rules:
 - Be conservative. Do not call a person a scammer or criminal.
 - Risk score is a CAUTION INDEX, not a probability that a crime occurred.
 - HTTPS, logos, follower counts, spelling, verification badges or visual polish are never proof by themselves.
-- Do not invent account age, follower metrics, domain age, hidden URLs, reputation results or external facts that are not visible in the screenshot.
+- Do not invent account age, follower metrics, domain age, hidden URLs, reputation results or external facts that are not visible in the screenshot or explicitly supplied by the analysis backend.
 - If evidence is incomplete, say so and lower confidence.
 - A screenshot alone cannot verify that an identity is genuine.
 - For social profiles, distinguish visible anomalies from facts that require external verification.
@@ -136,29 +147,29 @@ Use weight 0-30 only for genuinely risk-increasing signals; positive/neutral sig
 
 const linkedCopy: Record<SupportedLocale, { high: [string, string]; caution: [string, string]; low: [string, string] }> = {
   es: {
-    high: ["El enlace visible añade riesgo técnico", "Vonu pudo comprobar el enlace extraído de la captura y encontró señales técnicas de riesgo relevantes."],
-    caution: ["El enlace visible merece revisión", "Vonu pudo comprobar el enlace extraído y encontró señales técnicas que aconsejan precaución."],
-    low: ["El enlace visible no muestra alertas técnicas fuertes", "La comprobación técnica básica del enlace visible no encontró señales fuertes, aunque esto no certifica que sea legítimo."],
+    high: ["El enlace visible añade riesgo técnico", "Vonu comprobó el enlace extraído de la captura y encontró señales técnicas o de reputación relevantes."],
+    caution: ["El enlace visible merece revisión", "Vonu comprobó el enlace extraído y encontró señales técnicas que aconsejan precaución."],
+    low: ["El enlace visible no muestra alertas técnicas fuertes", "La comprobación técnica y de reputación disponible no encontró señales fuertes, aunque esto no certifica que sea legítimo."],
   },
   en: {
-    high: ["The visible link adds technical risk", "Vonu checked the link extracted from the screenshot and found relevant technical risk signals."],
+    high: ["The visible link adds technical risk", "Vonu checked the link extracted from the screenshot and found relevant technical or reputation risk signals."],
     caution: ["The visible link deserves review", "Vonu checked the extracted link and found technical signals that warrant caution."],
-    low: ["The visible link has no strong technical alerts", "The basic technical check found no strong signals, although this does not certify legitimacy."],
+    low: ["The visible link has no strong technical alerts", "The available technical and reputation checks found no strong signals, although this does not certify legitimacy."],
   },
   fr: {
-    high: ["Le lien visible ajoute un risque technique", "Vonu a vérifié le lien extrait de la capture et a trouvé des signaux techniques de risque importants."],
+    high: ["Le lien visible ajoute un risque technique", "Vonu a vérifié le lien extrait de la capture et a trouvé des signaux techniques ou de réputation importants."],
     caution: ["Le lien visible mérite une vérification", "Vonu a vérifié le lien extrait et a trouvé des signaux techniques qui appellent à la prudence."],
-    low: ["Le lien visible ne présente pas d’alerte technique forte", "La vérification technique de base n’a pas trouvé de signal fort, sans pour autant certifier la légitimité."],
+    low: ["Le lien visible ne présente pas d’alerte technique forte", "Les vérifications techniques et de réputation disponibles n’ont pas trouvé de signal fort, sans pour autant certifier la légitimité."],
   },
   de: {
-    high: ["Der sichtbare Link erhöht das technische Risiko", "Vonu hat den aus dem Screenshot extrahierten Link geprüft und relevante technische Risikosignale gefunden."],
+    high: ["Der sichtbare Link erhöht das technische Risiko", "Vonu hat den aus dem Screenshot extrahierten Link geprüft und relevante technische oder Reputationssignale gefunden."],
     caution: ["Der sichtbare Link sollte geprüft werden", "Vonu hat den extrahierten Link geprüft und technische Signale gefunden, die Vorsicht nahelegen."],
-    low: ["Der sichtbare Link zeigt keine starken technischen Warnungen", "Die technische Basisprüfung fand keine starken Signale; das bestätigt jedoch nicht die Seriosität."],
+    low: ["Der sichtbare Link zeigt keine starken technischen Warnungen", "Die verfügbaren technischen und Reputationsprüfungen fanden keine starken Signale; das bestätigt jedoch nicht die Seriosität."],
   },
   ar: {
-    high: ["الرابط الظاهر يضيف خطراً تقنياً", "تمكن Vonu من فحص الرابط المستخرج من الصورة ووجد إشارات تقنية مهمة للمخاطر."],
-    caution: ["الرابط الظاهر يستحق مزيداً من التحقق", "تمكن Vonu من فحص الرابط المستخرج ووجد إشارات تقنية تستدعي الحذر."],
-    low: ["لا توجد إنذارات تقنية قوية في الرابط الظاهر", "لم يجد الفحص التقني الأساسي إشارات قوية، لكن ذلك لا يثبت أن الموقع شرعي."],
+    high: ["الرابط الظاهر يضيف خطراً تقنياً", "فحص Vonu الرابط المستخرج من الصورة ووجد إشارات تقنية أو إشارات سمعة مهمة للمخاطر."],
+    caution: ["الرابط الظاهر يستحق مزيداً من التحقق", "فحص Vonu الرابط المستخرج ووجد إشارات تقنية تستدعي الحذر."],
+    low: ["لا توجد إنذارات تقنية قوية في الرابط الظاهر", "لم تجد الفحوص التقنية وفحوص السمعة المتاحة إشارات قوية، لكن ذلك لا يثبت أن الموقع شرعي."],
   },
 };
 
@@ -229,14 +240,18 @@ export async function POST(req: NextRequest) {
 
     const parsed = parseJsonText(edgeData.text);
     const baseScore = clampScore(parsed?.risk?.score);
+    const kind = normalizeKind(parsed?.kind);
     const signals = Array.isArray(parsed?.signals)
-      ? parsed.signals.slice(0, 10).map((signal: any, index: number) => ({
-          id: safeString(signal?.id, 80) || `signal_${index + 1}`,
-          tone: normalizeTone(signal?.tone),
-          title: safeString(signal?.title, 140),
-          detail: safeString(signal?.detail, 700),
-          weight: Math.max(0, Math.min(30, clampScore(signal?.weight))),
-        })).filter((signal: any) => signal.title && signal.detail)
+      ? parsed.signals
+          .slice(0, 10)
+          .map((signal: any, index: number) => ({
+            id: safeString(signal?.id, 80) || `signal_${index + 1}`,
+            tone: normalizeTone(signal?.tone),
+            title: safeString(signal?.title, 140),
+            detail: safeString(signal?.detail, 700),
+            weight: Math.max(0, Math.min(30, clampScore(signal?.weight))),
+          }))
+          .filter((signal: any) => signal.title && signal.detail)
       : [];
 
     const extracted = {
@@ -246,46 +261,73 @@ export async function POST(req: NextRequest) {
       brands: safeStringArray(parsed?.extracted?.brands, 6, 100),
     };
 
+    const reverseEvidence = extractReverseImageEvidence(edgeData);
+    const reuseSignal = reverseImageSignal(locale, reverseEvidence, kind);
+    if (reuseSignal) signals.push(reuseSignal);
+
     let linkedUrlCheck: CaptureCheckResult["linkedUrlCheck"] = null;
-    const candidateUrl = extracted.urls.find((value) => /^https?:\/\//i.test(value));
+    const candidateUrls = pickEmbeddedUrls(extracted.urls, 2);
 
-    if (candidateUrl) {
+    for (const candidateUrl of candidateUrls) {
       try {
-        const web = await collectWebSignals(candidateUrl, locale);
-        linkedUrlCheck = {
-          url: web.facts.finalUrl || candidateUrl,
-          risk: web.risk,
-          signals: web.signals.slice(0, 5),
-        };
+        const baseWeb = await collectWebSignals(candidateUrl, locale);
+        const web = await enrichWebResult(baseWeb);
 
-        const [title, detail] = linkedCopy[locale][web.risk.level === "high" ? "high" : web.risk.level === "caution" ? "caution" : "low"];
-        signals.push({
-          id: "linked_url_check",
-          tone: web.risk.level === "high" ? "negative" : web.risk.level === "caution" ? "warning" : "positive",
-          title,
-          detail,
-          weight: web.risk.level === "high" ? 20 : web.risk.level === "caution" ? 10 : 0,
-        });
+        if (!linkedUrlCheck || web.risk.score > linkedUrlCheck.risk.score) {
+          linkedUrlCheck = {
+            url: web.facts.finalUrl || candidateUrl,
+            risk: web.risk,
+            signals: web.signals.slice(0, 8),
+          };
+        }
       } catch {
-        linkedUrlCheck = null;
+        // The screenshot analysis remains useful even if a visible URL cannot be fetched safely.
       }
     }
 
+    if (linkedUrlCheck && linkedUrlCheck.risk.level !== "unknown") {
+      const key = linkedUrlCheck.risk.level === "high"
+        ? "high"
+        : linkedUrlCheck.risk.level === "caution"
+          ? "caution"
+          : "low";
+      const [title, detail] = linkedCopy[locale][key];
+      signals.push({
+        id: "linked_url_check",
+        tone: linkedUrlCheck.risk.level === "high"
+          ? "negative"
+          : linkedUrlCheck.risk.level === "caution"
+            ? "warning"
+            : "positive",
+        title,
+        detail,
+        weight: linkedUrlCheck.risk.level === "high" ? 24 : linkedUrlCheck.risk.level === "caution" ? 12 : 0,
+      });
+    }
+
     const linkedScore = linkedUrlCheck?.risk?.score ?? 0;
-    const finalScore = Math.max(baseScore, linkedScore);
+    const combinedWithWeb = combineIndependentScores(baseScore, linkedScore);
+    const finalScore = clampScore(combinedWithWeb + (reuseSignal?.weight ?? 0));
+
     const confidenceValue = parsed?.risk?.confidence;
-    const confidence: "limited" | "medium" | "high" =
+    const modelConfidence: "limited" | "medium" | "high" =
       confidenceValue === "high" || confidenceValue === "medium" || confidenceValue === "limited"
         ? confidenceValue
-        : linkedUrlCheck
-          ? "medium"
-          : "limited";
+        : "limited";
+    const confidence: "limited" | "medium" | "high" =
+      linkedUrlCheck?.risk?.confidence === "high"
+        ? "high"
+        : modelConfidence === "high"
+          ? "high"
+          : linkedUrlCheck || reverseEvidence.available || modelConfidence === "medium"
+            ? "medium"
+            : "limited";
 
     const result: CaptureCheckResult = {
       version: "vonu-capture-v1",
       checkedAt: new Date().toISOString(),
       locale,
-      kind: normalizeKind(parsed?.kind),
+      kind,
       risk: {
         level: riskFromScore(finalScore),
         score: finalScore,
