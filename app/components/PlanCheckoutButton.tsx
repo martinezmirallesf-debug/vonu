@@ -6,11 +6,11 @@ import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 
 const fallback: Record<SupportedLocale, string> = {
-  es: "Inicia sesión para continuar",
-  en: "Sign in to continue",
-  fr: "Connectez-vous pour continuer",
-  de: "Zum Fortfahren anmelden",
-  ar: "سجّل الدخول للمتابعة",
+  es: "Inicia sesión para comprar 3 análisis más",
+  en: "Sign in to buy 3 more analyses",
+  fr: "Connectez-vous pour acheter 3 analyses supplémentaires",
+  de: "Melde dich an, um 3 weitere Analysen zu kaufen",
+  ar: "سجّل الدخول لشراء 3 تحليلات إضافية",
 };
 
 const unavailable: Record<SupportedLocale, string> = {
@@ -22,16 +22,12 @@ const unavailable: Record<SupportedLocale, string> = {
 };
 
 export default function PlanCheckoutButton({
-  plan,
   locale,
   label,
-  billing = "monthly",
   className,
 }: {
-  plan: "plus" | "max";
   locale: SupportedLocale;
   label: string;
-  billing?: "monthly" | "yearly";
   className?: string;
 }) {
   const [loading, setLoading] = useState(false);
@@ -41,16 +37,16 @@ export default function PlanCheckoutButton({
     if (loading) return;
     setLoading(true);
     setMessage(null);
-    track("pricing_plan_selected", { plan, billing, locale });
+    track("analysis_pack_selected", { analyses: 3, amount_eur: 3.99, locale });
 
     try {
       const { data } = await supabaseBrowser.auth.getSession();
       const token = data.session?.access_token ?? null;
 
       if (!token) {
-        track("checkout_login_required", { plan, billing, locale });
+        track("analysis_pack_login_required", { locale });
         setMessage(fallback[locale]);
-        window.location.href = `/chat?upgrade=${plan}&billing=${billing}&locale=${locale}`;
+        window.location.href = `/${locale}/check?purchase=3-analyses&login=required`;
         return;
       }
 
@@ -60,13 +56,13 @@ export default function PlanCheckoutButton({
           "content-type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ plan, billing, locale }),
+        body: JSON.stringify({ locale }),
       });
 
       if (response.status === 401) {
-        track("checkout_login_required", { plan, billing, locale });
+        track("analysis_pack_login_required", { locale });
         setMessage(fallback[locale]);
-        window.location.href = `/chat?upgrade=${plan}&billing=${billing}&locale=${locale}`;
+        window.location.href = `/${locale}/check?purchase=3-analyses&login=required`;
         return;
       }
 
