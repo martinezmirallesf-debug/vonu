@@ -3,9 +3,10 @@ import type { SupportedLocale, WebCheckResult, WebCheckSignal } from "./types";
 import {
   domainAgeSignal,
   lookupDomainAge,
-  lookupUrlhaus,
   urlhausSignal,
+  type UrlhausLookup,
 } from "./web-external";
+import { lookupSupabaseUrlReputation } from "./supabase-evidence";
 
 const HEADER_TIMEOUT_MS = 4_500;
 
@@ -108,6 +109,35 @@ function levelFromScore(score: number): WebCheckResult["risk"]["level"] {
   return "low";
 }
 
+async function lookupCentralUrlhaus(url: string): Promise<UrlhausLookup> {
+  const payload: any = await lookupSupabaseUrlReputation(url);
+  const raw = payload?.urlReputation;
+
+  if (!raw || typeof raw !== "object") {
+    return {
+      configured: false,
+      attempted: false,
+      matched: null,
+      queryStatus: null,
+      urlStatus: null,
+      threat: null,
+      reference: null,
+      tags: [],
+    };
+  }
+
+  return {
+    configured: true,
+    attempted: Boolean(raw.checked) || typeof raw.match === "boolean",
+    matched: typeof raw.match === "boolean" ? raw.match : null,
+    queryStatus: typeof raw.status === "string" ? raw.status : null,
+    urlStatus: null,
+    threat: raw.match === true ? "known_malware_url" : null,
+    reference: null,
+    tags: [],
+  };
+}
+
 export async function enrichWebResult(result: WebCheckResult): Promise<WebCheckResult> {
   const { hostname, finalUrl, usesHttps, httpStatus } = result.facts;
   const locale = result.locale;
@@ -117,7 +147,7 @@ export async function enrichWebResult(result: WebCheckResult): Promise<WebCheckR
     safeDns(() => resolveCaa(hostname)),
     inspectHeaders(finalUrl),
     usesHttps ? hasSecurityTxt(new URL(finalUrl).origin) : Promise.resolve(false),
-    lookupUrlhaus(finalUrl),
+    lookupCentralUrlhaus(finalUrl),
     lookupDomainAge(hostname),
   ]);
 
@@ -180,11 +210,7 @@ export async function enrichWebResult(result: WebCheckResult): Promise<WebCheckR
       ageRiskWeight === 0 &&
       maturity >= 3
     ) {
-      risk = {
-        level: "low",
-        score: Math.min(combinedScore, 8),
-        confidence: "limited",
-      };
+      risk = { level: "low", score: Math.min(combinedScore, 8), confidence: "limited" };
     } else if (risk.level === "low" && maturity >= 3) {
       risk = { ...risk, confidence: "medium" };
     }
