@@ -4,6 +4,11 @@ import { enrichWebResult } from "@/lib/vonu-check/web-enrichment";
 import { pickEmbeddedUrls } from "@/lib/vonu-check/embedded-url";
 import { isSupportedLocale } from "@/lib/vonu-check/i18n";
 import {
+  FRAUD_ATLAS_PROMPT,
+  normaliseFraudAtlasEvidence,
+  scoreFraudAtlasEvidence,
+} from "@/lib/vonu-check/fraud-atlas";
+import {
   calibrateModelRiskScore,
   clampRiskScore,
   combineIndependentRiskScores,
@@ -84,6 +89,7 @@ Goals:
 3. Extract visible URLs, phone numbers, emails and brand names exactly when present.
 4. Explain the strongest evidence briefly.
 5. Give practical, non-legal next actions.
+6. Map the text to behavioural Fraud Atlas evidence. Recognise semantically equivalent NEW variants even when wording, brand, amount, country or channel changes.
 
 VONU RISK SCORE:
 - Return a score from 0 to 100 where 0 means no risk signals were detected in the available evidence and 100 means maximum risk evidence.
@@ -99,6 +105,10 @@ Rules:
 - If context is incomplete, lower confidence and say so.
 - Legitimate-looking language, logos or spelling are not proof of legitimacy.
 - Keep signals concise and useful on mobile.
+- Do NOT mark ordinary family money requests, ordinary Bizum requests, urgency alone, a new number alone, or an ordinary link alone as high risk.
+- Fraud Atlas evidence MUST be grounded in exact text excerpts. If the text does not support an evidence id, omit it.
+
+${FRAUD_ATLAS_PROMPT}
 
 Return ONLY valid JSON, no markdown.
 Schema:
@@ -115,6 +125,15 @@ Schema:
       "weight": 0
     }
   ],
+  "atlas": {
+    "evidence": [
+      {
+        "id": "one Fraud Atlas evidence id from the list above",
+        "confidence": "low|medium|high",
+        "excerpt": "short EXACT quote copied from USER TEXT"
+      }
+    ]
+  },
   "extracted": { "urls": [], "phones": [], "emails": [], "brands": [] },
   "recommendedActions": ["short practical action in ${locale}"],
   "limitations": ["short limitation in ${locale}"]
@@ -232,7 +251,14 @@ export async function POST(req: NextRequest) {
           }))
           .filter((signal: any) => signal.title && signal.detail)
       : [];
-    const baseScore = calibrateModelRiskScore(rawBaseScore, signals);
+
+    // The model score is still capped by the evidence it exposes in normal
+    // signals, but the Atlas can now raise an under-estimated score only when
+    // multiple grounded behavioural primitives support a known risk mechanic.
+    const calibratedModelScore = calibrateModelRiskScore(rawBaseScore, signals);
+    const atlasEvidence = normaliseFraudAtlasEvidence(parsed?.atlas?.evidence, text);
+    const atlasScore = scoreFraudAtlasEvidence(atlasEvidence);
+    const baseScore = Math.max(calibratedModelScore, atlasScore.score);
 
     const extracted = {
       urls: safeStringArray(parsed?.extracted?.urls, 5, 500),
@@ -289,11 +315,11 @@ export async function POST(req: NextRequest) {
         ? confidenceValue
         : "limited";
     const confidence: "limited" | "medium" | "high" =
-      linkedUrlCheck?.risk?.confidence === "high"
+      linkedUrlCheck?.risk?.confidence === "high" || atlasScore.confidence === "high"
         ? "high"
         : modelConfidence === "high"
           ? "high"
-          : linkedUrlCheck || modelConfidence === "medium"
+          : linkedUrlCheck || modelConfidence === "medium" || atlasScore.confidence === "medium"
             ? "medium"
             : "limited";
 
