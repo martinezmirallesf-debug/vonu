@@ -3,48 +3,43 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { track } from "@vercel/analytics";
+import DevicePackCheckoutButton from "./DevicePackCheckoutButton";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
-import { publicPath } from "@/lib/vonu-global/i18n";
 
-const copy: Record<SupportedLocale, { eyebrow: string; title: string; text: string; cta: string; free: string; newCheck: string[] }> = {
+const copy: Record<SupportedLocale, { eyebrow: string; title: string; text: string; cta: string; newCheck: string[] }> = {
   es: {
-    eyebrow: "Sigue protegido",
-    title: "Haz de comprobar antes de actuar un hábito.",
-    text: "Tu primer análisis es para probar Vonu. Plus y Max te dan más margen para revisar enlaces, capturas, mensajes y documentos cuando lo necesites.",
-    cta: "Ver Plus y Max",
-    free: "Seguir con Vonu",
+    eyebrow: "Análisis adicionales",
+    title: "Consigue 3 análisis más por 3,99 €",
+    text: "Pago único. Sin registro, sin suscripción y sin renovación automática. Los 3 análisis quedan asociados a este navegador o dispositivo.",
+    cta: "Comprar 3 análisis · 3,99 €",
     newCheck: ["Nueva comprobación"],
   },
   en: {
-    eyebrow: "Stay protected",
-    title: "Make checking before you act a habit.",
-    text: "Your first analysis lets you try Vonu. Plus and Max give you more room to review links, screenshots, messages and documents whenever you need it.",
-    cta: "See Plus and Max",
-    free: "Keep using Vonu",
+    eyebrow: "Additional analyses",
+    title: "Get 3 more analyses for €3.99",
+    text: "One-time payment. No account, no subscription and no automatic renewal. The 3 analyses stay linked to this browser or device.",
+    cta: "Buy 3 analyses · €3.99",
     newCheck: ["New check"],
   },
   fr: {
-    eyebrow: "Restez protégé",
-    title: "Prenez l’habitude de vérifier avant d’agir.",
-    text: "Votre première analyse permet de découvrir Vonu. Plus et Max offrent davantage de marge pour vérifier liens, captures, messages et documents.",
-    cta: "Voir Plus et Max",
-    free: "Continuer avec Vonu",
+    eyebrow: "Analyses supplémentaires",
+    title: "Obtenez 3 analyses de plus pour 3,99 €",
+    text: "Paiement unique. Sans compte, sans abonnement et sans renouvellement automatique. Les 3 analyses restent liées à ce navigateur ou appareil.",
+    cta: "Acheter 3 analyses · 3,99 €",
     newCheck: ["Nouvelle vérification"],
   },
   de: {
-    eyebrow: "Bleib geschützt",
-    title: "Mach das Prüfen vor dem Handeln zur Gewohnheit.",
-    text: "Mit der ersten Analyse testest du Vonu. Plus und Max geben dir mehr Spielraum für Links, Screenshots, Nachrichten und Dokumente.",
-    cta: "Plus und Max ansehen",
-    free: "Vonu weiter nutzen",
+    eyebrow: "Zusätzliche Analysen",
+    title: "3 weitere Analysen für 3,99 €",
+    text: "Einmalige Zahlung. Kein Konto, kein Abo und keine automatische Verlängerung. Die 3 Analysen bleiben mit diesem Browser oder Gerät verknüpft.",
+    cta: "3 Analysen kaufen · 3,99 €",
     newCheck: ["Neue Prüfung", "Neue Überprüfung"],
   },
   ar: {
-    eyebrow: "ابقَ أكثر أمانًا",
-    title: "اجعل التحقق قبل التصرف عادة.",
-    text: "يسمح لك التحليل الأول بتجربة Vonu. تمنحك Plus وMax سعة أكبر لمراجعة الروابط ولقطات الشاشة والرسائل والمستندات عند الحاجة.",
-    cta: "عرض Plus وMax",
-    free: "متابعة استخدام Vonu",
+    eyebrow: "تحليلات إضافية",
+    title: "احصل على 3 تحليلات إضافية مقابل 3.99 €",
+    text: "دفعة واحدة فقط. بدون حساب أو اشتراك أو تجديد تلقائي. ترتبط التحليلات الثلاثة بهذا المتصفح أو الجهاز.",
+    cta: "شراء 3 تحليلات · 3.99 €",
     newCheck: ["فحص جديد", "تحقق جديد"],
   },
 };
@@ -94,8 +89,6 @@ export default function CheckResultConversion() {
 
   if (!target) return null;
 
-  const pricingHref = publicPath(locale, "precios");
-
   return createPortal(
     <section className="mt-6 overflow-hidden rounded-[24px] border border-emerald-400/15 bg-emerald-400/[0.045] p-5 shadow-[0_22px_60px_rgba(0,0,0,.18)] sm:p-6" data-vonu-conversion-nudge="result">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
@@ -104,13 +97,11 @@ export default function CheckResultConversion() {
           <h2 className="mt-2 text-[21px] font-bold tracking-[-0.035em] text-white sm:text-[24px]">{t.title}</h2>
           <p className="mt-2 text-[13px] leading-6 text-slate-400">{t.text}</p>
         </div>
-        <a
-          href={pricingHref}
-          onClick={() => track("result_upgrade_clicked", { locale, destination: pricingHref })}
-          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-emerald-400 px-5 text-[13px] font-bold text-[#07110d] transition hover:bg-emerald-300"
-        >
-          {t.cta}
-        </a>
+        <DevicePackCheckoutButton
+          locale={locale}
+          label={t.cta}
+          className="inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-xl bg-emerald-400 px-5 text-[13px] font-bold text-[#07110d] transition hover:bg-emerald-300 disabled:opacity-70 sm:w-auto"
+        />
       </div>
     </section>,
     target,
