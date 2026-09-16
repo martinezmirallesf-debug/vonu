@@ -71,7 +71,7 @@ export default function AvisoLegalPage() {
           Vonu es una herramienta de comprobación preventiva que ayuda a revisar mensajes, capturas de pantalla, enlaces y sitios web antes de confiar, responder, facilitar datos o realizar un pago.
         </p>
         <p>
-          El servicio combina análisis automatizado, modelos de inteligencia artificial, reglas internas de detección y, para determinados enlaces, comprobaciones técnicas y de reputación. Sus resultados describen señales observadas y un nivel de riesgo orientativo; no certifican que una persona, empresa, mensaje o web sea legítima o fraudulenta.
+          El servicio combina análisis automatizado, modelos de inteligencia artificial, reglas internas de detección y, para determinados enlaces, comprobaciones técnicas y de reputación. Sus resultados describen señales observadas y un índice de riesgo orientativo; no certifican que una persona, empresa, mensaje o web sea legítima o fraudulenta.
         </p>
 
         <h2>3. Acceso y uso</h2>
