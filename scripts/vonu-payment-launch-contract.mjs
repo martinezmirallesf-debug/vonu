@@ -63,7 +63,8 @@ requireText(terms, "3 análisis adicionales por 3,99 €", "terms pack offer");
 requireText(terms, "no crea una suscripción", "terms no subscription");
 requireText(terms, "Stripe", "payment processor terms");
 requireText(privacy, "Identificador técnico del dispositivo", "privacy device identifier");
-requireText(privacy, "grant", "noop");
+requireText(privacy, "vonu_device_id", "privacy device cookie");
+requireText(privacy, "pago confirmado", "privacy payment-to-credit flow");
 requireText(cookies, "vonu_device_id", "cookie disclosure");
 
 console.log("VONU_PAYMENT_LAUNCH_CONTRACT_GREEN model=device free=1 pack=3 price=399");
