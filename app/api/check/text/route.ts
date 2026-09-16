@@ -4,6 +4,7 @@ import { enrichWebResult } from "@/lib/vonu-check/web-enrichment";
 import { pickEmbeddedUrls } from "@/lib/vonu-check/embedded-url";
 import { isSupportedLocale } from "@/lib/vonu-check/i18n";
 import {
+  calibrateModelRiskScore,
   clampRiskScore,
   combineIndependentRiskScores,
   riskBandFromScore,
@@ -90,6 +91,7 @@ VONU RISK SCORE:
 - The score is a risk index, NOT a probability that fraud or a crime occurred.
 - Strong, specific evidence must move the score more than vague language or generic suspicion.
 - Missing context should reduce confidence, not automatically increase the score.
+- The summary must describe the evidence and recommended caution, not repeat a numeric score or a risk-band label.
 
 Rules:
 - Be conservative. Never state that a person is a criminal or scammer as a fact.
@@ -103,7 +105,7 @@ Schema:
 {
   "kind": "message|email|social_profile|marketplace|website_or_checkout|other",
   "risk": { "score": 0, "confidence": "limited|medium|high" },
-  "summary": "one short conclusion in ${locale}",
+  "summary": "one short evidence-based conclusion in ${locale}, without a score or risk-band label",
   "signals": [
     {
       "id": "short_machine_id",
@@ -217,7 +219,7 @@ export async function POST(req: NextRequest) {
     }
 
     const parsed = parseJsonText(edgeData.text);
-    const baseScore = clampRiskScore(parsed?.risk?.score);
+    const rawBaseScore = clampRiskScore(parsed?.risk?.score);
     const signals = Array.isArray(parsed?.signals)
       ? parsed.signals
           .slice(0, 10)
@@ -230,6 +232,7 @@ export async function POST(req: NextRequest) {
           }))
           .filter((signal: any) => signal.title && signal.detail)
       : [];
+    const baseScore = calibrateModelRiskScore(rawBaseScore, signals);
 
     const extracted = {
       urls: safeStringArray(parsed?.extracted?.urls, 5, 500),
