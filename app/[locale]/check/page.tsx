@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import CheckClient from "./CheckClient";
 import SubmissionNotice from "./SubmissionNotice";
 import CheckCompactFooter from "./CheckCompactFooter";
+import DeviceAccessGate from "@/app/components/DeviceAccessGate";
 import "./check.css";
 import "./check-polish.css";
 import "./url-search-icon-size.css";
@@ -194,6 +195,7 @@ export default async function LocalizedCheckPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <CheckClient locale={locale} />
+      <DeviceAccessGate locale={locale} />
       <SubmissionNotice locale={locale} />
       <CheckCompactFooter locale={locale} />
     </div>
