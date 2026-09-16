@@ -67,13 +67,25 @@ const calibrationCases = [
     expected: 19,
   },
   {
+    label: "warning tone survives a missing weight",
+    raw: 80,
+    signals: [{ tone: "warning", weight: 0 }],
+    expected: 31,
+  },
+  {
+    label: "negative tone survives a missing weight",
+    raw: 80,
+    signals: [{ tone: "negative", weight: 0 }],
+    expected: 43,
+  },
+  {
     label: "single weak warning stays low",
     raw: 80,
     signals: [{ tone: "warning", weight: 5 }],
     expected: 29,
   },
   {
-    label: "two weak warnings stay below moderate ceiling",
+    label: "two weak warnings remain moderate",
     raw: 90,
     signals: [{ tone: "warning", weight: 8 }, { tone: "warning", weight: 5 }],
     expected: 45,
