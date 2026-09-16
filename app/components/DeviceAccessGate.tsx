@@ -102,7 +102,7 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
 
       for (let attempt = 0; attempt < 12 && !cancelled; attempt += 1) {
         try {
-          const response = await originalFetch("/api/check/entitlement", {
+          const response = await fetch("/api/check/entitlement", {
             method: "GET",
             cache: "no-store",
           });
