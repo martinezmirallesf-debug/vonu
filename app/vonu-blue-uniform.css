@@ -1,0 +1,94 @@
+/* Final Vonu blue authority.
+   Keep page canvases on the same navy as the header while preserving cards,
+   fields and semantic risk colours as separate surfaces. */
+
+html,
+body,
+.vonu-check-page,
+.vonu-premium-page {
+  background: var(--vonu-bg-main) !important;
+}
+
+/* Public pages previously alternated between two dark section colours.
+   They now use one continuous navy canvas, matching the header. */
+[class*="bg-[#080b12]"],
+[class*="bg-[#0a0d15]"],
+[class*="bg-[#0b0e17]"],
+[class*="bg-[#0d101b]"],
+[class*="bg-[#111523]"] {
+  background-color: var(--vonu-bg-main) !important;
+}
+
+/* Dropdowns and real elevated UI stay one step above the page canvas. */
+[class*="bg-[#101522]"] {
+  background-color: var(--vonu-bg-elevated) !important;
+}
+
+/* Vonu Check carried an inline radial/linear background. The product decision is
+   now a completely flat page canvas, identical to the header navy. */
+[class*="bg-[#0d101b]"][style*="radial-gradient"],
+.vonu-check-page [style*="radial-gradient"] {
+  background: var(--vonu-bg-main) !important;
+  background-image: none !important;
+}
+
+/* The shared core use-case theme paints top-level sections directly with
+   !important. Override only those canvases, not their cards. */
+main:has(> header[data-vonu-use-case="core"]),
+main:has(> header[data-vonu-use-case="core"]) > section,
+main:has(> header[data-vonu-use-case="core"]) > section:first-of-type {
+  background: var(--vonu-bg-main) !important;
+  background-image: none !important;
+}
+
+/* Keep the public shell continuous across header, mobile overlay and footer. */
+header[class*="bg-[#0b0e17]"],
+footer[class*="bg-[#0b0e17]"],
+.vonu-check-compact-footer {
+  background-color: var(--vonu-bg-main) !important;
+}
+
+@media (max-width: 767px) {
+  header > div.fixed.inset-0,
+  .vonu-check-page header > div:nth-child(2) {
+    background: var(--vonu-bg-main) !important;
+  }
+
+  /* Absolute guarantee against the last legacy green CTA in mobile menus. */
+  header a[class*="bg-emerald-400"],
+  header button[class*="bg-emerald-400"] {
+    background: var(--vonu-accent) !important;
+    color: #07142f !important;
+    box-shadow: 0 10px 30px var(--vonu-accent-glow) !important;
+  }
+
+  header a[class*="hover:bg-emerald-300"]:hover,
+  header button[class*="hover:bg-emerald-300"]:hover {
+    background: var(--vonu-accent-hover) !important;
+  }
+
+  /* Language popovers are overlays, so opening them never increases the menu
+     height or causes the initial mobile menu to jump/scroll. */
+  .vonu-mobile-language {
+    position: relative !important;
+  }
+
+  .vonu-mobile-language-popover {
+    position: absolute !important;
+    inset-inline: 0 !important;
+    bottom: calc(100% + 8px) !important;
+    z-index: 10060 !important;
+    max-height: min(310px, 48dvh) !important;
+    overflow-y: auto !important;
+    border: 1px solid rgb(255 255 255 / 0.09) !important;
+    border-radius: 16px !important;
+    background: var(--vonu-bg-elevated) !important;
+    box-shadow: 0 24px 70px rgb(0 0 0 / 0.38) !important;
+  }
+
+  .vonu-mobile-language-popover a[data-active="true"] {
+    border-color: var(--vonu-accent-ring) !important;
+    background: var(--vonu-accent-soft) !important;
+    color: var(--vonu-accent-hover) !important;
+  }
+}
