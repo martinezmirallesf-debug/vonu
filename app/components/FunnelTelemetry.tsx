@@ -3,10 +3,40 @@
 import { useEffect } from "react";
 import { track } from "@vercel/analytics";
 
+const supportedLocales = new Set(["es", "en", "fr", "de", "ar"]);
+
 function emit(name: string, data: Record<string, string | number | boolean | undefined> = {}) {
   track(name, data);
   if (typeof window !== "undefined" && typeof (window as any).gtag === "function") {
     (window as any).gtag("event", name, data);
+  }
+}
+
+function rememberLocale(locale: string) {
+  if (!supportedLocales.has(locale) || typeof document === "undefined") return;
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `vonu_locale=${locale}; Max-Age=31536000; Path=/; SameSite=Lax${secure}`;
+}
+
+function maybeRememberLocale(anchor: HTMLAnchorElement, href: string) {
+  if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
+
+  try {
+    const url = new URL(href, window.location.origin);
+    if (url.origin !== window.location.origin) return;
+    const first = url.pathname.split("/").filter(Boolean)[0] || "";
+
+    if (supportedLocales.has(first)) {
+      rememberLocale(first);
+      return;
+    }
+
+    const label = (anchor.textContent || "").trim().toLowerCase();
+    if (label === "es" || label === "español") {
+      rememberLocale("es");
+    }
+  } catch {
+    // Ignore malformed or non-navigation hrefs.
   }
 }
 
@@ -81,6 +111,20 @@ async function startSpanishPricingCheckout(anchor: HTMLAnchorElement) {
 
 export default function FunnelTelemetry() {
   useEffect(() => {
+    const search = new URLSearchParams(window.location.search);
+    const checkout = search.get("checkout");
+    if (checkout === "success" || checkout === "cancel") {
+      const eventKey = `vonu-checkout-return:${window.location.pathname}${window.location.search}`;
+      if (!window.sessionStorage.getItem(eventKey)) {
+        window.sessionStorage.setItem(eventKey, "1");
+        emit(checkout === "success" ? "checkout_returned_success" : "checkout_returned_cancel", {
+          plan: search.get("plan") || undefined,
+          locale: document.documentElement.lang || undefined,
+          path: window.location.pathname,
+        });
+      }
+    }
+
     const originalFetch = window.fetch.bind(window);
 
     window.fetch = async (...args: Parameters<typeof fetch>) => {
@@ -148,6 +192,8 @@ export default function FunnelTelemetry() {
       const anchor = target?.closest("a");
       if (!anchor) return;
       const href = anchor.getAttribute("href") || "";
+
+      maybeRememberLocale(anchor, href);
 
       if (window.location.pathname === "/precios" && href === "/chat") {
         const text = (anchor.textContent || "").toLowerCase();
