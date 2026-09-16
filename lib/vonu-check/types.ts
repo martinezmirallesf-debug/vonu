@@ -1,6 +1,7 @@
 export type SupportedLocale = "es" | "en" | "fr" | "de" | "ar";
 
 export type RiskLevel = "low" | "caution" | "high" | "unknown";
+export type RiskBand = "very_low" | "low" | "moderate" | "high" | "very_high" | "unknown";
 export type SignalTone = "positive" | "warning" | "negative" | "neutral";
 export type AnalysisConfidence = "limited" | "medium" | "high";
 
@@ -39,6 +40,7 @@ export type WebCheckResult = {
   locale: SupportedLocale;
   risk: {
     level: RiskLevel;
+    band: RiskBand;
     score: number;
     confidence: AnalysisConfidence;
   };
