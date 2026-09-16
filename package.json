@@ -6,9 +6,11 @@
     "dev": "next dev",
     "prebuild": "node scripts/vonu-risk-calibration-contract.mjs && node scripts/vonu-fraud-atlas-contract.mjs && node scripts/vonu-capture-message-parity-contract.mjs",
     "build": "next build",
+    "postbuild": "node scripts/vonu-web-e2e.mjs",
     "calibrate:e2e": "node scripts/vonu-risk-e2e-preview.mjs",
     "calibrate:adversarial": "node scripts/vonu-risk-e2e-adversarial.mjs",
     "calibrate:boundary": "node scripts/vonu-risk-e2e-boundary.mjs",
+    "calibrate:web": "node scripts/vonu-web-e2e.mjs",
     "start": "next start",
     "lint": "eslint"
   },
