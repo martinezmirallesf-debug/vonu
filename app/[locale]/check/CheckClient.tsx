@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import HomeHeader from "@/app/components/HomeHeader";
 import { localeMeta } from "@/lib/vonu-check/i18n";
+import { riskBandFromScore } from "@/lib/vonu-check/risk-score";
 import type { CaptureCheckResult } from "@/lib/vonu-check/capture-types";
 import type { TextCheckResult } from "@/lib/vonu-check/text-types";
-import type { RiskLevel, SignalTone, SupportedLocale, WebCheckResult } from "@/lib/vonu-check/types";
+import type { RiskBand, RiskLevel, SignalTone, SupportedLocale, WebCheckResult } from "@/lib/vonu-check/types";
 
 type Mode = "url" | "capture" | "text";
 type Result = WebCheckResult | CaptureCheckResult | TextCheckResult;
@@ -47,9 +48,11 @@ type UiCopy = {
   invalidText: string;
   invalidImage: string;
   genericError: string;
+  veryLow: string;
   low: string;
   caution: string;
   high: string;
+  veryHigh: string;
   unknown: string;
   lowSummary: string;
   cautionSummary: string;
@@ -87,11 +90,11 @@ const UI: Record<SupportedLocale, UiCopy> = {
     firstFree: "Primer análisis gratuito",
     pasteImage: "También puedes pegar una captura con Ctrl+V",
     scanning: "Analizando señales de riesgo",
-    scanUrl: ["Resolviendo dominio y destino…", "Comprobando HTTPS y respuesta…", "Revisando redirecciones y formularios…", "Analizando señales visibles…", "Calculando índice de precaución…"],
-    scanCapture: ["Leyendo el contenido visible…", "Clasificando el contexto…", "Detectando urgencia y suplantación…", "Extrayendo enlaces y datos visibles…", "Contrastando señales técnicas…"],
-    scanText: ["Clasificando el mensaje…", "Detectando presión y urgencia…", "Buscando señales de suplantación…", "Extrayendo enlaces y contactos…", "Calculando índice de precaución…"],
+    scanUrl: ["Resolviendo dominio y destino…", "Comprobando HTTPS y respuesta…", "Revisando redirecciones y formularios…", "Analizando señales visibles…", "Calculando puntuación de riesgo…"],
+    scanCapture: ["Leyendo el contenido visible…", "Clasificando el contexto…", "Detectando urgencia y suplantación…", "Extrayendo enlaces y datos visibles…", "Calculando puntuación de riesgo…"],
+    scanText: ["Clasificando el mensaje…", "Detectando presión y urgencia…", "Buscando señales de suplantación…", "Extrayendo enlaces y contactos…", "Calculando puntuación de riesgo…"],
     report: "Informe Vonu Check",
-    cautionIndex: "Índice de precaución",
+    cautionIndex: "Puntuación de riesgo",
     confidence: "Confianza del análisis",
     limited: "Limitada",
     medium: "Media",
@@ -106,14 +109,16 @@ const UI: Record<SupportedLocale, UiCopy> = {
     invalidText: "Pega un mensaje o texto para analizar.",
     invalidImage: "Sube una imagen PNG, JPG o WEBP de tamaño razonable.",
     genericError: "No hemos podido completar el análisis. Inténtalo de nuevo.",
-    low: "Sin alertas fuertes",
-    caution: "Precaución",
+    veryLow: "Riesgo muy bajo",
+    low: "Riesgo bajo",
+    caution: "Riesgo moderado",
     high: "Riesgo alto",
+    veryHigh: "Riesgo muy alto",
     unknown: "No concluyente",
     lowSummary: "No vemos señales fuertes de riesgo en esta primera capa. Aun así, una ausencia de alertas no certifica que sea legítimo.",
     cautionSummary: "Hay señales que merecen revisión antes de pagar, responder o compartir datos.",
     highSummary: "Hemos encontrado varias señales relevantes de riesgo. No continuaríamos sin verificarlo por otra vía.",
-    noCertification: "Vonu identifica señales de riesgo; no certifica que una web, persona o mensaje sea legítimo o fraudulento.",
+    noCertification: "La puntuación de Vonu es un índice de riesgo basado en las evidencias disponibles; no es una probabilidad de fraude ni certifica legitimidad.",
     finalUrl: "Destino final",
     httpStatus: "Estado HTTP",
     redirects: "Redirecciones",
@@ -144,11 +149,11 @@ const UI: Record<SupportedLocale, UiCopy> = {
     firstFree: "First analysis free",
     pasteImage: "You can also paste a screenshot with Ctrl+V",
     scanning: "Analysing risk signals",
-    scanUrl: ["Resolving domain and destination…", "Checking HTTPS and response…", "Reviewing redirects and forms…", "Inspecting visible signals…", "Calculating caution index…"],
-    scanCapture: ["Reading visible content…", "Classifying context…", "Detecting urgency and impersonation…", "Extracting visible links and data…", "Cross-checking technical signals…"],
-    scanText: ["Classifying message…", "Detecting pressure and urgency…", "Checking impersonation signals…", "Extracting links and contacts…", "Calculating caution index…"],
+    scanUrl: ["Resolving domain and destination…", "Checking HTTPS and response…", "Reviewing redirects and forms…", "Inspecting visible signals…", "Calculating risk score…"],
+    scanCapture: ["Reading visible content…", "Classifying context…", "Detecting urgency and impersonation…", "Extracting visible links and data…", "Calculating risk score…"],
+    scanText: ["Classifying message…", "Detecting pressure and urgency…", "Checking impersonation signals…", "Extracting links and contacts…", "Calculating risk score…"],
     report: "Vonu Check report",
-    cautionIndex: "Caution index",
+    cautionIndex: "Risk score",
     confidence: "Analysis confidence",
     limited: "Limited",
     medium: "Medium",
@@ -163,14 +168,16 @@ const UI: Record<SupportedLocale, UiCopy> = {
     invalidText: "Paste a message or text to analyse.",
     invalidImage: "Upload a reasonable-size PNG, JPG or WEBP image.",
     genericError: "We could not complete the analysis. Please try again.",
-    low: "No strong alerts",
-    caution: "Caution",
+    veryLow: "Very low risk",
+    low: "Low risk",
+    caution: "Moderate risk",
     high: "High risk",
+    veryHigh: "Very high risk",
     unknown: "Inconclusive",
     lowSummary: "We do not see strong risk signals in this first layer. A lack of alerts does not certify legitimacy.",
     cautionSummary: "Some signals deserve review before paying, replying or sharing data.",
     highSummary: "Several relevant risk signals were found. We would not continue without independent verification.",
-    noCertification: "Vonu identifies risk signals; it does not certify that a website, person or message is legitimate or fraudulent.",
+    noCertification: "Vonu's score is a risk index based on the available evidence; it is not a probability of fraud and does not certify legitimacy.",
     finalUrl: "Final destination",
     httpStatus: "HTTP status",
     redirects: "Redirects",
@@ -201,11 +208,11 @@ const UI: Record<SupportedLocale, UiCopy> = {
     firstFree: "Première analyse gratuite",
     pasteImage: "Vous pouvez aussi coller une capture avec Ctrl+V",
     scanning: "Analyse des signaux de risque",
-    scanUrl: ["Résolution du domaine…", "Vérification HTTPS et réponse…", "Analyse des redirections…", "Inspection des signaux visibles…", "Calcul de l’indice de prudence…"],
-    scanCapture: ["Lecture du contenu visible…", "Classification du contexte…", "Détection de l’urgence…", "Extraction des liens et données…", "Vérification des signaux techniques…"],
-    scanText: ["Classification du message…", "Détection de la pression…", "Recherche d’usurpation…", "Extraction des liens…", "Calcul de l’indice de prudence…"],
+    scanUrl: ["Résolution du domaine…", "Vérification HTTPS et réponse…", "Analyse des redirections…", "Inspection des signaux visibles…", "Calcul du score de risque…"],
+    scanCapture: ["Lecture du contenu visible…", "Classification du contexte…", "Détection de l’urgence…", "Extraction des liens et données…", "Calcul du score de risque…"],
+    scanText: ["Classification du message…", "Détection de la pression…", "Recherche d’usurpation…", "Extraction des liens…", "Calcul du score de risque…"],
     report: "Rapport Vonu Check",
-    cautionIndex: "Indice de prudence",
+    cautionIndex: "Score de risque",
     confidence: "Confiance de l’analyse",
     limited: "Limitée",
     medium: "Moyenne",
@@ -220,14 +227,16 @@ const UI: Record<SupportedLocale, UiCopy> = {
     invalidText: "Collez un message ou un texte à analyser.",
     invalidImage: "Importez une image PNG, JPG ou WEBP de taille raisonnable.",
     genericError: "Impossible de terminer l’analyse. Réessayez.",
-    low: "Pas d’alerte forte",
-    caution: "Prudence",
+    veryLow: "Risque très faible",
+    low: "Risque faible",
+    caution: "Risque modéré",
     high: "Risque élevé",
+    veryHigh: "Risque très élevé",
     unknown: "Non concluant",
     lowSummary: "Nous ne voyons pas de signal fort dans cette première couche. L’absence d’alerte ne certifie pas la légitimité.",
     cautionSummary: "Certains signaux méritent une vérification avant de payer, répondre ou partager des données.",
     highSummary: "Plusieurs signaux importants ont été trouvés. Nous ne continuerions pas sans vérification indépendante.",
-    noCertification: "Vonu identifie des signaux de risque ; il ne certifie pas qu’un site, une personne ou un message est légitime ou frauduleux.",
+    noCertification: "Le score Vonu est un indice de risque fondé sur les preuves disponibles ; il ne s'agit pas d'une probabilité de fraude et il ne certifie pas la légitimité.",
     finalUrl: "Destination finale",
     httpStatus: "Statut HTTP",
     redirects: "Redirections",
@@ -258,11 +267,11 @@ const UI: Record<SupportedLocale, UiCopy> = {
     firstFree: "Erste Analyse kostenlos",
     pasteImage: "Screenshot auch mit Ctrl+V einfügen",
     scanning: "Risikosignale werden analysiert",
-    scanUrl: ["Domain wird aufgelöst…", "HTTPS und Antwort werden geprüft…", "Weiterleitungen werden analysiert…", "Sichtbare Signale werden geprüft…", "Vorsichtsindex wird berechnet…"],
-    scanCapture: ["Sichtbarer Inhalt wird gelesen…", "Kontext wird klassifiziert…", "Dringlichkeit wird geprüft…", "Links und Daten werden extrahiert…", "Technische Signale werden abgeglichen…"],
-    scanText: ["Nachricht wird klassifiziert…", "Druck und Dringlichkeit werden geprüft…", "Identitätsmissbrauch wird geprüft…", "Links werden extrahiert…", "Vorsichtsindex wird berechnet…"],
+    scanUrl: ["Domain wird aufgelöst…", "HTTPS und Antwort werden geprüft…", "Weiterleitungen werden analysiert…", "Sichtbare Signale werden geprüft…", "Risikowert wird berechnet…"],
+    scanCapture: ["Sichtbarer Inhalt wird gelesen…", "Kontext wird klassifiziert…", "Dringlichkeit wird geprüft…", "Links und Daten werden extrahiert…", "Risikowert wird berechnet…"],
+    scanText: ["Nachricht wird klassifiziert…", "Druck und Dringlichkeit werden geprüft…", "Identitätsmissbrauch wird geprüft…", "Links werden extrahiert…", "Risikowert wird berechnet…"],
     report: "Vonu Check Bericht",
-    cautionIndex: "Vorsichtsindex",
+    cautionIndex: "Risikowert",
     confidence: "Analysevertrauen",
     limited: "Begrenzt",
     medium: "Mittel",
@@ -277,14 +286,16 @@ const UI: Record<SupportedLocale, UiCopy> = {
     invalidText: "Füge eine Nachricht oder Text zur Analyse ein.",
     invalidImage: "Lade ein PNG-, JPG- oder WEBP-Bild in angemessener Größe hoch.",
     genericError: "Die Analyse konnte nicht abgeschlossen werden. Bitte erneut versuchen.",
-    low: "Keine starken Warnungen",
-    caution: "Vorsicht",
+    veryLow: "Sehr geringes Risiko",
+    low: "Geringes Risiko",
+    caution: "Mittleres Risiko",
     high: "Hohes Risiko",
+    veryHigh: "Sehr hohes Risiko",
     unknown: "Nicht eindeutig",
     lowSummary: "In dieser ersten Schicht sehen wir keine starken Risikosignale. Das bestätigt jedoch keine Seriosität.",
     cautionSummary: "Einige Signale sollten geprüft werden, bevor du zahlst, antwortest oder Daten teilst.",
     highSummary: "Mehrere relevante Risikosignale wurden gefunden. Wir würden ohne unabhängige Prüfung nicht fortfahren.",
-    noCertification: "Vonu erkennt Risikosignale; es bestätigt nicht, dass eine Website, Person oder Nachricht legitim oder betrügerisch ist.",
+    noCertification: "Der Vonu-Wert ist ein Risikoindex auf Basis der verfügbaren Belege; er ist keine Betrugswahrscheinlichkeit und bestätigt keine Seriosität.",
     finalUrl: "Endziel",
     httpStatus: "HTTP-Status",
     redirects: "Weiterleitungen",
@@ -315,11 +326,11 @@ const UI: Record<SupportedLocale, UiCopy> = {
     firstFree: "أول تحليل مجاني",
     pasteImage: "يمكنك أيضاً لصق لقطة باستخدام Ctrl+V",
     scanning: "جارٍ تحليل إشارات المخاطر",
-    scanUrl: ["جارٍ التحقق من النطاق…", "جارٍ فحص HTTPS والاستجابة…", "جارٍ مراجعة التحويلات…", "جارٍ تحليل الإشارات الظاهرة…", "جارٍ حساب مؤشر الحذر…"],
-    scanCapture: ["جارٍ قراءة المحتوى…", "جارٍ تصنيف السياق…", "جارٍ فحص الاستعجال والانتحال…", "جارٍ استخراج الروابط والبيانات…", "جارٍ مطابقة الإشارات التقنية…"],
-    scanText: ["جارٍ تصنيف الرسالة…", "جارٍ فحص الضغط والاستعجال…", "جارٍ فحص الانتحال…", "جارٍ استخراج الروابط…", "جارٍ حساب مؤشر الحذر…"],
+    scanUrl: ["جارٍ التحقق من النطاق…", "جارٍ فحص HTTPS والاستجابة…", "جارٍ مراجعة التحويلات…", "جارٍ تحليل الإشارات الظاهرة…", "جارٍ حساب درجة المخاطر…"],
+    scanCapture: ["جارٍ قراءة المحتوى…", "جارٍ تصنيف السياق…", "جارٍ فحص الاستعجال والانتحال…", "جارٍ استخراج الروابط والبيانات…", "جارٍ حساب درجة المخاطر…"],
+    scanText: ["جارٍ تصنيف الرسالة…", "جارٍ فحص الضغط والاستعجال…", "جارٍ فحص الانتحال…", "جارٍ استخراج الروابط…", "جارٍ حساب درجة المخاطر…"],
     report: "تقرير Vonu Check",
-    cautionIndex: "مؤشر الحذر",
+    cautionIndex: "درجة المخاطر",
     confidence: "ثقة التحليل",
     limited: "محدودة",
     medium: "متوسطة",
@@ -334,14 +345,16 @@ const UI: Record<SupportedLocale, UiCopy> = {
     invalidText: "الصق رسالة أو نصاً للتحليل.",
     invalidImage: "ارفع صورة PNG أو JPG أو WEBP بحجم مناسب.",
     genericError: "تعذر إكمال التحليل. حاول مرة أخرى.",
-    low: "لا توجد إنذارات قوية",
-    caution: "الحذر",
+    veryLow: "مخاطر منخفضة جداً",
+    low: "مخاطر منخفضة",
+    caution: "مخاطر متوسطة",
     high: "مخاطر عالية",
+    veryHigh: "مخاطر عالية جداً",
     unknown: "غير حاسم",
     lowSummary: "لا نرى إشارات خطر قوية في هذه الطبقة الأولى. غياب التنبيهات لا يثبت الشرعية.",
     cautionSummary: "هناك إشارات تستحق التحقق قبل الدفع أو الرد أو مشاركة البيانات.",
     highSummary: "تم العثور على عدة إشارات مهمة للمخاطر. لن نتابع دون تحقق مستقل.",
-    noCertification: "يحدد Vonu إشارات المخاطر ولا يشهد بأن الموقع أو الشخص أو الرسالة شرعية أو احتيالية.",
+    noCertification: "درجة Vonu هي مؤشر للمخاطر قائم على الأدلة المتاحة؛ وليست احتمالاً للاحتيال ولا شهادة على الشرعية.",
     finalUrl: "الوجهة النهائية",
     httpStatus: "حالة HTTP",
     redirects: "التحويلات",
@@ -449,6 +462,15 @@ function contextLabel(kind: CaptureCheckResult["kind"], locale: SupportedLocale)
     ar: { message: "رسالة", email: "بريد", social_profile: "ملف اجتماعي", marketplace: "سوق / بائع", website_or_checkout: "موقع / دفع", other: "آخر" },
   };
   return labels[locale][kind];
+}
+
+function labelForRiskBand(band: RiskBand, t: UiCopy) {
+  if (band === "very_low") return t.veryLow;
+  if (band === "low") return t.low;
+  if (band === "moderate") return t.caution;
+  if (band === "high") return t.high;
+  if (band === "very_high") return t.veryHigh;
+  return t.unknown;
 }
 
 export default function CheckClient({ locale }: { locale: SupportedLocale }) {
@@ -572,15 +594,10 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
   const activeStep = steps[scanIndex % steps.length];
   const risk = result?.risk;
   const styles = risk ? riskStyles(risk.level) : riskStyles("unknown");
-  const riskLabel = risk
-    ? risk.level === "high"
-      ? t.high
-      : risk.level === "caution"
-        ? t.caution
-        : risk.level === "low"
-          ? t.low
-          : t.unknown
-    : t.unknown;
+  const riskBand: RiskBand = !risk || risk.level === "unknown"
+    ? "unknown"
+    : risk.band ?? riskBandFromScore(risk.score);
+  const riskLabel = labelForRiskBand(riskBand, t);
   const confidenceLabel = risk
     ? risk.confidence === "high"
       ? t.highConfidence
@@ -795,8 +812,14 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
                 <h1 className="mt-3 text-[34px] font-bold tracking-[-0.05em] sm:text-[48px]" style={{ color: styles.accent }}>{riskLabel}</h1>
                 <p className="mt-3 max-w-2xl text-[15px] leading-7 text-slate-300">{summary}</p>
               </div>
-              <div className="flex min-w-[190px] items-center gap-4 rounded-2xl bg-black/15 p-4 ring-1 ring-white/[0.07]">
-                <div className="text-[42px] font-bold tracking-[-0.06em] text-white">{risk?.level === "unknown" ? "—" : risk?.score ?? 0}</div>
+              <div className="flex min-w-[220px] items-center gap-4 rounded-2xl bg-black/15 p-4 ring-1 ring-white/[0.07]">
+                <div className="whitespace-nowrap font-bold tracking-[-0.06em] text-white">
+                  {risk?.level === "unknown" ? (
+                    <span className="text-[42px]">—</span>
+                  ) : (
+                    <><span className="text-[42px]">{risk?.score ?? 0}</span><span className="ms-1 text-[20px] text-slate-400">/100</span></>
+                  )}
+                </div>
                 <div className="text-xs leading-5 text-slate-400"><div>{t.cautionIndex}</div><div className="mt-1 text-slate-300">{t.confidence}: {confidenceLabel}</div></div>
               </div>
             </div>
