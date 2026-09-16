@@ -8,8 +8,7 @@ const siteUrl = "https://vonuai.com";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Cookies y almacenamiento local — Vonu",
-  description:
-    "Información sobre cookies, almacenamiento técnico y analítica en Vonu.",
+  description: "Información sobre cookies, identificación técnica del dispositivo, almacenamiento y analítica en Vonu.",
   alternates: { canonical: "/legal/cookies" },
   openGraph: {
     title: "Cookies y almacenamiento local — Vonu",
@@ -29,7 +28,7 @@ export default function CookiesPage() {
     "@id": `${siteUrl}/legal/cookies#webpage`,
     url: `${siteUrl}/legal/cookies`,
     name: "Cookies y almacenamiento local — Vonu",
-    description: "Información sobre cookies, almacenamiento técnico y analítica en Vonu.",
+    description: "Información sobre cookies, identificación técnica del dispositivo, almacenamiento y analítica en Vonu.",
     inLanguage: "es-ES",
     isPartOf: { "@type": "WebSite", name: "Vonu", url: siteUrl },
   };
@@ -45,7 +44,7 @@ export default function CookiesPage() {
             <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Privacidad</p>
             <h1 className="mt-4 text-[50px] font-semibold leading-[0.98] tracking-[-0.06em] text-zinc-950 sm:text-[82px]">Cookies y almacenamiento.</h1>
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
-              Una explicación concreta de la medición y el almacenamiento técnico que utiliza Vonu hoy.
+              Una explicación concreta del almacenamiento técnico que permite ofrecer el análisis gratuito y mantener los packs comprados sin crear una cuenta.
             </p>
             <p className="mt-5 text-[13px] text-zinc-500">Última actualización: 16 de septiembre de 2026</p>
           </div>
@@ -58,44 +57,49 @@ export default function CookiesPage() {
           En la versión pública actual, Vonu <strong>no utiliza Google Analytics ni cookies publicitarias</strong>. La medición principal se realiza mediante Vercel Web Analytics y eventos técnicos de producto.
         </p>
         <p>
-          Según la documentación de Vercel, su Web Analytics no utiliza cookies para identificar visitantes y trabaja con datos agregados. Vonu no envía como propiedades de analítica el texto, la imagen o la URL que introduces para una comprobación, ni tu dirección de email.
+          Vonu tampoco necesita una cuenta para utilizar Vonu Check. El control del análisis gratuito y de los análisis comprados se realiza mediante un identificador técnico pseudónimo del navegador o dispositivo.
         </p>
 
-        <h2>2. Cookies y almacenamiento estrictamente necesarios</h2>
+        <h2>2. Cookie técnica de dispositivo</h2>
         <p>
-          Algunas partes de la aplicación pueden necesitar almacenamiento técnico del navegador para mantener una sesión, conservar temporalmente el estado de una operación, evitar repetir eventos dentro de una misma sesión o aplicar medidas de seguridad.
+          Vonu utiliza una cookie estrictamente necesaria llamada <strong>vonu_device_id</strong>. Contiene un identificador aleatorio y no incluye tu nombre, email, documento de identidad ni el contenido que analizas.
         </p>
         <p>
-          Este almacenamiento se utiliza para prestar funciones solicitadas por el usuario y no para crear perfiles publicitarios.
+          Esta cookie permite reconocer que ese navegador o dispositivo ya ha utilizado su análisis gratuito y mantener el saldo de análisis comprados. Se configura como cookie HTTP-only, segura y de primera parte, con una duración técnica máxima aproximada de un año salvo que la elimines antes.
         </p>
 
-        <h2>3. Analítica de Vercel</h2>
+        <h2>3. Qué ocurre si borras el almacenamiento</h2>
+        <p>
+          Si borras cookies o datos del navegador, utilizas navegación privada, cambias de navegador o cambias de dispositivo, Vonu puede dejar de reconocer el identificador anterior. Esto puede hacer que el saldo comprado no aparezca automáticamente en el nuevo entorno.
+        </p>
+        <p>
+          Si has realizado una compra, conserva el recibo de Stripe. Puede ayudarnos a localizar la operación si necesitas soporte.
+        </p>
+
+        <h2>4. Analítica de Vercel</h2>
         <p>
           Utilizamos Vercel Web Analytics para conocer de forma agregada el uso de páginas y funciones, así como eventos como el inicio o finalización técnica de una comprobación. También podemos utilizar Vercel Speed Insights para medir rendimiento y experiencia técnica.
         </p>
         <p>
-          Estas herramientas se configuran para evitar incluir intencionadamente contenido de las comprobaciones o identificadores directos del usuario en los eventos de producto.
+          Estas herramientas se configuran para evitar incluir intencionadamente el texto, la imagen o la URL introducida para una comprobación como propiedades de analítica.
         </p>
 
-        <h2>4. Servicios externos</h2>
+        <h2>5. Servicios externos</h2>
         <p>
-          Cuando accedes voluntariamente a servicios externos, como una pasarela de pago, esos proveedores pueden utilizar sus propias cookies o tecnologías conforme a sus políticas. Por ejemplo, Stripe puede utilizar tecnologías necesarias para seguridad, prevención de fraude y ejecución del pago en sus propios dominios.
+          Cuando accedes voluntariamente a servicios externos, como la pasarela de pago de Stripe, esos proveedores pueden utilizar sus propias cookies o tecnologías conforme a sus políticas para seguridad, prevención de fraude y ejecución del pago.
         </p>
 
-        <h2>5. Si incorporamos cookies no necesarias</h2>
+        <h2>6. Si incorporamos cookies no necesarias</h2>
         <p>
           Si en el futuro activamos herramientas que requieran cookies o tecnologías no necesarias —por ejemplo, determinadas soluciones de publicidad o medición que exijan consentimiento— se mostrará un mecanismo para aceptar o rechazar esas categorías antes de activarlas cuando la normativa lo requiera.
         </p>
+
+        <h2>7. Control desde el navegador</h2>
         <p>
-          Las opciones de aceptar y rechazar se ofrecerán de forma clara y sin condicionar el acceso a las funciones que no dependan de esas tecnologías.
+          Puedes consultar, bloquear o eliminar cookies y almacenamiento desde la configuración de tu navegador. Ten en cuenta que eliminar <strong>vonu_device_id</strong> puede impedir que Vonu reconozca el análisis gratuito ya utilizado o los créditos asociados a ese navegador.
         </p>
 
-        <h2>6. Control desde el navegador</h2>
-        <p>
-          Puedes consultar, bloquear o eliminar cookies y almacenamiento local desde la configuración de tu navegador. Eliminar almacenamiento estrictamente necesario puede cerrar sesiones o hacer que algunas funciones tengan que iniciarse de nuevo.
-        </p>
-
-        <h2>7. Cambios y contacto</h2>
+        <h2>8. Cambios y contacto</h2>
         <p>
           Actualizaremos esta página si cambia la configuración de medición o se incorporan nuevas tecnologías de seguimiento. Para cualquier duda de privacidad puedes escribir a <strong>privacy@vonuai.com</strong>.
         </p>
