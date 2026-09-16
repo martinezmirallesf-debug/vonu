@@ -71,7 +71,7 @@
     border: 0 !important;
     outline: 0 !important;
     border-radius: 8px !important;
-    background: #0b0e17 !important;
+    background: #020b24 !important;
     box-shadow: 0 12px 30px rgba(0,0,0,.34) !important;
     overflow: hidden !important;
     pointer-events: auto !important;
@@ -103,8 +103,8 @@
 
   .vonu-language-desktop-menu > button:hover,
   .vonu-language-desktop-menu > button.is-active {
-    background: rgba(52,211,153,.10) !important;
-    color: rgb(167 243 208) !important;
+    background: rgba(123,183,255,.12) !important;
+    color: #a3ceff !important;
   }
 }
 
@@ -136,7 +136,7 @@
     border: 0 !important;
     outline: 0 !important;
     border-radius: 8px !important;
-    background: #0b0e17 !important;
+    background: #020b24 !important;
     box-shadow: 0 12px 28px rgba(0,0,0,.28) !important;
     overflow: hidden !important;
   }
@@ -168,7 +168,7 @@
 
   .language-mobile-root > .language-mobile-menu > button:hover,
   .language-mobile-root > .language-mobile-menu > button.is-active {
-    background: rgba(52,211,153,.10) !important;
-    color: rgb(167 243 208) !important;
+    background: rgba(123,183,255,.12) !important;
+    color: #a3ceff !important;
   }
 }
