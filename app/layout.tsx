@@ -3,6 +3,7 @@ import "./globals.css";
 import "./global-navigation-fix.css";
 import "katex/dist/katex.min.css";
 import "./vonu-blue-theme.css";
+import "./vonu-blue-uniform.css";
 import type { Metadata, Viewport } from "next";
 import { Inter, Space_Mono, Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
