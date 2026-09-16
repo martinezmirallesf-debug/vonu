@@ -42,8 +42,8 @@ export default function PlanCheckoutButton({
     track("analysis_pack_selected", { analyses: 3, amount_eur: 3.99, locale });
 
     try {
-      const { data } = await supabaseBrowser.auth.getSession();
-      const token = data.session?.access_token ?? null;
+      const { data: authData } = await supabaseBrowser.auth.getSession();
+      const token = authData.session?.access_token ?? null;
 
       if (!token) {
         track("analysis_pack_login_required", { locale });
