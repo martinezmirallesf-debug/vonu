@@ -227,11 +227,33 @@ const lowConfidence = normaliseFraudAtlasEvidence(
 );
 assertEqual(scoreFraudAtlasEvidence(lowConfidence).score, 0, "low-confidence evidence cannot create a deterministic floor");
 
-const negatedSafetyAdvice = normaliseFraudAtlasEvidence(
-  [ev("protect_funds_transfer", "mover tus ahorros a una cuenta segura")],
-  "Aviso de seguridad: si alguien te pide mover tus ahorros a una cuenta segura, no lo hagas.",
-);
-assertEqual(negatedSafetyAdvice.length, 0, "negated safety advice rejected");
-assertEqual(scoreFraudAtlasEvidence(negatedSafetyAdvice).score, 0, "negated safety advice cannot raise risk");
+const negatedCases = [
+  {
+    label: "safe-account safety advice",
+    text: "Aviso de seguridad: si alguien te pide mover tus ahorros a una cuenta segura, no lo hagas.",
+    evidence: ev("protect_funds_transfer", "mover tus ahorros a una cuenta segura"),
+  },
+  {
+    label: "otp disclosure with clitic negation",
+    text: "No me leas los seis dígitos que acaban de aparecer en la notificación del móvil.",
+    evidence: ev("otp_or_mfa_request", "los seis dígitos que acaban de aparecer en la notificación del móvil"),
+  },
+  {
+    label: "release fee explicitly absent",
+    text: "La venta ya está pagada. No tienes que abonar ninguna tasa para que la plataforma libere los 380 € a tu cuenta.",
+    evidence: ev("fake_balance_or_withdrawal_fee", "abonar ninguna tasa para que la plataforma libere los 380 €"),
+  },
+  {
+    label: "cash courier with clitic negation",
+    text: "Por seguridad, no retires efectivo ni se lo entregues al mensajero que irá a tu casa.",
+    evidence: ev("cash_courier_pickup", "se lo entregues al mensajero"),
+  },
+];
 
-console.log(`VONU_FRAUD_ATLAS_CONTRACT_GREEN cases=${cases.length} grounding=1 low_confidence=1 negation=1`);
+for (const test of negatedCases) {
+  const grounded = normaliseFraudAtlasEvidence([test.evidence], test.text);
+  assertEqual(grounded.length, 0, `${test.label} rejected`);
+  assertEqual(scoreFraudAtlasEvidence(grounded).score, 0, `${test.label} cannot raise risk`);
+}
+
+console.log(`VONU_FRAUD_ATLAS_CONTRACT_GREEN cases=${cases.length} grounding=1 low_confidence=1 negation=${negatedCases.length}`);
