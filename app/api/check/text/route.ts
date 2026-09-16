@@ -3,9 +3,15 @@ import { collectWebSignals } from "@/lib/vonu-check/web-signals";
 import { enrichWebResult } from "@/lib/vonu-check/web-enrichment";
 import { pickEmbeddedUrls } from "@/lib/vonu-check/embedded-url";
 import { isSupportedLocale } from "@/lib/vonu-check/i18n";
+import {
+  clampRiskScore,
+  combineIndependentRiskScores,
+  riskBandFromScore,
+  riskLevelFromScore,
+} from "@/lib/vonu-check/risk-score";
 import type { CaptureKind } from "@/lib/vonu-check/capture-types";
 import type { TextCheckResult } from "@/lib/vonu-check/text-types";
-import type { RiskLevel, SignalTone, SupportedLocale } from "@/lib/vonu-check/types";
+import type { SignalTone, SupportedLocale } from "@/lib/vonu-check/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,26 +20,6 @@ const MAX_TEXT_CHARS = 20_000;
 
 function cleanUrl(value: string) {
   return (value || "").trim().replace(/\/$/, "");
-}
-
-function clampScore(value: unknown) {
-  const n = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(n)) return 0;
-  return Math.max(0, Math.min(100, Math.round(n)));
-}
-
-function riskFromScore(score: number): RiskLevel {
-  if (score >= 70) return "high";
-  if (score >= 35) return "caution";
-  return "low";
-}
-
-function combineIndependentScores(a: number, b: number) {
-  if (a <= 0) return clampScore(b);
-  if (b <= 0) return clampScore(a);
-  const strongest = Math.max(a, b);
-  const supporting = Math.min(a, b);
-  return clampScore(strongest + Math.round(supporting * 0.2));
 }
 
 function safeString(value: unknown, max = 800) {
@@ -98,9 +84,15 @@ Goals:
 4. Explain the strongest evidence briefly.
 5. Give practical, non-legal next actions.
 
+VONU RISK SCORE:
+- Return a score from 0 to 100 where 0 means no risk signals were detected in the available evidence and 100 means maximum risk evidence.
+- Use the same calibration for every analysis: 0-19 very low, 20-39 low, 40-59 moderate, 60-79 high, 80-100 very high.
+- The score is a risk index, NOT a probability that fraud or a crime occurred.
+- Strong, specific evidence must move the score more than vague language or generic suspicion.
+- Missing context should reduce confidence, not automatically increase the score.
+
 Rules:
 - Be conservative. Never state that a person is a criminal or scammer as a fact.
-- The score is a CAUTION INDEX, not a probability that a crime occurred.
 - Do not invent sender identity, account age, domain reputation, hidden links or external facts.
 - If context is incomplete, lower confidence and say so.
 - Legitimate-looking language, logos or spelling are not proof of legitimacy.
@@ -225,7 +217,7 @@ export async function POST(req: NextRequest) {
     }
 
     const parsed = parseJsonText(edgeData.text);
-    const baseScore = clampScore(parsed?.risk?.score);
+    const baseScore = clampRiskScore(parsed?.risk?.score);
     const signals = Array.isArray(parsed?.signals)
       ? parsed.signals
           .slice(0, 10)
@@ -234,7 +226,7 @@ export async function POST(req: NextRequest) {
             tone: normalizeTone(signal?.tone),
             title: safeString(signal?.title, 140),
             detail: safeString(signal?.detail, 700),
-            weight: Math.max(0, Math.min(30, clampScore(signal?.weight))),
+            weight: Math.max(0, Math.min(30, clampRiskScore(signal?.weight))),
           }))
           .filter((signal: any) => signal.title && signal.detail)
       : [];
@@ -262,7 +254,7 @@ export async function POST(req: NextRequest) {
           };
         }
       } catch {
-        // Keep the AI analysis even when a linked URL cannot be fetched safely.
+        // Keep the text analysis useful even when a linked URL cannot be fetched safely.
       }
     }
 
@@ -287,7 +279,7 @@ export async function POST(req: NextRequest) {
     }
 
     const linkedScore = linkedUrlCheck?.risk?.score ?? 0;
-    const finalScore = combineIndependentScores(baseScore, linkedScore);
+    const finalScore = combineIndependentRiskScores(baseScore, linkedScore);
     const confidenceValue = parsed?.risk?.confidence;
     const modelConfidence: "limited" | "medium" | "high" =
       confidenceValue === "high" || confidenceValue === "medium" || confidenceValue === "limited"
@@ -308,7 +300,8 @@ export async function POST(req: NextRequest) {
       locale,
       kind: normalizeKind(parsed?.kind),
       risk: {
-        level: riskFromScore(finalScore),
+        level: riskLevelFromScore(finalScore),
+        band: riskBandFromScore(finalScore),
         score: finalScore,
         confidence,
       },
