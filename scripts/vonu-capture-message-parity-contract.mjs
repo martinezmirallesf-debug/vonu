@@ -24,7 +24,7 @@ for (const needle of sharedRequirements) {
 }
 
 requireSource(capture, "visibleText", "capture visible-text grounding");
-requireSource(capture, "exact substring of visibleText", "capture exact-evidence grounding");
+requireSource(capture, "exact substrings of visibleText", "capture exact-evidence grounding");
 requireSource(capture, "Preserve wording and polarity", "capture polarity instruction");
 requireSource(capture, "atlasScore.confidence", "capture atlas confidence");
 requireSource(text, "Fraud Atlas evidence MUST be grounded in exact text excerpts", "text exact-evidence grounding");
