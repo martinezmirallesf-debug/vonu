@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "purpose": "Second-generation adversarial boundary pairs for Vonu Check. Each pair keeps the scenario nearly identical while changing one decisive behavioural variable. Guardrails validate direction and separation, not fraud probability.",
+  "pairs": [
+    {
+      "id": "safe-account-polarity",
+      "locale": "es",
+      "low": "Por seguridad, no transfieras tus ahorros a una cuenta segura de custodia. Llama al banco desde la app oficial.",
+      "high": "Por seguridad, transfiere tus ahorros a una cuenta segura de custodia. Llama al banco después desde la app oficial.",
+      "lowMax": 29,
+      "highMin": 80,
+      "minGap": 45,
+      "variable": "The risky transfer changes from explicitly prohibited to explicitly requested."
+    },
+    {
+      "id": "otp-polarity",
+      "locale": "es",
+      "low": "No me leas los seis dígitos que acaban de aparecer en la notificación del móvil.",
+      "high": "Léeme los seis dígitos que acaban de aparecer en la notificación del móvil.",
+      "lowMax": 29,
+      "highMin": 75,
+      "minGap": 45,
+      "variable": "The temporary authentication digits change from prohibited disclosure to requested disclosure."
+    },
+    {
+      "id": "remote-control-polarity",
+      "locale": "es",
+      "low": "No abras Asistencia rápida ni aceptes que tomemos el control del equipo.",
+      "high": "Abre Asistencia rápida y acepta que tomemos el control del equipo.",
+      "lowMax": 29,
+      "highMin": 65,
+      "minGap": 35,
+      "variable": "Remote control changes from explicitly prohibited to requested."
+    },
+    {
+      "id": "wallet-signature-polarity",
+      "locale": "es",
+      "low": "Para proteger tu wallet, no firmes la autorización que acaba de aparecer para reclamar los tokens.",
+      "high": "Para reclamar los tokens, firma la autorización que acaba de aparecer en tu wallet.",
+      "lowMax": 29,
+      "highMin": 65,
+      "minGap": 35,
+      "variable": "The wallet approval changes from prohibited to requested."
+    },
+    {
+      "id": "job-upfront-payment-polarity",
+      "locale": "es",
+      "low": "Tu candidatura ha sido aprobada. Para empezar, no tienes que pagar el kit de incorporación de 59 €; lo cubre la empresa.",
+      "high": "Tu candidatura ha sido aprobada. Para empezar, tienes que pagar el kit de incorporación de 59 €; después activaremos tu usuario.",
+      "lowMax": 29,
+      "highMin": 60,
+      "minGap": 30,
+      "variable": "The same starter kit changes from employer-paid to applicant-paid."
+    },
+    {
+      "id": "family-identity-continuity",
+      "locale": "es",
+      "low": "Mamá, soy Dani y sigo usando mi número de siempre. ¿Me haces un Bizum de 300 € para pagar el taller?",
+      "high": "Mamá, soy Dani y este es mi número nuevo porque perdí el anterior. ¿Me haces un Bizum de 300 € para pagar el taller?",
+      "lowMax": 39,
+      "highMin": 60,
+      "minGap": 25,
+      "variable": "The family money request is unchanged; only identity continuity becomes discontinuity."
+    },
+    {
+      "id": "family-verification-suppression",
+      "locale": "es",
+      "low": "Mamá, soy Dani. Necesito 280 € hoy para el taller. Si quieres, llámame al número de siempre antes de hacer el Bizum.",
+      "high": "Mamá, soy Dani. Necesito 280 € hoy para el taller. No me llames al número de siempre antes de hacer el Bizum.",
+      "lowMax": 39,
+      "highMin": 60,
+      "minGap": 25,
+      "variable": "Independent verification changes from encouraged to suppressed."
+    },
+    {
+      "id": "invoice-destination-continuity",
+      "locale": "es",
+      "low": "Para la factura pendiente de septiembre, realiza el pago de 14.800 € en el IBAN habitual que ya tienes registrado.",
+      "high": "Para la factura pendiente de septiembre, ignora el IBAN habitual y realiza el pago de 14.800 € en el nuevo IBAN indicado en este correo.",
+      "lowMax": 39,
+      "highMin": 65,
+      "minGap": 25,
+      "variable": "The invoice amount and context stay fixed; only the payment destination changes."
+    },
+    {
+      "id": "marketplace-release-fee-polarity",
+      "locale": "es",
+      "low": "La venta ya está pagada. No tienes que abonar ninguna tasa para que la plataforma libere los 380 € a tu cuenta.",
+      "high": "La venta ya está pagada. Tienes que abonar una tasa de 12,50 € para que la plataforma libere los 380 € a tu cuenta.",
+      "lowMax": 29,
+      "highMin": 60,
+      "minGap": 30,
+      "variable": "The release fee changes from explicitly absent to required."
+    },
+    {
+      "id": "cash-courier-polarity",
+      "locale": "es",
+      "low": "Por seguridad, no retires efectivo ni se lo entregues al mensajero que irá a tu casa.",
+      "high": "Por seguridad, retira el efectivo y entrégaselo al mensajero que irá a tu casa.",
+      "lowMax": 29,
+      "highMin": 80,
+      "minGap": 45,
+      "variable": "Cash handoff changes from prohibited to instructed."
+    }
+  ]
+}
