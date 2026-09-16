@@ -40,7 +40,7 @@ export type WebCheckResult = {
   locale: SupportedLocale;
   risk: {
     level: RiskLevel;
-    band: RiskBand;
+    band?: RiskBand;
     score: number;
     confidence: AnalysisConfidence;
   };
