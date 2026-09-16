@@ -3,6 +3,7 @@ import { collectWebSignals } from "@/lib/vonu-check/web-signals";
 import { enrichWebResult } from "@/lib/vonu-check/web-enrichment";
 import { pickEmbeddedUrls } from "@/lib/vonu-check/embedded-url";
 import { extractReverseImageEvidence, reverseImageSignal } from "@/lib/vonu-check/reverse-image";
+import { lookupSupabaseReverseImage } from "@/lib/vonu-check/supabase-evidence";
 import { isSupportedLocale } from "@/lib/vonu-check/i18n";
 import type { CaptureCheckResult, CaptureKind } from "@/lib/vonu-check/capture-types";
 import type { RiskLevel, SignalTone, SupportedLocale } from "@/lib/vonu-check/types";
@@ -79,9 +80,7 @@ function parseJsonText(text: string) {
   } catch {
     const first = clean.indexOf("{");
     const last = clean.lastIndexOf("}");
-    if (first >= 0 && last > first) {
-      return JSON.parse(clean.slice(first, last + 1));
-    }
+    if (first >= 0 && last > first) return JSON.parse(clean.slice(first, last + 1));
     throw new Error("invalid_model_json");
   }
 }
@@ -117,26 +116,16 @@ Return ONLY valid JSON. No markdown and no prose outside JSON.
 Schema:
 {
   "kind": "message|email|social_profile|marketplace|website_or_checkout|other",
-  "risk": {
-    "score": 0,
-    "confidence": "limited|medium|high"
-  },
+  "risk": { "score": 0, "confidence": "limited|medium|high" },
   "summary": "one short conclusion in ${locale}",
-  "signals": [
-    {
-      "id": "short_machine_id",
-      "tone": "positive|warning|negative|neutral",
-      "title": "short title in ${locale}",
-      "detail": "brief evidence-based explanation in ${locale}",
-      "weight": 0
-    }
-  ],
-  "extracted": {
-    "urls": [],
-    "phones": [],
-    "emails": [],
-    "brands": []
-  },
+  "signals": [{
+    "id": "short_machine_id",
+    "tone": "positive|warning|negative|neutral",
+    "title": "short title in ${locale}",
+    "detail": "brief evidence-based explanation in ${locale}",
+    "weight": 0
+  }],
+  "extracted": { "urls": [], "phones": [], "emails": [], "brands": [] },
   "recommendedActions": ["short practical action in ${locale}"],
   "limitations": ["short limitation in ${locale}"]
 }
@@ -183,7 +172,6 @@ export async function POST(req: NextRequest) {
     if (!imageBase64 || !/^data:image\/(?:png|jpe?g|webp);base64,/i.test(imageBase64)) {
       return NextResponse.json({ error: "invalid_image" }, { status: 400 });
     }
-
     if (imageBase64.length > MAX_DATA_URL_CHARS) {
       return NextResponse.json({ error: "image_too_large" }, { status: 413 });
     }
@@ -195,13 +183,17 @@ export async function POST(req: NextRequest) {
       process.env.SUPABASE_ANON_KEY_FALLBACK ||
       ""
     ).trim();
-    const edgeUrl =
-      cleanUrl(process.env.SUPABASE_EDGE_FUNCTION_URL || "") ||
+    const edgeUrl = cleanUrl(process.env.SUPABASE_EDGE_FUNCTION_URL || "") ||
       (supabaseUrl ? `${supabaseUrl}/functions/v1/quick-service` : "");
 
     if (!supabaseAnonKey || !edgeUrl) {
       return NextResponse.json({ error: "vision_not_configured" }, { status: 500 });
     }
+
+    // Run independent structured Web Detection alongside the legacy AI service.
+    // The evidence improves explanation/confidence but is not added again to the score,
+    // because quick-service already uses reverse-image context internally.
+    const reverseEvidencePromise = lookupSupabaseReverseImage(imageBase64);
 
     const edgeResponse = await fetch(edgeUrl, {
       method: "POST",
@@ -261,9 +253,10 @@ export async function POST(req: NextRequest) {
       brands: safeStringArray(parsed?.extracted?.brands, 6, 100),
     };
 
-    const reverseEvidence = extractReverseImageEvidence(edgeData);
+    const evidenceData = await reverseEvidencePromise;
+    const reverseEvidence = extractReverseImageEvidence(evidenceData ?? edgeData);
     const reuseSignal = reverseImageSignal(locale, reverseEvidence, kind);
-    if (reuseSignal) signals.push(reuseSignal);
+    if (reuseSignal) signals.push({ ...reuseSignal, weight: 0 });
 
     let linkedUrlCheck: CaptureCheckResult["linkedUrlCheck"] = null;
     const candidateUrls = pickEmbeddedUrls(extracted.urls, 2);
@@ -272,7 +265,6 @@ export async function POST(req: NextRequest) {
       try {
         const baseWeb = await collectWebSignals(candidateUrl, locale);
         const web = await enrichWebResult(baseWeb);
-
         if (!linkedUrlCheck || web.risk.score > linkedUrlCheck.risk.score) {
           linkedUrlCheck = {
             url: web.facts.finalUrl || candidateUrl,
@@ -281,7 +273,7 @@ export async function POST(req: NextRequest) {
           };
         }
       } catch {
-        // The screenshot analysis remains useful even if a visible URL cannot be fetched safely.
+        // Screenshot analysis remains useful if a visible URL cannot be fetched safely.
       }
     }
 
@@ -306,8 +298,7 @@ export async function POST(req: NextRequest) {
     }
 
     const linkedScore = linkedUrlCheck?.risk?.score ?? 0;
-    const combinedWithWeb = combineIndependentScores(baseScore, linkedScore);
-    const finalScore = clampScore(combinedWithWeb + (reuseSignal?.weight ?? 0));
+    const finalScore = combineIndependentScores(baseScore, linkedScore);
 
     const confidenceValue = parsed?.risk?.confidence;
     const modelConfidence: "limited" | "medium" | "high" =
@@ -328,11 +319,7 @@ export async function POST(req: NextRequest) {
       checkedAt: new Date().toISOString(),
       locale,
       kind,
-      risk: {
-        level: riskFromScore(finalScore),
-        score: finalScore,
-        confidence,
-      },
+      risk: { level: riskFromScore(finalScore), score: finalScore, confidence },
       summary: safeString(parsed?.summary, 700),
       signals,
       extracted,
@@ -341,9 +328,7 @@ export async function POST(req: NextRequest) {
       limitations: safeStringArray(parsed?.limitations, 5, 400),
     };
 
-    return NextResponse.json(result, {
-      headers: { "cache-control": "no-store" },
-    });
+    return NextResponse.json(result, { headers: { "cache-control": "no-store" } });
   } catch (error) {
     console.error("[vonu-check/image]", error);
     return NextResponse.json({ error: "capture_check_failed" }, { status: 500 });
