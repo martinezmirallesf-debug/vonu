@@ -3,41 +3,8 @@
 import { useEffect } from "react";
 import { track } from "@vercel/analytics";
 
-const supportedLocales = new Set(["es", "en", "fr", "de", "ar"]);
-
 function emit(name: string, data: Record<string, string | number | boolean | undefined> = {}) {
   track(name, data);
-  if (typeof window !== "undefined" && typeof (window as any).gtag === "function") {
-    (window as any).gtag("event", name, data);
-  }
-}
-
-function rememberLocale(locale: string) {
-  if (!supportedLocales.has(locale) || typeof document === "undefined") return;
-  const secure = window.location.protocol === "https:" ? "; Secure" : "";
-  document.cookie = `vonu_locale=${locale}; Max-Age=31536000; Path=/; SameSite=Lax${secure}`;
-}
-
-function maybeRememberLocale(anchor: HTMLAnchorElement, href: string) {
-  if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
-
-  try {
-    const url = new URL(href, window.location.origin);
-    if (url.origin !== window.location.origin) return;
-    const first = url.pathname.split("/").filter(Boolean)[0] || "";
-
-    if (supportedLocales.has(first)) {
-      rememberLocale(first);
-      return;
-    }
-
-    const label = (anchor.textContent || "").trim().toLowerCase();
-    if (label === "es" || label === "español") {
-      rememberLocale("es");
-    }
-  } catch {
-    // Ignore malformed or non-navigation hrefs.
-  }
 }
 
 function classify(url: string) {
@@ -193,8 +160,6 @@ export default function FunnelTelemetry() {
       if (!anchor) return;
       const href = anchor.getAttribute("href") || "";
 
-      maybeRememberLocale(anchor, href);
-
       if (window.location.pathname === "/precios" && href === "/chat") {
         const text = (anchor.textContent || "").toLowerCase();
         if (text.includes("probar plus") || text.includes("probar max") || text.includes("añadir recarga")) {
@@ -214,22 +179,6 @@ export default function FunnelTelemetry() {
     };
 
     document.addEventListener("click", clickHandler, true);
-
-    const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
-    if (gaId && !(window as any).__vonuGaBooted) {
-      (window as any).__vonuGaBooted = true;
-      const script = document.createElement("script");
-      script.async = true;
-      script.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
-      document.head.appendChild(script);
-
-      (window as any).dataLayer = (window as any).dataLayer || [];
-      (window as any).gtag = function gtag(...payload: any[]) {
-        (window as any).dataLayer.push(payload);
-      };
-      (window as any).gtag("js", new Date());
-      (window as any).gtag("config", gaId, { send_page_view: true });
-    }
 
     return () => {
       window.fetch = originalFetch;
