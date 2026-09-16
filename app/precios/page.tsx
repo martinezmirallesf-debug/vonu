@@ -10,11 +10,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Precios — Vonu",
   description:
-    "Planes de Vonu para comprobar enlaces, mensajes y capturas antes de confiar, responder, compartir datos o pagar.",
+    "Prueba Vonu con 1 análisis gratuito. Si quieres seguir, compra 3 análisis adicionales por 3,99 €.",
   alternates: { canonical: "/precios" },
   openGraph: {
     title: "Precios — Vonu",
-    description: "Empieza gratis y amplía tu capacidad de análisis cuando lo necesites.",
+    description: "1 análisis gratis. Después, 3 análisis adicionales por 3,99 €.",
     url: `${siteUrl}/precios`,
     siteName: "Vonu",
     locale: "es_ES",
@@ -23,46 +23,18 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-const plans = [
-  {
-    name: "Free",
-    price: "0€",
-    description: "Para probar Vonu con una comprobación real antes de decidir si necesitas más.",
-    features: [
-      "Primer análisis gratuito",
-      "Enlaces, mensajes o capturas",
-      "Señales de riesgo y próximos pasos",
-      "Sin tarjeta para empezar",
-    ],
-  },
-  {
-    name: "Plus",
-    price: "9,99€",
-    description: "Para usar Vonu con frecuencia en situaciones cotidianas donde conviene comprobar antes de actuar.",
-    features: [
-      "Más análisis durante el mes",
-      "Enlaces, mensajes y capturas",
-      "Comprobaciones técnicas cuando aplican",
-      "Fraud Atlas y calibración de riesgo",
-    ],
-  },
-  {
-    name: "Max",
-    price: "19,99€",
-    description: "Para quienes necesitan más capacidad y utilizan Vonu de forma intensiva.",
-    features: [
-      "Mayor capacidad mensual",
-      "Enlaces, mensajes y capturas",
-      "Mismas capas de análisis con más margen",
-      "Pensado para uso intensivo",
-    ],
-  },
-];
-
 const faqs = [
   {
     q: "¿Puedo probar Vonu sin pagar?",
-    a: "Sí. El primer análisis es gratuito y no necesitas introducir una tarjeta para probar Vonu.",
+    a: "Sí. Tu primer análisis es gratuito y no necesitas introducir una tarjeta para probar Vonu.",
+  },
+  {
+    q: "¿Qué pasa después del análisis gratuito?",
+    a: "Si quieres seguir usando Vonu, puedes comprar un pack de 3 análisis adicionales por 3,99 €. Es un pago único, no una suscripción.",
+  },
+  {
+    q: "¿Los 3 análisis caducan cada mes?",
+    a: "No. Este lanzamiento no usa una suscripción mensual: compras 3 análisis adicionales y se añaden a tu cuenta.",
   },
   {
     q: "¿Qué analiza Vonu?",
@@ -74,11 +46,7 @@ const faqs = [
   },
   {
     q: "¿Cómo se gestiona el pago?",
-    a: "Las suscripciones se procesan mediante Stripe. Vonu recibe los datos necesarios para gestionar tu plan y estado de pago, pero no necesita almacenar el número completo de tu tarjeta.",
-  },
-  {
-    q: "¿Puedo cancelar?",
-    a: "Sí. Puedes gestionar la suscripción y su renovación desde el portal de facturación asociado a tu cuenta.",
+    a: "El pago único se procesa mediante Stripe. Vonu recibe los datos necesarios para acreditar tus 3 análisis, pero no necesita almacenar el número completo de tu tarjeta.",
   },
 ];
 
@@ -97,7 +65,7 @@ export default function PricingPage() {
     "@id": `${siteUrl}/precios#webpage`,
     url: `${siteUrl}/precios`,
     name: "Precios — Vonu",
-    description: "Planes de Vonu para comprobar enlaces, mensajes y capturas.",
+    description: "1 análisis gratis y, después, 3 análisis adicionales por 3,99 €.",
     inLanguage: "es-ES",
     isPartOf: { "@type": "WebSite", name: "Vonu", url: siteUrl },
   };
@@ -116,80 +84,63 @@ export default function PricingPage() {
           <div className="mx-auto max-w-[980px] text-center">
             <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Precios</p>
             <h1 className="mx-auto mt-5 max-w-[980px] text-[50px] font-semibold leading-[0.98] tracking-[-0.065em] text-white sm:text-[76px] sm:leading-[0.94] lg:text-[90px]">
-              Empieza gratis.
-              <span className="block text-slate-400">Amplía cuando lo necesites.</span>
+              Prueba Vonu gratis.
+              <span className="block text-slate-400">Paga solo si quieres seguir.</span>
             </h1>
             <p className="mx-auto mt-7 max-w-[760px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">
-              Elige el margen que necesitas para comprobar enlaces, mensajes y capturas antes de confiar, responder, compartir datos o pagar.
+              Tienes 1 análisis gratuito. Después puedes comprar 3 análisis adicionales por 3,99 €, sin suscripción mensual.
             </p>
           </div>
         </div>
       </section>
 
       <section id="planes" className="border-b border-white/[0.06] bg-[#0a0d15]">
-        <div className="mx-auto max-w-[1180px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
-          <div className="grid gap-4 lg:grid-cols-3">
-            {plans.map((plan) => {
-              const highlighted = plan.name === "Plus";
-              return (
-                <article
-                  key={plan.name}
-                  className={[
-                    "relative flex min-h-[470px] flex-col rounded-[26px] border p-6",
-                    highlighted
-                      ? "border-emerald-400/30 bg-emerald-400/[0.055] shadow-[0_26px_80px_rgba(16,185,129,.08)]"
-                      : "border-white/[0.07] bg-white/[0.03]",
-                  ].join(" ")}
-                >
-                  {highlighted && (
-                    <span className="absolute right-5 top-5 rounded-full border border-emerald-300/20 bg-emerald-400/[0.10] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-200">
-                      Más elegido
-                    </span>
-                  )}
-                  <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">{plan.name}</p>
-                  <div className="mt-8 flex items-end gap-2">
-                    <span className="text-[54px] font-semibold leading-none tracking-[-0.07em] text-white">{plan.price}</span>
-                    {plan.name !== "Free" && <span className="pb-1 text-[13px] text-slate-500">/ mes</span>}
+        <div className="mx-auto max-w-[980px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+          <div className="grid gap-4 md:grid-cols-2">
+            <article className="flex min-h-[430px] flex-col rounded-[26px] border border-white/[0.07] bg-white/[0.03] p-6">
+              <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Prueba gratis</p>
+              <div className="mt-8 flex items-end gap-2">
+                <span className="text-[54px] font-semibold leading-none tracking-[-0.07em] text-white">0€</span>
+              </div>
+              <p className="mt-5 text-[14px] leading-7 text-slate-400">Comprueba una situación real antes de decidir si Vonu te resulta útil.</p>
+              <div className="mt-7 space-y-3">
+                {["1 análisis gratuito", "URL, mensaje o captura", "Índice de riesgo y señales detectadas", "Sin tarjeta para empezar"].map((feature) => (
+                  <div key={feature} className="flex items-center gap-3 text-[13px] leading-6 text-slate-300">
+                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-400/[0.10] text-emerald-300"><CheckIcon /></span>
+                    <span>{feature}</span>
                   </div>
-                  <p className="mt-5 min-h-[84px] text-[14px] leading-7 text-slate-400">{plan.description}</p>
-                  <div className="mt-6 space-y-3">
-                    {plan.features.map((feature) => (
-                      <div key={feature} className="flex items-center gap-3 text-[13px] leading-6 text-slate-300">
-                        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-400/[0.10] text-emerald-300">
-                          <CheckIcon />
-                        </span>
-                        <span>{feature}</span>
-                      </div>
-                    ))}
-                  </div>
+                ))}
+              </div>
+              <Link href="/es/check" className="mt-auto inline-flex h-12 w-full items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.045] px-5 text-[14px] font-bold text-white transition hover:bg-white/[0.07]">
+                Hacer mi análisis gratis
+              </Link>
+            </article>
 
-                  {plan.name === "Free" ? (
-                    <Link
-                      href="/es/check"
-                      className="mt-auto inline-flex h-12 w-full items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.045] px-5 text-[14px] font-bold text-white transition hover:bg-white/[0.07]"
-                    >
-                      Probar gratis
-                    </Link>
-                  ) : (
-                    <PlanCheckoutButton
-                      plan={plan.name === "Plus" ? "plus" : "max"}
-                      locale="es"
-                      label={plan.name === "Plus" ? "Elegir Plus" : "Elegir Max"}
-                      className={[
-                        "mt-auto h-12 w-full rounded-xl px-5 text-[14px] font-bold transition disabled:cursor-wait disabled:opacity-70",
-                        highlighted
-                          ? "bg-emerald-400 text-[#07110d] hover:bg-emerald-300"
-                          : "border border-white/[0.10] bg-white/[0.045] text-white hover:bg-white/[0.07]",
-                      ].join(" ")}
-                    />
-                  )}
-                </article>
-              );
-            })}
+            <article className="relative flex min-h-[430px] flex-col rounded-[26px] border border-emerald-400/30 bg-emerald-400/[0.055] p-6 shadow-[0_26px_80px_rgba(16,185,129,.08)]">
+              <span className="absolute right-5 top-5 rounded-full border border-emerald-300/20 bg-emerald-400/[0.10] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-200">Pago único</span>
+              <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Pack de análisis</p>
+              <div className="mt-8 flex items-end gap-2">
+                <span className="text-[54px] font-semibold leading-none tracking-[-0.07em] text-white">3,99€</span>
+              </div>
+              <p className="mt-5 text-[14px] leading-7 text-slate-400">Cuando gastes tu análisis gratuito, añade 3 análisis más a tu cuenta.</p>
+              <div className="mt-7 space-y-3">
+                {["3 análisis adicionales", "URL, mensaje o captura", "Sin renovación automática", "Compra única mediante Stripe"].map((feature) => (
+                  <div key={feature} className="flex items-center gap-3 text-[13px] leading-6 text-slate-300">
+                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-400/[0.10] text-emerald-300"><CheckIcon /></span>
+                    <span>{feature}</span>
+                  </div>
+                ))}
+              </div>
+              <PlanCheckoutButton
+                locale="es"
+                label="Comprar 3 análisis"
+                className="mt-auto h-12 w-full rounded-xl bg-emerald-400 px-5 text-[14px] font-bold text-[#07110d] transition hover:bg-emerald-300 disabled:cursor-wait disabled:opacity-70"
+              />
+            </article>
           </div>
 
           <p className="mx-auto mt-8 max-w-[760px] text-center text-[12px] leading-6 text-slate-500">
-            Las suscripciones de pago se procesan mediante Stripe. El importe y las condiciones de la compra se muestran antes de confirmar el pago.
+            3,99 € es un pago único por 3 análisis adicionales. No hay renovación automática ni suscripción mensual en esta fase de lanzamiento.
           </p>
         </div>
       </section>
@@ -198,7 +149,7 @@ export default function PricingPage() {
         <div className="mx-auto max-w-[900px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
           <div className="text-center">
             <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Preguntas frecuentes</p>
-            <h2 className="mt-4 text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">Antes de elegir.</h2>
+            <h2 className="mt-4 text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">Simple desde el principio.</h2>
           </div>
           <div className="mt-10 space-y-3">
             {faqs.map((item) => (
@@ -219,12 +170,8 @@ export default function PricingPage() {
       <section className="bg-[#0a0d15]">
         <div className="mx-auto max-w-[900px] px-4 py-20 text-center sm:px-6 sm:py-24 lg:px-8">
           <h2 className="text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">Comprueba antes de confiar.</h2>
-          <p className="mx-auto mt-5 max-w-[680px] text-[16px] leading-8 text-slate-400">
-            Puedes empezar con un análisis gratuito y ampliar tu plan solo cuando el uso real lo justifique.
-          </p>
-          <Link href="/es/check" className="mt-8 inline-flex h-12 items-center justify-center rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] transition hover:bg-emerald-300">
-            Analizar ahora
-          </Link>
+          <p className="mx-auto mt-5 max-w-[680px] text-[16px] leading-8 text-slate-400">Empieza con tu análisis gratuito. Si necesitas seguir, añade 3 análisis por 3,99 €.</p>
+          <Link href="/es/check" className="mt-8 inline-flex h-12 items-center justify-center rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] transition hover:bg-emerald-300">Analizar ahora</Link>
           <div className="mt-6 flex flex-wrap justify-center gap-4 text-[11px] text-slate-600">
             <Link href="/legal/terminos" className="transition hover:text-slate-400">Términos</Link>
             <Link href="/legal/privacidad" className="transition hover:text-slate-400">Privacidad</Link>
