@@ -1,4 +1,4 @@
-import type { AnalysisConfidence, RiskLevel, SignalTone, SupportedLocale, WebCheckSignal } from "./types";
+import type { AnalysisConfidence, RiskBand, RiskLevel, SignalTone, SupportedLocale, WebCheckSignal } from "./types";
 
 export type CaptureKind =
   | "message"
@@ -27,6 +27,7 @@ export type LinkedUrlCheck = {
   url: string;
   risk: {
     level: RiskLevel;
+    band: RiskBand;
     score: number;
     confidence: AnalysisConfidence;
   };
@@ -40,6 +41,7 @@ export type CaptureCheckResult = {
   kind: CaptureKind;
   risk: {
     level: RiskLevel;
+    band: RiskBand;
     score: number;
     confidence: AnalysisConfidence;
   };
