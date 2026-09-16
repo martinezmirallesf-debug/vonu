@@ -1,0 +1,121 @@
+/* Mobile-only guardrails for the capture composer.
+   Keep the selected screenshot, error feedback and CTA compact enough that
+   the legal notice + footer remain visually separate on short phone screens. */
+
+@media (max-width: 767px) {
+  /* A selected screenshot becomes a compact horizontal row instead of a tall
+     portrait preview stacked above its metadata. */
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    > div:first-child:has(input[type="file"]):has(img[alt="Preview"]) {
+    min-height: 96px !important;
+    padding: 4px 0 !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    > div:first-child:has(input[type="file"]):has(img[alt="Preview"])
+    > div:first-child {
+    display: grid !important;
+    grid-template-columns: 72px minmax(0, 1fr) !important;
+    width: 100% !important;
+    gap: 12px !important;
+    align-items: center !important;
+    text-align: start !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    img[alt="Preview"] {
+    width: 72px !important;
+    height: 72px !important;
+    max-width: 72px !important;
+    max-height: 72px !important;
+    margin: 0 !important;
+    border-radius: 14px !important;
+    object-fit: cover !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    > div:first-child:has(input[type="file"]):has(img[alt="Preview"])
+    > div:first-child
+    > div:last-child {
+    min-width: 0 !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    > div:first-child:has(input[type="file"]):has(img[alt="Preview"])
+    p {
+    margin-top: 2px !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    > div:first-child:has(input[type="file"]):has(img[alt="Preview"])
+    p:first-child {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    font-size: 13px !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    > div:first-child:has(input[type="file"]):has(img[alt="Preview"])
+    p:nth-child(2) {
+    display: -webkit-box !important;
+    overflow: hidden !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(input[type="file"])
+    > div:first-child:has(input[type="file"]):has(img[alt="Preview"])
+    button {
+    margin-top: 7px !important;
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+  }
+
+  /* Generic analysis errors should inform without consuming a large block of
+     the phone viewport or pushing the CTA into the footer. */
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child
+    > p[class*="bg-rose"] {
+    margin-top: 8px !important;
+    padding: 8px 12px !important;
+    border-radius: 12px !important;
+    font-size: 12.5px !important;
+    line-height: 1.35 !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)
+    > div:last-child:has(> p[class*="bg-rose"])
+    > div:last-child {
+    margin-top: 8px !important;
+  }
+
+  /* Keep a small visual safety gap before the legal notice / compact footer. */
+  .vonu-check-page main:has(> section.text-center) {
+    padding-bottom: 10px !important;
+  }
+
+  .vonu-check-page:has(main > section.text-center) .vonu-submission-notice {
+    margin-top: 5px !important;
+  }
+}
