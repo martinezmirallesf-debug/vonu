@@ -1,4 +1,4 @@
-import type { RiskBand, RiskLevel } from "./types";
+import type { RiskBand, RiskLevel, SignalTone } from "./types";
 
 export const VONU_RISK_BANDS = {
   veryLowMax: 19,
@@ -6,6 +6,11 @@ export const VONU_RISK_BANDS = {
   moderateMax: 59,
   highMax: 79,
 } as const;
+
+export type RiskSignalLike = {
+  tone: SignalTone;
+  weight: number;
+};
 
 export function clampRiskScore(value: unknown): number {
   const numeric = typeof value === "number" ? value : Number(value);
@@ -31,6 +36,47 @@ export function riskLevelFromScore(score: number): Exclude<RiskLevel, "unknown">
   if (band === "very_low" || band === "low") return "low";
   if (band === "moderate") return "caution";
   return "high";
+}
+
+/**
+ * Prevent a language/vision model from assigning a high numeric score when the
+ * structured evidence it returned does not support that severity.
+ *
+ * This is intentionally one-way: it can cap an over-aggressive model score,
+ * but never raises a score. Objective reputation/technical evidence is fused
+ * afterwards and can still move the final result upward.
+ */
+export function calibrateModelRiskScore(rawScore: unknown, signals: RiskSignalLike[]): number {
+  const score = clampRiskScore(rawScore);
+  const riskSignals = signals.filter(
+    (signal) =>
+      (signal.tone === "warning" || signal.tone === "negative") &&
+      clampRiskScore(signal.weight) > 0,
+  );
+
+  const evidenceWeight = riskSignals.reduce(
+    (total, signal) => total + Math.min(30, clampRiskScore(signal.weight)),
+    0,
+  );
+  const negativeCount = riskSignals.filter((signal) => signal.tone === "negative").length;
+
+  // No concrete risk evidence should remain in the very-low band even if the
+  // model emitted a higher number because of uncertainty or vague suspicion.
+  if (evidenceWeight === 0) return Math.min(score, VONU_RISK_BANDS.veryLowMax);
+
+  // Evidence strength defines a conservative ceiling. Examples:
+  // 5 points -> 29 max, 10 -> 39, 20 -> 59, 30 -> 79.
+  let ceiling = Math.min(100, VONU_RISK_BANDS.veryLowMax + evidenceWeight * 2);
+
+  // Warning-only evidence can justify a high result, but not "very high" by
+  // itself. A very-high score requires at least one explicitly negative signal.
+  if (negativeCount === 0) ceiling = Math.min(ceiling, 69);
+
+  // A lone/limited negative signal without enough supporting evidence should
+  // not reach the very-high band either.
+  if (negativeCount > 0 && evidenceWeight < 30) ceiling = Math.min(ceiling, 79);
+
+  return Math.min(score, ceiling);
 }
 
 /**
