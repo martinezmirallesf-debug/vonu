@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { track } from "@vercel/analytics";
+import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 
 const fallback: Record<SupportedLocale, string> = {
@@ -12,15 +13,25 @@ const fallback: Record<SupportedLocale, string> = {
   ar: "سجّل الدخول للمتابعة",
 };
 
+const unavailable: Record<SupportedLocale, string> = {
+  es: "El pago no está disponible ahora mismo. Inténtalo de nuevo en unos instantes.",
+  en: "Payment is unavailable right now. Please try again in a moment.",
+  fr: "Le paiement est momentanément indisponible. Réessayez dans un instant.",
+  de: "Die Zahlung ist momentan nicht verfügbar. Bitte versuche es gleich noch einmal.",
+  ar: "الدفع غير متاح حالياً. حاول مرة أخرى بعد قليل.",
+};
+
 export default function PlanCheckoutButton({
   plan,
   locale,
   label,
+  billing = "monthly",
   className,
 }: {
   plan: "plus" | "max";
   locale: SupportedLocale;
   label: string;
+  billing?: "monthly" | "yearly";
   className?: string;
 }) {
   const [loading, setLoading] = useState(false);
@@ -30,19 +41,32 @@ export default function PlanCheckoutButton({
     if (loading) return;
     setLoading(true);
     setMessage(null);
-    track("pricing_plan_selected", { plan, billing: "monthly", locale });
+    track("pricing_plan_selected", { plan, billing, locale });
 
     try {
+      const { data } = await supabaseBrowser.auth.getSession();
+      const token = data.session?.access_token ?? null;
+
+      if (!token) {
+        track("checkout_login_required", { plan, billing, locale });
+        setMessage(fallback[locale]);
+        window.location.href = `/chat?upgrade=${plan}&billing=${billing}&locale=${locale}`;
+        return;
+      }
+
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ plan, billing: "monthly", locale }),
+        headers: {
+          "content-type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ plan, billing, locale }),
       });
 
       if (response.status === 401) {
-        track("checkout_login_required", { plan, locale });
+        track("checkout_login_required", { plan, billing, locale });
         setMessage(fallback[locale]);
-        window.location.href = `/chat?upgrade=${plan}&locale=${locale}`;
+        window.location.href = `/chat?upgrade=${plan}&billing=${billing}&locale=${locale}`;
         return;
       }
 
@@ -53,7 +77,7 @@ export default function PlanCheckoutButton({
 
       window.location.href = data.url;
     } catch {
-      setMessage(fallback[locale]);
+      setMessage(unavailable[locale]);
       setLoading(false);
     }
   }
