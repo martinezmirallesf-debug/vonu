@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/app/lib/stripe";
 import { getSupabaseAdmin } from "@/app/lib/supabaseAdmin";
 import { getUserFromRequest } from "@/app/lib/authServer";
+import { checkPath } from "@/lib/vonu-global/i18n";
+import { localizedPublicPath } from "@/lib/vonu-global/routes";
+import type { SupportedLocale } from "@/lib/vonu-check/types";
 
 export const runtime = "nodejs";
 
-const supportedLocales = new Set(["es", "en", "fr", "de", "ar"]);
+const supportedLocales = new Set<SupportedLocale>(["es", "en", "fr", "de", "ar"]);
 
 function getAppUrl(req: NextRequest) {
   const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "";
@@ -18,8 +21,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const plan = (body?.plan ?? "").toString() as "plus" | "max";
     const billing = (body?.billing ?? "").toString() as "monthly" | "yearly";
-    const requestedLocale = (body?.locale ?? "es").toString().toLowerCase();
-    const locale = supportedLocales.has(requestedLocale) ? requestedLocale : "es";
+    const requestedLocale = (body?.locale ?? "es").toString().toLowerCase() as SupportedLocale;
+    const locale: SupportedLocale = supportedLocales.has(requestedLocale) ? requestedLocale : "es";
 
     if (!["plus", "max"].includes(plan) || !["monthly", "yearly"].includes(billing)) {
       return NextResponse.json({ error: "Invalid checkout params" }, { status: 400 });
@@ -81,12 +84,13 @@ export async function POST(req: NextRequest) {
     }
 
     const appUrl = getAppUrl(req);
-    const pricingPath = locale === "es" ? "/precios" : `/${locale}/precios`;
-    const successPath = `/${locale}/check?checkout=success&plan=${plan}`;
+    const pricingPath = localizedPublicPath(locale, "precios");
+    const successPath = `${checkPath(locale)}?checkout=success&plan=${plan}`;
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
+      client_reference_id: user.id,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${appUrl}${successPath}`,
       cancel_url: `${appUrl}${pricingPath}?checkout=cancel`,
