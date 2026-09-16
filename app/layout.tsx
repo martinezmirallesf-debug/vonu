@@ -2,6 +2,7 @@
 import "./globals.css";
 import "./global-navigation-fix.css";
 import "katex/dist/katex.min.css";
+import "./vonu-blue-theme.css";
 import type { Metadata, Viewport } from "next";
 import { Inter, Space_Mono, Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
@@ -79,7 +80,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#0b0e17",
+  themeColor: "#020b24",
 };
 
 const entityGraph = {
