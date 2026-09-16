@@ -49,7 +49,7 @@ const signalCopy: Record<SupportedLocale, Record<string, [string, string]>> = {
     badStatus: ["Réponse HTTP non standard", "Le site a renvoyé un statut HTTP différent de l’habituel. Cela décrit la réponse du serveur mais n’indique pas, à lui seul, une fraude."],
     redirects: ["Plusieurs redirections", "L’URL passe par plusieurs redirections avant la destination finale."],
     password: ["Formulaire de mot de passe", "La page contient un champ de mot de passe. Vérifiez soigneusement le domaine avant de saisir vos identifiants."],
-    externalForm: ["Formulaire vers un autre domaine", "Au moins un formulaire semble envoyer des données vers un autre domaine."],
+    externalForm: ["Formulaire vers un autre domaine", "Au moins un formulaire semble envoyer des données vers un domaine différent."],
     legal: ["Informations légales détectées", "Des mentions habituelles liées aux informations légales, conditions ou confidentialité ont été trouvées."],
     noLegal: ["Informations légales non détectées", "Nous n’avons pas trouvé les mentions légales, conditions ou confidentialité habituelles sur la page analysée."],
     contact: ["Contact détecté", "Des signaux d’une section ou d’informations de contact ont été trouvés."],
@@ -134,16 +134,28 @@ function isPrivateIpv6(address: string): boolean {
 }
 
 async function assertPublicHostname(hostname: string) {
-  const literalType = isIP(hostname);
-  if (literalType === 4 && isPrivateIpv4(hostname)) throw new Error("private_target");
-  if (literalType === 6 && isPrivateIpv6(hostname)) throw new Error("private_target");
+  const host = hostname.startsWith('[') && hostname.endsWith(']')
+    ? hostname.slice(1, -1)
+    : hostname;
+  const literalType = isIP(host);
+  if (literalType === 4 && isPrivateIpv4(host)) throw new Error("private_target");
+  if (literalType === 6 && isPrivateIpv6(host)) throw new Error("private_target");
   if (literalType) return;
 
-  if (hostname === 'localhost' || hostname.endsWith('.localhost') || hostname.endsWith('.local')) {
+  if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local')) {
     throw new Error("private_target");
   }
 
-  const addresses = await lookup(hostname, { all: true, verbatim: true });
+  let addresses;
+  try {
+    addresses = await lookup(host, { all: true, verbatim: true });
+  } catch (error) {
+    const code = error && typeof error === 'object' && 'code' in error
+      ? String((error as { code?: unknown }).code || '')
+      : '';
+    if (code === 'ENOTFOUND' || code === 'ENODATA') throw new Error("dns_not_found");
+    throw error;
+  }
   if (!addresses.length) throw new Error("dns_not_found");
   for (const entry of addresses) {
     if ((entry.family === 4 && isPrivateIpv4(entry.address)) || (entry.family === 6 && isPrivateIpv6(entry.address))) {
