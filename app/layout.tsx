@@ -1,5 +1,6 @@
 // app/layout.tsx
 import "./globals.css";
+import "./global-navigation-fix.css";
 import "katex/dist/katex.min.css";
 import type { Metadata, Viewport } from "next";
 import { Inter, Space_Mono, Playfair_Display } from "next/font/google";
