@@ -34,8 +34,36 @@ function labelsFrom(value: unknown) {
     .slice(0, 4);
 }
 
+function readNumericEvidence(node: any): ReverseImageEvidence | null {
+  if (!node || typeof node !== "object" || Array.isArray(node)) return null;
+  const hasCountField = [
+    "full_matching_images_count",
+    "partial_matching_images_count",
+    "pages_with_matching_images_count",
+    "visually_similar_images_count",
+  ].some((key) => key in node);
+  if (!hasCountField) return null;
+
+  const n = (value: unknown) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
+  };
+
+  return {
+    available: Boolean(node.checked ?? true),
+    fullMatches: n(node.full_matching_images_count),
+    partialMatches: n(node.partial_matching_images_count),
+    pagesWithMatches: n(node.pages_with_matching_images_count),
+    visuallySimilar: n(node.visually_similar_images_count),
+    bestGuessLabels: labelsFrom(node.best_guess_labels),
+  };
+}
+
 function readWebDetection(node: any): ReverseImageEvidence | null {
   if (!node || typeof node !== "object" || Array.isArray(node)) return null;
+
+  const numeric = readNumericEvidence(node);
+  if (numeric) return numeric;
 
   const hasKnownField = [
     "fullMatchingImages",
@@ -94,6 +122,8 @@ export function extractReverseImageEvidence(payload: unknown): ReverseImageEvide
       node.reverse_image,
       node.reverseImageCheck,
       node.reverse_image_check,
+      node.reverseImageRisk,
+      node.reverse_image_risk,
       node.googleVision,
       node.google_vision,
       node.vision,
@@ -107,12 +137,10 @@ export function extractReverseImageEvidence(payload: unknown): ReverseImageEvide
       if (candidate && typeof candidate === "object") walk(candidate, depth + 1);
     }
 
-    // Google Vision REST commonly wraps annotations in responses[].webDetection.
     for (const response of asArray(node.responses)) {
       if (response && typeof response === "object") walk(response, depth + 1);
     }
 
-    // Some versions of quick-service return auxiliary evidence under a custom object.
     if (depth < 4) {
       for (const [key, value] of Object.entries(node)) {
         if (!value || typeof value !== "object") continue;
@@ -125,7 +153,14 @@ export function extractReverseImageEvidence(payload: unknown): ReverseImageEvide
   return result;
 }
 
-const copy: Record<SupportedLocale, { reused: [string, string]; partial: [string, string] }> = {
+type ReverseCopy = {
+  reused: [string, string];
+  partial: [string, string];
+  exactCounts: (full: number, pages: number) => string;
+  partialCounts: (partial: number, similar: number) => string;
+};
+
+const copy: Record<SupportedLocale, ReverseCopy> = {
   es: {
     reused: [
       "La imagen aparece en otros sitios",
@@ -135,6 +170,8 @@ const copy: Record<SupportedLocale, { reused: [string, string]; partial: [string
       "Hay imágenes relacionadas en la web",
       "Google Web Detection ha encontrado coincidencias parciales o visualmente similares. Es contexto útil, pero no permite afirmar que la imagen haya sido robada o reutilizada con intención fraudulenta.",
     ],
+    exactCounts: (full, pages) => `${full} coincidencias completas · ${pages} páginas`,
+    partialCounts: (partial, similar) => `${partial} parciales · ${similar} similares`,
   },
   en: {
     reused: [
@@ -145,6 +182,8 @@ const copy: Record<SupportedLocale, { reused: [string, string]; partial: [string
       "Related images exist on the web",
       "Google Web Detection found partial or visually similar matches. This is useful context, but it does not prove the image was stolen or reused fraudulently.",
     ],
+    exactCounts: (full, pages) => `${full} full matches · ${pages} pages`,
+    partialCounts: (partial, similar) => `${partial} partial · ${similar} similar`,
   },
   fr: {
     reused: [
@@ -155,6 +194,8 @@ const copy: Record<SupportedLocale, { reused: [string, string]; partial: [string
       "Des images similaires existent sur le Web",
       "Google Web Detection a trouvé des correspondances partielles ou visuellement similaires. C’est un contexte utile, sans prouver que l’image a été volée ou réutilisée frauduleusement.",
     ],
+    exactCounts: (full, pages) => `${full} correspondances complètes · ${pages} pages`,
+    partialCounts: (partial, similar) => `${partial} partielles · ${similar} similaires`,
   },
   de: {
     reused: [
@@ -165,6 +206,8 @@ const copy: Record<SupportedLocale, { reused: [string, string]; partial: [string
       "Ähnliche Bilder sind im Web vorhanden",
       "Google Web Detection hat teilweise oder visuell ähnliche Treffer gefunden. Das ist nützlicher Kontext, beweist aber nicht, dass das Bild gestohlen oder betrügerisch wiederverwendet wurde.",
     ],
+    exactCounts: (full, pages) => `${full} vollständige Treffer · ${pages} Seiten`,
+    partialCounts: (partial, similar) => `${partial} teilweise · ${similar} ähnlich`,
   },
   ar: {
     reused: [
@@ -175,6 +218,8 @@ const copy: Record<SupportedLocale, { reused: [string, string]; partial: [string
       "توجد صور مرتبطة على الويب",
       "وجد Google Web Detection تطابقات جزئية أو صوراً متشابهة بصرياً. هذا سياق مفيد، لكنه لا يثبت أن الصورة مسروقة أو أعيد استخدامها بقصد احتيالي.",
     ],
+    exactCounts: (full, pages) => `${full} تطابقات كاملة · ${pages} صفحات`,
+    partialCounts: (partial, similar) => `${partial} جزئية · ${similar} مشابهة`,
   },
 };
 
@@ -188,7 +233,7 @@ export function reverseImageSignal(
   const exactEvidence = evidence.fullMatches > 0 || evidence.pagesWithMatches > 0;
   if (exactEvidence) {
     const [title, baseDetail] = copy[locale].reused;
-    const detail = `${baseDetail} (${evidence.fullMatches} coincidencias completas · ${evidence.pagesWithMatches} páginas)`;
+    const detail = `${baseDetail} (${copy[locale].exactCounts(evidence.fullMatches, evidence.pagesWithMatches)})`;
     const identitySensitive = kind === "social_profile" || kind === "marketplace";
     return {
       id: "reverse-image-web-match",
@@ -206,7 +251,7 @@ export function reverseImageSignal(
       tone: "neutral",
       weight: 0,
       title,
-      detail: `${baseDetail} (${evidence.partialMatches} parciales · ${evidence.visuallySimilar} similares)`,
+      detail: `${baseDetail} (${copy[locale].partialCounts(evidence.partialMatches, evidence.visuallySimilar)})`,
     };
   }
 
