@@ -14,8 +14,9 @@ function forbidText(source, needle, label) {
   }
 }
 
-const [middleware, button, gate, entitlement, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
+const [middleware, metered, button, gate, entitlement, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
   read("middleware.ts"),
+  read("app/api/check/metered/route.ts"),
   read("app/components/DevicePackCheckoutButton.tsx"),
   read("app/components/DeviceAccessGate.tsx"),
   read("app/api/check/entitlement/route.ts"),
@@ -28,9 +29,17 @@ const [middleware, button, gate, entitlement, checkout, webhook, pricing, terms,
 ]);
 
 requireText(middleware, 'const DEVICE_COOKIE = "vonu_device_id"', "device cookie");
-requireText(middleware, "consume_vonu_device_analysis", "atomic device consumption");
-requireText(middleware, "status: 402", "paywall response");
-requireText(middleware, 'analyses: 3, amount: 399, currency: "EUR"', "paywall offer");
+requireText(middleware, 'meteredUrl.pathname = "/api/check/metered"', "metered rewrite");
+requireText(middleware, 'requestHeaders.set(DEVICE_HEADER, deviceId)', "device header propagation");
+
+requireText(metered, "reserve_vonu_device_analysis", "atomic analysis reservation");
+requireText(metered, "commit_vonu_device_analysis", "successful analysis commit");
+requireText(metered, "release_vonu_device_analysis", "failed analysis refund");
+requireText(metered, "status: 402", "paywall response");
+requireText(metered, 'analyses: 3, amount: 399, currency: "EUR"', "paywall offer");
+requireText(metered, 'target === "web"', "web handler execution");
+requireText(metered, 'target === "image"', "image handler execution");
+requireText(metered, "await checkText", "text handler execution");
 
 requireText(button, 'fetch("/api/stripe/checkout"', "device pack checkout button");
 forbidText(button, "supabaseBrowser.auth.getSession", "checkout must not require login");
@@ -74,4 +83,4 @@ requireText(privacy, "vonu_device_id", "privacy device cookie");
 requireText(privacy, "pago confirmado", "privacy payment-to-credit flow");
 requireText(cookies, "vonu_device_id", "cookie disclosure");
 
-console.log("VONU_PAYMENT_LAUNCH_CONTRACT_GREEN model=device free=1 pack=3 price=399 activation=poll");
+console.log("VONU_PAYMENT_LAUNCH_CONTRACT_GREEN model=device free=1 pack=3 price=399 activation=poll refunds=failed-analysis");
