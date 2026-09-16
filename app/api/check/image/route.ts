@@ -6,6 +6,11 @@ import { extractReverseImageEvidence, reverseImageSignal } from "@/lib/vonu-chec
 import { lookupSupabaseReverseImage } from "@/lib/vonu-check/supabase-evidence";
 import { isSupportedLocale } from "@/lib/vonu-check/i18n";
 import {
+  FRAUD_ATLAS_PROMPT,
+  normaliseFraudAtlasEvidence,
+  scoreFraudAtlasEvidence,
+} from "@/lib/vonu-check/fraud-atlas";
+import {
   calibrateModelRiskScore,
   clampRiskScore,
   combineIndependentRiskScores,
@@ -73,6 +78,8 @@ function parseJsonText(text: string) {
 }
 
 function promptFor(locale: SupportedLocale) {
+  const atlasPrompt = FRAUD_ATLAS_PROMPT.replaceAll("USER TEXT", "VISIBLE SCREENSHOT TEXT");
+
   return `
 You are VONU CAPTURE, a conservative screenshot fraud-risk analysis engine.
 
@@ -83,9 +90,11 @@ The screenshot may contain an SMS, WhatsApp/Telegram chat, email, social profile
 Goals:
 1. Classify the screenshot context.
 2. Detect concrete fraud/phishing/social-engineering risk signals.
-3. Extract visible URLs, phone numbers, emails and brand names exactly when legible.
-4. Explain the strongest evidence briefly.
-5. Give practical, non-legal next actions.
+3. Transcribe the legible, decision-relevant visible text accurately enough to ground behavioural evidence.
+4. Extract visible URLs, phone numbers, emails and brand names exactly when legible.
+5. Explain the strongest evidence briefly.
+6. Give practical, non-legal next actions.
+7. Map visible text to behavioural Fraud Atlas evidence. Recognise semantically equivalent NEW variants even when wording, brand, amount, country or channel changes.
 
 VONU RISK SCORE:
 - Return a score from 0 to 100 where 0 means no risk signals were detected in the available evidence and 100 means maximum risk evidence.
@@ -103,7 +112,12 @@ Important rules:
 - A screenshot alone cannot verify that an identity is genuine.
 - For social profiles, distinguish visible anomalies from facts that require external verification.
 - For links visible in the image, copy the visible URL as accurately as possible. Do not invent missing characters.
+- visibleText must contain only legible text actually visible in the screenshot. Preserve wording and polarity; never turn a prohibition into a request.
+- Fraud Atlas evidence excerpts must be exact substrings of visibleText. If a relevant phrase is not legible enough to transcribe, omit that evidence.
+- Explicit safety advice, refusals and negated dangerous actions must not raise the general risk score merely because risky keywords are visible. Represent them as positive/neutral signals with weight 0 unless separate risk evidence exists.
 - Keep signals concise and useful on mobile.
+
+${atlasPrompt}
 
 Return ONLY valid JSON. No markdown and no prose outside JSON.
 
@@ -112,6 +126,7 @@ Schema:
   "kind": "message|email|social_profile|marketplace|website_or_checkout|other",
   "risk": { "score": 0, "confidence": "limited|medium|high" },
   "summary": "one short evidence-based conclusion in ${locale}, without a score or risk-band label",
+  "visibleText": "best-effort exact transcription of legible decision-relevant screenshot text",
   "signals": [{
     "id": "short_machine_id",
     "tone": "positive|warning|negative|neutral",
@@ -119,6 +134,13 @@ Schema:
     "detail": "brief evidence-based explanation in ${locale}",
     "weight": 0
   }],
+  "atlas": {
+    "evidence": [{
+      "id": "one Fraud Atlas evidence id from the list above",
+      "confidence": "low|medium|high",
+      "excerpt": "short EXACT quote copied from visibleText"
+    }]
+  },
   "extracted": { "urls": [], "phones": [], "emails": [], "brands": [] },
   "recommendedActions": ["short practical action in ${locale}"],
   "limitations": ["short limitation in ${locale}"]
@@ -227,6 +249,7 @@ export async function POST(req: NextRequest) {
     const parsed = parseJsonText(edgeData.text);
     const rawBaseScore = clampRiskScore(parsed?.risk?.score);
     const kind = normalizeKind(parsed?.kind);
+    const visibleText = safeString(parsed?.visibleText, 12_000);
     const signals = Array.isArray(parsed?.signals)
       ? parsed.signals
           .slice(0, 10)
@@ -239,7 +262,11 @@ export async function POST(req: NextRequest) {
           }))
           .filter((signal: any) => signal.title && signal.detail)
       : [];
-    const baseScore = calibrateModelRiskScore(rawBaseScore, signals);
+
+    const calibratedModelScore = calibrateModelRiskScore(rawBaseScore, signals);
+    const atlasEvidence = normaliseFraudAtlasEvidence(parsed?.atlas?.evidence, visibleText);
+    const atlasScore = scoreFraudAtlasEvidence(atlasEvidence);
+    const baseScore = Math.max(calibratedModelScore, atlasScore.score);
 
     const extracted = {
       urls: safeStringArray(parsed?.extracted?.urls, 5, 500),
@@ -301,11 +328,11 @@ export async function POST(req: NextRequest) {
         ? confidenceValue
         : "limited";
     const confidence: "limited" | "medium" | "high" =
-      linkedUrlCheck?.risk?.confidence === "high"
+      linkedUrlCheck?.risk?.confidence === "high" || atlasScore.confidence === "high"
         ? "high"
         : modelConfidence === "high"
           ? "high"
-          : linkedUrlCheck || reverseEvidence.available || modelConfidence === "medium"
+          : linkedUrlCheck || reverseEvidence.available || atlasScore.confidence === "medium" || modelConfidence === "medium"
             ? "medium"
             : "limited";
 
