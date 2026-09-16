@@ -76,6 +76,13 @@ to a safe account” is not protect_funds_transfer. “We never ask you to insta
 remote access” is not remote_access_request. The sender must actually request,
 encourage, threaten, claim or direct the risky behaviour in the current message.
 
+POLARITY ALSO CONTROLS THE GENERAL RISK SCORE AND SIGNALS. If a dangerous action
+is explicitly prohibited, refused or described as safety advice, do not raise the
+raw risk merely because dangerous keywords appear. Represent that sentence as a
+positive/neutral safety signal with weight 0. Pay attention to clitic pronouns
+between a negation and the verb (for example “no me leas” or “no se lo entregues”)
+and to fee negations such as “no tienes que pagar/abonar”.
+
 Evidence ids:
 - family_or_close_relation: sender claims to be a child, parent, partner, friend or other close/trusted person.
 - trusted_identity_claim: sender claims a specific trusted identity or role relevant to the request.
@@ -148,6 +155,7 @@ const NEGATION_SENSITIVE_IDS = new Set<FraudAtlasEvidenceId>([
   "protect_funds_transfer",
   "guaranteed_return",
   "investment_pitch",
+  "fake_balance_or_withdrawal_fee",
   "job_upfront_payment",
   "invoice_bank_change",
   "rental_deposit_before_viewing",
@@ -159,8 +167,10 @@ const NEGATION_SENSITIVE_IDS = new Set<FraudAtlasEvidenceId>([
 ]);
 
 const SAFETY_NEGATION_PATTERNS = [
-  /\bno\s+(?:lo\s+)?(?:hagas|transfieras|muevas|env[ií]es|pagues|compartas|digas|facilites|leas|firmes|instales|aceptes|uses|escanees|abras|conectes|compres|adelantes)\b/i,
-  /\bno\s+tienes\s+que\s+(?:pagar|transferir|mover|enviar|compartir|instalar|firmar|comprar|adelantar)\b/i,
+  /\bno\s+(?:(?:me|te|se|lo|la|los|las|le|les)\s+){0,2}(?:hagas|transfieras|muevas|env[ií]es|pagues|abones|compartas|digas|facilites|leas|firmes|instales|aceptes|uses|escanees|abras|conectes|compres|adelantes|retires|entregues)\b/i,
+  /\bno\s+tienes\s+que\s+(?:pagar|abonar|transferir|mover|enviar|compartir|instalar|firmar|comprar|adelantar|retirar|entregar)\b/i,
+  /\bno\s+(?:debes|deber[ií]as)\s+(?:pagar|abonar|transferir|mover|enviar|compartir|instalar|firmar|comprar|adelantar|retirar|entregar)\b/i,
+  /\bsin\s+(?:tener\s+que\s+)?(?:pagar|abonar|transferir|mover|enviar|compartir|instalar|firmar|comprar|adelantar|retirar|entregar)\b/i,
   /\bnunca\s+(?:te\s+)?(?:pedir[aá]|pediremos|pedimos|debes)\b/i,
   /\b(?:debes|deber[ií]as)\s+(?:rechazar|ignorar|evitar)\b/i,
   /\bdo\s+not\s+(?:send|transfer|move|pay|share|read|sign|install|accept|use|scan|open|connect|buy)\b/i,
