@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 const DEVICE_COOKIE = "vonu_device_id";
 const DEVICE_HEADER = "x-vonu-device-id";
 const ONE_YEAR = 60 * 60 * 24 * 365;
-const METERED_CHECK_PATHS = new Set([
-  "/api/check/web",
-  "/api/check/image",
-  "/api/check/text",
+const METERED_CHECK_PATHS = new Map([
+  ["/api/check/web", "web"],
+  ["/api/check/image", "image"],
+  ["/api/check/text", "text"],
 ]);
 
 function isUuid(value: string | null | undefined) {
@@ -26,28 +26,7 @@ function withDeviceCookie(response: NextResponse, deviceId: string, shouldSet: b
   return response;
 }
 
-async function consumeAnalysis(deviceId: string) {
-  const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "").replace(/\/$/, "");
-  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-  if (!supabaseUrl || !serviceRole) throw new Error("device_entitlement_not_configured");
-
-  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/consume_vonu_device_analysis`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      apikey: serviceRole,
-      Authorization: `Bearer ${serviceRole}`,
-    },
-    body: JSON.stringify({ p_device_id: deviceId }),
-    cache: "no-store",
-  });
-
-  if (!response.ok) throw new Error("device_entitlement_failed");
-  const rows = await response.json().catch(() => []);
-  return Array.isArray(rows) ? rows[0] : null;
-}
-
-export async function middleware(req: NextRequest) {
+export function middleware(req: NextRequest) {
   const cookieId = req.cookies.get(DEVICE_COOKIE)?.value ?? null;
   const suppliedId = req.headers.get(DEVICE_HEADER);
   const existingId = isUuid(cookieId) ? cookieId : isUuid(suppliedId) ? suppliedId : null;
@@ -57,33 +36,17 @@ export async function middleware(req: NextRequest) {
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set(DEVICE_HEADER, deviceId);
 
-  if (req.method === "POST" && METERED_CHECK_PATHS.has(req.nextUrl.pathname)) {
-    try {
-      const access = await consumeAnalysis(deviceId);
-      if (!access?.allowed) {
-        return withDeviceCookie(
-          NextResponse.json(
-            {
-              error: "payment_required",
-              offer: { analyses: 3, amount: 399, currency: "EUR" },
-              credits_remaining: Number(access?.credits_remaining || 0),
-            },
-            { status: 402 },
-          ),
-          deviceId,
-          shouldSetCookie,
-        );
-      }
+  const target = METERED_CHECK_PATHS.get(req.nextUrl.pathname);
+  if (req.method === "POST" && target) {
+    const meteredUrl = req.nextUrl.clone();
+    meteredUrl.pathname = "/api/check/metered";
+    meteredUrl.search = "";
+    meteredUrl.searchParams.set("target", target);
 
-      requestHeaders.set("x-vonu-access-source", String(access.access_source || "unknown"));
-      requestHeaders.set("x-vonu-credits-remaining", String(access.credits_remaining ?? 0));
-    } catch {
-      return withDeviceCookie(
-        NextResponse.json({ error: "entitlement_unavailable" }, { status: 503 }),
-        deviceId,
-        shouldSetCookie,
-      );
-    }
+    const response = NextResponse.rewrite(meteredUrl, {
+      request: { headers: requestHeaders },
+    });
+    return withDeviceCookie(response, deviceId, shouldSetCookie);
   }
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
