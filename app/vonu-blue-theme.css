@@ -1,0 +1,158 @@
+/* Vonu global navy-blue visual system.
+   Intentionally loaded last from app/layout.tsx so the palette is applied
+   consistently without changing typography, copy or layout. */
+
+:root {
+  --vonu-bg-main: #020b24;
+  --vonu-bg-elevated: #07142f;
+  --vonu-bg-card: #0d1b3d;
+  --vonu-bg-field: #081631;
+
+  --vonu-accent: #7bb7ff;
+  --vonu-accent-strong: #8ec2ff;
+  --vonu-accent-hover: #a3ceff;
+  --vonu-accent-soft: rgb(123 183 255 / 0.10);
+  --vonu-accent-soft-strong: rgb(123 183 255 / 0.16);
+  --vonu-accent-ring: rgb(123 183 255 / 0.28);
+  --vonu-accent-border: rgb(140 185 255 / 0.18);
+  --vonu-accent-glow: rgb(123 183 255 / 0.22);
+
+  /* Tailwind v4 brand-family remap: keep semantic grays untouched while
+     moving the former Vonu greens/teals into the approved blue family. */
+  --color-emerald-50: #f2f8ff;
+  --color-emerald-100: #e5f1ff;
+  --color-emerald-200: #cfe6ff;
+  --color-emerald-300: #a3ceff;
+  --color-emerald-400: #7bb7ff;
+  --color-emerald-500: #66aeff;
+  --color-emerald-600: #5598e6;
+  --color-emerald-700: #447bbd;
+  --color-emerald-800: #335f92;
+  --color-emerald-900: #23466e;
+  --color-emerald-950: #122846;
+
+  --color-green-50: #f2f8ff;
+  --color-green-100: #e5f1ff;
+  --color-green-200: #cfe6ff;
+  --color-green-300: #a3ceff;
+  --color-green-400: #7bb7ff;
+  --color-green-500: #66aeff;
+  --color-green-600: #5598e6;
+  --color-green-700: #447bbd;
+  --color-green-800: #335f92;
+  --color-green-900: #23466e;
+  --color-green-950: #122846;
+
+  --color-teal-50: #f2f8ff;
+  --color-teal-100: #e5f1ff;
+  --color-teal-200: #cfe6ff;
+  --color-teal-300: #a3ceff;
+  --color-teal-400: #7bb7ff;
+  --color-teal-500: #66aeff;
+  --color-teal-600: #5598e6;
+  --color-teal-700: #447bbd;
+  --color-teal-800: #335f92;
+  --color-teal-900: #23466e;
+  --color-teal-950: #122846;
+}
+
+html,
+body {
+  background: var(--vonu-bg-main) !important;
+}
+
+body {
+  color-scheme: dark;
+}
+
+/* Main Vonu dark surfaces. Text grays remain untouched. */
+[class*="bg-[#080b12]"],
+[class*="bg-[#0b0e17]"],
+[class*="bg-[#0d101b]"] {
+  background-color: var(--vonu-bg-main) !important;
+}
+
+[class*="bg-[#0a0d15]"],
+[class*="bg-[#101522]"],
+[class*="bg-[#111523]"] {
+  background-color: var(--vonu-bg-elevated) !important;
+}
+
+[class*="bg-[#141927]"] {
+  background-color: var(--vonu-bg-card) !important;
+}
+
+[class*="bg-[#0d1220]"] {
+  background-color: var(--vonu-bg-field) !important;
+}
+
+/* Preserve the dark readable text used on bright CTAs, now in navy. */
+[class*="text-[#07110d]"] {
+  color: #07142f !important;
+}
+
+/* Check page has an inline background-image, so explicitly translate it. */
+[class*="bg-[#0d101b]"][style*="radial-gradient"] {
+  background-color: var(--vonu-bg-main) !important;
+  background-image:
+    radial-gradient(circle at 50% 44%, rgb(123 183 255 / 0.09), transparent 28%),
+    radial-gradient(circle at 88% 68%, rgb(142 194 255 / 0.05), transparent 24%),
+    linear-gradient(180deg, #020b24 0%, #07142f 100%) !important;
+}
+
+/* Replace legacy green glow utilities that contain literal RGB values. */
+[class*="shadow-"][class*="rgba(52,211,153"] {
+  box-shadow: 0 10px 30px var(--vonu-accent-glow) !important;
+}
+
+[class*="shadow-"][class*="rgba(16,185,129"] {
+  box-shadow: 0 24px 72px rgb(123 183 255 / 0.13) !important;
+}
+
+/* Result conversion card and other soft brand panels. */
+[data-vonu-conversion-nudge="result"] {
+  border-color: var(--vonu-accent-border) !important;
+  background: rgb(123 183 255 / 0.055) !important;
+  box-shadow: 0 22px 60px rgb(0 0 0 / 0.20) !important;
+}
+
+/* Public header/footer surfaces should feel like one continuous navy shell. */
+header[class*="bg-[#0b0e17]"],
+footer[class*="bg-[#0b0e17]"],
+.vonu-check-compact-footer {
+  background-color: rgb(2 11 36 / 0.96) !important;
+}
+
+/* Existing light translucent cards remain translucent, but now sit on navy. */
+[class*="bg-white/[0.03]"],
+[class*="bg-white/[0.025]"] {
+  background-color: rgb(255 255 255 / 0.032) !important;
+}
+
+/* Give active focus states a coherent blue ring even when a component still
+   carries an old literal green box-shadow. */
+input:focus,
+textarea:focus,
+select:focus,
+button:focus-visible,
+a:focus-visible {
+  outline-color: var(--vonu-accent) !important;
+}
+
+/* Core check loading/radar visuals. */
+[class*="border-emerald-400"],
+[class*="ring-emerald-400"] {
+  --tw-ring-color: var(--vonu-accent-ring) !important;
+}
+
+/* Legacy custom CSS occasionally paints a brand accent directly on pseudo
+   elements. These high-value public surfaces are explicitly normalised. */
+[data-vonu-use-case="core"] + main::before,
+[data-vonu-use-case="core"] + main::after {
+  border-color: var(--vonu-accent-border) !important;
+}
+
+::selection {
+  background: rgb(123 183 255 / 0.32);
+  color: white;
+}
