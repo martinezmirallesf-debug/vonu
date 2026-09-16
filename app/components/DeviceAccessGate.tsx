@@ -4,27 +4,120 @@ import { useEffect, useState } from "react";
 import DevicePackCheckoutButton from "./DevicePackCheckoutButton";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 
-const copy: Record<SupportedLocale, { eyebrow: string; title: string; text: string; cta: string; note: string; close: string; success: string }> = {
-  es: { eyebrow: "Primer análisis agotado", title: "Sigue con 3 análisis más por 3,99 €", text: "Pago único. Sin registro, sin suscripción y sin renovación automática.", cta: "Comprar 3 análisis · 3,99 €", note: "Los 3 análisis quedan asociados a este navegador/dispositivo.", close: "Cerrar", success: "Pago confirmado. Ya tienes 3 análisis adicionales en este dispositivo." },
-  en: { eyebrow: "Free analysis used", title: "Continue with 3 more analyses for €3.99", text: "One-time payment. No account, no subscription and no automatic renewal.", cta: "Buy 3 analyses · €3.99", note: "The 3 analyses stay linked to this browser/device.", close: "Close", success: "Payment confirmed. You now have 3 additional analyses on this device." },
-  fr: { eyebrow: "Analyse gratuite utilisée", title: "Continuez avec 3 analyses de plus pour 3,99 €", text: "Paiement unique. Sans compte, sans abonnement et sans renouvellement automatique.", cta: "Acheter 3 analyses · 3,99 €", note: "Les 3 analyses restent liées à ce navigateur/appareil.", close: "Fermer", success: "Paiement confirmé. Vous disposez maintenant de 3 analyses supplémentaires sur cet appareil." },
-  de: { eyebrow: "Kostenlose Analyse genutzt", title: "Weiter mit 3 weiteren Analysen für 3,99 €", text: "Einmalige Zahlung. Kein Konto, kein Abo und keine automatische Verlängerung.", cta: "3 Analysen kaufen · 3,99 €", note: "Die 3 Analysen bleiben mit diesem Browser/Gerät verknüpft.", close: "Schließen", success: "Zahlung bestätigt. Auf diesem Gerät stehen jetzt 3 zusätzliche Analysen bereit." },
-  ar: { eyebrow: "تم استخدام التحليل المجاني", title: "تابع مع 3 تحليلات إضافية مقابل 3.99 €", text: "دفعة واحدة فقط. بدون حساب أو اشتراك أو تجديد تلقائي.", cta: "شراء 3 تحليلات · 3.99 €", note: "ترتبط التحليلات الثلاثة بهذا المتصفح/الجهاز.", close: "إغلاق", success: "تم تأكيد الدفع. لديك الآن 3 تحليلات إضافية على هذا الجهاز." },
+type PaymentState = "idle" | "activating" | "ready" | "delayed";
+
+const copy: Record<SupportedLocale, {
+  eyebrow: string;
+  title: string;
+  text: string;
+  cta: string;
+  note: string;
+  close: string;
+  success: string;
+  activating: string;
+  delayed: string;
+}> = {
+  es: {
+    eyebrow: "Primer análisis agotado",
+    title: "Sigue con 3 análisis más por 3,99 €",
+    text: "Pago único. Sin registro, sin suscripción y sin renovación automática.",
+    cta: "Comprar 3 análisis · 3,99 €",
+    note: "Los 3 análisis quedan asociados a este navegador/dispositivo.",
+    close: "Cerrar",
+    success: "Pago confirmado. Tus análisis ya están disponibles en este dispositivo.",
+    activating: "Pago recibido. Estamos activando tus análisis…",
+    delayed: "El pago se ha completado, pero la activación está tardando unos segundos. Recarga esta página en un momento; no vuelvas a pagar.",
+  },
+  en: {
+    eyebrow: "Free analysis used",
+    title: "Continue with 3 more analyses for €3.99",
+    text: "One-time payment. No account, no subscription and no automatic renewal.",
+    cta: "Buy 3 analyses · €3.99",
+    note: "The 3 analyses stay linked to this browser/device.",
+    close: "Close",
+    success: "Payment confirmed. Your analyses are now available on this device.",
+    activating: "Payment received. We are activating your analyses…",
+    delayed: "Payment completed, but activation is taking a few seconds. Reload this page shortly; do not pay again.",
+  },
+  fr: {
+    eyebrow: "Analyse gratuite utilisée",
+    title: "Continuez avec 3 analyses de plus pour 3,99 €",
+    text: "Paiement unique. Sans compte, sans abonnement et sans renouvellement automatique.",
+    cta: "Acheter 3 analyses · 3,99 €",
+    note: "Les 3 analyses restent liées à ce navigateur/appareil.",
+    close: "Fermer",
+    success: "Paiement confirmé. Vos analyses sont maintenant disponibles sur cet appareil.",
+    activating: "Paiement reçu. Activation de vos analyses…",
+    delayed: "Le paiement est terminé mais l’activation prend quelques secondes. Rechargez cette page dans un instant ; ne payez pas à nouveau.",
+  },
+  de: {
+    eyebrow: "Kostenlose Analyse genutzt",
+    title: "Weiter mit 3 weiteren Analysen für 3,99 €",
+    text: "Einmalige Zahlung. Kein Konto, kein Abo und keine automatische Verlängerung.",
+    cta: "3 Analysen kaufen · 3,99 €",
+    note: "Die 3 Analysen bleiben mit diesem Browser/Gerät verknüpft.",
+    close: "Schließen",
+    success: "Zahlung bestätigt. Deine Analysen sind auf diesem Gerät verfügbar.",
+    activating: "Zahlung erhalten. Deine Analysen werden aktiviert…",
+    delayed: "Die Zahlung ist abgeschlossen, aber die Aktivierung dauert noch kurz. Lade die Seite gleich neu; zahle nicht erneut.",
+  },
+  ar: {
+    eyebrow: "تم استخدام التحليل المجاني",
+    title: "تابع مع 3 تحليلات إضافية مقابل 3.99 €",
+    text: "دفعة واحدة فقط. بدون حساب أو اشتراك أو تجديد تلقائي.",
+    cta: "شراء 3 تحليلات · 3.99 €",
+    note: "ترتبط التحليلات الثلاثة بهذا المتصفح/الجهاز.",
+    close: "إغلاق",
+    success: "تم تأكيد الدفع. أصبحت تحليلاتك متاحة الآن على هذا الجهاز.",
+    activating: "تم استلام الدفع. جارٍ تفعيل تحليلاتك…",
+    delayed: "اكتمل الدفع لكن التفعيل يستغرق بضع ثوانٍ. أعد تحميل الصفحة بعد قليل ولا تدفع مرة أخرى.",
+  },
 };
+
+function wait(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
 
 export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }) {
   const [open, setOpen] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [paymentState, setPaymentState] = useState<PaymentState>("idle");
   const t = copy[locale];
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function confirmCredits() {
+      setPaymentState("activating");
+
+      for (let attempt = 0; attempt < 12 && !cancelled; attempt += 1) {
+        try {
+          const response = await fetch("/api/check/entitlement", {
+            method: "GET",
+            cache: "no-store",
+          });
+          const data = await response.json().catch(() => null);
+
+          if (response.ok && Number(data?.credits_remaining || 0) > 0) {
+            setPaymentState("ready");
+            const clean = new URL(window.location.href);
+            clean.searchParams.delete("checkout");
+            clean.searchParams.delete("pack");
+            window.history.replaceState({}, "", clean.pathname + clean.search + clean.hash);
+            return;
+          }
+        } catch {
+          // Stripe webhooks and the entitlement endpoint can briefly race after redirect.
+        }
+
+        await wait(attempt < 3 ? 500 : 1000);
+      }
+
+      if (!cancelled) setPaymentState("delayed");
+    }
+
     const params = new URLSearchParams(window.location.search);
     if (params.get("checkout") === "success" && params.get("pack") === "3") {
-      setSuccess(true);
-      const clean = new URL(window.location.href);
-      clean.searchParams.delete("checkout");
-      clean.searchParams.delete("pack");
-      window.history.replaceState({}, "", clean.pathname + clean.search + clean.hash);
+      void confirmCredits();
     }
 
     const originalFetch = window.fetch.bind(window);
@@ -38,16 +131,35 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
     };
 
     return () => {
+      cancelled = true;
       window.fetch = originalFetch;
     };
   }, []);
 
+  const paymentMessage =
+    paymentState === "ready"
+      ? t.success
+      : paymentState === "activating"
+        ? t.activating
+        : paymentState === "delayed"
+          ? t.delayed
+          : null;
+
   return (
     <>
-      {success && (
-        <div className="fixed inset-x-3 top-3 z-[90] mx-auto max-w-xl rounded-2xl border border-emerald-400/25 bg-[#0d1620]/95 px-4 py-3 text-center text-sm text-emerald-100 shadow-2xl backdrop-blur">
-          {t.success}
-          <button type="button" onClick={() => setSuccess(false)} className="ms-3 font-bold text-emerald-300">×</button>
+      {paymentMessage && (
+        <div
+          className={[
+            "fixed inset-x-3 top-3 z-[90] mx-auto max-w-xl rounded-2xl px-4 py-3 text-center text-sm shadow-2xl backdrop-blur",
+            paymentState === "delayed"
+              ? "border border-amber-400/25 bg-[#1c1710]/95 text-amber-100"
+              : "border border-emerald-400/25 bg-[#0d1620]/95 text-emerald-100",
+          ].join(" ")}
+        >
+          {paymentMessage}
+          {paymentState !== "activating" && (
+            <button type="button" onClick={() => setPaymentState("idle")} className="ms-3 font-bold opacity-80">×</button>
+          )}
         </div>
       )}
 
