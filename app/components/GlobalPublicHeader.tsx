@@ -11,8 +11,8 @@ import {
   getTopic,
   localeInfo,
   navCopy,
-  publicPath,
 } from "@/lib/vonu-global/i18n";
+import { localizedPublicPath } from "@/lib/vonu-global/routes";
 
 const caseSlugs: IndexedPublicSlug[] = [
   "comprobar-web-fiable",
@@ -56,7 +56,7 @@ export default function GlobalPublicHeader({
           {mainLinks.map((item) =>
             item.hasMenu ? (
               <div key={item.slug} className="group relative py-5">
-                <Link href={publicPath(locale, item.slug)} className="inline-flex items-center gap-1.5 transition hover:text-white">
+                <Link href={localizedPublicPath(locale, item.slug)} className="inline-flex items-center gap-1.5 transition hover:text-white">
                   {item.label}
                   <span className="text-[10px] text-slate-500">⌄</span>
                 </Link>
@@ -65,7 +65,7 @@ export default function GlobalPublicHeader({
                     {caseSlugs.map((caseSlug) => {
                       const topic = getTopic(locale, caseSlug);
                       return (
-                        <Link key={caseSlug} href={publicPath(locale, caseSlug)} className="rounded-2xl px-4 py-3 transition hover:bg-white/[0.045]">
+                        <Link key={caseSlug} href={localizedPublicPath(locale, caseSlug)} className="rounded-2xl px-4 py-3 transition hover:bg-white/[0.045]">
                           <span className="block text-[14px] font-semibold text-slate-100">{topic.eyebrow}</span>
                           <span className="mt-1 block text-[12px] leading-5 text-slate-500">{topic.hero}</span>
                         </Link>
@@ -75,7 +75,7 @@ export default function GlobalPublicHeader({
                 </div>
               </div>
             ) : (
-              <Link key={item.slug} href={publicPath(locale, item.slug)} className="transition hover:text-white">
+              <Link key={item.slug} href={localizedPublicPath(locale, item.slug)} className="transition hover:text-white">
                 {item.label}
               </Link>
             ),
@@ -96,7 +96,7 @@ export default function GlobalPublicHeader({
               {GLOBAL_LOCALES.map((item) => (
                 <Link
                   key={item}
-                  href={publicPath(item, slug)}
+                  href={localizedPublicPath(item, slug)}
                   className={[
                     "flex items-center justify-between rounded-xl px-3 py-2.5 text-[13px] transition",
                     item === locale ? "bg-emerald-400/[0.10] text-emerald-200" : "text-slate-400 hover:bg-white/[0.045] hover:text-white",
@@ -148,7 +148,7 @@ export default function GlobalPublicHeader({
                   {casesOpen && (
                     <div className="mb-3 grid border-s border-emerald-400/25 ps-3">
                       {caseSlugs.map((caseSlug) => (
-                        <Link key={caseSlug} href={publicPath(locale, caseSlug)} onClick={() => setOpen(false)} className="py-2.5 text-[14px] text-slate-400">
+                        <Link key={caseSlug} href={localizedPublicPath(locale, caseSlug)} onClick={() => setOpen(false)} className="py-2.5 text-[14px] text-slate-400">
                           {getTopic(locale, caseSlug).eyebrow}
                         </Link>
                       ))}
@@ -156,7 +156,7 @@ export default function GlobalPublicHeader({
                   )}
                 </div>
               ) : (
-                <Link key={item.slug} href={publicPath(locale, item.slug)} onClick={() => setOpen(false)} className="flex min-h-[60px] items-center py-3 text-[26px] font-semibold leading-none tracking-[-0.045em] text-white">
+                <Link key={item.slug} href={localizedPublicPath(locale, item.slug)} onClick={() => setOpen(false)} className="flex min-h-[60px] items-center py-3 text-[26px] font-semibold leading-none tracking-[-0.045em] text-white">
                   {item.label}
                 </Link>
               ),
@@ -169,7 +169,7 @@ export default function GlobalPublicHeader({
               {GLOBAL_LOCALES.map((item) => (
                 <Link
                   key={item}
-                  href={publicPath(item, slug)}
+                  href={localizedPublicPath(item, slug)}
                   onClick={() => setOpen(false)}
                   className={["rounded-xl border px-3 py-2 text-[12px] font-bold", item === locale ? "border-emerald-400/30 bg-emerald-400/[0.10] text-emerald-200" : "border-white/[0.08] text-slate-500"].join(" ")}
                 >
