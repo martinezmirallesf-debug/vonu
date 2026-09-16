@@ -13,6 +13,7 @@ import "./capture-breathe.css";
 import "./mobile-header-fix.css";
 import "./mobile-menu-visibility-fix.css";
 import "./desktop-home-fit.css";
+import "./mobile-capture-safe-area.css";
 import { isSupportedLocale, localeMeta, supportedLocales } from "@/lib/vonu-check/i18n";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 
