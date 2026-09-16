@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/vonu-risk-calibration-contract.mjs",
+    "prebuild": "node scripts/vonu-risk-calibration-contract.mjs && node scripts/vonu-fraud-atlas-contract.mjs",
     "build": "next build",
     "calibrate:e2e": "node scripts/vonu-risk-e2e-preview.mjs",
     "start": "next start",
