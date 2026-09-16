@@ -12,6 +12,11 @@ export type RiskSignalLike = {
   weight: number;
 };
 
+const FALLBACK_TONE_WEIGHT: Partial<Record<SignalTone, number>> = {
+  warning: 6,
+  negative: 12,
+};
+
 export function clampRiskScore(value: unknown): number {
   const numeric = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(numeric)) return 0;
@@ -38,6 +43,12 @@ export function riskLevelFromScore(score: number): Exclude<RiskLevel, "unknown">
   return "high";
 }
 
+function calibrationWeight(signal: RiskSignalLike): number {
+  if (signal.tone !== "warning" && signal.tone !== "negative") return 0;
+  const explicit = Math.min(30, clampRiskScore(signal.weight));
+  return explicit > 0 ? explicit : FALLBACK_TONE_WEIGHT[signal.tone] ?? 0;
+}
+
 /**
  * Prevent a language/vision model from assigning a high numeric score when the
  * structured evidence it returned does not support that severity.
@@ -49,23 +60,23 @@ export function riskLevelFromScore(score: number): Exclude<RiskLevel, "unknown">
 export function calibrateModelRiskScore(rawScore: unknown, signals: RiskSignalLike[]): number {
   const score = clampRiskScore(rawScore);
   const riskSignals = signals.filter(
-    (signal) =>
-      (signal.tone === "warning" || signal.tone === "negative") &&
-      clampRiskScore(signal.weight) > 0,
+    (signal) => signal.tone === "warning" || signal.tone === "negative",
   );
 
   const evidenceWeight = riskSignals.reduce(
-    (total, signal) => total + Math.min(30, clampRiskScore(signal.weight)),
+    (total, signal) => total + calibrationWeight(signal),
     0,
   );
   const negativeCount = riskSignals.filter((signal) => signal.tone === "negative").length;
 
-  // No concrete risk evidence should remain in the very-low band even if the
-  // model emitted a higher number because of uncertainty or vague suspicion.
-  if (evidenceWeight === 0) return Math.min(score, VONU_RISK_BANDS.veryLowMax);
+  // No concrete warning/negative evidence should remain outside the very-low
+  // band even if the model emitted a higher number because of uncertainty.
+  if (riskSignals.length === 0 || evidenceWeight === 0) {
+    return Math.min(score, VONU_RISK_BANDS.veryLowMax);
+  }
 
-  // Evidence strength defines a conservative ceiling. Examples:
-  // 5 points -> 29 max, 10 -> 39, 20 -> 59, 30 -> 79.
+  // Evidence strength defines a conservative ceiling. Examples with explicit
+  // weights: 5 points -> 29 max, 10 -> 39, 20 -> 59, 30 -> 79.
   let ceiling = Math.min(100, VONU_RISK_BANDS.veryLowMax + evidenceWeight * 2);
 
   // Warning-only evidence can justify a high result, but not "very high" by
