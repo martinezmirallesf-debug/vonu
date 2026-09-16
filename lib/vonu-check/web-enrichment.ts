@@ -7,6 +7,7 @@ import {
   type UrlhausLookup,
 } from "./web-external";
 import { lookupSupabaseUrlReputation } from "./supabase-evidence";
+import { clampRiskScore, riskBandFromScore, riskLevelFromScore } from "./risk-score";
 
 const HEADER_TIMEOUT_MS = 4_500;
 
@@ -103,12 +104,6 @@ async function hasSecurityTxt(origin: string): Promise<boolean> {
   }
 }
 
-function levelFromScore(score: number): WebCheckResult["risk"]["level"] {
-  if (score >= 45) return "high";
-  if (score >= 20) return "caution";
-  return "low";
-}
-
 async function lookupCentralUrlhaus(url: string): Promise<UrlhausLookup> {
   const payload: any = await lookupSupabaseUrlReputation(url);
   const raw = payload?.urlReputation;
@@ -187,34 +182,31 @@ export async function enrichWebResult(result: WebCheckResult): Promise<WebCheckR
   const protectedAccess = [401, 403, 429].includes(httpStatus ?? 0);
   const ageRiskWeight = ageSignal && ageSignal.tone === "warning" ? ageSignal.weight : 0;
 
-  let risk = result.risk;
+  let score = clampRiskScore(result.risk.score + ageRiskWeight);
+  let confidence = result.risk.confidence;
 
   if (urlhaus.matched === true) {
-    risk = {
-      level: "high",
-      score: Math.max(92, result.risk.score),
-      confidence: "high",
-    };
-  } else {
-    const combinedScore = Math.max(0, Math.min(100, result.risk.score + ageRiskWeight));
-    risk = {
-      ...result.risk,
-      score: combinedScore,
-      level: levelFromScore(combinedScore),
-    };
-
-    if (
-      protectedAccess &&
-      usesHttps &&
-      !hasStructuralWarning &&
-      ageRiskWeight === 0 &&
-      maturity >= 3
-    ) {
-      risk = { level: "low", score: Math.min(combinedScore, 8), confidence: "limited" };
-    } else if (risk.level === "low" && maturity >= 3) {
-      risk = { ...risk, confidence: "medium" };
-    }
+    score = Math.max(92, score);
+    confidence = "high";
+  } else if (
+    protectedAccess &&
+    usesHttps &&
+    !hasStructuralWarning &&
+    ageRiskWeight === 0 &&
+    maturity >= 3
+  ) {
+    score = Math.min(score, 8);
+    confidence = "limited";
+  } else if (riskLevelFromScore(score) === "low" && maturity >= 3) {
+    confidence = "medium";
   }
+
+  const risk: WebCheckResult["risk"] = {
+    level: riskLevelFromScore(score),
+    band: riskBandFromScore(score),
+    score,
+    confidence,
+  };
 
   let limitations = [...result.limitations];
 
