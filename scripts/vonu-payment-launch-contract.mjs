@@ -5,9 +5,7 @@ async function read(path) {
 }
 
 function requireText(source, needle, label) {
-  if (!source.includes(needle)) {
-    throw new Error(`${label}: missing ${JSON.stringify(needle)}`);
-  }
+  if (!source.includes(needle)) throw new Error(`${label}: missing ${JSON.stringify(needle)}`);
 }
 
 function forbidText(source, needle, label) {
@@ -16,39 +14,56 @@ function forbidText(source, needle, label) {
   }
 }
 
-const [button, checkout, webhook, pricing, terms] = await Promise.all([
-  read("app/components/PlanCheckoutButton.tsx"),
+const [middleware, button, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
+  read("middleware.ts"),
+  read("app/components/DevicePackCheckoutButton.tsx"),
   read("app/api/stripe/checkout/route.ts"),
   read("app/api/stripe/webhook/route.ts"),
-  read("app/precios/page.tsx"),
+  read("app/components/DevicePricingPage.tsx"),
   read("app/legal/terminos/page.tsx"),
+  read("app/legal/privacidad/page.tsx"),
+  read("app/legal/cookies/page.tsx"),
 ]);
 
-requireText(button, "supabaseBrowser.auth.getSession()", "public checkout auth");
-requireText(button, "Authorization: `Bearer ${token}`", "public checkout bearer");
-requireText(button, 'billing?: "monthly" | "yearly"', "checkout billing contract");
+requireText(middleware, 'const DEVICE_COOKIE = "vonu_device_id"', "device cookie");
+requireText(middleware, "consume_vonu_device_analysis", "atomic device consumption");
+requireText(middleware, "status: 402", "paywall response");
+requireText(middleware, 'analyses: 3, amount: 399, currency: "EUR"', "paywall offer");
 
+requireText(button, 'fetch("/api/stripe/checkout"', "device pack checkout button");
+forbidText(button, "supabaseBrowser.auth.getSession", "checkout must not require login");
+forbidText(button, "Authorization: `Bearer", "checkout must not require bearer auth");
+
+requireText(checkout, 'mode: "payment"', "one-time checkout mode");
+requireText(checkout, 'kind: "device_pack"', "device checkout metadata");
+requireText(checkout, 'analyses: "3"', "three-analysis pack metadata");
+requireText(checkout, 'price_1UGKu8Bmg4sO36zcKMqrlWQ4', "launch Stripe price");
+requireText(checkout, 'customer_creation: "always"', "receipt customer collection");
 requireText(checkout, 'localizedPublicPath(locale, "precios")', "localized checkout cancel path");
 requireText(checkout, "checkPath(locale)", "localized checkout success path");
-requireText(checkout, "client_reference_id: user.id", "checkout user reference");
-requireText(checkout, "allow_promotion_codes: true", "checkout promotions");
+forbidText(checkout, 'mode: "subscription"', "no recurring checkout");
+forbidText(checkout, "getUserFromRequest", "no account checkout");
 
-requireText(webhook, 'case "checkout.session.completed"', "webhook checkout completion");
-requireText(webhook, 'case "customer.subscription.updated"', "webhook subscription updates");
-requireText(webhook, 'case "customer.subscription.deleted"', "webhook subscription deletion");
-requireText(webhook, "syncProfilePlan", "webhook profile plan sync");
+requireText(webhook, "grant_vonu_device_pack", "idempotent device grant");
+requireText(webhook, 'case "checkout.session.completed"', "checkout completion event");
+requireText(webhook, 'case "checkout.session.async_payment_succeeded"', "async payment event");
+requireText(webhook, 'amountTotal !== 399', "amount validation");
+requireText(webhook, 'currency !== "eur"', "currency validation");
 
-requireText(pricing, "PlanCheckoutButton", "pricing checkout component");
-requireText(pricing, 'price: "9,99€"', "plus public price");
-requireText(pricing, 'price: "19,99€"', "max public price");
-requireText(pricing, "Stripe", "pricing payment processor copy");
-forbidText(pricing, "Modo conversación", "pricing scope");
-forbidText(pricing, "Recarga", "pricing scope");
-forbidText(pricing, "minutos de voz", "pricing scope");
-forbidText(pricing, 'href="/chat"', "pricing legacy checkout");
+requireText(pricing, "1 análisis gratuito por navegador/dispositivo", "Spanish device free offer");
+requireText(pricing, "3 análisis adicionales", "three analysis offer");
+requireText(pricing, "3,99 €", "public launch price");
+requireText(pricing, "Pago único", "one-time payment copy");
+requireText(pricing, "Sin suscripción", "no subscription copy");
+forbidText(pricing, "Plus", "no Plus plan");
+forbidText(pricing, "Max", "no Max plan");
 
-requireText(terms, "Las suscripciones periódicas se renovarán", "subscription renewal terms");
-requireText(terms, "La cancelación impedirá futuras renovaciones", "subscription cancellation terms");
+requireText(terms, "un análisis gratuito por navegador o dispositivo", "terms free analysis");
+requireText(terms, "3 análisis adicionales por 3,99 €", "terms pack offer");
+requireText(terms, "no crea una suscripción", "terms no subscription");
 requireText(terms, "Stripe", "payment processor terms");
+requireText(privacy, "Identificador técnico del dispositivo", "privacy device identifier");
+requireText(privacy, "grant", "noop");
+requireText(cookies, "vonu_device_id", "cookie disclosure");
 
-console.log("VONU_PAYMENT_LAUNCH_CONTRACT_GREEN");
+console.log("VONU_PAYMENT_LAUNCH_CONTRACT_GREEN model=device free=1 pack=3 price=399");
