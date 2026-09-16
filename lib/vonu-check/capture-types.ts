@@ -27,7 +27,7 @@ export type LinkedUrlCheck = {
   url: string;
   risk: {
     level: RiskLevel;
-    band: RiskBand;
+    band?: RiskBand;
     score: number;
     confidence: AnalysisConfidence;
   };
