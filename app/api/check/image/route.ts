@@ -60,30 +60,60 @@ function normalizeTone(value: unknown): SignalTone {
   return "neutral";
 }
 
+function isLikelyClosingQuote(value: string, quoteIndex: number) {
+  let cursor = quoteIndex + 1;
+  while (cursor < value.length && /\s/.test(value[cursor])) cursor += 1;
+  const next = value[cursor];
+
+  if (!next || next === ":" || next === "}" || next === "]") return true;
+  if (next !== ",") return false;
+
+  cursor += 1;
+  while (cursor < value.length && /\s/.test(value[cursor])) cursor += 1;
+  const afterComma = value[cursor];
+  return !afterComma || /["{\[\]}0-9tfn-]/.test(afterComma);
+}
+
 function repairJsonCandidate(value: string) {
   let output = "";
   let inString = false;
-  let escaped = false;
+  const closers: string[] = [];
 
   for (let index = 0; index < value.length; index += 1) {
     const char = value[index];
 
     if (inString) {
-      if (escaped) {
-        output += char;
-        escaped = false;
-        continue;
-      }
       if (char === "\\") {
-        output += char;
-        escaped = true;
+        const next = value[index + 1];
+        const validSimpleEscape = !!next && /["\\/bfnrt]/.test(next);
+        const validUnicodeEscape = next === "u" && /^[0-9a-fA-F]{4}$/.test(value.slice(index + 2, index + 6));
+
+        if (validSimpleEscape || validUnicodeEscape) {
+          output += char;
+          if (next) {
+            output += next;
+            index += 1;
+            if (next === "u") {
+              output += value.slice(index + 1, index + 5);
+              index += 4;
+            }
+          }
+        } else {
+          output += "\\\\";
+        }
         continue;
       }
+
       if (char === '"') {
-        output += char;
-        inString = false;
+        if (isLikelyClosingQuote(value, index)) {
+          output += char;
+          inString = false;
+        } else {
+          output += '\\"';
+        }
         continue;
       }
+
       if (char === "\n") {
         output += "\\n";
         continue;
@@ -101,12 +131,23 @@ function repairJsonCandidate(value: string) {
       continue;
     }
 
-    if (char === '"') inString = true;
+    if (char === '"') {
+      inString = true;
+      output += char;
+      continue;
+    }
+    if (char === "{") closers.push("}");
+    if (char === "[") closers.push("]");
+    if ((char === "}" || char === "]") && closers[closers.length - 1] === char) closers.pop();
     output += char;
   }
 
-  // Vision models occasionally leave a trailing comma before a closing
-  // bracket/object even when explicitly asked for strict JSON.
+  if (inString) output += '"';
+
+  // The vision response can occasionally be cut off at the very end. If the
+  // JSON body is otherwise usable, close only containers that were actually opened.
+  while (closers.length) output += closers.pop();
+
   return output.replace(/,\s*([}\]])/g, "$1");
 }
 
@@ -119,8 +160,9 @@ function parseJsonText(text: string) {
 
   const first = clean.indexOf("{");
   const last = clean.lastIndexOf("}");
-  const objectOnly = first >= 0 && last > first ? clean.slice(first, last + 1) : clean;
-  const candidates = Array.from(new Set([clean, objectOnly])).filter(Boolean);
+  const fromFirst = first >= 0 ? clean.slice(first) : clean;
+  const objectOnly = first >= 0 && last > first ? clean.slice(first, last + 1) : fromFirst;
+  const candidates = Array.from(new Set([clean, objectOnly, fromFirst])).filter(Boolean);
 
   for (const candidate of candidates) {
     try {
@@ -129,7 +171,7 @@ function parseJsonText(text: string) {
       try {
         return JSON.parse(repairJsonCandidate(candidate));
       } catch {
-        // Try the next candidate before giving up.
+        // Try the next candidate before using the one-time compact retry.
       }
     }
   }
@@ -207,6 +249,28 @@ Schema:
 }
 
 Use weight 0-30 only for genuinely risk-increasing signals; positive/neutral signals should normally have weight 0.
+`.trim();
+}
+
+function compactRetryPrompt(locale: SupportedLocale) {
+  return `
+Analyse this screenshot conservatively for fraud, phishing, impersonation or social-engineering risk. Human-readable output language: ${locale}.
+Return ONLY one valid JSON object. No markdown. Escape every quote and line break inside strings. Keep the entire response under 3500 characters.
+Use risk score 0-100 as a risk index, not a probability. Missing context lowers confidence. Do not invent facts not visible in the image.
+Use at most 6 concise signals, 4 recommended actions and 3 limitations. visibleText must be at most 1200 characters and contain only legible decision-relevant text.
+
+Exact schema:
+{
+  "kind":"message|email|social_profile|marketplace|website_or_checkout|other",
+  "risk":{"score":0,"confidence":"limited|medium|high"},
+  "summary":"short evidence-based conclusion",
+  "visibleText":"short exact transcription",
+  "signals":[{"id":"id","tone":"positive|warning|negative|neutral","title":"short title","detail":"short detail","weight":0}],
+  "atlas":{"evidence":[]},
+  "extracted":{"urls":[],"phones":[],"emails":[],"brands":[]},
+  "recommendedActions":[],
+  "limitations":[]
+}
 `.trim();
 }
 
@@ -306,7 +370,47 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const parsed = parseJsonText(edgeData.text);
+    let parsed: any = null;
+    try {
+      parsed = parseJsonText(edgeData.text);
+    } catch {
+      // Retry only when the model produced malformed JSON. The same screenshot is
+      // re-analysed with a much smaller schema so a formatting glitch does not become
+      // a user-visible failure or consume the free analysis.
+      const retryResponse = await fetch(edgeUrl, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({
+          messages: [],
+          userText: compactRetryPrompt(locale),
+          imageBase64,
+          pdfText: null,
+          mode: "chat",
+          tutorLevel: "adult",
+          footballProfile: "normal",
+          extraInstructions: "Return one compact valid JSON object only. No markdown.",
+        }),
+        cache: "no-store",
+      });
+
+      const retryRaw = await retryResponse.text().catch(() => "");
+      let retryData: any = null;
+      try {
+        retryData = retryRaw ? JSON.parse(retryRaw) : null;
+      } catch {
+        retryData = null;
+      }
+
+      if (!retryResponse.ok || !retryData || typeof retryData.text !== "string") {
+        throw new Error("vision_retry_failed");
+      }
+      parsed = parseJsonText(retryData.text);
+    }
+
     const rawBaseScore = clampRiskScore(parsed?.risk?.score);
     const kind = normalizeKind(parsed?.kind);
     const visibleText = safeString(parsed?.visibleText, 12_000);
