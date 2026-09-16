@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "purpose": "Safe launch calibration corpus for Vonu Check. Expected ranges are broad product guardrails, not ground-truth probabilities.",
+  "version": 2,
+  "purpose": "Safe launch calibration corpus for Vonu Check. Includes paired near-neighbor cases so the engine must react to combinations of behavioural evidence rather than memorised phrases. Expected ranges are product guardrails, not ground-truth probabilities.",
   "textCases": [
     {
       "id": "benign-family-message",
@@ -8,6 +8,41 @@
       "text": "Hola, llego sobre las 19:30. Si quieres compro pan de camino a casa.",
       "expected": { "min": 0, "max": 19 },
       "reason": "Ordinary conversation with no fraud signal."
+    },
+    {
+      "id": "benign-family-bizum",
+      "locale": "es",
+      "text": "Papá, ¿me haces un Bizum de 15 € para cenar? Luego te lo devuelvo cuando llegue a casa.",
+      "expected": { "min": 0, "max": 39 },
+      "reason": "A routine family money request, even via Bizum, is not enough for high risk without identity discontinuity or other corroborating mechanics."
+    },
+    {
+      "id": "benign-new-number-no-money",
+      "locale": "es",
+      "text": "Mamá, soy Laura. Este es mi número nuevo porque cambié de compañía. Guarda este y borra el anterior. Te llamo esta noche.",
+      "expected": { "min": 0, "max": 39 },
+      "reason": "A changed number alone should create uncertainty, not a high fraud score."
+    },
+    {
+      "id": "family-new-number-bizum-urgent",
+      "locale": "es",
+      "text": "Mamá, soy tu hijo. Se me ha roto el móvil y te escribo desde mi número nuevo. Necesito que me hagas ahora un Bizum de 480 € a este número. No puedo llamarte, luego te explico.",
+      "expected": { "min": 75, "max": 100 },
+      "reason": "Family identity claim plus new number, money, instant payment, urgency and blocked verification is a strong family-impersonation pattern."
+    },
+    {
+      "id": "family-new-number-transfer-no-deadline",
+      "locale": "es",
+      "text": "Papá, soy Ana. He cambiado de número porque perdí el otro móvil. Necesito que me transfieras 250 € para pagar una reparación. Escríbeme por aquí.",
+      "expected": { "min": 60, "max": 100 },
+      "reason": "Family claim plus identity discontinuity and money request is materially suspicious even without an explicit short deadline."
+    },
+    {
+      "id": "family-known-chat-third-party-no-call",
+      "locale": "es",
+      "text": "Mamá, necesito un favor. No puedo hablar por teléfono ahora. Haz un Bizum de 300 € al número de un amigo y luego te cuento qué ha pasado.",
+      "expected": { "min": 65, "max": 100 },
+      "reason": "Family context plus money, third-party beneficiary and suppression of independent verification can also fit account compromise."
     },
     {
       "id": "benign-appointment-reminder",
@@ -38,6 +73,13 @@
       "reason": "Brand impersonation, urgent small payment and suspicious link combine into strong evidence."
     },
     {
+      "id": "benign-delivery-reminder",
+      "locale": "es",
+      "text": "Tu paquete está en reparto y se entregará hoy entre las 16:00 y las 19:00. No necesitas realizar ninguna acción ni pago.",
+      "expected": { "min": 0, "max": 29 },
+      "reason": "A delivery message without a payment, credential or link request should stay low."
+    },
+    {
       "id": "bank-otp-request",
       "locale": "es",
       "text": "Soy del departamento de seguridad de su banco. Hemos bloqueado una operación. Dígame ahora el código SMS que acaba de recibir para cancelarla.",
@@ -45,11 +87,32 @@
       "reason": "Impersonation plus request for a one-time security code is very strong social-engineering evidence."
     },
     {
+      "id": "benign-bank-never-share-code",
+      "locale": "es",
+      "text": "Código de seguridad: 472911. Úsalo únicamente en la app para confirmar tu operación. El banco nunca te pedirá este código por teléfono, SMS o WhatsApp.",
+      "expected": { "min": 0, "max": 39 },
+      "reason": "Mentioning an OTP is not the same as asking the target to disclose it."
+    },
+    {
+      "id": "bank-safe-account-transfer",
+      "locale": "es",
+      "text": "Le llamamos del área de fraude de su banco. Su cuenta está comprometida. Para proteger sus fondos transfiera ahora 4.800 € a la cuenta segura que le indicamos y no comente esta operación con nadie hasta terminar.",
+      "expected": { "min": 80, "max": 100 },
+      "reason": "Bank impersonation plus a safe-account transfer, urgency and secrecy is a high-risk social-engineering combination."
+    },
+    {
       "id": "marketplace-off-platform-payment",
       "locale": "es",
       "text": "Te lo compro ya, pero la plataforma me falla. Envíame tu teléfono y te pago por Bizum; luego pulsa el enlace que te llegará para recibir el dinero.",
       "expected": { "min": 60, "max": 100 },
       "reason": "Moves payment off-platform and asks the seller to follow a payment link."
+    },
+    {
+      "id": "inverse-bizum-marketplace",
+      "locale": "es",
+      "text": "Perfecto, me quedo con la bici. Te he enviado un Bizum de 220 €. Abre la app y acepta la solicitud de 220 € que te aparece para que puedas recibir mi pago.",
+      "expected": { "min": 65, "max": 100 },
+      "reason": "The victim expects to receive money but is told to approve a request that would send it."
     },
     {
       "id": "crypto-guaranteed-return",
@@ -66,6 +129,55 @@
       "reason": "Emotional relationship context plus urgent emergency money request deserves strong caution without declaring fraud as fact."
     },
     {
+      "id": "job-upfront-payment",
+      "locale": "es",
+      "text": "Has sido seleccionado para trabajar desde casa valorando productos. Antes de empezar debes ingresar 120 € como depósito para activar tu nivel y desbloquear las tareas remuneradas.",
+      "expected": { "min": 65, "max": 100 },
+      "reason": "A job or task opportunity that requires an upfront deposit is a strong fraud mechanic."
+    },
+    {
+      "id": "benign-job-interview",
+      "locale": "es",
+      "text": "Gracias por tu candidatura. Nos gustaría hacer una entrevista por videollamada el jueves a las 12:00. No tienes que realizar ningún pago ni comprar material.",
+      "expected": { "min": 0, "max": 29 },
+      "reason": "A normal recruitment message without money or credential requests should remain low."
+    },
+    {
+      "id": "rental-deposit-before-viewing",
+      "locale": "es",
+      "text": "El piso sigue libre pero estoy fuera de España y no puedo enseñártelo. Para reservarlo antes de que lo vea otra persona envíame hoy una señal de 700 € y después te mando las llaves.",
+      "expected": { "min": 60, "max": 100 },
+      "reason": "Rental deposit before any credible viewing or identity/property verification is a known high-risk mechanic."
+    },
+    {
+      "id": "recovery-advance-fee",
+      "locale": "es",
+      "text": "Sabemos que perdiste dinero en una inversión fraudulenta. Podemos recuperarte el 100 % de los fondos, pero primero debes pagar 350 € de gastos judiciales para liberar el reembolso.",
+      "expected": { "min": 70, "max": 100 },
+      "reason": "Recovery offer plus an upfront fee targets someone who has already lost money."
+    },
+    {
+      "id": "government-payment-threat",
+      "locale": "es",
+      "text": "Le llamamos de la Policía. Hay una orden pendiente a su nombre. Si no abona hoy 1.200 € mediante transferencia se iniciará su detención. No cuelgue hasta completar el pago.",
+      "expected": { "min": 75, "max": 100 },
+      "reason": "Authority impersonation, threat and immediate payment demand create a very strong risk pattern."
+    },
+    {
+      "id": "tech-support-remote-access",
+      "locale": "es",
+      "text": "Soy del soporte de Microsoft. Hemos detectado un virus en su equipo. Instale AnyDesk y compártame el código de conexión para que pueda limpiarlo ahora mismo.",
+      "expected": { "min": 80, "max": 100 },
+      "reason": "Unsolicited trusted support plus remote-control installation is a strong tech-support scam mechanic."
+    },
+    {
+      "id": "cash-courier-safe-funds",
+      "locale": "es",
+      "text": "Su banco está siendo investigado y sus ahorros corren peligro. Retire 8.000 € en efectivo, métalos en un sobre y entrégueselos al mensajero de seguridad que pasará esta tarde. No informe al personal de la sucursal.",
+      "expected": { "min": 85, "max": 100 },
+      "reason": "Cash withdrawal, courier pickup and secrecy are extreme social-engineering mechanics."
+    },
+    {
       "id": "generic-social-profile",
       "locale": "es",
       "text": "Perfil: fotógrafo, viajes, café y música. Madrid. Cuenta creada para compartir mis trabajos.",
@@ -78,6 +190,13 @@
       "text": "Payroll notice: your salary account will be suspended today unless you confirm your credentials at https://payroll-verify.example.invalid within 30 minutes.",
       "expected": { "min": 60, "max": 100 },
       "reason": "Credential request, urgency and suspicious external link are strong phishing indicators."
+    },
+    {
+      "id": "english-family-new-number",
+      "locale": "en",
+      "text": "Mum, it's me. My phone broke and this is my new number. I need you to send £600 to my friend's account today. I can't call right now, please just do it and I'll explain later.",
+      "expected": { "min": 70, "max": 100 },
+      "reason": "The same family-impersonation mechanics should generalise across language and wording."
     },
     {
       "id": "english-benign-colleague",
