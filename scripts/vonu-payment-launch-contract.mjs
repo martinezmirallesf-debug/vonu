@@ -71,8 +71,10 @@ requireText(pricing, "3 análisis adicionales", "three analysis offer");
 requireText(pricing, "3,99 €", "public launch price");
 requireText(pricing, "Pago único", "one-time payment copy");
 requireText(pricing, "Sin suscripción", "no subscription copy");
-forbidText(pricing, "Plus", "no Plus plan");
-forbidText(pricing, "Max", "no Max plan");
+forbidText(pricing, 'plan="plus"', "no Plus checkout");
+forbidText(pricing, 'plan="max"', "no Max checkout");
+forbidText(pricing, "9,99€", "no legacy Plus price");
+forbidText(pricing, "19,99€", "no legacy Max price");
 
 requireText(terms, "un análisis gratuito por navegador o dispositivo", "terms free analysis");
 requireText(terms, "3 análisis adicionales por 3,99 €", "terms pack offer");
