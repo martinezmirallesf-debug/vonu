@@ -35,12 +35,12 @@
     {
       "id": "wallet-signature-polarity",
       "locale": "es",
-      "low": "Para proteger tu wallet, no firmes la autorización que acaba de aparecer para reclamar los tokens.",
-      "high": "Para reclamar los tokens, firma la autorización que acaba de aparecer en tu wallet.",
+      "low": "Para proteger tu wallet, no firmes ahora la autorización que acaba de aparecer para reclamar los tokens.",
+      "high": "Para proteger tu wallet, firma ahora la autorización que acaba de aparecer para reclamar los tokens.",
       "lowMax": 29,
-      "highMin": 65,
-      "minGap": 35,
-      "variable": "The wallet approval changes from prohibited to requested."
+      "highMin": 70,
+      "minGap": 40,
+      "variable": "The same wallet approval changes only from explicitly prohibited to explicitly requested."
     },
     {
       "id": "job-upfront-payment-polarity",
@@ -55,12 +55,12 @@
     {
       "id": "family-identity-continuity",
       "locale": "es",
-      "low": "Mamá, soy Dani y sigo usando mi número de siempre. ¿Me haces un Bizum de 300 € para pagar el taller?",
-      "high": "Mamá, soy Dani y este es mi número nuevo porque perdí el anterior. ¿Me haces un Bizum de 300 € para pagar el taller?",
+      "low": "Mamá, soy tu hijo Dani y sigo usando mi número de siempre. ¿Me haces un Bizum de 300 € para pagar el taller?",
+      "high": "Mamá, soy tu hijo Dani y este es mi número nuevo porque perdí el anterior. ¿Me haces un Bizum de 300 € para pagar el taller?",
       "lowMax": 39,
       "highMin": 60,
       "minGap": 25,
-      "variable": "The family money request is unchanged; only identity continuity becomes discontinuity."
+      "variable": "The family relation and money request stay fixed; only identity continuity becomes discontinuity."
     },
     {
       "id": "family-verification-suppression",
