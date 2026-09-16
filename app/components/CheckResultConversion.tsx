@@ -67,6 +67,10 @@ export default function CheckResultConversion() {
       const reset = buttons.find((button) => t.newCheck.includes((button.textContent || "").trim()));
       const main = reset?.closest("main") as HTMLElement | null;
 
+      if (reset && window.matchMedia("(max-width: 639px)").matches) {
+        reset.style.alignSelf = "center";
+      }
+
       if (main) {
         setTarget(main);
         if (!tracked) {
