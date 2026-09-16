@@ -152,6 +152,35 @@ a:focus-visible {
   border-color: var(--vonu-accent-border) !important;
 }
 
+/* Check-specific legacy styles use literal colors with !important. Keep their
+   layout untouched while forcing only the approved palette. */
+.vonu-check-page.vonu-check-page {
+  background: var(--vonu-bg-main) !important;
+}
+
+.vonu-check-page.vonu-check-page .vonu-submission-notice a:hover {
+  color: var(--vonu-accent-hover) !important;
+}
+
+@media (max-width: 767px) {
+  .vonu-check-page.vonu-check-page header:has(> div:nth-child(2)) > div:first-child,
+  .vonu-check-page.vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2),
+  .vonu-check-page.vonu-check-page header > div:nth-child(2) {
+    background: var(--vonu-bg-main) !important;
+  }
+
+  .vonu-check-page.vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) nav > a:hover,
+  .vonu-check-page.vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) nav > div > button:hover {
+    color: var(--vonu-accent-hover) !important;
+  }
+
+  .vonu-check-page.vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) > div > div:last-child > a:last-child {
+    background: var(--vonu-accent) !important;
+    color: #07142f !important;
+    box-shadow: 0 10px 30px var(--vonu-accent-glow) !important;
+  }
+}
+
 ::selection {
   background: rgb(123 183 255 / 0.32);
   color: white;
