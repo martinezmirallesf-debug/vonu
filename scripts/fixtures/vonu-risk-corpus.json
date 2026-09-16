@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "purpose": "Safe launch calibration corpus for Vonu Check. Expected ranges are broad product guardrails, not ground-truth probabilities.",
+  "textCases": [
+    {
+      "id": "benign-family-message",
+      "locale": "es",
+      "text": "Hola, llego sobre las 19:30. Si quieres compro pan de camino a casa.",
+      "expected": { "min": 0, "max": 19 },
+      "reason": "Ordinary conversation with no fraud signal."
+    },
+    {
+      "id": "benign-appointment-reminder",
+      "locale": "es",
+      "text": "Recordatorio: mañana tienes cita a las 10:30. Si necesitas cambiarla, responde a este mensaje.",
+      "expected": { "min": 0, "max": 29 },
+      "reason": "Routine reminder; incomplete sender context should lower confidence, not create high risk."
+    },
+    {
+      "id": "benign-marketplace-question",
+      "locale": "es",
+      "text": "Hola, ¿sigue disponible la mesa? Si está bien conservada puedo pasar a verla el sábado.",
+      "expected": { "min": 0, "max": 29 },
+      "reason": "Normal marketplace conversation with no payment diversion or pressure."
+    },
+    {
+      "id": "weak-urgency-only",
+      "locale": "es",
+      "text": "Necesito que me respondas hoy, es importante. Llámame cuando puedas.",
+      "expected": { "min": 0, "max": 39 },
+      "reason": "Urgency alone is weak evidence and must not create a high score."
+    },
+    {
+      "id": "delivery-small-payment-phishing",
+      "locale": "es",
+      "text": "CORREOS: No hemos podido entregar su paquete. Pague 1,99 € en https://correos-seguridad.example.invalid para reprogramar la entrega en las próximas 2 horas.",
+      "expected": { "min": 60, "max": 100 },
+      "reason": "Brand impersonation, urgent small payment and suspicious link combine into strong evidence."
+    },
+    {
+      "id": "bank-otp-request",
+      "locale": "es",
+      "text": "Soy del departamento de seguridad de su banco. Hemos bloqueado una operación. Dígame ahora el código SMS que acaba de recibir para cancelarla.",
+      "expected": { "min": 80, "max": 100 },
+      "reason": "Impersonation plus request for a one-time security code is very strong social-engineering evidence."
+    },
+    {
+      "id": "marketplace-off-platform-payment",
+      "locale": "es",
+      "text": "Te lo compro ya, pero la plataforma me falla. Envíame tu teléfono y te pago por Bizum; luego pulsa el enlace que te llegará para recibir el dinero.",
+      "expected": { "min": 60, "max": 100 },
+      "reason": "Moves payment off-platform and asks the seller to follow a payment link."
+    },
+    {
+      "id": "crypto-guaranteed-return",
+      "locale": "es",
+      "text": "Inversión garantizada: duplica tu capital en 7 días sin riesgo. Para activar la cuenta debes enviar hoy 500 USDT a la wallet que te indicamos.",
+      "expected": { "min": 70, "max": 100 },
+      "reason": "Guaranteed returns, no-risk claim, crypto payment and urgency are strong combined signals."
+    },
+    {
+      "id": "romance-money-request",
+      "locale": "es",
+      "text": "Cariño, estoy retenido en el aeropuerto y no puedo acceder a mi cuenta. Necesito que me envíes 900 € hoy; te lo devolveré en cuanto llegue.",
+      "expected": { "min": 55, "max": 100 },
+      "reason": "Emotional relationship context plus urgent emergency money request deserves strong caution without declaring fraud as fact."
+    },
+    {
+      "id": "generic-social-profile",
+      "locale": "es",
+      "text": "Perfil: fotógrafo, viajes, café y música. Madrid. Cuenta creada para compartir mis trabajos.",
+      "expected": { "min": 0, "max": 29 },
+      "reason": "A generic profile bio cannot support a fake-profile conclusion by itself."
+    },
+    {
+      "id": "english-payroll-phishing",
+      "locale": "en",
+      "text": "Payroll notice: your salary account will be suspended today unless you confirm your credentials at https://payroll-verify.example.invalid within 30 minutes.",
+      "expected": { "min": 60, "max": 100 },
+      "reason": "Credential request, urgency and suspicious external link are strong phishing indicators."
+    },
+    {
+      "id": "english-benign-colleague",
+      "locale": "en",
+      "text": "Hi, I moved our meeting to 3 pm because the client asked for another half hour. See you then.",
+      "expected": { "min": 0, "max": 19 },
+      "reason": "Routine workplace message with no meaningful risk evidence."
+    }
+  ]
+}
