@@ -11,6 +11,7 @@ import { localizedPublicPath } from "@/lib/vonu-global/routes";
 import GlobalPublicHeader from "./GlobalPublicHeader";
 import FunnelLink from "./FunnelLink";
 import PlanCheckoutButton from "./PlanCheckoutButton";
+import ResourceSignup from "./ResourceSignup";
 import VonuMark from "./VonuMark";
 
 const SITE_URL = "https://vonuai.com";
@@ -29,11 +30,11 @@ const pricingCopy: Record<SupportedLocale, {
   chooseMax: string;
   perMonth: string;
 }> = {
-  es: { section: "Planes", title: "Elige cuánto margen necesitas", free: "Free", plus: "Plus", max: "Max", freeText: "Primer análisis y uso puntual para probar Vonu.", plusText: "Más análisis, imágenes, documentos y voz para uso frecuente.", maxText: "Más capacidad para un uso intensivo y situaciones complejas.", start: "Empezar gratis", choosePlus: "Elegir Plus", chooseMax: "Elegir Max", perMonth: "/ mes" },
-  en: { section: "Plans", title: "Choose the capacity you need", free: "Free", plus: "Plus", max: "Max", freeText: "First analysis and occasional use to try Vonu.", plusText: "More analyses, images, documents and voice for regular use.", maxText: "More capacity for intensive use and complex situations.", start: "Start free", choosePlus: "Choose Plus", chooseMax: "Choose Max", perMonth: "/ month" },
-  fr: { section: "Offres", title: "Choisissez la capacité dont vous avez besoin", free: "Free", plus: "Plus", max: "Max", freeText: "Première analyse et usage ponctuel pour découvrir Vonu.", plusText: "Plus d’analyses, d’images, de documents et de voix pour un usage régulier.", maxText: "Plus de capacité pour un usage intensif et des situations complexes.", start: "Commencer gratuitement", choosePlus: "Choisir Plus", chooseMax: "Choisir Max", perMonth: "/ mois" },
-  de: { section: "Pläne", title: "Wähle die Kapazität, die du brauchst", free: "Free", plus: "Plus", max: "Max", freeText: "Erste Analyse und gelegentliche Nutzung zum Testen von Vonu.", plusText: "Mehr Analysen, Bilder, Dokumente und Sprache für regelmäßige Nutzung.", maxText: "Mehr Kapazität für intensive Nutzung und komplexe Situationen.", start: "Kostenlos starten", choosePlus: "Plus wählen", chooseMax: "Max wählen", perMonth: "/ Monat" },
-  ar: { section: "الخطط", title: "اختر السعة التي تحتاجها", free: "مجاني", plus: "Plus", max: "Max", freeText: "التحليل الأول واستخدام محدود لتجربة Vonu.", plusText: "تحليلات وصور ومستندات وصوت أكثر للاستخدام المنتظم.", maxText: "سعة أكبر للاستخدام المكثف والحالات المعقدة.", start: "ابدأ مجانًا", choosePlus: "اختر Plus", chooseMax: "اختر Max", perMonth: "/ شهر" },
+  es: { section: "Planes", title: "Elige cuánto margen necesitas", free: "Free", plus: "Plus", max: "Max", freeText: "Primer análisis y uso puntual para probar las comprobaciones de Vonu.", plusText: "Más comprobaciones de enlaces, mensajes y capturas para un uso frecuente.", maxText: "Mayor capacidad para un uso intensivo y más comprobaciones cada mes.", start: "Empezar gratis", choosePlus: "Elegir Plus", chooseMax: "Elegir Max", perMonth: "/ mes" },
+  en: { section: "Plans", title: "Choose the capacity you need", free: "Free", plus: "Plus", max: "Max", freeText: "First analysis and occasional use to try Vonu checks.", plusText: "More link, message and screenshot checks for regular use.", maxText: "Higher capacity for intensive use and more checks each month.", start: "Start free", choosePlus: "Choose Plus", chooseMax: "Choose Max", perMonth: "/ month" },
+  fr: { section: "Offres", title: "Choisissez la capacité dont vous avez besoin", free: "Free", plus: "Plus", max: "Max", freeText: "Première analyse et usage ponctuel pour découvrir les vérifications Vonu.", plusText: "Plus de vérifications de liens, messages et captures pour un usage régulier.", maxText: "Davantage de capacité pour un usage intensif et plus de vérifications chaque mois.", start: "Commencer gratuitement", choosePlus: "Choisir Plus", chooseMax: "Choisir Max", perMonth: "/ mois" },
+  de: { section: "Pläne", title: "Wähle die Kapazität, die du brauchst", free: "Free", plus: "Plus", max: "Max", freeText: "Erste Analyse und gelegentliche Nutzung zum Testen der Vonu-Prüfungen.", plusText: "Mehr Link-, Nachrichten- und Screenshot-Prüfungen für regelmäßige Nutzung.", maxText: "Mehr Kapazität für intensive Nutzung und mehr Prüfungen pro Monat.", start: "Kostenlos starten", choosePlus: "Plus wählen", chooseMax: "Max wählen", perMonth: "/ Monat" },
+  ar: { section: "الخطط", title: "اختر السعة التي تحتاجها", free: "مجاني", plus: "Plus", max: "Max", freeText: "التحليل الأول واستخدام محدود لتجربة فحوص Vonu.", plusText: "فحوص أكثر للروابط والرسائل ولقطات الشاشة للاستخدام المنتظم.", maxText: "سعة أكبر للاستخدام المكثف وعدد أكبر من الفحوص كل شهر.", start: "ابدأ مجانًا", choosePlus: "اختر Plus", chooseMax: "اختر Max", perMonth: "/ شهر" },
 };
 
 function Arrow() {
@@ -52,6 +53,7 @@ export default function LocalizedPublicPage({
   const nav = navCopy[locale];
   const pageUrl = `${SITE_URL}${localizedPublicPath(locale, slug)}`;
   const isPricing = slug === "precios";
+  const isResources = slug === "recursos";
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -104,28 +106,14 @@ export default function LocalizedPublicPage({
             <h1 className="mx-auto mt-5 max-w-[1050px] text-[48px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[74px] sm:leading-[0.94] lg:text-[90px]">
               {topic.hero}
             </h1>
-            <p className="mx-auto mt-7 max-w-[760px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">
-              {topic.description}
-            </p>
-            <p className="mx-auto mt-4 max-w-[740px] text-[14px] leading-7 text-slate-500">
-              {t.intro}
-            </p>
+            <p className="mx-auto mt-7 max-w-[760px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">{topic.description}</p>
+            <p className="mx-auto mt-4 max-w-[740px] text-[14px] leading-7 text-slate-500">{t.intro}</p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <FunnelLink
-                href={checkPath(locale)}
-                event="localized_primary_cta"
-                properties={{ locale, slug }}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:-translate-y-0.5 hover:bg-emerald-300"
-              >
+              <FunnelLink href={checkPath(locale)} event="localized_primary_cta" properties={{ locale, slug }} className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:-translate-y-0.5 hover:bg-emerald-300">
                 {t.cta} <Arrow />
               </FunnelLink>
               {!isPricing && (
-                <FunnelLink
-                  href={localizedPublicPath(locale, "precios")}
-                  event="localized_pricing_cta"
-                  properties={{ locale, slug }}
-                  className="inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.045] px-6 text-[14px] font-semibold text-slate-200 transition hover:bg-white/[0.07]"
-                >
+                <FunnelLink href={localizedPublicPath(locale, "precios")} event="localized_pricing_cta" properties={{ locale, slug }} className="inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.045] px-6 text-[14px] font-semibold text-slate-200 transition hover:bg-white/[0.07]">
                   {t.ctaSecondary}
                 </FunnelLink>
               )}
@@ -146,27 +134,19 @@ export default function LocalizedPublicPage({
                 <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">{pc.free}</p>
                 <p className="mt-7 text-[52px] font-semibold tracking-[-0.07em] text-white">0€</p>
                 <p className="mt-4 text-[14px] leading-7 text-slate-400">{pc.freeText}</p>
-                <FunnelLink href={checkPath(locale)} event="pricing_free_selected" properties={{ locale }} className="mt-auto inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.045] px-5 text-[14px] font-bold text-white">
-                  {pc.start}
-                </FunnelLink>
+                <FunnelLink href={checkPath(locale)} event="pricing_free_selected" properties={{ locale }} className="mt-auto inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.045] px-5 text-[14px] font-bold text-white">{pc.start}</FunnelLink>
               </article>
 
               <article className="relative flex min-h-[360px] flex-col rounded-[26px] border border-emerald-400/30 bg-emerald-400/[0.055] p-6 shadow-[0_26px_80px_rgba(16,185,129,.08)]">
                 <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">{pc.plus}</p>
-                <div className="mt-7 flex items-end gap-2">
-                  <span className="text-[52px] font-semibold tracking-[-0.07em] text-white">9,99€</span>
-                  <span className="pb-2 text-[12px] text-slate-500">{pc.perMonth}</span>
-                </div>
+                <div className="mt-7 flex items-end gap-2"><span className="text-[52px] font-semibold tracking-[-0.07em] text-white">9,99€</span><span className="pb-2 text-[12px] text-slate-500">{pc.perMonth}</span></div>
                 <p className="mt-4 text-[14px] leading-7 text-slate-400">{pc.plusText}</p>
                 <PlanCheckoutButton plan="plus" locale={locale} label={pc.choosePlus} className="mt-auto h-12 w-full rounded-xl bg-emerald-400 px-5 text-[14px] font-bold text-[#07110d] transition hover:bg-emerald-300" />
               </article>
 
               <article className="flex min-h-[360px] flex-col rounded-[26px] border border-white/[0.07] bg-white/[0.03] p-6">
                 <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">{pc.max}</p>
-                <div className="mt-7 flex items-end gap-2">
-                  <span className="text-[52px] font-semibold tracking-[-0.07em] text-white">19,99€</span>
-                  <span className="pb-2 text-[12px] text-slate-500">{pc.perMonth}</span>
-                </div>
+                <div className="mt-7 flex items-end gap-2"><span className="text-[52px] font-semibold tracking-[-0.07em] text-white">19,99€</span><span className="pb-2 text-[12px] text-slate-500">{pc.perMonth}</span></div>
                 <p className="mt-4 text-[14px] leading-7 text-slate-400">{pc.maxText}</p>
                 <PlanCheckoutButton plan="max" locale={locale} label={pc.chooseMax} className="mt-auto h-12 w-full rounded-xl border border-white/[0.10] bg-white/[0.045] px-5 text-[14px] font-bold text-white transition hover:bg-white/[0.07]" />
               </article>
@@ -223,6 +203,8 @@ export default function LocalizedPublicPage({
         </div>
       </section>
 
+      {isResources && <ResourceSignup locale={locale} page={localizedPublicPath(locale, slug)} />}
+
       <section className="border-b border-white/[0.06] bg-[#080b12]">
         <div className="mx-auto max-w-[900px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
           <div className="text-center">
@@ -250,23 +232,20 @@ export default function LocalizedPublicPage({
         <div className="relative mx-auto max-w-[1320px] px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-[900px] text-center">
             <h2 className="text-[44px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[70px]">{topic.hero}</h2>
-            <FunnelLink href={checkPath(locale)} event="localized_final_cta" properties={{ locale, slug }} className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d]">
-              {t.cta} <Arrow />
-            </FunnelLink>
+            <FunnelLink href={checkPath(locale)} event="localized_final_cta" properties={{ locale, slug }} className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d]">{t.cta} <Arrow /></FunnelLink>
           </div>
         </div>
       </section>
 
       <footer className="border-t border-white/[0.055] bg-[#0b0e17]">
         <div className="mx-auto flex min-h-12 max-w-[1320px] flex-col items-center justify-between gap-3 px-4 py-3 text-[11px] text-slate-600 sm:flex-row sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 text-slate-500">
-            <VonuMark className="h-5 w-5" />
-            <span className="font-semibold tracking-[0.08em] text-slate-400">VONU</span>
-          </div>
+          <div className="flex items-center gap-2 text-slate-500"><VonuMark className="h-5 w-5" /><span className="font-semibold tracking-[0.08em] text-slate-400">VONU</span></div>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link href="/legal/aviso-legal" className="transition hover:text-slate-400">{nav.legal}</Link>
             <Link href="/legal/privacidad" className="transition hover:text-slate-400">{nav.privacy}</Link>
+            <Link href="/legal/cookies" className="transition hover:text-slate-400">Cookies</Link>
             <Link href="/legal/terminos" className="transition hover:text-slate-400">{nav.terms}</Link>
+            <Link href="/legal/uso-responsable" className="transition hover:text-slate-400">{nav.responsible}</Link>
             <Link href={localizedPublicPath(locale, "contacto")} className="transition hover:text-slate-400">{nav.contact}</Link>
           </div>
         </div>
