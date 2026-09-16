@@ -59,6 +59,7 @@ export default function AvisoLegalPage() {
         </p>
         <ul>
           <li><strong>Titular:</strong> Francisco Luis Martínez Miralles</li>
+          <li><strong>NIF:</strong> 74235561W</li>
           <li><strong>Domicilio de contacto:</strong> Calle Velarde, 55, 03203 Elche, Alicante, España</li>
           <li><strong>Email general:</strong> hello@vonuai.com</li>
           <li><strong>Email legal:</strong> legal@vonuai.com</li>
