@@ -4,12 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/vonu-risk-calibration-contract.mjs && node scripts/vonu-fraud-atlas-contract.mjs && node scripts/vonu-capture-message-parity-contract.mjs && node scripts/vonu-web-contract.mjs",
+    "prebuild": "node scripts/vonu-risk-calibration-contract.mjs && node scripts/vonu-fraud-atlas-contract.mjs && node scripts/vonu-capture-message-parity-contract.mjs && node scripts/vonu-web-contract.mjs && node scripts/vonu-global-seo-contract.mjs",
     "build": "next build",
     "calibrate:e2e": "node scripts/vonu-risk-e2e-preview.mjs",
     "calibrate:adversarial": "node scripts/vonu-risk-e2e-adversarial.mjs",
     "calibrate:boundary": "node scripts/vonu-risk-e2e-boundary.mjs",
     "calibrate:web": "node scripts/vonu-web-e2e.mjs",
+    "audit:seo": "node scripts/vonu-global-seo-contract.mjs",
     "start": "next start",
     "lint": "eslint"
   },
