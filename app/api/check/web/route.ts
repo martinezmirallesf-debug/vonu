@@ -6,6 +6,8 @@ import { isSupportedLocale } from "@/lib/vonu-check/i18n";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const EXPLICIT_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -16,6 +18,10 @@ export async function POST(request: Request) {
 
     if (!url || url.length > 2048) {
       return NextResponse.json({ error: "invalid_url" }, { status: 400 });
+    }
+
+    if (EXPLICIT_SCHEME.test(url) && !/^https?:/i.test(url)) {
+      throw new Error("unsupported_protocol");
     }
 
     const baseResult = await collectWebSignals(url, locale);
