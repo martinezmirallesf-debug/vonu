@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import HomeHeader from "@/app/components/HomeHeader";
 import { localeMeta } from "@/lib/vonu-check/i18n";
+import { friendlyHttpStatus, humanizeLimitation, humanizeWebSignal } from "@/lib/vonu-check/presentation";
 import { riskBandFromScore } from "@/lib/vonu-check/risk-score";
 import type { CaptureCheckResult } from "@/lib/vonu-check/capture-types";
 import type { TextCheckResult } from "@/lib/vonu-check/text-types";
@@ -90,20 +91,20 @@ const UI: Record<SupportedLocale, UiCopy> = {
     firstFree: "Primer análisis gratuito",
     pasteImage: "También puedes pegar una captura con Ctrl+V",
     scanning: "Analizando señales de riesgo",
-    scanUrl: ["Resolviendo dominio y destino…", "Comprobando HTTPS y respuesta…", "Revisando redirecciones y formularios…", "Analizando señales visibles…", "Calculando puntuación de riesgo…"],
-    scanCapture: ["Leyendo el contenido visible…", "Clasificando el contexto…", "Detectando urgencia y suplantación…", "Extrayendo enlaces y datos visibles…", "Calculando puntuación de riesgo…"],
-    scanText: ["Clasificando el mensaje…", "Detectando presión y urgencia…", "Buscando señales de suplantación…", "Extrayendo enlaces y contactos…", "Calculando puntuación de riesgo…"],
-    report: "Informe Vonu Check",
-    cautionIndex: "Puntuación de riesgo",
-    confidence: "Confianza del análisis",
+    scanUrl: ["Comprobando a qué página lleva…", "Revisando si la conexión es segura…", "Comprobando cambios de dirección…", "Buscando señales sospechosas…", "Calculando el nivel de riesgo…"],
+    scanCapture: ["Leyendo el contenido visible…", "Entendiendo qué aparece en la imagen…", "Buscando presión, urgencia o suplantación…", "Revisando enlaces y datos visibles…", "Calculando el nivel de riesgo…"],
+    scanText: ["Entendiendo el mensaje…", "Buscando presión o urgencia…", "Comprobando posibles suplantaciones…", "Revisando enlaces y contactos…", "Calculando el nivel de riesgo…"],
+    report: "Resultado del análisis",
+    cautionIndex: "Nivel de riesgo",
+    confidence: "Fiabilidad del análisis",
     limited: "Limitada",
     medium: "Media",
     highConfidence: "Alta",
-    evidence: "Señales y evidencias",
-    technical: "Resumen técnico",
+    evidence: "Qué hemos encontrado",
+    technical: "Qué hemos comprobado",
     extracted: "Datos detectados",
     actions: "Qué hacer ahora",
-    limitations: "Límites del análisis",
+    limitations: "Qué no hemos podido comprobar",
     newCheck: "Nueva comprobación",
     invalidUrl: "Introduce una URL válida.",
     invalidText: "Pega un mensaje o texto para analizar.",
@@ -115,15 +116,15 @@ const UI: Record<SupportedLocale, UiCopy> = {
     high: "Riesgo alto",
     veryHigh: "Riesgo muy alto",
     unknown: "No concluyente",
-    lowSummary: "No vemos señales fuertes de riesgo en esta primera capa. Aun así, una ausencia de alertas no certifica que sea legítimo.",
-    cautionSummary: "Hay señales que merecen revisión antes de pagar, responder o compartir datos.",
-    highSummary: "Hemos encontrado varias señales relevantes de riesgo. No continuaríamos sin verificarlo por otra vía.",
-    noCertification: "La puntuación de Vonu es un índice de riesgo basado en las evidencias disponibles; no es una probabilidad de fraude ni certifica legitimidad.",
-    finalUrl: "Destino final",
-    httpStatus: "Estado HTTP",
-    redirects: "Redirecciones",
-    https: "HTTPS",
-    forms: "Formularios",
+    lowSummary: "No hemos encontrado señales importantes de riesgo con las comprobaciones realizadas. Aun así, ninguna comprobación puede garantizar al 100 % que una web sea legítima.",
+    cautionSummary: "Hemos encontrado algunos indicios que conviene revisar antes de pagar, responder o compartir datos personales.",
+    highSummary: "Hemos encontrado varias señales preocupantes. No continúes sin confirmar por otra vía que la web o la persona son realmente quienes dicen ser.",
+    noCertification: "La puntuación resume las señales detectadas. No representa la probabilidad exacta de que sea una estafa ni garantiza que una web sea segura.",
+    finalUrl: "Página final",
+    httpStatus: "Respuesta de la web",
+    redirects: "Cambios de dirección",
+    https: "Conexión cifrada",
+    forms: "Formularios encontrados",
     context: "Contexto",
     urls: "Enlaces",
     phones: "Teléfonos",
@@ -149,20 +150,20 @@ const UI: Record<SupportedLocale, UiCopy> = {
     firstFree: "First analysis free",
     pasteImage: "You can also paste a screenshot with Ctrl+V",
     scanning: "Analysing risk signals",
-    scanUrl: ["Resolving domain and destination…", "Checking HTTPS and response…", "Reviewing redirects and forms…", "Inspecting visible signals…", "Calculating risk score…"],
-    scanCapture: ["Reading visible content…", "Classifying context…", "Detecting urgency and impersonation…", "Extracting visible links and data…", "Calculating risk score…"],
-    scanText: ["Classifying message…", "Detecting pressure and urgency…", "Checking impersonation signals…", "Extracting links and contacts…", "Calculating risk score…"],
-    report: "Vonu Check report",
-    cautionIndex: "Risk score",
-    confidence: "Analysis confidence",
+    scanUrl: ["Checking where the link leads…", "Checking whether the connection is secure…", "Reviewing changes of destination…", "Looking for suspicious signs…", "Calculating the risk level…"],
+    scanCapture: ["Reading visible content…", "Understanding what is shown…", "Looking for pressure, urgency or impersonation…", "Reviewing visible links and details…", "Calculating the risk level…"],
+    scanText: ["Understanding the message…", "Looking for pressure or urgency…", "Checking for impersonation…", "Reviewing links and contacts…", "Calculating the risk level…"],
+    report: "Analysis result",
+    cautionIndex: "Risk level",
+    confidence: "Analysis reliability",
     limited: "Limited",
     medium: "Medium",
     highConfidence: "High",
-    evidence: "Signals and evidence",
-    technical: "Technical summary",
+    evidence: "What we found",
+    technical: "What we checked",
     extracted: "Detected data",
     actions: "What to do now",
-    limitations: "Analysis limits",
+    limitations: "What we could not check",
     newCheck: "New check",
     invalidUrl: "Enter a valid URL.",
     invalidText: "Paste a message or text to analyse.",
@@ -174,15 +175,15 @@ const UI: Record<SupportedLocale, UiCopy> = {
     high: "High risk",
     veryHigh: "Very high risk",
     unknown: "Inconclusive",
-    lowSummary: "We do not see strong risk signals in this first layer. A lack of alerts does not certify legitimacy.",
-    cautionSummary: "Some signals deserve review before paying, replying or sharing data.",
-    highSummary: "Several relevant risk signals were found. We would not continue without independent verification.",
-    noCertification: "Vonu's score is a risk index based on the available evidence; it is not a probability of fraud and does not certify legitimacy.",
-    finalUrl: "Final destination",
-    httpStatus: "HTTP status",
-    redirects: "Redirects",
-    https: "HTTPS",
-    forms: "Forms",
+    lowSummary: "We did not find major risk signs in the checks we were able to perform. Even so, no check can guarantee that a website is legitimate.",
+    cautionSummary: "We found some signs worth checking before paying, replying or sharing personal information.",
+    highSummary: "We found several worrying signs. Do not continue until you independently confirm that the site or person is really who they claim to be.",
+    noCertification: "The score summarises the signs we detected. It is not the exact probability of fraud and does not guarantee that a website is safe.",
+    finalUrl: "Final page",
+    httpStatus: "Website response",
+    redirects: "Changes of destination",
+    https: "Encrypted connection",
+    forms: "Forms found",
     context: "Context",
     urls: "Links",
     phones: "Phones",
@@ -208,20 +209,20 @@ const UI: Record<SupportedLocale, UiCopy> = {
     firstFree: "Première analyse gratuite",
     pasteImage: "Vous pouvez aussi coller une capture avec Ctrl+V",
     scanning: "Analyse des signaux de risque",
-    scanUrl: ["Résolution du domaine…", "Vérification HTTPS et réponse…", "Analyse des redirections…", "Inspection des signaux visibles…", "Calcul du score de risque…"],
-    scanCapture: ["Lecture du contenu visible…", "Classification du contexte…", "Détection de l’urgence…", "Extraction des liens et données…", "Calcul du score de risque…"],
-    scanText: ["Classification du message…", "Détection de la pression…", "Recherche d’usurpation…", "Extraction des liens…", "Calcul du score de risque…"],
-    report: "Rapport Vonu Check",
-    cautionIndex: "Score de risque",
-    confidence: "Confiance de l’analyse",
+    scanUrl: ["Vérification de la destination du lien…", "Vérification de la sécurité de la connexion…", "Analyse des changements de destination…", "Recherche de signes suspects…", "Calcul du niveau de risque…"],
+    scanCapture: ["Lecture du contenu visible…", "Compréhension de l’image…", "Recherche de pression, urgence ou usurpation…", "Vérification des liens et données visibles…", "Calcul du niveau de risque…"],
+    scanText: ["Compréhension du message…", "Recherche de pression ou d’urgence…", "Vérification d’une éventuelle usurpation…", "Vérification des liens et contacts…", "Calcul du niveau de risque…"],
+    report: "Résultat de l’analyse",
+    cautionIndex: "Niveau de risque",
+    confidence: "Fiabilité de l’analyse",
     limited: "Limitée",
     medium: "Moyenne",
     highConfidence: "Élevée",
-    evidence: "Signaux et preuves",
-    technical: "Résumé technique",
+    evidence: "Ce que nous avons trouvé",
+    technical: "Ce que nous avons vérifié",
     extracted: "Données détectées",
     actions: "Que faire maintenant",
-    limitations: "Limites de l’analyse",
+    limitations: "Ce que nous n’avons pas pu vérifier",
     newCheck: "Nouvelle vérification",
     invalidUrl: "Saisissez une URL valide.",
     invalidText: "Collez un message ou un texte à analyser.",
@@ -233,15 +234,15 @@ const UI: Record<SupportedLocale, UiCopy> = {
     high: "Risque élevé",
     veryHigh: "Risque très élevé",
     unknown: "Non concluant",
-    lowSummary: "Nous ne voyons pas de signal fort dans cette première couche. L’absence d’alerte ne certifie pas la légitimité.",
-    cautionSummary: "Certains signaux méritent une vérification avant de payer, répondre ou partager des données.",
-    highSummary: "Plusieurs signaux importants ont été trouvés. Nous ne continuerions pas sans vérification indépendante.",
-    noCertification: "Le score Vonu est un indice de risque fondé sur les preuves disponibles ; il ne s'agit pas d'une probabilité de fraude et il ne certifie pas la légitimité.",
-    finalUrl: "Destination finale",
-    httpStatus: "Statut HTTP",
-    redirects: "Redirections",
-    https: "HTTPS",
-    forms: "Formulaires",
+    lowSummary: "Nous n’avons pas trouvé de signal de risque important dans les vérifications effectuées. Aucune vérification ne peut toutefois garantir qu’un site est légitime.",
+    cautionSummary: "Nous avons trouvé quelques éléments à vérifier avant de payer, répondre ou partager des données personnelles.",
+    highSummary: "Nous avons trouvé plusieurs signaux préoccupants. Ne continuez pas sans confirmer par une autre voie que le site ou la personne est bien qui il prétend être.",
+    noCertification: "Le score résume les signaux détectés. Il ne représente pas la probabilité exacte d’une fraude et ne garantit pas qu’un site est sûr.",
+    finalUrl: "Page finale",
+    httpStatus: "Réponse du site",
+    redirects: "Changements de destination",
+    https: "Connexion chiffrée",
+    forms: "Formulaires trouvés",
     context: "Contexte",
     urls: "Liens",
     phones: "Téléphones",
@@ -267,20 +268,20 @@ const UI: Record<SupportedLocale, UiCopy> = {
     firstFree: "Erste Analyse kostenlos",
     pasteImage: "Screenshot auch mit Ctrl+V einfügen",
     scanning: "Risikosignale werden analysiert",
-    scanUrl: ["Domain wird aufgelöst…", "HTTPS und Antwort werden geprüft…", "Weiterleitungen werden analysiert…", "Sichtbare Signale werden geprüft…", "Risikowert wird berechnet…"],
-    scanCapture: ["Sichtbarer Inhalt wird gelesen…", "Kontext wird klassifiziert…", "Dringlichkeit wird geprüft…", "Links und Daten werden extrahiert…", "Risikowert wird berechnet…"],
-    scanText: ["Nachricht wird klassifiziert…", "Druck und Dringlichkeit werden geprüft…", "Identitätsmissbrauch wird geprüft…", "Links werden extrahiert…", "Risikowert wird berechnet…"],
-    report: "Vonu Check Bericht",
-    cautionIndex: "Risikowert",
-    confidence: "Analysevertrauen",
+    scanUrl: ["Prüfen, wohin der Link führt…", "Prüfen, ob die Verbindung sicher ist…", "Prüfen von Zielwechseln…", "Suchen nach verdächtigen Hinweisen…", "Berechnen des Risikoniveaus…"],
+    scanCapture: ["Sichtbaren Inhalt lesen…", "Bildinhalt verstehen…", "Nach Druck, Dringlichkeit oder Identitätsmissbrauch suchen…", "Sichtbare Links und Daten prüfen…", "Risikostufe berechnen…"],
+    scanText: ["Nachricht verstehen…", "Nach Druck oder Dringlichkeit suchen…", "Auf Identitätsmissbrauch prüfen…", "Links und Kontakte prüfen…", "Risikostufe berechnen…"],
+    report: "Analyseergebnis",
+    cautionIndex: "Risikostufe",
+    confidence: "Zuverlässigkeit der Analyse",
     limited: "Begrenzt",
     medium: "Mittel",
     highConfidence: "Hoch",
-    evidence: "Signale und Belege",
-    technical: "Technische Zusammenfassung",
+    evidence: "Was wir gefunden haben",
+    technical: "Was wir geprüft haben",
     extracted: "Erkannte Daten",
     actions: "Was jetzt zu tun ist",
-    limitations: "Grenzen der Analyse",
+    limitations: "Was wir nicht prüfen konnten",
     newCheck: "Neue Prüfung",
     invalidUrl: "Gib eine gültige URL ein.",
     invalidText: "Füge eine Nachricht oder Text zur Analyse ein.",
@@ -292,15 +293,15 @@ const UI: Record<SupportedLocale, UiCopy> = {
     high: "Hohes Risiko",
     veryHigh: "Sehr hohes Risiko",
     unknown: "Nicht eindeutig",
-    lowSummary: "In dieser ersten Schicht sehen wir keine starken Risikosignale. Das bestätigt jedoch keine Seriosität.",
-    cautionSummary: "Einige Signale sollten geprüft werden, bevor du zahlst, antwortest oder Daten teilst.",
-    highSummary: "Mehrere relevante Risikosignale wurden gefunden. Wir würden ohne unabhängige Prüfung nicht fortfahren.",
-    noCertification: "Der Vonu-Wert ist ein Risikoindex auf Basis der verfügbaren Belege; er ist keine Betrugswahrscheinlichkeit und bestätigt keine Seriosität.",
-    finalUrl: "Endziel",
-    httpStatus: "HTTP-Status",
-    redirects: "Weiterleitungen",
-    https: "HTTPS",
-    forms: "Formulare",
+    lowSummary: "Bei den durchgeführten Prüfungen haben wir keine wichtigen Risikosignale gefunden. Keine Prüfung kann jedoch garantieren, dass eine Website seriös ist.",
+    cautionSummary: "Wir haben einige Hinweise gefunden, die du vor einer Zahlung, Antwort oder Weitergabe persönlicher Daten prüfen solltest.",
+    highSummary: "Wir haben mehrere besorgniserregende Hinweise gefunden. Fahre erst fort, wenn du unabhängig bestätigt hast, dass Website oder Person wirklich die behauptete Identität haben.",
+    noCertification: "Der Wert fasst die erkannten Hinweise zusammen. Er ist nicht die genaue Betrugswahrscheinlichkeit und garantiert nicht, dass eine Website sicher ist.",
+    finalUrl: "Endseite",
+    httpStatus: "Antwort der Website",
+    redirects: "Zielwechsel",
+    https: "Verschlüsselte Verbindung",
+    forms: "Gefundene Formulare",
     context: "Kontext",
     urls: "Links",
     phones: "Telefonnummern",
@@ -326,20 +327,20 @@ const UI: Record<SupportedLocale, UiCopy> = {
     firstFree: "أول تحليل مجاني",
     pasteImage: "يمكنك أيضاً لصق لقطة باستخدام Ctrl+V",
     scanning: "جارٍ تحليل إشارات المخاطر",
-    scanUrl: ["جارٍ التحقق من النطاق…", "جارٍ فحص HTTPS والاستجابة…", "جارٍ مراجعة التحويلات…", "جارٍ تحليل الإشارات الظاهرة…", "جارٍ حساب درجة المخاطر…"],
-    scanCapture: ["جارٍ قراءة المحتوى…", "جارٍ تصنيف السياق…", "جارٍ فحص الاستعجال والانتحال…", "جارٍ استخراج الروابط والبيانات…", "جارٍ حساب درجة المخاطر…"],
-    scanText: ["جارٍ تصنيف الرسالة…", "جارٍ فحص الضغط والاستعجال…", "جارٍ فحص الانتحال…", "جارٍ استخراج الروابط…", "جارٍ حساب درجة المخاطر…"],
-    report: "تقرير Vonu Check",
-    cautionIndex: "درجة المخاطر",
-    confidence: "ثقة التحليل",
+    scanUrl: ["جارٍ التحقق من وجهة الرابط…", "جارٍ التحقق من أمان الاتصال…", "جارٍ مراجعة تغيّر الوجهة…", "جارٍ البحث عن إشارات مريبة…", "جارٍ حساب مستوى المخاطر…"],
+    scanCapture: ["جارٍ قراءة المحتوى الظاهر…", "جارٍ فهم محتوى الصورة…", "جارٍ البحث عن الضغط أو الاستعجال أو الانتحال…", "جارٍ مراجعة الروابط والبيانات الظاهرة…", "جارٍ حساب مستوى المخاطر…"],
+    scanText: ["جارٍ فهم الرسالة…", "جارٍ البحث عن الضغط أو الاستعجال…", "جارٍ التحقق من الانتحال…", "جارٍ مراجعة الروابط وبيانات الاتصال…", "جارٍ حساب مستوى المخاطر…"],
+    report: "نتيجة التحليل",
+    cautionIndex: "مستوى المخاطر",
+    confidence: "موثوقية التحليل",
     limited: "محدودة",
     medium: "متوسطة",
     highConfidence: "عالية",
-    evidence: "الإشارات والأدلة",
-    technical: "الملخص التقني",
+    evidence: "ما الذي وجدناه",
+    technical: "ما الذي تحققنا منه",
     extracted: "البيانات المكتشفة",
     actions: "ماذا تفعل الآن",
-    limitations: "حدود التحليل",
+    limitations: "ما الذي لم نتمكن من التحقق منه",
     newCheck: "فحص جديد",
     invalidUrl: "أدخل رابطاً صالحاً.",
     invalidText: "الصق رسالة أو نصاً للتحليل.",
@@ -351,15 +352,15 @@ const UI: Record<SupportedLocale, UiCopy> = {
     high: "مخاطر عالية",
     veryHigh: "مخاطر عالية جداً",
     unknown: "غير حاسم",
-    lowSummary: "لا نرى إشارات خطر قوية في هذه الطبقة الأولى. غياب التنبيهات لا يثبت الشرعية.",
-    cautionSummary: "هناك إشارات تستحق التحقق قبل الدفع أو الرد أو مشاركة البيانات.",
-    highSummary: "تم العثور على عدة إشارات مهمة للمخاطر. لن نتابع دون تحقق مستقل.",
-    noCertification: "درجة Vonu هي مؤشر للمخاطر قائم على الأدلة المتاحة؛ وليست احتمالاً للاحتيال ولا شهادة على الشرعية.",
-    finalUrl: "الوجهة النهائية",
-    httpStatus: "حالة HTTP",
-    redirects: "التحويلات",
-    https: "HTTPS",
-    forms: "النماذج",
+    lowSummary: "لم نجد إشارات خطر مهمة في الفحوصات التي أجريناها. ومع ذلك لا يمكن لأي فحص أن يضمن أن الموقع شرعي بنسبة 100٪.",
+    cautionSummary: "وجدنا بعض الإشارات التي تستحق التحقق قبل الدفع أو الرد أو مشاركة البيانات الشخصية.",
+    highSummary: "وجدنا عدة إشارات مقلقة. لا تتابع قبل أن تؤكد بشكل مستقل أن الموقع أو الشخص هو فعلاً من يدّعي أنه.",
+    noCertification: "تلخص الدرجة الإشارات التي اكتشفناها. وهي ليست الاحتمال الدقيق للاحتيال ولا تضمن أن الموقع آمن.",
+    finalUrl: "الصفحة النهائية",
+    httpStatus: "استجابة الموقع",
+    redirects: "تغيّر الوجهة",
+    https: "اتصال مشفّر",
+    forms: "النماذج الموجودة",
     context: "السياق",
     urls: "الروابط",
     phones: "الهواتف",
@@ -371,57 +372,19 @@ const UI: Record<SupportedLocale, UiCopy> = {
 };
 
 const unknownSummary: Record<SupportedLocale, string> = {
-  es: "No hemos podido inspeccionar suficiente contenido para emitir un veredicto fiable. Esto no es una señal de fraude: algunos servicios bloquean las comprobaciones automatizadas.",
-  en: "We could not inspect enough content to produce a reliable verdict. This is not a fraud signal: some services block automated checks.",
-  fr: "Nous n’avons pas pu inspecter assez de contenu pour fournir un verdict fiable. Ce n’est pas un signal de fraude : certains services bloquent les vérifications automatisées.",
-  de: "Wir konnten nicht genug Inhalt prüfen, um ein verlässliches Urteil abzugeben. Das ist kein Betrugssignal: Manche Dienste blockieren automatisierte Prüfungen.",
-  ar: "لم نتمكن من فحص محتوى كافٍ لإصدار نتيجة موثوقة. هذا ليس مؤشر احتيال؛ بعض الخدمات تمنع الفحوصات الآلية.",
+  es: "No hemos podido revisar suficiente contenido para dar una conclusión fiable. Esto no significa que sea una estafa: algunas webs bloquean las comprobaciones automáticas.",
+  en: "We could not review enough content to give a reliable conclusion. This does not mean the site is a scam: some websites block automated checks.",
+  fr: "Nous n’avons pas pu examiner assez de contenu pour donner une conclusion fiable. Cela ne signifie pas qu’il s’agit d’une arnaque : certains sites bloquent les vérifications automatiques.",
+  de: "Wir konnten nicht genug Inhalt prüfen, um eine verlässliche Schlussfolgerung zu geben. Das bedeutet nicht, dass die Website betrügerisch ist: Manche Seiten blockieren automatische Prüfungen.",
+  ar: "لم نتمكن من مراجعة محتوى كافٍ لإعطاء نتيجة موثوقة. هذا لا يعني أن الموقع احتيالي؛ فبعض المواقع تمنع الفحوصات الآلية.",
 };
 
 const subjectCopy: Record<SupportedLocale, { analysed: string; url: string; capture: string; text: string }> = {
-  es: { analysed: "Analizado", url: "URL analizada", capture: "Captura analizada", text: "Mensaje analizado" },
-  en: { analysed: "Analysed", url: "Analysed URL", capture: "Analysed screenshot", text: "Analysed message" },
-  fr: { analysed: "Analysé", url: "URL analysée", capture: "Capture analysée", text: "Message analysé" },
-  de: { analysed: "Analysiert", url: "Analysierte URL", capture: "Analysierter Screenshot", text: "Analysierte Nachricht" },
+  es: { analysed: "Analizado", url: "Enlace analizado", capture: "Captura analizada", text: "Mensaje analizado" },
+  en: { analysed: "Analysed", url: "Analysed link", capture: "Analysed screenshot", text: "Analysed message" },
+  fr: { analysed: "Analysé", url: "Lien analysé", capture: "Capture analysée", text: "Message analysé" },
+  de: { analysed: "Analysiert", url: "Analysierter Link", capture: "Analysierter Screenshot", text: "Analysierte Nachricht" },
   ar: { analysed: "تم التحليل", url: "الرابط الذي تم تحليله", capture: "لقطة الشاشة التي تم تحليلها", text: "الرسالة التي تم تحليلها" },
-};
-
-const limitationCopy: Record<SupportedLocale, Record<string, string>> = {
-  es: {
-    "technical-signals-only": "Esta versión usa todavía una capa técnica inicial.",
-    "no-reputation-layer-yet": "La reputación externa todavía no se contrasta en este informe.",
-    "no-business-identity-layer-yet": "La identidad empresarial todavía no se verifica en esta versión.",
-    "no-domain-age-layer-yet": "La antigüedad y registro del dominio todavía no se incorporan.",
-    "page-content-not-inspectable": "El servidor no permitió inspeccionar el contenido completo de la página.",
-  },
-  en: {
-    "technical-signals-only": "This version still uses an initial technical layer.",
-    "no-reputation-layer-yet": "External reputation is not yet cross-checked in this report.",
-    "no-business-identity-layer-yet": "Business identity is not yet verified in this version.",
-    "no-domain-age-layer-yet": "Domain age and registration are not yet included.",
-    "page-content-not-inspectable": "The server did not allow the full page content to be inspected.",
-  },
-  fr: {
-    "technical-signals-only": "Cette version utilise encore une première couche technique.",
-    "no-reputation-layer-yet": "La réputation externe n’est pas encore recoupée dans ce rapport.",
-    "no-business-identity-layer-yet": "L’identité de l’entreprise n’est pas encore vérifiée dans cette version.",
-    "no-domain-age-layer-yet": "L’ancienneté et l’enregistrement du domaine ne sont pas encore inclus.",
-    "page-content-not-inspectable": "Le serveur n’a pas permis d’inspecter tout le contenu de la page.",
-  },
-  de: {
-    "technical-signals-only": "Diese Version nutzt noch eine erste technische Ebene.",
-    "no-reputation-layer-yet": "Externe Reputation wird in diesem Bericht noch nicht abgeglichen.",
-    "no-business-identity-layer-yet": "Die Unternehmensidentität wird in dieser Version noch nicht verifiziert.",
-    "no-domain-age-layer-yet": "Domainalter und Registrierung sind noch nicht enthalten.",
-    "page-content-not-inspectable": "Der Server erlaubte keine vollständige Prüfung des Seiteninhalts.",
-  },
-  ar: {
-    "technical-signals-only": "لا يزال هذا الإصدار يستخدم طبقة تقنية أولية.",
-    "no-reputation-layer-yet": "لم تتم بعد مقارنة السمعة الخارجية في هذا التقرير.",
-    "no-business-identity-layer-yet": "لم يتم بعد التحقق من هوية الشركة في هذا الإصدار.",
-    "no-domain-age-layer-yet": "لم تتم بعد إضافة عمر النطاق وبيانات تسجيله.",
-    "page-content-not-inspectable": "لم يسمح الخادم بفحص محتوى الصفحة بالكامل.",
-  },
 };
 
 function VonuMark() {
@@ -471,6 +434,17 @@ function labelForRiskBand(band: RiskBand, t: UiCopy) {
   if (band === "high") return t.high;
   if (band === "very_high") return t.veryHigh;
   return t.unknown;
+}
+
+function yesNoLabel(locale: SupportedLocale, value: boolean) {
+  const labels: Record<SupportedLocale, [string, string]> = {
+    es: ["Sí", "No"],
+    en: ["Yes", "No"],
+    fr: ["Oui", "Non"],
+    de: ["Ja", "Nein"],
+    ar: ["نعم", "لا"],
+  };
+  return value ? labels[locale][0] : labels[locale][1];
 }
 
 export default function CheckClient({ locale }: { locale: SupportedLocale }) {
@@ -665,7 +639,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
 
   function SubjectCard({ completed = false }: { completed?: boolean }) {
     return (
-      <section className="mb-5 flex items-center gap-3 rounded-[18px] border border-white/[0.075] bg-[#111725]/88 p-3.5 shadow-[0_16px_40px_rgba(0,0,0,.18)]">
+      <section className="mb-5 flex min-w-0 items-center gap-3 overflow-hidden rounded-[18px] border border-white/[0.075] bg-[#111725]/88 p-3.5 shadow-[0_16px_40px_rgba(0,0,0,.18)]">
         {subject.image ? (
           <img src={subject.image} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover ring-1 ring-white/10" />
         ) : (
@@ -691,7 +665,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
       dir={dir}
       onPaste={handlePaste}
       className={[
-        "flex min-h-dvh flex-col bg-[#0d101b] text-slate-100",
+        "flex min-h-dvh w-full max-w-[100vw] overflow-x-hidden flex-col bg-[#0d101b] text-slate-100",
         idle ? "md:h-dvh md:overflow-hidden" : "",
       ].join(" ")}
       style={{
@@ -737,7 +711,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
                     {imageData ? (
                       <div className="grid w-full gap-3 sm:grid-cols-[110px_1fr] sm:items-center sm:text-start">
                         <img src={imageData} alt="Preview" className="mx-auto max-h-[112px] max-w-[110px] rounded-lg object-contain" />
-                        <div>
+                        <div className="min-w-0">
                           <p className="truncate text-[14px] font-semibold text-white">{imageName}</p>
                           <p className="mt-1 text-[13px] text-slate-400">{t.dropHint}</p>
                           <button type="button" onClick={() => fileRef.current?.click()} className="mt-3 rounded-lg bg-white/[0.05] px-3.5 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]">{t.change}</button>
@@ -782,19 +756,19 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
       )}
 
       {loading && (
-        <main className="mx-auto grid min-h-[calc(100dvh-68px)] w-full max-w-[900px] place-items-center px-4 py-10">
-          <section className="w-full">
+        <main className="mx-auto grid min-h-[calc(100dvh-68px)] w-full min-w-0 max-w-[900px] place-items-center overflow-x-hidden px-4 py-8 sm:py-10">
+          <section className="w-full min-w-0 max-w-full overflow-hidden">
             <SubjectCard />
-            <div className="rounded-[26px] bg-[#141927]/86 p-6 text-center shadow-[0_30px_80px_rgba(0,0,0,.34)] ring-1 ring-white/[0.08] sm:p-9">
-              <div className="relative mx-auto h-40 w-40">
+            <div className="w-full min-w-0 overflow-hidden rounded-[26px] bg-[#141927]/86 p-5 text-center shadow-[0_30px_80px_rgba(0,0,0,.34)] ring-1 ring-white/[0.08] sm:p-9">
+              <div className="relative mx-auto h-40 w-40 max-h-[44vw] max-w-[44vw]">
                 <div className="absolute inset-0 rounded-full border border-emerald-400/15" />
                 <div className="absolute inset-5 rounded-full border border-emerald-400/20" />
                 <div className="absolute inset-10 rounded-full border border-emerald-400/25" />
-                <div className="absolute left-1/2 top-1/2 h-px w-[72px] origin-left -translate-y-1/2 bg-gradient-to-r from-emerald-300 to-transparent animate-[spin_1.45s_linear_infinite]" />
+                <div className="absolute left-1/2 top-1/2 h-px w-[45%] origin-left -translate-y-1/2 bg-gradient-to-r from-emerald-300 to-transparent animate-[spin_1.45s_linear_infinite]" />
                 <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-400 shadow-[0_0_22px_rgba(52,211,153,.85)]" />
               </div>
-              <h2 className="mt-6 text-[24px] font-bold tracking-[-0.035em] text-white">{t.scanning}</h2>
-              <p className="mt-3 min-h-6 text-sm text-emerald-200/85">{activeStep}</p>
+              <h2 className="mt-6 text-[22px] font-bold tracking-[-0.035em] text-white sm:text-[24px]">{t.scanning}</h2>
+              <p className="mx-auto mt-3 min-h-6 max-w-full break-words px-1 text-sm text-emerald-200/85">{activeStep}</p>
               <div className="mx-auto mt-6 h-1 max-w-sm overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full w-1/2 animate-[pulse_1.1s_ease-in-out_infinite] rounded-full bg-emerald-400" /></div>
             </div>
           </section>
@@ -802,17 +776,17 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
       )}
 
       {result && (
-        <main className="mx-auto w-full max-w-[1080px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
+        <main className="mx-auto w-full min-w-0 max-w-[1080px] flex-1 overflow-x-hidden px-4 py-8 sm:px-6 lg:px-8">
           <SubjectCard completed />
 
           <section className="rounded-[28px] p-5 shadow-[0_30px_90px_rgba(0,0,0,.35)] ring-1 sm:p-8" style={{ background: `linear-gradient(180deg, ${styles.bg}, rgba(20,25,39,.94))`, borderColor: styles.border }}>
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-              <div>
+              <div className="min-w-0">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">{t.report}</p>
                 <h1 className="mt-3 text-[34px] font-bold tracking-[-0.05em] sm:text-[48px]" style={{ color: styles.accent }}>{riskLabel}</h1>
                 <p className="mt-3 max-w-2xl text-[15px] leading-7 text-slate-300">{summary}</p>
               </div>
-              <div className="flex min-w-[220px] items-center gap-4 rounded-2xl bg-black/15 p-4 ring-1 ring-white/[0.07]">
+              <div className="flex min-w-0 sm:min-w-[220px] items-center gap-4 rounded-2xl bg-black/15 p-4 ring-1 ring-white/[0.07]">
                 <div className="whitespace-nowrap font-bold tracking-[-0.06em] text-white">
                   {risk?.level === "unknown" ? (
                     <span className="text-[42px]">—</span>
@@ -825,39 +799,42 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
             </div>
           </section>
 
-          <div className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
-            <section className="rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08] sm:p-6">
+          <div className="mt-5 grid min-w-0 gap-5 lg:grid-cols-[1.15fr_.85fr]">
+            <section className="min-w-0 rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08] sm:p-6">
               <h2 className="text-[17px] font-bold text-white">{t.evidence}</h2>
-              <div className="mt-4 grid gap-3">
-                {result.signals.map((signal) => (
-                  <div key={signal.id} className="rounded-2xl bg-black/10 p-4 ring-1 ring-white/[0.055]">
-                    <div className="flex items-start gap-3">
-                      <span className={`mt-2 h-2 w-2 shrink-0 rounded-full ${toneDot(signal.tone)}`} />
-                      <div><h3 className="text-[14px] font-semibold text-white">{signal.title}</h3><p className="mt-1 text-[13px] leading-6 text-slate-400">{signal.detail}</p></div>
+              <div className="mt-4 grid min-w-0 gap-3">
+                {result.signals.map((signal) => {
+                  const displaySignal = result.version === "vonu-check-v1" ? humanizeWebSignal(locale, signal) : signal;
+                  return (
+                    <div key={signal.id} className="min-w-0 rounded-2xl bg-black/10 p-4 ring-1 ring-white/[0.055]">
+                      <div className="flex min-w-0 items-start gap-3">
+                        <span className={`mt-2 h-2 w-2 shrink-0 rounded-full ${toneDot(displaySignal.tone)}`} />
+                        <div className="min-w-0"><h3 className="text-[14px] font-semibold text-white">{displaySignal.title}</h3><p className="mt-1 break-words text-[13px] leading-6 text-slate-400 [overflow-wrap:anywhere]">{displaySignal.detail}</p></div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
 
-            <div className="grid content-start gap-5">
+            <div className="grid min-w-0 content-start gap-5">
               {result.version === "vonu-check-v1" ? (
-                <section className="rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08]">
+                <section className="min-w-0 rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08]">
                   <h2 className="text-[17px] font-bold text-white">{t.technical}</h2>
-                  <dl className="mt-4 grid gap-3 text-[13px]">
-                    <div className="flex justify-between gap-4"><dt className="text-slate-500">{t.finalUrl}</dt><dd className="max-w-[220px] truncate text-slate-300">{result.facts.finalUrl}</dd></div>
-                    <div className="flex justify-between gap-4"><dt className="text-slate-500">{t.httpStatus}</dt><dd className="text-slate-300">{result.facts.httpStatus ?? "—"}</dd></div>
+                  <dl className="mt-4 grid min-w-0 gap-3 text-[13px]">
+                    <div className="flex min-w-0 justify-between gap-4"><dt className="shrink-0 text-slate-500">{t.finalUrl}</dt><dd className="min-w-0 max-w-[220px] truncate text-slate-300">{result.facts.finalUrl}</dd></div>
+                    <div className="flex justify-between gap-4"><dt className="text-slate-500">{t.httpStatus}</dt><dd className="text-slate-300">{friendlyHttpStatus(locale, result.facts.httpStatus)}</dd></div>
                     <div className="flex justify-between gap-4"><dt className="text-slate-500">{t.redirects}</dt><dd className="text-slate-300">{result.facts.redirects}</dd></div>
-                    <div className="flex justify-between gap-4"><dt className="text-slate-500">{t.https}</dt><dd className="text-slate-300">{result.facts.usesHttps ? "✓" : "—"}</dd></div>
+                    <div className="flex justify-between gap-4"><dt className="text-slate-500">{t.https}</dt><dd className="text-slate-300">{yesNoLabel(locale, result.facts.usesHttps)}</dd></div>
                     <div className="flex justify-between gap-4"><dt className="text-slate-500">{t.forms}</dt><dd className="text-slate-300">{result.facts.formCount}</dd></div>
                   </dl>
                 </section>
               ) : (
                 <>
-                  <section className="rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08]">
+                  <section className="min-w-0 rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08]">
                     <h2 className="text-[17px] font-bold text-white">{t.extracted}</h2>
                     {result.version === "vonu-capture-v1" && <p className="mt-3 text-[13px] text-slate-400">{t.context}: <span className="text-slate-200">{contextLabel(result.kind, locale)}</span></p>}
-                    <div className="mt-3 grid gap-2 text-[12px] text-slate-400">
+                    <div className="mt-3 grid min-w-0 gap-2 text-[12px] text-slate-400 [overflow-wrap:anywhere]">
                       {result.extracted.urls.length > 0 && <p><span className="text-slate-500">{t.urls}: </span>{result.extracted.urls.join(", ")}</p>}
                       {result.extracted.phones.length > 0 && <p><span className="text-slate-500">{t.phones}: </span>{result.extracted.phones.join(", ")}</p>}
                       {result.extracted.emails.length > 0 && <p><span className="text-slate-500">{t.emails}: </span>{result.extracted.emails.join(", ")}</p>}
@@ -876,9 +853,9 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
           </div>
 
           {result.limitations.length > 0 && (
-            <section className="mt-5 rounded-[22px] bg-white/[0.025] p-5 ring-1 ring-white/[0.06]">
+            <section className="mt-5 min-w-0 rounded-[22px] bg-white/[0.025] p-5 ring-1 ring-white/[0.06]">
               <h2 className="text-[14px] font-semibold text-slate-300">{t.limitations}</h2>
-              <ul className="mt-2 grid gap-1.5 text-[12px] leading-5 text-slate-500">{result.limitations.map((item, index) => <li key={`${item}-${index}`}>• {limitationCopy[locale][item] || item}</li>)}</ul>
+              <ul className="mt-2 grid gap-1.5 text-[12px] leading-5 text-slate-500">{result.limitations.map((item, index) => <li className="break-words [overflow-wrap:anywhere]" key={`${item}-${index}`}>• {humanizeLimitation(locale, item)}</li>)}</ul>
             </section>
           )}
 
