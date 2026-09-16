@@ -1,47 +1,75 @@
 # Vonu
 
-> Vonu is a preventive online-safety analysis tool for suspicious websites, links, screenshots and messages. Its purpose is to surface risk signals before a user pays, replies, shares data or takes another sensitive action.
+> Vonu is a preventive online-safety analysis tool for suspicious websites, links, screenshots and messages. It surfaces technical and contextual risk signals before a user pays, replies, shares data or takes another sensitive action.
 
 ## Core product
 
-- https://vonuai.com/check — automatic language entry point for Vonu Check.
-- https://vonuai.com/es/check — Spanish Vonu Check.
-- https://vonuai.com/en/check — English Vonu Check.
-- https://vonuai.com/fr/check — French Vonu Check.
-- https://vonuai.com/de/check — German Vonu Check.
-- https://vonuai.com/ar/check — Arabic Vonu Check.
+Vonu Check supports Spanish, English, French, German and Arabic.
+
+- https://vonuai.com/check — automatic language entry point using the browser's preferred supported language.
+- https://vonuai.com/es/check — Spanish.
+- https://vonuai.com/en/check — English.
+- https://vonuai.com/fr/check — French.
+- https://vonuai.com/de/check — German.
+- https://vonuai.com/ar/check — Arabic / RTL.
+
+Each language version has its own canonical URL and reciprocal hreflang alternatives. The public marketing and risk-guide pages are also available in EN, FR, DE and AR under the language prefix while the established Spanish URLs remain unchanged to preserve their existing search signals.
 
 ## Main use cases
 
-- https://vonuai.com/comprobar-web-fiable — check whether a website shows relevant risk signals.
-- https://vonuai.com/comprobar-tienda-online — review an online store before paying or sharing data.
-- https://vonuai.com/analizar-link-sospechoso — analyse a suspicious link or redirect chain.
-- https://vonuai.com/analizar-captura-pantalla — analyse a screenshot of a message, profile, website or payment screen.
-- https://vonuai.com/analizar-sms-estafa — analyse suspicious SMS or WhatsApp content.
-- https://vonuai.com/email-sospechoso-estafa — analyse a suspicious email.
-- https://vonuai.com/detectar-perfil-falso — review signals associated with suspicious or fake profiles.
-- https://vonuai.com/comprobar-inversion-estafa — review warning signals around suspicious investment propositions.
+Spanish canonical pages:
+
+- https://vonuai.com/comprobar-web-fiable — website reliability and risk signals.
+- https://vonuai.com/comprobar-tienda-online — online-store checks before payment.
+- https://vonuai.com/analizar-link-sospechoso — suspicious-link and redirect review.
+- https://vonuai.com/analizar-captura-pantalla — screenshot analysis.
+- https://vonuai.com/analizar-sms-estafa — suspicious SMS / WhatsApp analysis.
+- https://vonuai.com/email-sospechoso-estafa — suspicious email and phishing review.
+- https://vonuai.com/detectar-perfil-falso — fake-profile and impersonation signals.
+- https://vonuai.com/comprobar-inversion-estafa — suspicious investment propositions.
+- https://vonuai.com/revisar-contrato — contract review guidance.
+- https://vonuai.com/revisar-contrato-alquiler — rental agreement review guidance.
+- https://vonuai.com/comprobar-factura — invoice review guidance.
+- https://vonuai.com/detectar-manipulacion — pressure and manipulation signals in conversations.
+- https://vonuai.com/estafas-criptomonedas — cryptocurrency scam warning signs.
+- https://vonuai.com/llamada-banco-codigo-sms — bank impersonation and SMS-code requests.
+- https://vonuai.com/es-fiable — general trust and risk-check entry page.
+
+For English, French, German and Arabic, prepend `/en`, `/fr`, `/de` or `/ar` to the Spanish canonical path, for example:
+
+- https://vonuai.com/en/comprobar-web-fiable
+- https://vonuai.com/fr/comprobar-web-fiable
+- https://vonuai.com/de/comprobar-web-fiable
+- https://vonuai.com/ar/comprobar-web-fiable
+
+## Product and commercial pages
+
+- https://vonuai.com/producto
+- https://vonuai.com/casos-de-uso
+- https://vonuai.com/recursos
+- https://vonuai.com/precios
+- https://vonuai.com/como-funciona
+- https://vonuai.com/contacto
+
+The same `/en`, `/fr`, `/de`, `/ar` convention applies to those public pages.
 
 ## How Vonu works
 
-Vonu combines deterministic technical checks with contextual analysis. Depending on the input, it can inspect HTTPS and response behaviour, redirects, DNS and security configuration, visible content, extracted URLs, suspicious language, urgency, impersonation patterns and other relevant signals. Additional reputation, business-identity and domain-history layers may be used as the product evolves.
+Vonu combines deterministic technical checks with contextual analysis. Depending on the input, it can inspect HTTPS and response behaviour, redirects, DNS and security configuration, visible content, extracted URLs, suspicious language, urgency, impersonation patterns and other relevant signals.
 
 Vonu reports risk signals and analysis confidence separately. A low-risk result is not a certification of legitimacy, and a warning signal does not by itself prove fraud.
 
 ## Important safety and interpretation notes
 
 - Vonu is a preventive analysis tool, not a legal authority or fraud-certification service.
-- Users should not submit passwords, authentication codes, full card details or other highly sensitive information.
+- Users should not submit passwords, authentication codes, PINs, full card details or other highly sensitive information.
 - Results should be interpreted together with the evidence and confidence shown in the report.
 - If a service blocks automated inspection, Vonu should distinguish that limitation from an actual fraud signal.
+- For high-impact financial, legal, medical or safety decisions, Vonu can help organise information and identify questions but does not replace qualified professionals or authorities.
 
-## Product and trust information
+## Commercial model
 
-- https://vonuai.com/producto
-- https://vonuai.com/como-funciona
-- https://vonuai.com/casos-de-uso
-- https://vonuai.com/recursos
-- https://vonuai.com/precios
+Vonu offers a free entry point and paid Plus and Max subscriptions. Paid plans increase usage capacity and supported formats; they do not change the responsible-use limitations or create certainty where evidence is insufficient.
 
 ## Policies
 
@@ -49,7 +77,4 @@ Vonu reports risk signals and analysis confidence separately. A low-risk result 
 - https://vonuai.com/legal/terminos
 - https://vonuai.com/legal/uso-responsable
 - https://vonuai.com/legal/aviso-legal
-
-## Languages
-
-Vonu currently supports Spanish, English, French, German and Arabic interfaces for Vonu Check.
+- https://vonuai.com/legal/cookies
