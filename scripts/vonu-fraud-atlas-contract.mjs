@@ -227,4 +227,11 @@ const lowConfidence = normaliseFraudAtlasEvidence(
 );
 assertEqual(scoreFraudAtlasEvidence(lowConfidence).score, 0, "low-confidence evidence cannot create a deterministic floor");
 
-console.log(`VONU_FRAUD_ATLAS_CONTRACT_GREEN cases=${cases.length} grounding=1 low_confidence=1`);
+const negatedSafetyAdvice = normaliseFraudAtlasEvidence(
+  [ev("protect_funds_transfer", "mover tus ahorros a una cuenta segura")],
+  "Aviso de seguridad: si alguien te pide mover tus ahorros a una cuenta segura, no lo hagas.",
+);
+assertEqual(negatedSafetyAdvice.length, 0, "negated safety advice rejected");
+assertEqual(scoreFraudAtlasEvidence(negatedSafetyAdvice).score, 0, "negated safety advice cannot raise risk");
+
+console.log(`VONU_FRAUD_ATLAS_CONTRACT_GREEN cases=${cases.length} grounding=1 low_confidence=1 negation=1`);
