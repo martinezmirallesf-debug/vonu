@@ -5,6 +5,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Space_Mono, Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import FunnelTelemetry from "./components/FunnelTelemetry";
 
 const BASE_URL = "https://vonuai.com";
 
@@ -89,7 +90,7 @@ const entityGraph = {
       alternateName: "VonuAI",
       url: BASE_URL,
       description:
-        "Vonu desarrolla herramientas preventivas para analizar señales de riesgo en webs, enlaces, capturas y mensajes sospechosos.",
+        "Vonu develops preventive tools that analyse risk signals in websites, links, screenshots and suspicious messages.",
       logo: {
         "@type": "ImageObject",
         "@id": `${BASE_URL}/#logo`,
@@ -115,7 +116,7 @@ const entityGraph = {
       alternateName: "VonuAI",
       url: BASE_URL,
       description:
-        "Herramienta para analizar URLs, capturas de pantalla y mensajes sospechosos y detectar señales de phishing, fraude y suplantación.",
+        "Preventive tool for analysing suspicious URLs, screenshots and messages before a user pays, replies or shares data.",
       publisher: { "@id": `${BASE_URL}/#organization` },
       inLanguage: ["es", "en", "fr", "de", "ar"],
     },
@@ -130,6 +131,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(entityGraph) }}
         />
+        <FunnelTelemetry />
         {children}
         <Analytics />
         <SpeedInsights />
