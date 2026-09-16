@@ -1,5 +1,11 @@
 import { resolveCaa, resolveNs } from "node:dns/promises";
 import type { SupportedLocale, WebCheckResult, WebCheckSignal } from "./types";
+import {
+  domainAgeSignal,
+  lookupDomainAge,
+  lookupUrlhaus,
+  urlhausSignal,
+} from "./web-external";
 
 const HEADER_TIMEOUT_MS = 4_500;
 
@@ -62,7 +68,7 @@ async function inspectHeaders(url: string) {
       cache: "no-store",
       signal: AbortSignal.timeout(HEADER_TIMEOUT_MS),
       headers: {
-        "user-agent": "VonuCheck/0.2 (+https://vonuai.com)",
+        "user-agent": "VonuCheck/1.0 (+https://vonuai.com)",
         accept: "text/html,*/*;q=0.5",
       },
     });
@@ -84,7 +90,7 @@ async function hasSecurityTxt(origin: string): Promise<boolean> {
       cache: "no-store",
       signal: AbortSignal.timeout(HEADER_TIMEOUT_MS),
       headers: {
-        "user-agent": "VonuCheck/0.2 (+https://vonuai.com)",
+        "user-agent": "VonuCheck/1.0 (+https://vonuai.com)",
         accept: "text/plain,*/*;q=0.3",
       },
     });
@@ -96,15 +102,23 @@ async function hasSecurityTxt(origin: string): Promise<boolean> {
   }
 }
 
+function levelFromScore(score: number): WebCheckResult["risk"]["level"] {
+  if (score >= 45) return "high";
+  if (score >= 20) return "caution";
+  return "low";
+}
+
 export async function enrichWebResult(result: WebCheckResult): Promise<WebCheckResult> {
   const { hostname, finalUrl, usesHttps, httpStatus } = result.facts;
   const locale = result.locale;
 
-  const [nameservers, caa, headers, securityTxt] = await Promise.all([
+  const [nameservers, caa, headers, securityTxt, urlhaus, domainAge] = await Promise.all([
     safeDns(() => resolveNs(hostname)),
     safeDns(() => resolveCaa(hostname)),
     inspectHeaders(finalUrl),
     usesHttps ? hasSecurityTxt(new URL(finalUrl).origin) : Promise.resolve(false),
+    lookupUrlhaus(finalUrl),
+    lookupDomainAge(hostname),
   ]);
 
   const extraSignals: WebCheckSignal[] = [];
@@ -131,25 +145,76 @@ export async function enrichWebResult(result: WebCheckResult): Promise<WebCheckR
     maturity += 1;
   }
 
+  const reputationSignal = urlhausSignal(locale, urlhaus);
+  if (reputationSignal) extraSignals.push(reputationSignal);
+
+  const ageSignal = domainAgeSignal(locale, domainAge);
+  if (ageSignal) extraSignals.push(ageSignal);
+
   const hasStructuralWarning = result.signals.some((item) =>
     ["noHttps", "punycode", "hyphens", "externalForm"].includes(item.id),
   );
   const protectedAccess = [401, 403, 429].includes(httpStatus ?? 0);
+  const ageRiskWeight = ageSignal && ageSignal.tone === "warning" ? ageSignal.weight : 0;
 
   let risk = result.risk;
-  if (protectedAccess && usesHttps && !hasStructuralWarning && maturity >= 3) {
+
+  if (urlhaus.matched === true) {
     risk = {
-      level: "low",
-      score: Math.min(result.risk.score, 8),
-      confidence: "limited",
+      level: "high",
+      score: Math.max(92, result.risk.score),
+      confidence: "high",
     };
-  } else if (result.risk.level === "low" && maturity >= 3) {
-    risk = { ...result.risk, confidence: "medium" };
+  } else {
+    const combinedScore = Math.max(0, Math.min(100, result.risk.score + ageRiskWeight));
+    risk = {
+      ...result.risk,
+      score: combinedScore,
+      level: levelFromScore(combinedScore),
+    };
+
+    if (
+      protectedAccess &&
+      usesHttps &&
+      !hasStructuralWarning &&
+      ageRiskWeight === 0 &&
+      maturity >= 3
+    ) {
+      risk = {
+        level: "low",
+        score: Math.min(combinedScore, 8),
+        confidence: "limited",
+      };
+    } else if (risk.level === "low" && maturity >= 3) {
+      risk = { ...risk, confidence: "medium" };
+    }
+  }
+
+  let limitations = [...result.limitations];
+
+  if (domainAge.ageDays != null) {
+    limitations = limitations.filter((item) => item !== "no-domain-age-layer-yet");
+  }
+
+  if (urlhaus.attempted && urlhaus.matched !== null) {
+    limitations = limitations.filter((item) => item !== "no-reputation-layer-yet");
+    if (!limitations.includes("urlhaus-covers-known-malware-not-all-fraud")) {
+      limitations.push("urlhaus-covers-known-malware-not-all-fraud");
+    }
   }
 
   return {
     ...result,
     risk,
+    facts: {
+      ...result.facts,
+      registeredDomain: domainAge.registeredDomain,
+      domainRegisteredAt: domainAge.registeredAt,
+      domainAgeDays: domainAge.ageDays,
+      urlhausChecked: urlhaus.attempted,
+      urlhausMatch: urlhaus.matched,
+    },
     signals: [...result.signals, ...extraSignals],
+    limitations,
   };
 }
