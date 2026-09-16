@@ -69,30 +69,37 @@ USER TEXT itself contains evidence for it. For every item, quote a short EXACT
 excerpt from USER TEXT; never paraphrase the excerpt and never infer invisible
 context.
 
+POLARITY IS CRITICAL: do NOT emit a risky evidence id when the behaviour is only
+mentioned as a warning, prohibition, security tip, quoted scam example or negated
+instruction. “Never share the code” is not otp_or_mfa_request. “Do not move money
+to a safe account” is not protect_funds_transfer. “We never ask you to install
+remote access” is not remote_access_request. The sender must actually request,
+encourage, threaten, claim or direct the risky behaviour in the current message.
+
 Evidence ids:
 - family_or_close_relation: sender claims to be a child, parent, partner, friend or other close/trusted person.
 - trusted_identity_claim: sender claims a specific trusted identity or role relevant to the request.
-- identity_discontinuity: claimed trusted person suddenly uses a new number/account/device or says the usual one is broken/lost/unavailable.
+- identity_discontinuity: claimed trusted person suddenly uses a new number/account/device, has lost access to the usual channel, or says the normal identity channel is broken/lost/unavailable. Temporary inability to talk, by itself, is not identity discontinuity.
 - authority_or_business_impersonation: sender claims to represent a bank, company, platform, police, government or other authority.
 - urgent_action: explicit pressure to act now/quickly/today or before a short deadline.
 - secrecy_or_isolation: asks the target not to tell/call/check with other people or keeps them isolated.
-- verification_suppression: prevents or discourages an independent identity check, e.g. says they cannot be called or insists on staying in this channel.
+- verification_suppression: prevents or discourages an independent identity check, e.g. says they cannot be called, says not to contact the usual account, or insists on staying in this channel. Mere temporary unavailability without discouraging later verification is weak and should normally be omitted.
 - money_request: explicitly asks the target to send/pay/transfer money or value.
 - instant_payment_rail: asks to use an instant or hard-to-reverse rail such as Bizum, instant transfer, crypto, gift card or cash.
 - third_party_payment: asks to pay a different person, account, phone, wallet or beneficiary from the claimed sender/entity.
 - off_platform_move: moves a marketplace/service transaction away from its normal protected payment/chat flow.
 - payment_link_or_qr: directs the target to a link/QR to pay, receive money, verify or log in.
 - advance_fee: demands a fee/tax/insurance/deposit/unlock payment before receiving money, a prize, job, refund, loan or withdrawal.
-- otp_or_mfa_request: asks the target to disclose, forward or approve a one-time code, SMS code, MFA prompt or security token. A message saying NEVER SHARE a code is not this primitive.
+- otp_or_mfa_request: asks the target to disclose, forward or approve a one-time code, SMS code, MFA prompt, security token or equivalent temporary digits. It can be described without using the words OTP, SMS or code. A message saying NEVER SHARE a code is not this primitive.
 - credential_request: asks for password, PIN, full card details, login credentials or similarly secret authentication data.
-- remote_access_request: asks to install remote-control software, share a screen or hand over device control.
-- protect_funds_transfer: tells the target to move money to a “safe/protected/secure” account or wallet to prevent fraud.
+- remote_access_request: asks to install or open remote-control/support software, share a screen, enter a remote-support key, or hand over device control.
+- protect_funds_transfer: tells the target to move money to a “safe/protected/secure/holding/custody/temporary” account or wallet, or otherwise relocate funds supposedly to isolate/protect them from fraud.
 - guaranteed_return: promises guaranteed, risk-free, unusually fast or certain investment profit.
 - investment_pitch: asks or persuades the target to invest/trade/deposit into an investment or crypto opportunity.
 - fake_balance_or_withdrawal_fee: claims gains/balance exist but requires another payment/tax/fee to withdraw them.
 - romantic_grooming: relationship/romantic trust is explicitly used around a financial or sensitive request.
 - job_offer: presents paid work, recruitment, task work or a side hustle.
-- job_upfront_payment: requires the worker/applicant to pay/deposit/buy something to start, unlock tasks or receive earnings.
+- job_upfront_payment: requires the worker/applicant to pay, deposit or buy a starter kit/training/equipment to start, unlock tasks or receive earnings.
 - invoice_bank_change: changes an IBAN/account/payment destination for an invoice, supplier or executive request.
 - delivery_problem: claims a parcel, customs or delivery problem requiring action.
 - government_threat: authority/police/government threat of arrest, fine, sanction or legal consequence.
@@ -128,6 +135,68 @@ function excerptIsGrounded(userText: string, excerpt: string) {
   return needle.length >= 3 && haystack.includes(needle);
 }
 
+const NEGATION_SENSITIVE_IDS = new Set<FraudAtlasEvidenceId>([
+  "money_request",
+  "instant_payment_rail",
+  "third_party_payment",
+  "off_platform_move",
+  "payment_link_or_qr",
+  "advance_fee",
+  "otp_or_mfa_request",
+  "credential_request",
+  "remote_access_request",
+  "protect_funds_transfer",
+  "guaranteed_return",
+  "investment_pitch",
+  "job_upfront_payment",
+  "invoice_bank_change",
+  "rental_deposit_before_viewing",
+  "seed_phrase_or_private_key",
+  "wallet_signature_or_approval",
+  "inverse_payment_request",
+  "overpayment_refund",
+  "cash_courier_pickup",
+]);
+
+const SAFETY_NEGATION_PATTERNS = [
+  /\bno\s+(?:lo\s+)?(?:hagas|transfieras|muevas|env[ií]es|pagues|compartas|digas|facilites|leas|firmes|instales|aceptes|uses|escanees|abras|conectes|compres|adelantes)\b/i,
+  /\bno\s+tienes\s+que\s+(?:pagar|transferir|mover|enviar|compartir|instalar|firmar|comprar|adelantar)\b/i,
+  /\bnunca\s+(?:te\s+)?(?:pedir[aá]|pediremos|pedimos|debes)\b/i,
+  /\b(?:debes|deber[ií]as)\s+(?:rechazar|ignorar|evitar)\b/i,
+  /\bdo\s+not\s+(?:send|transfer|move|pay|share|read|sign|install|accept|use|scan|open|connect|buy)\b/i,
+  /\bnever\s+(?:send|transfer|move|pay|share|read|sign|install|accept|use|scan|open|connect|ask)\b/i,
+  /\bwill\s+never\s+ask\b/i,
+  /\bne\s+(?:transf[eé]rez|payez|partagez|signez|installez|acceptez|utilisez|scannez|ouvrez)\s+pas\b/i,
+  /\b(?:niemals|nicht)\s+(?:überweisen|zahlen|teilen|unterschreiben|installieren|akzeptieren|verwenden|scannen|öffnen)\b/i,
+];
+
+function sentenceWindow(userText: string, excerpt: string) {
+  const haystack = normaliseForQuote(userText);
+  const needle = normaliseForQuote(excerpt);
+  const index = haystack.indexOf(needle);
+  if (index < 0) return "";
+
+  const sentenceStart = Math.max(
+    haystack.lastIndexOf(".", index - 1),
+    haystack.lastIndexOf("!", index - 1),
+    haystack.lastIndexOf("?", index - 1),
+    haystack.lastIndexOf("\n", index - 1),
+  );
+  const candidates = [".", "!", "?", "\n"]
+    .map((mark) => haystack.indexOf(mark, index + needle.length))
+    .filter((value) => value >= 0);
+  const sentenceEnd = candidates.length > 0 ? Math.min(...candidates) : haystack.length;
+
+  return haystack.slice(Math.max(0, sentenceStart + 1), Math.min(haystack.length, sentenceEnd + 1)).trim();
+}
+
+function evidenceIsSafetyNegated(id: FraudAtlasEvidenceId, userText: string, excerpt: string) {
+  if (!NEGATION_SENSITIVE_IDS.has(id)) return false;
+  const window = sentenceWindow(userText, excerpt);
+  if (!window) return false;
+  return SAFETY_NEGATION_PATTERNS.some((pattern) => pattern.test(window));
+}
+
 export function normaliseFraudAtlasEvidence(raw: unknown, userText: string): FraudAtlasEvidence[] {
   if (!Array.isArray(raw)) return [];
   const output: FraudAtlasEvidence[] = [];
@@ -143,6 +212,7 @@ export function normaliseFraudAtlasEvidence(raw: unknown, userText: string): Fra
     if (!evidenceIdSet.has(id)) continue;
     if (confidence !== "low" && confidence !== "medium" && confidence !== "high") continue;
     if (!excerptIsGrounded(userText, excerpt)) continue;
+    if (evidenceIsSafetyNegated(id as FraudAtlasEvidenceId, userText, excerpt)) continue;
     if (seen.has(id)) continue;
 
     seen.add(id);
