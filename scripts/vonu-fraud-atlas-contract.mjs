@@ -46,6 +46,17 @@ const cases = [
     expected: 0,
   },
   {
+    label: "ordinary urgent family bizum still has no deterministic high-risk floor",
+    text: "Mamá, hazme un Bizum de 20 € ahora que estoy pagando el súper.",
+    evidence: [
+      ev("family_or_close_relation", "Mamá"),
+      ev("money_request", "hazme un Bizum de 20 €"),
+      ev("instant_payment_rail", "Bizum"),
+      ev("urgent_action", "ahora"),
+    ],
+    expected: 0,
+  },
+  {
     label: "new family identity plus money",
     text: "Mamá, soy tu hijo. Este es mi número nuevo. Envíame 400 €.",
     evidence: [
@@ -68,9 +79,36 @@ const cases = [
     expected: 84,
   },
   {
+    label: "known family identity plus third party and blocked verification",
+    text: "Mamá, soy Dani. No me llames. Haz un Bizum de 300 € al número de mi compañero.",
+    evidence: [
+      ev("family_or_close_relation", "Mamá, soy Dani"),
+      ev("verification_suppression", "No me llames"),
+      ev("money_request", "Haz un Bizum de 300 €"),
+      ev("third_party_payment", "al número de mi compañero"),
+    ],
+    expected: 74,
+  },
+  {
+    label: "temporary family account is identity discontinuity",
+    text: "Papá, soy Marta. He perdido el acceso a mi WhatsApp de siempre y uso esta cuenta temporal. Transfiéreme 280 €.",
+    evidence: [
+      ev("family_or_close_relation", "Papá, soy Marta"),
+      ev("identity_discontinuity", "He perdido el acceso a mi WhatsApp de siempre y uso esta cuenta temporal"),
+      ev("money_request", "Transfiéreme 280 €"),
+    ],
+    expected: 68,
+  },
+  {
     label: "otp disclosure request",
     text: "Dígame el código SMS que acaba de recibir.",
     evidence: [ev("otp_or_mfa_request", "código SMS que acaba de recibir")],
+    expected: 82,
+  },
+  {
+    label: "otp semantic variant without code word",
+    text: "Léame los seis dígitos que acaban de aparecer en la notificación.",
+    evidence: [ev("otp_or_mfa_request", "los seis dígitos que acaban de aparecer en la notificación")],
     expected: 82,
   },
   {
@@ -80,11 +118,26 @@ const cases = [
     expected: 88,
   },
   {
+    label: "safe account semantic variant",
+    text: "Mueva el saldo al IBAN temporal de custodia para aislar sus fondos.",
+    evidence: [ev("protect_funds_transfer", "IBAN temporal de custodia para aislar sus fondos")],
+    expected: 88,
+  },
+  {
     label: "job upfront fee",
     text: "Trabajo desde casa. Debes pagar un depósito de 100 € para empezar.",
     evidence: [
       ev("job_offer", "Trabajo desde casa"),
       ev("job_upfront_payment", "pagar un depósito de 100 € para empezar"),
+    ],
+    expected: 76,
+  },
+  {
+    label: "job starter kit variant",
+    text: "Puesto remoto aprobado. Debes comprar el kit de incorporación de 59 € para empezar.",
+    evidence: [
+      ev("job_offer", "Puesto remoto aprobado"),
+      ev("job_upfront_payment", "comprar el kit de incorporación de 59 € para empezar"),
     ],
     expected: 76,
   },
@@ -99,6 +152,16 @@ const cases = [
     expected: 70,
   },
   {
+    label: "delivery qr payment variant",
+    text: "Su envío está retenido. Escanee el QR y pague 2,37 € de gestión.",
+    evidence: [
+      ev("delivery_problem", "Su envío está retenido"),
+      ev("payment_link_or_qr", "Escanee el QR"),
+      ev("money_request", "pague 2,37 € de gestión"),
+    ],
+    expected: 70,
+  },
+  {
     label: "recovery advance fee",
     text: "Recuperamos su dinero perdido. Pague primero 300 € de gastos.",
     evidence: [
@@ -106,6 +169,36 @@ const cases = [
       ev("advance_fee", "Pague primero 300 € de gastos"),
     ],
     expected: 82,
+  },
+  {
+    label: "remote support semantic variant",
+    text: "Somos de soporte. Abra Asistencia rápida y acepte que tomemos el control del equipo.",
+    evidence: [
+      ev("authority_or_business_impersonation", "Somos de soporte"),
+      ev("remote_access_request", "acepte que tomemos el control del equipo"),
+    ],
+    expected: 90,
+  },
+  {
+    label: "invoice bank change",
+    text: "Para la factura pendiente ignore el IBAN habitual y pague en la nueva cuenta indicada.",
+    evidence: [ev("invoice_bank_change", "ignore el IBAN habitual y pague en la nueva cuenta indicada")],
+    expected: 78,
+  },
+  {
+    label: "unexpected wallet approval",
+    text: "Conecte su wallet y firme ahora la autorización para reclamar el airdrop.",
+    evidence: [
+      ev("wallet_signature_or_approval", "firme ahora la autorización"),
+      ev("urgent_action", "ahora"),
+    ],
+    expected: 82,
+  },
+  {
+    label: "overpayment refund",
+    text: "Te mandé 650 € en vez de 450 €. Devuélveme ahora los 200 € de diferencia.",
+    evidence: [ev("overpayment_refund", "Devuélveme ahora los 200 € de diferencia")],
+    expected: 76,
   },
   {
     label: "cash courier",
@@ -128,4 +221,10 @@ const hallucinated = normaliseFraudAtlasEvidence(
 assertEqual(hallucinated.length, 0, "ungrounded excerpt rejected");
 assertEqual(scoreFraudAtlasEvidence(hallucinated).score, 0, "ungrounded excerpt cannot raise risk");
 
-console.log(`VONU_FRAUD_ATLAS_CONTRACT_GREEN cases=${cases.length} grounding=1`);
+const lowConfidence = normaliseFraudAtlasEvidence(
+  [ev("cash_courier_pickup", "entrégueselo al mensajero", "low")],
+  "Retire el efectivo y entrégueselo al mensajero.",
+);
+assertEqual(scoreFraudAtlasEvidence(lowConfidence).score, 0, "low-confidence evidence cannot create a deterministic floor");
+
+console.log(`VONU_FRAUD_ATLAS_CONTRACT_GREEN cases=${cases.length} grounding=1 low_confidence=1`);
