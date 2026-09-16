@@ -19,30 +19,8 @@ function getAppUrl(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const plan = (body?.plan ?? "").toString() as "plus" | "max";
-    const billing = (body?.billing ?? "").toString() as "monthly" | "yearly";
     const requestedLocale = (body?.locale ?? "es").toString().toLowerCase() as SupportedLocale;
     const locale: SupportedLocale = supportedLocales.has(requestedLocale) ? requestedLocale : "es";
-
-    if (!["plus", "max"].includes(plan) || !["monthly", "yearly"].includes(billing)) {
-      return NextResponse.json({ error: "Invalid checkout params" }, { status: 400 });
-    }
-
-    const priceMap = {
-      plus: {
-        monthly: process.env.STRIPE_PRICE_PLUS_MONTHLY,
-        yearly: process.env.STRIPE_PRICE_PLUS_YEARLY,
-      },
-      max: {
-        monthly: process.env.STRIPE_PRICE_MAX_MONTHLY,
-        yearly: process.env.STRIPE_PRICE_MAX_YEARLY,
-      },
-    } as const;
-
-    const priceId = priceMap[plan][billing];
-    if (!priceId) {
-      return NextResponse.json({ error: "Missing Stripe price env vars for selected plan/billing" }, { status: 500 });
-    }
 
     const { user, error } = await getUserFromRequest(req);
     if (!user) {
@@ -85,28 +63,42 @@ export async function POST(req: NextRequest) {
 
     const appUrl = getAppUrl(req);
     const pricingPath = localizedPublicPath(locale, "precios");
-    const successPath = `${checkPath(locale)}?checkout=success&plan=${plan}`;
+    const successPath = `${checkPath(locale)}?checkout=success&credits=3`;
 
     const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
+      mode: "payment",
       customer: customerId,
       client_reference_id: user.id,
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: "eur",
+            unit_amount: 399,
+            product_data: {
+              name: "Vonu — 3 análisis adicionales",
+              description: "Pack de 3 análisis adicionales de URLs, mensajes o capturas.",
+            },
+          },
+        },
+      ],
       success_url: `${appUrl}${successPath}`,
       cancel_url: `${appUrl}${pricingPath}?checkout=cancel`,
-      allow_promotion_codes: true,
       customer_update: { address: "auto", name: "auto" },
       metadata: {
+        kind: "analysis_pack",
+        analysis_pack: "three",
+        analyses: "3",
+        amount_eur: "3.99",
         supabase_user_id: user.id,
-        billing_cycle: billing,
-        app_plan: plan,
         locale,
       },
-      subscription_data: {
+      payment_intent_data: {
         metadata: {
+          kind: "analysis_pack",
+          analysis_pack: "three",
+          analyses: "3",
           supabase_user_id: user.id,
-          billing_cycle: billing,
-          app_plan: plan,
           locale,
         },
       },
