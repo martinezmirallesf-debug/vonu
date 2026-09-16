@@ -14,9 +14,11 @@ function forbidText(source, needle, label) {
   }
 }
 
-const [middleware, button, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
+const [middleware, button, gate, entitlement, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
   read("middleware.ts"),
   read("app/components/DevicePackCheckoutButton.tsx"),
+  read("app/components/DeviceAccessGate.tsx"),
+  read("app/api/check/entitlement/route.ts"),
   read("app/api/stripe/checkout/route.ts"),
   read("app/api/stripe/webhook/route.ts"),
   read("app/components/DevicePricingPage.tsx"),
@@ -33,6 +35,11 @@ requireText(middleware, 'analyses: 3, amount: 399, currency: "EUR"', "paywall of
 requireText(button, 'fetch("/api/stripe/checkout"', "device pack checkout button");
 forbidText(button, "supabaseBrowser.auth.getSession", "checkout must not require login");
 forbidText(button, "Authorization: `Bearer", "checkout must not require bearer auth");
+
+requireText(gate, 'fetch("/api/check/entitlement"', "post-payment entitlement polling");
+requireText(gate, 'credits_remaining || 0) > 0', "credit activation confirmation");
+requireText(gate, "no vuelvas a pagar", "duplicate-payment warning");
+requireText(entitlement, "get_vonu_device_entitlement", "entitlement status RPC");
 
 requireText(checkout, 'mode: "payment"', "one-time checkout mode");
 requireText(checkout, 'kind: "device_pack"', "device checkout metadata");
@@ -67,4 +74,4 @@ requireText(privacy, "vonu_device_id", "privacy device cookie");
 requireText(privacy, "pago confirmado", "privacy payment-to-credit flow");
 requireText(cookies, "vonu_device_id", "cookie disclosure");
 
-console.log("VONU_PAYMENT_LAUNCH_CONTRACT_GREEN model=device free=1 pack=3 price=399");
+console.log("VONU_PAYMENT_LAUNCH_CONTRACT_GREEN model=device free=1 pack=3 price=399 activation=poll");
