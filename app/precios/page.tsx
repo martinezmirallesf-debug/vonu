@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
 import DevicePricingPage from "../components/DevicePricingPage";
+import PricingStructuredData from "../components/PricingStructuredData";
 
 const siteUrl = "https://vonuai.com";
 
@@ -34,6 +35,7 @@ export const metadata: Metadata = {
 export default function PricingPage() {
   return (
     <>
+      <PricingStructuredData locale="es" />
       <HomeHeader />
       <DevicePricingPage locale="es" />
       <HomeFooter />
