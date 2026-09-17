@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import LocalizedPublicPage from "@/app/components/LocalizedPublicPage";
+import IntentPublicPage from "@/app/components/IntentPublicPage";
 import DevicePricingPage from "@/app/components/DevicePricingPage";
 import GlobalPublicHeader from "@/app/components/GlobalPublicHeader";
 import HomeFooter from "@/app/components/HomeFooter";
@@ -9,6 +10,7 @@ import {
   getTopic,
   isGlobalLocale,
 } from "@/lib/vonu-global/i18n";
+import { isIntentSlug } from "@/lib/vonu-global/intent-content";
 import {
   localizedLanguageAlternates,
   localizedPublicPath,
@@ -119,6 +121,10 @@ export default async function GlobalLocalizedPage({ params }: Props) {
         <HomeFooter />
       </>
     );
+  }
+
+  if (isIntentSlug(slug)) {
+    return <IntentPublicPage locale={locale} slug={slug} />;
   }
 
   return <LocalizedPublicPage locale={locale} slug={slug} />;
