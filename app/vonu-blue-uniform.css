@@ -240,3 +240,41 @@ footer span[class*="tracking-[0.08em]"] {
     background: var(--vonu-accent-hover) !important;
   }
 }
+
+/* Final two mobile-only refinements requested in preview. */
+@media (max-width: 767px) {
+  /* Draw the close icon independently so both strokes are exactly equal. */
+  header button[aria-label="Close"] > span {
+    display: none !important;
+  }
+
+  header button[aria-label="Close"]::before,
+  header button[aria-label="Close"]::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 22px;
+    height: 2px;
+    border-radius: 9999px;
+    background: var(--vonu-accent-strong);
+    transform-origin: center;
+  }
+
+  header button[aria-label="Close"]::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  header button[aria-label="Close"]::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+  }
+
+  /* Conventional language formatting: “Español, ES”. */
+  .vonu-mobile-language-popover a {
+    gap: 0.35rem !important;
+  }
+
+  .vonu-mobile-language-popover a > span:first-child::after {
+    content: ",";
+  }
+}
