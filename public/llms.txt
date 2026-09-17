@@ -6,18 +6,18 @@
 
 Vonu Check supports Spanish, English, French, German and Arabic.
 
-- https://vonuai.com/check — automatic language entry point using the browser's preferred supported language.
+- https://vonuai.com/check — automatic language entry point.
 - https://vonuai.com/es/check — Spanish.
 - https://vonuai.com/en/check — English.
 - https://vonuai.com/fr/check — French.
 - https://vonuai.com/de/check — German.
 - https://vonuai.com/ar/check — Arabic / RTL.
 
-Each language version has its own canonical URL and reciprocal hreflang alternatives. The public marketing and risk-guide pages are also available in EN, FR, DE and AR under the language prefix while the established Spanish URLs remain unchanged to preserve their existing search signals.
+Each language version has its own canonical URL and reciprocal hreflang alternatives. Public marketing and risk-guide pages use localized route slugs rather than mechanically prepending a language code to the Spanish slug.
 
 ## Main use cases
 
-Spanish canonical pages:
+Spanish canonical pages include:
 
 - https://vonuai.com/comprobar-web-fiable — website reliability and risk signals.
 - https://vonuai.com/comprobar-tienda-online — online-store checks before payment.
@@ -35,23 +35,25 @@ Spanish canonical pages:
 - https://vonuai.com/llamada-banco-codigo-sms — bank impersonation and SMS-code requests.
 - https://vonuai.com/es-fiable — general trust and risk-check entry page.
 
-For English, French, German and Arabic, prepend `/en`, `/fr`, `/de` or `/ar` to the Spanish canonical path, for example:
+Examples of localized equivalents:
 
-- https://vonuai.com/en/comprobar-web-fiable
-- https://vonuai.com/fr/comprobar-web-fiable
-- https://vonuai.com/de/comprobar-web-fiable
-- https://vonuai.com/ar/comprobar-web-fiable
+- Website check: https://vonuai.com/en/is-this-website-safe | https://vonuai.com/fr/site-est-il-fiable | https://vonuai.com/de/website-serioes-pruefen | https://vonuai.com/ar/check-website
+- Online-store check: https://vonuai.com/en/check-online-store | https://vonuai.com/fr/verifier-boutique-en-ligne | https://vonuai.com/de/onlineshop-serioes-pruefen | https://vonuai.com/ar/check-online-store
+- Suspicious link: https://vonuai.com/en/check-suspicious-link | https://vonuai.com/fr/analyser-lien-suspect | https://vonuai.com/de/verdaechtigen-link-pruefen | https://vonuai.com/ar/check-link
+- Suspicious message: https://vonuai.com/en/is-this-text-a-scam | https://vonuai.com/fr/sms-arnaque | https://vonuai.com/de/sms-betrug-pruefen | https://vonuai.com/ar/check-sms
+- Phishing email: https://vonuai.com/en/phishing-email-check | https://vonuai.com/fr/email-phishing | https://vonuai.com/de/phishing-email-pruefen | https://vonuai.com/ar/check-email
+- Investment scam: https://vonuai.com/en/investment-scam-check | https://vonuai.com/fr/investissement-arnaque | https://vonuai.com/de/investitionsbetrug-pruefen | https://vonuai.com/ar/investment-scam
+- Crypto scams: https://vonuai.com/en/crypto-scams | https://vonuai.com/fr/arnaques-crypto | https://vonuai.com/de/krypto-betrug | https://vonuai.com/ar/crypto-scams
+
+The sitemap at https://vonuai.com/sitemap.xml is the authoritative machine-readable list of localized public URLs and hreflang relationships.
 
 ## Product and commercial pages
 
-- https://vonuai.com/producto
-- https://vonuai.com/casos-de-uso
-- https://vonuai.com/recursos
-- https://vonuai.com/precios
-- https://vonuai.com/como-funciona
-- https://vonuai.com/contacto
-
-The same `/en`, `/fr`, `/de`, `/ar` convention applies to those public pages.
+- Spanish: https://vonuai.com/producto | https://vonuai.com/casos-de-uso | https://vonuai.com/recursos | https://vonuai.com/precios | https://vonuai.com/como-funciona | https://vonuai.com/contacto
+- English: https://vonuai.com/en/product | https://vonuai.com/en/use-cases | https://vonuai.com/en/resources | https://vonuai.com/en/pricing | https://vonuai.com/en/how-it-works | https://vonuai.com/en/contact
+- French: https://vonuai.com/fr/produit | https://vonuai.com/fr/cas-utilisation | https://vonuai.com/fr/ressources | https://vonuai.com/fr/tarifs | https://vonuai.com/fr/comment-ca-marche | https://vonuai.com/fr/contact
+- German: https://vonuai.com/de/produkt | https://vonuai.com/de/anwendungsfaelle | https://vonuai.com/de/ressourcen | https://vonuai.com/de/preise | https://vonuai.com/de/so-funktionierts | https://vonuai.com/de/kontakt
+- Arabic: https://vonuai.com/ar/product | https://vonuai.com/ar/use-cases | https://vonuai.com/ar/resources | https://vonuai.com/ar/pricing | https://vonuai.com/ar/how-it-works | https://vonuai.com/ar/contact
 
 ## How Vonu works
 
@@ -69,7 +71,15 @@ Vonu reports risk signals and analysis confidence separately. A low-risk result 
 
 ## Commercial model
 
-Vonu offers a free entry point and paid Plus and Max subscriptions. Paid plans increase usage capacity and supported formats; they do not change the responsible-use limitations or create certainty where evidence is insufficient.
+Vonu Check does not require an account to start. The first analysis is free per browser/device. After the free analysis, a user can buy a pack of 3 additional analyses for EUR 3.99 as a one-time payment. There is no subscription or automatic renewal in the current public offer.
+
+Pricing pages:
+
+- https://vonuai.com/precios
+- https://vonuai.com/en/pricing
+- https://vonuai.com/fr/tarifs
+- https://vonuai.com/de/preise
+- https://vonuai.com/ar/pricing
 
 ## Policies
 
