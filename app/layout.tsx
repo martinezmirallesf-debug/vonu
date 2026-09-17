@@ -1,4 +1,3 @@
-// app/layout.tsx
 import "./globals.css";
 import "./global-navigation-fix.css";
 import "katex/dist/katex.min.css";
@@ -13,6 +12,7 @@ import CheckResultConversion from "./components/CheckResultConversion";
 import DocumentLocaleSync from "./components/DocumentLocaleSync";
 
 const BASE_URL = "https://vonuai.com";
+const BRAND_ASSET_VERSION = "20260917-blue";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const spaceMono = Space_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-mono" });
@@ -39,9 +39,12 @@ export const metadata: Metadata = {
   category: "security",
   referrer: "origin-when-cross-origin",
   icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    shortcut: "/icon.svg",
-    apple: "/icon.png",
+    icon: [
+      { url: `/icon.svg?v=${BRAND_ASSET_VERSION}`, type: "image/svg+xml" },
+      { url: `/api/icon?v=${BRAND_ASSET_VERSION}`, type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: `/icon.svg?v=${BRAND_ASSET_VERSION}`,
+    apple: [{ url: `/api/icon?v=${BRAND_ASSET_VERSION}`, type: "image/png", sizes: "512x512" }],
   },
   openGraph: {
     type: "website",
@@ -52,10 +55,10 @@ export const metadata: Metadata = {
     description: "Analiza URLs, capturas y mensajes sospechosos para detectar señales de riesgo antes de actuar.",
     images: [
       {
-        url: "/api/og",
+        url: `/api/og?v=${BRAND_ASSET_VERSION}`,
         width: 1200,
         height: 630,
-        alt: "Vonu — Comprueba antes de confiar",
+        alt: "Vonu",
       },
     ],
   },
@@ -63,7 +66,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Vonu — Comprueba antes de confiar",
     description: "Analiza URLs, capturas y mensajes sospechosos para detectar señales de riesgo antes de actuar.",
-    images: ["/api/og"],
+    images: [`/api/og?v=${BRAND_ASSET_VERSION}`],
   },
   robots: {
     index: true,
