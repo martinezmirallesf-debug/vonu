@@ -13,6 +13,7 @@ import DocumentLocaleSync from "./components/DocumentLocaleSync";
 
 const BASE_URL = "https://vonuai.com";
 const BRAND_ASSET_VERSION = "20260917-blue";
+const FAVICON_VERSION = "20260917-blue-v2";
 const SOCIAL_IMAGE = `${BASE_URL}/api/og?v=${BRAND_ASSET_VERSION}`;
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -41,11 +42,11 @@ export const metadata: Metadata = {
   referrer: "origin-when-cross-origin",
   icons: {
     icon: [
-      { url: `/icon.svg?v=${BRAND_ASSET_VERSION}`, type: "image/svg+xml" },
-      { url: `/api/icon?v=${BRAND_ASSET_VERSION}`, type: "image/png", sizes: "512x512" },
+      { url: `/icon.svg?v=${FAVICON_VERSION}`, type: "image/svg+xml" },
+      { url: `/api/icon?v=${FAVICON_VERSION}`, type: "image/png", sizes: "512x512" },
     ],
-    shortcut: `/icon.svg?v=${BRAND_ASSET_VERSION}`,
-    apple: [{ url: `/api/icon?v=${BRAND_ASSET_VERSION}`, type: "image/png", sizes: "512x512" }],
+    shortcut: `/icon.svg?v=${FAVICON_VERSION}`,
+    apple: [{ url: `/api/icon?v=${FAVICON_VERSION}`, type: "image/png", sizes: "512x512" }],
   },
   openGraph: {
     type: "website",
