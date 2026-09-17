@@ -191,6 +191,10 @@ export default function HomeHeader() {
             )}
           </nav>
 
+          <Link href={checkPath(locale)} onClick={closeMenu} className="mx-auto mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-400 px-5 text-[13px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:bg-emerald-300 active:scale-[.99]">
+            {t.analyze}
+          </Link>
+
           <div className="mt-auto border-t border-white/[0.10] pt-5">
             <div className="mb-5 grid grid-cols-2 gap-x-5 gap-y-3">
               {secondaryLinks.map((item) => (
@@ -199,10 +203,6 @@ export default function HomeHeader() {
                 </Link>
               ))}
             </div>
-
-            <Link href={checkPath(locale)} onClick={closeMenu} className="inline-flex min-h-[48px] w-full items-center justify-center gap-3 rounded-xl bg-[#7bb7ff] px-5 text-[15px] font-bold text-[#07142f] shadow-[0_10px_30px_rgba(123,183,255,.22)] transition hover:bg-[#a3ceff]">
-              <span>{t.analyze}</span><span aria-hidden="true">→</span>
-            </Link>
 
             <div className="vonu-mobile-language mt-4 border-t border-white/[0.10] pt-3">
               {languageOpen && (
