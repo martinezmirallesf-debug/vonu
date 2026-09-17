@@ -1,10 +1,15 @@
-import { lookup } from "node:dns/promises";
+import { resolve4, resolve6 } from "node:dns/promises";
 import { isIP } from "node:net";
 import type { SupportedLocale, WebCheckResult, WebCheckSignal } from "./types";
 
 const MAX_REDIRECTS = 4;
 const MAX_HTML_BYTES = 400_000;
 const FETCH_TIMEOUT_MS = 8_000;
+const DNS_RETRY_DELAYS_MS = [120, 300, 700];
+const FETCH_RETRY_DELAYS_MS = [160, 420];
+const DNS_NOT_FOUND_CODES = new Set(["ENOTFOUND", "ENODATA"]);
+const TRANSIENT_DNS_CODES = new Set(["EBUSY", "EAI_AGAIN", "ETIMEOUT", "ETIMEDOUT", "SERVFAIL", "EREFUSED"]);
+const TRANSIENT_FETCH_CODES = new Set(["EBUSY", "EAI_AGAIN", "ECONNRESET", "ENETDOWN", "ENETUNREACH", "EHOSTUNREACH", "UND_ERR_CONNECT_TIMEOUT"]);
 
 const signalCopy: Record<SupportedLocale, Record<string, [string, string]>> = {
   es: {
@@ -133,7 +138,60 @@ function isPrivateIpv6(address: string): boolean {
   return mapped ? isPrivateIpv4(mapped[1]) : false;
 }
 
-async function assertPublicHostname(hostname: string) {
+function nestedErrorCode(error: unknown): string {
+  let current: unknown = error;
+  for (let depth = 0; depth < 5 && current && typeof current === 'object'; depth += 1) {
+    if ('code' in current) {
+      const code = String((current as { code?: unknown }).code || '').toUpperCase();
+      if (code) return code;
+    }
+    current = 'cause' in current ? (current as { cause?: unknown }).cause : null;
+  }
+  return '';
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function resolveHostAddresses(host: string): Promise<string[]> {
+  let lastTransient: unknown = null;
+
+  for (let attempt = 0; attempt <= DNS_RETRY_DELAYS_MS.length; attempt += 1) {
+    const [ipv4, ipv6] = await Promise.allSettled([resolve4(host), resolve6(host)]);
+    const addresses = [
+      ...(ipv4.status === 'fulfilled' ? ipv4.value : []),
+      ...(ipv6.status === 'fulfilled' ? ipv6.value : []),
+    ];
+    if (addresses.length > 0) return Array.from(new Set(addresses));
+
+    const failures = [ipv4, ipv6]
+      .filter((entry): entry is PromiseRejectedResult => entry.status === 'rejected')
+      .map((entry) => entry.reason);
+    const codes = failures.map(nestedErrorCode).filter(Boolean);
+
+    if (codes.length > 0 && codes.every((code) => DNS_NOT_FOUND_CODES.has(code))) {
+      throw new Error("dns_not_found");
+    }
+
+    const transient = failures.find((failure) => TRANSIENT_DNS_CODES.has(nestedErrorCode(failure)));
+    if (transient) {
+      lastTransient = transient;
+      if (attempt < DNS_RETRY_DELAYS_MS.length) {
+        await wait(DNS_RETRY_DELAYS_MS[attempt]);
+        continue;
+      }
+      throw transient;
+    }
+
+    if (failures.length > 0) throw failures[0];
+    throw new Error("dns_not_found");
+  }
+
+  throw lastTransient || new Error("dns_not_found");
+}
+
+export async function assertPublicHostname(hostname: string) {
   const host = hostname.startsWith('[') && hostname.endsWith(']')
     ? hostname.slice(1, -1)
     : hostname;
@@ -146,19 +204,10 @@ async function assertPublicHostname(hostname: string) {
     throw new Error("private_target");
   }
 
-  let addresses;
-  try {
-    addresses = await lookup(host, { all: true, verbatim: true });
-  } catch (error) {
-    const code = error && typeof error === 'object' && 'code' in error
-      ? String((error as { code?: unknown }).code || '')
-      : '';
-    if (code === 'ENOTFOUND' || code === 'ENODATA') throw new Error("dns_not_found");
-    throw error;
-  }
-  if (!addresses.length) throw new Error("dns_not_found");
-  for (const entry of addresses) {
-    if ((entry.family === 4 && isPrivateIpv4(entry.address)) || (entry.family === 6 && isPrivateIpv6(entry.address))) {
+  const addresses = await resolveHostAddresses(host);
+  for (const address of addresses) {
+    const family = isIP(address);
+    if ((family === 4 && isPrivateIpv4(address)) || (family === 6 && isPrivateIpv6(address))) {
       throw new Error("private_target");
     }
   }
@@ -184,22 +233,39 @@ async function readLimitedText(response: Response): Promise<string> {
   return output;
 }
 
+async function fetchTarget(url: URL) {
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt <= FETCH_RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      return await fetch(url, {
+        method: 'GET',
+        redirect: 'manual',
+        cache: 'no-store',
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        headers: {
+          'user-agent': 'VonuCheck/0.1 (+https://vonuai.com)',
+          accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5',
+        },
+      });
+    } catch (error) {
+      lastError = error;
+      const code = nestedErrorCode(error);
+      if (!TRANSIENT_FETCH_CODES.has(code) || attempt === FETCH_RETRY_DELAYS_MS.length) throw error;
+      await wait(FETCH_RETRY_DELAYS_MS[attempt]);
+    }
+  }
+
+  throw lastError || new Error('fetch_failed');
+}
+
 async function fetchPage(start: URL) {
   let current = start;
   let redirects = 0;
 
   while (true) {
     await assertPublicHostname(current.hostname);
-    const response = await fetch(current, {
-      method: 'GET',
-      redirect: 'manual',
-      cache: 'no-store',
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      headers: {
-        'user-agent': 'VonuCheck/0.1 (+https://vonuai.com)',
-        accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5',
-      },
-    });
+    const response = await fetchTarget(current);
 
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get('location');
