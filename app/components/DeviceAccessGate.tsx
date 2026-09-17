@@ -5,13 +5,23 @@ import DevicePackCheckoutButton from "./DevicePackCheckoutButton";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 
 type PaymentState = "idle" | "activating" | "ready" | "delayed";
+type EntitlementSnapshot = {
+  freeUsed: boolean;
+  creditsRemaining: number;
+  lifetimeAnalyses: number;
+};
 
 const analyzeLabels = new Set([
   "Analizar ahora",
+  "Analizar gratis",
   "Analyse now",
+  "Analyse for free",
   "Analyser",
+  "Analyser gratuitement",
   "Jetzt analysieren",
+  "Kostenlos analysieren",
   "حلّل الآن",
+  "حلّل مجانًا",
 ]);
 
 const copy: Record<SupportedLocale, {
@@ -24,6 +34,12 @@ const copy: Record<SupportedLocale, {
   success: string;
   activating: string;
   delayed: string;
+  analyze: string;
+  analyzeFree: string;
+  originalFreeLabel: string;
+  freeAvailable: string;
+  freeUsed: string;
+  creditsAvailable: (count: number) => string;
 }> = {
   es: {
     eyebrow: "Primer análisis agotado",
@@ -35,6 +51,12 @@ const copy: Record<SupportedLocale, {
     success: "Pago confirmado. Tus análisis ya están disponibles en este dispositivo.",
     activating: "Pago recibido. Estamos activando tus análisis…",
     delayed: "El pago se ha completado, pero la activación está tardando unos segundos. Recarga esta página en un momento; no vuelvas a pagar.",
+    analyze: "Analizar ahora",
+    analyzeFree: "Analizar gratis",
+    originalFreeLabel: "Primer análisis gratuito",
+    freeAvailable: "1 análisis gratuito disponible",
+    freeUsed: "Análisis gratuito utilizado",
+    creditsAvailable: (count) => `${count}/3 ${count === 1 ? "análisis disponible" : "análisis disponibles"}`,
   },
   en: {
     eyebrow: "Free analysis used",
@@ -46,6 +68,12 @@ const copy: Record<SupportedLocale, {
     success: "Payment confirmed. Your analyses are now available on this device.",
     activating: "Payment received. We are activating your analyses…",
     delayed: "Payment completed, but activation is taking a few seconds. Reload this page shortly; do not pay again.",
+    analyze: "Analyse now",
+    analyzeFree: "Analyse for free",
+    originalFreeLabel: "First analysis free",
+    freeAvailable: "1 free analysis available",
+    freeUsed: "Free analysis used",
+    creditsAvailable: (count) => `${count}/3 ${count === 1 ? "analysis available" : "analyses available"}`,
   },
   fr: {
     eyebrow: "Analyse gratuite utilisée",
@@ -57,6 +85,12 @@ const copy: Record<SupportedLocale, {
     success: "Paiement confirmé. Vos analyses sont maintenant disponibles sur cet appareil.",
     activating: "Paiement reçu. Activation de vos analyses…",
     delayed: "Le paiement est terminé mais l’activation prend quelques secondes. Rechargez cette page dans un instant ; ne payez pas à nouveau.",
+    analyze: "Analyser",
+    analyzeFree: "Analyser gratuitement",
+    originalFreeLabel: "Première analyse gratuite",
+    freeAvailable: "1 analyse gratuite disponible",
+    freeUsed: "Analyse gratuite utilisée",
+    creditsAvailable: (count) => `${count}/3 ${count === 1 ? "analyse disponible" : "analyses disponibles"}`,
   },
   de: {
     eyebrow: "Kostenlose Analyse genutzt",
@@ -68,6 +102,12 @@ const copy: Record<SupportedLocale, {
     success: "Zahlung bestätigt. Deine Analysen sind auf diesem Gerät verfügbar.",
     activating: "Zahlung erhalten. Deine Analysen werden aktiviert…",
     delayed: "Die Zahlung ist abgeschlossen, aber die Aktivierung dauert noch kurz. Lade die Seite gleich neu; zahle nicht erneut.",
+    analyze: "Jetzt analysieren",
+    analyzeFree: "Kostenlos analysieren",
+    originalFreeLabel: "Erste Analyse kostenlos",
+    freeAvailable: "1 kostenlose Analyse verfügbar",
+    freeUsed: "Kostenlose Analyse genutzt",
+    creditsAvailable: (count) => `${count}/3 Analysen verfügbar`,
   },
   ar: {
     eyebrow: "تم استخدام التحليل المجاني",
@@ -79,11 +119,25 @@ const copy: Record<SupportedLocale, {
     success: "تم تأكيد الدفع. أصبحت تحليلاتك متاحة الآن على هذا الجهاز.",
     activating: "تم استلام الدفع. جارٍ تفعيل تحليلاتك…",
     delayed: "اكتمل الدفع لكن التفعيل يستغرق بضع ثوانٍ. أعد تحميل الصفحة بعد قليل ولا تدفع مرة أخرى.",
+    analyze: "حلّل الآن",
+    analyzeFree: "حلّل مجانًا",
+    originalFreeLabel: "أول تحليل مجاني",
+    freeAvailable: "تحليل مجاني واحد متاح",
+    freeUsed: "تم استخدام التحليل المجاني",
+    creditsAvailable: (count) => `${count}/3 تحليلات متاحة`,
   },
 };
 
 function wait(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function entitlementFromData(data: any): EntitlementSnapshot {
+  return {
+    freeUsed: Boolean(data?.free_used),
+    creditsRemaining: Math.max(0, Number(data?.credits_remaining || 0)),
+    lifetimeAnalyses: Math.max(0, Number(data?.lifetime_analyses || 0)),
+  };
 }
 
 export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }) {
@@ -95,26 +149,84 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
     let cancelled = false;
     let replayingAnalysisClick = false;
     let entitlementCheckPending = false;
+    let entitlement: EntitlementSnapshot | null = null;
     const originalFetch = window.fetch.bind(window);
+
+    function entitlementStatus(snapshot: EntitlementSnapshot) {
+      if (!snapshot.freeUsed && snapshot.creditsRemaining <= 0) return t.freeAvailable;
+      if (snapshot.creditsRemaining > 0) return t.creditsAvailable(snapshot.creditsRemaining);
+      if (snapshot.lifetimeAnalyses >= 4) return t.creditsAvailable(0);
+      return t.freeUsed;
+    }
+
+    function applyEntitlementUi() {
+      if (!entitlement || cancelled) return;
+
+      const freeAvailable = !entitlement.freeUsed && entitlement.creditsRemaining <= 0;
+      const desiredButtonLabel = freeAvailable ? t.analyzeFree : t.analyze;
+
+      document.querySelectorAll<HTMLButtonElement>("button").forEach((button) => {
+        const current = (button.textContent || "").trim();
+        if (button.dataset.vonuAnalyzeCta === "true" || analyzeLabels.has(current)) {
+          button.dataset.vonuAnalyzeCta = "true";
+          if (current !== desiredButtonLabel) button.textContent = desiredButtonLabel;
+        }
+      });
+
+      let status = document.querySelector<HTMLElement>('[data-vonu-entitlement-status="true"]');
+      if (!status) {
+        const expected = `✓ ${t.originalFreeLabel}`;
+        status = Array.from(document.querySelectorAll<HTMLElement>("span")).find(
+          (element) => (element.textContent || "").trim() === expected,
+        ) || null;
+        if (status) status.dataset.vonuEntitlementStatus = "true";
+      }
+
+      if (status) {
+        const desiredStatus = entitlementStatus(entitlement);
+        if ((status.textContent || "").trim() !== desiredStatus) status.textContent = desiredStatus;
+      }
+    }
+
+    async function refreshEntitlement() {
+      try {
+        const response = await originalFetch("/api/check/entitlement", {
+          method: "GET",
+          cache: "no-store",
+        });
+        const data = await response.json().catch(() => null);
+        if (cancelled || !response.ok || !data) return null;
+        entitlement = entitlementFromData(data);
+        applyEntitlementUi();
+        return entitlement;
+      } catch {
+        return null;
+      }
+    }
 
     async function confirmCredits() {
       setPaymentState("activating");
 
       for (let attempt = 0; attempt < 12 && !cancelled; attempt += 1) {
         try {
-          const response = await fetch("/api/check/entitlement", {
+          const response = await originalFetch("/api/check/entitlement", {
             method: "GET",
             cache: "no-store",
           });
           const data = await response.json().catch(() => null);
 
-          if (response.ok && Number(data?.credits_remaining || 0) > 0) {
-            setPaymentState("ready");
-            const clean = new URL(window.location.href);
-            clean.searchParams.delete("checkout");
-            clean.searchParams.delete("pack");
-            window.history.replaceState({}, "", clean.pathname + clean.search + clean.hash);
-            return;
+          if (response.ok && data) {
+            entitlement = entitlementFromData(data);
+            applyEntitlementUi();
+
+            if (entitlement.creditsRemaining > 0) {
+              setPaymentState("ready");
+              const clean = new URL(window.location.href);
+              clean.searchParams.delete("checkout");
+              clean.searchParams.delete("pack");
+              window.history.replaceState({}, "", clean.pathname + clean.search + clean.hash);
+              return;
+            }
           }
         } catch {
           // Stripe webhooks and the entitlement endpoint can briefly race after redirect.
@@ -136,9 +248,6 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
         return;
       }
 
-      // Stop the React onClick until we know whether this browser/device can
-      // consume an analysis. This avoids showing a generic analysis error when
-      // the correct UX is the €3.99 pack wall.
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
@@ -154,9 +263,9 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
         });
         const data = await response.json().catch(() => null);
         if (response.ok && data) {
-          const freeUsed = Boolean(data.free_used);
-          const creditsRemaining = Number(data.credits_remaining || 0);
-          shouldOpenPaywall = freeUsed && creditsRemaining <= 0;
+          entitlement = entitlementFromData(data);
+          applyEntitlementUi();
+          shouldOpenPaywall = entitlement.freeUsed && entitlement.creditsRemaining <= 0;
         }
       } catch {
         // Fail open: the metered endpoint remains the source of truth and the
@@ -174,6 +283,11 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
       button.click();
     }
 
+    const observer = new MutationObserver(() => applyEntitlementUi());
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    void refreshEntitlement();
+
     const params = new URLSearchParams(window.location.search);
     if (params.get("checkout") === "success" && params.get("pack") === "3") {
       void confirmCredits();
@@ -184,9 +298,15 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
     window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const response = await originalFetch(input, init);
       const url = typeof input === "string" ? input : input instanceof URL ? input.pathname : input.url;
-      if (response.status === 402 && /\/api\/check\/(web|image|text)(?:\?|$)/.test(url)) {
+      const isAnalysisRequest = /\/api\/check\/(web|image|text)(?:\?|$)/.test(url);
+
+      if (isAnalysisRequest && response.status === 402) {
         setOpen(true);
+        void refreshEntitlement();
+      } else if (isAnalysisRequest && response.ok) {
+        void refreshEntitlement();
       }
+
       return response;
     };
 
@@ -194,10 +314,11 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
 
     return () => {
       cancelled = true;
+      observer.disconnect();
       document.removeEventListener("click", preflightAnalysis, true);
       window.fetch = originalFetch;
     };
-  }, []);
+  }, [locale, t]);
 
   const paymentMessage =
     paymentState === "ready"
