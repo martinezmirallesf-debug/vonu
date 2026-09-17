@@ -7,6 +7,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const EXPLICIT_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
+const TRANSIENT_NETWORK_MARKERS = ["EBUSY", "EAI_AGAIN", "ETIMEDOUT", "ECONNRESET"];
 
 function errorDetails(error: unknown) {
   if (!(error instanceof Error)) {
@@ -24,10 +25,33 @@ function errorDetails(error: unknown) {
   };
 }
 
+function isTransientNetworkFailure(error: unknown) {
+  const { code, causeCode, causeMessage } = errorDetails(error);
+  const haystack = `${code} ${causeCode} ${causeMessage}`.toUpperCase();
+  return TRANSIENT_NETWORK_MARKERS.some((marker) => haystack.includes(marker));
+}
+
+async function collectWebSignalsWithRetry(url: string, locale: Parameters<typeof collectWebSignals>[1]) {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await collectWebSignals(url, locale);
+    } catch (error) {
+      lastError = error;
+      if (!isTransientNetworkFailure(error) || attempt === 2) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 180 * (attempt + 1)));
+    }
+  }
+
+  throw lastError;
+}
+
 function classifyFailure(error: unknown) {
-  const { code, causeCode } = errorDetails(error);
+  const { code, causeCode, causeMessage } = errorDetails(error);
   const normalized = code.toLowerCase();
   const normalizedCause = causeCode.toUpperCase();
+  const combined = `${code} ${causeCode} ${causeMessage}`.toUpperCase();
 
   if (normalized.includes("invalid url") || normalized.includes("failed to parse url")) {
     return { error: "invalid_url", status: 422 };
@@ -42,9 +66,13 @@ function classifyFailure(error: unknown) {
     return { error: "target_timeout", status: 422 };
   }
 
+  if (combined.includes("EBUSY") || combined.includes("EAI_AGAIN")) {
+    return { error: "dns_temporarily_unavailable", status: 503 };
+  }
+
   if (
     normalized === "fetch failed" ||
-    ["ECONNREFUSED", "ECONNRESET", "EHOSTUNREACH", "ENETUNREACH", "EAI_AGAIN"].includes(normalizedCause)
+    ["ECONNREFUSED", "ECONNRESET", "EHOSTUNREACH", "ENETUNREACH"].includes(normalizedCause)
   ) {
     return { error: "target_unreachable", status: 422 };
   }
@@ -91,7 +119,7 @@ export async function POST(request: Request) {
       // The main analyser will classify malformed URLs below.
     }
 
-    const baseResult = await collectWebSignals(url, locale);
+    const baseResult = await collectWebSignalsWithRetry(url, locale);
     const result = await enrichWebResult(baseResult);
     return NextResponse.json(result, {
       status: 200,
