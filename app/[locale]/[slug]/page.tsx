@@ -20,6 +20,8 @@ import {
 } from "@/lib/vonu-global/routes";
 
 const SITE_URL = "https://vonuai.com";
+const BRAND_ASSET_VERSION = "20260917-blue";
+const SOCIAL_IMAGE = `/api/og?v=${BRAND_ASSET_VERSION}`;
 const NON_SPANISH = ["en", "fr", "de", "ar"] as const;
 
 const pricingMeta = {
@@ -82,13 +84,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       locale: ogLocale,
       title: selected.title,
       description: selected.description,
-      images: [{ url: "/api/og", width: 1200, height: 630, alt: selected.title }],
+      images: [{ url: SOCIAL_IMAGE, width: 1200, height: 630, alt: selected.title }],
     },
     twitter: {
       card: "summary_large_image",
       title: selected.title,
       description: selected.description,
-      images: ["/api/og"],
+      images: [SOCIAL_IMAGE],
     },
     robots: {
       index: true,
