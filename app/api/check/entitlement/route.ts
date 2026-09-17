@@ -24,9 +24,18 @@ export async function GET(req: NextRequest) {
   }
 
   const row = Array.isArray(data) ? data[0] : data;
-  return NextResponse.json({
+  const snapshot = {
     free_used: !!row?.free_used,
     credits_remaining: Number(row?.credits_remaining ?? 0),
     lifetime_analyses: Number(row?.lifetime_analyses ?? 0),
+  };
+
+  console.info("[vonu-entitlement]", {
+    device: deviceId!.slice(0, 8),
+    freeUsed: snapshot.free_used,
+    creditsRemaining: snapshot.credits_remaining,
+    lifetimeAnalyses: snapshot.lifetime_analyses,
   });
+
+  return NextResponse.json(snapshot);
 }
