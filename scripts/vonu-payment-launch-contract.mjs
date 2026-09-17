@@ -54,6 +54,9 @@ requireText(gate, 'analyzeFree: "Analyser gratuitement"', "French free CTA");
 requireText(gate, 'analyzeFree: "Kostenlos analysieren"', "German free CTA");
 requireText(gate, 'analyzeFree: "حلّل مجانًا"', "Arabic free CTA");
 requireText(gate, "creditsAvailable", "paid analysis balance display");
+requireText(gate, "findBalanceStatus", "robust paid balance target");
+requireText(gate, '":scope > div:first-child span"', "scanner balance sibling selector");
+requireText(gate, "characterData: true", "balance mutation resync");
 requireText(gate, "no vuelvas a pagar", "duplicate-payment warning");
 requireText(entitlement, "get_vonu_device_entitlement", "entitlement status RPC");
 
@@ -92,4 +95,4 @@ requireText(privacy, "vonu_device_id", "privacy device cookie");
 requireText(privacy, "pago confirmado", "privacy payment-to-credit flow");
 requireText(cookies, "vonu_device_id", "cookie disclosure");
 
-console.log("VONU_PAYMENT_LAUNCH_CONTRACT_GREEN model=device free=1 pack=3 price=399 activation=poll balance=localized refunds=failed-analysis");
+console.log("VONU_PAYMENT_LAUNCH_CONTRACT_GREEN model=device free=1 pack=3 price=399 activation=poll balance=localized-live refunds=failed-analysis");
