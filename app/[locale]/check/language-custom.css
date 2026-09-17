@@ -1,0 +1,242 @@
+@media (min-width: 768px) {
+  nav select[aria-label="Language"],
+  nav select[aria-label="Language"] + span {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  nav .language-custom-host {
+    width: auto !important;
+    min-width: 0 !important;
+    height: 32px !important;
+    overflow: visible !important;
+  }
+
+  nav .language-custom-host::before,
+  nav .language-custom-host::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  .language-custom-root {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .language-custom-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    box-shadow: none;
+    color: rgb(226 232 240);
+    font-size: 14px;
+    line-height: 1;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .language-custom-trigger:focus,
+  .language-custom-trigger:focus-visible {
+    outline: 0;
+    box-shadow: none;
+  }
+
+  .language-custom-chevron {
+    display: inline-block;
+    font-size: 14px;
+    line-height: 1;
+    font-weight: 900;
+    color: rgb(203 213 225);
+    transform: translateY(-1px);
+  }
+
+  .language-custom-menu {
+    position: absolute;
+    z-index: 100;
+    top: calc(100% + 7px);
+    right: 0;
+    min-width: 78px;
+    padding: 4px;
+    border: 0 !important;
+    outline: 0 !important;
+    border-radius: 8px;
+    background: #020b24;
+    box-shadow: 0 12px 30px rgba(0,0,0,.34);
+  }
+
+  .language-custom-menu button {
+    display: block;
+    width: 100%;
+    padding: 7px 9px;
+    border: 0 !important;
+    outline: 0 !important;
+    border-radius: 6px;
+    background: transparent;
+    color: rgb(203 213 225) !important;
+    text-align: start;
+    white-space: nowrap;
+    font-size: 13px !important;
+    line-height: 1.2;
+    font-weight: 500 !important;
+    cursor: pointer;
+  }
+
+  .language-custom-menu button:hover,
+  .language-custom-menu button.is-active {
+    background: rgba(123,183,255,.12);
+    color: #a3ceff !important;
+  }
+}
+
+/* Legacy Spanish pseudo-title rules are intentionally neutralized by hero-title-fix.css,
+   which is loaded after this file. */
+html[lang^="es"] main > section.text-center > h1 {
+  font-size: 0 !important;
+}
+
+html[lang^="es"] main > section.text-center > h1::before,
+html[lang^="es"] main > section.text-center > h1::after {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.055em;
+}
+
+html[lang^="es"] main > section.text-center > h1::before {
+  content: "Detecta estafas, phishing y perfiles falsos ";
+  color: #fff;
+}
+
+html[lang^="es"] main > section.text-center > h1::after {
+  content: "en segundos";
+  color: #7bb7ff;
+}
+
+@media (min-width: 640px) {
+  html[lang^="es"] main > section.text-center > h1::before,
+  html[lang^="es"] main > section.text-center > h1::after {
+    font-size: 48px;
+  }
+}
+
+@media (min-width: 1024px) {
+  html[lang^="es"] main > section.text-center > h1::before,
+  html[lang^="es"] main > section.text-center > h1::after {
+    font-size: 56px;
+  }
+}
+
+@media (min-width: 1280px) {
+  html[lang^="es"] main > section.text-center > h1::before,
+  html[lang^="es"] main > section.text-center > h1::after {
+    font-size: 60px;
+  }
+}
+
+@media (max-width: 767px) {
+  header:has(> div:nth-child(2)) > div:first-child,
+  header:has(> div:nth-child(2)) > div:nth-child(2),
+  header:has(> div:nth-child(2)) > div:nth-child(2) a {
+    border-color: transparent !important;
+    border-bottom: 0 !important;
+    border-top: 0 !important;
+  }
+
+  header > div:nth-child(2) select {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .language-mobile-root {
+    position: relative;
+    display: flex;
+    width: fit-content;
+    margin-top: auto;
+    padding: 10px 2px 2px;
+    align-items: center;
+  }
+
+  .language-mobile-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-height: 30px;
+    padding: 0;
+    border: 0 !important;
+    outline: 0 !important;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none !important;
+    color: rgb(226 232 240);
+    font-size: 14px;
+    line-height: 1;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .language-mobile-trigger:focus,
+  .language-mobile-trigger:focus-visible {
+    border: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .language-mobile-chevron {
+    display: inline-block;
+    margin-inline-start: 0;
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 900;
+    color: rgb(203 213 225);
+    transform: translateY(-1px);
+  }
+
+  .language-mobile-menu {
+    position: absolute;
+    inset-inline-start: 0;
+    bottom: calc(100% + 3px);
+    z-index: 10020;
+    width: 88px;
+    max-width: calc(100vw - 48px);
+    padding: 3px;
+    border: 0 !important;
+    outline: 0 !important;
+    border-radius: 8px;
+    background: #020b24;
+    box-shadow: 0 12px 28px rgba(0,0,0,.28);
+    overflow: hidden;
+  }
+
+  .language-mobile-menu button {
+    display: block !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    padding: 6px 7px !important;
+    border: 0 !important;
+    outline: 0 !important;
+    border-radius: 5px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: rgb(203 213 225) !important;
+    text-align: start !important;
+    white-space: nowrap;
+    font-size: 13px !important;
+    line-height: 1.1 !important;
+    font-weight: 500 !important;
+    cursor: pointer;
+  }
+
+  .language-mobile-menu button:hover,
+  .language-mobile-menu button.is-active {
+    background: rgba(123,183,255,.12) !important;
+    color: #a3ceff !important;
+  }
+}

@@ -24,20 +24,18 @@ export async function POST(req: NextRequest) {
     const email = cleanText(body?.email, 180).toLowerCase();
     const page = cleanText(body?.page, 180);
     const source = cleanText(body?.source, 120) || "resource_signup";
+    const consent = body?.consent === true;
 
     if (!email || !isValidEmail(email)) {
-      return json(
-        {
-          ok: false,
-          error: "Introduce un email válido.",
-        },
-        400
-      );
+      return json({ ok: false, error: "Introduce un email válido." }, 400);
+    }
+
+    if (!consent) {
+      return json({ ok: false, error: "Necesitamos tu consentimiento para enviarte recursos." }, 400);
     }
 
     const supabaseUrl =
       process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
-
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
     if (!supabaseUrl || !serviceRoleKey) {
@@ -45,20 +43,11 @@ export async function POST(req: NextRequest) {
         hasSupabaseUrl: !!supabaseUrl,
         hasServiceRoleKey: !!serviceRoleKey,
       });
-
-      return json(
-        {
-          ok: false,
-          error: "Error de configuración.",
-        },
-        500
-      );
+      return json({ ok: false, error: "Error de configuración." }, 500);
     }
 
     const supabase = createClient(supabaseUrl, serviceRoleKey, {
-      auth: {
-        persistSession: false,
-      },
+      auth: { persistSession: false },
     });
 
     const { error } = await supabase.from("resource_subscribers").upsert(
@@ -67,39 +56,17 @@ export async function POST(req: NextRequest) {
         page: page || null,
         source,
       },
-      {
-        onConflict: "email",
-      }
+      { onConflict: "email" },
     );
 
     if (error) {
       console.error("SUBSCRIBE_SUPABASE_ERROR", error);
-
-      return json(
-        {
-          ok: false,
-          error: "No se ha podido guardar el email ahora mismo.",
-        },
-        500
-      );
+      return json({ ok: false, error: "No se ha podido guardar el email ahora mismo." }, 500);
     }
 
-    return json(
-      {
-        ok: true,
-        message: "Email guardado correctamente.",
-      },
-      200
-    );
+    return json({ ok: true, message: "Email guardado correctamente." }, 200);
   } catch (error) {
     console.error("SUBSCRIBE_INTERNAL_ERROR", error);
-
-    return json(
-      {
-        ok: false,
-        error: "Error interno guardando el email.",
-      },
-      500
-    );
+    return json({ ok: false, error: "Error interno guardando el email." }, 500);
   }
 }

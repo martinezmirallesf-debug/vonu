@@ -1,46 +1,53 @@
 import type { MetadataRoute } from "next";
+import { GLOBAL_LOCALES, INDEXED_PUBLIC_SLUGS } from "@/lib/vonu-global/i18n";
+import {
+  localizedLanguageAlternates,
+  localizedPublicPath,
+} from "@/lib/vonu-global/routes";
 
 const BASE_URL = "https://vonuai.com";
+const UPDATED_AT = new Date("2026-09-16T00:00:00.000Z");
+
+const checkLanguages = {
+  es: `${BASE_URL}/es/check`,
+  en: `${BASE_URL}/en/check`,
+  fr: `${BASE_URL}/fr/check`,
+  de: `${BASE_URL}/de/check`,
+  ar: `${BASE_URL}/ar/check`,
+  "x-default": `${BASE_URL}/check`,
+};
+
+const localizedCheckRoutes: MetadataRoute.Sitemap = GLOBAL_LOCALES.map((locale) => ({
+  url: `${BASE_URL}/${locale}/check`,
+  lastModified: UPDATED_AT,
+  changeFrequency: "weekly",
+  priority: 1,
+  alternates: { languages: checkLanguages },
+}));
+
+const publicRoutes: MetadataRoute.Sitemap = INDEXED_PUBLIC_SLUGS.flatMap((slug) =>
+  GLOBAL_LOCALES.map((locale) => ({
+    url: `${BASE_URL}${localizedPublicPath(locale, slug)}`,
+    lastModified: UPDATED_AT,
+    changeFrequency: slug === "recursos" ? ("weekly" as const) : ("monthly" as const),
+    priority:
+      slug === "comprobar-web-fiable" || slug === "es-fiable"
+        ? 0.95
+        : slug === "producto" || slug === "casos-de-uso" || slug === "precios"
+          ? 0.9
+          : 0.82,
+    alternates: { languages: localizedLanguageAlternates(slug) },
+  })),
+);
+
+const legalRoutes: MetadataRoute.Sitemap = [
+  { url: `${BASE_URL}/legal/aviso-legal`, lastModified: UPDATED_AT, changeFrequency: "yearly", priority: 0.25 },
+  { url: `${BASE_URL}/legal/privacidad`, lastModified: UPDATED_AT, changeFrequency: "yearly", priority: 0.25 },
+  { url: `${BASE_URL}/legal/terminos`, lastModified: UPDATED_AT, changeFrequency: "yearly", priority: 0.25 },
+  { url: `${BASE_URL}/legal/cookies`, lastModified: UPDATED_AT, changeFrequency: "yearly", priority: 0.2 },
+  { url: `${BASE_URL}/legal/uso-responsable`, lastModified: UPDATED_AT, changeFrequency: "yearly", priority: 0.35 },
+];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const routes = [
-    "",
-    "/chat",
-    "/producto",
-    "/casos-de-uso",
-    "/precios",
-    "/como-funciona",
-    "/recursos",
-    "/contacto",
-    "/analizar-sms-estafa",
-    "/comprobar-web-fiable",
-    "/revisar-contrato",
-    "/comprobar-factura",
-    "/comprobar-tienda-online",
-    "/detectar-manipulacion",
-    "/legal/aviso-legal",
-    "/legal/privacidad",
-    "/legal/terminos",
-    "/legal/cookies",
-    "/legal/uso-responsable",
-  ];
-
-  return routes.map((route) => ({
-    url: `${BASE_URL}${route}`,
-    lastModified: new Date(),
-    changeFrequency:
-      route === "" || route === "/recursos" ? "weekly" : "monthly",
-    priority:
-      route === ""
-        ? 1
-        : route === "/chat"
-        ? 0.95
-        : route === "/producto" || route === "/casos-de-uso"
-        ? 0.85
-        : route === "/recursos"
-        ? 0.8
-        : route.startsWith("/legal")
-        ? 0.3
-        : 0.75,
-  }));
+  return [...localizedCheckRoutes, ...publicRoutes, ...legalRoutes];
 }

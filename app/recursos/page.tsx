@@ -9,685 +9,105 @@ const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Recursos Vonu — Guías, avances y decisiones seguras",
+  title: "Recursos Vonu — Estafas, phishing y señales de riesgo",
   description:
-    "Recursos VonuAI: guías prácticas, avances de producto, seguridad, estudio, voz, documentos y decisiones digitales.",
-  alternates: {
-    canonical: "/recursos",
-  },
+    "Guías prácticas de Vonu para detectar phishing, suplantación, tiendas sospechosas, enlaces peligrosos, perfiles falsos, inversiones dudosas y otras señales de fraude.",
+  alternates: { canonical: "/recursos" },
   openGraph: {
-    title: "Recursos Vonu — Guías, avances y decisiones seguras",
-    description:
-      "Guías prácticas, avances de producto y recursos para usar VonuAI con más claridad.",
+    title: "Recursos Vonu — Comprueba antes de confiar",
+    description: "Guías prácticas para reconocer señales de fraude y verificar antes de pagar, responder o compartir datos.",
     url: `${siteUrl}/recursos`,
-    siteName: "VonuAI",
+    siteName: "Vonu",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Recursos Vonu — Guías, avances y decisiones seguras",
-    description: "Guías, avances y recursos para decidir mejor con VonuAI.",
+    title: "Recursos Vonu",
+    description: "Guías para reconocer estafas, phishing, suplantación y riesgos digitales.",
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  robots: { index: true, follow: true },
 };
 
 const featuredResources = [
-    {
-    title: "¿Es fiable? Compruébalo antes de actuar",
-    category: "Fiabilidad",
-    text: "Revisa webs, tiendas, mensajes, perfiles, facturas, contratos u ofertas antes de pagar, firmar, contestar o compartir datos.",
-    href: "/es-fiable",
-  },
-  {
-    title: "Analizar link sospechoso",
-    category: "Enlaces sospechosos",
-    text: "Comprueba enlaces recibidos por SMS, WhatsApp, email, redes sociales o códigos QR antes de pulsar o introducir datos.",
-    href: "/analizar-link-sospechoso",
-  },
-  {
-    title: "Comprobar si una inversión es estafa",
-    category: "Inversiones",
-    text: "Revisa propuestas de trading, criptomonedas, plataformas raras o beneficios rápidos antes de enviar dinero.",
-    href: "/comprobar-inversion-estafa",
-  },
-  {
-    title: "Cómo saber si un SMS puede ser una estafa",
-    category: "Estafas",
-    text: "Señales habituales, errores comunes y pasos prudentes antes de pulsar un enlace o compartir datos.",
-    href: "/analizar-sms-estafa",
-  },
-  {
-    title: "Cómo comprobar si una web es fiable",
-    category: "Webs",
-    text: "Qué revisar antes de pagar: dominio, datos legales, métodos de pago, opiniones y señales de presión.",
-    href: "/comprobar-web-fiable",
-  },
-  {
-    title: "Qué mirar antes de firmar un contrato",
-    category: "Documentos",
-    text: "Puntos básicos para detectar cláusulas confusas, obligaciones, permanencias, penalizaciones y riesgos.",
-    href: "/revisar-contrato",
-  },
-  {
-    title: "Me llama el banco y me pide un código SMS",
-    category: "Llamadas sospechosas",
-    text: "Señales de vishing, llamadas falsas del banco y pasos prudentes antes de dar códigos, claves o datos.",
-    href: "/llamada-banco-codigo-sms",
-  },
-  {
-    title: "Estafas con criptomonedas",
-    category: "Crypto",
-    text: "Cómo detectar promesas de inversión, plataformas falsas, contactos por Telegram o supuestos expertos en trading.",
-    href: "/estafas-criptomonedas",
-  },
-  {
-    title: "Email sospechoso o phishing",
-    category: "Email",
-    text: "Revisa correos que imitan bancos, empresas, pagos, facturas, avisos urgentes o enlaces que piden datos.",
-    href: "/email-sospechoso-estafa",
-  },
-  {
-    title: "Cómo comprobar si una factura está bien",
-    category: "Facturas",
-    text: "Revisa importes, conceptos, cargos duplicados, servicios no contratados y qué hacer si crees que te han cobrado de más.",
-    href: "/comprobar-factura",
-  },
-  {
-    title: "Cómo detectar manipulación emocional",
-    category: "Psicología aplicada",
-    text: "Revisa mensajes o situaciones donde sientes culpa, presión, urgencia o confusión antes de contestar o decidir.",
-    href: "/detectar-manipulacion",
-  },
-  {
-    title: "Cómo comprobar si una tienda online es fiable",
-    category: "Compras online",
-    text: "Antes de pagar, revisa si la tienda muestra señales reales de confianza o posibles indicios de estafa.",
-    href: "/comprobar-tienda-online",
-  },
-  {
-    title: "Analizar captura de pantalla online",
-    category: "Capturas",
-    text: "Sube una captura de SMS, WhatsApp, perfil, web, factura o conversación para revisar señales antes de actuar.",
-    href: "/analizar-captura-pantalla",
-  },
-  {
-    title: "Cómo detectar un perfil falso",
-    category: "Apps de citas y redes",
-    text: "Revisa capturas de Tinder, Badoo, Bumble, Instagram o conversaciones para detectar catfishing, fotos reutilizadas o señales raras.",
-    href: "/detectar-perfil-falso",
-  },
-  {
-    title: "Revisar contrato de alquiler online",
-    category: "Contratos",
-    text: "Comprueba fianza, duración, gastos, reparaciones, penalizaciones y cláusulas delicadas antes de firmar.",
-    href: "/revisar-contrato-alquiler",
-  },
+  { title: "¿Es fiable? Compruébalo antes de actuar", category: "Comprobación general", text: "Cuando una web, mensaje, perfil u oferta no termina de cuadrar, reúne las señales antes de tomar una decisión.", href: "/es-fiable" },
+  { title: "Analizar un link sospechoso", category: "Enlaces", text: "Qué revisar en un enlace recibido por SMS, WhatsApp, email, redes o QR antes de abrirlo o introducir datos.", href: "/analizar-link-sospechoso" },
+  { title: "Cómo saber si un SMS puede ser una estafa", category: "Mensajes", text: "Urgencia, suplantación, pagos, códigos y otros patrones que conviene comprobar antes de responder.", href: "/analizar-sms-estafa" },
+  { title: "Email sospechoso o phishing", category: "Email", text: "Señales habituales en correos que imitan bancos, empresas, pagos, facturas o avisos urgentes.", href: "/email-sospechoso-estafa" },
+  { title: "Cómo comprobar si una web es fiable", category: "Webs", text: "Dominio, formularios, redirecciones, reputación técnica y otras pistas que Vonu puede revisar antes de que confíes.", href: "/comprobar-web-fiable" },
+  { title: "Cómo comprobar una tienda online", category: "Compras online", text: "Antes de pagar, revisa señales de identidad, dominio, métodos de pago, presión y coherencia de la tienda.", href: "/comprobar-tienda-online" },
+  { title: "Analizar una captura de pantalla", category: "Capturas", text: "Sube una captura de un chat, SMS, perfil, web o pantalla de pago para revisar lo que se ve antes de actuar.", href: "/analizar-captura-pantalla" },
+  { title: "Cómo detectar un perfil falso", category: "Identidad", text: "Revisa señales de cuentas clonadas, identidades inventadas, catfishing y conversaciones que intentan ganar confianza demasiado rápido.", href: "/detectar-perfil-falso" },
+  { title: "Comprobar una inversión sospechosa", category: "Inversiones", text: "Promesas de rentabilidad, urgencia, plataformas raras, pagos en cripto y otras señales antes de enviar dinero.", href: "/comprobar-inversion-estafa" },
+  { title: "Estafas con criptomonedas", category: "Cripto", text: "Oportunidades irreales, falsos soportes, recuperadores de fondos y presión para mover dinero o conectar una wallet.", href: "/estafas-criptomonedas" },
+  { title: "El banco me pide un código SMS", category: "Suplantación bancaria", text: "Qué hacer cuando una llamada o mensaje que dice ser de tu banco te pide códigos, claves o una acción urgente.", href: "/llamada-banco-codigo-sms" },
 ];
 
 const categories = [
-  {
-    title: "Seguridad digital",
-    text: "Mensajes sospechosos, enlaces, webs, pagos, fraudes y decisiones online.",
-  },
-  {
-    title: "Documentos y contratos",
-    text: "Facturas, PDFs, condiciones, cláusulas, recibos y textos difíciles de entender.",
-  },
-  {
-    title: "Voz y producto",
-    text: "Avances de Vonu, modo conversación, análisis de archivos y nuevas funciones.",
-  },
-  {
-    title: "Tutor y estudio",
-    text: "Explicaciones paso a paso, resúmenes, ejercicios, voz y ayudas visuales.",
-  },
-  {
-    title: "Psicología aplicada",
-    text: "Presión, manipulación, dudas antes de responder y claridad emocional.",
-  },
-  {
-    title: "Uso responsable",
-    text: "Buenas prácticas para usar IA con privacidad, criterio y seguridad.",
-  },
+  { title: "Mensajes y suplantación", text: "SMS, WhatsApp, email, llamadas, familiares, bancos y cuentas que intentan parecer otra persona o empresa." },
+  { title: "Webs, enlaces y compras", text: "Dominios, tiendas, formularios, redirecciones, métodos de pago y señales técnicas antes de introducir datos." },
+  { title: "Dinero e inversiones", text: "Transferencias, Bizum, cripto, promesas de rentabilidad y situaciones donde verificar antes puede evitar una pérdida." },
 ];
 
-const upcoming = [
-  "Guías cortas para detectar estafas frecuentes.",
-  "Explicaciones sobre nuevas funciones de Vonu.",
-  "Casos prácticos de webs, contratos, facturas y mensajes.",
-  "Recursos para estudiar mejor con voz, archivos e imágenes.",
-  "Consejos de privacidad y uso responsable de IA.",
-];
-
-type GradientTone =
-  | "blueGreen"
-  | "blueCyan"
-  | "green"
-  | "orangeRed"
-  | "purplePink"
-  | "amberOrange";
-
-const gradientMap: Record<GradientTone, string> = {
-  blueGreen: "linear-gradient(90deg, #0A84FF 0%, #22C55E 100%)",
-  blueCyan: "linear-gradient(90deg, #1A73E8 0%, #06B6D4 100%)",
-  green: "linear-gradient(90deg, #0A8F3C 0%, #34D399 100%)",
-  orangeRed: "linear-gradient(90deg, #F97316 0%, #EF4444 100%)",
-  purplePink: "linear-gradient(90deg, #7C3AED 0%, #EC4899 100%)",
-  amberOrange: "linear-gradient(90deg, #F59E0B 0%, #F97316 100%)",
-};
-
-function GradientText({
-  children,
-  tone,
-}: {
-  children: ReactNode;
-  tone: GradientTone;
-}) {
-  return (
-    <span
-      className="inline align-baseline"
-      style={{
-        backgroundImage: gradientMap[tone],
-        WebkitBackgroundClip: "text",
-        backgroundClip: "text",
-        color: "transparent",
-        WebkitTextFillColor: "transparent",
-      }}
-    >
-      {children}
-    </span>
-  );
+function GradientText({ children }: { children: ReactNode }) {
+  return <span className="inline" style={{ backgroundImage: "linear-gradient(92deg, #60A5FA 0%, #38BDF8 35%, #34D399 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", WebkitTextFillColor: "transparent" }}>{children}</span>;
 }
 
 function ArrowIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
-      <path d="M5 12h13" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-      <path
-        d="m13 6 6 6-6 6"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" aria-hidden="true">
-      <path
-        d="m5 12.5 4.2 4.2L19 7"
-        stroke="currentColor"
-        strokeWidth="2.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function ResourceTitle({ title }: { title: string }) {
-  if (title === "¿Es fiable? Compruébalo antes de actuar") {
-    return (
-      <>
-        ¿Es <GradientText tone="blueGreen">fiable</GradientText>? Compruébalo antes de actuar
-      </>
-    );
-  }
-
-  if (title === "Analizar link sospechoso") {
-    return (
-      <>
-        Analizar link <GradientText tone="orangeRed">sospechoso</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Comprobar si una inversión es estafa") {
-    return (
-      <>
-        Comprobar si una inversión es <GradientText tone="purplePink">estafa</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Cómo saber si un SMS puede ser una estafa") {
-    return (
-      <>
-        SMS puede ser una <GradientText tone="orangeRed">estafa</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Cómo comprobar si una web es fiable") {
-    return (
-      <>
-        Comprobar si una web es <GradientText tone="blueCyan">fiable</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Qué mirar antes de firmar un contrato") {
-    return (
-      <>
-        Antes de firmar un <GradientText tone="purplePink">contrato</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Me llama el banco y me pide un código SMS") {
-    return (
-      <>
-        Banco y código <GradientText tone="orangeRed">SMS</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Estafas con criptomonedas") {
-    return (
-      <>
-        Estafas con <GradientText tone="green">criptomonedas</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Email sospechoso o phishing") {
-    return (
-      <>
-        Email sospechoso o <GradientText tone="orangeRed">phishing</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Cómo comprobar si una factura está bien") {
-    return (
-      <>
-        Comprobar una <GradientText tone="amberOrange">factura</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Cómo detectar manipulación emocional") {
-    return (
-      <>
-        Detectar <GradientText tone="purplePink">manipulación</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Cómo comprobar si una tienda online es fiable") {
-    return (
-      <>
-        Tienda online <GradientText tone="blueCyan">fiable</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Analizar captura de pantalla online") {
-    return (
-      <>
-        Analizar <GradientText tone="blueGreen">captura</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Cómo detectar un perfil falso") {
-    return (
-      <>
-        Detectar perfil <GradientText tone="orangeRed">falso</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Cómo detectar un perfil falso") {
-    return (
-      <>
-        Detectar perfil <GradientText tone="orangeRed">falso</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Revisar contrato de alquiler online") {
-    return (
-      <>
-        Contrato de <GradientText tone="purplePink">alquiler</GradientText>
-      </>
-    );
-  }
-
-  return <>{title}</>;
-}
-
-function CategoryTitle({ title }: { title: string }) {
-  if (title === "Seguridad digital") {
-    return (
-      <>
-        Seguridad <GradientText tone="blueCyan">digital</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Documentos y contratos") {
-    return (
-      <>
-        Documentos y <GradientText tone="purplePink">contratos</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Voz y producto") {
-    return (
-      <>
-        Voz y <GradientText tone="blueGreen">producto</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Tutor y estudio") {
-    return (
-      <>
-        Tutor y <GradientText tone="green">estudio</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Psicología aplicada") {
-    return (
-      <>
-        Psicología <GradientText tone="amberOrange">aplicada</GradientText>
-      </>
-    );
-  }
-
-  if (title === "Uso responsable") {
-    return (
-      <>
-        Uso <GradientText tone="blueCyan">responsable</GradientText>
-      </>
-    );
-  }
-
-  return <>{title}</>;
+  return <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true"><path d="M5 12h13" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /><path d="m13 6 6 6-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
 export default function RecursosPage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
-      {
-        "@type": "CollectionPage",
-        "@id": `${siteUrl}/recursos#webpage`,
-        url: `${siteUrl}/recursos`,
-        name: "Recursos Vonu — Guías, avances y decisiones seguras",
-        description:
-          "Guías prácticas, avances de producto y recursos para usar VonuAI con más claridad.",
-        inLanguage: "es-ES",
-        isPartOf: {
-          "@type": "WebSite",
-          name: "VonuAI",
-          url: siteUrl,
-        },
-      },
-      {
-        "@type": "ItemList",
-        "@id": `${siteUrl}/recursos#resources`,
-        itemListElement: featuredResources.map((item, index) => ({
-          "@type": "ListItem",
-          position: index + 1,
-          name: item.title,
-          url: `${siteUrl}${item.href}`,
-        })),
-      },
+      { "@type": "CollectionPage", "@id": `${siteUrl}/recursos#webpage`, url: `${siteUrl}/recursos`, name: "Recursos Vonu", description: "Guías prácticas para detectar estafas, phishing, suplantación y señales de riesgo digital.", inLanguage: "es-ES" },
+      { "@type": "ItemList", "@id": `${siteUrl}/recursos#resources`, itemListElement: featuredResources.map((item, index) => ({ "@type": "ListItem", position: index + 1, name: item.title, url: `${siteUrl}${item.href}` })) },
     ],
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f5f7] text-zinc-950">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-
+    <main className="min-h-screen overflow-hidden bg-[#080b12] text-slate-100">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <HomeHeader />
 
-      <section className="relative overflow-hidden bg-[#f5f5f7]">
-        <div className="mx-auto max-w-[1500px] px-4 pb-12 pt-8 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8">
-          <div className="mx-auto max-w-[1120px] text-center">
-            <h1 className="mx-auto max-w-[1080px] text-[52px] font-semibold leading-[1.02] tracking-[-0.064em] text-zinc-950 sm:text-[86px] sm:leading-[0.94] sm:tracking-[-0.078em] lg:text-[118px]">
-              Guías y avances
-              <span className="block text-zinc-500">
-                para decidir <GradientText tone="blueGreen">mejor.</GradientText>
-              </span>
-            </h1>
-
-            <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
-              Recursos prácticos sobre seguridad digital, documentos, estudio,
-              voz, IA responsable y nuevas formas de usar Vonu con claridad.
-            </p>
-
-            <div className="mt-7 flex flex-row justify-center gap-2.5 sm:mt-9 sm:gap-3">
-              <Link
-                href="/chat"
-                className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] transition hover:scale-[1.02] active:scale-[0.99] sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-[15px]"
-              >
-                <span className="truncate">Probar Vonu</span>
-                <ArrowIcon />
-              </Link>
-
-              <a
-                href="#guias"
-                className="inline-flex min-w-0 flex-1 items-center justify-center rounded-full border border-zinc-200 bg-white px-4 py-3 text-[14px] font-semibold text-zinc-800 shadow-sm transition hover:-translate-y-[1px] hover:shadow-md sm:flex-none sm:px-7 sm:py-3.5 sm:text-[15px]"
-              >
-                Ver guías
-              </a>
-            </div>
+      <section className="relative isolate overflow-hidden border-b border-white/[0.06]">
+        <div className="pointer-events-none absolute inset-0 -z-20 bg-[#080b12]" />
+        <div className="pointer-events-none absolute left-1/2 top-[-190px] -z-10 h-[620px] w-[900px] -translate-x-1/2 rounded-full bg-sky-500/[0.10] blur-[120px]" />
+        <div className="pointer-events-none absolute right-[-180px] top-[300px] -z-10 h-[460px] w-[460px] rounded-full bg-emerald-400/[0.07] blur-[120px]" />
+        <div className="mx-auto max-w-[1320px] px-4 pb-20 pt-14 sm:px-6 sm:pb-28 sm:pt-20 lg:px-8 lg:pt-24">
+          <div className="mx-auto max-w-[1020px] text-center">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Recursos</p>
+            <h1 className="mx-auto mt-5 max-w-[1020px] text-[50px] font-semibold leading-[0.98] tracking-[-0.065em] text-white sm:text-[76px] sm:leading-[0.94] lg:text-[92px]">Aprende a revisar<span className="block text-slate-400">antes de <GradientText>confiar.</GradientText></span></h1>
+            <p className="mx-auto mt-7 max-w-[780px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">Guías breves para reconocer señales de phishing, suplantación, tiendas sospechosas, inversiones dudosas y otras formas de fraude antes de pagar, responder o compartir datos.</p>
           </div>
-
-          <div className="mx-auto mt-10 grid max-w-5xl gap-5 sm:mt-14 md:grid-cols-3">
-            <div className="rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)]">
-              <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
-                Seguridad
-              </p>
-
-              <p className="mt-5 text-[42px] font-semibold leading-none tracking-[-0.075em] text-zinc-950">
-                <GradientText tone="orangeRed">Estafas</GradientText>
-              </p>
-
-              <p className="mt-5 text-[16px] leading-7 text-zinc-600">
-                SMS, email, llamadas, webs, tiendas y perfiles falsos.
-              </p>
-            </div>
-
-            <div className="rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)]">
-              <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-blue-600">
-                Decisiones
-              </p>
-
-              <p className="mt-5 text-[42px] font-semibold leading-none tracking-[-0.075em] text-zinc-950">
-                <GradientText tone="blueGreen">Claridad</GradientText>
-              </p>
-
-              <p className="mt-5 text-[16px] leading-7 text-zinc-600">
-                Contratos, facturas, manipulación y próximos pasos.
-              </p>
-            </div>
-
-            <div className="rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)]">
-              <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
-                Producto
-              </p>
-
-              <p className="mt-5 text-[42px] font-semibold leading-none tracking-[-0.075em] text-zinc-950">
-                <GradientText tone="purplePink">Vonu</GradientText>
-              </p>
-
-              <p className="mt-5 text-[16px] leading-7 text-zinc-600">
-                Guías, avances y formas de usarlo mejor.
-              </p>
-            </div>
-          </div>
-
-          <p className="mx-auto mt-7 max-w-2xl text-center text-[14px] leading-7 text-zinc-500">
-            Un centro vivo para revisar antes de firmar, pagar, contestar o
-            decidir.
-          </p>
-        </div>
-      </section>
-
-      <section id="guias" className="bg-[#f5f5f7]">
-        <div className="mx-auto max-w-[1500px] px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
-          <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-            <div>
-              <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-600">
-                Destacados
-              </p>
-
-              <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
-                Primeras guías
-                <span className="block text-zinc-500">
-                  para revisar antes de <GradientText tone="blueCyan">actuar.</GradientText>
-                </span>
-              </h2>
-            </div>
-
-            <p className="max-w-md text-[17px] leading-8 text-zinc-600">
-              Empezamos por las dudas más comunes: mensajes raros, webs poco
-              claras, llamadas urgentes y documentos que conviene entender antes
-              de aceptar.
-            </p>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {featuredResources.map((item) => (
-              <Link
-                key={item.title}
-                href={item.href}
-                className="group flex min-h-[340px] flex-col rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)] transition hover:-translate-y-1 hover:shadow-[0_2px_5px_rgba(0,0,0,0.045),0_24px_58px_rgba(0,0,0,0.075)]"
-              >
-                <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-blue-600">
-                  {item.category}
-                </p>
-
-                <h3 className="mt-12 text-[32px] font-semibold leading-[1.08] tracking-[-0.045em] text-zinc-950">
-                  <ResourceTitle title={item.title} />
-                </h3>
-
-                <p className="mt-5 flex-1 text-[15.5px] leading-7 text-zinc-600">
-                  {item.text}
-                </p>
-
-                <div className="mt-8 inline-flex items-center gap-2 text-[15px] font-semibold text-zinc-950">
-                  Ver recurso
-                  <ArrowIcon />
-                </div>
-              </Link>
-            ))}
+          <div className="mx-auto mt-14 grid max-w-[1040px] gap-4 md:grid-cols-3">
+            {categories.map((item) => <div key={item.title} className="min-h-[220px] rounded-[24px] border border-white/[0.07] bg-white/[0.035] p-6"><p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-emerald-300">Explora</p><h2 className="mt-10 text-[28px] font-semibold leading-[1.04] tracking-[-0.045em] text-white">{item.title}</h2><p className="mt-4 text-[14px] leading-7 text-slate-400">{item.text}</p></div>)}
           </div>
         </div>
       </section>
 
-      <section className="bg-[#f5f5f7]">
-        <div className="mx-auto max-w-[1500px] px-4 py-16 sm:px-6 lg:px-8">
-          <div className="mb-10 max-w-3xl">
-            <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-600">
-              Explorar
-            </p>
-
-            <h2 className="mt-3 text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
-              No solo seguridad.
-              <span className="block text-zinc-500">
-                También <GradientText tone="purplePink">claridad.</GradientText>
-              </span>
-            </h2>
-
-            <p className="mt-5 text-[17px] leading-8 text-zinc-600">
-              Vonu no se queda en detectar estafas. También ayuda a entender,
-              estudiar, revisar documentos y preparar mejores decisiones.
-            </p>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {categories.map((item) => (
-              <article
-                key={item.title}
-                className="min-h-[240px] rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)]"
-              >
-                <h3 className="mt-8 text-[34px] font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950">
-                  <CategoryTitle title={item.title} />
-                </h3>
-
-                <p className="mt-5 text-[15.5px] leading-7 text-zinc-600">
-                  {item.text}
-                </p>
-              </article>
-            ))}
+      <section className="border-b border-white/[0.06] bg-[#0a0d15]">
+        <div className="mx-auto max-w-[1320px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end"><div><p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Guías destacadas</p><h2 className="mt-4 max-w-[700px] text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">Empieza por lo que tienes delante.</h2></div><p className="max-w-xl text-[16px] leading-8 text-slate-400 lg:justify-self-end">Cada guía explica qué señales importan, cuáles pueden ser inocentes y qué conviene verificar después.</p></div>
+          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {featuredResources.map((item) => <Link key={item.href} href={item.href} className="group relative min-h-[285px] overflow-hidden rounded-[24px] border border-white/[0.07] bg-white/[0.03] p-6 transition duration-300 hover:-translate-y-1 hover:border-white/[0.12] hover:bg-white/[0.05]"><p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-emerald-300">{item.category}</p><h3 className="mt-8 max-w-[330px] text-[26px] font-semibold leading-[1.04] tracking-[-0.04em] text-white">{item.title}</h3><p className="mt-4 max-w-[350px] text-[14px] leading-7 text-slate-400">{item.text}</p><span className="absolute bottom-6 right-6 grid h-9 w-9 place-items-center rounded-full border border-white/[0.08] bg-white/[0.035] text-slate-400 transition group-hover:border-white/[0.14] group-hover:text-white"><ArrowIcon /></span></Link>)}
           </div>
         </div>
       </section>
 
-      <section className="bg-zinc-950 text-white">
-        <div className="mx-auto grid max-w-[1500px] gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
-          <div>
-            <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-300">
-              Próximamente
-            </p>
-
-            <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[0.96] tracking-[-0.065em] sm:text-[72px]">
-              Un centro vivo
-              <span className="block text-zinc-400">
-                de guías, producto y <GradientText tone="blueGreen">seguridad.</GradientText>
-              </span>
-            </h2>
-
-            <p className="mt-5 max-w-xl text-[17px] leading-8 text-zinc-300">
-              Esta sección crecerá con nuevas guías, actualizaciones, ejemplos
-              prácticos y recursos para usar Vonu mejor.
-            </p>
-          </div>
-
-          <div className="grid gap-4">
-            {upcoming.map((item) => (
-              <div
-                key={item}
-                className="flex gap-4 rounded-[30px] border border-white/10 bg-white/[0.06] p-6 text-[15.5px] leading-7 text-zinc-200 shadow-[0_18px_44px_rgba(0,0,0,0.18)]"
-              >
-                <span className="shrink-0 text-white">
-                  <CheckIcon />
-                </span>
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
+      <section className="border-b border-white/[0.06] bg-[#080b12]">
+        <div className="mx-auto grid max-w-[1320px] gap-8 px-4 py-20 sm:px-6 sm:py-24 lg:grid-cols-2 lg:px-8">
+          <div className="rounded-[26px] border border-white/[0.07] bg-white/[0.03] p-7"><p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-sky-300">Una regla útil</p><h2 className="mt-5 text-[36px] font-semibold leading-[1.02] tracking-[-0.05em] text-white">Verifica por otra vía.</h2><p className="mt-5 text-[15px] leading-8 text-slate-400">Si alguien dice ser tu banco, un familiar, una empresa o una plataforma y te pide dinero, códigos o datos, utiliza un canal que ya conocías o hayas obtenido de una fuente oficial.</p></div>
+          <div className="rounded-[26px] border border-white/[0.07] bg-white/[0.03] p-7"><p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Otra regla útil</p><h2 className="mt-5 text-[36px] font-semibold leading-[1.02] tracking-[-0.05em] text-white">No compartas secretos para comprobarlos.</h2><p className="mt-5 text-[15px] leading-8 text-slate-400">No pegues contraseñas, OTP, PIN, claves de recuperación ni tarjetas completas. Normalmente basta con el mensaje, remitente, dominio, importe o fragmento relevante.</p></div>
         </div>
       </section>
 
-      <ResourceSignup page="recursos" />
+      <ResourceSignup page="/recursos" locale="es" />
 
-      <section className="bg-zinc-950 text-white">
-        <div className="mx-auto max-w-[1500px] px-4 py-16 text-center sm:px-6 lg:px-8">
-          <h2 className="mx-auto max-w-5xl text-[48px] font-semibold leading-[0.98] tracking-[-0.064em] sm:text-[82px]">
-            ¿Tienes una duda real ahora?
-          </h2>
-
-          <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
-            Abre Vonu, pega el mensaje, sube el archivo o explica la situación.
-            Lo importante es revisar antes de actuar.
-          </p>
-
-          <Link
-            href="/chat"
-            className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
-          >
-            Abrir Vonu
-            <ArrowIcon />
-          </Link>
-        </div>
+      <section className="relative overflow-hidden bg-[#0a0d15]">
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500/[0.08] blur-[120px]" />
+        <div className="relative mx-auto max-w-[1320px] px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8"><h2 className="mx-auto max-w-[900px] text-[44px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[70px]">¿Tienes algo sospechoso delante? Analízalo ahora.</h2><Link href="/es/check" className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d]">Abrir Vonu Check <ArrowIcon /></Link></div>
       </section>
 
       <HomeFooter />

@@ -1,0 +1,132 @@
+{
+  "version": 1,
+  "purpose": "Adversarial near-neighbor corpus for Vonu Check. It stresses semantic generalisation, negation, quoted safety advice and small wording changes without turning ordinary messages into fraud. Expected ranges are product guardrails, not probabilities.",
+  "textCases": [
+    {
+      "id": "benign-family-urgent-known-context",
+      "locale": "es",
+      "text": "Mamá, hazme un Bizum de 20 € ahora que estoy en la caja del súper y me he dejado la cartera en casa. Luego te lo devuelvo.",
+      "expected": { "min": 0, "max": 39 },
+      "reason": "Urgency plus a routine family Bizum is still not enough without identity discontinuity, verification suppression or another corroborating mechanic."
+    },
+    {
+      "id": "family-third-party-verification-variant",
+      "locale": "es",
+      "text": "Mamá, soy Dani. No me llames porque estoy con el micrófono roto. Necesito 360 € hoy; haz el Bizum al número de mi compañero y luego te explico.",
+      "expected": { "min": 65, "max": 100 },
+      "reason": "Family identity plus money, third-party beneficiary and blocked verification should generalise without requiring the phrase 'número nuevo'."
+    },
+    {
+      "id": "family-temporary-account-variant",
+      "locale": "es",
+      "text": "Papá, soy Marta. He perdido el acceso a mi WhatsApp de siempre y estoy usando esta cuenta temporal. ¿Puedes transferirme 280 €? No escribas al otro número porque ya no lo controlo.",
+      "expected": { "min": 60, "max": 100 },
+      "reason": "Identity discontinuity can be a lost account or temporary channel, not only a new phone number."
+    },
+    {
+      "id": "benign-bank-safe-account-warning",
+      "locale": "es",
+      "text": "Aviso de seguridad: si alguien te pide mover tus ahorros a una cuenta segura o de protección, no lo hagas. Cuelga y llama tú mismo al banco desde la app oficial.",
+      "expected": { "min": 0, "max": 29 },
+      "reason": "A warning that explicitly tells the user not to perform the risky action must not be treated as a safe-account scam request."
+    },
+    {
+      "id": "bank-temporary-holding-iban",
+      "locale": "es",
+      "text": "Somos del equipo antifraude de su banco. Para aislar el saldo mientras revisamos el acceso, mueva ahora 6.200 € al IBAN temporal de custodia que le indicaremos. No contacte con su oficina hasta que terminemos.",
+      "expected": { "min": 80, "max": 100 },
+      "reason": "The safe-account mechanic should be recognised from semantically equivalent wording such as temporary custody or holding account."
+    },
+    {
+      "id": "otp-six-digits-without-code-word",
+      "locale": "es",
+      "text": "Para cerrar la operación necesito que me lea los seis dígitos que le acaban de aparecer en la notificación del móvil.",
+      "expected": { "min": 75, "max": 100 },
+      "reason": "An OTP disclosure request should be recognised even if the sender never says the words OTP, SMS or código."
+    },
+    {
+      "id": "benign-marketplace-stay-in-app",
+      "locale": "es",
+      "text": "Me interesa la bicicleta. Prefiero que hablemos y paguemos todo dentro de Wallapop; no quiero usar enlaces externos ni Bizum.",
+      "expected": { "min": 0, "max": 29 },
+      "reason": "Mentioning external links or Bizum in a refusal must not create an off-platform payment pattern."
+    },
+    {
+      "id": "marketplace-release-fee-variant",
+      "locale": "es",
+      "text": "Ya he pagado los 380 € por la cámara. Para que la plataforma libere el dinero a tu cuenta tienes que abonar antes 12,50 € de seguro en el enlace que te envío.",
+      "expected": { "min": 65, "max": 100 },
+      "reason": "The seller expects to receive money but is asked for an advance fee through a link to release it."
+    },
+    {
+      "id": "delivery-qr-customs-variant",
+      "locale": "es",
+      "text": "Su envío está retenido en aduanas. Escanee el QR adjunto y pague 2,37 € de gestión antes de 2 horas para evitar la devolución del paquete.",
+      "expected": { "min": 60, "max": 100 },
+      "reason": "Delivery, QR payment, small fee and urgency should be recognised without relying on a URL."
+    },
+    {
+      "id": "benign-remote-support-warning",
+      "locale": "es",
+      "text": "Recordatorio de TI: nuestro equipo nunca te pedirá instalar AnyDesk, Quick Assist ni compartir un código de acceso remoto por teléfono.",
+      "expected": { "min": 0, "max": 29 },
+      "reason": "Security advice mentioning remote-control tools is not a request to install or use them."
+    },
+    {
+      "id": "tech-support-quick-assist-variant",
+      "locale": "es",
+      "text": "Le llamo del soporte de Windows por una alerta crítica. Abra Asistencia rápida, introduzca la clave 817392 y acepte que tomemos el control del equipo para corregirlo.",
+      "expected": { "min": 75, "max": 100 },
+      "reason": "Remote-access social engineering should generalise beyond AnyDesk or a specific remote-control brand."
+    },
+    {
+      "id": "job-starter-kit-variant",
+      "locale": "es",
+      "text": "Tu candidatura ha sido aprobada para el puesto remoto. Para empezar debes comprar hoy el kit de incorporación de 59 €; después activaremos tu usuario y podrás cobrar por tarea.",
+      "expected": { "min": 60, "max": 100 },
+      "reason": "An upfront purchase or starter kit is economically equivalent to a job deposit."
+    },
+    {
+      "id": "benign-job-equipment-policy",
+      "locale": "es",
+      "text": "Has pasado a la segunda entrevista. Si finalmente te incorporas, la empresa te enviará el equipo sin coste. No tienes que adelantar dinero ni comprar material.",
+      "expected": { "min": 0, "max": 29 },
+      "reason": "A legitimate hiring message that explicitly rejects upfront payments should remain low risk."
+    },
+    {
+      "id": "supplier-new-iban-variant",
+      "locale": "es",
+      "text": "Para la factura pendiente de septiembre hemos cambiado de banco. Ignora el IBAN habitual y realiza el pago de 14.800 € en la nueva cuenta ES12 3456 7890 1234 5678 9012 indicada en este correo.",
+      "expected": { "min": 70, "max": 100 },
+      "reason": "A payment-destination change for an invoice should trigger the invoice-bank-change mechanic without needing a specific brand."
+    },
+    {
+      "id": "wallet-signature-airdrop-variant",
+      "locale": "es",
+      "text": "Tu wallet es elegible para el airdrop. Conéctala y firma ahora la autorización que aparece para verificar la dirección y reclamar los tokens antes de que cierre el cupo.",
+      "expected": { "min": 70, "max": 100 },
+      "reason": "Unexpected wallet approval plus a claim flow and urgency should be recognised as a dangerous Web3 mechanic."
+    },
+    {
+      "id": "benign-wallet-signature-warning",
+      "locale": "es",
+      "text": "Consejo de seguridad: no firmes autorizaciones inesperadas en tu wallet ni compartas tu frase semilla. Comprueba siempre el dominio antes de conectar la cartera.",
+      "expected": { "min": 0, "max": 29 },
+      "reason": "A safety warning that mentions wallet approvals and seed phrases must not be mistaken for a request to disclose or sign them."
+    },
+    {
+      "id": "overpayment-refund-variant",
+      "locale": "es",
+      "text": "Me equivoqué al hacer la transferencia: en vez de 450 € te mandé 650 €. Devuélveme ahora los 200 € de diferencia a este otro IBAN y luego revisamos el justificante.",
+      "expected": { "min": 65, "max": 100 },
+      "reason": "An alleged overpayment followed by an immediate refund request to another destination is a strong payment-risk mechanic."
+    },
+    {
+      "id": "quoted-scam-example-warning",
+      "locale": "es",
+      "text": "ALERTA ANTIFRAUDE: si recibes un mensaje que diga ‘transfiere tu dinero a una cuenta segura’ o ‘dime los seis dígitos’, no hagas caso. Son ejemplos de peticiones que debes rechazar.",
+      "expected": { "min": 0, "max": 29 },
+      "reason": "Quoted scam examples inside explicit safety guidance are adversarial false-positive traps and must stay low."
+    }
+  ]
+}

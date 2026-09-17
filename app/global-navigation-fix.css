@@ -1,0 +1,6 @@
+/* Keep full-screen mobile navigation above page content on every public header. */
+@media (max-width: 767px) {
+  header > div.fixed.inset-0 {
+    z-index: 10010 !important;
+  }
+}

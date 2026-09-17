@@ -1,24 +1,20 @@
 // app/layout.tsx
 import "./globals.css";
+import "./global-navigation-fix.css";
 import "katex/dist/katex.min.css";
+import "./vonu-blue-theme.css";
+import "./vonu-blue-uniform.css";
 import type { Metadata, Viewport } from "next";
 import { Inter, Space_Mono, Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import FunnelTelemetry from "./components/FunnelTelemetry";
+import CheckResultConversion from "./components/CheckResultConversion";
 
 const BASE_URL = "https://vonuai.com";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
-
-const spaceMono = Space_Mono({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-mono",
-});
-
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const spaceMono = Space_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-mono" });
 const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -29,68 +25,45 @@ const playfairDisplay = Playfair_Display({
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
-
   title: {
-    default: "VonuAI — Antes de actuar, pregúntale a Vonu",
-    template: "%s | VonuAI",
+    default: "Vonu — Comprueba antes de confiar",
+    template: "%s | Vonu",
   },
-
   description:
-    "VonuAI te ayuda a revisar mensajes, webs, contratos, facturas, documentos y situaciones delicadas antes de firmar, pagar, contestar o decidir.",
-
-  applicationName: "VonuAI",
-
-  keywords: [
-    "VonuAI",
-    "Vonu",
-    "comprobar web fiable",
-    "detectar estafa",
-    "analizar SMS sospechoso",
-    "revisar contrato",
-    "comprobar factura",
-    "detectar manipulación",
-    "asistente decisiones seguras",
-  ],
-
-  authors: [{ name: "VonuAI" }],
-  creator: "VonuAI",
-  publisher: "VonuAI",
-
-  alternates: {
-    canonical: "/",
-  },
-
+    "Vonu analiza URLs, capturas de pantalla y mensajes sospechosos para detectar señales de phishing, fraude y suplantación antes de que pagues, respondas o compartas datos.",
+  applicationName: "Vonu",
+  authors: [{ name: "Vonu", url: BASE_URL }],
+  creator: "Vonu",
+  publisher: "Vonu",
+  category: "security",
+  referrer: "origin-when-cross-origin",
   icons: {
-    icon: "/icon.png",
-    apple: "/apple-touch-icon.png",
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: "/icon.svg",
+    apple: "/icon.png",
   },
-
   openGraph: {
     type: "website",
     locale: "es_ES",
     url: BASE_URL,
-    siteName: "VonuAI",
-    title: "VonuAI — Antes de actuar, pregúntale a Vonu",
-    description:
-      "Revisa mensajes, webs, contratos, facturas, documentos y situaciones delicadas antes de firmar, pagar, contestar o decidir.",
+    siteName: "Vonu",
+    title: "Vonu — Comprueba antes de confiar",
+    description: "Analiza URLs, capturas y mensajes sospechosos para detectar señales de riesgo antes de actuar.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/api/og",
         width: 1200,
         height: 630,
-        alt: "VonuAI — Antes de actuar, pregúntale a Vonu",
+        alt: "Vonu — Comprueba antes de confiar",
       },
     ],
   },
-
   twitter: {
     card: "summary_large_image",
-    title: "VonuAI — Antes de actuar, pregúntale a Vonu",
-    description:
-      "Analiza dudas, riesgos y señales de alerta antes de firmar, pagar, contestar o decidir.",
-    images: ["/og-image.png"],
+    title: "Vonu — Comprueba antes de confiar",
+    description: "Analiza URLs, capturas y mensajes sospechosos para detectar señales de riesgo antes de actuar.",
+    images: ["/api/og"],
   },
-
   robots: {
     index: true,
     follow: true,
@@ -108,59 +81,63 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#020b24",
 };
 
-const organizationJsonLd = {
+const entityGraph = {
   "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "VonuAI",
-  alternateName: "Vonu",
-  url: BASE_URL,
-  logo: `${BASE_URL}/icon.png`,
-  email: "hello@vonuai.com",
-  sameAs: [],
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${BASE_URL}/#organization`,
+      name: "Vonu",
+      alternateName: "VonuAI",
+      url: BASE_URL,
+      description:
+        "Vonu develops preventive tools that analyse risk signals in websites, links, screenshots and suspicious messages.",
+      logo: {
+        "@type": "ImageObject",
+        "@id": `${BASE_URL}/#logo`,
+        url: `${BASE_URL}/icon.svg`,
+        contentUrl: `${BASE_URL}/icon.svg`,
+        caption: "Vonu",
+      },
+      email: "hello@vonuai.com",
+      knowsAbout: [
+        "phishing",
+        "online fraud",
+        "website risk analysis",
+        "suspicious links",
+        "smishing",
+        "impersonation scams",
+        "fake profiles",
+      ],
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${BASE_URL}/#website`,
+      name: "Vonu",
+      alternateName: "VonuAI",
+      url: BASE_URL,
+      description:
+        "Preventive tool for analysing suspicious URLs, screenshots and messages before a user pays, replies or shares data.",
+      publisher: { "@id": `${BASE_URL}/#organization` },
+      inLanguage: ["es", "en", "fr", "de", "ar"],
+    },
+  ],
 };
 
-const websiteJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: "VonuAI",
-  alternateName: "Vonu",
-  url: BASE_URL,
-  description:
-    "VonuAI te ayuda a revisar mensajes, webs, contratos, facturas, documentos y situaciones delicadas antes de firmar, pagar, contestar o decidir.",
-  inLanguage: "es",
-  potentialAction: {
-    "@type": "SearchAction",
-    target: `${BASE_URL}/recursos?q={search_term_string}`,
-    "query-input": "required name=search_term_string",
-  },
-};
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="es"
-      className={`${inter.variable} ${spaceMono.variable} ${playfairDisplay.variable}`}
-    >
+    <html lang="es" className={`${inter.variable} ${spaceMono.variable} ${playfairDisplay.variable}`}>
       <body className="font-sans">
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationJsonLd),
-          }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(entityGraph) }}
         />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(websiteJsonLd),
-          }}
-        />
-               {children}
+        <FunnelTelemetry />
+        <CheckResultConversion />
+        {children}
         <Analytics />
         <SpeedInsights />
       </body>

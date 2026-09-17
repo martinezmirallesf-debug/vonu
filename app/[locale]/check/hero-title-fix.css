@@ -1,0 +1,64 @@
+/* Final hero-title authority. Loaded last to neutralize legacy pseudo-content. */
+html[lang^="es"] main > section.text-center > h1::before,
+html[lang^="es"] main > section.text-center > h1::after {
+  content: none !important;
+  display: none !important;
+}
+
+html[lang^="es"] main > section.text-center > h1 {
+  font-size: 36px !important;
+}
+
+@media (min-width: 640px) {
+  html[lang^="es"] main > section.text-center > h1 {
+    font-size: 48px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  main > section.text-center > h1 {
+    width: min(966px, calc(100vw - 180px)) !important;
+    max-width: 966px !important;
+    text-wrap: wrap !important;
+  }
+
+  html[lang^="es"] main > section.text-center > h1 {
+    font-size: 56px !important;
+  }
+
+  /* French copy is materially longer: preserve the same width as the scanner,
+     but use a slightly smaller heading and tighter vertical rhythm so the CTA
+     remains fully visible above the footer. */
+  html[lang^="fr"] header + main:has(> section.text-center) {
+    padding-top: 28px !important;
+    padding-bottom: 8px !important;
+  }
+
+  html[lang^="fr"] main > section.text-center > h1 {
+    width: min(966px, calc(100vw - 180px)) !important;
+    max-width: 966px !important;
+    font-size: 48px !important;
+    line-height: 1 !important;
+    letter-spacing: -0.05em !important;
+    text-wrap: normal !important;
+  }
+
+  html[lang^="fr"] main > section.text-center > p {
+    margin-top: 12px !important;
+    line-height: 1.4 !important;
+  }
+
+  html[lang^="fr"] header + main:has(> section.text-center) > section:nth-of-type(2) {
+    margin-top: 18px !important;
+  }
+}
+
+@media (min-width: 1280px) {
+  html[lang^="es"] main > section.text-center > h1 {
+    font-size: 60px !important;
+  }
+
+  html[lang^="fr"] main > section.text-center > h1 {
+    font-size: 50px !important;
+  }
+}

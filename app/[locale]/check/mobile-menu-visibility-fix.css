@@ -1,0 +1,63 @@
+/* Final mobile-menu visibility fix. Keep the settled Check layout untouched and
+   make the mobile navigation a true viewport overlay. */
+@media (max-width: 767px) {
+  .vonu-check-page header {
+    overflow: visible !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Slightly shorten both burger strokes while closed, preserving the outer/right
+     alignment and the current stroke thickness. */
+  .vonu-check-page header > div:first-child > button[aria-expanded="false"] > span > span:first-child {
+    left: auto !important;
+    right: 0 !important;
+    width: 28px !important;
+  }
+
+  .vonu-check-page header > div:first-child > button[aria-expanded="false"] > span > span:last-child {
+    left: auto !important;
+    right: 0 !important;
+    width: 22px !important;
+  }
+
+  /* Keep the open X consistent with the shared HomeHeader on Check too. */
+  .vonu-check-page header > div:first-child > button[aria-expanded="true"] > span > span:last-child {
+    left: 2px !important;
+    right: auto !important;
+    width: 28px !important;
+  }
+
+  /* Full-screen mobile menu. The top bar remains above it via the existing
+     z-index rules, while the menu background covers the complete viewport. */
+  .vonu-check-page header > div:nth-child(2) {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    z-index: 10010 !important;
+    overflow: hidden !important;
+    background: #020b24 !important;
+  }
+
+  .vonu-check-page header > div:nth-child(2) > div {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    padding: 88px 24px 24px !important;
+    overflow-y: auto !important;
+  }
+
+  /* Match the mobile menu CTA corner radius to the home CTA instead of a pill.
+     This selector intentionally matches the higher-specificity legacy rule. */
+  .vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) > div > div:last-child > a:last-child {
+    border-radius: 12px !important;
+  }
+
+  /* Give the expandable-section + / − a clearly larger size. */
+  .vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) nav > div > button > span:last-child {
+    font-size: 26px !important;
+    line-height: 1 !important;
+  }
+}

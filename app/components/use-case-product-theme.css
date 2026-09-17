@@ -1,0 +1,191 @@
+/* Shared visual layer for the eight core Vonu use-case pages.
+   Scope is activated by HomeHeader through data-vonu-use-case="core". */
+
+main:has(> header[data-vonu-use-case="core"]) {
+  background: #020b24 !important;
+  color: #f8fafc !important;
+  overflow: hidden;
+}
+
+main:has(> header[data-vonu-use-case="core"]) > section {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+main:has(> header[data-vonu-use-case="core"]) section[class~="bg-[#f5f5f7]"] {
+  background: #020b24 !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) section[class~="bg-zinc-950"] {
+  background: #07142f !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) > section:first-of-type {
+  background:
+    radial-gradient(ellipse 58% 34% at 50% -2%, rgba(123, 183, 255, 0.15), transparent 72%),
+    radial-gradient(circle at 88% 38%, rgba(142, 194, 255, 0.07), transparent 30%),
+    #020b24 !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) > section:first-of-type > div[class*="max-w-[1500px]"] {
+  max-width: 1320px !important;
+  padding-top: 56px !important;
+  padding-bottom: 80px !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) > section:first-of-type h1 {
+  max-width: 1020px !important;
+  font-size: 50px !important;
+  line-height: 0.98 !important;
+  letter-spacing: -0.065em !important;
+  color: #fff !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) > section:first-of-type h1 [class~="text-zinc-500"] {
+  color: #94a3b8 !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) > section:first-of-type h1 + p {
+  max-width: 760px !important;
+  margin-top: 28px !important;
+  font-size: 17px !important;
+  line-height: 2rem !important;
+  color: #94a3b8 !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) [class~="bg-white"] {
+  background-color: #0d1b3d !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) [class~="bg-[#f5f5f7]"] {
+  background-color: #07142f !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) [class~="bg-[#e9edf1]"] {
+  background-color: #102044 !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) [class~="border-zinc-200"] {
+  border-color: rgba(140, 185, 255, 0.12) !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) [class~="text-zinc-950"],
+main:has(> header[data-vonu-use-case="core"]) [class~="text-zinc-900"] {
+  color: #f8fafc !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) [class~="text-zinc-800"] {
+  color: #e2e8f0 !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) [class~="text-zinc-700"],
+main:has(> header[data-vonu-use-case="core"]) [class~="text-zinc-600"] {
+  color: #94a3b8 !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) [class~="text-zinc-500"],
+main:has(> header[data-vonu-use-case="core"]) [class~="text-zinc-400"] {
+  color: #64748b !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) [class~="text-blue-600"],
+main:has(> header[data-vonu-use-case="core"]) [class~="text-blue-300"] {
+  color: #a3ceff !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) span[style*="background-image"] {
+  background-image: linear-gradient(90deg, #8ec2ff 0%, #7bb7ff 100%) !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) article,
+main:has(> header[data-vonu-use-case="core"]) details,
+main:has(> header[data-vonu-use-case="core"]) [class~="rounded-[34px]"],
+main:has(> header[data-vonu-use-case="core"]) [class~="rounded-[30px]"],
+main:has(> header[data-vonu-use-case="core"]) [class~="rounded-[38px]"],
+main:has(> header[data-vonu-use-case="core"]) [class~="rounded-[42px]"] {
+  border-radius: 26px !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) article,
+main:has(> header[data-vonu-use-case="core"]) details {
+  box-shadow: none !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) article:hover,
+main:has(> header[data-vonu-use-case="core"]) details:hover {
+  border-color: rgba(140, 185, 255, 0.18) !important;
+  background-color: rgba(123, 183, 255, 0.05) !important;
+  box-shadow: none !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) a[class~="bg-[#1a73e8]"],
+main:has(> header[data-vonu-use-case="core"]) button[class~="bg-[#1a73e8]"] {
+  background: #7bb7ff !important;
+  color: #07142f !important;
+  border-radius: 12px !important;
+  box-shadow: 0 9px 26px rgba(123, 183, 255, 0.22) !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) a[class~="bg-[#1a73e8]"]:hover,
+main:has(> header[data-vonu-use-case="core"]) button[class~="bg-[#1a73e8]"]:hover {
+  background: #a3ceff !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) a[class~="inline-flex"][class~="rounded-full"][class~="bg-white"][class~="border-zinc-200"] {
+  background: rgba(255, 255, 255, 0.045) !important;
+  color: #cbd5e1 !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) a[class~="inline-flex"][class~="rounded-full"][class~="bg-white"][class~="border-zinc-200"]:hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) [class~="shadow-sm"],
+main:has(> header[data-vonu-use-case="core"]) [class*="shadow-[0_1px_2px"],
+main:has(> header[data-vonu-use-case="core"]) [class*="shadow-[0_2px_5px"] {
+  box-shadow: none !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) details > summary span:last-child {
+  color: #a3ceff !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) input,
+main:has(> header[data-vonu-use-case="core"]) textarea {
+  border-color: rgba(140, 185, 255, 0.14) !important;
+  background: #081631 !important;
+  color: #f8fafc !important;
+}
+
+main:has(> header[data-vonu-use-case="core"]) input::placeholder,
+main:has(> header[data-vonu-use-case="core"]) textarea::placeholder {
+  color: #64748b !important;
+}
+
+@media (min-width: 640px) {
+  main:has(> header[data-vonu-use-case="core"]) > section:first-of-type > div[class*="max-w-[1500px]"] {
+    padding-top: 80px !important;
+    padding-bottom: 112px !important;
+  }
+
+  main:has(> header[data-vonu-use-case="core"]) > section:first-of-type h1 {
+    font-size: 76px !important;
+    line-height: 0.94 !important;
+  }
+
+  main:has(> header[data-vonu-use-case="core"]) > section:first-of-type h1 + p {
+    font-size: 19px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  main:has(> header[data-vonu-use-case="core"]) > section:first-of-type > div[class*="max-w-[1500px]"] {
+    padding-top: 96px !important;
+  }
+
+  main:has(> header[data-vonu-use-case="core"]) > section:first-of-type h1 {
+    font-size: 92px !important;
+  }
+}

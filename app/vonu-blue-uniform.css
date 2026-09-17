@@ -1,0 +1,306 @@
+/* Final Vonu blue authority.
+   Keep every public page canvas on the same navy as the header while preserving
+   cards, fields and semantic warning colours as separate surfaces. */
+
+html,
+body,
+.vonu-check-page,
+.vonu-premium-page {
+  background: var(--vonu-bg-main) !important;
+}
+
+/* Public pages previously alternated between several dark section colours.
+   They now use one continuous navy canvas, matching the header exactly. */
+[class*="bg-[#080b12]"],
+[class*="bg-[#0a0d15]"],
+[class*="bg-[#0b0e17]"],
+[class*="bg-[#0d101b]"],
+[class*="bg-[#111523]"] {
+  background-color: var(--vonu-bg-main) !important;
+}
+
+/* Dropdowns, cards and genuine elevated UI stay one step above the canvas. */
+[class*="bg-[#101522]"] {
+  background-color: var(--vonu-bg-elevated) !important;
+}
+
+/* Vonu Check used to carry a radial + linear background. The launch decision is
+   a completely flat navy canvas, identical from header to footer. */
+.vonu-check-page > div,
+[class*="bg-[#0d101b]"][style*="radial-gradient"],
+.vonu-check-page [style*="radial-gradient"] {
+  background-color: var(--vonu-bg-main) !important;
+  background-image: none !important;
+}
+
+/* Shared public-page canvases also stay on the same navy, without dark bands. */
+main:has(> header),
+main:has(> header) > section,
+main:has(> header) > section:first-of-type,
+main:has(> header[data-vonu-use-case="core"]),
+main:has(> header[data-vonu-use-case="core"]) > section,
+main:has(> header[data-vonu-use-case="core"]) > section:first-of-type {
+  background-color: var(--vonu-bg-main) !important;
+}
+
+/* Keep the public shell continuous across header, mobile overlay and footer. */
+header[class*="bg-[#0b0e17]"],
+footer[class*="bg-[#0b0e17]"],
+.vonu-check-compact-footer {
+  background: var(--vonu-bg-main) !important;
+  background-image: none !important;
+}
+
+/* Brand accents in navigation are blue everywhere, including legacy utility
+   names that still say emerald in the source. */
+header [class*="text-emerald-"] {
+  color: var(--vonu-accent-strong) !important;
+}
+
+header [class*="border-emerald-"] {
+  border-color: var(--vonu-accent-ring) !important;
+}
+
+header [class*="bg-emerald-"] {
+  background-color: var(--vonu-accent-soft) !important;
+}
+
+header a[class*="hover:text-emerald-"]:hover,
+header button[class*="hover:text-emerald-"]:hover {
+  color: var(--vonu-accent-hover) !important;
+}
+
+/* Primary analysis CTAs use the approved Vonu blue, never the old green. */
+.vonu-check-page button[class*="bg-emerald-400"]:not([class*="bg-emerald-400/"]),
+header a[class*="bg-emerald-400"]:not([class*="bg-emerald-400/"]),
+header button[class*="bg-emerald-400"]:not([class*="bg-emerald-400/"]) {
+  background: var(--vonu-accent) !important;
+  color: #07142f !important;
+  box-shadow: 0 10px 30px var(--vonu-accent-glow) !important;
+}
+
+.vonu-check-page button[class*="hover:bg-emerald-300"]:hover,
+header a[class*="hover:bg-emerald-300"]:hover,
+header button[class*="hover:bg-emerald-300"]:hover {
+  background: var(--vonu-accent-hover) !important;
+}
+
+@media (max-width: 767px) {
+  header > div.fixed.inset-0,
+  .vonu-check-page header > div:nth-child(2) {
+    background: var(--vonu-bg-main) !important;
+    background-image: none !important;
+  }
+
+  /* Mobile menu icon and close X use the approved neon Vonu blue. */
+  header button[aria-label="Menu"] > span > span,
+  header button[aria-label="Close"] > span > span {
+    background-color: var(--vonu-accent-strong) !important;
+  }
+
+  /* Match the mobile menu Analyze CTA to the home scanner button without
+     increasing the menu height, so the menu remains comfortably non-scrolling. */
+  header > div.fixed.inset-0 div.mt-auto > a[class*="bg-[#7bb7ff]"] {
+    display: inline-flex !important;
+    width: fit-content !important;
+    min-height: 44px !important;
+    margin-inline: auto !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    padding-inline: 1.25rem !important;
+    border-radius: 0.75rem !important;
+    background: var(--vonu-accent) !important;
+    color: #07142f !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 10px 30px var(--vonu-accent-glow) !important;
+  }
+
+  header > div.fixed.inset-0 div.mt-auto > a[class*="bg-[#7bb7ff]"]:hover {
+    background: var(--vonu-accent-hover) !important;
+  }
+
+  header > div.fixed.inset-0 div.mt-auto > a[class*="bg-[#7bb7ff]"] > span[aria-hidden="true"] {
+    display: none !important;
+  }
+
+  /* Language popovers are overlays, so opening them never increases the menu
+     height or causes the initial mobile menu to jump/scroll. */
+  .vonu-mobile-language {
+    position: relative !important;
+  }
+
+  .vonu-mobile-language-popover {
+    position: absolute !important;
+    inset-inline: 0 !important;
+    bottom: calc(100% + 8px) !important;
+    z-index: 10060 !important;
+    max-height: min(310px, 48dvh) !important;
+    overflow-y: auto !important;
+    border: 1px solid rgb(255 255 255 / 0.09) !important;
+    border-radius: 16px !important;
+    background: var(--vonu-bg-elevated) !important;
+    box-shadow: 0 24px 70px rgb(0 0 0 / 0.38) !important;
+  }
+
+  /* Keep every language option compact, equal-sized and centered. */
+  .vonu-mobile-language-popover a {
+    width: 170px !important;
+    margin-inline: auto !important;
+    justify-content: center !important;
+    gap: 1rem !important;
+    text-align: center !important;
+  }
+
+  .vonu-mobile-language-popover a[data-active="true"] {
+    border-color: var(--vonu-accent-ring) !important;
+    background: var(--vonu-accent-soft) !important;
+    color: var(--vonu-accent-hover) !important;
+  }
+}
+
+/* Brand wordmark micro-polish: make the VONU lettering slightly lighter while
+   leaving the geometric VonuMark icon completely untouched. */
+header a[aria-label="Vonu"] > span:last-child,
+footer span[class*="tracking-[0.08em]"] {
+  font-weight: 500 !important;
+}
+
+@media (max-width: 767px) {
+  /* Main mobile navigation: one subtle step smaller, preserving spacing. */
+  header > div.fixed.inset-0 > div > nav > a,
+  header > div.fixed.inset-0 > div > nav > div > button {
+    font-size: 25px !important;
+  }
+
+  /* Mobile navigation is white by default; only the current item or hover is blue. */
+  header > div.fixed.inset-0 > div > nav > a,
+  header > div.fixed.inset-0 > div > nav > div > button {
+    color: #ffffff !important;
+  }
+
+  header > div.fixed.inset-0 > div > nav > a[data-current="true"],
+  header > div.fixed.inset-0 > div > nav > div > button[data-current="true"],
+  header > div.fixed.inset-0 > div > nav > a:hover,
+  header > div.fixed.inset-0 > div > nav > div > button:hover {
+    color: var(--vonu-accent-strong) !important;
+  }
+
+  /* Keep the burger stroke thickness exactly as-is (2px), only shorten it. */
+  header button[aria-label="Menu"] > span > span:first-child {
+    width: 26px !important;
+  }
+
+  header button[aria-label="Menu"] > span > span:last-child {
+    width: 20px !important;
+  }
+
+  /* Close X: equal arms crossing at one centre point. Clear Tailwind's
+     individual translate/rotate first so the angles are not applied twice. */
+  header button[aria-label="Close"] > span > span:first-child {
+    top: 11px !important;
+    left: 5px !important;
+    width: 22px !important;
+    translate: none !important;
+    rotate: 45deg !important;
+    transform: none !important;
+    transform-origin: center !important;
+  }
+
+  header button[aria-label="Close"] > span > span:last-child {
+    top: 11px !important;
+    left: 5px !important;
+    width: 22px !important;
+    translate: none !important;
+    rotate: -45deg !important;
+    transform: none !important;
+    transform-origin: center !important;
+  }
+
+  /* The public-menu CTA now mirrors the home scanner CTA exactly in shape,
+     typography, colour and shadow. Its location below the main nav is kept. */
+  header > div.fixed.inset-0 > div > nav + a {
+    display: inline-flex !important;
+    width: fit-content !important;
+    min-height: 44px !important;
+    margin-inline: auto !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding-inline: 1.25rem !important;
+    border-radius: 0.75rem !important;
+    background: var(--vonu-accent) !important;
+    color: #07142f !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 9px 26px rgb(123 183 255 / 0.15) !important;
+  }
+
+  header > div.fixed.inset-0 > div > nav + a:hover {
+    background: var(--vonu-accent-hover) !important;
+  }
+}
+
+/* Final two mobile-only refinements requested in preview. */
+@media (max-width: 767px) {
+  /* Draw the close icon independently so both strokes are exactly equal. */
+  header button[aria-label="Close"] > span {
+    display: none !important;
+  }
+
+  header button[aria-label="Close"]::before,
+  header button[aria-label="Close"]::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 22px;
+    height: 2px;
+    border-radius: 9999px;
+    background: var(--vonu-accent-strong);
+    transform-origin: center;
+  }
+
+  header button[aria-label="Close"]::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  header button[aria-label="Close"]::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+  }
+
+  /* Conventional language formatting: “Español, ES”. */
+  .vonu-mobile-language-popover a {
+    gap: 0.35rem !important;
+  }
+
+  .vonu-mobile-language-popover a > span:first-child::after {
+    content: ",";
+  }
+}
+
+/* X-only hardening: render a single SVG-shaped mask so the two strokes can never drift apart. */
+@media (max-width: 767px) {
+  header button[aria-label="Close"] > span {
+    display: none !important;
+  }
+
+  header button[aria-label="Close"]::before {
+    content: "" !important;
+    display: block !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    width: 22px !important;
+    height: 22px !important;
+    transform: translate(-50%, -50%) !important;
+    background-color: var(--vonu-accent-strong) !important;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 5L19 19M19 5L5 19' stroke='black' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E") center / 22px 22px no-repeat !important;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 5L19 19M19 5L5 19' stroke='black' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E") center / 22px 22px no-repeat !important;
+  }
+
+  header button[aria-label="Close"]::after {
+    content: none !important;
+    display: none !important;
+  }
+}

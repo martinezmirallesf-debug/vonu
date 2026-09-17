@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
 import HomeHeader from "../../components/HomeHeader";
 import HomeFooter from "../../components/HomeFooter";
 import LegalPage from "../../components/LegalPage";
@@ -8,72 +7,20 @@ const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Aviso legal — VonuAI",
+  title: "Aviso legal — Vonu",
   description:
-    "Aviso legal de VonuAI: titularidad del servicio, condiciones de acceso, propiedad intelectual, responsabilidades y contacto legal.",
-  alternates: {
-    canonical: "/legal/aviso-legal",
-  },
+    "Aviso legal de Vonu: titularidad, objeto del servicio, propiedad intelectual, límites de responsabilidad y contacto.",
+  alternates: { canonical: "/legal/aviso-legal" },
   openGraph: {
-    title: "Aviso legal — VonuAI",
-    description:
-      "Información legal sobre la titularidad, uso y condiciones generales de VonuAI.",
+    title: "Aviso legal — Vonu",
+    description: "Información legal sobre la titularidad y el uso de Vonu.",
     url: `${siteUrl}/legal/aviso-legal`,
-    siteName: "VonuAI",
+    siteName: "Vonu",
     locale: "es_ES",
     type: "website",
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  robots: { index: true, follow: true },
 };
-
-type GradientTone = "blueCyan" | "blueGreen" | "purplePink";
-
-const gradientMap: Record<GradientTone, string> = {
-  blueCyan: "linear-gradient(90deg, #1A73E8 0%, #06B6D4 100%)",
-  blueGreen: "linear-gradient(90deg, #0A84FF 0%, #22C55E 100%)",
-  purplePink: "linear-gradient(90deg, #7C3AED 0%, #EC4899 100%)",
-};
-
-function GradientText({
-  children,
-  tone,
-}: {
-  children: ReactNode;
-  tone: GradientTone;
-}) {
-  return (
-    <span
-      className="inline align-baseline"
-      style={{
-        backgroundImage: gradientMap[tone],
-        WebkitBackgroundClip: "text",
-        backgroundClip: "text",
-        color: "transparent",
-        WebkitTextFillColor: "transparent",
-      }}
-    >
-      {children}
-    </span>
-  );
-}
-
-const legalHighlights = [
-  {
-    title: "Titularidad",
-    text: "Información sobre el titular del servicio, nombre comercial y canales de contacto.",
-  },
-  {
-    title: "Uso responsable",
-    text: "Condiciones básicas para acceder y utilizar VonuAI de forma lícita y adecuada.",
-  },
-  {
-    title: "Límites del servicio",
-    text: "VonuAI ofrece orientación preventiva, pero no sustituye a profesionales cualificados.",
-  },
-];
 
 export default function AvisoLegalPage() {
   const jsonLd = {
@@ -81,214 +28,99 @@ export default function AvisoLegalPage() {
     "@type": "WebPage",
     "@id": `${siteUrl}/legal/aviso-legal#webpage`,
     url: `${siteUrl}/legal/aviso-legal`,
-    name: "Aviso legal — VonuAI",
-    description:
-      "Aviso legal de VonuAI con información sobre titularidad, condiciones de acceso, propiedad intelectual, responsabilidades y contacto legal.",
+    name: "Aviso legal — Vonu",
+    description: "Información legal sobre la titularidad y el uso de Vonu.",
     inLanguage: "es-ES",
-    isPartOf: {
-      "@type": "WebSite",
-      name: "VonuAI",
-      url: siteUrl,
-    },
+    isPartOf: { "@type": "WebSite", name: "Vonu", url: siteUrl },
   };
 
   return (
     <main className="min-h-screen bg-[#f5f5f7] text-zinc-950">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <HomeHeader />
 
       <section className="bg-[#f5f5f7]">
         <div className="mx-auto max-w-[1500px] px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12 lg:px-8">
-          <div className="mx-auto max-w-[1120px] text-center">
-            <p className="text-[14px] font-semibold uppercase tracking-[0.18em] text-blue-600">
-              Legal
-            </p>
-
-            <h1 className="mx-auto mt-4 max-w-[1040px] text-[48px] font-semibold leading-[1.02] tracking-[-0.065em] text-zinc-950 sm:text-[86px] sm:leading-[0.94] sm:tracking-[-0.078em] lg:text-[118px]">
-              Aviso
-              <span className="block text-zinc-500">
-                <GradientText tone="blueCyan">legal.</GradientText>
-              </span>
-            </h1>
-
+          <div className="mx-auto max-w-[980px] text-center">
+            <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Legal</p>
+            <h1 className="mt-4 text-[52px] font-semibold leading-[0.98] tracking-[-0.06em] text-zinc-950 sm:text-[86px]">Aviso legal.</h1>
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
-              Información básica sobre el titular de VonuAI, el uso de la web,
-              las condiciones generales de acceso y los límites responsables del
-              servicio.
+              Quién presta Vonu, qué hace el servicio y cuáles son sus límites esenciales.
             </p>
-          </div>
-
-          <div className="mx-auto mt-10 grid max-w-6xl gap-5 sm:mt-14 md:grid-cols-3">
-            {legalHighlights.map((item) => (
-              <article
-                key={item.title}
-                className="rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)]"
-              >
-                <h2 className="text-[30px] font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950">
-                  {item.title === "Titularidad" ? (
-                    <GradientText tone="blueCyan">Titularidad</GradientText>
-                  ) : item.title === "Uso responsable" ? (
-                    <GradientText tone="blueGreen">Uso responsable</GradientText>
-                  ) : (
-                    <GradientText tone="purplePink">Límites del servicio</GradientText>
-                  )}
-                </h2>
-
-                <p className="mt-5 text-[15px] leading-7 text-zinc-600">
-                  {item.text}
-                </p>
-              </article>
-            ))}
+            <p className="mt-5 text-[13px] text-zinc-500">Última actualización: 16 de septiembre de 2026</p>
           </div>
         </div>
       </section>
 
-      <LegalPage
-        title="Aviso legal"
-        description="Información básica sobre el titular de VonuAI, el uso de la web y las condiciones generales de acceso."
-      >
+      <LegalPage title="Aviso legal" description="Información legal del servicio Vonu y del sitio vonuai.com.">
         <h2>1. Titularidad del servicio</h2>
-
         <p>
-          En cumplimiento de las obligaciones de información aplicables, se
-          informa de que este sitio web y el servicio VonuAI son titularidad de{" "}
-          <strong>Francisco Luis Martínez Miralles</strong>, actuando bajo el
-          nombre comercial <strong>VonuAI</strong>.
+          Este sitio web y el servicio <strong>Vonu</strong>, disponible en <strong>vonuai.com</strong>, son titularidad de <strong>Francisco Luis Martínez Miralles</strong>.
         </p>
-
         <ul>
-          <li>
-            <strong>Nombre comercial:</strong> VonuAI
-          </li>
-          <li>
-            <strong>Titular:</strong> Francisco Luis Martínez Miralles
-          </li>
-          <li>
-            <strong>Domicilio de contacto:</strong> Calle Velarde, 55, 03203
-            Elche, Alicante, España
-          </li>
-          <li>
-            <strong>Email general:</strong> hello@vonuai.com
-          </li>
-          <li>
-            <strong>Email legal:</strong> legal@vonuai.com
-          </li>
-          <li>
-            <strong>Dominios asociados:</strong> vonuai.com y sus subdominios
-            asociados
-          </li>
+          <li><strong>Titular:</strong> Francisco Luis Martínez Miralles</li>
+          <li><strong>NIF:</strong> 74235561W</li>
+          <li><strong>Domicilio de contacto:</strong> Calle Velarde, 55, 03203 Elche, Alicante, España</li>
+          <li><strong>Email general:</strong> hello@vonuai.com</li>
+          <li><strong>Email legal:</strong> legal@vonuai.com</li>
+          <li><strong>Dominio:</strong> vonuai.com y sus subdominios asociados</li>
         </ul>
 
-        <h2>2. Objeto de VonuAI</h2>
-
+        <h2>2. Objeto de Vonu</h2>
         <p>
-          VonuAI es una herramienta de orientación preventiva diseñada para
-          ayudar a los usuarios a revisar mensajes, enlaces, webs, documentos,
-          facturas, contratos, archivos y situaciones delicadas antes de firmar,
-          pagar, contestar o decidir.
+          Vonu es una herramienta de comprobación preventiva que ayuda a revisar mensajes, capturas de pantalla, enlaces y sitios web antes de confiar, responder, facilitar datos o realizar un pago.
+        </p>
+        <p>
+          El servicio combina análisis automatizado, modelos de inteligencia artificial, reglas internas de detección y, para determinados enlaces, comprobaciones técnicas y de reputación. Sus resultados describen señales observadas y un índice de riesgo orientativo; no certifican que una persona, empresa, mensaje o web sea legítima o fraudulenta.
         </p>
 
+        <h2>3. Acceso y uso</h2>
         <p>
-          El servicio puede ofrecer explicaciones, análisis de señales de
-          riesgo, resúmenes, preguntas útiles, próximos pasos y orientación
-          práctica. Su finalidad es ayudar al usuario a ganar claridad, no
-          sustituir su criterio ni reemplazar servicios profesionales.
+          El usuario debe utilizar Vonu de forma lícita y responsable, respetando la normativa aplicable y los derechos de terceros. No está permitido utilizar el servicio para fraude, suplantación, abuso, obtención indebida de credenciales, ataque a sistemas o vulneración de derechos de terceros.
         </p>
 
-        <h2>3. Acceso y uso del sitio web</h2>
-
+        <h2>4. Límites del servicio</h2>
         <p>
-          El acceso a este sitio web implica la aceptación de este aviso legal y
-          del resto de condiciones publicadas en la web. El usuario se compromete
-          a utilizar VonuAI de forma lícita, responsable y respetuosa con la
-          normativa aplicable, los derechos de terceros y el correcto
-          funcionamiento del servicio.
+          Vonu puede cometer errores, no disponer de contexto suficiente o no detectar amenazas nuevas. Una puntuación baja no constituye una garantía de seguridad y una puntuación alta no constituye por sí sola una prueba de delito o fraude.
         </p>
-
         <p>
-          No está permitido utilizar VonuAI para actividades ilícitas, abusivas,
-          fraudulentas, dañinas, discriminatorias, de acoso, de suplantación de
-          identidad, de vulneración de derechos de terceros o de obtención de
-          información sensible de manera indebida.
-        </p>
-
-        <h2>4. Naturaleza orientativa del servicio</h2>
-
-        <p>
-          VonuAI ofrece orientación preventiva y ayuda a analizar situaciones,
-          pero <strong>no sustituye</strong> a abogados, médicos, psicólogos,
-          asesores fiscales, fuerzas de seguridad, entidades financieras ni otros
-          profesionales cualificados.
-        </p>
-
-        <p>
-          En situaciones urgentes, de riesgo inmediato, emergencia médica,
-          amenaza, delito, pérdida económica relevante o conflicto legal
-          importante, el usuario debe contactar con los servicios de emergencia,
-          autoridades competentes, su banco o el profesional adecuado.
+          Si existe una pérdida económica, una posible suplantación, acceso no autorizado, amenaza o cualquier situación urgente, el usuario debe recurrir también al banco, plataforma, proveedor, autoridad o profesional competente según el caso.
         </p>
 
         <h2>5. Propiedad intelectual e industrial</h2>
-
         <p>
-          Los contenidos, textos, diseño, elementos visuales, marca, estructura,
-          código, logotipos y demás materiales propios de VonuAI están protegidos
-          por la normativa de propiedad intelectual e industrial, salvo que se
-          indique lo contrario.
+          La marca, diseño, textos propios, software, estructura, elementos visuales y demás materiales originales de Vonu están protegidos por la normativa aplicable. El uso del servicio no transfiere al usuario derechos de propiedad sobre esos elementos.
+        </p>
+        <p>
+          El usuario mantiene los derechos que le correspondan sobre el contenido que aporta y autoriza únicamente el tratamiento necesario para prestar las funciones solicitadas, de acuerdo con los Términos y la Política de privacidad.
         </p>
 
+        <h2>6. Servicios y fuentes de terceros</h2>
         <p>
-          El usuario no adquiere ningún derecho de propiedad sobre la web, la
-          marca o los elementos del servicio por el mero uso de VonuAI. Queda
-          prohibida la reproducción, distribución, comunicación pública,
-          transformación o explotación no autorizada de los contenidos propios de
-          VonuAI.
+          Algunas funciones dependen de proveedores tecnológicos, servicios de inteligencia artificial, infraestructura, bases de datos o fuentes técnicas de terceros. Vonu no controla la disponibilidad permanente de esos servicios ni puede garantizar que sus datos estén siempre completos o actualizados.
         </p>
 
-        <h2>6. Responsabilidad</h2>
-
+        <h2>7. Responsabilidad</h2>
         <p>
-          VonuAI trabaja para ofrecer información útil, clara y razonable, pero
-          no puede garantizar que todas las respuestas sean completas, exactas,
-          actualizadas o adecuadas para cualquier situación concreta. El usuario
-          debe valorar la información recibida, contrastarla cuando sea necesario
-          y tomar sus propias decisiones con responsabilidad.
+          Vonu aplica medidas razonables para ofrecer resultados útiles y comprensibles, pero no garantiza exactitud absoluta, disponibilidad ininterrumpida ni ausencia total de errores. El usuario debe valorar el contexto y verificar por canales oficiales antes de realizar acciones sensibles.
+        </p>
+        <p>
+          Nada de lo indicado en este aviso excluye o limita derechos o responsabilidades que no puedan excluirse conforme a la legislación aplicable.
         </p>
 
+        <h2>8. Legislación y consumidores</h2>
         <p>
-          VonuAI no será responsable de decisiones adoptadas exclusivamente a
-          partir de la información generada por el servicio, ni de daños
-          derivados de un uso indebido, descontextualizado o contrario a estas
-          condiciones.
+          Este sitio se gestiona desde España. La relación con los usuarios se regirá por la normativa aplicable, sin perjuicio de las normas imperativas de protección de consumidores y de los fueros que correspondan legalmente al usuario.
         </p>
 
-        <h2>7. Enlaces a terceros</h2>
-
+        <h2>9. Actualizaciones</h2>
         <p>
-          La web puede contener enlaces a sitios o servicios de terceros. VonuAI
-          no controla ni responde por el contenido, disponibilidad, políticas,
-          seguridad o prácticas de esos sitios externos.
+          Este aviso puede actualizarse para reflejar cambios legales, técnicos o de producto. La versión vigente será la publicada en esta página con su fecha de actualización.
         </p>
 
-        <h2>8. Modificaciones</h2>
-
+        <h2>10. Contacto</h2>
         <p>
-          VonuAI podrá actualizar este aviso legal y el resto de documentos
-          legales para adaptarlos a cambios normativos, técnicos, operativos o de
-          producto. La versión vigente será la publicada en esta página.
-        </p>
-
-        <h2>9. Contacto</h2>
-
-        <p>
-          Para cualquier cuestión relacionada con este aviso legal, puedes
-          escribir a <strong>legal@vonuai.com</strong>. Para consultas generales
-          o soporte, puedes usar la página de contacto o escribir a{" "}
-          <strong>hello@vonuai.com</strong>.
+          Para cuestiones legales puedes escribir a <strong>legal@vonuai.com</strong>. Para soporte o consultas generales, utiliza <strong>hello@vonuai.com</strong> o la página de contacto.
         </p>
       </LegalPage>
 

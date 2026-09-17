@@ -1,0 +1,197 @@
+/* Vonu Check — desktop one-screen product surface. */
+
+@media (min-width: 768px) {
+  /* Stable footprint: switching URL / Capture / Text must never move the hero or footer. */
+  section[class*="max-w-[850px]"] > div:last-child {
+    height: 242px;
+    min-height: 242px;
+  }
+
+  section[class*="max-w-[850px]"] > div:last-child > :first-child,
+  section[class*="max-w-[850px]"] > div:last-child > textarea:first-child {
+    min-height: 142px !important;
+    height: 142px !important;
+  }
+
+  section[class*="max-w-[850px]"] > div:last-child:has(> p) {
+    min-height: 242px;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Header proportions. */
+  header > div:first-child {
+    height: 76px !important;
+    max-width: 1450px !important;
+    padding-inline: 34px !important;
+  }
+
+  header nav {
+    gap: 34px !important;
+    font-size: 14px !important;
+  }
+
+  /* Lift the whole hero + scanner block upward while preserving the one-screen footer. */
+  header + main:has(> section.text-center) {
+    position: relative;
+    max-width: none !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+    padding: 58px 28px 28px !important;
+    overflow: hidden;
+  }
+
+  header + main:has(> section.text-center) > section:first-child {
+    position: relative;
+    z-index: 2;
+  }
+
+  header + main:has(> section.text-center) > section:first-child h1 {
+    max-width: 920px !important;
+    font-size: clamp(56px, 3.75vw, 64px) !important;
+    line-height: .995 !important;
+    letter-spacing: -.058em !important;
+  }
+
+  header + main:has(> section.text-center) > section:first-child p {
+    max-width: 760px !important;
+    margin-top: 18px !important;
+    font-size: 18px !important;
+    line-height: 1.55 !important;
+    color: rgb(148 163 184 / .92) !important;
+  }
+
+  /* Scanner geometry: no outer card, border, glow or enclosing box. */
+  header + main:has(> section.text-center) > section:nth-of-type(2) {
+    position: relative;
+    z-index: 3;
+    width: min(966px, calc(100vw - 180px)) !important;
+    max-width: 966px !important;
+    height: 312px;
+    margin-top: 30px !important;
+    overflow: visible;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Tabs. */
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child {
+    height: 69px;
+    padding: 0 22px !important;
+  }
+
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button {
+    height: 69px !important;
+    font-size: 16px !important;
+    gap: 10px !important;
+  }
+
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button > span:last-child {
+    bottom: 0 !important;
+    height: 3px !important;
+    inset-inline: 24% !important;
+  }
+
+  /* Content area stays exactly the same size in every mode. */
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:last-child {
+    box-sizing: border-box;
+    height: 242px !important;
+    min-height: 242px !important;
+    padding: 26px 30px 25px !important;
+  }
+
+  /* URL remains one clean inner field. */
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:last-child > div:first-child:not([class*="grid"]) {
+    min-height: 72px !important;
+    height: 72px !important;
+    border-radius: 18px !important;
+    background: rgba(7,12,24,.56) !important;
+    box-shadow: none !important;
+  }
+
+  header + main:has(> section.text-center) input[inputmode="url"] {
+    padding-block: 0 !important;
+    font-size: 17px !important;
+  }
+
+  /* Capture stays vertically centered. */
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:last-child > div.grid.min-h-\[138px\] {
+    height: 142px !important;
+    min-height: 142px !important;
+    padding-block: 6px !important;
+  }
+
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:last-child > div.grid.min-h-\[138px\] p:first-child {
+    font-size: 18px !important;
+  }
+
+  /* Text mode gets the same internal height as capture. */
+  header + main:has(> section.text-center) textarea {
+    height: 142px !important;
+    min-height: 142px !important;
+    max-height: 142px !important;
+  }
+
+  /* No decorative side ornaments. */
+  header + main:has(> section.text-center)::before,
+  header + main:has(> section.text-center)::after,
+  section[class*="max-w-[850px]"]::before,
+  section[class*="max-w-[850px]"]::after {
+    content: none !important;
+    display: none !important;
+    background-image: none !important;
+  }
+
+  /* Footer stays visible in the same viewport. */
+  footer {
+    height: 84px !important;
+    background: rgba(7,12,22,.44) !important;
+  }
+
+  footer > div {
+    height: 84px !important;
+    max-width: 1450px !important;
+    padding-inline: 34px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* Mobile remains functional and intentionally simpler than desktop. */
+@media (max-width: 767px) {
+  section[class*="max-w-[850px]"] > div:last-child {
+    min-height: 0;
+  }
+
+  /* Mobile scanner tabs use one short, commercial label per action.
+     Desktop copy is intentionally left unchanged. */
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button > span:nth-of-type(2) {
+    font-size: 0 !important;
+  }
+
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button > span:nth-of-type(2)::after {
+    font-size: 12px;
+  }
+
+  html[lang="es"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(1) > span:nth-of-type(2)::after { content: "Enlace"; }
+  html[lang="es"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(2) > span:nth-of-type(2)::after { content: "Captura"; }
+  html[lang="es"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(3) > span:nth-of-type(2)::after { content: "Mensaje"; }
+
+  html[lang="en"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(1) > span:nth-of-type(2)::after { content: "Link"; }
+  html[lang="en"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(2) > span:nth-of-type(2)::after { content: "Screenshot"; }
+  html[lang="en"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(3) > span:nth-of-type(2)::after { content: "Message"; }
+
+  html[lang="fr"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(1) > span:nth-of-type(2)::after { content: "Lien"; }
+  html[lang="fr"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(2) > span:nth-of-type(2)::after { content: "Capture"; }
+  html[lang="fr"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(3) > span:nth-of-type(2)::after { content: "Message"; }
+
+  html[lang="de"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(1) > span:nth-of-type(2)::after { content: "Link"; }
+  html[lang="de"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(2) > span:nth-of-type(2)::after { content: "Screenshot"; }
+  html[lang="de"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(3) > span:nth-of-type(2)::after { content: "Nachricht"; }
+
+  html[lang="ar"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(1) > span:nth-of-type(2)::after { content: "رابط"; }
+  html[lang="ar"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(2) > span:nth-of-type(2)::after { content: "لقطة"; }
+  html[lang="ar"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(3) > span:nth-of-type(2)::after { content: "رسالة"; }
+}
