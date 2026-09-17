@@ -159,6 +159,26 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
       return t.freeUsed;
     }
 
+    function findBalanceStatus() {
+      const tagged = document.querySelector<HTMLElement>('[data-vonu-entitlement-status="true"]');
+      if (tagged) return tagged;
+
+      const analyzeButton = document.querySelector<HTMLButtonElement>('button[data-vonu-analyze-cta="true"]');
+      const controlsRow = analyzeButton?.parentElement;
+      const siblingStatus = controlsRow?.querySelector<HTMLElement>(":scope > div:first-child span") ?? null;
+      if (siblingStatus) {
+        siblingStatus.dataset.vonuEntitlementStatus = "true";
+        return siblingStatus;
+      }
+
+      const expected = `✓ ${t.originalFreeLabel}`;
+      const fallback = Array.from(document.querySelectorAll<HTMLElement>("span")).find(
+        (element) => (element.textContent || "").trim() === expected,
+      ) || null;
+      if (fallback) fallback.dataset.vonuEntitlementStatus = "true";
+      return fallback;
+    }
+
     function applyEntitlementUi() {
       if (!entitlement || cancelled) return;
 
@@ -173,15 +193,7 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
         }
       });
 
-      let status = document.querySelector<HTMLElement>('[data-vonu-entitlement-status="true"]');
-      if (!status) {
-        const expected = `✓ ${t.originalFreeLabel}`;
-        status = Array.from(document.querySelectorAll<HTMLElement>("span")).find(
-          (element) => (element.textContent || "").trim() === expected,
-        ) || null;
-        if (status) status.dataset.vonuEntitlementStatus = "true";
-      }
-
+      const status = findBalanceStatus();
       if (status) {
         const desiredStatus = entitlementStatus(entitlement);
         if ((status.textContent || "").trim() !== desiredStatus) status.textContent = desiredStatus;
@@ -284,7 +296,7 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
     }
 
     const observer = new MutationObserver(() => applyEntitlementUi());
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
 
     void refreshEntitlement();
 
