@@ -19,6 +19,8 @@ import type { SupportedLocale } from "@/lib/vonu-check/types";
 import { localizedPublicPath } from "@/lib/vonu-global/routes";
 
 const siteUrl = "https://vonuai.com";
+const BRAND_ASSET_VERSION = "20260917-blue";
+const SOCIAL_IMAGE = `/api/og?v=${BRAND_ASSET_VERSION}`;
 const isProduction = process.env.VERCEL_ENV === "production";
 
 type Props = {
@@ -89,7 +91,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: selected.description,
       images: [
         {
-          url: "/api/og",
+          url: SOCIAL_IMAGE,
           width: 1200,
           height: 630,
           alt: selected.title,
@@ -100,7 +102,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: "summary_large_image",
       title: selected.title,
       description: selected.description,
-      images: ["/api/og"],
+      images: [SOCIAL_IMAGE],
     },
     robots: isProduction
       ? {
@@ -142,7 +144,7 @@ function getCheckJsonLd(locale: SupportedLocale) {
         publisher: { "@id": `${siteUrl}/#organization` },
         primaryImageOfPage: {
           "@type": "ImageObject",
-          url: `${siteUrl}/api/og`,
+          url: `${siteUrl}${SOCIAL_IMAGE}`,
           width: 1200,
           height: 630,
         },
