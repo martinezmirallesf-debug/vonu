@@ -157,3 +157,55 @@ header button[class*="hover:bg-emerald-300"]:hover {
     color: var(--vonu-accent-hover) !important;
   }
 }
+
+/* Brand wordmark micro-polish: make the VONU lettering slightly lighter while
+   leaving the geometric VonuMark icon completely untouched. */
+header a[aria-label="Vonu"] > span:last-child,
+footer span[class*="tracking-[0.08em]"] {
+  font-weight: 500 !important;
+}
+
+@media (max-width: 767px) {
+  /* Main mobile navigation: one subtle step smaller, preserving spacing. */
+  header > div.fixed.inset-0 > div > nav > a,
+  header > div.fixed.inset-0 > div > nav > div > button {
+    font-size: 25px !important;
+  }
+
+  /* Keep the burger stroke thickness exactly as-is (2px), only shorten it. */
+  header button[aria-label="Menu"] > span > span:first-child {
+    width: 26px !important;
+  }
+
+  header button[aria-label="Menu"] > span > span:last-child {
+    width: 20px !important;
+  }
+
+  /* The close X is slightly more compact, still centred and equally thick. */
+  header button[aria-label="Close"] > span > span {
+    left: 4px !important;
+    width: 24px !important;
+  }
+
+  /* The public-menu CTA now mirrors the home scanner CTA exactly in shape,
+     typography, colour and shadow. Its location below the main nav is kept. */
+  header > div.fixed.inset-0 > div > nav + a {
+    display: inline-flex !important;
+    width: fit-content !important;
+    min-height: 44px !important;
+    margin-inline: auto !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding-inline: 1.25rem !important;
+    border-radius: 0.75rem !important;
+    background: var(--vonu-accent) !important;
+    color: #07142f !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 9px 26px rgb(123 183 255 / 0.15) !important;
+  }
+
+  header > div.fixed.inset-0 > div > nav + a:hover {
+    background: var(--vonu-accent-hover) !important;
+  }
+}
