@@ -92,6 +92,12 @@ header button[class*="hover:bg-emerald-300"]:hover {
     background-image: none !important;
   }
 
+  /* Mobile menu icon and close X use the approved neon Vonu blue. */
+  header button[aria-label="Menu"] > span > span,
+  header button[aria-label="Close"] > span > span {
+    background-color: var(--vonu-accent-strong) !important;
+  }
+
   /* Language popovers are overlays, so opening them never increases the menu
      height or causes the initial mobile menu to jump/scroll. */
   .vonu-mobile-language {
@@ -109,6 +115,13 @@ header button[class*="hover:bg-emerald-300"]:hover {
     border-radius: 16px !important;
     background: var(--vonu-bg-elevated) !important;
     box-shadow: 0 24px 70px rgb(0 0 0 / 0.38) !important;
+  }
+
+  /* Keep language name + ISO code together and centered inside each option. */
+  .vonu-mobile-language-popover a {
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    text-align: center !important;
   }
 
   .vonu-mobile-language-popover a[data-active="true"] {
