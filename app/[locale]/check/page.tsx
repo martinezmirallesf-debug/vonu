@@ -229,6 +229,7 @@ export default async function LocalizedCheckPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <style dangerouslySetInnerHTML={{ __html: ".vonu-check-page footer:not(.vonu-check-compact-footer){display:none}" }} />
       <CheckClient locale={locale} />
       <DeviceAccessGate locale={locale} />
       <SubmissionNotice locale={locale} />
