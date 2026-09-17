@@ -13,8 +13,8 @@ type Copy = {
   analyze: string;
   analyzeFree: string;
   freeAvailable: string;
+  freeUsed: string;
   creditsAvailable: (count: number) => string;
-  noneAvailable: string;
   unknown: string;
   unknownSummary: string;
   technical: string;
@@ -31,8 +31,8 @@ const copy: Record<SupportedLocale, Copy> = {
     analyze: "Analizar ahora",
     analyzeFree: "Analizar gratis",
     freeAvailable: "1 análisis gratuito disponible",
+    freeUsed: "Análisis gratuito utilizado",
     creditsAvailable: (count) => `${count}/3 ${count === 1 ? "análisis disponible" : "análisis disponibles"}`,
-    noneAvailable: "0 análisis disponibles",
     unknown: "No concluyente",
     unknownSummary: "No hemos podido revisar suficiente contenido para dar una conclusión fiable. Esto no implica por sí solo que sea una estafa; revisa el motivo técnico que aparece abajo.",
     technical: "Qué hemos comprobado",
@@ -47,8 +47,8 @@ const copy: Record<SupportedLocale, Copy> = {
     analyze: "Analyse now",
     analyzeFree: "Analyse for free",
     freeAvailable: "1 free analysis available",
+    freeUsed: "Free analysis used",
     creditsAvailable: (count) => `${count}/3 ${count === 1 ? "analysis available" : "analyses available"}`,
-    noneAvailable: "0 analyses available",
     unknown: "Inconclusive",
     unknownSummary: "We could not review enough content to give a reliable conclusion. This does not by itself mean the site is a scam; check the technical reason shown below.",
     technical: "What we checked",
@@ -63,8 +63,8 @@ const copy: Record<SupportedLocale, Copy> = {
     analyze: "Analyser",
     analyzeFree: "Analyser gratuitement",
     freeAvailable: "1 analyse gratuite disponible",
+    freeUsed: "Analyse gratuite utilisée",
     creditsAvailable: (count) => `${count}/3 ${count === 1 ? "analyse disponible" : "analyses disponibles"}`,
-    noneAvailable: "0 analyse disponible",
     unknown: "Non concluant",
     unknownSummary: "Nous n’avons pas pu examiner assez de contenu pour donner une conclusion fiable. Cela ne signifie pas à lui seul qu’il s’agit d’une arnaque ; consultez la raison technique indiquée ci-dessous.",
     technical: "Ce que nous avons vérifié",
@@ -79,8 +79,8 @@ const copy: Record<SupportedLocale, Copy> = {
     analyze: "Jetzt analysieren",
     analyzeFree: "Kostenlos analysieren",
     freeAvailable: "1 kostenlose Analyse verfügbar",
+    freeUsed: "Kostenlose Analyse genutzt",
     creditsAvailable: (count) => `${count}/3 Analysen verfügbar`,
-    noneAvailable: "0 Analysen verfügbar",
     unknown: "Nicht eindeutig",
     unknownSummary: "Wir konnten nicht genug Inhalt prüfen, um eine verlässliche Schlussfolgerung zu geben. Das bedeutet für sich allein nicht, dass die Website betrügerisch ist; prüfe den unten angegebenen technischen Grund.",
     technical: "Was wir geprüft haben",
@@ -95,8 +95,8 @@ const copy: Record<SupportedLocale, Copy> = {
     analyze: "حلّل الآن",
     analyzeFree: "حلّل مجانًا",
     freeAvailable: "تحليل مجاني واحد متاح",
+    freeUsed: "تم استخدام التحليل المجاني",
     creditsAvailable: (count) => `${count}/3 تحليلات متاحة`,
-    noneAvailable: "0 تحليلات متاحة",
     unknown: "غير حاسم",
     unknownSummary: "لم نتمكن من مراجعة محتوى كافٍ لإعطاء نتيجة موثوقة. هذا لا يعني بحد ذاته أن الموقع احتيالي؛ راجع السبب التقني الموضح أدناه.",
     technical: "ما الذي تحققنا منه",
@@ -133,7 +133,7 @@ const subjectModeByLabel = new Map<string, "url" | "capture" | "text">([
 
 function currentLocale(): SupportedLocale | null {
   const match = window.location.pathname.match(/^\/(es|en|fr|de|ar)\/check\/?$/);
-  return match ? match[1] as SupportedLocale : null;
+  return match ? (match[1] as SupportedLocale) : null;
 }
 
 function entitlementFromData(data: any): EntitlementSnapshot {
@@ -144,28 +144,48 @@ function entitlementFromData(data: any): EntitlementSnapshot {
   };
 }
 
-function requestPath(input: RequestInfo | URL) {
-  if (typeof input === "string") return input;
-  if (input instanceof URL) return input.pathname;
-  return input.url;
-}
-
 function setText(element: Element | null | undefined, value: string) {
   if (element && (element.textContent || "").trim() !== value) element.textContent = value;
 }
 
 export default function CheckExperienceController() {
   useEffect(() => {
+    const initialLocale = currentLocale();
+    if (!initialLocale) return;
+
     let cancelled = false;
     let entitlement: EntitlementSnapshot | null = null;
-    let refreshTimer: number | null = null;
-    const previousFetch = window.fetch.bind(window);
+    let resultWasVisible = false;
+    let frame: number | null = null;
 
     function balanceLabel(locale: SupportedLocale, snapshot: EntitlementSnapshot) {
       const t = copy[locale];
       if (!snapshot.freeUsed && snapshot.creditsRemaining <= 0) return t.freeAvailable;
       if (snapshot.creditsRemaining > 0) return t.creditsAvailable(snapshot.creditsRemaining);
-      return t.noneAvailable;
+      if (snapshot.lifetimeAnalyses >= 4) return t.creditsAvailable(0);
+      return t.freeUsed;
+    }
+
+    function applyBalance(locale: SupportedLocale) {
+      if (!entitlement) return;
+      const t = copy[locale];
+      const button = Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find((candidate) => {
+        const label = (candidate.textContent || "").trim();
+        return candidate.dataset.vonuAnalyzeCta === "true" || analyzeLabels.has(label);
+      });
+      if (!button) return;
+
+      button.dataset.vonuAnalyzeCta = "true";
+      const freeAvailable = !entitlement.freeUsed && entitlement.creditsRemaining <= 0;
+      setText(button, freeAvailable ? t.analyzeFree : t.analyze);
+
+      const row = button.parentElement;
+      let status = row?.querySelector<HTMLElement>('[data-vonu-entitlement-status="true"]') || null;
+      if (!status) status = row?.querySelector<HTMLElement>("div span") || null;
+      if (status) {
+        status.dataset.vonuEntitlementStatus = "true";
+        setText(status, balanceLabel(locale, entitlement));
+      }
     }
 
     function applySubjectIcons() {
@@ -193,9 +213,7 @@ export default function CheckExperienceController() {
       const responseValue = (rows[1].querySelector("dd")?.textContent || "").trim();
       if (responseValue !== t.unavailable) return;
 
-      const summary = riskHeading.nextElementSibling;
-      setText(summary, t.unknownSummary);
-
+      setText(riskHeading.nextElementSibling, t.unknownSummary);
       setText(rows[0].querySelector("dt"), t.checkedUrl);
       setText(rows[2].querySelector("dd"), t.unavailable);
       setText(rows[3].querySelector("dd"), t.unavailable);
@@ -204,7 +222,8 @@ export default function CheckExperienceController() {
       const limitationsHeading = Array.from(document.querySelectorAll<HTMLHeadingElement>("h2")).find(
         (heading) => (heading.textContent || "").trim() === t.limitations,
       );
-      setText(limitationsHeading?.closest("section")?.querySelector("li"), `• ${t.unavailableLimitation}`);
+      const limitation = limitationsHeading?.closest("section")?.querySelector("li");
+      if (limitation) setText(limitation, `• ${t.unavailableLimitation}`);
 
       const newCheckButton = Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(
         (button) => t.newCheck.includes((button.textContent || "").trim()),
@@ -212,46 +231,17 @@ export default function CheckExperienceController() {
       setText(newCheckButton?.parentElement?.querySelector("p"), t.noScore);
     }
 
-    function applyConversionVisibility(snapshot: EntitlementSnapshot | null) {
-      const conversion = document.querySelector<HTMLElement>('[data-vonu-conversion-nudge="result"]');
-      if (!conversion) return;
-      const exhausted = Boolean(snapshot?.freeUsed) && Number(snapshot?.creditsRemaining || 0) <= 0;
-      const desired = exhausted ? "" : "none";
-      if (conversion.style.display !== desired) conversion.style.display = desired;
-    }
-
-    function apply() {
-      const locale = currentLocale();
-      if (!locale) return;
-      applySubjectIcons();
-      applyInconclusivePolish(locale);
-      applyConversionVisibility(entitlement);
-
-      if (!entitlement) return;
-      const t = copy[locale];
-      const button = Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find((candidate) => {
-        const label = (candidate.textContent || "").trim();
-        return candidate.dataset.vonuAnalyzeCta === "true" || analyzeLabels.has(label);
-      });
-      if (!button) return;
-
-      button.dataset.vonuAnalyzeCta = "true";
-      const freeAvailable = !entitlement.freeUsed && entitlement.creditsRemaining <= 0;
-      setText(button, freeAvailable ? t.analyzeFree : t.analyze);
-
-      const row = button.parentElement;
-      let status = row?.querySelector<HTMLElement>('[data-vonu-entitlement-status="true"]') || null;
-      if (!status) status = row?.querySelector<HTMLElement>("div span") || null;
-      if (status) {
-        status.dataset.vonuEntitlementStatus = "true";
-        setText(status, balanceLabel(locale, entitlement));
-      }
+    function hasResult(locale: SupportedLocale) {
+      const labels = copy[locale].newCheck;
+      return Array.from(document.querySelectorAll<HTMLButtonElement>("button")).some((button) =>
+        labels.includes((button.textContent || "").trim()),
+      );
     }
 
     async function refreshEntitlement() {
       if (cancelled || !currentLocale()) return;
       try {
-        const response = await previousFetch("/api/check/entitlement", {
+        const response = await fetch("/api/check/entitlement", {
           method: "GET",
           cache: "no-store",
         });
@@ -259,49 +249,53 @@ export default function CheckExperienceController() {
         if (cancelled || !response.ok || !data) return;
         entitlement = entitlementFromData(data);
         window.dispatchEvent(new CustomEvent("vonu:entitlement", { detail: entitlement }));
-        apply();
+        const locale = currentLocale();
+        if (locale) applyBalance(locale);
       } catch {
-        // The metered endpoint remains authoritative; keep the last known balance if refresh fails.
+        // Server-side metering remains authoritative if the balance refresh fails.
       }
     }
 
-    function scheduleRefresh(delay = 0) {
-      if (refreshTimer != null) window.clearTimeout(refreshTimer);
-      refreshTimer = window.setTimeout(() => {
-        refreshTimer = null;
-        void refreshEntitlement();
-      }, delay);
+    function applyAll() {
+      frame = null;
+      if (cancelled) return;
+      const locale = currentLocale();
+      if (!locale) return;
+
+      applyBalance(locale);
+      applySubjectIcons();
+      applyInconclusivePolish(locale);
+
+      const visible = hasResult(locale);
+      if (visible && !resultWasVisible) void refreshEntitlement();
+      resultWasVisible = visible;
     }
 
-    const patchedFetch: typeof window.fetch = async (input, init) => {
-      const response = await previousFetch(input, init);
-      if (/\/api\/check\/(web|image|text)(?:\?|$)/.test(requestPath(input))) {
-        scheduleRefresh(0);
-      }
-      return response;
-    };
-    window.fetch = patchedFetch;
+    function scheduleApply() {
+      if (frame != null) return;
+      frame = window.requestAnimationFrame(applyAll);
+    }
 
-    const observer = new MutationObserver(() => apply());
-    observer.observe(document.body, { childList: true, subtree: true });
+    const observer = new MutationObserver(scheduleApply);
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
 
-    const onFocus = () => scheduleRefresh(0);
+    const onFocus = () => void refreshEntitlement();
     const onVisibility = () => {
-      if (document.visibilityState === "visible") scheduleRefresh(0);
+      if (document.visibilityState === "visible") void refreshEntitlement();
     };
+
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisibility);
 
-    apply();
-    scheduleRefresh(0);
+    scheduleApply();
+    void refreshEntitlement();
 
     return () => {
       cancelled = true;
-      if (refreshTimer != null) window.clearTimeout(refreshTimer);
       observer.disconnect();
+      if (frame != null) window.cancelAnimationFrame(frame);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
-      if (window.fetch === patchedFetch) window.fetch = previousFetch;
     };
   }, []);
 

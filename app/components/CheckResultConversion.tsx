@@ -6,6 +6,12 @@ import { track } from "@vercel/analytics";
 import DevicePackCheckoutButton from "./DevicePackCheckoutButton";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 
+type EntitlementSnapshot = {
+  freeUsed: boolean;
+  creditsRemaining: number;
+  lifetimeAnalyses: number;
+};
+
 const copy: Record<SupportedLocale, { eyebrow: string; title: string; text: string; cta: string; newCheck: string[] }> = {
   es: {
     eyebrow: "Análisis adicionales",
@@ -52,15 +58,40 @@ function localeFromPath(): SupportedLocale {
     : "es";
 }
 
+function entitlementFromData(data: any): EntitlementSnapshot {
+  return {
+    freeUsed: Boolean(data?.free_used),
+    creditsRemaining: Math.max(0, Number(data?.credits_remaining || 0)),
+    lifetimeAnalyses: Math.max(0, Number(data?.lifetime_analyses || 0)),
+  };
+}
+
 export default function CheckResultConversion() {
   const [target, setTarget] = useState<HTMLElement | null>(null);
+  const [entitlement, setEntitlement] = useState<EntitlementSnapshot | null>(null);
   const locale = useMemo(localeFromPath, []);
   const t = copy[locale];
 
   useEffect(() => {
-    if (typeof window === "undefined" || !/^\/(es|en|fr|de|ar)\/check$/.test(window.location.pathname)) return;
+    if (typeof window === "undefined" || !/^\/(es|en|fr|de|ar)\/check\/?$/.test(window.location.pathname)) return;
 
+    let cancelled = false;
     let tracked = false;
+
+    const refreshEntitlement = async () => {
+      try {
+        const response = await fetch("/api/check/entitlement", { method: "GET", cache: "no-store" });
+        const data = await response.json().catch(() => null);
+        if (!cancelled && response.ok && data) setEntitlement(entitlementFromData(data));
+      } catch {
+        // Keep the offer hidden if the authoritative balance cannot be confirmed.
+      }
+    };
+
+    const onEntitlement = (event: Event) => {
+      const detail = (event as CustomEvent<EntitlementSnapshot>).detail;
+      if (detail && !cancelled) setEntitlement(detail);
+    };
 
     const locate = () => {
       const buttons = Array.from(document.querySelectorAll("button"));
@@ -85,13 +116,22 @@ export default function CheckResultConversion() {
       }
     };
 
+    window.addEventListener("vonu:entitlement", onEntitlement as EventListener);
     locate();
+    void refreshEntitlement();
+
     const observer = new MutationObserver(locate);
     observer.observe(document.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
+
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+      window.removeEventListener("vonu:entitlement", onEntitlement as EventListener);
+    };
   }, [locale, t.newCheck]);
 
-  if (!target) return null;
+  const exhausted = Boolean(entitlement?.freeUsed) && Number(entitlement?.creditsRemaining || 0) <= 0;
+  if (!target || !exhausted) return null;
 
   return createPortal(
     <section className="mt-6 overflow-hidden rounded-[24px] border border-emerald-400/15 bg-emerald-400/[0.045] p-5 shadow-[0_22px_60px_rgba(0,0,0,.18)] sm:p-6" data-vonu-conversion-nudge="result">
