@@ -3,6 +3,7 @@ import vm from "node:vm";
 import ts from "typescript";
 
 const routeSource = fs.readFileSync("app/api/check/web/route.ts", "utf8");
+const meteredSource = fs.readFileSync("app/api/check/metered/route.ts", "utf8");
 const signalsSource = fs.readFileSync("lib/vonu-check/web-signals.ts", "utf8");
 const enrichmentSource = fs.readFileSync("lib/vonu-check/web-enrichment.ts", "utf8");
 const externalSource = fs.readFileSync("lib/vonu-check/web-external.ts", "utf8");
@@ -22,10 +23,20 @@ requireSource(routeSource, "unsupported_protocol", "unsupported protocol rejecti
 requireSource(routeSource, "credentials_not_allowed", "credential URL rejection");
 requireSource(routeSource, "private_target", "private target rejection");
 requireSource(routeSource, "dns_not_found", "DNS failure classification");
+requireSource(routeSource, "dns_temporarily_unavailable", "transient DNS failure classification");
+requireSource(routeSource, "x-vonu-analysis-billable", "non-billable inconclusive result marker");
+requireSource(routeSource, "NON_BILLABLE_RESULT_ERRORS", "inconclusive network result set");
+requireSource(meteredSource, "explicitlyNonBillable", "meter honours non-billable successful result");
+requireSource(meteredSource, 'response.headers.get("x-vonu-analysis-billable") === "0"', "meter reads non-billable marker");
 requireSource(signalsSource, "MAX_REDIRECTS", "redirect cap");
 requireSource(signalsSource, "MAX_HTML_BYTES", "HTML byte cap");
 requireSource(signalsSource, "FETCH_TIMEOUT_MS", "fetch timeout");
 requireSource(signalsSource, "assertPublicHostname", "SSRF hostname guard");
+requireSource(signalsSource, "resolve4", "DNS resolver IPv4 path");
+requireSource(signalsSource, "resolve6", "DNS resolver IPv6 path");
+requireSource(signalsSource, "DNS_RETRY_DELAYS_MS", "DNS retry backoff");
+requireSource(signalsSource, "FETCH_RETRY_DELAYS_MS", "target fetch retry backoff");
+requireSource(signalsSource, "TRANSIENT_FETCH_CODES", "transient target network classification");
 requireSource(signalsSource, "externalForm", "external form signal");
 requireSource(signalsSource, "punycode", "punycode signal");
 requireSource(signalsSource, "noHttps", "HTTP signal");
@@ -102,4 +113,4 @@ const established = domainAgeSignal("es", { attempted: true, registeredDomain: "
 assertEqual(established?.tone, "positive", "established domain tone");
 assertEqual(established?.weight, 0, "established domain weight");
 
-console.log("VONU_WEB_CONTRACT_GREEN safety=1 reputation=2 domain_age=3 infra=4");
+console.log("VONU_WEB_CONTRACT_GREEN safety=1 reputation=2 domain_age=3 infra=4 resilience=5");
