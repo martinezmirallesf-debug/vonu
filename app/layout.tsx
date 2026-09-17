@@ -13,6 +13,7 @@ import DocumentLocaleSync from "./components/DocumentLocaleSync";
 
 const BASE_URL = "https://vonuai.com";
 const BRAND_ASSET_VERSION = "20260917-blue";
+const SOCIAL_IMAGE = `${BASE_URL}/api/og?v=${BRAND_ASSET_VERSION}`;
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const spaceMono = Space_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-mono" });
@@ -144,6 +145,14 @@ const entityGraph = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html suppressHydrationWarning className={`${inter.variable} ${spaceMono.variable} ${playfairDisplay.variable}`}>
+      <head>
+        <meta property="og:image" content={SOCIAL_IMAGE} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content="Vonu — comprueba antes de confiar" />
+        <meta name="twitter:image" content={SOCIAL_IMAGE} />
+        <meta name="twitter:image:alt" content="Vonu — comprueba antes de confiar" />
+      </head>
       <body className="font-sans">
         <DocumentLocaleSync />
         <script
