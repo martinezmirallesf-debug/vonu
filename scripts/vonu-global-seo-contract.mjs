@@ -3,11 +3,17 @@ import fs from "node:fs";
 const read = (path) => fs.readFileSync(path, "utf8");
 const sitemap = read("app/sitemap.ts");
 const robots = read("app/robots.ts");
+const rootLayout = read("app/layout.tsx");
 const header = read("app/components/GlobalPublicHeader.tsx");
 const localizedPage = read("app/components/LocalizedPublicPage.tsx");
+const intentPage = read("app/components/IntentPublicPage.tsx");
+const intentContent = read("lib/vonu-global/intent-content.ts");
 const localizedRoute = read("app/[locale]/[slug]/page.tsx");
 const checkPage = read("app/[locale]/check/page.tsx");
+const devicePricing = read("app/components/DevicePricingPage.tsx");
+const pricingSchema = read("app/components/PricingStructuredData.tsx");
 const routes = read("lib/vonu-global/routes.ts");
+const llms = read("public/llms.txt");
 
 function requireText(source, needle, label) {
   if (!source.includes(needle)) throw new Error(`${label}: missing ${JSON.stringify(needle)}`);
@@ -33,8 +39,66 @@ rejectText(localizedPage, "publicPath(", "localized page legacy route helper");
 
 requireText(localizedRoute, "localizedLanguageAlternates(slug)", "page hreflang");
 requireText(localizedRoute, "localizedPublicPath(locale, slug)", "page canonical");
+requireText(localizedRoute, 'slug === "precios"', "localized pricing interception");
+requireText(localizedRoute, "<DevicePricingPage locale={locale} />", "localized device pricing model");
+requireText(localizedRoute, "<PricingStructuredData locale={locale} />", "localized pricing schema");
+requireText(localizedRoute, "isIntentSlug(slug)", "intent routing");
+requireText(localizedRoute, "<IntentPublicPage locale={locale} slug={slug} />", "deep intent template");
+
 requireText(checkPage, '"x-default": `${siteUrl}/check`', "check x-default");
 requireText(checkPage, "supportedLocales.map", "check locale alternates");
+requireText(checkPage, '"@type": "WebApplication"', "check web application schema");
+requireText(checkPage, 'price: "3.99"', "check paid offer price");
+requireText(checkPage, 'price: "0"', "check free offer price");
+requireText(checkPage, '"@type": "UseAction"', "check use action");
+
+requireText(devicePricing, 'packPrice: "€3.99"', "English pack price");
+requireText(devicePricing, 'packPrice: "3,99 €"', "European pack price");
+requireText(devicePricing, 'packPrice: "3.99 €"', "Arabic pack price");
+requireText(devicePricing, "No subscription", "English no-subscription copy");
+requireText(devicePricing, "Sans abonnement", "French no-subscription copy");
+requireText(devicePricing, "Kein Abo", "German no-subscription copy");
+requireText(devicePricing, "بدون اشتراك", "Arabic no-subscription copy");
+rejectText(devicePricing, "9,99€", "legacy Plus price");
+rejectText(devicePricing, "19,99€", "legacy Max price");
+
+requireText(pricingSchema, 'price: "0"', "pricing free offer schema");
+requireText(pricingSchema, 'price: "3.99"', "pricing paid offer schema");
+requireText(pricingSchema, 'priceCurrency: "EUR"', "pricing currency schema");
+
+const requiredIntents = [
+  "comprobar-web-fiable",
+  "comprobar-tienda-online",
+  "analizar-link-sospechoso",
+  "analizar-captura-pantalla",
+  "analizar-sms-estafa",
+  "email-sospechoso-estafa",
+  "detectar-perfil-falso",
+  "comprobar-inversion-estafa",
+  "revisar-contrato",
+  "revisar-contrato-alquiler",
+  "comprobar-factura",
+  "detectar-manipulacion",
+  "estafas-criptomonedas",
+  "llamada-banco-codigo-sms",
+  "es-fiable",
+];
+for (const slug of requiredIntents) {
+  requireText(intentContent, `"${slug}"`, `intent coverage ${slug}`);
+}
+for (const locale of ["es", "en", "fr", "de", "ar"]) {
+  requireText(intentContent, `${locale}: {`, `intent locale ${locale}`);
+}
+requireText(intentPage, 'id="answer"', "answer-first block");
+requireText(intentPage, '"@type": "ItemList"', "intent signal list schema");
+requireText(intentPage, '"@type": "FAQPage"', "intent FAQ semantics");
+requireText(intentPage, '"@type": "UseAction"', "intent conversion action");
+requireText(intentPage, "content.related.map", "intent internal links");
+
+requireText(rootLayout, "<DocumentLocaleSync />", "document locale synchronization");
+rejectText(rootLayout, '<html lang="es"', "hardcoded Spanish document language");
+requireText(rootLayout, "availableLanguage", "organization language support");
+requireText(rootLayout, "knowsLanguage", "organization language graph");
 
 requireText(robots, 'sitemap: `${BASE_URL}/sitemap.xml`', "robots sitemap");
 requireText(robots, "allow: \"/\"", "robots crawl allow");
@@ -48,7 +112,15 @@ for (const [locale, expected] of [
 ]) {
   requireText(routes, expected, `${locale} route map`);
 }
-
 requireText(routes, '"x-default": `https://vonuai.com${localizedPublicPath("es", slug)}`', "public x-default");
 
-console.log("VONU_GLOBAL_SEO_CONTRACT_GREEN routing=4 sitemap=1 hreflang=2 navigation=3 robots=3");
+requireText(llms, "3 additional analyses for EUR 3.99", "llms current commercial model");
+requireText(llms, "There is no subscription or automatic renewal", "llms no-subscription model");
+requireText(llms, "https://vonuai.com/en/is-this-website-safe", "llms localized English route");
+requireText(llms, "https://vonuai.com/fr/site-est-il-fiable", "llms localized French route");
+requireText(llms, "https://vonuai.com/de/website-serioes-pruefen", "llms localized German route");
+requireText(llms, "https://vonuai.com/ar/check-website", "llms localized Arabic route");
+rejectText(llms, "Plus (€9.99", "llms legacy Plus model");
+rejectText(llms, "Max (€19.99", "llms legacy Max model");
+
+console.log(`VONU_GLOBAL_SEO_CONTRACT_GREEN intents=${requiredIntents.length} locales=5 pricing=2 schema=4 routing=4`);
