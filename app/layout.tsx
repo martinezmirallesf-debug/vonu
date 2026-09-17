@@ -10,6 +10,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import FunnelTelemetry from "./components/FunnelTelemetry";
 import CheckResultConversion from "./components/CheckResultConversion";
+import DocumentLocaleSync from "./components/DocumentLocaleSync";
 
 const BASE_URL = "https://vonuai.com";
 
@@ -103,6 +104,13 @@ const entityGraph = {
         caption: "Vonu",
       },
       email: "hello@vonuai.com",
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "customer support",
+        email: "hello@vonuai.com",
+        availableLanguage: ["Spanish", "English", "French", "German", "Arabic"],
+      },
+      knowsLanguage: ["es", "en", "fr", "de", "ar"],
       knowsAbout: [
         "phishing",
         "online fraud",
@@ -111,6 +119,9 @@ const entityGraph = {
         "smishing",
         "impersonation scams",
         "fake profiles",
+        "online shopping scams",
+        "investment scams",
+        "cryptocurrency scams",
       ],
     },
     {
@@ -129,8 +140,9 @@ const entityGraph = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${inter.variable} ${spaceMono.variable} ${playfairDisplay.variable}`}>
+    <html suppressHydrationWarning className={`${inter.variable} ${spaceMono.variable} ${playfairDisplay.variable}`}>
       <body className="font-sans">
+        <DocumentLocaleSync />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(entityGraph) }}
