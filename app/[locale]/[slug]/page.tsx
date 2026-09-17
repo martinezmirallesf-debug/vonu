@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import LocalizedPublicPage from "@/app/components/LocalizedPublicPage";
 import IntentPublicPage from "@/app/components/IntentPublicPage";
 import DevicePricingPage from "@/app/components/DevicePricingPage";
+import PricingStructuredData from "@/app/components/PricingStructuredData";
 import GlobalPublicHeader from "@/app/components/GlobalPublicHeader";
 import HomeFooter from "@/app/components/HomeFooter";
 import {
@@ -116,6 +117,7 @@ export default async function GlobalLocalizedPage({ params }: Props) {
   if (slug === "precios") {
     return (
       <>
+        <PricingStructuredData locale={locale} />
         <GlobalPublicHeader locale={locale} slug="precios" />
         <DevicePricingPage locale={locale} />
         <HomeFooter />
