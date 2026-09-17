@@ -98,6 +98,33 @@ header button[class*="hover:bg-emerald-300"]:hover {
     background-color: var(--vonu-accent-strong) !important;
   }
 
+  /* Match the mobile menu Analyze CTA to the home scanner button without
+     increasing the menu height, so the menu remains comfortably non-scrolling. */
+  header > div.fixed.inset-0 div.mt-auto > a[class*="bg-[#7bb7ff]"] {
+    display: inline-flex !important;
+    width: fit-content !important;
+    min-height: 44px !important;
+    margin-inline: auto !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    padding-inline: 1.25rem !important;
+    border-radius: 0.75rem !important;
+    background: var(--vonu-accent) !important;
+    color: #07142f !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 10px 30px var(--vonu-accent-glow) !important;
+  }
+
+  header > div.fixed.inset-0 div.mt-auto > a[class*="bg-[#7bb7ff]"]:hover {
+    background: var(--vonu-accent-hover) !important;
+  }
+
+  header > div.fixed.inset-0 div.mt-auto > a[class*="bg-[#7bb7ff]"] > span[aria-hidden="true"] {
+    display: none !important;
+  }
+
   /* Language popovers are overlays, so opening them never increases the menu
      height or causes the initial mobile menu to jump/scroll. */
   .vonu-mobile-language {
