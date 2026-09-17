@@ -169,7 +169,13 @@ export default function HomeHeader() {
             {mainLinks.map((item) =>
               item.hasMenu ? (
                 <div key={item.slug}>
-                  <button type="button" onClick={() => setCasesOpen((value) => !value)} className="flex min-h-[60px] w-full items-center justify-between py-3 text-left text-[26px] font-semibold leading-none tracking-[-0.045em] text-white" aria-expanded={casesOpen}>
+                  <button
+                    type="button"
+                    onClick={() => setCasesOpen((value) => !value)}
+                    data-current={currentSlug === item.slug ? "true" : "false"}
+                    className="flex min-h-[60px] w-full items-center justify-between py-3 text-left text-[26px] font-semibold leading-none tracking-[-0.045em] text-white"
+                    aria-expanded={casesOpen}
+                  >
                     <span>{item.label}</span>
                     <span className="text-[26px] font-light leading-none text-emerald-300">{casesOpen ? "−" : "+"}</span>
                   </button>
@@ -184,7 +190,13 @@ export default function HomeHeader() {
                   )}
                 </div>
               ) : (
-                <Link key={item.slug} href={localizedPublicPath(locale, item.slug)} onClick={closeMenu} className="flex min-h-[60px] items-center py-3 text-[26px] font-semibold leading-none tracking-[-0.045em] text-white transition hover:text-emerald-300">
+                <Link
+                  key={item.slug}
+                  href={localizedPublicPath(locale, item.slug)}
+                  onClick={closeMenu}
+                  data-current={currentSlug === item.slug ? "true" : "false"}
+                  className="flex min-h-[60px] items-center py-3 text-[26px] font-semibold leading-none tracking-[-0.045em] text-white transition hover:text-emerald-300"
+                >
                   {item.label}
                 </Link>
               ),
