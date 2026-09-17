@@ -24,6 +24,128 @@ const analyzeLabels = new Set([
   "حلّل مجانًا",
 ]);
 
+const subjectModeByLabel = new Map<string, "url" | "capture" | "text">([
+  ["Enlace analizado", "url"],
+  ["Analysed link", "url"],
+  ["Lien analysé", "url"],
+  ["Analysierter Link", "url"],
+  ["الرابط الذي تم تحليله", "url"],
+  ["Captura analizada", "capture"],
+  ["Analysed screenshot", "capture"],
+  ["Capture analysée", "capture"],
+  ["Analysierter Screenshot", "capture"],
+  ["لقطة الشاشة التي تم تحليلها", "capture"],
+  ["Mensaje analizado", "text"],
+  ["Analysed message", "text"],
+  ["Message analysé", "text"],
+  ["Analysierte Nachricht", "text"],
+  ["الرسالة التي تم تحليلها", "text"],
+]);
+
+const experienceCss = `
+.vonu-check-page main > section[data-vonu-subject-mode] > :first-child {
+  display: none !important;
+}
+
+.vonu-check-page main > section[data-vonu-subject-mode]::before {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  align-self: center;
+  border-radius: 12px;
+  border: 1px solid rgba(123, 183, 255, .28);
+  background-color: rgba(123, 183, 255, .065);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 22px 22px;
+  box-shadow: inset 0 0 0 1px rgba(123, 183, 255, .025);
+}
+
+.vonu-check-page main > section[data-vonu-subject-mode="url"]::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71' stroke='%237bb7ff' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71' stroke='%237bb7ff' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.vonu-check-page main > section[data-vonu-subject-mode="capture"]::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect x='3' y='3' width='18' height='18' rx='2.5' stroke='%237bb7ff' stroke-width='1.9'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5' stroke='%237bb7ff' stroke-width='1.8'/%3E%3Cpath d='m21 15-5-5L5 21' stroke='%237bb7ff' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.vonu-check-page main > section[data-vonu-subject-mode="text"]::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z' stroke='%237bb7ff' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M7.5 8.5h9M7.5 12.5h6' stroke='%237bb7ff' stroke-width='1.9' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+.vonu-check-page [data-vonu-radar="true"] {
+  isolation: isolate;
+}
+
+.vonu-check-page [data-vonu-radar="true"]::before,
+.vonu-check-page [data-vonu-radar="true"]::after {
+  content: "";
+  position: absolute;
+  z-index: 4;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  pointer-events: none;
+  animation: vonuRadarBlip 1.65s ease-in-out infinite;
+}
+
+.vonu-check-page [data-vonu-radar="true"]::before {
+  left: 31%;
+  top: 27%;
+  background: #7bb7ff;
+  box-shadow:
+    55px 24px 0 -1px rgba(123, 183, 255, .82),
+    -13px 58px 0 -1px rgba(52, 211, 153, .78);
+}
+
+.vonu-check-page [data-vonu-radar="true"]::after {
+  left: 69%;
+  top: 63%;
+  background: #34d399;
+  animation-delay: .48s;
+  box-shadow:
+    -64px -18px 0 -1px rgba(52, 211, 153, .78),
+    -26px 35px 0 -1px rgba(123, 183, 255, .72);
+}
+
+.vonu-check-page [data-vonu-progress="true"] {
+  position: relative !important;
+}
+
+.vonu-check-page [data-vonu-progress="true"] > div {
+  position: absolute !important;
+  inset-block: 0 !important;
+  inset-inline-start: 0 !important;
+  width: 38% !important;
+  animation: vonuProgressSweep 1.25s ease-in-out infinite !important;
+  will-change: transform, opacity;
+}
+
+html[dir="rtl"] .vonu-check-page [data-vonu-progress="true"] > div {
+  animation-name: vonuProgressSweepRtl !important;
+}
+
+@keyframes vonuRadarBlip {
+  0%, 100% { opacity: .22; transform: scale(.72); filter: drop-shadow(0 0 0 rgba(123,183,255,0)); }
+  45% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 7px rgba(123,183,255,.7)); }
+  68% { opacity: .55; transform: scale(.86); }
+}
+
+@keyframes vonuProgressSweep {
+  0% { transform: translateX(-130%); opacity: .45; }
+  45% { opacity: 1; }
+  100% { transform: translateX(300%); opacity: .55; }
+}
+
+@keyframes vonuProgressSweepRtl {
+  0% { transform: translateX(130%); opacity: .45; }
+  45% { opacity: 1; }
+  100% { transform: translateX(-300%); opacity: .55; }
+}
+`;
+
 const copy: Record<SupportedLocale, {
   eyebrow: string;
   title: string;
@@ -200,6 +322,43 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
       }
     }
 
+    function applyVisualMarkers() {
+      document.querySelectorAll<HTMLElement>("main > section").forEach((section) => {
+        const label = section.querySelector<HTMLElement>(":scope > div:nth-child(2) > p:first-child");
+        const mode = subjectModeByLabel.get((label?.textContent || "").trim());
+        if (mode && section.dataset.vonuSubjectMode !== mode) {
+          section.dataset.vonuSubjectMode = mode;
+        }
+      });
+
+      const radar = Array.from(document.querySelectorAll<HTMLElement>("main div")).find(
+        (element) =>
+          element.classList.contains("relative") &&
+          element.classList.contains("mx-auto") &&
+          element.classList.contains("h-40") &&
+          element.classList.contains("w-40"),
+      );
+
+      if (radar) {
+        radar.dataset.vonuRadar = "true";
+        const panel = radar.parentElement;
+        const progress = panel
+          ? Array.from(panel.children).find(
+              (child) =>
+                child instanceof HTMLElement &&
+                child.classList.contains("h-1") &&
+                child.classList.contains("overflow-hidden"),
+            )
+          : null;
+        if (progress instanceof HTMLElement) progress.dataset.vonuProgress = "true";
+      }
+    }
+
+    function applyUi() {
+      applyEntitlementUi();
+      applyVisualMarkers();
+    }
+
     async function refreshEntitlement() {
       try {
         const response = await originalFetch("/api/check/entitlement", {
@@ -209,7 +368,7 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
         const data = await response.json().catch(() => null);
         if (cancelled || !response.ok || !data) return null;
         entitlement = entitlementFromData(data);
-        applyEntitlementUi();
+        applyUi();
         return entitlement;
       } catch {
         return null;
@@ -229,7 +388,7 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
 
           if (response.ok && data) {
             entitlement = entitlementFromData(data);
-            applyEntitlementUi();
+            applyUi();
 
             if (entitlement.creditsRemaining > 0) {
               setPaymentState("ready");
@@ -276,7 +435,7 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
         const data = await response.json().catch(() => null);
         if (response.ok && data) {
           entitlement = entitlementFromData(data);
-          applyEntitlementUi();
+          applyUi();
           shouldOpenPaywall = entitlement.freeUsed && entitlement.creditsRemaining <= 0;
         }
       } catch {
@@ -295,9 +454,10 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
       button.click();
     }
 
-    const observer = new MutationObserver(() => applyEntitlementUi());
+    const observer = new MutationObserver(applyUi);
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
 
+    applyVisualMarkers();
     void refreshEntitlement();
 
     const params = new URLSearchParams(window.location.search);
@@ -343,24 +503,35 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
 
   return (
     <>
+      <style>{experienceCss}</style>
+
       {paymentMessage && (
         <div
+          role="status"
+          aria-live="polite"
           className={[
-            "fixed inset-x-3 top-3 z-[90] mx-auto max-w-xl rounded-2xl px-4 py-3 text-center text-sm shadow-2xl backdrop-blur",
+            "fixed inset-x-3 top-[calc(env(safe-area-inset-top)+10px)] z-[10080] mx-auto flex max-w-xl items-center justify-center rounded-2xl px-12 py-3.5 text-center text-[13px] leading-5 shadow-2xl backdrop-blur sm:top-4 sm:text-sm",
             paymentState === "delayed"
-              ? "border border-amber-400/25 bg-[#1c1710]/95 text-amber-100"
-              : "border border-emerald-400/25 bg-[#0d1620]/95 text-emerald-100",
+              ? "border border-amber-400/25 bg-[#1c1710]/97 text-amber-100"
+              : "border border-[#7bb7ff]/25 bg-[#0d1620]/97 text-slate-100",
           ].join(" ")}
         >
-          {paymentMessage}
+          <span>{paymentMessage}</span>
           {paymentState !== "activating" && (
-            <button type="button" onClick={() => setPaymentState("idle")} className="ms-3 font-bold opacity-80">×</button>
+            <button
+              type="button"
+              onClick={() => setPaymentState("idle")}
+              aria-label={t.close}
+              className="absolute end-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-white/[0.08] bg-white/[0.045] text-[18px] font-semibold leading-none text-slate-300 transition hover:bg-white/[0.09] hover:text-white"
+            >
+              ×
+            </button>
           )}
         </div>
       )}
 
       {open && (
-        <div className="fixed inset-0 z-[100] grid place-items-center bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-[10070] grid place-items-center bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
           <div className="w-full max-w-[480px] rounded-[28px] border border-white/[0.09] bg-[#111725] p-6 shadow-[0_30px_100px_rgba(0,0,0,.55)] sm:p-7" dir={locale === "ar" ? "rtl" : "ltr"}>
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-300">{t.eyebrow}</p>
             <h2 className="mt-3 text-[30px] font-semibold leading-[1.05] tracking-[-0.045em] text-white">{t.title}</h2>
