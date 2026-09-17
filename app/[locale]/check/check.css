@@ -164,4 +164,34 @@
   section[class*="max-w-[850px]"] > div:last-child {
     min-height: 0;
   }
+
+  /* Mobile scanner tabs use one short, commercial label per action.
+     Desktop copy is intentionally left unchanged. */
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button > span:nth-of-type(2) {
+    font-size: 0 !important;
+  }
+
+  header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button > span:nth-of-type(2)::after {
+    font-size: 12px;
+  }
+
+  html[lang="es"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(1) > span:nth-of-type(2)::after { content: "Enlace"; }
+  html[lang="es"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(2) > span:nth-of-type(2)::after { content: "Captura"; }
+  html[lang="es"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(3) > span:nth-of-type(2)::after { content: "Mensaje"; }
+
+  html[lang="en"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(1) > span:nth-of-type(2)::after { content: "Link"; }
+  html[lang="en"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(2) > span:nth-of-type(2)::after { content: "Screenshot"; }
+  html[lang="en"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(3) > span:nth-of-type(2)::after { content: "Message"; }
+
+  html[lang="fr"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(1) > span:nth-of-type(2)::after { content: "Lien"; }
+  html[lang="fr"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(2) > span:nth-of-type(2)::after { content: "Capture"; }
+  html[lang="fr"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(3) > span:nth-of-type(2)::after { content: "Message"; }
+
+  html[lang="de"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(1) > span:nth-of-type(2)::after { content: "Link"; }
+  html[lang="de"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(2) > span:nth-of-type(2)::after { content: "Screenshot"; }
+  html[lang="de"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(3) > span:nth-of-type(2)::after { content: "Nachricht"; }
+
+  html[lang="ar"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(1) > span:nth-of-type(2)::after { content: "رابط"; }
+  html[lang="ar"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(2) > span:nth-of-type(2)::after { content: "لقطة"; }
+  html[lang="ar"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(3) > span:nth-of-type(2)::after { content: "رسالة"; }
 }
