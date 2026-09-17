@@ -147,6 +147,7 @@ export default function GlobalPublicHeader({
                   <button
                     type="button"
                     onClick={() => setCasesOpen((value) => !value)}
+                    data-current={slug === item.slug || caseSlugs.includes(slug) ? "true" : "false"}
                     className="flex min-h-[60px] w-full items-center justify-between py-3 text-start text-[26px] font-semibold leading-none tracking-[-0.045em] text-white"
                     aria-expanded={casesOpen}
                   >
@@ -164,7 +165,13 @@ export default function GlobalPublicHeader({
                   )}
                 </div>
               ) : (
-                <Link key={item.slug} href={localizedPublicPath(locale, item.slug)} onClick={closeMenu} className="flex min-h-[60px] items-center py-3 text-[26px] font-semibold leading-none tracking-[-0.045em] text-white">
+                <Link
+                  key={item.slug}
+                  href={localizedPublicPath(locale, item.slug)}
+                  onClick={closeMenu}
+                  data-current={slug === item.slug ? "true" : "false"}
+                  className="flex min-h-[60px] items-center py-3 text-[26px] font-semibold leading-none tracking-[-0.045em] text-white"
+                >
                   {item.label}
                 </Link>
               ),
