@@ -45,8 +45,15 @@ requireText(button, 'fetch("/api/stripe/checkout"', "device pack checkout button
 forbidText(button, "supabaseBrowser.auth.getSession", "checkout must not require login");
 forbidText(button, "Authorization: `Bearer", "checkout must not require bearer auth");
 
-requireText(gate, 'fetch("/api/check/entitlement"', "post-payment entitlement polling");
-requireText(gate, 'credits_remaining || 0) > 0', "credit activation confirmation");
+requireText(gate, 'originalFetch("/api/check/entitlement"', "post-payment entitlement polling");
+requireText(gate, "entitlement.creditsRemaining > 0", "credit activation confirmation");
+requireText(gate, "response.status === 402", "exhausted-credit paywall trigger");
+requireText(gate, 'analyzeFree: "Analizar gratis"', "Spanish free CTA");
+requireText(gate, 'analyzeFree: "Analyse for free"', "English free CTA");
+requireText(gate, 'analyzeFree: "Analyser gratuitement"', "French free CTA");
+requireText(gate, 'analyzeFree: "Kostenlos analysieren"', "German free CTA");
+requireText(gate, 'analyzeFree: "حلّل مجانًا"', "Arabic free CTA");
+requireText(gate, "creditsAvailable", "paid analysis balance display");
 requireText(gate, "no vuelvas a pagar", "duplicate-payment warning");
 requireText(entitlement, "get_vonu_device_entitlement", "entitlement status RPC");
 
@@ -85,4 +92,4 @@ requireText(privacy, "vonu_device_id", "privacy device cookie");
 requireText(privacy, "pago confirmado", "privacy payment-to-credit flow");
 requireText(cookies, "vonu_device_id", "cookie disclosure");
 
-console.log("VONU_PAYMENT_LAUNCH_CONTRACT_GREEN model=device free=1 pack=3 price=399 activation=poll refunds=failed-analysis");
+console.log("VONU_PAYMENT_LAUNCH_CONTRACT_GREEN model=device free=1 pack=3 price=399 activation=poll balance=localized refunds=failed-analysis");
