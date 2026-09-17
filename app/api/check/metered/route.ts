@@ -91,7 +91,9 @@ export async function POST(req: NextRequest) {
           ? await checkImage(internalRequest)
           : await checkText(internalRequest);
 
-    if (response.ok) {
+    const explicitlyNonBillable = response.headers.get("x-vonu-analysis-billable") === "0";
+
+    if (response.ok && !explicitlyNonBillable) {
       try {
         await commit(reservationId);
       } catch (error) {
