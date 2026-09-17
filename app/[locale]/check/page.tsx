@@ -16,6 +16,7 @@ import "./desktop-home-fit.css";
 import "./mobile-capture-safe-area.css";
 import { isSupportedLocale, localeMeta, supportedLocales } from "@/lib/vonu-check/i18n";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
+import { localizedPublicPath } from "@/lib/vonu-global/routes";
 
 const siteUrl = "https://vonuai.com";
 const isProduction = process.env.VERCEL_ENV === "production";
@@ -45,6 +46,14 @@ const meta: Record<SupportedLocale, { title: string; description: string }> = {
     title: "فحص رابط أو لقطة شاشة أو رسالة مشبوهة — Vonu Check",
     description: "حلّل الروابط ولقطات الشاشة والرسائل المشبوهة لاكتشاف إشارات التصيد والاحتيال والانتحال قبل أن تتصرف.",
   },
+};
+
+const packNames: Record<SupportedLocale, { free: string; paid: string }> = {
+  es: { free: "Primer análisis gratuito", paid: "Pack de 3 análisis" },
+  en: { free: "First free analysis", paid: "3-analysis pack" },
+  fr: { free: "Première analyse gratuite", paid: "Pack de 3 analyses" },
+  de: { free: "Erste kostenlose Analyse", paid: "3-Analysen-Paket" },
+  ar: { free: "التحليل المجاني الأول", paid: "حزمة 3 تحليلات" },
 };
 
 export const dynamicParams = false;
@@ -83,7 +92,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           url: "/api/og",
           width: 1200,
           height: 630,
-          alt: "Vonu Check — Comprueba antes de confiar",
+          alt: selected.title,
         },
       ],
     },
@@ -115,6 +124,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 function getCheckJsonLd(locale: SupportedLocale) {
   const selected = meta[locale];
   const pageUrl = `${siteUrl}/${locale}/check`;
+  const pricingUrl = `${siteUrl}${localizedPublicPath(locale, "precios")}`;
+  const offerNames = packNames[locale];
 
   return {
     "@context": "https://schema.org",
@@ -148,6 +159,7 @@ function getCheckJsonLd(locale: SupportedLocale) {
         operatingSystem: "Any",
         browserRequirements: "Requires a modern web browser with JavaScript enabled.",
         provider: { "@id": `${siteUrl}/#organization` },
+        isAccessibleForFree: true,
         inLanguage: ["es", "en", "fr", "de", "ar"],
         featureList: [
           "Website and URL risk analysis",
@@ -156,6 +168,28 @@ function getCheckJsonLd(locale: SupportedLocale) {
           "Phishing and impersonation signal detection",
           "Technical web security signal analysis",
         ],
+        offers: [
+          {
+            "@type": "Offer",
+            name: offerNames.free,
+            url: pageUrl,
+            price: "0",
+            priceCurrency: "EUR",
+            availability: "https://schema.org/InStock",
+          },
+          {
+            "@type": "Offer",
+            name: offerNames.paid,
+            url: pricingUrl,
+            price: "3.99",
+            priceCurrency: "EUR",
+            availability: "https://schema.org/InStock",
+          },
+        ],
+        potentialAction: {
+          "@type": "UseAction",
+          target: pageUrl,
+        },
       },
       {
         "@type": "BreadcrumbList",
