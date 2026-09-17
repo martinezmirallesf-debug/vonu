@@ -147,7 +147,7 @@ header button[class*="hover:bg-emerald-300"]:hover {
   /* Keep language name + ISO code together and centered inside each option. */
   .vonu-mobile-language-popover a {
     justify-content: center !important;
-    gap: 0.5rem !important;
+    gap: 1rem !important;
     text-align: center !important;
   }
 
@@ -181,10 +181,21 @@ footer span[class*="tracking-[0.08em]"] {
     width: 20px !important;
   }
 
-  /* The close X is slightly more compact, still centred and equally thick. */
-  header button[aria-label="Close"] > span > span {
-    left: 4px !important;
-    width: 24px !important;
+  /* Close X: equal arms, same centre point, same stroke thickness. */
+  header button[aria-label="Close"] > span > span:first-child {
+    top: 11px !important;
+    left: 5px !important;
+    width: 22px !important;
+    transform: rotate(45deg) !important;
+    transform-origin: center !important;
+  }
+
+  header button[aria-label="Close"] > span > span:last-child {
+    top: 11px !important;
+    left: 5px !important;
+    width: 22px !important;
+    transform: rotate(-45deg) !important;
+    transform-origin: center !important;
   }
 
   /* The public-menu CTA now mirrors the home scanner CTA exactly in shape,
