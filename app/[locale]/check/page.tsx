@@ -4,6 +4,7 @@ import CheckClient from "./CheckClient";
 import SubmissionNotice from "./SubmissionNotice";
 import CheckCompactFooter from "./CheckCompactFooter";
 import DeviceAccessGate from "@/app/components/DeviceAccessGate";
+import CheckRuntimeFixes from "@/app/components/CheckRuntimeFixes";
 import "./check.css";
 import "./check-polish.css";
 import "./url-search-icon-size.css";
@@ -234,6 +235,7 @@ export default async function LocalizedCheckPage({ params }: Props) {
       <style dangerouslySetInnerHTML={{ __html: ".vonu-check-page footer:not(.vonu-check-compact-footer){display:none}" }} />
       <CheckClient locale={locale} />
       <DeviceAccessGate locale={locale} />
+      <CheckRuntimeFixes locale={locale} />
       <SubmissionNotice locale={locale} />
       <CheckCompactFooter locale={locale} />
     </div>
