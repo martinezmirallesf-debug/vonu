@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const DEVICE_COOKIE = "vonu_device_id_v2";
-const LEGACY_DEVICE_COOKIE = "vonu_device_id";
+const DEVICE_COOKIE = "vonu_device_id";
+const SHARED_DEVICE_COOKIE = "vonu_device_id_v2";
 const DEVICE_HEADER = "x-vonu-device-id";
 const ONE_YEAR = 60 * 60 * 24 * 365;
 const METERED_CHECK_PATHS = new Map([
@@ -25,7 +25,7 @@ function withDeviceCookie(
   hostname: string,
 ) {
   if (shouldSet) {
-    response.cookies.set(DEVICE_COOKIE, deviceId, {
+    response.cookies.set(SHARED_DEVICE_COOKIE, deviceId, {
       httpOnly: true,
       secure: true,
       sameSite: "lax",
@@ -38,8 +38,8 @@ function withDeviceCookie(
 }
 
 export function middleware(req: NextRequest) {
-  const preferredCookieId = req.cookies.get(DEVICE_COOKIE)?.value ?? null;
-  const legacyCookieId = req.cookies.get(LEGACY_DEVICE_COOKIE)?.value ?? null;
+  const preferredCookieId = req.cookies.get(SHARED_DEVICE_COOKIE)?.value ?? null;
+  const legacyCookieId = req.cookies.get(DEVICE_COOKIE)?.value ?? null;
   const suppliedId = req.headers.get(DEVICE_HEADER);
   const existingId = isUuid(preferredCookieId)
     ? preferredCookieId
