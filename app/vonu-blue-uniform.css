@@ -144,8 +144,10 @@ header button[class*="hover:bg-emerald-300"]:hover {
     box-shadow: 0 24px 70px rgb(0 0 0 / 0.38) !important;
   }
 
-  /* Keep language name + ISO code together and centered inside each option. */
+  /* Keep every language option compact, equal-sized and centered. */
   .vonu-mobile-language-popover a {
+    width: 170px !important;
+    margin-inline: auto !important;
     justify-content: center !important;
     gap: 1rem !important;
     text-align: center !important;
@@ -172,6 +174,19 @@ footer span[class*="tracking-[0.08em]"] {
     font-size: 25px !important;
   }
 
+  /* Mobile navigation is white by default; only the current item or hover is blue. */
+  header > div.fixed.inset-0 > div > nav > a,
+  header > div.fixed.inset-0 > div > nav > div > button {
+    color: #ffffff !important;
+  }
+
+  header > div.fixed.inset-0 > div > nav > a[data-current="true"],
+  header > div.fixed.inset-0 > div > nav > div > button[data-current="true"],
+  header > div.fixed.inset-0 > div > nav > a:hover,
+  header > div.fixed.inset-0 > div > nav > div > button:hover {
+    color: var(--vonu-accent-strong) !important;
+  }
+
   /* Keep the burger stroke thickness exactly as-is (2px), only shorten it. */
   header button[aria-label="Menu"] > span > span:first-child {
     width: 26px !important;
@@ -181,12 +196,15 @@ footer span[class*="tracking-[0.08em]"] {
     width: 20px !important;
   }
 
-  /* Close X: equal arms, same centre point, same stroke thickness. */
+  /* Close X: equal arms crossing at one centre point. Clear Tailwind's
+     individual translate/rotate first so the angles are not applied twice. */
   header button[aria-label="Close"] > span > span:first-child {
     top: 11px !important;
     left: 5px !important;
     width: 22px !important;
-    transform: rotate(45deg) !important;
+    translate: none !important;
+    rotate: 45deg !important;
+    transform: none !important;
     transform-origin: center !important;
   }
 
@@ -194,7 +212,9 @@ footer span[class*="tracking-[0.08em]"] {
     top: 11px !important;
     left: 5px !important;
     width: 22px !important;
-    transform: rotate(-45deg) !important;
+    translate: none !important;
+    rotate: -45deg !important;
+    transform: none !important;
     transform-origin: center !important;
   }
 
