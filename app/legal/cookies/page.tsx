@@ -46,7 +46,7 @@ export default function CookiesPage() {
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
               Una explicación concreta del almacenamiento técnico que permite ofrecer el análisis gratuito y mantener los packs comprados sin crear una cuenta.
             </p>
-            <p className="mt-5 text-[13px] text-zinc-500">Última actualización: 16 de septiembre de 2026</p>
+            <p className="mt-5 text-[13px] text-zinc-500">Última actualización: 18 de septiembre de 2026</p>
           </div>
         </div>
       </section>
@@ -78,10 +78,10 @@ export default function CookiesPage() {
 
         <h2>4. Analítica de Vercel</h2>
         <p>
-          Utilizamos Vercel Web Analytics para conocer de forma agregada el uso de páginas y funciones, así como eventos como el inicio o finalización técnica de una comprobación. También podemos utilizar Vercel Speed Insights para medir rendimiento y experiencia técnica.
+          Utilizamos Vercel Web Analytics para conocer de forma agregada páginas vistas, procedencia, país o región aproximada, navegador, sistema operativo, tipo de dispositivo y eventos técnicos o de producto. También podemos utilizar Vercel Speed Insights para medir rendimiento y experiencia técnica.
         </p>
         <p>
-          Estas herramientas se configuran para evitar incluir intencionadamente el texto, la imagen o la URL introducida para una comprobación como propiedades de analítica.
+          Estas herramientas se configuran para evitar incluir intencionadamente el texto, la imagen o captura, el email del usuario o la URL completa introducida para una comprobación como propiedades de analítica.
         </p>
 
         <h2>5. Servicios externos</h2>

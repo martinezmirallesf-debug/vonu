@@ -46,7 +46,7 @@ export default function PrivacidadPage() {
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
               Qué recibe Vonu cuando haces una comprobación, cómo mantiene el saldo sin cuenta y qué control tienes sobre tus datos.
             </p>
-            <p className="mt-5 text-[13px] text-zinc-500">Última actualización: 16 de septiembre de 2026</p>
+            <p className="mt-5 text-[13px] text-zinc-500">Última actualización: 18 de septiembre de 2026</p>
           </div>
         </div>
       </section>
@@ -153,26 +153,31 @@ export default function PrivacidadPage() {
           <li>Los registros de compras y facturación se conservan durante los plazos exigidos por la normativa aplicable.</li>
           <li>Los datos de contacto se conservan mientras sea necesario atender y documentar la solicitud.</li>
           <li>El email de recursos se conserva hasta que solicites la baja o deje de ser necesario para esa finalidad.</li>
-          <li>El contenido enviado a una comprobación se procesa para generar el resultado. Si una función concreta conserva información adicional, se limitará a lo necesario para su finalidad y se describirá en esta política o en la propia función.</li>
+          <li>El contenido enviado a una comprobación se procesa para generar el resultado. No se envía como contenido bruto a la analítica de producto. Si una función operativa de seguridad o calidad conserva un informe derivado o enmascarado, se limitará a la finalidad para la que esté activada y deberá evitar secretos o datos innecesarios.</li>
         </ul>
 
         <h2>11. Analítica y eventos de producto</h2>
         <p>
-          La web utiliza Vercel Web Analytics y eventos de producto para conocer de forma agregada qué páginas o funciones funcionan mejor. No enviamos el texto, la imagen, la URL analizada ni tu email como propiedad de esos eventos.
+          Utilizamos Vercel Web Analytics y eventos de producto para conocer de forma agregada el uso del servicio. La medición puede incluir páginas visitadas, procedencia, país o región aproximada, tipo de navegador o dispositivo y eventos como modo de análisis, idioma, categoría técnica, nivel o banda de riesgo, duración, éxito o error.
         </p>
         <p>
-          En la configuración pública actual no utilizamos Google Analytics ni cookies publicitarias. Si esto cambia, se actualizará la información y se solicitará consentimiento cuando sea necesario.
+          No enviamos intencionadamente el texto del mensaje, la imagen o captura, el email del usuario ni la URL completa analizada como propiedad de esos eventos. En la configuración pública actual no utilizamos Google Analytics ni cookies publicitarias.
         </p>
 
         <h2>12. Datos sensibles y de terceros</h2>
         <p>
-          No compartas contraseñas, códigos de verificación, números completos de tarjeta, documentos identificativos completos, datos médicos innecesarios ni otra información especialmente sensible si no es imprescindible. Si una captura contiene datos ajenos al análisis, ocúltalos antes de subirla.
+          No compartas contraseñas, códigos de verificación u OTP, PIN, números completos de tarjeta, credenciales bancarias, documentos identificativos completos, datos médicos innecesarios ni otra información especialmente sensible si no es imprescindible. Si una captura contiene datos ajenos al análisis, ocúltalos antes de subirla.
         </p>
         <p>
           Si introduces datos de otra persona, eres responsable de contar con una base legítima para hacerlo y de limitar la información a lo estrictamente necesario.
         </p>
 
-        <h2>13. Tus derechos</h2>
+        <h2>13. Menores</h2>
+        <p>
+          Vonu no pretende recopilar de forma consciente datos personales innecesarios de menores. Cuando un menor utilice el servicio deberá existir la supervisión o autorización que corresponda conforme a la normativa aplicable. No deben subirse datos íntimos, identificativos o especialmente sensibles de un menor que no sean necesarios para la comprobación, y los menores no deben realizar compras sin la autorización legalmente exigible.
+        </p>
+
+        <h2>14. Tus derechos</h2>
         <p>
           Puedes solicitar acceso, rectificación, supresión, portabilidad, limitación u oposición cuando proceda, y retirar un consentimiento sin que ello afecte a la licitud del tratamiento previo. Escribe a <strong>privacy@vonuai.com</strong> indicando tu solicitud y la información necesaria para localizar los datos afectados. Si la solicitud se refiere a una compra sin cuenta, puede ser necesario aportar el recibo o identificador de la operación para poder localizarla.
         </p>
@@ -180,12 +185,12 @@ export default function PrivacidadPage() {
           También puedes presentar una reclamación ante la Agencia Española de Protección de Datos u otra autoridad de control competente.
         </p>
 
-        <h2>14. Seguridad y cambios</h2>
+        <h2>15. Seguridad y cambios</h2>
         <p>
           Aplicamos medidas técnicas y organizativas razonables para proteger la información y reducir el acceso no autorizado, pérdida o uso indebido. Ningún sistema conectado a Internet puede garantizar seguridad absoluta.
         </p>
         <p>
-          Esta política puede actualizarse cuando cambien el producto, sus proveedores o la normativa. La fecha de la versión vigente aparecerá en la parte superior.
+          Esta política puede actualizarse cuando cambien el producto, sus proveedores, las categorías de analítica o la normativa. La fecha de la versión vigente aparecerá en la parte superior.
         </p>
       </LegalPage>
 

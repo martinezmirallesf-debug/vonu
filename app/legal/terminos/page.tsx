@@ -46,7 +46,7 @@ export default function TerminosPage() {
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
               Reglas claras para utilizar Vonu, comprar análisis y entender los límites de una comprobación de riesgo.
             </p>
-            <p className="mt-5 text-[13px] text-zinc-500">Última actualización: 16 de septiembre de 2026</p>
+            <p className="mt-5 text-[13px] text-zinc-500">Última actualización: 18 de septiembre de 2026</p>
           </div>
         </div>
       </section>
@@ -107,7 +107,7 @@ export default function TerminosPage() {
           El pack de análisis se cobra mediante <strong>Stripe</strong>. Es un <strong>pago único</strong>: no crea una suscripción, no se renueva automáticamente y no genera cobros recurrentes por parte de Vonu.
         </p>
         <p>
-          Antes de confirmar el pago se muestra el importe. Stripe procesa los datos necesarios para el cobro y puede solicitar un email para el recibo. Vonu no necesita almacenar el número completo de tu tarjeta.
+          Antes de confirmar el pago se muestra de forma clara el importe total y las características principales del pack. El precio mostrado al consumidor incluye los impuestos cuando resulten aplicables. Stripe muestra el importe final y los medios de pago disponibles antes de la confirmación y puede solicitar un email para el recibo. Vonu no necesita almacenar el número completo de tu tarjeta.
         </p>
 
         <h2>9. Activación, incidencias y justificante de compra</h2>
@@ -118,42 +118,76 @@ export default function TerminosPage() {
           Conserva el justificante o recibo de Stripe. Si el navegador pierde su identificador técnico después de una compra, el recibo puede ser necesario para revisar la incidencia y valorar la restauración del saldo pendiente.
         </p>
 
-        <h2>10. Desistimiento y reembolsos de consumidores</h2>
+        <h2>10. Contratación electrónica y corrección de errores</h2>
         <p>
-          Si contratas como consumidor a distancia, se aplicarán los derechos de desistimiento y reembolso que correspondan conforme a la normativa aplicable y a las circunstancias concretas de la prestación digital. La información exigible sobre ejecución inmediata del servicio y cualquier consentimiento o reconocimiento legalmente necesario se mostrará cuando proceda durante la contratación.
+          El proceso de compra consiste en seleccionar el pack, revisar el precio y la información legal, confirmar las declaraciones requeridas, acceder a Stripe Checkout, revisar o corregir los datos de pago y facturación y confirmar finalmente el pago. Tras el pago correcto, el usuario vuelve a Vonu y los créditos se asocian al navegador o dispositivo reconocido.
         </p>
         <p>
-          Estos términos no limitan derechos imperativos del consumidor. Para solicitar ayuda sobre una compra, escribe a <strong>hello@vonuai.com</strong> incluyendo el justificante de pago y la información necesaria para localizar la operación.
+          Antes de pagar puedes volver atrás o corregir los datos que Stripe permita editar. Vonu y Stripe conservan los registros electrónicos necesarios para pago, soporte, prevención de fraude, contabilidad y obligaciones fiscales. Stripe puede enviar un recibo al email facilitado. Si necesitas localizar una compra, puedes solicitar ayuda aportando el recibo o identificador de la operación.
+        </p>
+        <p>
+          La contratación puede realizarse en español, inglés, francés, alemán o árabe mediante la versión correspondiente de Vonu. La información precontractual y estas condiciones permanecen accesibles para poder guardarlas o reproducirlas.
         </p>
 
-        <h2>11. Disponibilidad y cambios técnicos</h2>
+        <h2>11. Ejecución inmediata y derecho de desistimiento</h2>
+        <p>
+          Cuando contratas como consumidor a distancia dispones del derecho de desistimiento que establezca la normativa aplicable, salvo que concurra legalmente una excepción. Como los análisis comprados pueden quedar disponibles inmediatamente, antes del pago Vonu solicitará que pidas expresamente el inicio de la prestación durante el plazo de desistimiento y que reconozcas que tu derecho puede verse afectado conforme se ejecute el servicio, únicamente en la medida permitida por la ley.
+        </p>
+        <p>
+          Si ejerces válidamente el desistimiento después de que, a petición expresa tuya, se haya ejecutado parte del servicio, se aplicarán las consecuencias previstas por la normativa de consumo, incluido en su caso el importe proporcional correspondiente a la parte efectivamente prestada. Ninguna cláusula de Vonu pretende imponer una renuncia al desistimiento más amplia que la legalmente admisible.
+        </p>
+
+        <h2>12. Modelo de desistimiento</h2>
+        <p>
+          Si legalmente te corresponde y deseas desistir, puedes enviar una declaración inequívoca a <strong>legal@vonuai.com</strong>. Puedes utilizar este modelo:
+        </p>
+        <ul>
+          <li>A la atención de Vonu / Francisco Luis Martínez Miralles — legal@vonuai.com.</li>
+          <li>Por la presente comunico que desisto de mi contrato relativo a la siguiente compra de Vonu: [identificar compra o recibo de Stripe].</li>
+          <li>Fecha de pedido: [fecha].</li>
+          <li>Nombre del consumidor: [nombre].</li>
+          <li>Domicilio: [solo cuando sea necesario para tramitar la solicitud].</li>
+          <li>Fecha: [fecha]. Firma únicamente si el formulario se presenta en papel.</li>
+        </ul>
+
+        <h2>13. Reembolsos, incidencias y reclamaciones</h2>
+        <p>
+          Para incidencias de pago, créditos, reembolso o desistimiento, escribe a <strong>hello@vonuai.com</strong> o <strong>legal@vonuai.com</strong> e incluye el recibo o referencia de Stripe cuando sea posible. Las solicitudes se resolverán atendiendo al estado real de la prestación y a los derechos imperativos del consumidor que resulten aplicables.
+        </p>
+
+        <h2>14. Disponibilidad y cambios técnicos</h2>
         <p>
           Podemos modificar, mantener, sustituir o retirar funciones por motivos de seguridad, calidad, costes, proveedores o evolución del producto. Intentaremos evitar interrupciones innecesarias, pero no garantizamos disponibilidad ininterrumpida.
         </p>
 
-        <h2>12. Prevención de abuso</h2>
+        <h2>15. Prevención de abuso</h2>
         <p>
           Podemos aplicar límites técnicos razonables para impedir automatización abusiva, fraude de pagos, elusión sistemática del límite gratuito, sobrecarga o uso que comprometa la seguridad del servicio. Estas medidas no deben interpretarse como una garantía de identificación única de cada dispositivo.
         </p>
 
-        <h2>13. Propiedad intelectual</h2>
+        <h2>16. Propiedad intelectual</h2>
         <p>
           La marca Vonu, el diseño, software, reglas internas, estructura, textos propios y demás elementos originales del servicio pertenecen a sus respectivos titulares y están protegidos por la normativa aplicable.
         </p>
 
-        <h2>14. Limitación de responsabilidad</h2>
+        <h2>17. Limitación de responsabilidad</h2>
         <p>
-          Vonu no será responsable de decisiones adoptadas ignorando información relevante disponible fuera del servicio, de un uso contrario a estos términos o de daños atribuibles exclusivamente a servicios de terceros fuera de nuestro control. Nada de lo anterior excluye responsabilidad que legalmente no pueda excluirse.
+          Vonu no sustituye la verificación independiente y no garantiza que detecte todas las amenazas. No será responsable de decisiones adoptadas ignorando información relevante disponible fuera del servicio, de usos contrarios a estas condiciones o de daños atribuibles exclusivamente a servicios de terceros fuera de nuestro control. Nada de lo anterior excluye responsabilidad ni derechos del consumidor que legalmente no puedan excluirse o limitarse.
         </p>
 
-        <h2>15. Legislación y resolución de conflictos</h2>
+        <h2>18. Menores</h2>
         <p>
-          Estos términos se interpretarán conforme a la normativa aplicable en España, sin perjuicio de las normas imperativas del país de residencia del consumidor cuando correspondan y de los fueros legalmente reconocidos a los consumidores.
+          Cuando una persona menor de edad utilice Vonu deberá contar con la supervisión o autorización que exija la normativa aplicable. No deben enviarse datos íntimos, identificativos o especialmente sensibles de menores que no sean estrictamente necesarios, y un menor no debe realizar una compra sin la autorización legalmente necesaria.
         </p>
 
-        <h2>16. Contacto y modificaciones</h2>
+        <h2>19. Legislación, jurisdicción e idiomas</h2>
         <p>
-          Puedes contactar con nosotros en <strong>legal@vonuai.com</strong>. La versión vigente de estos términos será la publicada en esta página con su fecha de actualización.
+          Estas condiciones se interpretarán conforme a la normativa aplicable en España, sin perjuicio de las normas imperativas del país de residencia del consumidor y de los fueros legalmente reconocidos. Las versiones en español, inglés, francés, alemán y árabe pretenden comunicar las mismas condiciones y ninguna diferencia de traducción se interpretará para reducir un derecho imperativo del consumidor.
+        </p>
+
+        <h2>20. Contacto y modificaciones</h2>
+        <p>
+          Puedes contactar con nosotros en <strong>legal@vonuai.com</strong>. La versión vigente de estas condiciones será la publicada en esta página con su fecha de actualización. Los cambios materiales se reflejarán antes de aplicarse a nuevas compras cuando la normativa lo exija.
         </p>
       </LegalPage>
 

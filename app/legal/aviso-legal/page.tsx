@@ -47,7 +47,7 @@ export default function AvisoLegalPage() {
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
               Quién presta Vonu, qué hace el servicio y cuáles son sus límites esenciales.
             </p>
-            <p className="mt-5 text-[13px] text-zinc-500">Última actualización: 16 de septiembre de 2026</p>
+            <p className="mt-5 text-[13px] text-zinc-500">Última actualización: 18 de septiembre de 2026</p>
           </div>
         </div>
       </section>

@@ -47,7 +47,7 @@ export default function UsoResponsablePage() {
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
               Vonu ayuda a detectar señales. La decisión final debe apoyarse también en contexto y verificación.
             </p>
-            <p className="mt-5 text-[13px] text-zinc-500">Última actualización: 16 de septiembre de 2026</p>
+            <p className="mt-5 text-[13px] text-zinc-500">Última actualización: 18 de septiembre de 2026</p>
           </div>
         </div>
       </section>
@@ -102,9 +102,9 @@ export default function UsoResponsablePage() {
           Si crees que has enviado dinero o información sensible a un posible estafador, actúa cuanto antes: contacta con tu banco o proveedor de pago, cambia credenciales afectadas, protege tus cuentas y conserva pruebas. Cuando proceda, informa también a la plataforma y a las autoridades competentes.
         </p>
 
-        <h2>9. Limitaciones de la inteligencia artificial</h2>
+        <h2>9. Interacción con inteligencia artificial y sus limitaciones</h2>
         <p>
-          Los modelos de IA pueden interpretar mal un mensaje, inventar detalles o pasar por alto una señal. Vonu intenta reducir este riesgo mediante reglas de calibración, comprobaciones técnicas y evidencia visible, pero no puede eliminarlo por completo.
+          Vonu utiliza inteligencia artificial y comprobaciones automatizadas. Al utilizar el servicio estás interactuando con un sistema que emplea IA para producir parte del análisis. Los modelos pueden interpretar mal un mensaje, inventar detalles o pasar por alto una señal. Vonu intenta reducir este riesgo mediante reglas de calibración, comprobaciones técnicas y evidencia visible, pero no puede eliminarlo por completo.
         </p>
 
         <h2>10. Usos prohibidos</h2>
