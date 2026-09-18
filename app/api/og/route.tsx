@@ -38,7 +38,7 @@ export async function GET() {
           <div style={{ display: "flex", flexDirection: "column", width: 720, height: "100%", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
               <TriNodeMark size={76} />
-              <div style={{ fontSize: 42, fontWeight: 750, letterSpacing: "-1.8px", color: "#ffffff" }}>VONU</div>
+              <div style={{ fontSize: 42, fontWeight: 750, letterSpacing: "-1.8px", color: "#ffffff" }}>Vonu</div>
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
