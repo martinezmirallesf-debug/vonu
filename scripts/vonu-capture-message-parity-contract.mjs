@@ -27,6 +27,9 @@ requireSource(capture, "visibleText", "capture visible-text grounding");
 requireSource(capture, "exact substrings of visibleText", "capture exact-evidence grounding");
 requireSource(capture, "Preserve wording and polarity", "capture polarity instruction");
 requireSource(capture, "atlasScore.confidence", "capture atlas confidence");
+requireSource(capture, "extractFirstBalancedObject", "capture balanced-json recovery");
+requireSource(capture, "minimalRecoveryPrompt", "capture minimal recovery prompt");
+requireSource(capture, "vision_recovery_failed", "capture final recovery guard");
 requireSource(text, "Fraud Atlas evidence MUST be grounded in exact text excerpts", "text exact-evidence grounding");
 
-console.log("VONU_CAPTURE_MESSAGE_PARITY_CONTRACT_GREEN capture=1 text=1 shared_atlas=1 polarity=1");
+console.log("VONU_CAPTURE_MESSAGE_PARITY_CONTRACT_GREEN capture=1 text=1 shared_atlas=1 polarity=1 image_json_recovery=1");
