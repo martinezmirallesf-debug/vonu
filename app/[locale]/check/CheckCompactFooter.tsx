@@ -43,7 +43,7 @@ export default function CheckCompactFooter({ locale }: { locale: SupportedLocale
       <div className="mx-auto flex min-h-12 max-w-[1320px] items-center justify-between gap-3 px-4 text-[11px] text-slate-600 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2 text-slate-500">
           <VonuMark className="h-5 w-5" />
-          <span className="font-semibold tracking-[0.08em] text-white">VONU</span>
+          <span className="font-semibold tracking-[0.08em] text-white">Vonu</span>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-3 sm:gap-4">
           <Link href={localizedPublicPath(locale, "producto")} className="hidden transition hover:text-slate-400 sm:inline">{nav.product}</Link>
