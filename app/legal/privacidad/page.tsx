@@ -39,7 +39,7 @@ export default function PrivacidadPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <HomeHeader />
 
-      <LegalPage locale="es" title="Política de privacidad" description="Información sobre el tratamiento de datos personales, contenido y acceso por dispositivo en Vonu.">
+      <LegalPage locale="es" title="Política de privacidad" description="Información sobre el tratamiento de datos personales, contenido y acceso por dispositivo en Vonu." updatedAt="Última actualización: 18 de septiembre de 2026">
         <h2>1. Responsable del tratamiento</h2>
         <p>
           El responsable del tratamiento es <strong>Francisco Luis Martínez Miralles</strong>, titular de Vonu y del dominio vonuai.com.
