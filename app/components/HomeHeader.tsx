@@ -16,6 +16,7 @@ import {
   type IndexedPublicSlug,
 } from "@/lib/vonu-global/i18n";
 import { localizedPublicPath, resolveInternalSlug } from "@/lib/vonu-global/routes";
+import { legalDocumentFromPath, legalPath } from "@/lib/vonu-legal/routes";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 import "./use-case-product-theme.css";
 
@@ -47,6 +48,7 @@ export default function HomeHeader() {
   const pathParts = pathname.split("/").filter(Boolean);
   const currentRouteSlug = (isGlobalLocale(pathParts[0] || "") ? pathParts[1] : pathParts[0]) || "";
   const currentSlug = currentRouteSlug ? resolveInternalSlug(locale, currentRouteSlug) : null;
+  const currentLegalDocument = legalDocumentFromPath(pathname);
 
   const mainLinks = [
     { label: t.product, slug: "producto" as const },
@@ -57,14 +59,15 @@ export default function HomeHeader() {
   ];
 
   const secondaryLinks = [
-    { label: t.privacy, href: "/legal/privacidad" },
-    { label: t.terms, href: "/legal/terminos" },
-    { label: t.responsible, href: "/legal/uso-responsable" },
+    { label: t.privacy, href: legalPath(locale, "privacy") },
+    { label: t.terms, href: legalPath(locale, "terms") },
+    { label: t.responsible, href: legalPath(locale, "responsible-use") },
     { label: t.contact, href: localizedPublicPath(locale, "contacto") },
   ];
 
   function localeTarget(next: SupportedLocale) {
     if (isCheckHome) return checkPath(next);
+    if (currentLegalDocument) return legalPath(next, currentLegalDocument);
     if (currentSlug) return localizedPublicPath(next, currentSlug);
     return checkPath(next);
   }

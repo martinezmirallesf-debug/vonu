@@ -4,9 +4,10 @@ import {
   localizedLanguageAlternates,
   localizedPublicPath,
 } from "@/lib/vonu-global/routes";
+import { LEGAL_DOCUMENTS, legalAlternates, legalPath } from "@/lib/vonu-legal/routes";
 
 const BASE_URL = "https://vonuai.com";
-const UPDATED_AT = new Date("2026-09-16T00:00:00.000Z");
+const UPDATED_AT = new Date("2026-09-18T00:00:00.000Z");
 
 const checkLanguages = {
   es: `${BASE_URL}/es/check`,
@@ -40,13 +41,15 @@ const publicRoutes: MetadataRoute.Sitemap = INDEXED_PUBLIC_SLUGS.flatMap((slug) 
   })),
 );
 
-const legalRoutes: MetadataRoute.Sitemap = [
-  { url: `${BASE_URL}/legal/aviso-legal`, lastModified: UPDATED_AT, changeFrequency: "yearly", priority: 0.25 },
-  { url: `${BASE_URL}/legal/privacidad`, lastModified: UPDATED_AT, changeFrequency: "yearly", priority: 0.25 },
-  { url: `${BASE_URL}/legal/terminos`, lastModified: UPDATED_AT, changeFrequency: "yearly", priority: 0.25 },
-  { url: `${BASE_URL}/legal/cookies`, lastModified: UPDATED_AT, changeFrequency: "yearly", priority: 0.2 },
-  { url: `${BASE_URL}/legal/uso-responsable`, lastModified: UPDATED_AT, changeFrequency: "yearly", priority: 0.35 },
-];
+const legalRoutes: MetadataRoute.Sitemap = LEGAL_DOCUMENTS.flatMap((document) =>
+  GLOBAL_LOCALES.map((locale) => ({
+    url: `${BASE_URL}${legalPath(locale, document)}`,
+    lastModified: UPDATED_AT,
+    changeFrequency: "yearly" as const,
+    priority: document === "responsible-use" ? 0.35 : document === "cookies" ? 0.2 : 0.25,
+    alternates: { languages: legalAlternates(document) },
+  })),
+);
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [...localizedCheckRoutes, ...publicRoutes, ...legalRoutes];

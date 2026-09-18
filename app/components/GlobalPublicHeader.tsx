@@ -14,6 +14,7 @@ import {
   navCopy,
 } from "@/lib/vonu-global/i18n";
 import { localizedPublicPath } from "@/lib/vonu-global/routes";
+import { legalPath } from "@/lib/vonu-legal/routes";
 
 const caseSlugs: IndexedPublicSlug[] = [
   "comprobar-web-fiable",
@@ -47,9 +48,9 @@ export default function GlobalPublicHeader({
   ];
 
   const secondaryLinks = [
-    { label: t.privacy, href: "/legal/privacidad" },
-    { label: t.terms, href: "/legal/terminos" },
-    { label: t.responsible, href: "/legal/uso-responsable" },
+    { label: t.privacy, href: legalPath(locale, "privacy") },
+    { label: t.terms, href: legalPath(locale, "terms") },
+    { label: t.responsible, href: legalPath(locale, "responsible-use") },
     { label: t.contact, href: localizedPublicPath(locale, "contacto") },
   ];
 

@@ -43,3 +43,20 @@ export function legalAlternates(document: LegalDocument) {
 export function isLegalDocument(value: string): value is LegalDocument {
   return LEGAL_DOCUMENTS.includes(value as LegalDocument);
 }
+
+export function legalDocumentFromPath(pathname: string): LegalDocument | null {
+  const spanish: Record<string, LegalDocument> = {
+    "/legal/aviso-legal": "legal-notice",
+    "/legal/privacidad": "privacy",
+    "/legal/terminos": "terms",
+    "/legal/cookies": "cookies",
+    "/legal/uso-responsable": "responsible-use",
+  };
+  if (spanish[pathname]) return spanish[pathname];
+
+  const parts = pathname.split("/").filter(Boolean);
+  if (parts.length === 3 && parts[1] === "legal" && isLegalDocument(parts[2])) {
+    return parts[2];
+  }
+  return null;
+}
