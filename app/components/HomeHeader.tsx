@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import CoreUseCaseCheckDemo from "./CoreUseCaseCheckDemo";
 import VonuMark from "./VonuMark";
+import PublicRouteScrollReset from "./PublicRouteScrollReset";
 import {
   GLOBAL_LOCALES,
   checkPath,
@@ -75,7 +76,9 @@ export default function HomeHeader() {
   }
 
   return (
-    <header
+    <>
+      <PublicRouteScrollReset />
+      <header
       data-vonu-use-case={isCoreUseCase ? "core" : undefined}
       className="sticky top-0 z-50 isolate overflow-visible border-b border-white/[0.08] bg-[#0b0e17]/95 text-white backdrop-blur-xl max-md:backdrop-blur-none"
     >
@@ -247,7 +250,8 @@ export default function HomeHeader() {
         </div>
       </div>
 
-      <CoreUseCaseCheckDemo pathname={pathname} />
-    </header>
+        <CoreUseCaseCheckDemo pathname={pathname} />
+      </header>
+    </>
   );
 }

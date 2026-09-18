@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import VonuMark from "./VonuMark";
+import PublicRouteScrollReset from "./PublicRouteScrollReset";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 import {
   GLOBAL_LOCALES,
@@ -59,7 +60,9 @@ export default function GlobalPublicHeader({
   }
 
   return (
-    <header className="sticky top-0 z-50 isolate overflow-visible border-b border-white/[0.08] bg-[#0b0e17]/95 text-white backdrop-blur-xl max-md:backdrop-blur-none">
+    <>
+      <PublicRouteScrollReset />
+      <header className="sticky top-0 z-50 isolate overflow-visible border-b border-white/[0.08] bg-[#0b0e17]/95 text-white backdrop-blur-xl max-md:backdrop-blur-none">
       <div className="relative z-[10020] mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href={checkPath(locale)} className="flex items-center gap-3" aria-label="Vonu">
           <VonuMark className="h-7 w-7" framed />
@@ -225,6 +228,7 @@ export default function GlobalPublicHeader({
           </div>
         </div>
       </div>
-    </header>
+      </header>
+    </>
   );
 }

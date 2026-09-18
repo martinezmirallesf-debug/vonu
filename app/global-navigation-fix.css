@@ -1,10 +1,3 @@
-/* Next.js skips sticky headers when choosing the scroll target during
-   client-side navigation. Offset native scrollIntoView by the exact shared
-   public-header height so every route starts with its intended hero spacing. */
-html {
-  scroll-padding-top: 68px;
-}
-
 /* Keep full-screen mobile navigation above page content on every public header. */
 @media (max-width: 767px) {
   header > div.fixed.inset-0 {
