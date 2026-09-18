@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
+import { RESOURCE_CONSENT_VERSION } from "@/lib/vonu-legal/consent";
+import { legalPath } from "@/lib/vonu-legal/routes";
 
 type FormState = "idle" | "sending" | "success" | "error";
 
@@ -204,7 +206,14 @@ export default function ResourceSignup({ page = "unknown", locale = "es" }: { pa
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, page, source: "resource_signup", consent: true }),
+        body: JSON.stringify({
+          email,
+          page,
+          source: "resource_signup",
+          consent: true,
+          locale,
+          consentVersion: RESOURCE_CONSENT_VERSION,
+        }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) throw new Error(t.fallbackError);
@@ -256,7 +265,7 @@ export default function ResourceSignup({ page = "unknown", locale = "es" }: { pa
 
             <label className="mt-4 flex cursor-pointer items-start gap-3 text-[12px] leading-5 text-slate-500">
               <input type="checkbox" name="consent" required className="mt-1 h-4 w-4 shrink-0 accent-emerald-400" />
-              <span>{t.consentPrefix} <Link href="/legal/privacidad" className="text-slate-300 underline decoration-slate-600 underline-offset-2 hover:text-white">{t.privacy}</Link>{t.consentSuffix}</span>
+              <span>{t.consentPrefix} <Link href={legalPath(locale, "privacy")} className="text-slate-300 underline decoration-slate-600 underline-offset-2 hover:text-white">{t.privacy}</Link>{t.consentSuffix}</span>
             </label>
           </form>
 
