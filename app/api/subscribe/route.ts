@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { RESOURCE_CONSENT_VERSION } from "@/lib/vonu-legal/consent";
 
 export const runtime = "nodejs";
 
@@ -25,6 +26,9 @@ export async function POST(req: NextRequest) {
     const page = cleanText(body?.page, 180);
     const source = cleanText(body?.source, 120) || "resource_signup";
     const consent = body?.consent === true;
+    const locale = cleanText(body?.locale, 10).toLowerCase();
+    const consentVersion = cleanText(body?.consentVersion, 80);
+    const supportedLocales = new Set(["es", "en", "fr", "de", "ar"]);
 
     if (!email || !isValidEmail(email)) {
       return json({ ok: false, error: "Introduce un email válido." }, 400);
@@ -32,6 +36,14 @@ export async function POST(req: NextRequest) {
 
     if (!consent) {
       return json({ ok: false, error: "Necesitamos tu consentimiento para enviarte recursos." }, 400);
+    }
+
+    if (!supportedLocales.has(locale)) {
+      return json({ ok: false, error: "Idioma de consentimiento no válido." }, 400);
+    }
+
+    if (consentVersion !== RESOURCE_CONSENT_VERSION) {
+      return json({ ok: false, error: "La versión del consentimiento no coincide con la versión vigente." }, 409);
     }
 
     const supabaseUrl =
@@ -55,6 +67,10 @@ export async function POST(req: NextRequest) {
         email,
         page: page || null,
         source,
+        consent_at: new Date().toISOString(),
+        consent_version: RESOURCE_CONSENT_VERSION,
+        locale,
+        unsubscribed_at: null,
       },
       { onConflict: "email" },
     );
