@@ -13,6 +13,50 @@ import type { RiskBand, RiskLevel, SignalTone, SupportedLocale, WebCheckResult }
 type Mode = "url" | "capture" | "text";
 type Result = WebCheckResult | CaptureCheckResult | TextCheckResult;
 
+type EntitlementSnapshot = {
+  freeUsed: boolean;
+  creditsRemaining: number;
+  lifetimeAnalyses: number;
+};
+
+const BALANCE_COPY: Record<SupportedLocale, {
+  checking: string;
+  freeAvailable: string;
+  freeUsed: string;
+  creditsAvailable: (count: number) => string;
+}> = {
+  es: {
+    checking: "Comprobando análisis disponibles…",
+    freeAvailable: "1 análisis gratuito disponible",
+    freeUsed: "Análisis gratuito utilizado",
+    creditsAvailable: (count) => `${count}/3 ${count === 1 ? "análisis disponible" : "análisis disponibles"}`,
+  },
+  en: {
+    checking: "Checking available analyses…",
+    freeAvailable: "1 free analysis available",
+    freeUsed: "Free analysis used",
+    creditsAvailable: (count) => `${count}/3 ${count === 1 ? "analysis available" : "analyses available"}`,
+  },
+  fr: {
+    checking: "Vérification des analyses disponibles…",
+    freeAvailable: "1 analyse gratuite disponible",
+    freeUsed: "Analyse gratuite utilisée",
+    creditsAvailable: (count) => `${count}/3 ${count === 1 ? "analyse disponible" : "analyses disponibles"}`,
+  },
+  de: {
+    checking: "Verfügbare Analysen werden geprüft…",
+    freeAvailable: "1 kostenlose Analyse verfügbar",
+    freeUsed: "Kostenlose Analyse genutzt",
+    creditsAvailable: (count) => `${count}/3 Analysen verfügbar`,
+  },
+  ar: {
+    checking: "جارٍ التحقق من التحليلات المتاحة…",
+    freeAvailable: "تحليل مجاني واحد متاح",
+    freeUsed: "تم استخدام التحليل المجاني",
+    creditsAvailable: (count) => `${count}/3 تحليلات متاحة`,
+  },
+};
+
 type UiCopy = {
   hero: string;
   sub: string;
@@ -459,7 +503,31 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [scanIndex, setScanIndex] = useState(0);
+  const [entitlement, setEntitlement] = useState<EntitlementSnapshot | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    function onEntitlement(event: Event) {
+      const detail = (event as CustomEvent<EntitlementSnapshot>).detail;
+      if (!detail) return;
+      setEntitlement({
+        freeUsed: Boolean(detail.freeUsed),
+        creditsRemaining: Math.max(0, Number(detail.creditsRemaining || 0)),
+        lifetimeAnalyses: Math.max(0, Number(detail.lifetimeAnalyses || 0)),
+      });
+    }
+
+    window.addEventListener("vonu:entitlement", onEntitlement as EventListener);
+    const timer = window.setTimeout(() => {
+      window.dispatchEvent(new Event("vonu:entitlement:request"));
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("vonu:entitlement", onEntitlement as EventListener);
+    };
+  }, []);
+
 
   useEffect(() => {
     if (!loading) return;
@@ -471,6 +539,15 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
     document.documentElement.dir = dir;
     document.documentElement.lang = localeMeta[locale].htmlLang;
   }, [dir, locale]);
+
+  const balanceText = (() => {
+    const labels = BALANCE_COPY[locale];
+    if (!entitlement) return labels.checking;
+    if (!entitlement.freeUsed && entitlement.creditsRemaining <= 0) return labels.freeAvailable;
+    if (entitlement.creditsRemaining > 0) return labels.creditsAvailable(entitlement.creditsRemaining);
+    if (entitlement.lifetimeAnalyses >= 4) return labels.creditsAvailable(0);
+    return labels.freeUsed;
+  })();
 
   function switchMode(next: Mode) {
     if (loading) return;
@@ -733,9 +810,9 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
 
                 <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-slate-500 sm:text-xs">
-                    <span>✓ {t.firstFree}</span>
+                    <span data-vonu-entitlement-status="true">{balanceText}</span>
                   </div>
-                  <button type="button" onClick={() => void analyze()} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-400 px-5 text-[13px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:bg-emerald-300 active:scale-[.99] sm:min-w-[160px]">{t.analyze}</button>
+                  <button data-vonu-analyze-cta="true" type="button" onClick={() => void analyze()} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-400 px-5 text-[13px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:bg-emerald-300 active:scale-[.99] sm:min-w-[160px]">{t.analyze}</button>
                 </div>
               </div>
             </section>
