@@ -19,7 +19,7 @@ export default function GlobalPublicFooter({ locale }: { locale: SupportedLocale
       <div className="mx-auto flex min-h-12 max-w-[1320px] flex-col items-center justify-between gap-3 px-4 py-3 text-[11px] text-slate-600 sm:flex-row sm:px-6 lg:px-8">
         <div className="flex items-center gap-2 text-slate-500">
           <VonuMark className="h-5 w-5" />
-          <span className="font-semibold tracking-[0.08em] text-slate-400">VONU</span>
+          <span className="font-semibold tracking-[0.08em] text-white">VONU</span>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-4">
           <Link href="/legal/aviso-legal" className="transition hover:text-slate-400">{t.legal}</Link>
