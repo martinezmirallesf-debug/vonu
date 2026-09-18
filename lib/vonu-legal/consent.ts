@@ -1,0 +1,1 @@
+export const RESOURCE_CONSENT_VERSION = "2026-09-18-v1";
