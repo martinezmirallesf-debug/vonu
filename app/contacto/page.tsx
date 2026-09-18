@@ -10,26 +10,26 @@ const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Contacto — VonuAI",
+  title: "Contacto — Vonu",
   description:
-    "Contacta con VonuAI para soporte, dudas sobre planes, colaboración, privacidad o información general.",
+    "Contacta con Vonu para soporte, dudas sobre planes, colaboración, privacidad o información general.",
   alternates: {
     canonical: "/contacto",
   },
   openGraph: {
-    title: "Contacto — VonuAI",
+    title: "Contacto — Vonu",
     description:
-      "Contacta con VonuAI para soporte, dudas, colaboración o información sobre el producto.",
+      "Contacta con Vonu para soporte, dudas, colaboración o información sobre el producto.",
     url: `${siteUrl}/contacto`,
-    siteName: "VonuAI",
+    siteName: "Vonu",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Contacto — VonuAI",
+    title: "Contacto — Vonu",
     description:
-      "Soporte, colaboración, privacidad y contacto general de VonuAI.",
+      "Soporte, colaboración, privacidad y contacto general de Vonu.",
   },
   robots: {
     index: true,
