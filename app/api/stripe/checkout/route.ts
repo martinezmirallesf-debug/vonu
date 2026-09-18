@@ -9,6 +9,7 @@ export const runtime = "nodejs";
 const supportedLocales = new Set<SupportedLocale>(["es", "en", "fr", "de", "ar"]);
 const DEVICE_HEADER = "x-vonu-device-id";
 const PACK_PRICE_ID = process.env.STRIPE_PRICE_DEVICE_PACK_3 || "price_1UGKu8Bmg4sO36zcKMqrlWQ4";
+const LEGAL_VERSION = "2026-09-18";
 
 function getAppUrl(req: NextRequest) {
   const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "";
@@ -25,7 +26,17 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const requestedLocale = (body?.locale ?? "es").toString().toLowerCase() as SupportedLocale;
     const locale: SupportedLocale = supportedLocales.has(requestedLocale) ? requestedLocale : "es";
+    const consent = body?.legalConsent || {};
+    const validLegalConsent =
+      consent?.termsAccepted === true &&
+      consent?.immediatePerformance === true &&
+      consent?.withdrawalAcknowledged === true &&
+      consent?.version === LEGAL_VERSION;
     const deviceId = req.headers.get(DEVICE_HEADER);
+
+    if (!validLegalConsent) {
+      return NextResponse.json({ error: "legal_consent_required" }, { status: 400 });
+    }
 
     if (!isUuid(deviceId)) {
       return NextResponse.json({ error: "device_id_missing" }, { status: 400 });
@@ -35,6 +46,15 @@ export async function POST(req: NextRequest) {
     const appUrl = getAppUrl(req);
     const pricingPath = localizedPublicPath(locale, "precios");
     const successPath = `${checkPath(locale)}?checkout=success&pack=3`;
+    const acceptedAt = new Date().toISOString();
+
+    const legalMetadata = {
+      legal_version: LEGAL_VERSION,
+      terms_accepted: "true",
+      immediate_performance_requested: "true",
+      withdrawal_acknowledged: "true",
+      legal_accepted_at: acceptedAt,
+    };
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -48,6 +68,7 @@ export async function POST(req: NextRequest) {
         device_id: deviceId!,
         analyses: "3",
         locale,
+        ...legalMetadata,
       },
       payment_intent_data: {
         metadata: {
@@ -55,6 +76,7 @@ export async function POST(req: NextRequest) {
           device_id: deviceId!,
           analyses: "3",
           locale,
+          ...legalMetadata,
         },
       },
     });
