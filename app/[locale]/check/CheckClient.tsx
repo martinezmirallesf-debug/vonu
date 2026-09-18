@@ -451,6 +451,34 @@ function ModeIcon({ mode }: { mode: Mode }) {
   return <span aria-hidden="true" className="text-[17px]">≡</span>;
 }
 
+function ScannerModeIcon({ mode }: { mode: Mode }) {
+  if (mode === "url") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" aria-hidden="true">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+
+  if (mode === "capture") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="2.5" stroke="currentColor" strokeWidth="1.9" />
+        <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" strokeWidth="1.8" />
+        <path d="m21 15-5-5L5 21" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" aria-hidden="true">
+      <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7.5 8.5h9M7.5 12.5h6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function riskStyles(level: RiskLevel) {
   if (level === "high") return { accent: "#fb7185", bg: "rgba(244,63,94,.10)", border: "rgba(251,113,133,.34)" };
   if (level === "caution") return { accent: "#fbbf24", bg: "rgba(245,158,11,.10)", border: "rgba(251,191,36,.32)" };
@@ -872,7 +900,9 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
                 <div className="absolute inset-5 rounded-full border border-emerald-400/20" />
                 <div className="absolute inset-10 rounded-full border border-emerald-400/25" />
                 <div className="absolute left-1/2 top-1/2 h-px w-[45%] origin-left -translate-y-1/2 bg-gradient-to-r from-emerald-300 to-transparent animate-[spin_1.45s_linear_infinite]" />
-                <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-400 shadow-[0_0_22px_rgba(52,211,153,.85)]" />
+                <div className="absolute left-1/2 top-1/2 grid h-14 w-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[#07142f] text-emerald-300 shadow-[0_0_28px_rgba(123,183,255,.34)] ring-1 ring-emerald-400/25">
+                  <ScannerModeIcon mode={mode} />
+                </div>
               </div>
               <h2 className="mt-6 text-[22px] font-bold tracking-[-0.035em] text-white sm:text-[24px]">{t.scanning}</h2>
               <p className="mx-auto mt-3 min-h-6 max-w-full break-words px-1 text-sm text-emerald-200/85">{activeStep}</p>
