@@ -341,7 +341,6 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
         const data = await response.json().catch(() => null);
         if (cancelled || !response.ok || !data) return null;
         entitlement = entitlementFromData(data);
-        publishEntitlement(entitlement);
         applyUi();
         return entitlement;
       } catch {
@@ -362,8 +361,7 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
 
           if (response.ok && data) {
             entitlement = entitlementFromData(data);
-            publishEntitlement(entitlement);
-        applyUi();
+            applyUi();
 
             if (entitlement.creditsRemaining > 0) {
               setPaymentState("ready");
@@ -410,8 +408,7 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
         const data = await response.json().catch(() => null);
         if (response.ok && data) {
           entitlement = entitlementFromData(data);
-          publishEntitlement(entitlement);
-        applyUi();
+          applyUi();
           shouldOpenPaywall = entitlement.freeUsed && entitlement.creditsRemaining <= 0;
         }
       } catch {
