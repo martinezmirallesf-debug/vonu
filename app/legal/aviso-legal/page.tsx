@@ -40,7 +40,7 @@ export default function AvisoLegalPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <HomeHeader />
 
-      <LegalPage locale="es" title="Aviso legal" description="Información legal del servicio Vonu y del sitio vonuai.com.">
+      <LegalPage locale="es" title="Aviso legal" description="Información legal del servicio Vonu y del sitio vonuai.com." updatedAt="Última actualización: 18 de septiembre de 2026">
         <h2>1. Titularidad del servicio</h2>
         <p>
           Este sitio web y el servicio <strong>Vonu</strong>, disponible en <strong>vonuai.com</strong>, son titularidad de <strong>Francisco Luis Martínez Miralles</strong>.
