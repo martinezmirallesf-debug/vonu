@@ -11,6 +11,10 @@ const localizedLegal = read("app/components/LocalizedLegalDocument.tsx");
 const legalRoutes = read("lib/vonu-legal/routes.ts");
 const checkout = read("app/api/stripe/checkout/route.ts");
 const checkClient = read("app/[locale]/check/CheckClient.tsx");
+const resourceSignup = read("app/components/ResourceSignup.tsx");
+const subscribeRoute = read("app/api/subscribe/route.ts");
+const contactForm = read("app/components/ContactForm.tsx");
+const consentVersion = read("lib/vonu-legal/consent.ts");
 
 function requireText(source, needle, label) {
   if (!source.includes(needle)) throw new Error(`${label}: missing ${JSON.stringify(needle)}`);
@@ -57,10 +61,20 @@ requireText(checkout, "legal_consent_required", "checkout legal consent enforcem
 requireText(checkout, "immediate_performance_requested", "checkout immediate performance evidence");
 requireText(checkout, "withdrawal_acknowledged", "checkout withdrawal evidence");
 requireText(checkClient, "aiNotice", "visible AI disclosure");
+requireText(resourceSignup, 'legalPath(locale, "privacy")', "localized resource privacy link");
+requireText(resourceSignup, "RESOURCE_CONSENT_VERSION", "resource consent version sent");
+requireText(resourceSignup, "locale,", "resource consent locale sent");
+requireText(subscribeRoute, "consent_at", "resource consent timestamp persisted");
+requireText(subscribeRoute, "consent_version", "resource consent version persisted");
+requireText(subscribeRoute, "unsubscribed_at", "resource unsubscribe state persisted");
+requireText(subscribeRoute, "RESOURCE_CONSENT_VERSION", "resource consent version enforced");
+requireText(contactForm, "/legal/privacidad", "contact privacy link");
+requireText(consentVersion, '2026-09-18-v1', "resource consent wording version");
+
 
 rejectText(telemetry, "NEXT_PUBLIC_GA_MEASUREMENT_ID", "telemetry Google Analytics disabled");
 rejectText(telemetry, "gtag", "telemetry gtag disabled");
 rejectText(telemetry, "vonu_locale", "telemetry locale cookie disabled");
 requireText(telemetry, 'track(name, data)', "telemetry Vercel analytics");
 
-console.log("VONU_LEGAL_LAUNCH_CONTRACT_GREEN legal=25 providers=8 privacy=1 analytics=1 checkout_consents=1 ai_transparency=1");
+console.log("VONU_LEGAL_LAUNCH_CONTRACT_GREEN legal=25 providers=8 privacy=1 analytics=1 checkout_consents=1 ai_transparency=1 resource_consent=1 contact_privacy=1");
