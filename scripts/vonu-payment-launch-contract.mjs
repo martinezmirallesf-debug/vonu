@@ -14,12 +14,13 @@ function forbidText(source, needle, label) {
   }
 }
 
-const [middleware, metered, button, gate, checkClient, entitlement, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
+const [middleware, metered, button, gate, checkClient, checkPage, entitlement, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
   read("middleware.ts"),
   read("app/api/check/metered/route.ts"),
   read("app/components/DevicePackCheckoutButton.tsx"),
   read("app/components/DeviceAccessGate.tsx"),
   read("app/[locale]/check/CheckClient.tsx"),
+  read("app/[locale]/check/page.tsx"),
   read("app/api/check/entitlement/route.ts"),
   read("app/api/stripe/checkout/route.ts"),
   read("app/api/stripe/webhook/route.ts"),
@@ -61,6 +62,10 @@ requireText(checkClient, "BALANCE_COPY", "localized paid balance display");
 requireText(checkClient, "balanceText", "reactive paid balance state");
 requireText(checkClient, 'data-vonu-entitlement-status="true"', "stable scanner balance target");
 requireText(checkClient, '"vonu:entitlement"', "scanner entitlement subscription");
+requireText(checkClient, 'fetch("/api/check/entitlement"', "scanner direct entitlement refresh");
+requireText(checkClient, 'cache: "no-store"', "scanner no-store entitlement refresh");
+requireText(checkPage, 'export const dynamic = "force-dynamic"', "device-specific check page");
+requireText(checkPage, "export const revalidate = 0", "check page no static revalidation");
 requireText(gate, "no vuelvas a pagar", "duplicate-payment warning");
 requireText(entitlement, "get_vonu_device_entitlement", "entitlement status RPC");
 
