@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import HomeHeader from "../../components/HomeHeader";
 import HomeFooter from "../../components/HomeFooter";
 import LegalPage from "../../components/LegalPage";
+import { legalAlternates } from "@/lib/vonu-legal/routes";
 
 const siteUrl = "https://vonuai.com";
 
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Cookies y almacenamiento local — Vonu",
   description: "Información sobre cookies, identificación técnica del dispositivo, almacenamiento y analítica en Vonu.",
-  alternates: { canonical: "/legal/cookies" },
+  alternates: { canonical: "/legal/cookies", languages: legalAlternates("cookies") },
   openGraph: {
     title: "Cookies y almacenamiento local — Vonu",
     description: "Qué tecnologías de almacenamiento utiliza actualmente Vonu.",

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import HomeHeader from "../../components/HomeHeader";
 import HomeFooter from "../../components/HomeFooter";
 import LegalPage from "../../components/LegalPage";
+import { legalAlternates } from "@/lib/vonu-legal/routes";
 
 const siteUrl = "https://vonuai.com";
 
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
   title: "Uso responsable — Vonu",
   description:
     "Buenas prácticas para utilizar Vonu al comprobar mensajes, capturas, enlaces y webs sospechosas.",
-  alternates: { canonical: "/legal/uso-responsable" },
+  alternates: { canonical: "/legal/uso-responsable", languages: legalAlternates("responsible-use") },
   openGraph: {
     title: "Uso responsable — Vonu",
     description: "Cómo interpretar una comprobación de Vonu y actuar con seguridad.",

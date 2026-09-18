@@ -79,6 +79,12 @@ requireText(checkout, 'kind: "device_pack"', "device checkout metadata");
 requireText(checkout, 'analyses: "3"', "three-analysis pack metadata");
 requireText(checkout, 'price_1UGKu8Bmg4sO36zcKMqrlWQ4', "launch Stripe price");
 requireText(checkout, 'customer_creation: "always"', "receipt customer collection");
+requireText(checkout, "legal_consent_required", "legal consent required before checkout");
+requireText(checkout, 'terms_accepted: "true"', "terms acceptance evidence");
+requireText(checkout, 'immediate_performance_requested: "true"', "immediate performance evidence");
+requireText(checkout, 'withdrawal_acknowledged: "true"', "withdrawal acknowledgement evidence");
+requireText(button, "Antes de continuar al pago", "Spanish pre-checkout legal confirmation");
+requireText(button, "Before continuing to payment", "English pre-checkout legal confirmation");
 requireText(checkout, 'localizedPublicPath(locale, "precios")', "localized checkout cancel path");
 requireText(checkout, "checkPath(locale)", "localized checkout success path");
 forbidText(checkout, 'mode: "subscription"', "no recurring checkout");
@@ -109,4 +115,4 @@ requireText(privacy, "vonu_device_id", "privacy device cookie");
 requireText(privacy, "pago confirmado", "privacy payment-to-credit flow");
 requireText(cookies, "vonu_device_id", "cookie disclosure");
 
-console.log("VONU_PAYMENT_LAUNCH_CONTRACT_GREEN model=device free=1 pack=3 price=399 activation=poll balance=localized-live refunds=failed-analysis");
+console.log("VONU_PAYMENT_LAUNCH_CONTRACT_GREEN model=device free=1 pack=3 price=399 activation=poll balance=localized-live refunds=failed-analysis legal-consent=versioned");

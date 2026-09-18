@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import HomeHeader from "../../components/HomeHeader";
 import HomeFooter from "../../components/HomeFooter";
 import LegalPage from "../../components/LegalPage";
+import { legalAlternates } from "@/lib/vonu-legal/routes";
 
 const siteUrl = "https://vonuai.com";
 
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Política de privacidad — Vonu",
   description: "Política de privacidad de Vonu: análisis con IA, identificador técnico de dispositivo, pagos, proveedores, conservación y derechos.",
-  alternates: { canonical: "/legal/privacidad" },
+  alternates: { canonical: "/legal/privacidad", languages: legalAlternates("privacy") },
   openGraph: {
     title: "Política de privacidad — Vonu",
     description: "Cómo trata Vonu el contenido enviado, el identificador técnico del dispositivo y los datos de pago necesarios.",

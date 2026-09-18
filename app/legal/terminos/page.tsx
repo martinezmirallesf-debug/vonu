@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import HomeHeader from "../../components/HomeHeader";
 import HomeFooter from "../../components/HomeFooter";
 import LegalPage from "../../components/LegalPage";
+import { legalAlternates } from "@/lib/vonu-legal/routes";
 
 const siteUrl = "https://vonuai.com";
 
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Términos y condiciones — Vonu",
   description: "Términos de Vonu: uso del servicio, análisis gratuito por dispositivo, packs de análisis, pagos y límites de responsabilidad.",
-  alternates: { canonical: "/legal/terminos" },
+  alternates: { canonical: "/legal/terminos", languages: legalAlternates("terms") },
   openGraph: {
     title: "Términos y condiciones — Vonu",
     description: "Condiciones generales de uso y compra de análisis en Vonu.",

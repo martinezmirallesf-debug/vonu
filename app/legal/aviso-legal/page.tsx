@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import HomeHeader from "../../components/HomeHeader";
 import HomeFooter from "../../components/HomeFooter";
 import LegalPage from "../../components/LegalPage";
+import { legalAlternates } from "@/lib/vonu-legal/routes";
 
 const siteUrl = "https://vonuai.com";
 
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
   title: "Aviso legal — Vonu",
   description:
     "Aviso legal de Vonu: titularidad, objeto del servicio, propiedad intelectual, límites de responsabilidad y contacto.",
-  alternates: { canonical: "/legal/aviso-legal" },
+  alternates: { canonical: "/legal/aviso-legal", languages: legalAlternates("legal-notice") },
   openGraph: {
     title: "Aviso legal — Vonu",
     description: "Información legal sobre la titularidad y el uso de Vonu.",

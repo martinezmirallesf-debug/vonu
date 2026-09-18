@@ -7,6 +7,10 @@ const privacy = read("app/legal/privacidad/page.tsx");
 const terms = read("app/legal/terminos/page.tsx");
 const cookies = read("app/legal/cookies/page.tsx");
 const responsible = read("app/legal/uso-responsable/page.tsx");
+const localizedLegal = read("app/components/LocalizedLegalDocument.tsx");
+const legalRoutes = read("lib/vonu-legal/routes.ts");
+const checkout = read("app/api/stripe/checkout/route.ts");
+const checkClient = read("app/[locale]/check/CheckClient.tsx");
 
 function requireText(source, needle, label) {
   if (!source.includes(needle)) throw new Error(`${label}: missing ${JSON.stringify(needle)}`);
@@ -24,7 +28,7 @@ for (const [source, label] of [
   [responsible, "responsible use"],
 ]) {
   rejectText(source, "VonuAI", `${label} obsolete brand`);
-  requireText(source, "16 de septiembre de 2026", `${label} update date`);
+  requireText(source, "18 de septiembre de 2026", `${label} update date`);
 }
 
 requireText(legal, "mensajes, capturas de pantalla, enlaces y sitios web", "legal current product");
@@ -44,10 +48,19 @@ requireText(responsible, "contraseñas", "responsible secret minimization");
 requireText(responsible, "códigos OTP", "responsible OTP minimization");
 requireText(responsible, "Un resultado bajo tampoco garantiza seguridad", "responsible false reassurance guard");
 requireText(cookies, "no utiliza Google Analytics ni cookies publicitarias", "cookies current analytics state");
+requireText(localizedLegal, "Legal notice", "English legal documents");
+requireText(localizedLegal, "Politique de confidentialité", "French legal documents");
+requireText(localizedLegal, "Datenschutzerklärung", "German legal documents");
+requireText(localizedLegal, "سياسة الخصوصية", "Arabic legal documents");
+requireText(legalRoutes, 'return `/${locale}/legal/${document}`', "localized legal routing");
+requireText(checkout, "legal_consent_required", "checkout legal consent enforcement");
+requireText(checkout, "immediate_performance_requested", "checkout immediate performance evidence");
+requireText(checkout, "withdrawal_acknowledged", "checkout withdrawal evidence");
+requireText(checkClient, "aiNotice", "visible AI disclosure");
 
 rejectText(telemetry, "NEXT_PUBLIC_GA_MEASUREMENT_ID", "telemetry Google Analytics disabled");
 rejectText(telemetry, "gtag", "telemetry gtag disabled");
 rejectText(telemetry, "vonu_locale", "telemetry locale cookie disabled");
 requireText(telemetry, 'track(name, data)', "telemetry Vercel analytics");
 
-console.log("VONU_LEGAL_LAUNCH_CONTRACT_GREEN legal=5 providers=8 privacy=1 analytics=1");
+console.log("VONU_LEGAL_LAUNCH_CONTRACT_GREEN legal=25 providers=8 privacy=1 analytics=1 checkout_consents=1 ai_transparency=1");
