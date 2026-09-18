@@ -151,18 +151,57 @@ function repairJsonCandidate(value: string) {
   return output.replace(/,\s*([}\]])/g, "$1");
 }
 
+function extractFirstBalancedObject(value: string) {
+  const start = value.indexOf("{");
+  if (start < 0) return "";
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = start; index < value.length; index += 1) {
+    const char = value[index];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (char === '"') inString = false;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+    if (char === "{") depth += 1;
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0) return value.slice(start, index + 1);
+    }
+  }
+
+  return value.slice(start);
+}
+
 function parseJsonText(text: string) {
   const clean = text
     .trim()
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/i, "")
+    .replace(/^\`\`\`(?:json)?\s*/i, "")
+    .replace(/\s*\`\`\`$/i, "")
     .trim();
 
   const first = clean.indexOf("{");
   const last = clean.lastIndexOf("}");
   const fromFirst = first >= 0 ? clean.slice(first) : clean;
   const objectOnly = first >= 0 && last > first ? clean.slice(first, last + 1) : fromFirst;
-  const candidates = Array.from(new Set([clean, objectOnly, fromFirst])).filter(Boolean);
+  const balancedObject = extractFirstBalancedObject(clean);
+  const candidates = Array.from(new Set([clean, balancedObject, objectOnly, fromFirst])).filter(Boolean);
 
   for (const candidate of candidates) {
     try {
@@ -171,7 +210,7 @@ function parseJsonText(text: string) {
       try {
         return JSON.parse(repairJsonCandidate(candidate));
       } catch {
-        // Try the next candidate before using the one-time compact retry.
+        // Try the next candidate before using the compact recovery attempts.
       }
     }
   }
@@ -268,6 +307,32 @@ Exact schema:
   "signals":[{"id":"id","tone":"positive|warning|negative|neutral","title":"short title","detail":"short detail","weight":0}],
   "atlas":{"evidence":[]},
   "extracted":{"urls":[],"phones":[],"emails":[],"brands":[]},
+  "recommendedActions":[],
+  "limitations":[]
+}
+`.trim();
+}
+
+function minimalRecoveryPrompt(locale: SupportedLocale) {
+  return `
+Read this screenshot and return one SMALL JSON object only. It may contain a message, email, profile, marketplace, website or payment screen.
+Human-readable text must be in: ${locale}.
+
+Rules:
+- No markdown and no prose outside JSON.
+- Keep the whole response under 1800 characters.
+- Use only what is visible in the screenshot.
+- risk.score is a 0-100 risk index, not a probability.
+- Missing context means confidence "limited"; do not invent facts.
+- Use at most 3 short signals, 3 actions and 2 limitations.
+
+Schema:
+{
+  "kind":"message|email|social_profile|marketplace|website_or_checkout|other",
+  "risk":{"score":0,"confidence":"limited|medium|high"},
+  "summary":"short conclusion",
+  "visibleText":"short exact visible text",
+  "signals":[{"id":"signal","tone":"positive|warning|negative|neutral","title":"short title","detail":"short detail","weight":0}],
   "recommendedActions":[],
   "limitations":[]
 }
@@ -408,7 +473,47 @@ export async function POST(req: NextRequest) {
       if (!retryResponse.ok || !retryData || typeof retryData.text !== "string") {
         throw new Error("vision_retry_failed");
       }
-      parsed = parseJsonText(retryData.text);
+
+      try {
+        parsed = parseJsonText(retryData.text);
+      } catch {
+        // Last recovery path: drastically reduce the requested schema. This avoids
+        // exposing a formatting failure to the user while keeping the normal,
+        // richer analysis path untouched. No screenshot or model text is logged.
+        const recoveryResponse = await fetch(edgeUrl, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${supabaseAnonKey}`,
+          },
+          body: JSON.stringify({
+            messages: [],
+            userText: minimalRecoveryPrompt(locale),
+            imageBase64,
+            pdfText: null,
+            mode: "chat",
+            tutorLevel: "adult",
+            footballProfile: "normal",
+            extraInstructions: "Return exactly one small valid JSON object only. No markdown or commentary.",
+          }),
+          cache: "no-store",
+        });
+
+        const recoveryRaw = await recoveryResponse.text().catch(() => "");
+        let recoveryData: any = null;
+        try {
+          recoveryData = recoveryRaw ? JSON.parse(recoveryRaw) : null;
+        } catch {
+          recoveryData = null;
+        }
+
+        if (!recoveryResponse.ok || !recoveryData || typeof recoveryData.text !== "string") {
+          throw new Error("vision_recovery_failed");
+        }
+
+        parsed = parseJsonText(recoveryData.text);
+      }
     }
 
     const rawBaseScore = clampRiskScore(parsed?.risk?.score);
