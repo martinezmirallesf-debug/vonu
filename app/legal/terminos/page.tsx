@@ -35,22 +35,9 @@ export default function TerminosPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f5f7] text-zinc-950">
+    <main className="min-h-screen bg-[#0d101b] text-slate-200">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <HomeHeader />
-
-      <section className="bg-[#f5f5f7]">
-        <div className="mx-auto max-w-[1500px] px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12 lg:px-8">
-          <div className="mx-auto max-w-[980px] text-center">
-            <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Condiciones</p>
-            <h1 className="mt-4 text-[50px] font-semibold leading-[0.98] tracking-[-0.06em] text-zinc-950 sm:text-[82px]">Términos y condiciones.</h1>
-            <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
-              Reglas claras para utilizar Vonu, comprar análisis y entender los límites de una comprobación de riesgo.
-            </p>
-            <p className="mt-5 text-[13px] text-zinc-500">Última actualización: 18 de septiembre de 2026</p>
-          </div>
-        </div>
-      </section>
 
       <LegalPage locale="es" title="Términos y condiciones" description="Condiciones generales para acceder y utilizar Vonu.">
         <h2>1. Titular y aceptación</h2>
