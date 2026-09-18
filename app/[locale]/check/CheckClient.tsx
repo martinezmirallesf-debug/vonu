@@ -541,6 +541,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
   const [url, setUrl] = useState("");
   const [text, setText] = useState("");
   const [imageData, setImageData] = useState<string | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [imageName, setImageName] = useState("");
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(false);
@@ -548,6 +549,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
   const [scanIndex, setScanIndex] = useState(0);
   const [entitlement, setEntitlement] = useState<EntitlementSnapshot | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const imagePreviewObjectUrlRef = useRef<string | null>(null);
 
   const refreshBalance = useCallback(async () => {
     try {
@@ -603,6 +605,15 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
   }, [loading]);
 
   useEffect(() => {
+    return () => {
+      if (imagePreviewObjectUrlRef.current) {
+        URL.revokeObjectURL(imagePreviewObjectUrlRef.current);
+        imagePreviewObjectUrlRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     document.documentElement.dir = dir;
     document.documentElement.lang = localeMeta[locale].htmlLang;
   }, [dir, locale]);
@@ -638,8 +649,15 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
       setError(t.invalidImage);
       return;
     }
+    if (imagePreviewObjectUrlRef.current) {
+      URL.revokeObjectURL(imagePreviewObjectUrlRef.current);
+    }
+    const previewUrl = URL.createObjectURL(file);
+    imagePreviewObjectUrlRef.current = previewUrl;
+
     setMode("capture");
     setImageData(dataUrl);
+    setImagePreviewUrl(previewUrl);
     setImageName(file.name || "screenshot");
     setError("");
   }
@@ -752,7 +770,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
         label: subjectCopy[locale].capture,
         primary: imageName || subjectCopy[locale].capture,
         detail: result?.version === "vonu-capture-v1" ? contextLabel(result.kind, locale) : t.dropHint,
-        image: imageData,
+        image: imagePreviewUrl || imageData,
         icon: "▣",
       };
     }
@@ -856,7 +874,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
                   <div onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); void handleFile(event.dataTransfer.files?.[0] || null); }} className="grid min-h-[138px] place-items-center px-3 py-2 text-center">
                     {imageData ? (
                       <div className="grid w-full gap-3 sm:grid-cols-[110px_1fr] sm:items-center sm:text-start">
-                        <img src={imageData} alt="Preview" className="mx-auto max-h-[112px] max-w-[110px] rounded-lg object-contain" />
+                        <img src={imagePreviewUrl || imageData} alt="Preview" className="mx-auto max-h-[112px] max-w-[110px] rounded-lg object-contain" />
                         <div className="min-w-0">
                           <p className="truncate text-[14px] font-semibold text-white">{imageName}</p>
                           <p className="mt-1 text-[13px] text-slate-400">{t.dropHint}</p>
