@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import HomeHeader from "@/app/components/HomeHeader";
 import { localeMeta } from "@/lib/vonu-check/i18n";
+import { navCopy } from "@/lib/vonu-global/i18n";
+import { localizedPublicPath } from "@/lib/vonu-global/routes";
+import { legalPath } from "@/lib/vonu-legal/routes";
 import { friendlyHttpStatus, humanizeLimitation, humanizeWebSignal } from "@/lib/vonu-check/presentation";
 import { riskBandFromScore } from "@/lib/vonu-check/risk-score";
 import type { CaptureCheckResult } from "@/lib/vonu-check/capture-types";
@@ -72,6 +75,7 @@ type UiCopy = {
   analyze: string;
   privacy: string;
   firstFree: string;
+  aiNotice: string;
   pasteImage: string;
   scanning: string;
   scanUrl: string[];
@@ -133,6 +137,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
     analyze: "Analizar ahora",
     privacy: "Sin registro",
     firstFree: "Primer análisis gratuito",
+    aiNotice: "Vonu utiliza IA y comprobaciones automatizadas. Puede equivocarse y el resultado no es un veredicto.",
     pasteImage: "También puedes pegar una captura con Ctrl+V",
     scanning: "Analizando señales de riesgo",
     scanUrl: ["Comprobando a qué página lleva…", "Revisando si la conexión es segura…", "Comprobando cambios de dirección…", "Buscando señales sospechosas…", "Calculando el nivel de riesgo…"],
@@ -192,6 +197,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
     analyze: "Analyse now",
     privacy: "No account required",
     firstFree: "First analysis free",
+    aiNotice: "Vonu uses AI and automated checks. It can make mistakes and the result is not a verdict.",
     pasteImage: "You can also paste a screenshot with Ctrl+V",
     scanning: "Analysing risk signals",
     scanUrl: ["Checking where the link leads…", "Checking whether the connection is secure…", "Reviewing changes of destination…", "Looking for suspicious signs…", "Calculating the risk level…"],
@@ -251,6 +257,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
     analyze: "Analyser",
     privacy: "Sans inscription",
     firstFree: "Première analyse gratuite",
+    aiNotice: "Vonu utilise l’IA et des vérifications automatisées. Il peut se tromper et le résultat n’est pas un verdict.",
     pasteImage: "Vous pouvez aussi coller une capture avec Ctrl+V",
     scanning: "Analyse des signaux de risque",
     scanUrl: ["Vérification de la destination du lien…", "Vérification de la sécurité de la connexion…", "Analyse des changements de destination…", "Recherche de signes suspects…", "Calcul du niveau de risque…"],
@@ -310,6 +317,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
     analyze: "Jetzt analysieren",
     privacy: "Ohne Konto",
     firstFree: "Erste Analyse kostenlos",
+    aiNotice: "Vonu nutzt KI und automatisierte Prüfungen. Fehler sind möglich; das Ergebnis ist kein Urteil.",
     pasteImage: "Screenshot auch mit Ctrl+V einfügen",
     scanning: "Risikosignale werden analysiert",
     scanUrl: ["Prüfen, wohin der Link führt…", "Prüfen, ob die Verbindung sicher ist…", "Prüfen von Zielwechseln…", "Suchen nach verdächtigen Hinweisen…", "Berechnen des Risikoniveaus…"],
@@ -369,6 +377,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
     analyze: "حلّل الآن",
     privacy: "بدون تسجيل",
     firstFree: "أول تحليل مجاني",
+    aiNotice: "يستخدم Vonu الذكاء الاصطناعي وفحوصاً آلية. قد يخطئ والنتيجة ليست حكماً نهائياً.",
     pasteImage: "يمكنك أيضاً لصق لقطة باستخدام Ctrl+V",
     scanning: "جارٍ تحليل إشارات المخاطر",
     scanUrl: ["جارٍ التحقق من وجهة الرابط…", "جارٍ التحقق من أمان الاتصال…", "جارٍ مراجعة تغيّر الوجهة…", "جارٍ البحث عن إشارات مريبة…", "جارٍ حساب مستوى المخاطر…"],
@@ -526,6 +535,7 @@ function yesNoLabel(locale: SupportedLocale, value: boolean) {
 
 export default function CheckClient({ locale }: { locale: SupportedLocale }) {
   const t = UI[locale];
+  const nav = navCopy[locale];
   const dir = localeMeta[locale].dir;
   const [mode, setMode] = useState<Mode>("url");
   const [url, setUrl] = useState("");
@@ -816,6 +826,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
             <section className="text-center">
               <h1 className="mx-auto max-w-[900px] text-balance text-[36px] font-bold leading-[1.02] tracking-[-0.055em] text-white sm:text-[48px] lg:text-[56px] xl:text-[60px]">{t.hero}</h1>
               <p className="mx-auto mt-3 max-w-[720px] text-[15px] leading-6 text-slate-400 sm:text-[16px] lg:text-[17px]">{t.sub}</p>
+              <p className="mx-auto mt-2 max-w-[760px] text-[11px] leading-5 text-slate-600">{t.aiNotice}</p>
             </section>
 
             <section className="mx-auto mt-5 w-full max-w-[850px] rounded-[22px] bg-[#141927]/72 shadow-[0_26px_70px_rgba(0,0,0,.24)] backdrop-blur-sm sm:mt-6">
@@ -880,10 +891,10 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
             <div className="mx-auto flex min-h-11 max-w-[1320px] items-center justify-between gap-3 px-4 text-[11px] text-slate-600 sm:px-6 lg:px-8">
               <div className="flex items-center gap-2 text-slate-500"><VonuMark /><span className="font-semibold tracking-[0.08em] text-white">Vonu</span></div>
               <div className="flex items-center gap-3 sm:gap-4">
-                <Link href="/producto" className="hidden hover:text-slate-400 sm:inline">Producto</Link>
-                <Link href="/casos-de-uso" className="hidden hover:text-slate-400 sm:inline">Casos de uso</Link>
-                <Link href="/legal/aviso-legal" className="hover:text-slate-400">{t.legal}</Link>
-                <Link href="/legal/privacidad" className="hover:text-slate-400">{t.privacyMenu}</Link>
+                <Link href={localizedPublicPath(locale, "producto")} className="hidden hover:text-slate-400 sm:inline">{nav.product}</Link>
+                <Link href={localizedPublicPath(locale, "casos-de-uso")} className="hidden hover:text-slate-400 sm:inline">{nav.cases}</Link>
+                <Link href={legalPath(locale, "legal-notice")} className="hover:text-slate-400">{t.legal}</Link>
+                <Link href={legalPath(locale, "privacy")} className="hover:text-slate-400">{t.privacyMenu}</Link>
               </div>
             </div>
           </footer>

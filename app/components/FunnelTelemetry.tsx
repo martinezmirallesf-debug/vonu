@@ -124,12 +124,20 @@ export default function FunnelTelemetry() {
         const response = await originalFetch(...args);
 
         if (analysisMode) {
+          const analysisData = response.ok
+            ? await response.clone().json().catch(() => null)
+            : null;
           emit("analysis_completed", {
             mode: analysisMode,
             ok: response.ok,
             status: response.status,
             duration_ms: Math.round(performance.now() - started),
             locale: document.documentElement.lang || "unknown",
+            risk_band: analysisData?.risk?.band || undefined,
+            risk_level: analysisData?.risk?.level || undefined,
+            confidence: analysisData?.risk?.confidence || undefined,
+            category: analysisData?.kind || undefined,
+            result_version: analysisData?.version || undefined,
           });
         }
         if ((isPlanCheckout || isTopupCheckout) && response.ok) {
