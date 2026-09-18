@@ -1,6 +1,7 @@
 import fs from "node:fs";
 
 const capture = fs.readFileSync("app/api/check/image/route.ts", "utf8");
+const checkClient = fs.readFileSync("app/[locale]/check/CheckClient.tsx", "utf8");
 const text = fs.readFileSync("app/api/check/text/route.ts", "utf8");
 
 function requireSource(source, needle, label) {
@@ -30,6 +31,8 @@ requireSource(capture, "atlasScore.confidence", "capture atlas confidence");
 requireSource(capture, "extractFirstBalancedObject", "capture balanced-json recovery");
 requireSource(capture, "minimalRecoveryPrompt", "capture minimal recovery prompt");
 requireSource(capture, "vision_recovery_failed", "capture final recovery guard");
+requireSource(checkClient, "URL.createObjectURL(file)", "capture stable thumbnail URL");
+requireSource(checkClient, "imagePreviewUrl || imageData", "capture thumbnail persistence");
 requireSource(text, "Fraud Atlas evidence MUST be grounded in exact text excerpts", "text exact-evidence grounding");
 
-console.log("VONU_CAPTURE_MESSAGE_PARITY_CONTRACT_GREEN capture=1 text=1 shared_atlas=1 polarity=1 image_json_recovery=1");
+console.log("VONU_CAPTURE_MESSAGE_PARITY_CONTRACT_GREEN capture=1 text=1 shared_atlas=1 polarity=1 image_json_recovery=1 thumbnail_persistence=1");
