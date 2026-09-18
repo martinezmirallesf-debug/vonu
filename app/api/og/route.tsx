@@ -2,6 +2,16 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
+const MARK_PATH = "M 27.92 2.00 L 27.83 2.27 L 26.68 2.62 L 25.00 3.59 L 23.76 4.92 L 23.49 5.54 L 23.23 5.80 L 22.61 8.01 L 22.61 9.43 L 22.79 10.05 L 22.79 11.73 L 22.61 12.44 L 21.99 13.68 L 20.93 14.83 L 19.96 15.44 L 18.89 15.89 L 17.13 16.06 L 16.15 15.89 L 13.94 14.65 L 11.73 13.94 L 9.70 13.94 L 8.81 14.12 L 7.13 14.74 L 5.63 15.80 L 4.83 16.59 L 4.12 17.66 L 3.50 19.25 L 3.24 19.34 L 3.24 22.61 L 3.50 22.70 L 4.03 24.11 L 4.74 25.26 L 5.63 26.15 L 6.42 26.77 L 7.57 27.39 L 9.43 27.92 L 11.46 27.92 L 12.97 27.56 L 14.65 26.77 L 16.42 25.44 L 18.01 24.82 L 19.96 24.73 L 21.02 25.09 L 22.43 26.24 L 22.96 27.21 L 23.05 29.15 L 22.70 30.30 L 22.70 32.43 L 23.05 33.67 L 23.94 35.26 L 25.09 36.41 L 26.94 37.47 L 27.83 37.73 L 27.92 38.00 L 31.19 38.00 L 31.28 37.73 L 32.16 37.47 L 33.75 36.58 L 34.99 35.52 L 35.79 34.55 L 36.50 32.87 L 36.76 32.78 L 36.76 29.24 L 36.41 29.07 L 35.43 27.03 L 34.02 25.71 L 32.52 24.82 L 31.19 24.47 L 30.39 24.47 L 28.89 23.85 L 27.92 22.96 L 27.47 22.34 L 26.94 21.02 L 26.94 19.07 L 27.47 17.66 L 28.80 16.24 L 29.86 15.71 L 31.19 15.53 L 32.52 15.09 L 34.20 14.03 L 35.17 13.06 L 36.14 11.20 L 36.50 9.43 L 36.76 9.34 L 36.76 8.46 L 36.50 8.37 L 36.23 6.95 L 35.52 5.27 L 34.99 4.57 L 33.75 3.42 L 32.52 2.71 L 31.01 2.27 L 30.92 2.00 Z";
+
+function TriNodeMark({ size }: { size: number }) {
+  return (
+    <svg viewBox="0 0 40 40" width={size} height={size} fill="none">
+      <path d={MARK_PATH} fill="#7bb7ff" />
+    </svg>
+  );
+}
+
 export async function GET() {
   return new ImageResponse(
     (
@@ -12,60 +22,34 @@ export async function GET() {
           display: "flex",
           position: "relative",
           overflow: "hidden",
-          background: "linear-gradient(135deg,#020b24 0%,#07142f 55%,#0d1b3d 100%)",
+          background: "#020b24",
           color: "white",
           fontFamily: "Arial, sans-serif",
         }}
       >
-        <div style={{ position: "absolute", width: 560, height: 560, borderRadius: 560, right: -80, top: -110, background: "rgba(123,183,255,.10)" }} />
-        <div style={{ position: "absolute", width: 390, height: 390, borderRadius: 390, left: -125, bottom: -180, background: "rgba(142,194,255,.055)" }} />
+        <div style={{ position: "absolute", width: 520, height: 520, borderRadius: 520, right: -110, top: -145, background: "rgba(123,183,255,.08)" }} />
+        <div style={{ position: "absolute", width: 360, height: 360, borderRadius: 360, left: -150, bottom: -190, background: "rgba(123,183,255,.045)" }} />
 
-        <div style={{ display: "flex", width: "100%", padding: "74px 82px", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", flexDirection: "column", width: 690, height: "100%", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-              <div style={{ display: "flex", width: 68, height: 68, border: "1px solid rgba(123,183,255,.30)", borderRadius: 19, alignItems: "center", justifyContent: "center", background: "rgba(123,183,255,.07)" }}>
-                <svg viewBox="0 0 64 64" width="50" height="50" fill="none">
-                  <path d="M32 10.8 48 19v26L32 53.2 16 45V19L32 10.8Z" fill="#A7CAFF" stroke="#4DA3FF" strokeWidth="3.8" strokeLinejoin="round" />
-                  <path d="M23.5 21.5 32 17l8.5 4.5M20.5 28 32 22l11.5 6M20.5 36 32 42l11.5-6M23.5 42.5 32 47l8.5-4.5" stroke="#081F3A" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <div style={{ fontSize: 38, fontWeight: 800, letterSpacing: "-1.6px" }}>VONU</div>
+        <div style={{ display: "flex", width: "100%", padding: "76px 84px", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", flexDirection: "column", width: 720, height: "100%", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
+              <TriNodeMark size={76} />
+              <div style={{ fontSize: 42, fontWeight: 750, letterSpacing: "-1.8px", color: "#ffffff" }}>Vonu</div>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-              <div style={{ display: "flex", gap: 16 }}>
-                {["↗", "▣", "≡", "✓"].map((symbol) => (
-                  <div
-                    key={symbol}
-                    style={{
-                      width: 92,
-                      height: 92,
-                      borderRadius: 26,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      border: "1px solid rgba(123,183,255,.20)",
-                      background: "rgba(123,183,255,.055)",
-                      color: "#A7CAFF",
-                      fontSize: 36,
-                      fontWeight: 700,
-                    }}
-                  >
-                    {symbol}
-                  </div>
-                ))}
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              <div style={{ fontSize: 58, fontWeight: 740, lineHeight: 1.03, letterSpacing: "-2.8px", color: "#ffffff" }}>
+                Comprueba antes de confiar.
               </div>
-              <div style={{ fontSize: 25, color: "#9fb1c5", letterSpacing: ".3px" }}>vonuai.com</div>
+              <div style={{ fontSize: 25, lineHeight: 1.35, color: "#9fb1c5" }}>
+                URLs, capturas y mensajes sospechosos, en un solo análisis.
+              </div>
+              <div style={{ fontSize: 23, color: "#7bb7ff", letterSpacing: ".2px" }}>vonuai.com</div>
             </div>
           </div>
 
-          <div style={{ display: "flex", width: 304, height: 304, borderRadius: 152, alignItems: "center", justifyContent: "center", border: "1px solid rgba(123,183,255,.25)", boxShadow: "0 0 100px rgba(123,183,255,.18)" }}>
-            <div style={{ display: "flex", width: 224, height: 224, borderRadius: 72, alignItems: "center", justifyContent: "center", border: "2px solid rgba(77,163,255,.42)", background: "rgba(123,183,255,.055)" }}>
-              <svg viewBox="0 0 64 64" width="158" height="158" fill="none">
-                <path d="M32 10.8 48 19v26L32 53.2 16 45V19L32 10.8Z" fill="#A7CAFF" stroke="#4DA3FF" strokeWidth="3.8" strokeLinejoin="round" />
-                <path d="M23.5 21.5 32 17l8.5 4.5M20.5 28 32 22l11.5 6M20.5 36 32 42l11.5-6M23.5 42.5 32 47l8.5-4.5" stroke="#081F3A" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
+          <div style={{ display: "flex", width: 310, height: 310, borderRadius: 155, alignItems: "center", justifyContent: "center", border: "1px solid rgba(123,183,255,.24)", background: "rgba(123,183,255,.045)" }}>
+            <TriNodeMark size={232} />
           </div>
         </div>
       </div>

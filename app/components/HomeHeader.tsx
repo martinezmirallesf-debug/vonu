@@ -82,7 +82,7 @@ export default function HomeHeader() {
       <div className={["relative z-[10020] mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8", isCheckHome ? "relative" : ""].join(" ")}>
         <Link href={checkPath(locale)} className="flex items-center gap-3" aria-label="Vonu">
           <VonuMark className="h-7 w-7" framed />
-          <span className="text-[21px] font-semibold tracking-[-0.045em]">VONU</span>
+          <span className="text-[21px] font-semibold tracking-[-0.045em]">Vonu</span>
         </Link>
 
         <nav className={["hidden items-center gap-7 text-[14px] font-medium text-slate-300 md:flex", isCheckHome ? "md:absolute md:left-1/2 md:-translate-x-1/2" : ""].join(" ")}>
