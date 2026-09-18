@@ -14,13 +14,14 @@ function forbidText(source, needle, label) {
   }
 }
 
-const [middleware, metered, button, gate, checkClient, checkPage, entitlement, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
+const [middleware, metered, button, gate, checkClient, checkPage, checkCss, entitlement, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
   read("middleware.ts"),
   read("app/api/check/metered/route.ts"),
   read("app/components/DevicePackCheckoutButton.tsx"),
   read("app/components/DeviceAccessGate.tsx"),
   read("app/[locale]/check/CheckClient.tsx"),
   read("app/[locale]/check/page.tsx"),
+  read("app/[locale]/check/submission-notice.css"),
   read("app/api/check/entitlement/route.ts"),
   read("app/api/stripe/checkout/route.ts"),
   read("app/api/stripe/webhook/route.ts"),
@@ -66,6 +67,10 @@ requireText(checkClient, 'fetch("/api/check/entitlement"', "scanner direct entit
 requireText(checkClient, 'cache: "no-store"', "scanner no-store entitlement refresh");
 requireText(checkPage, 'export const dynamic = "force-dynamic"', "device-specific check page");
 requireText(checkPage, "export const revalidate = 0", "check page no static revalidation");
+requireText(checkCss, 'span[data-vonu-entitlement-status="true"]', "live entitlement css target");
+if (/content:\s*["']1\s+(?:análisis gratuito|free analysis|analyse gratuite|kostenlose Analyse)/i.test(checkCss)) {
+  throw new Error("legacy fixed free-analysis pseudo-label must not override live balance");
+}
 requireText(gate, "no vuelvas a pagar", "duplicate-payment warning");
 requireText(entitlement, "get_vonu_device_entitlement", "entitlement status RPC");
 
