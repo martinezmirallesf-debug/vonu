@@ -1,29 +1,47 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import type { SupportedLocale } from "@/lib/vonu-check/types";
+import { checkPath } from "@/lib/vonu-global/i18n";
+import { legalPath, type LegalDocument } from "@/lib/vonu-legal/routes";
 
 type LegalPageProps = {
   title: string;
   description: string;
+  locale?: SupportedLocale;
   updatedAt?: string;
   children: ReactNode;
 };
 
-const legalLinks = [
-  { label: "Aviso legal", href: "/legal/aviso-legal" },
-  { label: "Privacidad", href: "/legal/privacidad" },
-  { label: "Términos", href: "/legal/terminos" },
-  { label: "Cookies", href: "/legal/cookies" },
-  { label: "Uso responsable", href: "/legal/uso-responsable" },
-];
+const legalLabels: Record<SupportedLocale, Record<LegalDocument, string>> = {
+  es: { "legal-notice": "Aviso legal", privacy: "Privacidad", terms: "Términos", cookies: "Cookies", "responsible-use": "Uso responsable" },
+  en: { "legal-notice": "Legal notice", privacy: "Privacy", terms: "Terms", cookies: "Cookies", "responsible-use": "Responsible use" },
+  fr: { "legal-notice": "Mentions légales", privacy: "Confidentialité", terms: "Conditions", cookies: "Cookies", "responsible-use": "Usage responsable" },
+  de: { "legal-notice": "Impressum", privacy: "Datenschutz", terms: "Bedingungen", cookies: "Cookies", "responsible-use": "Verantwortungsvolle Nutzung" },
+  ar: { "legal-notice": "إشعار قانوني", privacy: "الخصوصية", terms: "الشروط", cookies: "ملفات تعريف الارتباط", "responsible-use": "الاستخدام المسؤول" },
+};
+
+const backLabels: Record<SupportedLocale, string> = {
+  es: "Volver a Vonu Check",
+  en: "Back to Vonu Check",
+  fr: "Retour à Vonu Check",
+  de: "Zurück zu Vonu Check",
+  ar: "العودة إلى Vonu Check",
+};
 
 export default function LegalPage({
   title,
   description,
+  locale = "es",
   updatedAt = "Última actualización: septiembre de 2026",
   children,
 }: LegalPageProps) {
+  const legalLinks = (Object.keys(legalLabels[locale]) as LegalDocument[]).map((document) => ({
+    label: legalLabels[locale][document],
+    href: legalPath(locale, document),
+  }));
+
   return (
-    <section className="min-h-screen bg-[#0d101b] text-slate-200">
+    <section lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className="min-h-screen bg-[#0d101b] text-slate-200">
       <div className="mx-auto max-w-[1320px] px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[0.30fr_0.70fr] lg:gap-12">
           <aside className="lg:sticky lg:top-24 lg:self-start">
@@ -55,10 +73,10 @@ export default function LegalPage({
             </nav>
 
             <Link
-              href="/es/check"
+              href={checkPath(locale)}
               className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-emerald-400 px-4 py-3 text-[14px] font-bold text-[#07110d] transition hover:bg-emerald-300"
             >
-              Volver a Vonu Check
+              {backLabels[locale]}
             </Link>
           </aside>
 

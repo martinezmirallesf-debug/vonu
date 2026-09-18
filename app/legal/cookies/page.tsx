@@ -51,7 +51,7 @@ export default function CookiesPage() {
         </div>
       </section>
 
-      <LegalPage title="Cookies y almacenamiento local" description="Tecnologías técnicas y de medición utilizadas por Vonu.">
+      <LegalPage locale="es" title="Cookies y almacenamiento local" description="Tecnologías técnicas y de medición utilizadas por Vonu.">
         <h2>1. Estado actual</h2>
         <p>
           En la versión pública actual, Vonu <strong>no utiliza Google Analytics ni cookies publicitarias</strong>. La medición principal se realiza mediante Vercel Web Analytics y eventos técnicos de producto.

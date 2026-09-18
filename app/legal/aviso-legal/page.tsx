@@ -52,7 +52,7 @@ export default function AvisoLegalPage() {
         </div>
       </section>
 
-      <LegalPage title="Aviso legal" description="Información legal del servicio Vonu y del sitio vonuai.com.">
+      <LegalPage locale="es" title="Aviso legal" description="Información legal del servicio Vonu y del sitio vonuai.com.">
         <h2>1. Titularidad del servicio</h2>
         <p>
           Este sitio web y el servicio <strong>Vonu</strong>, disponible en <strong>vonuai.com</strong>, son titularidad de <strong>Francisco Luis Martínez Miralles</strong>.

@@ -51,7 +51,7 @@ export default function TerminosPage() {
         </div>
       </section>
 
-      <LegalPage title="Términos y condiciones" description="Condiciones generales para acceder y utilizar Vonu.">
+      <LegalPage locale="es" title="Términos y condiciones" description="Condiciones generales para acceder y utilizar Vonu.">
         <h2>1. Titular y aceptación</h2>
         <p>
           Estos términos regulan el uso de <strong>Vonu</strong>, disponible en vonuai.com y prestado por <strong>Francisco Luis Martínez Miralles</strong>. Al utilizar el servicio aceptas estos términos, la Política de privacidad, la Política de cookies y las normas de Uso responsable aplicables.
