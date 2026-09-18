@@ -844,7 +844,6 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
             <section className="text-center">
               <h1 className="mx-auto max-w-[900px] text-balance text-[36px] font-bold leading-[1.02] tracking-[-0.055em] text-white sm:text-[48px] lg:text-[56px] xl:text-[60px]">{t.hero}</h1>
               <p className="mx-auto mt-3 max-w-[720px] text-[15px] leading-6 text-slate-400 sm:text-[16px] lg:text-[17px]">{t.sub}</p>
-              <p className="mx-auto mt-2 max-w-[760px] text-[11px] leading-5 text-slate-600">{t.aiNotice}</p>
             </section>
 
             <section className="mx-auto mt-5 w-full max-w-[850px] rounded-[22px] bg-[#141927]/72 shadow-[0_26px_70px_rgba(0,0,0,.24)] backdrop-blur-sm sm:mt-6">
