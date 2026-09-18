@@ -38,6 +38,7 @@ function withDeviceCookie(
 }
 
 export function middleware(req: NextRequest) {
+  // Resolve one stable device id before the scanner client hydrates.
   const preferredCookieId = req.cookies.get(SHARED_DEVICE_COOKIE)?.value ?? null;
   const legacyCookieId = req.cookies.get(DEVICE_COOKIE)?.value ?? null;
   const suppliedId = req.headers.get(DEVICE_HEADER);
