@@ -34,7 +34,14 @@ for (const [source, label] of [
 ]) {
   rejectText(source, "VonuAI", `${label} obsolete brand`);
   requireText(source, "18 de septiembre de 2026", `${label} update date`);
+  rejectText(source, "<h1", `${label} duplicate legacy hero`);
+  rejectText(source, 'bg-[#f5f5f7]', `${label} legacy light legal surface`);
+  requireText(source, 'bg-[#0d101b]', `${label} unified legal surface`);
 }
+
+rejectText(localizedLegal, "<h1", "localized legal duplicate legacy hero");
+rejectText(localizedLegal, 'bg-[#f5f5f7]', "localized legal legacy light surface");
+requireText(localizedLegal, 'bg-[#0d101b]', "localized legal unified surface");
 
 requireText(legal, "mensajes, capturas de pantalla, enlaces y sitios web", "legal current product");
 requireText(legal, "índice de riesgo orientativo", "legal score limitation");
@@ -81,4 +88,4 @@ rejectText(telemetry, "gtag", "telemetry gtag disabled");
 rejectText(telemetry, "vonu_locale", "telemetry locale cookie disabled");
 requireText(telemetry, 'track(name, data)', "telemetry Vercel analytics");
 
-console.log("VONU_LEGAL_LAUNCH_CONTRACT_GREEN legal=25 providers=8 privacy=1 analytics=1 checkout_consents=1 ai_transparency=1 resource_consent=1 contact_privacy=1");
+console.log("VONU_LEGAL_LAUNCH_CONTRACT_GREEN legal=25 providers=8 privacy=1 analytics=1 checkout_consents=1 ai_transparency=1 resource_consent=1 contact_privacy=1 single_legal_header=1");
