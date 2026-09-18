@@ -24,6 +24,9 @@ const BRAND_ASSET_VERSION = "20260917-blue";
 const SOCIAL_IMAGE = `/api/og?v=${BRAND_ASSET_VERSION}`;
 const isProduction = process.env.VERCEL_ENV === "production";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type Props = {
   params: Promise<{ locale: string }>;
 };

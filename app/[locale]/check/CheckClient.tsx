@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import HomeHeader from "@/app/components/HomeHeader";
 import { localeMeta } from "@/lib/vonu-check/i18n";
 import { friendlyHttpStatus, humanizeLimitation, humanizeWebSignal } from "@/lib/vonu-check/presentation";
@@ -506,6 +506,25 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
   const [entitlement, setEntitlement] = useState<EntitlementSnapshot | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const refreshBalance = useCallback(async () => {
+    try {
+      const response = await fetch("/api/check/entitlement", {
+        method: "GET",
+        cache: "no-store",
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data) return;
+
+      setEntitlement({
+        freeUsed: Boolean(data.free_used),
+        creditsRemaining: Math.max(0, Number(data.credits_remaining || 0)),
+        lifetimeAnalyses: Math.max(0, Number(data.lifetime_analyses || 0)),
+      });
+    } catch {
+      // Keep the scanner usable; DeviceAccessGate remains the enforcement layer.
+    }
+  }, []);
+
   useEffect(() => {
     function onEntitlement(event: Event) {
       const detail = (event as CustomEvent<EntitlementSnapshot>).detail;
@@ -517,16 +536,21 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
       });
     }
 
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void refreshBalance();
+    };
+
     window.addEventListener("vonu:entitlement", onEntitlement as EventListener);
-    const timer = window.setTimeout(() => {
-      window.dispatchEvent(new Event("vonu:entitlement:request"));
-    }, 0);
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    void refreshBalance();
 
     return () => {
-      window.clearTimeout(timer);
       window.removeEventListener("vonu:entitlement", onEntitlement as EventListener);
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
-  }, []);
+  }, [refreshBalance]);
 
 
   useEffect(() => {
@@ -628,6 +652,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
       const data = await response.json().catch(() => null);
       if (!response.ok || !data) throw new Error(data?.error || "analysis_failed");
       setResult(data as Result);
+      void refreshBalance();
     } catch {
       setError(t.genericError);
     } finally {
