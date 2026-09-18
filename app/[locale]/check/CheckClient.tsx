@@ -434,8 +434,13 @@ const subjectCopy: Record<SupportedLocale, { analysed: string; url: string; capt
 function VonuMark() {
   return (
     <svg viewBox="0 0 40 40" className="h-5 w-5 shrink-0" fill="none" aria-hidden="true">
-      <path d="M20 3.8 33.8 11v18L20 36.2 6.2 29V11L20 3.8Z" stroke="rgb(52 211 153)" strokeWidth="2.35" strokeLinejoin="round" />
-      <path d="M13.2 11.2 20 7.7l6.8 3.5M9.7 17.2 20 12l10.3 5.2M9.7 22.8 20 28l10.3-5.2M13.2 28.8 20 32.3l6.8-3.5" stroke="rgba(52,211,153,.38)" strokeWidth="1" />
+      <g fill="#7bb7ff">
+        <circle cx="24.6" cy="8.7" r="7.2" />
+        <circle cx="8.6" cy="20.1" r="7.2" />
+        <circle cx="25.1" cy="31.1" r="7.2" />
+        <circle cx="18.7" cy="20.1" r="5.9" />
+        <path d="M12.8 16.3 19.7 10.9 24.8 15.4 20.8 20.1 25.4 25.5 20.7 30.1 14.2 23.8Z" />
+      </g>
     </svg>
   );
 }
@@ -845,7 +850,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
 
           <footer className="shrink-0 border-t border-white/[0.055] bg-[#0b0e17]/55">
             <div className="mx-auto flex min-h-11 max-w-[1320px] items-center justify-between gap-3 px-4 text-[11px] text-slate-600 sm:px-6 lg:px-8">
-              <div className="flex items-center gap-2 text-slate-500"><VonuMark /><span className="font-semibold tracking-[0.08em] text-slate-400">VONU</span></div>
+              <div className="flex items-center gap-2 text-slate-500"><VonuMark /><span className="font-semibold tracking-[0.08em] text-white">Vonu</span></div>
               <div className="flex items-center gap-3 sm:gap-4">
                 <Link href="/producto" className="hidden hover:text-slate-400 sm:inline">Producto</Link>
                 <Link href="/casos-de-uso" className="hidden hover:text-slate-400 sm:inline">Casos de uso</Link>

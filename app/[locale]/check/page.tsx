@@ -20,7 +20,7 @@ import type { SupportedLocale } from "@/lib/vonu-check/types";
 import { localizedPublicPath } from "@/lib/vonu-global/routes";
 
 const siteUrl = "https://vonuai.com";
-const BRAND_ASSET_VERSION = "20260917-blue";
+const BRAND_ASSET_VERSION = "20260918-trinode";
 const SOCIAL_IMAGE = `/api/og?v=${BRAND_ASSET_VERSION}`;
 const isProduction = process.env.VERCEL_ENV === "production";
 
