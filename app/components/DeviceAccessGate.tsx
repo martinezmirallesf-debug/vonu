@@ -274,31 +274,8 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
     let entitlement: EntitlementSnapshot | null = null;
     const originalFetch = window.fetch.bind(window);
 
-    function entitlementStatus(snapshot: EntitlementSnapshot) {
-      if (!snapshot.freeUsed && snapshot.creditsRemaining <= 0) return t.freeAvailable;
-      if (snapshot.creditsRemaining > 0) return t.creditsAvailable(snapshot.creditsRemaining);
-      if (snapshot.lifetimeAnalyses >= 4) return t.creditsAvailable(0);
-      return t.freeUsed;
-    }
-
-    function findBalanceStatus() {
-      const tagged = document.querySelector<HTMLElement>('[data-vonu-entitlement-status="true"]');
-      if (tagged) return tagged;
-
-      const analyzeButton = document.querySelector<HTMLButtonElement>('button[data-vonu-analyze-cta="true"]');
-      const controlsRow = analyzeButton?.parentElement;
-      const siblingStatus = controlsRow?.querySelector<HTMLElement>(":scope > div:first-child span") ?? null;
-      if (siblingStatus) {
-        siblingStatus.dataset.vonuEntitlementStatus = "true";
-        return siblingStatus;
-      }
-
-      const expected = `✓ ${t.originalFreeLabel}`;
-      const fallback = Array.from(document.querySelectorAll<HTMLElement>("span")).find(
-        (element) => (element.textContent || "").trim() === expected,
-      ) || null;
-      if (fallback) fallback.dataset.vonuEntitlementStatus = "true";
-      return fallback;
+    function publishEntitlement(snapshot: EntitlementSnapshot) {
+      window.dispatchEvent(new CustomEvent<EntitlementSnapshot>("vonu:entitlement", { detail: snapshot }));
     }
 
     function applyEntitlementUi() {
@@ -315,11 +292,7 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
         }
       });
 
-      const status = findBalanceStatus();
-      if (status) {
-        const desiredStatus = entitlementStatus(entitlement);
-        if ((status.textContent || "").trim() !== desiredStatus) status.textContent = desiredStatus;
-      }
+      publishEntitlement(entitlement);
     }
 
     function applyVisualMarkers() {
@@ -368,6 +341,7 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
         const data = await response.json().catch(() => null);
         if (cancelled || !response.ok || !data) return null;
         entitlement = entitlementFromData(data);
+        publishEntitlement(entitlement);
         applyUi();
         return entitlement;
       } catch {
@@ -388,7 +362,8 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
 
           if (response.ok && data) {
             entitlement = entitlementFromData(data);
-            applyUi();
+            publishEntitlement(entitlement);
+        applyUi();
 
             if (entitlement.creditsRemaining > 0) {
               setPaymentState("ready");
@@ -435,7 +410,8 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
         const data = await response.json().catch(() => null);
         if (response.ok && data) {
           entitlement = entitlementFromData(data);
-          applyUi();
+          publishEntitlement(entitlement);
+        applyUi();
           shouldOpenPaywall = entitlement.freeUsed && entitlement.creditsRemaining <= 0;
         }
       } catch {
@@ -482,11 +458,16 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
       return response;
     };
 
+    const onEntitlementRequest = () => {
+      void refreshEntitlement();
+    };
+    window.addEventListener("vonu:entitlement:request", onEntitlementRequest);
     document.addEventListener("click", preflightAnalysis, true);
 
     return () => {
       cancelled = true;
       observer.disconnect();
+      window.removeEventListener("vonu:entitlement:request", onEntitlementRequest);
       document.removeEventListener("click", preflightAnalysis, true);
       window.fetch = originalFetch;
     };
