@@ -14,11 +14,12 @@ function forbidText(source, needle, label) {
   }
 }
 
-const [middleware, metered, button, gate, entitlement, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
+const [middleware, metered, button, gate, checkClient, entitlement, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
   read("middleware.ts"),
   read("app/api/check/metered/route.ts"),
   read("app/components/DevicePackCheckoutButton.tsx"),
   read("app/components/DeviceAccessGate.tsx"),
+  read("app/[locale]/check/CheckClient.tsx"),
   read("app/api/check/entitlement/route.ts"),
   read("app/api/stripe/checkout/route.ts"),
   read("app/api/stripe/webhook/route.ts"),
@@ -53,10 +54,13 @@ requireText(gate, 'analyzeFree: "Analyse for free"', "English free CTA");
 requireText(gate, 'analyzeFree: "Analyser gratuitement"', "French free CTA");
 requireText(gate, 'analyzeFree: "Kostenlos analysieren"', "German free CTA");
 requireText(gate, 'analyzeFree: "حلّل مجانًا"', "Arabic free CTA");
-requireText(gate, "creditsAvailable", "paid analysis balance display");
-requireText(gate, "findBalanceStatus", "robust paid balance target");
-requireText(gate, '":scope > div:first-child span"', "scanner balance sibling selector");
-requireText(gate, "characterData: true", "balance mutation resync");
+requireText(gate, "publishEntitlement", "single-source entitlement publication");
+requireText(gate, '"vonu:entitlement"', "entitlement UI event");
+requireText(gate, '"vonu:entitlement:request"', "entitlement refresh request");
+requireText(checkClient, "BALANCE_COPY", "localized paid balance display");
+requireText(checkClient, "balanceText", "reactive paid balance state");
+requireText(checkClient, 'data-vonu-entitlement-status="true"', "stable scanner balance target");
+requireText(checkClient, '"vonu:entitlement"', "scanner entitlement subscription");
 requireText(gate, "no vuelvas a pagar", "duplicate-payment warning");
 requireText(entitlement, "get_vonu_device_entitlement", "entitlement status RPC");
 
