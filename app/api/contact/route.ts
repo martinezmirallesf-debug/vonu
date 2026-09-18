@@ -52,12 +52,12 @@ async function sendContactEmail(params: {
   const safeReason = escapeHtml(params.reason || "Sin motivo");
   const safeMessage = escapeHtml(params.message).replaceAll("\n", "<br />");
 
-  const subject = `Nuevo mensaje de contacto — ${params.reason || "VonuAI"}`;
+  const subject = `Nuevo mensaje de contacto — ${params.reason || "Vonu"}`;
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; color: #111827;">
       <h1 style="font-size: 24px; line-height: 1.2; margin: 0 0 16px;">
-        Nuevo mensaje desde VonuAI
+        Nuevo mensaje desde Vonu
       </h1>
 
       <p style="font-size: 15px; line-height: 1.6; color: #4b5563; margin: 0 0 24px;">
@@ -84,7 +84,7 @@ async function sendContactEmail(params: {
   `;
 
   const text = [
-    "Nuevo mensaje desde VonuAI",
+    "Nuevo mensaje desde Vonu",
     "",
     `Nombre: ${params.name || "Sin nombre"}`,
     `Email: ${params.email}`,
@@ -103,7 +103,7 @@ async function sendContactEmail(params: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: `VonuAI <${fromEmail}>`,
+      from: `Vonu <${fromEmail}>`,
       to: [toEmail],
       reply_to: params.email,
       subject,
