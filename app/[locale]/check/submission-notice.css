@@ -69,41 +69,17 @@
   font-size: 0 !important;
 }
 
-/* Replace the old reassurance with the shorter label. */
+/* The live entitlement text is rendered by CheckClient.
+   Do not replace it with a CSS pseudo-element; paid/free state is device-specific. */
 .vonu-check-page main:has(> section.text-center)
   section[class*="max-w-[850px]"]
   > div:last-child
   > div:last-child
   > div:first-child
-  > span {
-  font-size: 0 !important;
-}
-
-.vonu-check-page main:has(> section.text-center)
-  section[class*="max-w-[850px]"]
-  > div:last-child
-  > div:last-child
-  > div:first-child
-  > span::after {
+  > span[data-vonu-entitlement-status="true"] {
   font-size: 11px !important;
   font-weight: 500;
   color: rgb(100 116 139);
-}
-
-html[lang="es"] .vonu-check-page main:has(> section.text-center) section[class*="max-w-[850px]"] > div:last-child > div:last-child > div:first-child > span::after {
-  content: "1 análisis gratuito";
-}
-html[lang="en"] .vonu-check-page main:has(> section.text-center) section[class*="max-w-[850px]"] > div:last-child > div:last-child > div:first-child > span::after {
-  content: "1 free analysis";
-}
-html[lang="fr"] .vonu-check-page main:has(> section.text-center) section[class*="max-w-[850px]"] > div:last-child > div:last-child > div:first-child > span::after {
-  content: "1 analyse gratuite";
-}
-html[lang="de"] .vonu-check-page main:has(> section.text-center) section[class*="max-w-[850px]"] > div:last-child > div:last-child > div:first-child > span::after {
-  content: "1 kostenlose Analyse";
-}
-html[lang="ar"] .vonu-check-page main:has(> section.text-center) section[class*="max-w-[850px]"] > div:last-child > div:last-child > div:first-child > span::after {
-  content: "تحليل مجاني واحد";
 }
 
 .vonu-check-page main:has(> section.text-center)
