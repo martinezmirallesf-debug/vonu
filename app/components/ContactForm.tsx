@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 type FormState = "idle" | "sending" | "success" | "error";
@@ -148,10 +149,19 @@ export default function ContactForm() {
           />
         </label>
 
-        <p className="text-[13px] leading-6 text-zinc-500">
-          No compartas contraseñas, códigos de verificación, datos bancarios
-          completos ni información extremadamente sensible que no sea necesaria.
-        </p>
+        <div className="space-y-2 text-[13px] leading-6 text-zinc-500">
+          <p>
+            No compartas contraseñas, códigos de verificación, datos bancarios
+            completos ni información extremadamente sensible que no sea necesaria.
+          </p>
+          <p>
+            Usaremos los datos que nos envíes para gestionar y responder tu consulta. Consulta nuestra{" "}
+            <Link href="/legal/privacidad" className="font-medium text-zinc-700 underline decoration-zinc-300 underline-offset-2 hover:text-zinc-950">
+              Política de privacidad
+            </Link>
+            .
+          </p>
+        </div>
 
         {message && (
           <div
