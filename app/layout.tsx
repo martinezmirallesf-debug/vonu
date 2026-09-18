@@ -14,8 +14,8 @@ import CheckExperienceController from "./components/CheckExperienceController";
 import DocumentLocaleSync from "./components/DocumentLocaleSync";
 
 const BASE_URL = "https://vonuai.com";
-const BRAND_ASSET_VERSION = "20260917-blue";
-const FAVICON_VERSION = "20260917-blue-v2";
+const BRAND_ASSET_VERSION = "20260918-trinode";
+const FAVICON_VERSION = "20260918-trinode-v1";
 const SOCIAL_IMAGE = `${BASE_URL}/api/og?v=${BRAND_ASSET_VERSION}`;
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
