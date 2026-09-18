@@ -40,7 +40,7 @@ export default function UsoResponsablePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <HomeHeader />
 
-      <LegalPage locale="es" title="Uso responsable" description="Cómo interpretar y utilizar de forma segura las comprobaciones de Vonu.">
+      <LegalPage locale="es" title="Uso responsable" description="Cómo interpretar y utilizar de forma segura las comprobaciones de Vonu." updatedAt="Última actualización: 18 de septiembre de 2026">
         <h2>1. Qué hace Vonu</h2>
         <p>
           Vonu revisa mensajes, textos, capturas, enlaces y sitios web para identificar señales de riesgo. Está pensado para ayudarte a frenar, entender qué llama la atención y decidir qué conviene verificar antes de confiar, responder o pagar.
