@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import VonuMark from "./VonuMark";
 import VonuSocialLinks from "./VonuSocialLinks";
+import PwaInstallButton from "./PwaInstallButton";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 import {
   GLOBAL_LOCALES,
@@ -199,6 +200,7 @@ export default function GlobalPublicHeader({
             {t.analyze}
           </a>
           <VonuSocialLinks variant="mobile" />
+          <PwaInstallButton locale={locale} />
 
           <div className="mt-auto border-t border-white/[0.10] pt-5">
             <div className="mb-5 grid grid-cols-2 justify-items-center gap-x-4 gap-y-3 text-center">
