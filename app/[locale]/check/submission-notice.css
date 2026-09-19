@@ -93,9 +93,13 @@
   align-self: center !important;
 }
 
-.vonu-submission-notice,
-.vonu-check-compact-footer {
+.vonu-submission-notice {
   display: none;
+}
+
+.vonu-check-compact-footer {
+  display: block;
+  flex: 0 0 auto;
 }
 
 /* The notice is now physically rendered inside the CTA stack. */
