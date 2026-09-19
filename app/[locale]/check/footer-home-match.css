@@ -24,8 +24,8 @@
   }
 
   .vonu-check-page > footer > div {
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
   }
 
   .vonu-check-page > footer > div > div:last-child {
