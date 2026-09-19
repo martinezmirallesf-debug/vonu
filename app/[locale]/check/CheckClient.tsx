@@ -651,12 +651,13 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
     }
     if (imagePreviewObjectUrlRef.current) {
       URL.revokeObjectURL(imagePreviewObjectUrlRef.current);
-      imagePreviewObjectUrlRef.current = null;
     }
+    const previewUrl = URL.createObjectURL(file);
+    imagePreviewObjectUrlRef.current = previewUrl;
 
     setMode("capture");
     setImageData(dataUrl);
-    setImagePreviewUrl(dataUrl);
+    setImagePreviewUrl(previewUrl);
     setImageName(file.name || "screenshot");
     setError("");
   }
@@ -769,7 +770,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
         label: subjectCopy[locale].capture,
         primary: imageName || subjectCopy[locale].capture,
         detail: result?.version === "vonu-capture-v1" ? contextLabel(result.kind, locale) : t.dropHint,
-        image: imagePreviewUrl || imageData,
+        image: imageData || imagePreviewUrl,
         icon: "▣",
       };
     }
