@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import CoreUseCaseCheckDemo from "./CoreUseCaseCheckDemo";
 import VonuMark from "./VonuMark";
-import PublicRouteScrollReset from "./PublicRouteScrollReset";
 import VonuSocialLinks from "./VonuSocialLinks";
+import PwaInstallButton from "./PwaInstallButton";
 import {
   GLOBAL_LOCALES,
   checkPath,
@@ -91,7 +91,6 @@ export default function HomeHeader() {
 
   return (
     <>
-      <PublicRouteScrollReset />
       <header
       data-vonu-use-case={isCoreUseCase ? "core" : undefined}
       className="sticky top-0 z-50 isolate overflow-visible bg-[#0b0e17]/95 text-white backdrop-blur-xl max-md:backdrop-blur-none"
@@ -224,6 +223,7 @@ export default function HomeHeader() {
             {t.analyze}
           </Link>
           <VonuSocialLinks variant="mobile" />
+          <PwaInstallButton locale={locale} />
 
           <div className="mt-auto border-t border-white/[0.10] pt-5">
             <div className="mb-5 grid grid-cols-2 justify-items-center gap-x-4 gap-y-3 text-center">
