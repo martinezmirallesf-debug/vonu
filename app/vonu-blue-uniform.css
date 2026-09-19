@@ -133,10 +133,13 @@ header button[class*="hover:bg-emerald-300"]:hover {
 
   .vonu-mobile-language-popover {
     position: absolute !important;
-    inset-inline: 0 !important;
+    inset-inline: auto !important;
+    left: 50% !important;
     bottom: calc(100% + 8px) !important;
+    width: min(220px, calc(100vw - 72px)) !important;
+    transform: translateX(-50%) !important;
     z-index: 10060 !important;
-    max-height: min(310px, 48dvh) !important;
+    max-height: min(270px, 44dvh) !important;
     overflow-y: auto !important;
     border: 1px solid rgb(255 255 255 / 0.09) !important;
     border-radius: 16px !important;
@@ -146,10 +149,12 @@ header button[class*="hover:bg-emerald-300"]:hover {
 
   /* Keep every language option compact, equal-sized and centered. */
   .vonu-mobile-language-popover a {
-    width: 170px !important;
+    width: 100% !important;
     margin-inline: auto !important;
+    min-height: 36px !important;
     justify-content: center !important;
-    gap: 1rem !important;
+    gap: .55rem !important;
+    padding-inline: .65rem !important;
     text-align: center !important;
   }
 
@@ -168,10 +173,12 @@ footer span[class*="tracking-[0.08em]"] {
 }
 
 @media (max-width: 767px) {
-  /* Main mobile navigation: one subtle step smaller, preserving spacing. */
+  /* Main mobile navigation: compact enough to keep the full menu balanced in one viewport. */
   header > div.fixed.inset-0 > div > nav > a,
   header > div.fixed.inset-0 > div > nav > div > button {
-    font-size: 25px !important;
+    min-height: 48px !important;
+    padding-block: 8px !important;
+    font-size: 21px !important;
   }
 
   /* Mobile navigation is white by default; only the current item or hover is blue. */
