@@ -13,6 +13,7 @@ import CheckResultConversion from "./components/CheckResultConversion";
 import CheckExperienceController from "./components/CheckExperienceController";
 import DocumentLocaleSync from "./components/DocumentLocaleSync";
 import RouteScrollTop from "./components/RouteScrollTop";
+import PwaInstallPromptBar from "./components/PwaInstallPromptBar";
 
 const BASE_URL = "https://vonuai.com";
 const BRAND_ASSET_VERSION = "20260918-trinode";
@@ -225,6 +226,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="font-sans">
         <DocumentLocaleSync />
         <RouteScrollTop />
+        <PwaInstallPromptBar />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(entityGraph) }}
