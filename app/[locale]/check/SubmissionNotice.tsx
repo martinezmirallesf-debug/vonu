@@ -13,61 +13,50 @@ type NoticeCopy = {
   betweenTermsPrivacy: string;
   privacy: string;
   afterPrivacy: string;
-  learn: string;
 };
 
 const copy: Record<SupportedLocale, NoticeCopy> = {
   es: {
     ai: "Vonu utiliza IA y comprobaciones automatizadas; puede equivocarse y el resultado no es un veredicto. ",
-    beforeTerms: "Al enviar contenido para analizar, aceptas nuestros ",
-    terms: "Términos de servicio",
-    betweenTermsPrivacy: " y confirmas que has leído el ",
-    privacy: "Aviso de privacidad",
-    afterPrivacy:
-      ". No envíes contraseñas, códigos de verificación, datos bancarios completos ni información sensible innecesaria. El contenido puede ser procesado por los proveedores técnicos necesarios para realizar el análisis. ",
-    learn: "Más información",
+    beforeTerms: "Al analizar, aceptas nuestros ",
+    terms: "Términos",
+    betweenTermsPrivacy: " y confirmas que has leído ",
+    privacy: "Privacidad",
+    afterPrivacy: ".",
   },
   en: {
     ai: "Vonu uses AI and automated checks; it can make mistakes and the result is not a verdict. ",
-    beforeTerms: "By submitting content for analysis, you agree to our ",
-    terms: "Terms of Service",
-    betweenTermsPrivacy: " and confirm that you have read the ",
-    privacy: "Privacy Notice",
-    afterPrivacy:
-      ". Do not submit passwords, verification codes, full banking details or unnecessary sensitive information. Content may be processed by the technical providers required to perform the analysis. ",
-    learn: "Learn more",
+    beforeTerms: "By analysing, you agree to our ",
+    terms: "Terms",
+    betweenTermsPrivacy: " and confirm that you have read ",
+    privacy: "Privacy",
+    afterPrivacy: ".",
   },
   fr: {
-    ai: "Vonu utilise l’IA et des vérifications automatisées ; des erreurs sont possibles et le résultat ne constitue pas un verdict. ",
-    beforeTerms: "En envoyant du contenu à analyser, vous acceptez nos ",
-    terms: "Conditions d’utilisation",
-    betweenTermsPrivacy: " et confirmez avoir lu notre ",
-    privacy: "Politique de confidentialité",
-    afterPrivacy:
-      ". N’envoyez pas de mots de passe, codes de vérification, coordonnées bancaires complètes ni d’informations sensibles inutiles. Le contenu peut être traité par les prestataires techniques nécessaires à l’analyse. ",
-    learn: "En savoir plus",
+    ai: "Vonu utilise l’IA et des vérifications automatisées ; des erreurs sont possibles et le résultat n’est pas un verdict. ",
+    beforeTerms: "En lançant l’analyse, vous acceptez nos ",
+    terms: "Conditions",
+    betweenTermsPrivacy: " et confirmez avoir lu la ",
+    privacy: "Confidentialité",
+    afterPrivacy: ".",
   },
   de: {
     ai: "Vonu verwendet KI und automatisierte Prüfungen; Fehler sind möglich und das Ergebnis ist kein abschließendes Urteil. ",
-    beforeTerms: "Mit dem Absenden von Inhalten zur Analyse stimmst du unseren ",
-    terms: "Nutzungsbedingungen",
-    betweenTermsPrivacy: " zu und bestätigst, dass du den ",
-    privacy: "Datenschutzhinweis",
-    afterPrivacy:
-      " gelesen hast. Sende keine Passwörter, Bestätigungscodes, vollständigen Bankdaten oder unnötigen sensiblen Informationen. Inhalte können von den für die Analyse erforderlichen technischen Dienstleistern verarbeitet werden. ",
-    learn: "Mehr erfahren",
+    beforeTerms: "Mit der Analyse stimmst du den ",
+    terms: "Bedingungen",
+    betweenTermsPrivacy: " zu und bestätigst die ",
+    privacy: "Datenschutzinformationen",
+    afterPrivacy: ".",
   },
   ar: {
     ai: "تستخدم Vonu الذكاء الاصطناعي وعمليات فحص آلية؛ وقد تخطئ، والنتيجة ليست حكمًا نهائيًا. ",
-    beforeTerms: "بإرسال محتوى للتحليل، فإنك توافق على ",
-    terms: "شروط الخدمة",
+    beforeTerms: "بإجراء التحليل، فإنك توافق على ",
+    terms: "الشروط",
     betweenTermsPrivacy: " وتؤكد أنك قرأت ",
-    privacy: "إشعار الخصوصية",
-    afterPrivacy:
-      ". لا ترسل كلمات المرور أو رموز التحقق أو البيانات المصرفية الكاملة أو معلومات حساسة غير ضرورية. قد تتم معالجة المحتوى بواسطة مزودي الخدمات التقنية اللازمين لإجراء التحليل. ",
-    learn: "معرفة المزيد",
+    privacy: "الخصوصية",
+    afterPrivacy: ".",
   },
-};
+}
 
 export default function SubmissionNotice({ locale }: { locale: SupportedLocale }) {
   const t = copy[locale];
@@ -90,7 +79,6 @@ export default function SubmissionNotice({ locale }: { locale: SupportedLocale }
       {t.betweenTermsPrivacy}
       <Link href={legalPath(locale, "privacy")}>{t.privacy}</Link>
       {t.afterPrivacy}
-      <Link href={legalPath(locale, "privacy")}>{t.learn}</Link>.
     </p>,
     target,
   );
