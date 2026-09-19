@@ -36,9 +36,9 @@ export default function HomeFooter() {
             <span className="font-semibold tracking-[0.06em] text-white">Vonu</span>
           </div>
           <div className="flex min-w-0 shrink-0 items-center gap-2.5">
-            <Link href={legalPath(locale, "legal-notice")} className="transition hover:text-slate-300">{t.legal}</Link>
-            <Link href={legalPath(locale, "privacy")} className="transition hover:text-slate-300">{t.privacy}</Link>
-            <Link href={legalPath(locale, "terms")} className="transition hover:text-slate-300">{t.terms}</Link>
+            <Link scroll={false} href={legalPath(locale, "legal-notice")} className="transition hover:text-slate-300">{t.legal}</Link>
+            <Link scroll={false} href={legalPath(locale, "privacy")} className="transition hover:text-slate-300">{t.privacy}</Link>
+            <Link scroll={false} href={legalPath(locale, "terms")} className="transition hover:text-slate-300">{t.terms}</Link>
           </div>
         </div>
 
@@ -48,12 +48,12 @@ export default function HomeFooter() {
             <span className="font-semibold tracking-[0.08em] text-white">Vonu</span>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
-            <Link href={legalPath(locale, "legal-notice")} className="transition hover:text-slate-400">{t.legal}</Link>
-            <Link href={legalPath(locale, "privacy")} className="transition hover:text-slate-400">{t.privacy}</Link>
-            <Link href={legalPath(locale, "cookies")} className="transition hover:text-slate-400">{cookies[locale]}</Link>
-            <Link href={legalPath(locale, "terms")} className="transition hover:text-slate-400">{t.terms}</Link>
-            <Link href={legalPath(locale, "responsible-use")} className="transition hover:text-slate-400">{t.responsible}</Link>
-            <Link href={localizedPublicPath(locale, "contacto")} className="transition hover:text-slate-400">{t.contact}</Link>
+            <Link scroll={false} href={legalPath(locale, "legal-notice")} className="transition hover:text-slate-400">{t.legal}</Link>
+            <Link scroll={false} href={legalPath(locale, "privacy")} className="transition hover:text-slate-400">{t.privacy}</Link>
+            <Link scroll={false} href={legalPath(locale, "cookies")} className="transition hover:text-slate-400">{cookies[locale]}</Link>
+            <Link scroll={false} href={legalPath(locale, "terms")} className="transition hover:text-slate-400">{t.terms}</Link>
+            <Link scroll={false} href={legalPath(locale, "responsible-use")} className="transition hover:text-slate-400">{t.responsible}</Link>
+            <Link scroll={false} href={localizedPublicPath(locale, "contacto")} className="transition hover:text-slate-400">{t.contact}</Link>
             <VonuSocialLinks variant="footer" />
           </div>
         </div>
