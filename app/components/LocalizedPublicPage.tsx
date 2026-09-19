@@ -1,10 +1,8 @@
-import Link from "next/link";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 import type { IndexedPublicSlug } from "@/lib/vonu-global/i18n";
 import {
   checkPath,
   getTopic,
-  navCopy,
   templateCopy,
 } from "@/lib/vonu-global/i18n";
 import { localizedPublicPath } from "@/lib/vonu-global/routes";
@@ -12,7 +10,7 @@ import GlobalPublicHeader from "./GlobalPublicHeader";
 import FunnelLink from "./FunnelLink";
 import PlanCheckoutButton from "./PlanCheckoutButton";
 import ResourceSignup from "./ResourceSignup";
-import VonuMark from "./VonuMark";
+import GlobalPublicFooter from "./GlobalPublicFooter";
 
 const SITE_URL = "https://vonuai.com";
 
@@ -50,7 +48,6 @@ export default function LocalizedPublicPage({
 }) {
   const topic = getTopic(locale, slug);
   const t = templateCopy[locale];
-  const nav = navCopy[locale];
   const pageUrl = `${SITE_URL}${localizedPublicPath(locale, slug)}`;
   const isPricing = slug === "precios";
   const isResources = slug === "recursos";
@@ -109,7 +106,7 @@ export default function LocalizedPublicPage({
             <p className="mx-auto mt-7 max-w-[760px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">{topic.description}</p>
             <p className="mx-auto mt-4 max-w-[740px] text-[14px] leading-7 text-slate-500">{t.intro}</p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <FunnelLink href={checkPath(locale)} event="localized_primary_cta" properties={{ locale, slug }} className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:-translate-y-0.5 hover:bg-emerald-300">
+              <FunnelLink href={checkPath(locale)} event="localized_primary_cta" properties={{ locale, slug }} className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#7bb7ff] px-6 text-[14px] font-bold text-[#07142f] shadow-[0_10px_30px_rgba(123,183,255,.20)] transition hover:-translate-y-0.5 hover:bg-[#a3ceff] hover:shadow-[0_14px_34px_rgba(123,183,255,.24)] active:translate-y-0">
                 {t.cta} <Arrow />
               </FunnelLink>
               {!isPricing && (
@@ -232,24 +229,12 @@ export default function LocalizedPublicPage({
         <div className="relative mx-auto max-w-[1320px] px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-[900px] text-center">
             <h2 className="text-[44px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[70px]">{topic.hero}</h2>
-            <FunnelLink href={checkPath(locale)} event="localized_final_cta" properties={{ locale, slug }} className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d]">{t.cta} <Arrow /></FunnelLink>
+            <FunnelLink href={checkPath(locale)} event="localized_final_cta" properties={{ locale, slug }} className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#7bb7ff] px-6 text-[14px] font-bold text-[#07142f] shadow-[0_10px_30px_rgba(123,183,255,.20)] transition hover:-translate-y-0.5 hover:bg-[#a3ceff] hover:shadow-[0_14px_34px_rgba(123,183,255,.24)] active:translate-y-0">{t.cta} <Arrow /></FunnelLink>
           </div>
         </div>
       </section>
 
-      <footer className="border-t border-white/[0.055] bg-[#0b0e17]">
-        <div className="mx-auto flex min-h-12 max-w-[1320px] flex-col items-center justify-between gap-3 px-4 py-3 text-[11px] text-slate-600 sm:flex-row sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 text-slate-500"><VonuMark className="h-5 w-5" /><span className="font-semibold tracking-[0.08em] text-white">Vonu</span></div>
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link href="/legal/aviso-legal" className="transition hover:text-slate-400">{nav.legal}</Link>
-            <Link href="/legal/privacidad" className="transition hover:text-slate-400">{nav.privacy}</Link>
-            <Link href="/legal/cookies" className="transition hover:text-slate-400">Cookies</Link>
-            <Link href="/legal/terminos" className="transition hover:text-slate-400">{nav.terms}</Link>
-            <Link href="/legal/uso-responsable" className="transition hover:text-slate-400">{nav.responsible}</Link>
-            <Link href={localizedPublicPath(locale, "contacto")} className="transition hover:text-slate-400">{nav.contact}</Link>
-          </div>
-        </div>
-      </footer>
+      <GlobalPublicFooter locale={locale} />
     </main>
   );
 }
