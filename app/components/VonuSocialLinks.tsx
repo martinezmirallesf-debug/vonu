@@ -34,7 +34,7 @@ export default function VonuSocialLinks({ variant }: { variant: SocialVariant })
   const mobile = variant === "mobile";
   return (
     <div
-      className={mobile ? "mt-3 flex items-center justify-center gap-4" : "ms-1 flex items-center gap-2.5 border-s border-white/[0.08] ps-4"}
+      className={mobile ? "mt-3 flex items-center justify-center gap-5" : "ms-1 flex items-center gap-2.5 border-s border-white/[0.08] ps-4"}
       aria-label="Vonu social"
     >
       {socials.map((social) => (
@@ -46,9 +46,9 @@ export default function VonuSocialLinks({ variant }: { variant: SocialVariant })
           aria-label={social.label}
           title={social.label}
           className={[
-            "grid shrink-0 place-items-center text-[#7bb7ff] transition hover:text-[#a3ceff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7bb7ff]/45",
+            "grid shrink-0 place-items-center !text-[#7bb7ff] transition hover:!text-[#a3ceff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7bb7ff]/45",
             mobile
-              ? "h-9 w-9 rounded-xl border border-[#7bb7ff]/15 bg-[#7bb7ff]/[0.055] p-[8px]"
+              ? "h-8 w-8 p-[4px]"
               : "h-6 w-6 rounded-md p-[3px]",
           ].join(" ")}
         >
