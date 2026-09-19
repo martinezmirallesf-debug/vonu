@@ -623,3 +623,42 @@ body {
   color: transparent;
 }
 }
+
+/* ---------- CTA final unificado: mismo azul que el CTA principal de Vonu ---------- */
+main > section:last-of-type > div > :is(a[href="/chat"], a[href$="/check"]) {
+  min-height: 48px !important;
+  padding: 0 24px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: #7bb7ff !important;
+  color: #07142f !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 10px 30px rgba(123, 183, 255, 0.2) !important;
+  transform: translateY(0);
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease !important;
+}
+
+main > section:last-of-type > div > :is(a[href="/chat"], a[href$="/check"]):hover {
+  background: #a3ceff !important;
+  color: #07142f !important;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(123, 183, 255, 0.24) !important;
+}
+
+main > section:last-of-type > div > :is(a[href="/chat"], a[href$="/check"]):active {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main > section:last-of-type > div > :is(a[href="/chat"], a[href$="/check"]) {
+    transition: none !important;
+  }
+
+  main > section:last-of-type > div > :is(a[href="/chat"], a[href$="/check"]):hover {
+    transform: none;
+  }
+}
