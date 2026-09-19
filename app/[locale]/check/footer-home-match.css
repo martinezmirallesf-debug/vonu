@@ -1,5 +1,6 @@
-/* Keep Vonu Check on the exact same footer pattern as the public home. */
-.vonu-check-page .vonu-check-compact-footer {
+/* Vonu Check uses the exact HomeFooter component. These rules neutralize older
+   scanner-specific footer heights so the shared footer can keep its natural layout. */
+.vonu-check-page > footer {
   display: block !important;
   flex: 0 0 auto !important;
   width: 100% !important;
@@ -7,6 +8,11 @@
   height: auto !important;
   margin-top: 0 !important;
   background: #0b0e17 !important;
+}
+
+.vonu-check-page > footer > div {
+  min-height: 0 !important;
+  height: auto !important;
 }
 
 @media (max-width: 767px) {
@@ -17,14 +23,12 @@
     overflow: visible !important;
   }
 
-  .vonu-check-page .vonu-check-compact-footer > div {
-    min-height: 0 !important;
-    height: auto !important;
+  .vonu-check-page > footer > div {
     padding-top: 10px !important;
     padding-bottom: 10px !important;
   }
 
-  .vonu-check-page .vonu-check-compact-footer > div > div:last-child {
+  .vonu-check-page > footer > div > div:last-child {
     row-gap: 8px !important;
   }
 }
