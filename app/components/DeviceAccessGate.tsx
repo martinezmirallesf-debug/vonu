@@ -55,7 +55,7 @@ const experienceCss = `
   display: none !important;
 }
 
-.vonu-check-page main > section[data-vonu-subject-mode]::before {
+.vonu-check-page main > section[data-vonu-subject-mode]:not([data-vonu-subject-mode="capture"])::before {
   content: "";
   display: block;
   width: 48px;
