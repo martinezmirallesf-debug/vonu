@@ -38,20 +38,33 @@ export default function PwaInstallButton({ locale }: { locale: SupportedLocale }
 
   if (!available) return null;
 
-  async function install() {
+  function install() {
     const deferred = storedPrompt();
-    if (!deferred) return;
+    if (!deferred) {
+      fetch("/api/pwa-diagnostic?state=prompt-missing&controller=" + (navigator.serviceWorker?.controller ? "yes" : "no"), { cache: "no-store" }).catch(() => {});
+      return;
+    }
 
     try {
-      await deferred.prompt();
-      const choice = await deferred.userChoice;
-      fetch("/api/pwa-diagnostic?state=prompt-" + encodeURIComponent(choice.outcome) + "&controller=" + (navigator.serviceWorker?.controller ? "yes" : "no"), { cache: "no-store" }).catch(() => {});
-      if (choice.outcome === "accepted") {
-        (window as typeof window & { __vonuInstallPrompt?: InstallPromptEvent }).__vonuInstallPrompt = undefined;
-        setAvailable(false);
-      }
+      // Chrome requires prompt() to be invoked directly from the user's gesture.
+      // Do not await, schedule or animate anything before this call.
+      deferred.prompt();
+
+      fetch("/api/pwa-diagnostic?state=prompt-called&controller=" + (navigator.serviceWorker?.controller ? "yes" : "no"), { cache: "no-store" }).catch(() => {});
+
+      deferred.userChoice
+        .then((choice) => {
+          fetch("/api/pwa-diagnostic?state=prompt-" + encodeURIComponent(choice.outcome) + "&controller=" + (navigator.serviceWorker?.controller ? "yes" : "no"), { cache: "no-store" }).catch(() => {});
+          (window as typeof window & { __vonuInstallPrompt?: InstallPromptEvent }).__vonuInstallPrompt = undefined;
+          setAvailable(false);
+        })
+        .catch((error) => {
+          const name = error instanceof DOMException ? error.name : "unknown";
+          fetch("/api/pwa-diagnostic?state=choice-error-" + encodeURIComponent(name) + "&controller=" + (navigator.serviceWorker?.controller ? "yes" : "no"), { cache: "no-store" }).catch(() => {});
+        });
     } catch (error) {
-      fetch("/api/pwa-diagnostic?state=prompt-error&controller=" + (navigator.serviceWorker?.controller ? "yes" : "no"), { cache: "no-store" }).catch(() => {});
+      const name = error instanceof DOMException ? error.name : "unknown";
+      fetch("/api/pwa-diagnostic?state=prompt-sync-error-" + encodeURIComponent(name) + "&controller=" + (navigator.serviceWorker?.controller ? "yes" : "no"), { cache: "no-store" }).catch(() => {});
     }
   }
 
