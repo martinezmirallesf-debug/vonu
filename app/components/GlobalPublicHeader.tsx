@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import VonuMark from "./VonuMark";
-import PublicRouteScrollReset from "./PublicRouteScrollReset";
 import VonuSocialLinks from "./VonuSocialLinks";
+import PwaInstallButton from "./PwaInstallButton";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 import {
   GLOBAL_LOCALES,
@@ -73,7 +73,6 @@ export default function GlobalPublicHeader({
 
   return (
     <>
-      <PublicRouteScrollReset />
       <header className="sticky top-0 z-50 isolate overflow-visible bg-[#0b0e17]/95 text-white backdrop-blur-xl max-md:backdrop-blur-none">
       <div className="relative z-[10020] mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href={checkPath(locale)} className="flex items-center gap-3" aria-label="Vonu">
@@ -201,6 +200,7 @@ export default function GlobalPublicHeader({
             {t.analyze}
           </Link>
           <VonuSocialLinks variant="mobile" />
+          <PwaInstallButton locale={locale} />
 
           <div className="mt-auto border-t border-white/[0.10] pt-5">
             <div className="mb-5 grid grid-cols-2 justify-items-center gap-x-4 gap-y-3 text-center">
