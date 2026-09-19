@@ -651,13 +651,12 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
     }
     if (imagePreviewObjectUrlRef.current) {
       URL.revokeObjectURL(imagePreviewObjectUrlRef.current);
+      imagePreviewObjectUrlRef.current = null;
     }
-    const previewUrl = URL.createObjectURL(file);
-    imagePreviewObjectUrlRef.current = previewUrl;
 
     setMode("capture");
     setImageData(dataUrl);
-    setImagePreviewUrl(previewUrl);
+    setImagePreviewUrl(dataUrl);
     setImageName(file.name || "screenshot");
     setError("");
   }
@@ -904,7 +903,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
             </section>
           </main>
 
-          <footer className="shrink-0 border-t border-white/[0.055] bg-[#0b0e17]/55">
+          <footer className="vonu-check-inner-footer shrink-0 border-t border-white/[0.055] bg-[#0b0e17]/55">
             <div className="mx-auto flex min-h-11 max-w-[1320px] items-center justify-between gap-3 px-4 text-[11px] text-slate-600 sm:px-6 lg:px-8">
               <div className="flex items-center gap-2 text-slate-500"><VonuMark /><span className="font-semibold tracking-[0.08em] text-white">Vonu</span></div>
               <div className="flex items-center gap-3 sm:gap-4">
