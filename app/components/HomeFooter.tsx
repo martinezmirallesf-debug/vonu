@@ -42,8 +42,6 @@ export default function HomeFooter() {
           </div>
         </div>
 
-        </div>
-
         <div className="hidden min-h-12 items-center justify-between gap-5 py-3 text-[11px] text-slate-600 md:flex">
           <div className="flex shrink-0 items-center gap-2 text-slate-500">
             <VonuMark className="h-5 w-5" />
