@@ -175,15 +175,15 @@ export default function GlobalPublicHeader({
                   {casesOpen && (
                     <div className="mb-3 grid gap-0 border-s border-emerald-400/25 ps-3">
                       {caseSlugs.map((caseSlug) => (
-                        <Link scroll={false} key={caseSlug} href={localizedPublicPath(locale, caseSlug)} onClick={closeMenu} className="py-2.5 text-[14px] font-medium text-slate-400 transition hover:text-emerald-300">
+                        <a key={caseSlug} href={localizedPublicPath(locale, caseSlug)} onClick={closeMenu} className="py-2.5 text-[14px] font-medium text-slate-400 transition hover:text-emerald-300">
                           {getTopic(locale, caseSlug).eyebrow}
-                        </Link>
+                        </a>
                       ))}
                     </div>
                   )}
                 </div>
               ) : (
-                <Link scroll={false}
+                <a
                   key={item.slug}
                   href={localizedPublicPath(locale, item.slug)}
                   onClick={closeMenu}
@@ -191,23 +191,23 @@ export default function GlobalPublicHeader({
                   className="flex min-h-[48px] items-center py-2 text-[21px] font-semibold leading-none tracking-[-0.035em] text-white transition hover:text-emerald-300"
                 >
                   {item.label}
-                </Link>
+                </a>
               ),
             )}
           </nav>
 
-          <Link scroll={false} href={checkPath(locale)} onClick={closeMenu} className="mx-auto mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-400 px-5 text-[13px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:bg-emerald-300 active:scale-[.99]">
+          <a href={checkPath(locale)} onClick={closeMenu} className="mx-auto mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-400 px-5 text-[13px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:bg-emerald-300 active:scale-[.99]">
             {t.analyze}
-          </Link>
+          </a>
           <VonuSocialLinks variant="mobile" />
           <PwaInstallButton locale={locale} />
 
           <div className="mt-auto border-t border-white/[0.10] pt-5">
             <div className="mb-5 grid grid-cols-2 justify-items-center gap-x-4 gap-y-3 text-center">
               {secondaryLinks.map((item) => (
-                <Link scroll={false} key={item.href} href={item.href} onClick={closeMenu} className="w-full text-center text-[13px] font-medium text-slate-500 transition hover:text-[#7bb7ff]">
+                <a key={item.href} href={item.href} onClick={closeMenu} className="w-full text-center text-[13px] font-medium text-slate-500 transition hover:text-[#7bb7ff]">
                   {item.label}
-                </Link>
+                </a>
               ))}
             </div>
 
@@ -215,7 +215,7 @@ export default function GlobalPublicHeader({
               {languageOpen && (
                 <div className="vonu-mobile-language-popover grid gap-0.5 p-1.5">
                   {GLOBAL_LOCALES.map((item) => (
-                    <Link scroll={false}
+                    <a
                       key={item}
                       href={localizedPublicPath(item, slug)}
                       onClick={closeMenu}
@@ -224,7 +224,7 @@ export default function GlobalPublicHeader({
                     >
                       <span>{localeInfo[item].native}</span>
                       <span className="text-[11px] font-bold text-slate-500">{localeInfo[item].label}</span>
-                    </Link>
+                    </a>
                   ))}
                 </div>
               )}
