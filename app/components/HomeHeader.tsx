@@ -33,6 +33,14 @@ const caseSlugs: IndexedPublicSlug[] = [
 
 const coreUseCasePaths = new Set(caseSlugs.map((slug) => `/${slug}`));
 
+const cookies: Record<SupportedLocale, string> = {
+  es: "Cookies",
+  en: "Cookies",
+  fr: "Cookies",
+  de: "Cookies",
+  ar: "ملفات تعريف الارتباط",
+};
+
 export default function HomeHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -59,7 +67,9 @@ export default function HomeHeader() {
   ];
 
   const secondaryLinks = [
+    { label: t.legal, href: legalPath(locale, "legal-notice") },
     { label: t.privacy, href: legalPath(locale, "privacy") },
+    { label: cookies[locale], href: legalPath(locale, "cookies") },
     { label: t.terms, href: legalPath(locale, "terms") },
     { label: t.responsible, href: legalPath(locale, "responsible-use") },
     { label: t.contact, href: localizedPublicPath(locale, "contacto") },
