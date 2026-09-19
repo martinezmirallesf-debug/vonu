@@ -14,19 +14,19 @@ const manifest = {
   categories: ["security", "utilities"],
   icons: [
     {
-      src: "/api/icon?size=192",
+      src: "/api/icon?size=192&v=20260919-pwa6",
       sizes: "192x192",
       type: "image/png",
       purpose: "any",
     },
     {
-      src: "/api/icon?size=512",
+      src: "/api/icon?size=512&v=20260919-pwa6",
       sizes: "512x512",
       type: "image/png",
       purpose: "any",
     },
     {
-      src: "/api/icon?size=512",
+      src: "/api/icon?size=512&v=20260919-pwa6",
       sizes: "512x512",
       type: "image/png",
       purpose: "maskable",
