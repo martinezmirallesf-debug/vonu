@@ -11,6 +11,13 @@ const manifest = {
   background_color: "#020b24",
   theme_color: "#020b24",
   prefer_related_applications: false,
+  related_applications: [
+    {
+      platform: "webapp",
+      url: "/pwa.webmanifest",
+      id: "https://vonuai.com/vonu-app",
+    },
+  ],
   categories: ["security", "utilities"],
   icons: [
     {
