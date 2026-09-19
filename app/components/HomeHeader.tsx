@@ -190,11 +190,11 @@ export default function HomeHeader() {
                     type="button"
                     onClick={() => setCasesOpen((value) => !value)}
                     data-current={currentSlug === item.slug ? "true" : "false"}
-                    className="flex min-h-[54px] w-full items-center justify-between py-2.5 text-left text-[23px] font-semibold leading-none tracking-[-0.04em] text-white"
+                    className="flex min-h-[48px] w-full items-center justify-between py-2 text-left text-[21px] font-semibold leading-none tracking-[-0.035em] text-white"
                     aria-expanded={casesOpen}
                   >
                     <span>{item.label}</span>
-                    <span className="text-[23px] font-light leading-none text-[#7bb7ff]">{casesOpen ? "−" : "+"}</span>
+                    <span className="text-[21px] font-light leading-none text-[#7bb7ff]">{casesOpen ? "−" : "+"}</span>
                   </button>
                   {casesOpen && (
                     <div className="mb-3 grid gap-0 border-l border-emerald-400/25 pl-3">
@@ -212,7 +212,7 @@ export default function HomeHeader() {
                   href={localizedPublicPath(locale, item.slug)}
                   onClick={closeMenu}
                   data-current={currentSlug === item.slug ? "true" : "false"}
-                  className="flex min-h-[54px] items-center py-2.5 text-[23px] font-semibold leading-none tracking-[-0.04em] text-white transition hover:text-emerald-300"
+                  className="flex min-h-[48px] items-center py-2 text-[21px] font-semibold leading-none tracking-[-0.035em] text-white transition hover:text-emerald-300"
                 >
                   {item.label}
                 </Link>
@@ -236,14 +236,14 @@ export default function HomeHeader() {
 
             <div className="vonu-mobile-language mt-4 border-t border-white/[0.10] pt-3">
               {languageOpen && (
-                <div className="vonu-mobile-language-popover grid gap-1 p-2">
+                <div className="vonu-mobile-language-popover grid gap-0.5 p-1.5">
                   {GLOBAL_LOCALES.map((item) => (
                     <Link
                       key={item}
                       href={localeTarget(item)}
                       onClick={closeMenu}
                       data-active={item === locale ? "true" : "false"}
-                      className="flex min-h-[42px] items-center justify-between rounded-xl border border-transparent px-3 text-[13px] font-semibold text-slate-300 transition hover:bg-white/[0.05] hover:text-white"
+                      className="flex min-h-[36px] items-center justify-center rounded-lg border border-transparent px-2.5 text-[13px] font-semibold text-slate-300 transition hover:bg-white/[0.05] hover:text-white"
                     >
                       <span>{localeInfo[item].native}</span>
                       <span className="text-[11px] font-bold text-slate-500">{localeInfo[item].label}</span>
@@ -254,7 +254,7 @@ export default function HomeHeader() {
               <button
                 type="button"
                 onClick={() => setLanguageOpen((value) => !value)}
-                className="flex min-h-[38px] w-full items-center justify-between text-[13px] font-semibold text-slate-500"
+                className="mx-auto flex min-h-[38px] w-fit items-center justify-center gap-3 px-2 text-[13px] font-semibold text-slate-500"
                 aria-expanded={languageOpen}
               >
                 <span>{t.language}</span>
