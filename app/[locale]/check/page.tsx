@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import CheckClient from "./CheckClient";
 import SubmissionNotice from "./SubmissionNotice";
-import CheckCompactFooter from "./CheckCompactFooter";
+import HomeFooter from "@/app/components/HomeFooter";
 import DeviceAccessGate from "@/app/components/DeviceAccessGate";
 import CheckRuntimeFixes from "@/app/components/CheckRuntimeFixes";
 import "./check.css";
@@ -236,12 +236,12 @@ export default async function LocalizedCheckPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <style dangerouslySetInnerHTML={{ __html: ".vonu-check-page footer:not(.vonu-check-compact-footer){display:none}" }} />
+      <style dangerouslySetInnerHTML={{ __html: ".vonu-check-page .vonu-check-inner-footer{display:none!important}" }} />
       <CheckClient locale={locale} />
       <DeviceAccessGate locale={locale} />
       <CheckRuntimeFixes locale={locale} />
       <SubmissionNotice locale={locale} />
-      <CheckCompactFooter locale={locale} />
+      <HomeFooter />
     </div>
   );
 }
