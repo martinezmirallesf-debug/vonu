@@ -1,0 +1,23 @@
+{
+  "id": "/vonu-app-v2",
+  "name": "Vonu",
+  "short_name": "Vonu",
+  "description": "Comprueba enlaces, capturas y mensajes sospechosos antes de actuar.",
+  "start_url": "/es/check?source=pwa-install",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#020b24",
+  "theme_color": "#020b24",
+  "icons": [
+    {
+      "src": "/api/icon?size=192&v=pwa-clean-1",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/api/icon?size=512&v=pwa-clean-1",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
