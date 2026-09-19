@@ -167,11 +167,11 @@ export default function GlobalPublicHeader({
                     type="button"
                     onClick={() => setCasesOpen((value) => !value)}
                     data-current={slug === item.slug || caseSlugs.includes(slug) ? "true" : "false"}
-                    className="flex min-h-[60px] w-full items-center justify-between py-3 text-start text-[26px] font-semibold leading-none tracking-[-0.045em] text-white"
+                    className="flex min-h-[54px] w-full items-center justify-between py-2.5 text-start text-[23px] font-semibold leading-none tracking-[-0.04em] text-white"
                     aria-expanded={casesOpen}
                   >
                     <span>{item.label}</span>
-                    <span className="text-[26px] font-light leading-none text-emerald-300">{casesOpen ? "−" : "+"}</span>
+                    <span className="text-[23px] font-light leading-none text-[#7bb7ff]">{casesOpen ? "−" : "+"}</span>
                   </button>
                   {casesOpen && (
                     <div className="mb-3 grid gap-0 border-s border-emerald-400/25 ps-3">
@@ -189,7 +189,7 @@ export default function GlobalPublicHeader({
                   href={localizedPublicPath(locale, item.slug)}
                   onClick={closeMenu}
                   data-current={slug === item.slug ? "true" : "false"}
-                  className="flex min-h-[60px] items-center py-3 text-[26px] font-semibold leading-none tracking-[-0.045em] text-white transition hover:text-emerald-300"
+                  className="flex min-h-[54px] items-center py-2.5 text-[23px] font-semibold leading-none tracking-[-0.04em] text-white transition hover:text-emerald-300"
                 >
                   {item.label}
                 </Link>
@@ -203,9 +203,9 @@ export default function GlobalPublicHeader({
           <VonuSocialLinks variant="mobile" />
 
           <div className="mt-auto border-t border-white/[0.10] pt-5">
-            <div className="mb-5 grid grid-cols-2 gap-x-5 gap-y-3">
+            <div className="mb-5 grid grid-cols-2 justify-items-center gap-x-4 gap-y-3 text-center">
               {secondaryLinks.map((item) => (
-                <Link key={item.href} href={item.href} onClick={closeMenu} className="text-[13px] font-medium text-slate-500 transition hover:text-emerald-300">
+                <Link key={item.href} href={item.href} onClick={closeMenu} className="w-full text-center text-[13px] font-medium text-slate-500 transition hover:text-[#7bb7ff]">
                   {item.label}
                 </Link>
               ))}
