@@ -94,7 +94,7 @@ export default function HomeHeader() {
       <PublicRouteScrollReset />
       <header
       data-vonu-use-case={isCoreUseCase ? "core" : undefined}
-      className="sticky top-0 z-50 isolate overflow-visible border-b border-white/[0.08] bg-[#0b0e17]/95 text-white backdrop-blur-xl max-md:backdrop-blur-none"
+      className="sticky top-0 z-50 isolate overflow-visible bg-[#0b0e17]/95 text-white backdrop-blur-xl max-md:backdrop-blur-none"
     >
       <div className={["relative z-[10020] mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8", isCheckHome ? "relative" : ""].join(" ")}>
         <Link href={checkPath(locale)} className="flex items-center gap-3" aria-label="Vonu">
