@@ -12,6 +12,7 @@ import FunnelTelemetry from "./components/FunnelTelemetry";
 import CheckResultConversion from "./components/CheckResultConversion";
 import CheckExperienceController from "./components/CheckExperienceController";
 import DocumentLocaleSync from "./components/DocumentLocaleSync";
+import PwaRegistrar from "./components/PwaRegistrar";
 
 const BASE_URL = "https://vonuai.com";
 const BRAND_ASSET_VERSION = "20260918-trinode";
@@ -37,10 +38,16 @@ export const metadata: Metadata = {
   description:
     "Vonu analiza URLs, capturas de pantalla y mensajes sospechosos para detectar señales de phishing, fraude y suplantación antes de que pagues, respondas o compartas datos.",
   applicationName: "Vonu",
+  manifest: "/manifest.webmanifest",
   authors: [{ name: "Vonu", url: BASE_URL }],
   creator: "Vonu",
   publisher: "Vonu",
   category: "security",
+  appleWebApp: {
+    capable: true,
+    title: "Vonu",
+    statusBarStyle: "black-translucent",
+  },
   referrer: "origin-when-cross-origin",
   icons: {
     icon: [
@@ -158,6 +165,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="font-sans">
         <DocumentLocaleSync />
+        <PwaRegistrar />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(entityGraph) }}
