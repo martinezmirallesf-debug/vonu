@@ -758,6 +758,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
   const subject = (() => {
     if (result?.version === "vonu-check-v1") {
       return {
+        mode: "url" as const,
         label: subjectCopy[locale].url,
         primary: result.facts.hostname,
         detail: result.facts.finalUrl,
@@ -767,6 +768,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
     }
     if (result?.version === "vonu-capture-v1" || mode === "capture") {
       return {
+        mode: "capture" as const,
         label: subjectCopy[locale].capture,
         primary: imageName || subjectCopy[locale].capture,
         detail: result?.version === "vonu-capture-v1" ? contextLabel(result.kind, locale) : t.dropHint,
@@ -777,6 +779,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
     if (result?.version === "vonu-text-v1" || mode === "text") {
       const preview = text.trim().replace(/\s+/g, " ");
       return {
+        mode: "text" as const,
         label: subjectCopy[locale].text,
         primary: preview.slice(0, 72) || subjectCopy[locale].text,
         detail: preview.length > 72 ? `${preview.slice(72, 150)}…` : "",
@@ -792,6 +795,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
       // Keep the submitted value as the visible subject.
     }
     return {
+      mode: "url" as const,
       label: subjectCopy[locale].url,
       primary: host || subjectCopy[locale].url,
       detail: cleanUrl,
@@ -802,9 +806,19 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
 
   function SubjectCard({ completed = false }: { completed?: boolean }) {
     return (
-      <section className="mb-5 flex min-w-0 items-center gap-3 overflow-hidden rounded-[18px] border border-white/[0.075] bg-[#111725]/88 p-3.5 shadow-[0_16px_40px_rgba(0,0,0,.18)]">
+      <section data-vonu-subject-mode={subject.mode} className="mb-5 flex min-w-0 items-center gap-3 overflow-hidden rounded-[18px] border border-white/[0.075] bg-[#111725]/88 p-3.5 shadow-[0_16px_40px_rgba(0,0,0,.18)]">
         {subject.image ? (
-          <img src={subject.image} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover ring-1 ring-white/10" />
+          <img
+            src={subject.image}
+            data-vonu-capture-thumbnail={subject.mode === "capture" ? "true" : undefined}
+            alt=""
+            onError={(event) => {
+              if (subject.mode === "capture" && imagePreviewUrl && event.currentTarget.src !== imagePreviewUrl) {
+                event.currentTarget.src = imagePreviewUrl;
+              }
+            }}
+            className="h-12 w-12 shrink-0 rounded-xl object-cover ring-1 ring-white/10"
+          />
         ) : (
           <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-emerald-400/[0.08] text-[20px] text-emerald-300 ring-1 ring-emerald-400/20">{subject.icon}</div>
         )}
