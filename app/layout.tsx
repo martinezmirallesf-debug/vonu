@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   description:
     "Vonu analiza URLs, capturas de pantalla y mensajes sospechosos para detectar señales de phishing, fraude y suplantación antes de que pagues, respondas o compartas datos.",
   applicationName: "Vonu",
-  manifest: "/manifest.webmanifest?v=20260919-pwa2",
+  manifest: "/pwa.webmanifest?v=20260919-pwa3",
   authors: [{ name: "Vonu", url: BASE_URL }],
   creator: "Vonu",
   publisher: "Vonu",
