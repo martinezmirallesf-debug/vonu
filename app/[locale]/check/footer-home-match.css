@@ -37,10 +37,10 @@
 
 @media (max-width: 767px) {
   .vonu-check-page:has(main > section.text-center) > div:first-of-type {
-    flex: 1 1 auto !important;
+    flex: 1 1 0% !important;
     min-height: 0 !important;
     height: auto !important;
-    overflow: visible !important;
+    overflow: hidden !important;
   }
 
   .vonu-check-page > footer > div {
