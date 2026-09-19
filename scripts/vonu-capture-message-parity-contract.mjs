@@ -32,7 +32,7 @@ requireSource(capture, "extractFirstBalancedObject", "capture balanced-json reco
 requireSource(capture, "minimalRecoveryPrompt", "capture minimal recovery prompt");
 requireSource(capture, "vision_recovery_failed", "capture final recovery guard");
 requireSource(checkClient, "URL.createObjectURL(file)", "capture stable thumbnail URL");
-requireSource(checkClient, "imagePreviewUrl || imageData", "capture thumbnail persistence");
+requireSource(checkClient, "imageData || imagePreviewUrl", "capture result thumbnail uses stable uploaded image data");
 requireSource(text, "Fraud Atlas evidence MUST be grounded in exact text excerpts", "text exact-evidence grounding");
 
 console.log("VONU_CAPTURE_MESSAGE_PARITY_CONTRACT_GREEN capture=1 text=1 shared_atlas=1 polarity=1 image_json_recovery=1 thumbnail_persistence=1");
