@@ -12,7 +12,6 @@ import FunnelTelemetry from "./components/FunnelTelemetry";
 import CheckResultConversion from "./components/CheckResultConversion";
 import CheckExperienceController from "./components/CheckExperienceController";
 import DocumentLocaleSync from "./components/DocumentLocaleSync";
-import PwaRegistrar from "./components/PwaRegistrar";
 
 const BASE_URL = "https://vonuai.com";
 const BRAND_ASSET_VERSION = "20260918-trinode";
@@ -162,10 +161,50 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta property="og:image:alt" content="Vonu — comprueba antes de confiar" />
         <meta name="twitter:image" content={SOCIAL_IMAGE} />
         <meta name="twitter:image:alt" content="Vonu — comprueba antes de confiar" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(function () {
+  function report(state) {
+    try {
+      fetch('/api/pwa-diagnostic?state=' + encodeURIComponent(state) + '&controller=' + (navigator.serviceWorker && navigator.serviceWorker.controller ? 'yes' : 'no'), { cache: 'no-store' }).catch(function () {});
+    } catch (_) {}
+  }
+
+  if (!('serviceWorker' in navigator)) {
+    report('unsupported');
+    return;
+  }
+
+  report('supported');
+  navigator.serviceWorker
+    .register('/sw.js?v=20260919-pwa4', { scope: '/', updateViaCache: 'none' })
+    .then(function (registration) {
+      report('registered');
+      registration.update().catch(function () {});
+      return navigator.serviceWorker.ready;
+    })
+    .then(function () {
+      report('ready');
+    })
+    .catch(function (error) {
+      report('register-error-' + (error && error.name ? error.name : 'unknown'));
+    });
+
+  window.addEventListener('beforeinstallprompt', function () {
+    report('beforeinstallprompt');
+  });
+
+  window.addEventListener('appinstalled', function () {
+    report('installed');
+  });
+})();
+`,
+          }}
+        />
       </head>
       <body className="font-sans">
         <DocumentLocaleSync />
-        <PwaRegistrar />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(entityGraph) }}
