@@ -13,29 +13,23 @@ const cookies: Record<SupportedLocale, string> = {
   de: "Cookies",
   ar: "ملفات تعريف الارتباط",
 };
-const mobileLabels: Record<SupportedLocale, { legal: string; privacy: string; terms: string }> = {
-  es: { legal: "Legal", privacy: "Privacidad", terms: "Términos" },
-  en: { legal: "Legal", privacy: "Privacy", terms: "Terms" },
-  fr: { legal: "Légal", privacy: "Vie privée", terms: "Conditions" },
-  de: { legal: "Legal", privacy: "Datenschutz", terms: "Bedingungen" },
-  ar: { legal: "قانوني", privacy: "الخصوصية", terms: "الشروط" },
-};
 
 export default function GlobalPublicFooter({ locale }: { locale: SupportedLocale }) {
   const t = navCopy[locale];
-  const short = mobileLabels[locale];
 
   return (
     <footer className="bg-[#0b0e17]">
       <div className="mx-auto max-w-[1320px] px-3 sm:px-6 lg:px-8">
-        <div className="flex h-10 items-center justify-center whitespace-nowrap text-[9px] font-medium text-slate-500 md:hidden">
-          <span className="text-slate-400">© Vonu</span>
-          <span className="mx-1.5 text-slate-700">·</span>
-          <Link href={legalPath(locale, "legal-notice")} className="transition hover:text-slate-300">{short.legal}</Link>
-          <span className="mx-1.5 text-slate-700">·</span>
-          <Link href={legalPath(locale, "privacy")} className="transition hover:text-slate-300">{short.privacy}</Link>
-          <span className="mx-1.5 text-slate-700">·</span>
-          <Link href={legalPath(locale, "terms")} className="transition hover:text-slate-300">{short.terms}</Link>
+        <div dir="ltr" className="flex h-11 items-center justify-between gap-2 whitespace-nowrap text-[9px] font-medium text-slate-500 md:hidden">
+          <div className="flex shrink-0 items-center gap-1.5">
+            <VonuMark className="h-[18px] w-[18px]" />
+            <span className="font-semibold tracking-[0.06em] text-white">Vonu</span>
+          </div>
+          <div className="flex min-w-0 shrink-0 items-center gap-2.5">
+            <Link href={legalPath(locale, "legal-notice")} className="transition hover:text-slate-300">{t.legal}</Link>
+            <Link href={legalPath(locale, "privacy")} className="transition hover:text-slate-300">{t.privacy}</Link>
+            <Link href={legalPath(locale, "terms")} className="transition hover:text-slate-300">{t.terms}</Link>
+          </div>
         </div>
 
         <div className="hidden min-h-12 items-center justify-between gap-5 py-3 text-[11px] text-slate-600 md:flex">
