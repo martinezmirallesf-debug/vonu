@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#020b24" />
+  <title>Instalar Vonu</title>
+  <link rel="manifest" href="/install-vonu.webmanifest?v=1" />
+  <style>
+    :root{color-scheme:dark}
+    *{box-sizing:border-box}
+    body{
+      margin:0;min-height:100dvh;display:grid;place-items:center;
+      background:#020b24;color:#fff;font-family:Inter,system-ui,-apple-system,sans-serif;
+      padding:24px
+    }
+    main{width:min(100%,480px);text-align:center}
+    .logo{
+      width:84px;height:84px;margin:0 auto 24px;border-radius:24px;
+      background:#071637;display:grid;place-items:center;font-size:42px;color:#7bb7ff
+    }
+    h1{font-size:38px;line-height:1.05;margin:0 0 14px}
+    p{color:#9aa8c3;font-size:17px;line-height:1.55;margin:0 auto 28px}
+    button{
+      width:100%;min-height:58px;border:0;border-radius:18px;
+      background:#7bb7ff;color:#07111f;font-size:18px;font-weight:800;padding:14px 20px
+    }
+    button:disabled{opacity:.42}
+    #status{margin-top:16px;font-size:13px;color:#7f8da7}
+  </style>
+  <script>
+    window.__installEvent = null;
+
+    function send(state) {
+      fetch('/api/pwa-diagnostic?state=' + encodeURIComponent('clean-' + state) +
+        '&controller=' + (navigator.serviceWorker && navigator.serviceWorker.controller ? 'yes' : 'no'),
+        {cache:'no-store'}).catch(function(){});
+    }
+
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      window.__installEvent = e;
+      send('beforeinstallprompt');
+      window.dispatchEvent(new Event('clean-install-ready'));
+    });
+
+    window.addEventListener('appinstalled', function() {
+      send('installed');
+    });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js?v=clean-install-1', {scope:'/', updateViaCache:'none'})
+        .then(function(){ send('sw-registered'); return navigator.serviceWorker.ready; })
+        .then(function(){ send('sw-ready'); })
+        .catch(function(err){ send('sw-error-' + (err && err.name ? err.name : 'unknown')); });
+    } else {
+      send('sw-unsupported');
+    }
+  </script>
+</head>
+<body>
+  <main>
+    <div class="logo">●</div>
+    <h1>Instalar Vonu</h1>
+    <p>Esta página de instalación está aislada de la aplicación principal para comprobar la instalación nativa de Chrome.</p>
+    <button id="install" type="button" disabled>Preparando instalación…</button>
+    <div id="status">Esperando a Chrome…</div>
+  </main>
+  <script>
+    var button = document.getElementById('install');
+    var status = document.getElementById('status');
+
+    function sync() {
+      if (window.__installEvent) {
+        button.disabled = false;
+        button.textContent = 'Instalar Vonu';
+        status.textContent = 'Lista para instalar';
+      }
+    }
+
+    window.addEventListener('clean-install-ready', sync);
+    sync();
+
+    button.addEventListener('click', function() {
+      var e = window.__installEvent;
+      if (!e) {
+        send('prompt-missing');
+        status.textContent = 'Chrome aún no ha habilitado la instalación';
+        return;
+      }
+      try {
+        e.prompt();
+        send('prompt-called');
+        e.userChoice.then(function(choice) {
+          send('choice-' + choice.outcome);
+          status.textContent = choice.outcome === 'accepted' ? 'Instalación aceptada' : 'Instalación cancelada';
+          window.__installEvent = null;
+          button.disabled = true;
+        }).catch(function(err) {
+          send('choice-error-' + (err && err.name ? err.name : 'unknown'));
+          status.textContent = 'Error al completar la instalación';
+        });
+      } catch (err) {
+        send('prompt-error-' + (err && err.name ? err.name : 'unknown'));
+        status.textContent = 'Chrome ha rechazado el diálogo de instalación';
+      }
+    });
+  </script>
+</body>
+</html>
