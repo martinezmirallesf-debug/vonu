@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   description:
     "Vonu analiza URLs, capturas de pantalla y mensajes sospechosos para detectar señales de phishing, fraude y suplantación antes de que pagues, respondas o compartas datos.",
   applicationName: "Vonu",
-  manifest: "/pwa.webmanifest?v=20260919-pwa6",
+  manifest: "/pwa.webmanifest?v=20260919-pwa7",
   authors: [{ name: "Vonu", url: BASE_URL }],
   creator: "Vonu",
   publisher: "Vonu",
@@ -179,7 +179,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   report('supported');
   navigator.serviceWorker
-    .register('/sw.js?v=20260919-pwa6', { scope: '/', updateViaCache: 'none' })
+    .register('/sw.js?v=20260919-pwa7', { scope: '/', updateViaCache: 'none' })
     .then(function (registration) {
       report('registered');
       registration.update().catch(function () {});
@@ -187,6 +187,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     })
     .then(function () {
       report('ready');
+      try {
+        if (navigator.getInstalledRelatedApps) {
+          navigator.getInstalledRelatedApps()
+            .then(function (apps) {
+              report('installed-related-' + (apps && apps.length ? apps.length : 0));
+            })
+            .catch(function () {
+              report('installed-related-error');
+            });
+        } else {
+          report('installed-related-unsupported');
+        }
+      } catch (_) {
+        report('installed-related-error');
+      }
     })
     .catch(function (error) {
       report('register-error-' + (error && error.name ? error.name : 'unknown'));
