@@ -43,12 +43,21 @@ main:has(> header[data-vonu-use-case="core"]) > section:first-of-type {
   background-color: var(--vonu-bg-main) !important;
 }
 
-/* Keep the public shell continuous across header, mobile overlay and footer. */
-header[class*="bg-[#0b0e17]"],
-footer[class*="bg-[#0b0e17]"],
-.vonu-check-compact-footer {
+/* Keep the public shell clean: no divider under headers, and footers sit
+   one subtle navy step darker than the main canvas without a separator line. */
+header[class*="bg-[#0b0e17]"] {
   background: var(--vonu-bg-main) !important;
   background-image: none !important;
+  border-bottom: 0 !important;
+}
+
+footer,
+footer[class*="bg-[#0b0e17]"],
+.vonu-check-inner-footer,
+.vonu-check-compact-footer {
+  background: var(--vonu-bg-footer) !important;
+  background-image: none !important;
+  border-top: 0 !important;
 }
 
 /* Brand accents in navigation are blue everywhere, including legacy utility
