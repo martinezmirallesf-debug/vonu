@@ -6,6 +6,7 @@ const robots = read("app/robots.ts");
 const rootLayout = read("app/layout.tsx");
 const header = read("app/components/GlobalPublicHeader.tsx");
 const localizedPage = read("app/components/LocalizedPublicPage.tsx");
+const publicFooter = read("app/components/GlobalPublicFooter.tsx");
 const intentPage = read("app/components/IntentPublicPage.tsx");
 const intentContent = read("lib/vonu-global/intent-content.ts");
 const localizedRoute = read("app/[locale]/[slug]/page.tsx");
@@ -34,7 +35,13 @@ rejectText(header, "publicPath(", "localized header legacy route helper");
 
 requireText(localizedPage, "localizedPublicPath(locale, slug)", "localized structured data URL");
 requireText(localizedPage, "localizedPublicPath(locale, \"precios\")", "localized pricing CTA");
-requireText(localizedPage, "localizedPublicPath(locale, \"contacto\")", "localized contact link");
+requireText(localizedPage, "<GlobalPublicFooter locale={locale} />", "shared localized public footer");
+requireText(publicFooter, "localizedPublicPath(locale, \"contacto\")", "localized footer contact link");
+requireText(publicFooter, 'legalPath(locale, "legal-notice")', "localized footer legal notice");
+requireText(publicFooter, 'legalPath(locale, "privacy")', "localized footer privacy");
+requireText(publicFooter, 'legalPath(locale, "cookies")', "localized footer cookies");
+requireText(publicFooter, 'legalPath(locale, "terms")', "localized footer terms");
+requireText(publicFooter, 'legalPath(locale, "responsible-use")', "localized footer responsible use");
 rejectText(localizedPage, "publicPath(", "localized page legacy route helper");
 
 requireText(localizedRoute, "localizedLanguageAlternates(slug)", "page hreflang");
