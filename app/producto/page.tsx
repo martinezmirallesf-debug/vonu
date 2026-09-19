@@ -237,7 +237,8 @@ export default function ProductoPage() {
 
         <div className="mx-auto max-w-[1320px] px-4 pb-20 pt-14 sm:px-6 sm:pb-28 sm:pt-20 lg:px-8 lg:pt-24">
           <div className="mx-auto max-w-[1020px] text-center">
-            <h1 className="mx-auto max-w-[1020px] text-[50px] font-semibold leading-[0.98] tracking-[-0.065em] text-white sm:text-[76px] sm:leading-[0.94] lg:text-[92px]">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#8ec2ff]">Producto</p>
+            <h1 className="mx-auto mt-5 max-w-[1020px] text-[50px] font-semibold leading-[0.98] tracking-[-0.065em] text-white sm:text-[76px] sm:leading-[0.94] lg:text-[92px]">
               Antes de actuar,
               <span className="block text-slate-400">
                 entiende qué tienes <GradientText>delante.</GradientText>
