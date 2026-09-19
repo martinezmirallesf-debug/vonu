@@ -12,6 +12,7 @@ import FunnelTelemetry from "./components/FunnelTelemetry";
 import CheckResultConversion from "./components/CheckResultConversion";
 import CheckExperienceController from "./components/CheckExperienceController";
 import DocumentLocaleSync from "./components/DocumentLocaleSync";
+import RouteScrollTop from "./components/RouteScrollTop";
 
 const BASE_URL = "https://vonuai.com";
 const BRAND_ASSET_VERSION = "20260918-trinode";
@@ -191,8 +192,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       report('register-error-' + (error && error.name ? error.name : 'unknown'));
     });
 
-  window.addEventListener('beforeinstallprompt', function () {
+  window.addEventListener('beforeinstallprompt', function (event) {
+    event.preventDefault();
+    window.__vonuInstallPrompt = event;
     report('beforeinstallprompt');
+    window.dispatchEvent(new Event('vonu-install-ready'));
   });
 
   window.addEventListener('appinstalled', function () {
@@ -205,6 +209,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="font-sans">
         <DocumentLocaleSync />
+        <RouteScrollTop />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(entityGraph) }}
