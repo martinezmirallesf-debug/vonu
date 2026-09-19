@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 import { navCopy } from "@/lib/vonu-global/i18n";
 import { localizedPublicPath } from "@/lib/vonu-global/routes";
+import { legalPath } from "@/lib/vonu-legal/routes";
 import VonuMark from "./VonuMark";
 
 const cookies: Record<SupportedLocale, string> = {
@@ -22,11 +23,11 @@ export default function GlobalPublicFooter({ locale }: { locale: SupportedLocale
           <span className="font-semibold tracking-[0.08em] text-white">Vonu</span>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-4">
-          <Link href="/legal/aviso-legal" className="transition hover:text-slate-400">{t.legal}</Link>
-          <Link href="/legal/privacidad" className="transition hover:text-slate-400">{t.privacy}</Link>
-          <Link href="/legal/cookies" className="transition hover:text-slate-400">{cookies[locale]}</Link>
-          <Link href="/legal/terminos" className="transition hover:text-slate-400">{t.terms}</Link>
-          <Link href="/legal/uso-responsable" className="transition hover:text-slate-400">{t.responsible}</Link>
+          <Link href={legalPath(locale, "legal-notice")} className="transition hover:text-slate-400">{t.legal}</Link>
+          <Link href={legalPath(locale, "privacy")} className="transition hover:text-slate-400">{t.privacy}</Link>
+          <Link href={legalPath(locale, "cookies")} className="transition hover:text-slate-400">{cookies[locale]}</Link>
+          <Link href={legalPath(locale, "terms")} className="transition hover:text-slate-400">{t.terms}</Link>
+          <Link href={legalPath(locale, "responsible-use")} className="transition hover:text-slate-400">{t.responsible}</Link>
           <Link href={localizedPublicPath(locale, "contacto")} className="transition hover:text-slate-400">{t.contact}</Link>
         </div>
       </div>
