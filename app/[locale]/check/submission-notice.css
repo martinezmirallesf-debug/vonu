@@ -186,10 +186,11 @@
   }
 
   .vonu-check-page:has(main > section.text-center) .vonu-submission-notice {
-    width: min(340px, calc(100vw - 48px));
-    margin-top: 7px;
-    font-size: 8.5px;
-    line-height: 1.42;
+    width: min(350px, calc(100vw - 44px));
+    margin-top: 8px;
+    font-size: 9.5px;
+    line-height: 1.5;
+    color: rgb(100 116 139 / .92);
   }
 }
 
