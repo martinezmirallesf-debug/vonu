@@ -123,7 +123,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
               href={checkPath(locale)}
               event="intent_answer_cta"
               properties={{ locale, slug }}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:-translate-y-0.5 hover:bg-emerald-300"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#7bb7ff] px-6 text-[14px] font-bold text-[#07142f] shadow-[0_10px_30px_rgba(123,183,255,.20)] transition hover:-translate-y-0.5 hover:bg-[#a3ceff] hover:shadow-[0_14px_34px_rgba(123,183,255,.24)] active:translate-y-0"
             >
               {labels.cta} <span aria-hidden="true">→</span>
             </FunnelLink>
@@ -221,7 +221,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
             href={checkPath(locale)}
             event="intent_final_cta"
             properties={{ locale, slug }}
-            className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] transition hover:bg-emerald-300"
+            className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#7bb7ff] px-6 text-[14px] font-bold text-[#07142f] shadow-[0_10px_30px_rgba(123,183,255,.20)] transition hover:-translate-y-0.5 hover:bg-[#a3ceff] hover:shadow-[0_14px_34px_rgba(123,183,255,.24)] active:translate-y-0"
           >
             {labels.cta} <span aria-hidden="true">→</span>
           </FunnelLink>
