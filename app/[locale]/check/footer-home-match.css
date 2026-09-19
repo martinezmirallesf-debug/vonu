@@ -15,6 +15,26 @@
   height: auto !important;
 }
 
+/* The scanner is the home surface. Keep the idle home locked to the dynamic
+   viewport so neither mobile nor desktop gets a redundant page scroll. */
+.vonu-check-page:has(main > section.text-center) {
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+
+.vonu-check-page:has(main > section.text-center) > div:first-of-type {
+  min-height: 0 !important;
+  flex: 1 1 0% !important;
+  overflow: hidden !important;
+}
+
+.vonu-check-page:has(main > section.text-center) main:has(> section.text-center) {
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
 @media (max-width: 767px) {
   .vonu-check-page:has(main > section.text-center) > div:first-of-type {
     flex: 1 1 auto !important;
