@@ -26,7 +26,7 @@ export default function GlobalPublicFooter({ locale }: { locale: SupportedLocale
   const short = mobileLabels[locale];
 
   return (
-    <footer className="border-t border-white/[0.055] bg-[#0b0e17]">
+    <footer className="bg-[#0b0e17]">
       <div className="mx-auto max-w-[1320px] px-3 sm:px-6 lg:px-8">
         <div className="flex h-10 items-center justify-center whitespace-nowrap text-[9px] font-medium text-slate-500 md:hidden">
           <span className="text-slate-400">© Vonu</span>
