@@ -1,0 +1,30 @@
+/* Keep Vonu Check on the exact same footer pattern as the public home. */
+.vonu-check-page .vonu-check-compact-footer {
+  display: block !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin-top: 0 !important;
+  background: #0b0e17 !important;
+}
+
+@media (max-width: 767px) {
+  .vonu-check-page:has(main > section.text-center) > div:first-of-type {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .vonu-check-page .vonu-check-compact-footer > div {
+    min-height: 0 !important;
+    height: auto !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+
+  .vonu-check-page .vonu-check-compact-footer > div > div:last-child {
+    row-gap: 8px !important;
+  }
+}
