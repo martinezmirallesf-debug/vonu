@@ -6,6 +6,7 @@ import DevicePricingPage from "@/app/components/DevicePricingPage";
 import PricingStructuredData from "@/app/components/PricingStructuredData";
 import GlobalPublicHeader from "@/app/components/GlobalPublicHeader";
 import HomeFooter from "@/app/components/HomeFooter";
+import ContactPublicPage from "@/app/components/ContactPublicPage";
 import {
   INDEXED_PUBLIC_SLUGS,
   getTopic,
@@ -115,6 +116,10 @@ export default async function GlobalLocalizedPage({ params }: Props) {
 
   const slug = resolveInternalSlug(locale, routeSlug);
   if (!slug) notFound();
+
+  if (slug === "contacto") {
+    return <ContactPublicPage locale={locale} />;
+  }
 
   if (slug === "precios") {
     return (

@@ -79,7 +79,7 @@ requireText(subscribeRoute, "consent_at", "resource consent timestamp persisted"
 requireText(subscribeRoute, "consent_version", "resource consent version persisted");
 requireText(subscribeRoute, "unsubscribed_at", "resource unsubscribe state persisted");
 requireText(subscribeRoute, "RESOURCE_CONSENT_VERSION", "resource consent version enforced");
-requireText(contactForm, "/legal/privacidad", "contact privacy link");
+requireText(contactForm, 'legalPath(locale, "privacy")', "localized contact privacy link");
 requireText(consentVersion, '2026-09-18-v1', "resource consent wording version");
 
 
