@@ -43,7 +43,15 @@ const subjectModeByLabel = new Map<string, "url" | "capture" | "text">([
 ]);
 
 const experienceCss = `
-.vonu-check-page main > section[data-vonu-subject-mode] > :first-child {
+.vonu-check-page main > section[data-vonu-subject-mode]:not([data-vonu-subject-mode="capture"]) > :first-child {
+  display: none !important;
+}
+
+.vonu-check-page main > section[data-vonu-subject-mode="capture"] > :first-child {
+  display: block !important;
+}
+
+.vonu-check-page main > section[data-vonu-subject-mode="capture"]::before {
   display: none !important;
 }
 
@@ -168,7 +176,7 @@ const copy: Record<SupportedLocale, {
     title: "Sigue con 3 análisis más por 3,99 €",
     text: "Pago único. Sin registro, sin suscripción y sin renovación automática.",
     cta: "Comprar 3 análisis · 3,99 €",
-    note: "Los 3 análisis quedan asociados a este navegador/dispositivo.",
+    note: "Pago seguro con Stripe",
     close: "Cerrar",
     success: "Pago confirmado. Tus análisis ya están disponibles en este dispositivo.",
     activating: "Pago recibido. Estamos activando tus análisis…",
@@ -185,7 +193,7 @@ const copy: Record<SupportedLocale, {
     title: "Continue with 3 more analyses for €3.99",
     text: "One-time payment. No account, no subscription and no automatic renewal.",
     cta: "Buy 3 analyses · €3.99",
-    note: "The 3 analyses stay linked to this browser/device.",
+    note: "Secure payment with Stripe",
     close: "Close",
     success: "Payment confirmed. Your analyses are now available on this device.",
     activating: "Payment received. We are activating your analyses…",
@@ -202,7 +210,7 @@ const copy: Record<SupportedLocale, {
     title: "Continuez avec 3 analyses de plus pour 3,99 €",
     text: "Paiement unique. Sans compte, sans abonnement et sans renouvellement automatique.",
     cta: "Acheter 3 analyses · 3,99 €",
-    note: "Les 3 analyses restent liées à ce navigateur/appareil.",
+    note: "Paiement sécurisé avec Stripe",
     close: "Fermer",
     success: "Paiement confirmé. Vos analyses sont maintenant disponibles sur cet appareil.",
     activating: "Paiement reçu. Activation de vos analyses…",
@@ -219,7 +227,7 @@ const copy: Record<SupportedLocale, {
     title: "Weiter mit 3 weiteren Analysen für 3,99 €",
     text: "Einmalige Zahlung. Kein Konto, kein Abo und keine automatische Verlängerung.",
     cta: "3 Analysen kaufen · 3,99 €",
-    note: "Die 3 Analysen bleiben mit diesem Browser/Gerät verknüpft.",
+    note: "Sichere Zahlung mit Stripe",
     close: "Schließen",
     success: "Zahlung bestätigt. Deine Analysen sind auf diesem Gerät verfügbar.",
     activating: "Zahlung erhalten. Deine Analysen werden aktiviert…",
@@ -236,7 +244,7 @@ const copy: Record<SupportedLocale, {
     title: "تابع مع 3 تحليلات إضافية مقابل 3.99 €",
     text: "دفعة واحدة فقط. بدون حساب أو اشتراك أو تجديد تلقائي.",
     cta: "شراء 3 تحليلات · 3.99 €",
-    note: "ترتبط التحليلات الثلاثة بهذا المتصفح/الجهاز.",
+    note: "دفع آمن عبر Stripe",
     close: "إغلاق",
     success: "تم تأكيد الدفع. أصبحت تحليلاتك متاحة الآن على هذا الجهاز.",
     activating: "تم استلام الدفع. جارٍ تفعيل تحليلاتك…",
@@ -514,8 +522,14 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-300">{t.eyebrow}</p>
             <h2 className="mt-3 text-[30px] font-semibold leading-[1.05] tracking-[-0.045em] text-white">{t.title}</h2>
             <p className="mt-4 text-[14px] leading-7 text-slate-400">{t.text}</p>
-            <DevicePackCheckoutButton locale={locale} label={t.cta} className="mt-6 h-12 w-full rounded-xl bg-emerald-400 px-5 text-[14px] font-bold text-[#07110d] transition hover:bg-emerald-300 disabled:opacity-70" />
-            <p className="mt-3 text-center text-[11px] leading-5 text-slate-500">{t.note}</p>
+            <div className="mt-5 flex items-center justify-center gap-1.5 text-[11px] font-semibold text-slate-400">
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-[#7bb7ff]" fill="none" aria-hidden="true">
+                <path d="M12 3 19 6v5c0 4.6-2.8 8.1-7 10-4.2-1.9-7-5.4-7-10V6l7-3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                <path d="m8.8 12 2 2 4.4-4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>{t.note}</span>
+            </div>
+            <DevicePackCheckoutButton locale={locale} label={t.cta} className="mt-2.5 h-12 w-full rounded-xl bg-[#7bb7ff] px-5 text-[14px] font-bold text-[#07142f] shadow-[0_10px_30px_rgba(123,183,255,.20)] transition hover:bg-[#a3ceff] disabled:opacity-70" />
             <button type="button" onClick={() => setOpen(false)} className="mt-4 h-10 w-full rounded-xl border border-white/[0.08] bg-white/[0.035] text-[13px] font-semibold text-slate-300 hover:bg-white/[0.055]">{t.close}</button>
           </div>
         </div>
