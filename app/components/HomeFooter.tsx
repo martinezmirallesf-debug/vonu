@@ -7,6 +7,7 @@ import { navCopy } from "@/lib/vonu-global/i18n";
 import { localizedPublicPath } from "@/lib/vonu-global/routes";
 import { legalPath } from "@/lib/vonu-legal/routes";
 import VonuMark from "./VonuMark";
+import VonuSocialLinks from "./VonuSocialLinks";
 
 const supported = new Set<SupportedLocale>(["es", "en", "fr", "de", "ar"]);
 const cookies: Record<SupportedLocale, string> = {
@@ -60,6 +61,7 @@ export default function HomeFooter() {
             <Link href={legalPath(locale, "terms")} className="transition hover:text-slate-400">{t.terms}</Link>
             <Link href={legalPath(locale, "responsible-use")} className="transition hover:text-slate-400">{t.responsible}</Link>
             <Link href={localizedPublicPath(locale, "contacto")} className="transition hover:text-slate-400">{t.contact}</Link>
+            <VonuSocialLinks variant="footer" />
           </div>
         </div>
       </div>
