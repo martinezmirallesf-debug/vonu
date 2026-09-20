@@ -130,7 +130,7 @@ export default function GlobalPublicHeader({
             </button>
             <div className="pointer-events-none invisible absolute right-0 top-[44px] w-[180px] translate-y-1 rounded-[16px] border border-white/[0.09] bg-[#101522]/98 p-2 opacity-0 shadow-[0_24px_70px_rgba(0,0,0,.4)] transition group-hover:pointer-events-auto group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
               {GLOBAL_LOCALES.map((item) => (
-                <Link
+                <a
                   key={item}
                   href={localizedPublicPath(item, slug)}
                   className={[
@@ -140,7 +140,7 @@ export default function GlobalPublicHeader({
                 >
                   <span>{localeInfo[item].native}</span>
                   <span className="text-[10px] font-bold">{localeInfo[item].label}</span>
-                </Link>
+                </a>
               ))}
             </div>
           </div>
