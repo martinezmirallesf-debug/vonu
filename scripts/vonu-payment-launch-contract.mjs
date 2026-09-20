@@ -103,11 +103,14 @@ requireText(checkClient, 'data-vonu-scanner-subtitle="true"', "localized scanner
 requireText(checkClient, 'SCANNER_HEADLINE', "five-locale scanner title copy");
 requireText(checkClient, 'bg-gradient-to-r from-[#7bb7ff] to-emerald-300', "scanner title gradient accent");
 requireText(desktopFitCss, 'font-size: 20px !important;', "desktop scanner title size");
-requireText(desktopFitCss, 'max-width: 620px !important;', "desktop URL field visibly reduced width");
+requireText(desktopFitCss, 'max-width: 640px !important;', "desktop URL field centered single-line width");
+requireText(desktopFitCss, 'border: 1px solid rgb(35, 59, 97) !important;', "desktop URL matches message border");
+requireText(desktopFitCss, 'background: rgb(8, 22, 49) !important;', "desktop URL matches message surface");
 requireText(desktopFitCss, '[data-vonu-url-icon="true"]', "desktop URL icon target");
 requireText(desktopFitCss, 'display: none !important;', "desktop URL message-style icon removal");
-requireText(vonuMark, '/vonu-mark-official.svg', "official Vonu mark usage");
-requireText(brandAsset, 'data:image/png;base64,', "official Vonu embedded source");
+requireText(vonuMark, 'OFFICIAL_VONU_PATH', "official Vonu mark geometry");
+requireText(vonuMark, 'viewBox="0 0 2000 2000"', "official Vonu mark viewBox");
+requireText(brandAsset, '<path d="M 1308 240', "official Vonu vector asset");
 requireText(socialLinks, 'key: "youtube"', "YouTube social link");
 requireText(socialLinks, 'https://www.youtube.com/@vonuai', "YouTube channel target");
 requireText(socialLinks, 'network === "instagram"', "Instagram official-form icon");
