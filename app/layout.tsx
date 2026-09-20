@@ -221,15 +221,43 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     }, 60);
   }
 
+  function reportClientError(kind, value, source, line, column) {
+    try {
+      var message = recoveryMessage(value);
+      var stack = value && value.stack ? String(value.stack) : '';
+      var fingerprint = kind + ':' + window.location.pathname + ':' + message.slice(0, 180);
+      var reportKey = 'vonu-client-error-reported:' + fingerprint;
+      if (window.sessionStorage.getItem(reportKey)) return;
+      window.sessionStorage.setItem(reportKey, '1');
+
+      window.fetch('/api/client-error', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({
+          message: message,
+          stack: stack,
+          path: window.location.pathname,
+          source: source || '',
+          line: line || null,
+          column: column || null
+        })
+      }).catch(function () {});
+    } catch (_) {}
+  }
+
   window.addEventListener('error', function (event) {
     var target = event && event.target;
     var scriptSource = target && target.tagName === 'SCRIPT' ? target.src : '';
-    if (isStaleAssetFailure(event && (event.error || event.message)) || /_next\\/static\\/chunks/.test(scriptSource || '')) {
+    var value = event && (event.error || event.message);
+    reportClientError('error', value, event && event.filename, event && event.lineno, event && event.colno);
+    if (isStaleAssetFailure(value) || /_next\\/static\\/chunks/.test(scriptSource || '')) {
       recoverOnce();
     }
   }, true);
 
   window.addEventListener('unhandledrejection', function (event) {
+    reportClientError('rejection', event && event.reason, '', null, null);
     if (isStaleAssetFailure(event && event.reason)) recoverOnce();
   }, true);
 
