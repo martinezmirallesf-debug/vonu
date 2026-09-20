@@ -662,19 +662,32 @@ function DocumentThumbnail({ completed = false }: { completed?: boolean }) {
   return (
     <div
       data-vonu-document-thumbnail="true"
+      data-vonu-document-thumbnail-style="page"
+      data-vonu-document-thumbnail-state={completed ? "complete" : "scanning"}
       aria-hidden="true"
-      className={[
-        "relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#dceaff] p-1 ring-1 ring-[#7bb7ff]/30",
-        completed ? "" : "animate-[pulse_1.8s_ease-in-out_infinite]",
-      ].join(" ")}
+      className="relative h-[58px] w-[44px] shrink-0"
     >
-      <div className="relative h-full w-[34px] rounded-[4px] bg-white shadow-[0_2px_10px_rgba(0,0,0,.22)] ring-1 ring-slate-300/70">
-        <span className="absolute end-1 top-1 rounded-[3px] bg-[#0d5bd7] px-1 py-[1px] text-[5px] font-black tracking-[0.04em] text-white">PDF</span>
-        <span className="absolute start-[5px] top-[14px] h-[2px] w-[18px] rounded-full bg-slate-300" />
-        <span className="absolute start-[5px] top-[19px] h-[2px] w-[22px] rounded-full bg-slate-200" />
-        <span className="absolute start-[5px] top-[24px] h-[2px] w-[16px] rounded-full bg-slate-200" />
-        <span className="absolute start-[5px] top-[31px] h-[5px] w-[24px] rounded-[2px] bg-[#7bb7ff]/20" />
+      <div className="absolute inset-0 overflow-hidden rounded-[8px] bg-white shadow-[0_5px_18px_rgba(0,0,0,.30)] ring-1 ring-white/25">
+        <span className="absolute start-[6px] top-[6px] text-[6px] font-black tracking-[0.14em] text-[#3278d5]">PDF</span>
+        <span className="absolute end-[6px] top-[7px] text-[5px] font-bold tabular-nums text-slate-300">1</span>
+
+        <span className="absolute start-[6px] top-[17px] h-[2px] w-[25px] rounded-full bg-slate-300" />
+        <span className="absolute start-[6px] top-[22px] h-[2px] w-[31px] rounded-full bg-slate-200" />
+        <span className="absolute start-[6px] top-[27px] h-[2px] w-[28px] rounded-full bg-slate-200" />
+        <span className="absolute start-[6px] top-[32px] h-[2px] w-[21px] rounded-full bg-slate-200" />
+
+        <span className="absolute start-[6px] top-[40px] h-[7px] w-[31px] rounded-[2px] bg-[#eef5ff] ring-1 ring-[#7bb7ff]/20" />
+        <span className="absolute start-[9px] top-[43px] h-[1.5px] w-[18px] rounded-full bg-[#7bb7ff]/45" />
+
+        <svg viewBox="0 0 12 12" className="absolute end-0 top-0 h-3 w-3" fill="none">
+          <path d="M0 0h12v12L0 0Z" fill="#e8eef7" />
+          <path d="M0 0 12 12" stroke="#cbd5e1" strokeWidth="0.8" />
+        </svg>
       </div>
+
+      {!completed && (
+        <span className="absolute -bottom-[3px] start-1/2 h-[2px] w-6 -translate-x-1/2 animate-[pulse_1.4s_ease-in-out_infinite] rounded-full bg-[#7bb7ff]/75 shadow-[0_0_10px_rgba(123,183,255,.55)] rtl:translate-x-1/2" />
+      )}
     </div>
   );
 }
