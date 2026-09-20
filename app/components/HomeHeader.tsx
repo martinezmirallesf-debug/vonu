@@ -31,6 +31,10 @@ const caseSlugs: IndexedPublicSlug[] = [
   "comprobar-inversion-estafa",
 ];
 
+const resourceSlugs: IndexedPublicSlug[] = [
+  "revisar-contrato-alquiler",
+];
+
 const coreUseCasePaths = new Set(caseSlugs.map((slug) => `/${slug}`));
 
 const cookies: Record<SupportedLocale, string> = {
@@ -44,7 +48,7 @@ const cookies: Record<SupportedLocale, string> = {
 export default function HomeHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [casesOpen, setCasesOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState<IndexedPublicSlug | null>(null);
   const [languageOpen, setLanguageOpen] = useState(false);
 
   const first = pathname.split("/").filter(Boolean)[0] || "";
@@ -60,8 +64,8 @@ export default function HomeHeader() {
 
   const mainLinks = [
     { label: t.product, slug: "producto" as const },
-    { label: t.cases, slug: "casos-de-uso" as const, hasMenu: true },
-    { label: t.resources, slug: "recursos" as const },
+    { label: t.cases, slug: "casos-de-uso" as const, menuSlugs: caseSlugs },
+    { label: t.resources, slug: "recursos" as const, menuSlugs: resourceSlugs },
     { label: t.pricing, slug: "precios" as const },
     { label: t.how, slug: "como-funciona" as const },
   ];
@@ -84,7 +88,7 @@ export default function HomeHeader() {
 
   function closeMenu() {
     setOpen(false);
-    setCasesOpen(false);
+    setMenuOpen(null);
     setLanguageOpen(false);
   }
 
@@ -102,7 +106,7 @@ export default function HomeHeader() {
 
         <nav className={["hidden items-center gap-7 text-[14px] font-medium text-slate-300 md:flex", isCheckHome ? "md:absolute md:left-1/2 md:-translate-x-1/2" : ""].join(" ")}>
           {mainLinks.map((item) =>
-            item.hasMenu ? (
+            item.menuSlugs ? (
               <div key={item.slug} className="group relative py-5">
                 <Link href={localizedPublicPath(locale, item.slug)} className="inline-flex items-center gap-1.5 transition hover:text-white group-focus-within:text-white">
                   {item.label}
@@ -110,7 +114,7 @@ export default function HomeHeader() {
                 </Link>
                 <div className="pointer-events-none invisible absolute left-1/2 top-[58px] w-[620px] -translate-x-1/2 translate-y-1 rounded-[20px] border border-white/[0.09] bg-[#101522]/98 p-3 opacity-0 shadow-[0_28px_80px_rgba(0,0,0,.38)] transition duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
                   <div className="grid grid-cols-2 gap-1">
-                    {caseSlugs.map((caseSlug) => {
+                    {item.menuSlugs.map((caseSlug) => {
                       const topic = getTopic(locale, caseSlug);
                       return (
                         <Link key={caseSlug} href={localizedPublicPath(locale, caseSlug)} className="rounded-2xl px-4 py-3 transition hover:bg-white/[0.045]">
@@ -182,21 +186,21 @@ export default function HomeHeader() {
         <div className="flex h-full min-h-full w-full flex-col overflow-y-auto overscroll-contain px-6 pb-5 pt-[88px]">
           <nav className="grid gap-0">
             {mainLinks.map((item) =>
-              item.hasMenu ? (
+              item.menuSlugs ? (
                 <div key={item.slug}>
                   <button
                     type="button"
-                    onClick={() => setCasesOpen((value) => !value)}
-                    data-current={currentSlug === item.slug ? "true" : "false"}
+                    onClick={() => setMenuOpen((value) => value === item.slug ? null : item.slug)}
+                    data-current={currentSlug === item.slug || (currentSlug ? item.menuSlugs.includes(currentSlug) : false) ? "true" : "false"}
                     className="flex min-h-[48px] w-full items-center justify-between py-2 text-left text-[21px] font-semibold leading-none tracking-[-0.035em] text-white"
-                    aria-expanded={casesOpen}
+                    aria-expanded={menuOpen === item.slug}
                   >
                     <span>{item.label}</span>
-                    <span className="text-[21px] font-light leading-none text-[#7bb7ff]">{casesOpen ? "−" : "+"}</span>
+                    <span className="text-[21px] font-light leading-none text-[#7bb7ff]">{menuOpen === item.slug ? "−" : "+"}</span>
                   </button>
-                  {casesOpen && (
+                  {menuOpen === item.slug && (
                     <div className="mb-3 grid gap-0 border-l border-emerald-400/25 pl-3">
-                      {caseSlugs.map((caseSlug) => (
+                      {item.menuSlugs.map((caseSlug) => (
                         <a key={caseSlug} href={localizedPublicPath(locale, caseSlug)} onClick={closeMenu} className="py-2.5 text-[14px] font-medium text-slate-400 transition hover:text-emerald-300">
                           {getTopic(locale, caseSlug).eyebrow}
                         </a>
