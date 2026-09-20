@@ -679,10 +679,6 @@ function DocumentThumbnail({ completed = false }: { completed?: boolean }) {
         <span className="absolute start-[6px] top-[44px] h-[2px] w-[24px] rounded-full bg-slate-200" />
         <span className="absolute start-[6px] bottom-[6px] h-[1.5px] w-[14px] rounded-full bg-[#7bb7ff]/55" />
 
-        <svg viewBox="0 0 12 12" className="absolute end-0 top-0 h-3 w-3" fill="none">
-          <path d="M0 0h12v12L0 0Z" fill="#e8eef7" />
-          <path d="M0 0 12 12" stroke="#cbd5e1" strokeWidth="0.8" />
-        </svg>
       </div>
 
 
