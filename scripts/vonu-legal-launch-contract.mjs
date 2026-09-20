@@ -33,7 +33,7 @@ for (const [source, label] of [
   [responsible, "responsible use"],
 ]) {
   rejectText(source, "VonuAI", `${label} obsolete brand`);
-  requireText(source, "18 de septiembre de 2026", `${label} update date`);
+  requireText(source, "20 de septiembre de 2026", `${label} update date`);
   rejectText(source, "<h1", `${label} duplicate legacy hero`);
   rejectText(source, 'bg-[#f5f5f7]', `${label} legacy light legal surface`);
   requireText(source, 'bg-[#0d101b]', `${label} unified legal surface`);
@@ -43,8 +43,10 @@ rejectText(localizedLegal, "<h1", "localized legal duplicate legacy hero");
 rejectText(localizedLegal, 'bg-[#f5f5f7]', "localized legal legacy light surface");
 requireText(localizedLegal, 'bg-[#0d101b]', "localized legal unified surface");
 
-requireText(legal, "mensajes, capturas de pantalla, enlaces y sitios web", "legal current product");
-requireText(legal, "índice de riesgo orientativo", "legal score limitation");
+requireText(legal, "documentos PDF", "legal document product");
+requireText(legal, "firmar o realizar un pago", "legal document decision scope");
+requireText(legal, "no certifican", "legal certification limitation");
+requireText(legal, "jurídicamente válido", "legal document validity limitation");
 requireText(privacy, "OpenAI", "privacy OpenAI disclosure");
 requireText(privacy, "Google Gemini", "privacy Gemini disclosure");
 requireText(privacy, "URLhaus", "privacy URLhaus disclosure");
@@ -53,17 +55,26 @@ requireText(privacy, "Stripe", "privacy Stripe disclosure");
 requireText(privacy, "Supabase", "privacy Supabase disclosure");
 requireText(privacy, "Vercel", "privacy Vercel disclosure");
 requireText(privacy, "Resend", "privacy Resend disclosure");
-requireText(terms, "índice de riesgo", "terms score meaning");
+requireText(terms, "índice orientativo de riesgo", "terms risk score meaning");
+requireText(terms, "índice de prioridad de revisión", "terms document review score meaning");
 requireText(terms, "no representa una probabilidad matemática", "terms probability limitation");
+requireText(terms, "El idioma del documento o de la interfaz no determina por sí solo la jurisdicción", "terms jurisdiction separation");
+requireText(terms, "Vonu no garantiza que una cláusula sea válida, inválida, abusiva, exigible o conforme a derecho", "terms legal conclusion limitation");
 requireText(terms, "desistimiento", "terms consumer withdrawal");
 requireText(responsible, "contraseñas", "responsible secret minimization");
 requireText(responsible, "códigos OTP", "responsible OTP minimization");
+requireText(responsible, "Documentos, contratos y facturas", "responsible document section");
+requireText(responsible, "La jurisdicción se intenta identificar a partir del propio documento, no del idioma", "responsible jurisdiction separation");
 requireText(responsible, "Un resultado bajo tampoco garantiza seguridad", "responsible false reassurance guard");
 requireText(cookies, "no utiliza Google Analytics ni cookies publicitarias", "cookies current analytics state");
 requireText(localizedLegal, "Legal notice", "English legal documents");
 requireText(localizedLegal, "Politique de confidentialité", "French legal documents");
 requireText(localizedLegal, "Datenschutzerklärung", "German legal documents");
 requireText(localizedLegal, "سياسة الخصوصية", "Arabic legal documents");
+requireText(localizedLegal, "PDF documents", "English PDF legal coverage");
+requireText(localizedLegal, "documents PDF", "French PDF legal coverage");
+requireText(localizedLegal, "PDF-Dokumente", "German PDF legal coverage");
+requireText(localizedLegal, "مستندات PDF", "Arabic PDF legal coverage");
 requireText(legalRoutes, 'return `/${locale}/legal/${document}`', "localized legal routing");
 requireText(checkout, "legal_consent_required", "checkout legal consent enforcement");
 requireText(checkout, "immediate_performance_requested", "checkout immediate performance evidence");
@@ -88,4 +99,4 @@ rejectText(telemetry, "gtag", "telemetry gtag disabled");
 rejectText(telemetry, "vonu_locale", "telemetry locale cookie disabled");
 requireText(telemetry, 'track(name, data)', "telemetry Vercel analytics");
 
-console.log("VONU_LEGAL_LAUNCH_CONTRACT_GREEN legal=25 providers=8 privacy=1 analytics=1 checkout_consents=1 ai_transparency=1 resource_consent=1 contact_privacy=1 single_legal_header=1");
+console.log("VONU_LEGAL_LAUNCH_CONTRACT_GREEN legal=documents+jurisdiction providers=8 privacy=1 analytics=1 checkout_consents=1 ai_transparency=1 resource_consent=1 contact_privacy=1 single_legal_header=1");
