@@ -148,7 +148,7 @@ export default function CasosDeUsoPage() {
             <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Casos de uso</p>
             <h1 className="mx-auto mt-5 max-w-[1050px] text-[50px] font-semibold leading-[0.98] tracking-[-0.065em] text-white sm:text-[76px] sm:leading-[0.94] lg:text-[92px]">La estafa cambia.<span className="block text-slate-400">Las señales dejan <GradientText>pistas.</GradientText></span></h1>
             <p className="mx-auto mt-7 max-w-[800px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">Vonu está pensado para el momento anterior a una acción difícil de deshacer: pagar, compartir un código, introducir datos o confiar en una identidad.</p>
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/es/check" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d]">Analizar ahora <ArrowIcon /></Link><Link href="/como-funciona" className="inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.045] px-6 text-[14px] font-semibold text-slate-200">Cómo funciona</Link></div>
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row"><a href="/es/check" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d]">Analizar ahora <ArrowIcon /></a><Link href="/como-funciona" className="inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.045] px-6 text-[14px] font-semibold text-slate-200">Cómo funciona</Link></div>
           </div>
         </div>
       </section>
@@ -184,7 +184,7 @@ export default function CasosDeUsoPage() {
 
       <section className="relative overflow-hidden bg-[#080b12]">
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500/[0.08] blur-[120px]" />
-        <div className="relative mx-auto max-w-[1320px] px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8"><h2 className="mx-auto max-w-[900px] text-[44px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[70px]">Si algo te hace dudar, compruébalo antes de confiar.</h2><Link href="/es/check" className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d]">Abrir Vonu Check <ArrowIcon /></Link></div>
+        <div className="relative mx-auto max-w-[1320px] px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8"><h2 className="mx-auto max-w-[900px] text-[44px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[70px]">Si algo te hace dudar, compruébalo antes de confiar.</h2><a href="/es/check" className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d]">Abrir Vonu Check <ArrowIcon /></a></div>
       </section>
 
       <HomeFooter />
