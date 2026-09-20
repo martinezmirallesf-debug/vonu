@@ -95,9 +95,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <GlobalPublicHeader locale={locale} slug={slug} />
 
-      <section className="relative isolate overflow-hidden border-b border-white/[0.06]">
-        <div className="pointer-events-none absolute inset-0 -z-20 bg-[#080b12]" />
-        <div className="pointer-events-none absolute left-1/2 top-[-220px] -z-10 h-[680px] w-[980px] -translate-x-1/2 rounded-full bg-sky-500/[0.10] blur-[135px]" />
+      <section className="overflow-hidden border-b border-white/[0.06] bg-[#080b12]">
         <div className="mx-auto max-w-[1320px] px-4 pb-16 pt-8 sm:px-6 sm:pb-24 sm:pt-12 lg:px-8">
           <nav aria-label="Breadcrumb" className="mx-auto max-w-[1000px] text-[12px] text-slate-600">
             <Link href={checkPath(locale)} className="transition hover:text-slate-300">{t.home}</Link>
