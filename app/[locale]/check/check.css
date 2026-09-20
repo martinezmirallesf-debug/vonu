@@ -1,7 +1,7 @@
 /* Vonu Check — desktop one-screen product surface. */
 
 @media (min-width: 768px) {
-  /* Stable footprint: switching URL / Capture / Text must never move the hero or footer. */
+  /* Stable footprint: switching URL / Capture / Text / Document must never move the hero or footer. */
   section[class*="max-w-[850px]"] > div:last-child {
     height: 242px;
     min-height: 242px;
@@ -178,20 +178,25 @@
   html[lang="es"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(1) > span:nth-of-type(2)::after { content: "Enlace"; }
   html[lang="es"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(2) > span:nth-of-type(2)::after { content: "Captura"; }
   html[lang="es"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(3) > span:nth-of-type(2)::after { content: "Mensaje"; }
+  html[lang="es"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(4) > span:nth-of-type(2)::after { content: "Documento"; }
 
   html[lang="en"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(1) > span:nth-of-type(2)::after { content: "Link"; }
   html[lang="en"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(2) > span:nth-of-type(2)::after { content: "Screenshot"; }
   html[lang="en"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(3) > span:nth-of-type(2)::after { content: "Message"; }
+  html[lang="en"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(4) > span:nth-of-type(2)::after { content: "Document"; }
 
   html[lang="fr"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(1) > span:nth-of-type(2)::after { content: "Lien"; }
   html[lang="fr"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(2) > span:nth-of-type(2)::after { content: "Capture"; }
   html[lang="fr"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(3) > span:nth-of-type(2)::after { content: "Message"; }
+  html[lang="fr"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(4) > span:nth-of-type(2)::after { content: "Document"; }
 
   html[lang="de"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(1) > span:nth-of-type(2)::after { content: "Link"; }
   html[lang="de"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(2) > span:nth-of-type(2)::after { content: "Screenshot"; }
   html[lang="de"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(3) > span:nth-of-type(2)::after { content: "Nachricht"; }
+  html[lang="de"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(4) > span:nth-of-type(2)::after { content: "Dokument"; }
 
   html[lang="ar"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(1) > span:nth-of-type(2)::after { content: "رابط"; }
   html[lang="ar"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(2) > span:nth-of-type(2)::after { content: "لقطة"; }
   html[lang="ar"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(3) > span:nth-of-type(2)::after { content: "رسالة"; }
+  html[lang="ar"] header + main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button:nth-child(4) > span:nth-of-type(2)::after { content: "مستند"; }
 }
