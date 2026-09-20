@@ -866,7 +866,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
                   <button key={item} type="button" onClick={() => switchMode(item)} className={["relative flex h-[52px] items-center justify-center gap-2 px-2 text-[12px] font-semibold transition sm:text-[14px]", mode === item ? "text-emerald-300" : "text-slate-400 hover:text-slate-200"].join(" ")}>
                     <ModeIcon mode={item} />
                     <span>{item === "url" ? t.url : item === "capture" ? t.capture : t.text}</span>
-                    {mode === item && <span className="absolute inset-x-[18%] bottom-0 h-[2px] rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,.45)]" />}
+                    {mode === item && <span className="absolute inset-x-[18%] bottom-[6px] h-[2px] rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,.45)]" />}
                   </button>
                 ))}
               </div>
