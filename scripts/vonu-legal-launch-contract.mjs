@@ -57,7 +57,7 @@ requireText(privacy, "Vercel", "privacy Vercel disclosure");
 requireText(privacy, "Resend", "privacy Resend disclosure");
 requireText(terms, "índice orientativo de riesgo", "terms risk score meaning");
 requireText(terms, "índice de prioridad de revisión", "terms document review score meaning");
-requireText(terms, "no representa una probabilidad matemática", "terms probability limitation");
+requireText(terms, "Ninguna de las dos representa una probabilidad matemática", "terms probability limitation");
 requireText(terms, "El idioma del documento o de la interfaz no determina por sí solo la jurisdicción", "terms jurisdiction separation");
 requireText(terms, "Vonu no garantiza que una cláusula sea válida, inválida, abusiva, exigible o conforme a derecho", "terms legal conclusion limitation");
 requireText(terms, "desistimiento", "terms consumer withdrawal");
