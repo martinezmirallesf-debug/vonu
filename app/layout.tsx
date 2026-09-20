@@ -162,20 +162,73 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta property="og:image:alt" content="Vonu — comprueba antes de confiar" />
         <meta name="twitter:image" content={SOCIAL_IMAGE} />
         <meta name="twitter:image:alt" content="Vonu — comprueba antes de confiar" />
+        <style>{`
+          #vonu-app-launch { display: none; }
+          @media (display-mode: standalone) {
+            #vonu-app-launch {
+              position: fixed;
+              inset: 0;
+              z-index: 2147483647;
+              display: grid;
+              place-items: center;
+              background: #020b24;
+              opacity: 1;
+              pointer-events: none;
+              transition: opacity 160ms ease-out;
+            }
+            #vonu-app-launch.vonu-app-launch--hide {
+              opacity: 0;
+            }
+            #vonu-app-launch svg {
+              width: 94px;
+              height: 94px;
+              display: block;
+            }
+          }
+        `}</style>
         <script
           dangerouslySetInnerHTML={{
             __html: `
 (function () {
-  if (!('serviceWorker' in navigator)) return;
-  navigator.serviceWorker
-    .register('/sw.js?v=clean-install-1', { scope: '/', updateViaCache: 'none' })
-    .catch(function () {});
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+      .register('/sw.js?v=clean-install-1', { scope: '/', updateViaCache: 'none' })
+      .catch(function () {});
+  }
+
+  function finishLaunch() {
+    var launch = document.getElementById('vonu-app-launch');
+    if (!launch) return;
+    launch.classList.add('vonu-app-launch--hide');
+    window.setTimeout(function () {
+      if (launch && launch.parentNode) launch.parentNode.removeChild(launch);
+    }, 180);
+  }
+
+  window.addEventListener('load', function () {
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(function () {
+        window.setTimeout(finishLaunch, 80);
+      });
+    });
+  }, { once: true });
 })();
 `,
           }}
         />
       </head>
       <body className="font-sans">
+        <div id="vonu-app-launch" aria-hidden="true">
+          <svg viewBox="0 0 40 40" fill="none" focusable="false">
+            <g fill="#7bb7ff">
+              <circle cx="24.6" cy="8.7" r="7.2" />
+              <circle cx="8.6" cy="20.1" r="7.2" />
+              <circle cx="25.1" cy="31.1" r="7.2" />
+              <circle cx="18.7" cy="20.1" r="5.9" />
+              <path d="M12.8 16.3 19.7 10.9 24.8 15.4 20.8 20.1 25.4 25.5 20.7 30.1 14.2 23.8Z" />
+            </g>
+          </svg>
+        </div>
         <DocumentLocaleSync />
         <RouteScrollTop />
         <script
