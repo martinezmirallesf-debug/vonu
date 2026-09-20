@@ -121,18 +121,26 @@
     overflow: visible !important;
   }
 
-  /* Keep tabs centered and evenly spaced. */
+  /* Stretch the tab row to the same left/right edges as the input.
+     Each icon+label remains one centered unit, while the four units breathe
+     naturally across the full scanner width. */
   .vonu-check-page main:has(> section.text-center) > section:nth-of-type(2) > div:first-child {
+    display: flex !important;
     width: 100% !important;
     height: 54px !important;
     min-height: 54px !important;
-    padding-inline: 2px !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding-inline: 0 !important;
   }
 
   .vonu-check-page main:has(> section.text-center) > section:nth-of-type(2) > div:first-child button {
+    width: auto !important;
+    min-width: 0 !important;
     height: 54px !important;
     min-height: 54px !important;
-    padding-inline: 2px !important;
+    flex: 0 0 auto !important;
+    padding-inline: 0 !important;
   }
 
   /* Let each mode use the height it actually needs inside a stable scanner footprint. */
