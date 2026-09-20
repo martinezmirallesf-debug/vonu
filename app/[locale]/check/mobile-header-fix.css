@@ -266,8 +266,17 @@
     min-height: 0 !important;
     flex-direction: column !important;
     gap: 0 !important;
-    overflow-y: auto !important;
     padding: 20px 24px 24px !important;
+  }
+
+  .vonu-check-page header > div[data-vonu-mobile-menu-expanded="false"] > div {
+    overflow-y: hidden !important;
+    overscroll-behavior: none !important;
+  }
+
+  .vonu-check-page header > div[data-vonu-mobile-menu-expanded="true"] > div {
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
   }
 
   .vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) nav > a,
