@@ -37,6 +37,7 @@ export type DocumentCheckResult = {
     band: RiskBand;
     score: number;
     confidence: AnalysisConfidence;
+    confidenceReason: string;
   };
   summary: string;
   signals: DocumentSignal[];
