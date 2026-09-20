@@ -1502,6 +1502,8 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
 
                 {error && <p className="mt-3 rounded-lg bg-rose-400/[0.07] px-4 py-2.5 text-sm text-rose-200 ring-1 ring-rose-400/20">{error}</p>}
 
+                {mode === "url" && <div data-vonu-desktop-url-gap="true" aria-hidden="true" className="hidden h-[10px] lg:block" />}
+
                 <div data-vonu-cta-stack="true" className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-slate-500 sm:text-xs">
                     <span data-vonu-entitlement-status="true">{balanceText}</span>

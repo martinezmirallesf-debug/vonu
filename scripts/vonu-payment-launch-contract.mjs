@@ -98,6 +98,8 @@ requireText(checkClient, 'data-vonu-url-input-shell="true"', "stable desktop URL
 requireText(checkClient, 'data-vonu-tab-label="true"', "stable tab label marker");
 requireText(checkClient, 'data-vonu-tab-underline="true"', "stable tab underline marker");
 requireText(checkClient, 'data-vonu-cta-stack="true"', "stable CTA stack marker");
+requireText(checkClient, 'data-vonu-desktop-url-gap="true"', "physical desktop URL action spacer");
+requireText(checkClient, 'className="hidden h-[10px] lg:block"', "desktop-only physical URL gap");
 requireText(submissionNotice, 'data-vonu-cta-stack="true"', "submission notice stable portal target");
 requireText(submissionNotice, 'vonu-submission-notice__ai', "submission notice AI line");
 requireText(submissionNotice, 'vonu-submission-notice__legal', "submission notice legal line");
