@@ -272,7 +272,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     if (!launch) return;
     launch.classList.add('vonu-app-launch--hide');
     window.setTimeout(function () {
-      if (launch && launch.parentNode) launch.parentNode.removeChild(launch);
+      if (launch) {
+        launch.style.display = 'none';
+        launch.setAttribute('aria-hidden', 'true');
+      }
     }, 180);
   }
 
