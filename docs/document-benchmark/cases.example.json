@@ -1,0 +1,24 @@
+[
+  {
+    "id": "es-contract-001",
+    "country": "Spain",
+    "language": "es",
+    "documentKind": "contract",
+    "jurisdictionExpected": {
+      "country": "Spain",
+      "governingLaw": "as explicitly stated in the synthetic contract",
+      "venue": "as explicitly stated in the synthetic contract"
+    },
+    "expectedFindings": [
+      "replace with the deliberately inserted review point",
+      "replace with another expected review point"
+    ],
+    "normalClausesNotToFlag": [
+      "replace with a deliberately ordinary clause"
+    ],
+    "expectedLimitations": [
+      "authenticity cannot be verified from the PDF alone"
+    ],
+    "notes": "Generated synthetic benchmark document. No real personal data."
+  }
+]
