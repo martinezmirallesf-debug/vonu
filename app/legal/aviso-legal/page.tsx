@@ -40,7 +40,7 @@ export default function AvisoLegalPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <HomeHeader />
 
-      <LegalPage locale="es" title="Aviso legal" description="Información legal del servicio Vonu y del sitio vonuai.com." updatedAt="Última actualización: 18 de septiembre de 2026">
+      <LegalPage locale="es" title="Aviso legal" description="Información legal del servicio Vonu y del sitio vonuai.com." updatedAt="Última actualización: 20 de septiembre de 2026">
         <h2>1. Titularidad del servicio</h2>
         <p>
           Este sitio web y el servicio <strong>Vonu</strong>, disponible en <strong>vonuai.com</strong>, son titularidad de <strong>Francisco Luis Martínez Miralles</strong>.
@@ -56,10 +56,10 @@ export default function AvisoLegalPage() {
 
         <h2>2. Objeto de Vonu</h2>
         <p>
-          Vonu es una herramienta de comprobación preventiva que ayuda a revisar mensajes, capturas de pantalla, enlaces y sitios web antes de confiar, responder, facilitar datos o realizar un pago.
+          Vonu es una herramienta de comprobación preventiva que ayuda a revisar mensajes, capturas de pantalla, enlaces, sitios web y documentos PDF antes de confiar, responder, facilitar datos, firmar o realizar un pago.
         </p>
         <p>
-          El servicio combina análisis automatizado, modelos de inteligencia artificial, reglas internas de detección y, para determinados enlaces, comprobaciones técnicas y de reputación. Sus resultados describen señales observadas y un índice de riesgo orientativo; no certifican que una persona, empresa, mensaje o web sea legítima o fraudulenta.
+          El servicio combina análisis automatizado, modelos de inteligencia artificial, reglas internas de detección y, según la función, comprobaciones técnicas o perfiles de revisión documental. Sus resultados describen señales observadas o puntos que conviene revisar; no certifican que una persona, empresa, mensaje, web o documento sea legítimo, auténtico, fraudulento o jurídicamente válido.
         </p>
 
         <h2>3. Acceso y uso</h2>
@@ -69,7 +69,7 @@ export default function AvisoLegalPage() {
 
         <h2>4. Límites del servicio</h2>
         <p>
-          Vonu puede cometer errores, no disponer de contexto suficiente o no detectar amenazas nuevas. Una puntuación baja no constituye una garantía de seguridad y una puntuación alta no constituye por sí sola una prueba de delito o fraude.
+          Vonu puede cometer errores, no disponer de contexto suficiente o no detectar amenazas, cláusulas o datos relevantes. Una puntuación baja no constituye una garantía de seguridad y una puntuación alta no constituye por sí sola una prueba de delito, fraude, invalidez contractual o incumplimiento legal.
         </p>
         <p>
           Si existe una pérdida económica, una posible suplantación, acceso no autorizado, amenaza o cualquier situación urgente, el usuario debe recurrir también al banco, plataforma, proveedor, autoridad o profesional competente según el caso.
