@@ -76,6 +76,16 @@ forbidText(checkClient, 'bg-[#dceaff] p-1 ring-1 ring-[#7bb7ff]/30', "legacy blu
 forbidText(checkClient, 'h-[7px] w-[31px] rounded-[2px] bg-[#eef5ff]', "legacy blue document thumbnail block");
 forbidText(checkClient, 'animate-[pulse_1.4s_ease-in-out_infinite]', "document thumbnail blue scan accent");
 forbidText(checkClient, 'M0 0h12v12L0 0Z', "document thumbnail corner fold");
+requireText(checkClient, 'share: "Compartir resultado"', "Spanish result share action");
+requireText(checkClient, 'share: "Share result"', "English result share action");
+requireText(checkClient, 'share: "Partager le résultat"', "French result share action");
+requireText(checkClient, 'share: "Ergebnis teilen"', "German result share action");
+requireText(checkClient, 'share: "مشاركة النتيجة"', "Arabic result share action");
+requireText(checkClient, 'typeof navigator.share === "function"', "native result sharing");
+requireText(checkClient, 'https://wa.me/?text=', "WhatsApp share fallback");
+requireText(checkClient, 'mailto:?subject=', "email share fallback");
+requireText(checkClient, 'navigator.clipboard.writeText', "copy result fallback");
+requireText(checkClient, 'bg-[#7bb7ff]', "blue new-analysis CTA");
 requireText(experienceCss, 'section[data-vonu-subject-mode]:not([data-vonu-subject-mode="document"]) > :first-child', "legacy subject icon styling excludes documents");
 requireText(experienceCss, 'section[data-vonu-subject-mode="document"] > [data-vonu-document-thumbnail="true"]', "document thumbnail preserves page proportions");
 requireText(experienceCss, 'section[data-vonu-subject-mode="document"]::before', "document subject overlay disabled");

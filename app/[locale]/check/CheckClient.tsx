@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { track } from "@vercel/analytics";
 import { useCallback, useEffect, useRef, useState } from "react";
 import HomeHeader from "@/app/components/HomeHeader";
 import { localeMeta } from "@/lib/vonu-check/i18n";
@@ -759,6 +760,82 @@ function documentKindLabel(kind: DocumentKind, locale: SupportedLocale) {
   return labels[locale][kind];
 }
 
+type ResultActionCopy = {
+  share: string;
+  copy: string;
+  copied: string;
+  whatsapp: string;
+  email: string;
+  privacy: string;
+  score: string;
+  highlights: string;
+  actions: string;
+  analysedWith: string;
+};
+
+const RESULT_ACTION_COPY: Record<SupportedLocale, ResultActionCopy> = {
+  es: {
+    share: "Compartir resultado",
+    copy: "Copiar resumen",
+    copied: "Resumen copiado",
+    whatsapp: "WhatsApp",
+    email: "Email",
+    privacy: "Se comparte solo un resumen. No se adjunta el PDF, la captura ni el contenido completo analizado.",
+    score: "Puntuación",
+    highlights: "Señales principales",
+    actions: "Qué hacer",
+    analysedWith: "Analizado con Vonu",
+  },
+  en: {
+    share: "Share result",
+    copy: "Copy summary",
+    copied: "Summary copied",
+    whatsapp: "WhatsApp",
+    email: "Email",
+    privacy: "Only a summary is shared. The PDF, screenshot and full analysed content are not attached.",
+    score: "Score",
+    highlights: "Main signals",
+    actions: "What to do",
+    analysedWith: "Analysed with Vonu",
+  },
+  fr: {
+    share: "Partager le résultat",
+    copy: "Copier le résumé",
+    copied: "Résumé copié",
+    whatsapp: "WhatsApp",
+    email: "Email",
+    privacy: "Seul un résumé est partagé. Le PDF, la capture et le contenu analysé complet ne sont pas joints.",
+    score: "Score",
+    highlights: "Signaux principaux",
+    actions: "Que faire",
+    analysedWith: "Analysé avec Vonu",
+  },
+  de: {
+    share: "Ergebnis teilen",
+    copy: "Zusammenfassung kopieren",
+    copied: "Zusammenfassung kopiert",
+    whatsapp: "WhatsApp",
+    email: "E-Mail",
+    privacy: "Es wird nur eine Zusammenfassung geteilt. PDF, Screenshot und vollständiger analysierter Inhalt werden nicht angehängt.",
+    score: "Bewertung",
+    highlights: "Wichtigste Signale",
+    actions: "Nächste Schritte",
+    analysedWith: "Mit Vonu analysiert",
+  },
+  ar: {
+    share: "مشاركة النتيجة",
+    copy: "نسخ الملخص",
+    copied: "تم نسخ الملخص",
+    whatsapp: "WhatsApp",
+    email: "البريد الإلكتروني",
+    privacy: "تتم مشاركة ملخص فقط. لا يتم إرفاق ملف PDF أو لقطة الشاشة أو المحتوى الكامل الذي تم تحليله.",
+    score: "النتيجة",
+    highlights: "أهم الإشارات",
+    actions: "ما الذي يجب فعله",
+    analysedWith: "تم التحليل بواسطة Vonu",
+  },
+};
+
 function labelForRiskBand(band: RiskBand, t: UiCopy) {
   if (band === "very_low") return t.veryLow;
   if (band === "low") return t.low;
@@ -842,6 +919,8 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
   const [error, setError] = useState("");
   const [scanIndex, setScanIndex] = useState(0);
   const [entitlement, setEntitlement] = useState<EntitlementSnapshot | null>(null);
+  const [shareFallbackOpen, setShareFallbackOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const documentRef = useRef<HTMLInputElement>(null);
   const imagePreviewObjectUrlRef = useRef<string | null>(null);
@@ -927,6 +1006,8 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
     setMode(next);
     setError("");
     setResult(null);
+    setShareFallbackOpen(false);
+    setShareCopied(false);
   }
 
   async function handleFile(file: File | null) {
@@ -1057,6 +1138,8 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
     setResult(null);
     setError("");
     setScanIndex(0);
+    setShareFallbackOpen(false);
+    setShareCopied(false);
   }
 
   const steps = mode === "url"
@@ -1093,6 +1176,83 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
             ? unknownSummary[locale]
             : t.lowSummary
       : result.summary;
+
+  const resultActions = RESULT_ACTION_COPY[locale];
+
+  function shareTextForResult() {
+    if (!result) return "";
+
+    const signalTitles = result.signals
+      .slice(0, 3)
+      .map((signal) => result.version === "vonu-check-v1" ? humanizeWebSignal(locale, signal).title : signal.title)
+      .filter(Boolean);
+
+    const recommendedActions = result.version === "vonu-check-v1"
+      ? []
+      : result.recommendedActions.slice(0, 2);
+
+    const lines = [
+      `Vonu — ${riskLabel}`,
+      risk?.level === "unknown" ? null : `${resultActions.score}: ${risk?.score ?? 0}/100`,
+      summary,
+      signalTitles.length ? `\n${resultActions.highlights}:\n${signalTitles.map((item) => `• ${item}`).join("\n")}` : null,
+      recommendedActions.length ? `\n${resultActions.actions}:\n${recommendedActions.map((item) => `• ${item}`).join("\n")}` : null,
+      `\n${resultActions.analysedWith}: https://vonuai.com/${locale}/check`,
+    ];
+
+    return lines.filter(Boolean).join("\n");
+  }
+
+  async function copyResultSummary() {
+    const shareText = shareTextForResult();
+    if (!shareText) return;
+
+    try {
+      await navigator.clipboard.writeText(shareText);
+      setShareCopied(true);
+      window.setTimeout(() => setShareCopied(false), 2200);
+      track("analysis_result_shared", { method: "copy", locale, mode: subject.mode });
+    } catch {
+      setShareFallbackOpen(true);
+    }
+  }
+
+  async function shareResult() {
+    const shareText = shareTextForResult();
+    if (!shareText) return;
+
+    track("analysis_share_clicked", { locale, mode: subject.mode });
+
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({
+          title: `Vonu — ${riskLabel}`,
+          text: shareText,
+        });
+        track("analysis_result_shared", { method: "native", locale, mode: subject.mode });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+
+    setShareFallbackOpen((value) => !value);
+  }
+
+  function shareResultByWhatsApp() {
+    const shareText = shareTextForResult();
+    if (!shareText) return;
+    window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank", "noopener,noreferrer");
+    track("analysis_result_shared", { method: "whatsapp", locale, mode: subject.mode });
+  }
+
+  function shareResultByEmail() {
+    const shareText = shareTextForResult();
+    if (!shareText) return;
+    window.location.href = `mailto:?subject=${encodeURIComponent(`Vonu — ${riskLabel}`)}&body=${encodeURIComponent(shareText)}`;
+    track("analysis_result_shared", { method: "email", locale, mode: subject.mode });
+  }
+
   const idle = !result && !loading;
 
   const subject = (() => {
@@ -1480,9 +1640,39 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
             </section>
           )}
 
-          <div className="mt-5 flex flex-col items-start justify-between gap-4 border-t border-white/[0.07] pt-5 sm:flex-row sm:items-center">
-            <p className="max-w-2xl text-[12px] leading-5 text-slate-600">{result.version === "vonu-document-v1" ? DOCUMENT_UI[locale].disclaimer : t.noCertification}</p>
-            <button type="button" onClick={reset} className="rounded-xl bg-white/[0.06] px-4 py-2.5 text-sm font-semibold text-slate-200 ring-1 ring-white/[0.08] hover:bg-white/[0.09]">{t.newCheck}</button>
+          <div className="mt-5 border-t border-white/[0.07] pt-5">
+            <p className="max-w-3xl text-[12px] leading-5 text-slate-600">{result.version === "vonu-document-v1" ? DOCUMENT_UI[locale].disclaimer : t.noCertification}</p>
+
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => void shareResult()}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#7bb7ff]/25 bg-[#7bb7ff]/[0.07] px-5 text-[13px] font-semibold text-[#b8d8ff] transition hover:bg-[#7bb7ff]/[0.12] active:scale-[.99]"
+              >
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
+                  <path d="M18 8a3 3 0 1 0-2.83-4A3 3 0 0 0 18 8ZM6 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm12 1a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM8.7 16.4l6.6 3.2M15.3 5.6 8.7 8.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {resultActions.share}
+              </button>
+
+              <button
+                type="button"
+                onClick={reset}
+                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#7bb7ff] px-5 text-[13px] font-bold text-[#07142f] shadow-[0_9px_26px_rgba(123,183,255,.20)] transition hover:bg-[#a3ceff] active:scale-[.99]"
+              >
+                {t.newCheck}
+              </button>
+            </div>
+
+            {shareFallbackOpen && (
+              <div className="mt-3 flex flex-wrap items-center justify-end gap-2 rounded-[16px] border border-white/[0.07] bg-white/[0.025] p-3">
+                <button type="button" onClick={shareResultByWhatsApp} className="rounded-lg bg-white/[0.05] px-3 py-2 text-[12px] font-semibold text-slate-300 ring-1 ring-white/[0.07] hover:bg-white/[0.08]">{resultActions.whatsapp}</button>
+                <button type="button" onClick={shareResultByEmail} className="rounded-lg bg-white/[0.05] px-3 py-2 text-[12px] font-semibold text-slate-300 ring-1 ring-white/[0.07] hover:bg-white/[0.08]">{resultActions.email}</button>
+                <button type="button" onClick={() => void copyResultSummary()} className="rounded-lg bg-white/[0.05] px-3 py-2 text-[12px] font-semibold text-slate-300 ring-1 ring-white/[0.07] hover:bg-white/[0.08]">{shareCopied ? resultActions.copied : resultActions.copy}</button>
+              </div>
+            )}
+
+            <p className="mt-3 text-end text-[10px] leading-4 text-slate-600">{resultActions.privacy}</p>
           </div>
         </main>
       )}
