@@ -14,7 +14,7 @@ function forbidText(source, needle, label) {
   }
 }
 
-const [middleware, metered, button, gate, checkClient, checkPage, checkCss, experienceCss, entitlement, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
+const [middleware, metered, button, gate, checkClient, checkPage, checkCss, experienceCss, desktopFitCss, entitlement, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
   read("middleware.ts"),
   read("app/api/check/metered/route.ts"),
   read("app/components/DevicePackCheckoutButton.tsx"),
@@ -23,6 +23,7 @@ const [middleware, metered, button, gate, checkClient, checkPage, checkCss, expe
   read("app/[locale]/check/page.tsx"),
   read("app/[locale]/check/submission-notice.css"),
   read("app/check-experience-polish.css"),
+  read("app/[locale]/check/desktop-home-fit.css"),
   read("app/api/check/entitlement/route.ts"),
   read("app/api/stripe/checkout/route.ts"),
   read("app/api/stripe/webhook/route.ts"),
@@ -86,6 +87,10 @@ requireText(checkClient, 'https://wa.me/?text=', "WhatsApp share fallback");
 requireText(checkClient, 'mailto:?subject=', "email share fallback");
 requireText(checkClient, 'navigator.clipboard.writeText', "copy result fallback");
 requireText(checkClient, 'bg-[#7bb7ff]', "blue new-analysis CTA");
+requireText(desktopFitCss, 'padding: 96px 28px 18px !important;', "desktop home lowered spacing");
+requireText(desktopFitCss, 'margin-top: 42px !important;', "desktop scanner separation");
+requireText(desktopFitCss, 'max-width: 500px !important;', "desktop disclaimer readable width");
+requireText(desktopFitCss, 'font-size: 10.5px !important;', "desktop disclaimer larger type");
 requireText(checkClient, 'data-vonu-result-actions="true"', "result action group");
 requireText(checkClient, 'data-vonu-share-result="true"', "share result action");
 requireText(checkClient, 'data-vonu-new-check="true"', "new analysis action");
