@@ -26,6 +26,9 @@ function rejectText(source, needle, label) {
   if (source.includes(needle)) throw new Error(`${label}: forbidden ${JSON.stringify(needle)}`);
 }
 
+requireText(rootLayout, "vonu-client-recovery:", "stale client chunk recovery key");
+requireText(rootLayout, "ChunkLoadError", "stale chunk error detection");
+requireText(rootLayout, "window.location.reload()", "single stale chunk recovery reload");
 requireText(sitemap, "localizedPublicPath(locale, slug)", "sitemap localized URLs");
 requireText(sitemap, "localizedLanguageAlternates(slug)", "sitemap hreflang");
 rejectText(sitemap, "publicPath(locale, slug)", "sitemap legacy route helper");
