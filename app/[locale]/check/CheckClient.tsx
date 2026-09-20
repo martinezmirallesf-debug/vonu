@@ -675,9 +675,9 @@ function DocumentThumbnail({ completed = false }: { completed?: boolean }) {
         <span className="absolute start-[6px] top-[22px] h-[2px] w-[31px] rounded-full bg-slate-200" />
         <span className="absolute start-[6px] top-[27px] h-[2px] w-[28px] rounded-full bg-slate-200" />
         <span className="absolute start-[6px] top-[32px] h-[2px] w-[21px] rounded-full bg-slate-200" />
-
-        <span className="absolute start-[6px] top-[40px] h-[7px] w-[31px] rounded-[2px] bg-[#eef5ff] ring-1 ring-[#7bb7ff]/20" />
-        <span className="absolute start-[9px] top-[43px] h-[1.5px] w-[18px] rounded-full bg-[#7bb7ff]/45" />
+        <span className="absolute start-[6px] top-[39px] h-[2px] w-[30px] rounded-full bg-slate-200" />
+        <span className="absolute start-[6px] top-[44px] h-[2px] w-[24px] rounded-full bg-slate-200" />
+        <span className="absolute start-[6px] bottom-[6px] h-[1.5px] w-[14px] rounded-full bg-[#7bb7ff]/55" />
 
         <svg viewBox="0 0 12 12" className="absolute end-0 top-0 h-3 w-3" fill="none">
           <path d="M0 0h12v12L0 0Z" fill="#e8eef7" />
@@ -1281,7 +1281,7 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
                   >
                     {documentFile ? (
                       <div className="grid w-full gap-3 sm:grid-cols-[72px_1fr] sm:items-center sm:text-start">
-                        <div className="mx-auto grid h-16 w-14 place-items-center rounded-xl border border-[#7bb7ff]/25 bg-[#7bb7ff]/[0.06] text-[12px] font-bold tracking-[0.08em] text-[#7bb7ff]">PDF</div>
+                        <div className="mx-auto"><DocumentThumbnail completed /></div>
                         <div className="min-w-0">
                           <p className="truncate text-[14px] font-semibold text-white">{documentName}</p>
                           <p className="mt-1 text-[13px] text-slate-400">{DOCUMENT_UI[locale].dropHint}</p>
@@ -1339,8 +1339,8 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
                   <ScannerModeIcon mode={mode} />
                 </div>
               </div>
-              <h2 className="mt-6 text-[22px] font-bold tracking-[-0.035em] text-white sm:text-[24px]">{t.scanning}</h2>
-              <p className="mx-auto mt-3 min-h-6 max-w-full break-words px-1 text-sm text-emerald-200/85">{activeStep}</p>
+              <h2 className="mt-6 flex min-h-[58px] items-center justify-center text-[22px] font-bold leading-tight tracking-[-0.035em] text-white sm:min-h-[34px] sm:text-[24px]">{t.scanning}</h2>
+              <p data-vonu-analysis-step="true" className="mx-auto mt-3 flex h-12 max-w-full items-center justify-center break-words px-1 text-sm leading-5 text-emerald-200/85 sm:h-7">{activeStep}</p>
               <div className="mx-auto mt-6 h-1 max-w-sm overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full w-1/2 animate-[pulse_1.1s_ease-in-out_infinite] rounded-full bg-emerald-400" /></div>
             </div>
           </section>
