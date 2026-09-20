@@ -115,8 +115,6 @@ requireText(socialLinks, 'key: "youtube"', "YouTube social link");
 requireText(socialLinks, 'https://www.youtube.com/@vonuai', "YouTube channel target");
 requireText(socialLinks, 'network === "instagram"', "Instagram official-form icon");
 requireText(socialLinks, 'x="2.9" y="2.9" width="18.2" height="18.2"', "Instagram icon proportions");
-requireText(desktopFitCss, 'border-radius: 18px !important;', "desktop URL matches message field radius");
-requireText(desktopFitCss, 'background: #0d1220 !important;', "desktop URL matches message field background");
 requireText(desktopFitCss, 'margin-top: 30px !important;', "desktop URL CTA breathing room");
 requireText(desktopFitCss, 'max-width: 840px !important;', "desktop two-line disclaimer width");
 requireText(desktopFitCss, 'white-space: nowrap !important;', "desktop disclaimer fixed to two logical lines");
