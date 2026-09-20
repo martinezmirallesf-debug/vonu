@@ -30,6 +30,7 @@ export const revalidate = 0;
 
 type Props = {
   params: Promise<{ locale: string }>;
+  searchParams?: Promise<{ mode?: string }>;
 };
 
 const meta: Record<SupportedLocale, { title: string; description: string }> = {
@@ -222,10 +223,12 @@ function getCheckJsonLd(locale: SupportedLocale) {
   };
 }
 
-export default async function LocalizedCheckPage({ params }: Props) {
+export default async function LocalizedCheckPage({ params, searchParams }: Props) {
   const { locale } = await params;
   if (!isSupportedLocale(locale)) notFound();
 
+  const requestedMode = (await searchParams)?.mode;
+  const initialMode = requestedMode === "document" ? "document" : "url";
   const jsonLd = getCheckJsonLd(locale);
 
   return (
@@ -239,7 +242,7 @@ export default async function LocalizedCheckPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <style dangerouslySetInnerHTML={{ __html: ".vonu-check-page .vonu-check-inner-footer{display:none!important}" }} />
-      <CheckClient locale={locale} />
+      <CheckClient locale={locale} initialMode={initialMode} />
       <DeviceAccessGate locale={locale} />
       <CheckRuntimeFixes locale={locale} />
       <SubmissionNotice locale={locale} />
