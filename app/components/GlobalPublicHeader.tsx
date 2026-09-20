@@ -28,6 +28,17 @@ const caseSlugs: IndexedPublicSlug[] = [
 ];
 
 const resourceSlugs: IndexedPublicSlug[] = [
+  "es-fiable",
+  "comprobar-web-fiable",
+  "comprobar-tienda-online",
+  "analizar-link-sospechoso",
+  "analizar-captura-pantalla",
+  "analizar-sms-estafa",
+  "email-sospechoso-estafa",
+  "detectar-perfil-falso",
+  "comprobar-inversion-estafa",
+  "estafas-criptomonedas",
+  "llamada-banco-codigo-sms",
   "revisar-contrato",
   "revisar-contrato-alquiler",
   "comprobar-factura",
@@ -96,8 +107,13 @@ export default function GlobalPublicHeader({
                   {item.label}
                   <span className="text-[10px] text-slate-500">⌄</span>
                 </Link>
-                <div className="pointer-events-none invisible absolute left-1/2 top-[58px] w-[620px] -translate-x-1/2 translate-y-1 rounded-[20px] border border-white/[0.09] bg-[#101522]/98 p-3 opacity-0 shadow-[0_28px_80px_rgba(0,0,0,.38)] transition duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
-                  <div className="grid grid-cols-2 gap-1">
+                <div
+                  className={[
+                    "pointer-events-none invisible absolute left-1/2 top-[58px] -translate-x-1/2 translate-y-1 rounded-[20px] border border-white/[0.09] bg-[#101522]/98 p-3 opacity-0 shadow-[0_28px_80px_rgba(0,0,0,.38)] transition duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100",
+                    item.slug === "recursos" ? "w-[min(900px,calc(100vw-24px))]" : "w-[620px]",
+                  ].join(" ")}
+                >
+                  <div className={["grid gap-1", item.slug === "recursos" ? "grid-cols-3" : "grid-cols-2"].join(" ")}>
                     {item.menuSlugs.map((caseSlug) => {
                       const topic = getTopic(locale, caseSlug);
                       return (
