@@ -48,7 +48,8 @@ const subjectModeByLabel = new Map<string, "url" | "capture" | "text" | "documen
 ]);
 
 const experienceCss = `
-.vonu-check-page main > section[data-vonu-subject-mode]:not([data-vonu-subject-mode="capture"]) > :first-child {
+.vonu-check-page main > section[data-vonu-subject-mode="url"] > :first-child,
+.vonu-check-page main > section[data-vonu-subject-mode="text"] > :first-child {
   display: none !important;
 }
 
@@ -56,11 +57,17 @@ const experienceCss = `
   display: block !important;
 }
 
-.vonu-check-page main > section[data-vonu-subject-mode="capture"]::before {
+.vonu-check-page main > section[data-vonu-subject-mode="document"] > :first-child {
+  display: flex !important;
+}
+
+.vonu-check-page main > section[data-vonu-subject-mode="capture"]::before,
+.vonu-check-page main > section[data-vonu-subject-mode="document"]::before {
   display: none !important;
 }
 
-.vonu-check-page main > section[data-vonu-subject-mode]:not([data-vonu-subject-mode="capture"])::before {
+.vonu-check-page main > section[data-vonu-subject-mode="url"]::before,
+.vonu-check-page main > section[data-vonu-subject-mode="text"]::before {
   content: "";
   display: block;
   width: 48px;
@@ -86,10 +93,6 @@ const experienceCss = `
 
 .vonu-check-page main > section[data-vonu-subject-mode="text"]::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z' stroke='%237bb7ff' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M7.5 8.5h9M7.5 12.5h6' stroke='%237bb7ff' stroke-width='1.9' stroke-linecap='round'/%3E%3C/svg%3E");
-}
-
-.vonu-check-page main > section[data-vonu-subject-mode="document"]::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 2.75h7.5L19 8.25V21.25H6V2.75Z' stroke='%237bb7ff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Cpath d='M13.5 2.75v5.5H19M9 12h7M9 15.5h7' stroke='%237bb7ff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
 .vonu-check-page [data-vonu-radar="true"] {

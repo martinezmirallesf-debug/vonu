@@ -33,6 +33,7 @@ const [middleware, metered, button, gate, checkClient, checkPage, checkCss, enti
 
 requireText(middleware, 'const DEVICE_COOKIE = "vonu_device_id"', "device cookie");
 requireText(middleware, 'meteredUrl.pathname = "/api/check/metered"', "metered rewrite");
+requireText(middleware, '["/api/check/document", "document"]', "document metered route");
 requireText(middleware, 'requestHeaders.set(DEVICE_HEADER, deviceId)', "device header propagation");
 
 requireText(metered, "reserve_vonu_device_analysis", "atomic analysis reservation");
@@ -42,6 +43,7 @@ requireText(metered, "status: 402", "paywall response");
 requireText(metered, 'analyses: 3, amount: 399, currency: "EUR"', "paywall offer");
 requireText(metered, 'target === "web"', "web handler execution");
 requireText(metered, 'target === "image"', "image handler execution");
+requireText(metered, 'target === "document"', "document handler execution");
 requireText(metered, "await checkText", "text handler execution");
 
 requireText(button, 'fetch("/api/stripe/checkout"', "device pack checkout button");

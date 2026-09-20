@@ -614,16 +614,17 @@ function VonuMark() {
 }
 
 function ModeIcon({ mode }: { mode: Mode }) {
-  if (mode === "url") return <span aria-hidden="true" className="text-[17px]">◎</span>;
-  if (mode === "capture") return <span aria-hidden="true" className="text-[16px]">▣</span>;
-  if (mode === "document") return <span aria-hidden="true" className="text-[16px]">▤</span>;
-  return <span aria-hidden="true" className="text-[17px]">≡</span>;
+  return (
+    <span aria-hidden="true" className="inline-grid h-[18px] w-[18px] shrink-0 place-items-center">
+      <ScannerModeIcon mode={mode} className="h-[18px] w-[18px]" />
+    </span>
+  );
 }
 
-function ScannerModeIcon({ mode }: { mode: Mode }) {
+function ScannerModeIcon({ mode, className = "h-8 w-8" }: { mode: Mode; className?: string }) {
   if (mode === "url") {
     return (
-      <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" aria-hidden="true">
+      <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
         <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
@@ -632,7 +633,7 @@ function ScannerModeIcon({ mode }: { mode: Mode }) {
 
   if (mode === "capture") {
     return (
-      <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" aria-hidden="true">
+      <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
         <rect x="3" y="3" width="18" height="18" rx="2.5" stroke="currentColor" strokeWidth="1.9" />
         <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" strokeWidth="1.8" />
         <path d="m21 15-5-5L5 21" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
@@ -642,7 +643,7 @@ function ScannerModeIcon({ mode }: { mode: Mode }) {
 
   if (mode === "document") {
     return (
-      <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" aria-hidden="true">
+      <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
         <path d="M6 2.75h7.5L19 8.25V21.25H6V2.75Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
         <path d="M13.5 2.75v5.5H19M9 12h7M9 15.5h7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
@@ -650,10 +651,31 @@ function ScannerModeIcon({ mode }: { mode: Mode }) {
   }
 
   return (
-    <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
       <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M7.5 8.5h9M7.5 12.5h6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
     </svg>
+  );
+}
+
+function DocumentThumbnail({ completed = false }: { completed?: boolean }) {
+  return (
+    <div
+      data-vonu-document-thumbnail="true"
+      aria-hidden="true"
+      className={[
+        "relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#dceaff] p-1 ring-1 ring-[#7bb7ff]/30",
+        completed ? "" : "animate-[pulse_1.8s_ease-in-out_infinite]",
+      ].join(" ")}
+    >
+      <div className="relative h-full w-[34px] rounded-[4px] bg-white shadow-[0_2px_10px_rgba(0,0,0,.22)] ring-1 ring-slate-300/70">
+        <span className="absolute end-1 top-1 rounded-[3px] bg-[#0d5bd7] px-1 py-[1px] text-[5px] font-black tracking-[0.04em] text-white">PDF</span>
+        <span className="absolute start-[5px] top-[14px] h-[2px] w-[18px] rounded-full bg-slate-300" />
+        <span className="absolute start-[5px] top-[19px] h-[2px] w-[22px] rounded-full bg-slate-200" />
+        <span className="absolute start-[5px] top-[24px] h-[2px] w-[16px] rounded-full bg-slate-200" />
+        <span className="absolute start-[5px] top-[31px] h-[5px] w-[24px] rounded-[2px] bg-[#7bb7ff]/20" />
+      </div>
+    </div>
   );
 }
 
@@ -1133,7 +1155,9 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
   function SubjectCard({ completed = false }: { completed?: boolean }) {
     return (
       <section data-vonu-subject-mode={subject.mode} className="mb-5 flex min-w-0 items-center gap-3 overflow-hidden rounded-[18px] border border-white/[0.075] bg-[#111725]/88 p-3.5 shadow-[0_16px_40px_rgba(0,0,0,.18)]">
-        {subject.image ? (
+        {subject.mode === "document" ? (
+          <DocumentThumbnail completed={completed} />
+        ) : subject.image ? (
           <img
             src={subject.image}
             data-vonu-capture-thumbnail={subject.mode === "capture" ? "true" : undefined}
@@ -1189,9 +1213,11 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
             <section className="mx-auto mt-5 w-full max-w-[850px] rounded-[22px] bg-[#141927]/72 shadow-[0_26px_70px_rgba(0,0,0,.24)] backdrop-blur-sm sm:mt-6">
               <div className="grid grid-cols-4 px-1 pt-1 sm:px-2">
                 {(["url", "capture", "text", "document"] as Mode[]).map((item) => (
-                  <button key={item} type="button" onClick={() => switchMode(item)} className={["relative flex h-[52px] items-center justify-center gap-1.5 px-1 text-[11px] font-semibold transition sm:gap-2 sm:px-2 sm:text-[14px]", mode === item ? "text-emerald-300" : "text-slate-400 hover:text-slate-200"].join(" ")}>
-                    <ModeIcon mode={item} />
-                    <span>{item === "url" ? t.url : item === "capture" ? t.capture : item === "text" ? t.text : DOCUMENT_UI[locale].label}</span>
+                  <button key={item} type="button" onClick={() => switchMode(item)} className={["relative flex h-[52px] min-w-0 items-center justify-center px-1 text-[11px] font-semibold transition sm:px-2 sm:text-[14px]", mode === item ? "text-emerald-300" : "text-slate-400 hover:text-slate-200"].join(" ")}>
+                    <span className="inline-flex min-w-0 items-center justify-center gap-[6px] text-center leading-tight">
+                      <ModeIcon mode={item} />
+                      <span className="min-w-0">{item === "url" ? t.url : item === "capture" ? t.capture : item === "text" ? t.text : DOCUMENT_UI[locale].label}</span>
+                    </span>
                     {mode === item && <span className="absolute inset-x-[18%] bottom-[6px] h-[2px] rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,.45)]" />}
                   </button>
                 ))}
