@@ -247,13 +247,13 @@ export default function ProductoPage() {
             </p>
 
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Link
+              <a
                 href="/es/check"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:-translate-y-0.5 hover:bg-emerald-300 active:translate-y-0"
               >
                 Probar Vonu Check
                 <ArrowIcon />
-              </Link>
+              </a>
               <Link
                 href="/casos-de-uso"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.045] px-6 text-[14px] font-semibold text-slate-200 transition hover:-translate-y-0.5 hover:bg-white/[0.07] active:translate-y-0"
@@ -437,13 +437,13 @@ export default function ProductoPage() {
             <p className="mx-auto mt-6 max-w-[640px] text-[16px] leading-8 text-slate-400">
               Una URL, una captura o un mensaje bastan para empezar. Vonu te ayuda a revisar señales de riesgo antes de que la urgencia decida por ti.
             </p>
-            <Link
+            <a
               href="/es/check"
               className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:-translate-y-0.5 hover:bg-emerald-300 active:translate-y-0"
             >
               Analizar ahora
               <ArrowIcon />
-            </Link>
+            </a>
           </div>
         </div>
       </section>
