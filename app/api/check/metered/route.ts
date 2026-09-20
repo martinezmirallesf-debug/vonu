@@ -3,11 +3,12 @@ import { getSupabaseAdmin } from "@/app/lib/supabaseAdmin";
 import { POST as checkWeb } from "../web/route";
 import { POST as checkImage } from "../image/route";
 import { POST as checkText } from "../text/route";
+import { POST as checkDocument } from "../document/route";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const TARGETS = new Set(["web", "image", "text"]);
+const TARGETS = new Set(["web", "image", "text", "document"]);
 
 function isUuid(value: string | null) {
   return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -89,7 +90,9 @@ export async function POST(req: NextRequest) {
         ? await checkWeb(internalRequest)
         : target === "image"
           ? await checkImage(internalRequest)
-          : await checkText(internalRequest);
+          : target === "document"
+            ? await checkDocument(internalRequest)
+            : await checkText(internalRequest);
 
     const explicitlyNonBillable = response.headers.get("x-vonu-analysis-billable") === "0";
 
