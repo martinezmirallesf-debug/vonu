@@ -678,10 +678,7 @@ function DocumentThumbnail({ completed = false }: { completed?: boolean }) {
         <span className="absolute start-[6px] top-[39px] h-[2px] w-[30px] rounded-full bg-slate-200" />
         <span className="absolute start-[6px] top-[44px] h-[2px] w-[24px] rounded-full bg-slate-200" />
         <span className="absolute start-[6px] bottom-[6px] h-[1.5px] w-[14px] rounded-full bg-[#7bb7ff]/55" />
-
       </div>
-
-
     </div>
   );
 }
