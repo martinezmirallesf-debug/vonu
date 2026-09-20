@@ -8,6 +8,7 @@ import {
   riskLevelFromScore,
 } from "@/lib/vonu-check/risk-score";
 import type { DocumentCheckResult, DocumentKind } from "@/lib/vonu-check/document-types";
+import { getJurisdictionProfile, jurisdictionGuidancePrompt } from "@/lib/vonu-check/jurisdiction-profiles";
 import type { AnalysisConfidence, SignalTone, SupportedLocale } from "@/lib/vonu-check/types";
 
 export const runtime = "nodejs";
@@ -491,6 +492,11 @@ Check parties, exact service scope, deliverables, fees, billing, duration, autom
 LOAN_OR_FINANCING:
 Check lender/borrower, principal, interest/APR or equivalent when present, instalments, term, total cost, commissions, late-payment consequences, early repayment, collateral/guarantees and acceleration clauses.
 
+VERIFIED JURISDICTION REVIEW ANCHORS:
+${jurisdictionGuidancePrompt()}
+
+Use these anchors only when the document itself supports the matching jurisdiction and the relevant scope. They are review aids, not automatic legal conclusions. If scope is uncertain, say so.
+
 CORE RULES:
 - Do not provide a definitive legal opinion or say a clause is legal/illegal unless the text itself states a verifiable rule. Flag items for review instead.
 - Never invent missing clauses, parties, amounts, dates, law, jurisdiction or external facts.
@@ -765,6 +771,10 @@ export async function POST(req: NextRequest) {
       jurisdiction.governingLaw ||
       jurisdiction.venue,
     );
+    const jurisdictionProfile =
+      jurisdiction.confidence === "limited"
+        ? null
+        : getJurisdictionProfile(jurisdiction.countryCode);
     const confidenceReason =
       safeString(parsed?.risk?.confidenceReason, 420) ||
       documentFindingCopy[locale].fallbackConfidence[confidence];
@@ -787,6 +797,14 @@ export async function POST(req: NextRequest) {
       signals,
       keyFacts,
       jurisdiction,
+      legalContext: jurisdictionProfile
+        ? {
+            profileCode: jurisdictionProfile.code,
+            profileName: jurisdictionProfile.name,
+            reviewedAt: jurisdictionProfile.reviewedAt,
+            references: jurisdictionProfile.references,
+          }
+        : null,
       extracted: {
         urls: safeStringArray(parsed?.extracted?.urls, 5, 500),
         phones: safeStringArray(parsed?.extracted?.phones, 5, 100),
