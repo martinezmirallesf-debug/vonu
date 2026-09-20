@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Uso responsable — Vonu",
   description:
-    "Buenas prácticas para utilizar Vonu al comprobar mensajes, capturas, enlaces y webs sospechosas.",
+    "Buenas prácticas para utilizar Vonu al comprobar mensajes, capturas, enlaces, webs y documentos PDF.",
   alternates: { canonical: "/legal/uso-responsable", languages: legalAlternates("responsible-use") },
   openGraph: {
     title: "Uso responsable — Vonu",
@@ -40,10 +40,10 @@ export default function UsoResponsablePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <HomeHeader />
 
-      <LegalPage locale="es" title="Uso responsable" description="Cómo interpretar y utilizar de forma segura las comprobaciones de Vonu." updatedAt="Última actualización: 18 de septiembre de 2026">
+      <LegalPage locale="es" title="Uso responsable" description="Cómo interpretar y utilizar de forma segura las comprobaciones de Vonu." updatedAt="Última actualización: 20 de septiembre de 2026">
         <h2>1. Qué hace Vonu</h2>
         <p>
-          Vonu revisa mensajes, textos, capturas, enlaces y sitios web para identificar señales de riesgo. Está pensado para ayudarte a frenar, entender qué llama la atención y decidir qué conviene verificar antes de confiar, responder o pagar.
+          Vonu revisa mensajes, textos, capturas, enlaces, sitios web y documentos PDF para identificar señales de riesgo o puntos que conviene revisar. Está pensado para ayudarte a frenar, entender qué llama la atención y decidir qué verificar antes de confiar, responder, firmar o pagar.
         </p>
 
         <h2>2. Una puntuación no es un veredicto</h2>
@@ -75,27 +75,38 @@ export default function UsoResponsablePage() {
           Evita pegar URLs que contengan tokens privados, claves de acceso o parámetros secretos. Algunas comprobaciones técnicas pueden consultar la URL o el dominio en servicios externos de reputación o registro.
         </p>
 
-        <h2>6. Si Vonu detecta riesgo alto</h2>
+        <h2>6. Documentos, contratos y facturas</h2>
+        <p>
+          En un documento, Vonu puede resumir y estructurar el texto, detectar condiciones relevantes y señalar elementos que conviene revisar. No certifica que el documento sea auténtico ni que una cláusula sea legal, ilegal, válida o exigible.
+        </p>
+        <p>
+          La jurisdicción se intenta identificar a partir del propio documento, no del idioma. Si la ley aplicable o el tribunal no están claros, Vonu debe tratar esa información como incierta. Para decisiones con consecuencias jurídicas, financieras o contractuales importantes, contrasta el resultado con fuentes oficiales vigentes o asesoramiento profesional.
+        </p>
+        <p>
+          Antes de subir un PDF, elimina o tapa contraseñas, datos bancarios innecesarios, documentos de identidad completos, información médica y datos de terceros que no sean relevantes para la revisión.
+        </p>
+
+        <h2>7. Si Vonu detecta riesgo alto</h2>
         <p>
           No actúes únicamente por la puntuación. Detén la operación sensible y revisa las señales mostradas. Si existe una petición de dinero, credenciales o códigos, verifica primero por un canal oficial o independiente.
         </p>
 
-        <h2>7. Si Vonu detecta riesgo bajo</h2>
+        <h2>8. Si Vonu detecta riesgo bajo</h2>
         <p>
           Interprétalo como ausencia de señales fuertes en lo que se ha podido analizar, no como una certificación. Si el contexto externo sigue siendo extraño —por ejemplo, una petición inesperada, un cambio de cuenta bancaria o un remitente nuevo— verifica antes de actuar.
         </p>
 
-        <h2>8. Si ya has pagado o compartido datos</h2>
+        <h2>9. Si ya has pagado o compartido datos</h2>
         <p>
           Si crees que has enviado dinero o información sensible a un posible estafador, actúa cuanto antes: contacta con tu banco o proveedor de pago, cambia credenciales afectadas, protege tus cuentas y conserva pruebas. Cuando proceda, informa también a la plataforma y a las autoridades competentes.
         </p>
 
-        <h2>9. Interacción con inteligencia artificial y sus limitaciones</h2>
+        <h2>10. Interacción con inteligencia artificial y sus limitaciones</h2>
         <p>
           Vonu utiliza inteligencia artificial y comprobaciones automatizadas. Al utilizar el servicio estás interactuando con un sistema que emplea IA para producir parte del análisis. Los modelos pueden interpretar mal un mensaje, inventar detalles o pasar por alto una señal. Vonu intenta reducir este riesgo mediante reglas de calibración, comprobaciones técnicas y evidencia visible, pero no puede eliminarlo por completo.
         </p>
 
-        <h2>10. Usos prohibidos</h2>
+        <h2>11. Usos prohibidos</h2>
         <p>No está permitido utilizar Vonu para:</p>
         <ul>
           <li>crear, mejorar o ensayar estafas, phishing o suplantaciones;</li>
@@ -106,12 +117,12 @@ export default function UsoResponsablePage() {
           <li>presentar una puntuación de Vonu como prueba definitiva de culpabilidad o identidad.</li>
         </ul>
 
-        <h2>11. Ayuda urgente</h2>
+        <h2>12. Ayuda urgente</h2>
         <p>
           Vonu no sustituye a bancos, plataformas, profesionales ni autoridades. Si existe amenaza inmediata, acceso no autorizado, pérdida económica relevante, extorsión o cualquier otra emergencia, utiliza también los canales oficiales adecuados sin esperar a una respuesta de Vonu.
         </p>
 
-        <h2>12. Contacto</h2>
+        <h2>13. Contacto</h2>
         <p>
           Si detectas un resultado claramente incorrecto o un patrón de fraude que crees que Vonu debería reconocer, puedes escribir a <strong>hello@vonuai.com</strong> sin incluir secretos ni datos sensibles innecesarios.
         </p>
