@@ -33,6 +33,29 @@ rejectText(sitemap, "publicPath(locale, slug)", "sitemap legacy route helper");
 requireText(header, "localizedPublicPath(locale, item.slug)", "desktop localized navigation");
 requireText(header, "localizedPublicPath(item, slug)", "language switcher");
 requireText(header, "localizedPublicPath(locale, caseSlug)", "localized case navigation");
+const resourceMenu = header.match(/const resourceSlugs: IndexedPublicSlug\[\] = \[([\s\S]*?)\];/)?.[1] ?? "";
+const requiredResourceMenuSlugs = [
+  "es-fiable",
+  "comprobar-web-fiable",
+  "comprobar-tienda-online",
+  "analizar-link-sospechoso",
+  "analizar-captura-pantalla",
+  "analizar-sms-estafa",
+  "email-sospechoso-estafa",
+  "detectar-perfil-falso",
+  "comprobar-inversion-estafa",
+  "estafas-criptomonedas",
+  "llamada-banco-codigo-sms",
+  "revisar-contrato",
+  "revisar-contrato-alquiler",
+  "comprobar-factura",
+  "revisar-presupuesto",
+  "revisar-contrato-servicios",
+  "revisar-prestamo-financiacion",
+];
+for (const slug of requiredResourceMenuSlugs) {
+  requireText(resourceMenu, `"${slug}"`, `resource menu coverage ${slug}`);
+}
 rejectText(header, "publicPath(", "localized header legacy route helper");
 requireText(checkHeader, "localizedPublicPath(locale, item.slug)", "check/legal header localized navigation");
 requireText(checkHeader, "localeTarget(item)", "check/legal locale switch routing");
@@ -150,4 +173,4 @@ requireText(llms, "https://vonuai.com/ar/check-website", "llms localized Arabic 
 rejectText(llms, "Plus (€9.99", "llms legacy Plus model");
 rejectText(llms, "Max (€19.99", "llms legacy Max model");
 
-console.log(`VONU_GLOBAL_SEO_CONTRACT_GREEN intents=${requiredIntents.length} locales=5 pricing=2 schema=4 routing=4`);
+console.log(`VONU_GLOBAL_SEO_CONTRACT_GREEN intents=${requiredIntents.length} resources=${requiredResourceMenuSlugs.length} locales=5 pricing=2 schema=4 routing=4`);
