@@ -92,8 +92,8 @@
   /* URL desktop: explicit stable markers, visibly shorter width and the same
      visual language as the Message textarea, but kept to one line. */
   .vonu-check-page [data-vonu-idle-mode="url"] > div:last-child {
-    height: 214px !important;
-    min-height: 214px !important;
+    height: 222px !important;
+    min-height: 222px !important;
   }
 
   .vonu-check-page main:has(> section.text-center)
@@ -132,15 +132,7 @@
   }
 
   .vonu-check-page [data-vonu-idle-mode="url"] [data-vonu-cta-stack="true"] {
-    margin-top: 30px !important;
-  }
-
-  /* Desktop action stack: move balance, CTA and legal note down together. */
-  .vonu-check-page main:has(> section.text-center)
-    section[data-vonu-idle-mode]
-    > div:last-child
-    > [data-vonu-cta-stack="true"] {
-    bottom: -2px !important;
+    margin-top: 36px !important;
   }
 
   /* Desktop active tab underline sits close to the label and matches its width. */
@@ -152,9 +144,11 @@
     inset-inline: auto !important;
     left: 50% !important;
     right: auto !important;
-    bottom: 7px !important;
+    bottom: 12px !important;
     width: max-content !important;
     height: 20px !important;
+    box-sizing: content-box !important;
+    padding-inline: 15px !important;
     transform: translateX(-50%) !important;
     border-radius: 0 !important;
     border-bottom: 3px solid #7bb7ff !important;
@@ -236,8 +230,8 @@
   }
 
   .vonu-check-page [data-vonu-idle-mode="url"] > div:last-child {
-    height: 198px !important;
-    min-height: 198px !important;
+    height: 204px !important;
+    min-height: 204px !important;
   }
 
   .vonu-check-page main:has(> section.text-center)
@@ -252,7 +246,7 @@
   }
 
   .vonu-check-page [data-vonu-idle-mode="url"] [data-vonu-cta-stack="true"] {
-    margin-top: 24px !important;
+    margin-top: 30px !important;
   }
 
   .vonu-check-page main:has(> section.text-center)
