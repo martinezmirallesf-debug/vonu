@@ -14,6 +14,43 @@ import GlobalPublicFooter from "./GlobalPublicFooter";
 
 const SITE_URL = "https://vonuai.com";
 
+const DOCUMENT_RESOURCE_SLUGS: IndexedPublicSlug[] = [
+  "revisar-contrato",
+  "revisar-contrato-alquiler",
+  "comprobar-factura",
+  "revisar-presupuesto",
+  "revisar-contrato-servicios",
+  "revisar-prestamo-financiacion",
+];
+
+const resourceDocumentCopy: Record<SupportedLocale, { eyebrow: string; title: string; intro: string }> = {
+  es: {
+    eyebrow: "Documentos",
+    title: "Revisa antes de firmar o pagar.",
+    intro: "Contratos, alquileres, facturas, presupuestos, servicios y financiación con una ruta directa al análisis de documentos.",
+  },
+  en: {
+    eyebrow: "Documents",
+    title: "Review before you sign or pay.",
+    intro: "Contracts, rentals, invoices, quotes, services and financing with a direct path to document analysis.",
+  },
+  fr: {
+    eyebrow: "Documents",
+    title: "Vérifiez avant de signer ou payer.",
+    intro: "Contrats, locations, factures, devis, services et financement avec un accès direct à l’analyse documentaire.",
+  },
+  de: {
+    eyebrow: "Dokumente",
+    title: "Prüfen, bevor du unterschreibst oder zahlst.",
+    intro: "Verträge, Miete, Rechnungen, Angebote, Dienstleistungen und Finanzierung mit direktem Zugang zur Dokumentprüfung.",
+  },
+  ar: {
+    eyebrow: "المستندات",
+    title: "راجع قبل التوقيع أو الدفع.",
+    intro: "العقود والإيجار والفواتير وعروض الأسعار والخدمات والتمويل مع وصول مباشر إلى تحليل المستندات.",
+  },
+};
+
 const pricingCopy: Record<SupportedLocale, {
   section: string;
   title: string;
@@ -196,6 +233,34 @@ export default function LocalizedPublicPage({
           </div>
         </div>
       </section>
+
+      {isResources && (
+        <section className="border-b border-white/[0.06] bg-[#080b12]">
+          <div className="mx-auto max-w-[1320px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">{resourceDocumentCopy[locale].eyebrow}</p>
+            <div className="mt-4 grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+              <h2 className="max-w-[760px] text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">{resourceDocumentCopy[locale].title}</h2>
+              <p className="max-w-xl text-[16px] leading-8 text-slate-400 lg:justify-self-end">{resourceDocumentCopy[locale].intro}</p>
+            </div>
+            <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {DOCUMENT_RESOURCE_SLUGS.map((documentSlug) => {
+                const item = getTopic(locale, documentSlug);
+                return (
+                  <a
+                    key={documentSlug}
+                    href={localizedPublicPath(locale, documentSlug)}
+                    className="group rounded-[24px] border border-white/[0.07] bg-white/[0.03] p-6 transition hover:-translate-y-0.5 hover:border-sky-300/20 hover:bg-white/[0.045]"
+                  >
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sky-300">{item.eyebrow}</p>
+                    <h3 className="mt-3 text-[22px] font-semibold leading-7 text-white">{item.hero}</h3>
+                    <p className="mt-4 text-[13px] leading-6 text-slate-500 transition group-hover:text-slate-400">{item.description}</p>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {isResources && <ResourceSignup locale={locale} page={localizedPublicPath(locale, slug)} />}
 
