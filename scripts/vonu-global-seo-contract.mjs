@@ -85,6 +85,9 @@ const requiredIntents = [
   "revisar-contrato",
   "revisar-contrato-alquiler",
   "comprobar-factura",
+  "revisar-presupuesto",
+  "revisar-contrato-servicios",
+  "revisar-prestamo-financiacion",
   "detectar-manipulacion",
   "estafas-criptomonedas",
   "llamada-banco-codigo-sms",
@@ -120,6 +123,10 @@ for (const [locale, expected] of [
   requireText(routes, expected, `${locale} route map`);
 }
 requireText(routes, '"x-default": `https://vonuai.com${localizedPublicPath("es", slug)}`', "public x-default");
+requireText(routes, '"revisar-presupuesto": "review-quote-proforma"', "English quote route");
+requireText(routes, '"revisar-contrato-servicios": "verifier-contrat-services"', "French service-contract route");
+requireText(routes, '"revisar-prestamo-financiacion": "darlehen-finanzierung-pruefen"', "German financing route");
+requireText(routes, '"revisar-presupuesto": "review-quote"', "Arabic quote route");
 
 requireText(llms, "3 additional analyses for EUR 3.99", "llms current commercial model");
 requireText(llms, "There is no subscription or automatic renewal", "llms no-subscription model");
