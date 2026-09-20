@@ -162,7 +162,7 @@ type Topic = {
 
 const topics: Record<SupportedLocale, Record<IndexedPublicSlug, Topic>> = {
   es: {
-    producto: { title: "Producto — Vonu", description: "Vonu analiza URLs, capturas y mensajes sospechosos para mostrar señales de riesgo antes de actuar.", eyebrow: "Producto", hero: "Comprueba antes de confiar." },
+    producto: { title: "Producto — Vonu", description: "Vonu analiza URLs, capturas, mensajes y documentos para mostrar señales de riesgo o puntos de revisión antes de actuar.", eyebrow: "Producto", hero: "Comprueba antes de confiar." },
     "casos-de-uso": { title: "Casos de uso — Vonu", description: "Situaciones reales en las que Vonu ayuda a revisar señales antes de pagar, responder o compartir datos.", eyebrow: "Casos de uso", hero: "Cuando algo no encaja, revísalo antes de actuar." },
     recursos: { title: "Recursos — Vonu", description: "Guías prácticas para detectar señales de estafa, phishing, suplantación y riesgo digital.", eyebrow: "Recursos", hero: "Aprende a revisar antes de confiar." },
     precios: { title: "Precios — Vonu", description: "Empieza gratis con Vonu y amplía capacidad cuando necesites más análisis.", eyebrow: "Precios", hero: "Empieza gratis. Amplía cuando lo necesites." },
@@ -188,7 +188,7 @@ const topics: Record<SupportedLocale, Record<IndexedPublicSlug, Topic>> = {
     "es-fiable": { title: "¿Es fiable? Compruébalo con Vonu", description: "Revisa una web, mensaje, perfil o situación cuando algo no termina de encajar.", eyebrow: "Vonu Check", hero: "¿Es fiable? Comprueba las señales antes de actuar." },
   },
   en: {
-    producto: { title: "Product — Vonu", description: "Vonu analyses suspicious URLs, screenshots and messages to surface risk signals before you act.", eyebrow: "Product", hero: "Check before you trust." },
+    producto: { title: "Product — Vonu", description: "Vonu analyses URLs, screenshots, messages and documents to surface risk signals or points worth reviewing before you act.", eyebrow: "Product", hero: "Check before you trust." },
     "casos-de-uso": { title: "Use cases — Vonu", description: "Real situations where Vonu helps you review signals before paying, replying or sharing data.", eyebrow: "Use cases", hero: "When something feels off, check it before you act." },
     recursos: { title: "Resources — Vonu", description: "Practical guides for spotting scam, phishing, impersonation and online-risk signals.", eyebrow: "Resources", hero: "Learn what to check before you trust." },
     precios: { title: "Pricing — Vonu", description: "Start free with Vonu and add capacity when you need more analyses.", eyebrow: "Pricing", hero: "Start free. Upgrade when you need more." },
@@ -214,7 +214,7 @@ const topics: Record<SupportedLocale, Record<IndexedPublicSlug, Topic>> = {
     "es-fiable": { title: "Is it trustworthy? Check with Vonu", description: "Review a website, message, profile or situation when something does not feel right.", eyebrow: "Vonu Check", hero: "Is it trustworthy? Check the signals before acting." },
   },
   fr: {
-    producto: { title: "Produit — Vonu", description: "Vonu analyse URLs, captures et messages suspects afin de faire ressortir les signaux de risque avant d’agir.", eyebrow: "Produit", hero: "Vérifiez avant de faire confiance." },
+    producto: { title: "Produit — Vonu", description: "Vonu analyse URLs, captures, messages et documents afin de faire ressortir les signaux de risque ou les points à vérifier avant d’agir.", eyebrow: "Produit", hero: "Vérifiez avant de faire confiance." },
     "casos-de-uso": { title: "Cas d’usage — Vonu", description: "Des situations réelles où Vonu aide à vérifier les signaux avant de payer, répondre ou partager des données.", eyebrow: "Cas d’usage", hero: "Quand quelque chose semble étrange, vérifiez avant d’agir." },
     recursos: { title: "Ressources — Vonu", description: "Guides pratiques pour repérer les signaux d’arnaque, phishing, usurpation et risque en ligne.", eyebrow: "Ressources", hero: "Apprenez quoi vérifier avant de faire confiance." },
     precios: { title: "Tarifs — Vonu", description: "Commencez gratuitement avec Vonu et augmentez votre capacité lorsque vous avez besoin de plus d’analyses.", eyebrow: "Tarifs", hero: "Commencez gratuitement. Évoluez quand vous en avez besoin." },
@@ -240,7 +240,7 @@ const topics: Record<SupportedLocale, Record<IndexedPublicSlug, Topic>> = {
     "es-fiable": { title: "Est-ce fiable ? Vérifiez avec Vonu", description: "Vérifiez un site, message, profil ou situation lorsque quelque chose ne semble pas normal.", eyebrow: "Vonu Check", hero: "Est-ce fiable ? Vérifiez les signaux avant d’agir." },
   },
   de: {
-    producto: { title: "Produkt — Vonu", description: "Vonu analysiert verdächtige URLs, Screenshots und Nachrichten und zeigt Risikosignale vor einer Handlung.", eyebrow: "Produkt", hero: "Prüfen, bevor du vertraust." },
+    producto: { title: "Produkt — Vonu", description: "Vonu analysiert URLs, Screenshots, Nachrichten und Dokumente und zeigt Risikosignale oder wichtige Prüfpunkte vor einer Handlung.", eyebrow: "Produkt", hero: "Prüfen, bevor du vertraust." },
     "casos-de-uso": { title: "Anwendungsfälle — Vonu", description: "Reale Situationen, in denen Vonu vor Zahlung, Antwort oder Datenfreigabe relevante Signale prüft.", eyebrow: "Anwendungsfälle", hero: "Wenn etwas nicht stimmt, prüfe es vor dem Handeln." },
     recursos: { title: "Ressourcen — Vonu", description: "Praktische Leitfäden zu Betrug, Phishing, Identitätsmissbrauch und Online-Risiken.", eyebrow: "Ressourcen", hero: "Lerne, was du vor dem Vertrauen prüfen solltest." },
     precios: { title: "Preise — Vonu", description: "Starte kostenlos mit Vonu und erweitere bei Bedarf deine Analysekapazität.", eyebrow: "Preise", hero: "Kostenlos starten. Erweitern, wenn du mehr brauchst." },
