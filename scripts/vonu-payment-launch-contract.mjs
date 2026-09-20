@@ -109,10 +109,12 @@ requireText(desktopFitCss, 'max-width: 640px !important;', "desktop URL field ce
 requireText(desktopFitCss, 'border: 1px solid rgb(35, 59, 97) !important;', "desktop URL matches message border");
 requireText(desktopFitCss, 'background: rgb(8, 22, 49) !important;', "desktop URL matches message surface");
 requireText(desktopFitCss, 'align-self: center !important;', "desktop URL centered");
-requireText(desktopFitCss, 'bottom: -2px !important;', "desktop CTA stack lowered");
+requireText(desktopFitCss, 'height: 222px !important;', "desktop URL stack reserves lower action space");
+requireText(desktopFitCss, 'margin-top: 36px !important;', "desktop URL action stack lowered");
 requireText(desktopFitCss, 'width: max-content !important;', "desktop tab underline follows label width");
+requireText(desktopFitCss, 'padding-inline: 15px !important;', "desktop tab underline includes icon and gap width");
 requireText(desktopFitCss, 'border-bottom: 3px solid #7bb7ff !important;', "desktop tab underline treatment");
-requireText(desktopFitCss, 'bottom: 7px !important;', "desktop tab underline closer to label");
+requireText(desktopFitCss, 'bottom: 12px !important;', "desktop tab underline closer to icon and label");
 requireText(desktopFitCss, '[data-vonu-url-icon="true"]', "desktop URL icon target");
 requireText(desktopFitCss, 'display: none !important;', "desktop URL message-style icon removal");
 requireText(vonuMark, 'OFFICIAL_VONU_PATH', "official Vonu mark geometry");
