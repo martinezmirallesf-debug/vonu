@@ -95,10 +95,10 @@ export default function HomeHeader() {
       className="sticky top-0 z-50 isolate overflow-visible bg-[#0b0e17]/95 text-white backdrop-blur-xl max-md:backdrop-blur-none"
     >
       <div className={["relative z-[10020] mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8", isCheckHome ? "relative" : ""].join(" ")}>
-        <Link href={checkPath(locale)} className="flex items-center gap-3" aria-label="Vonu">
+        <a href={checkPath(locale)} className="flex items-center gap-3" aria-label="Vonu">
           <VonuMark className="h-[30px] w-[30px]" framed />
           <span className="text-[23px] font-semibold tracking-[-0.045em]">Vonu</span>
-        </Link>
+        </a>
 
         <nav className={["hidden items-center gap-7 text-[14px] font-medium text-slate-300 md:flex", isCheckHome ? "md:absolute md:left-1/2 md:-translate-x-1/2" : ""].join(" ")}>
           {mainLinks.map((item) =>
@@ -158,9 +158,9 @@ export default function HomeHeader() {
           </div>
 
           {!isCheckHome && (
-            <Link href={checkPath(locale)} className="rounded-xl bg-[#7bb7ff] px-4 py-2.5 text-[14px] font-bold text-[#07142f] transition hover:bg-[#a3ceff]">
+            <a href={checkPath(locale)} className="rounded-xl bg-[#7bb7ff] px-4 py-2.5 text-[14px] font-bold text-[#07142f] transition hover:bg-[#a3ceff]">
               {t.analyze}
-            </Link>
+            </a>
           )}
         </div>
 
