@@ -7,7 +7,7 @@ import {
 import { LEGAL_DOCUMENTS, legalAlternates, legalPath } from "@/lib/vonu-legal/routes";
 
 const BASE_URL = "https://vonuai.com";
-const UPDATED_AT = new Date("2026-09-18T00:00:00.000Z");
+const UPDATED_AT = new Date("2026-09-20T00:00:00.000Z");
 
 const checkLanguages = {
   es: `${BASE_URL}/es/check`,
