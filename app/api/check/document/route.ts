@@ -426,7 +426,7 @@ export async function POST(req: NextRequest) {
       keyClauses: safeStringArray(parsed?.keyFacts?.keyClauses, 8, 500),
     };
 
-    let signals = Array.isArray(parsed?.signals)
+    let signals: DocumentCheckResult["signals"] = Array.isArray(parsed?.signals)
       ? parsed.signals
           .slice(0, 8)
           .map((signal: any, index: number) => ({
