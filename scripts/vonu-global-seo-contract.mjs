@@ -5,8 +5,10 @@ const sitemap = read("app/sitemap.ts");
 const robots = read("app/robots.ts");
 const rootLayout = read("app/layout.tsx");
 const header = read("app/components/GlobalPublicHeader.tsx");
+const checkHeader = read("app/components/HomeHeader.tsx");
 const localizedPage = read("app/components/LocalizedPublicPage.tsx");
 const publicFooter = read("app/components/GlobalPublicFooter.tsx");
+const checkFooter = read("app/components/HomeFooter.tsx");
 const intentPage = read("app/components/IntentPublicPage.tsx");
 const intentContent = read("lib/vonu-global/intent-content.ts");
 const localizedRoute = read("app/[locale]/[slug]/page.tsx");
@@ -32,6 +34,17 @@ requireText(header, "localizedPublicPath(locale, item.slug)", "desktop localized
 requireText(header, "localizedPublicPath(item, slug)", "language switcher");
 requireText(header, "localizedPublicPath(locale, caseSlug)", "localized case navigation");
 rejectText(header, "publicPath(", "localized header legacy route helper");
+requireText(checkHeader, "localizedPublicPath(locale, item.slug)", "check/legal header localized navigation");
+requireText(checkHeader, "localeTarget(item)", "check/legal locale switch routing");
+requireText(checkHeader, 'legalPath(locale, "legal-notice")', "check/legal mobile legal notice");
+requireText(checkHeader, 'legalPath(locale, "privacy")', "check/legal mobile privacy");
+requireText(checkHeader, 'legalPath(locale, "terms")', "check/legal mobile terms");
+requireText(checkFooter, 'legalPath(locale, "legal-notice")', "check footer legal notice");
+requireText(checkFooter, 'legalPath(locale, "privacy")', "check footer privacy");
+requireText(checkFooter, 'legalPath(locale, "terms")', "check footer terms");
+requireText(checkFooter, 'localizedPublicPath(locale, "contacto")', "check footer localized contact");
+rejectText(checkHeader, "publicPath(", "check/legal header legacy route helper");
+rejectText(checkFooter, "publicPath(", "check footer legacy route helper");
 
 requireText(localizedPage, "localizedPublicPath(locale, slug)", "localized structured data URL");
 requireText(localizedPage, "localizedPublicPath(locale, \"precios\")", "localized pricing CTA");

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 import { checkPath } from "@/lib/vonu-global/i18n";
@@ -70,22 +69,22 @@ export default function LegalPage({
 
             <nav className="mt-7 grid gap-1 rounded-[22px] border border-white/[0.08] bg-[#141927] p-2 text-[14px]">
               {legalLinks.map((item) => (
-                <Link
+                <a
                   key={item.href}
                   href={item.href}
                   className="rounded-xl px-3 py-2.5 text-slate-400 transition hover:bg-white/[0.04] hover:text-white"
                 >
                   {item.label}
-                </Link>
+                </a>
               ))}
             </nav>
 
-            <Link
+            <a
               href={checkPath(locale)}
               className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-emerald-400 px-4 py-3 text-[14px] font-bold text-[#07110d] transition hover:bg-emerald-300"
             >
               {backLabels[locale]}
-            </Link>
+            </a>
           </aside>
 
           <article className="rounded-[28px] border border-white/[0.08] bg-[#141927] p-5 shadow-[0_24px_70px_rgba(0,0,0,.24)] sm:p-8 lg:p-10">

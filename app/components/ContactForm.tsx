@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 import { legalPath } from "@/lib/vonu-legal/routes";
@@ -220,9 +219,9 @@ export default function ContactForm({ locale = "es" }: { locale?: SupportedLocal
         <p>{t.safety}</p>
         <p>
           {t.privacyPrefix}{" "}
-          <Link href={legalPath(locale, "privacy")} className="font-semibold text-slate-400 underline decoration-slate-700 underline-offset-2 transition hover:text-[#9bc8ff]">
+          <a href={legalPath(locale, "privacy")} className="font-semibold text-slate-400 underline decoration-slate-700 underline-offset-2 transition hover:text-[#9bc8ff]">
             {t.privacyLink}
-          </Link>.
+          </a>.
         </p>
       </div>
 

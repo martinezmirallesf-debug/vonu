@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
@@ -75,9 +74,9 @@ export default function SubmissionNotice({ locale }: { locale: SupportedLocale }
     <p className="vonu-submission-notice">
       {t.ai}
       {t.beforeTerms}
-      <Link href={legalPath(locale, "terms")}>{t.terms}</Link>
+      <a href={legalPath(locale, "terms")}>{t.terms}</a>
       {t.betweenTermsPrivacy}
-      <Link href={legalPath(locale, "privacy")}>{t.privacy}</Link>
+      <a href={legalPath(locale, "privacy")}>{t.privacy}</a>
       {t.afterPrivacy}
     </p>,
     target,
