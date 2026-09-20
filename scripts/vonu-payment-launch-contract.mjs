@@ -14,7 +14,7 @@ function forbidText(source, needle, label) {
   }
 }
 
-const [middleware, metered, button, gate, checkClient, checkPage, checkCss, entitlement, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
+const [middleware, metered, button, gate, checkClient, checkPage, checkCss, experienceCss, entitlement, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
   read("middleware.ts"),
   read("app/api/check/metered/route.ts"),
   read("app/components/DevicePackCheckoutButton.tsx"),
@@ -22,6 +22,7 @@ const [middleware, metered, button, gate, checkClient, checkPage, checkCss, enti
   read("app/[locale]/check/CheckClient.tsx"),
   read("app/[locale]/check/page.tsx"),
   read("app/[locale]/check/submission-notice.css"),
+  read("app/check-experience-polish.css"),
   read("app/api/check/entitlement/route.ts"),
   read("app/api/stripe/checkout/route.ts"),
   read("app/api/stripe/webhook/route.ts"),
@@ -73,6 +74,10 @@ requireText(checkClient, 'data-vonu-analysis-step="true"', "stable analysis step
 requireText(checkClient, 'className="mx-auto mt-3 flex h-12', "fixed mobile analysis step height");
 forbidText(checkClient, 'bg-[#dceaff] p-1 ring-1 ring-[#7bb7ff]/30', "legacy blue document thumbnail shell");
 forbidText(checkClient, 'h-[7px] w-[31px] rounded-[2px] bg-[#eef5ff]', "legacy blue document thumbnail block");
+forbidText(checkClient, 'animate-[pulse_1.4s_ease-in-out_infinite]', "document thumbnail blue scan accent");
+requireText(experienceCss, 'section[data-vonu-subject-mode]:not([data-vonu-subject-mode="document"]) > :first-child', "legacy subject icon styling excludes documents");
+requireText(experienceCss, 'section[data-vonu-subject-mode="document"] > [data-vonu-document-thumbnail="true"]', "document thumbnail preserves page proportions");
+requireText(experienceCss, 'section[data-vonu-subject-mode="document"]::before', "document subject overlay disabled");
 requireText(checkPage, 'export const dynamic = "force-dynamic"', "device-specific check page");
 requireText(checkPage, "export const revalidate = 0", "check page no static revalidation");
 requireText(checkCss, 'span[data-vonu-entitlement-status="true"]', "live entitlement css target");
