@@ -36,6 +36,12 @@ export type DocumentJurisdiction = {
   evidence: string[];
 };
 
+export type DocumentLegalReference = {
+  title: string;
+  url: string;
+  scope: string;
+};
+
 export type DocumentCheckResult = {
   version: "vonu-document-v1";
   checkedAt: string;
@@ -54,6 +60,12 @@ export type DocumentCheckResult = {
   signals: DocumentSignal[];
   keyFacts: DocumentKeyFacts;
   jurisdiction: DocumentJurisdiction;
+  legalContext: {
+    profileCode: string;
+    profileName: string;
+    reviewedAt: string;
+    references: DocumentLegalReference[];
+  } | null;
   extracted: {
     urls: string[];
     phones: string[];
