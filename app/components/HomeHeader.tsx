@@ -187,8 +187,16 @@ export default function HomeHeader() {
         </button>
       </div>
 
-      <div className={["fixed inset-0 z-[10010] h-[100dvh] min-h-[100dvh] w-screen overflow-hidden bg-[#0b0e17] transition-[opacity,transform] duration-300 ease-out md:hidden", open ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none -translate-y-5 opacity-0"].join(" ")}>
-        <div className="flex h-full min-h-full w-full flex-col overflow-y-auto overscroll-contain px-6 pb-5 pt-[88px]">
+      <div
+        data-vonu-mobile-menu-expanded={menuOpen || languageOpen ? "true" : "false"}
+        className={["fixed inset-0 z-[10010] h-[100dvh] min-h-[100dvh] w-screen overflow-hidden bg-[#0b0e17] transition-[opacity,transform] duration-300 ease-out md:hidden", open ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none -translate-y-5 opacity-0"].join(" ")}
+      >
+        <div
+          className={[
+            "flex h-full min-h-0 w-full flex-col px-6 pb-5 pt-[88px]",
+            menuOpen || languageOpen ? "overflow-y-auto overscroll-contain" : "overflow-y-hidden overscroll-none",
+          ].join(" ")}
+        >
           <nav className="grid gap-0">
             {mainLinks.map((item) =>
               item.menuSlugs ? (

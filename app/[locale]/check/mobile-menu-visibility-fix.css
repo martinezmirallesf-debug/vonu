@@ -44,9 +44,57 @@
   .vonu-check-page header > div:nth-child(2) > div {
     width: 100% !important;
     height: 100% !important;
-    min-height: 100% !important;
+    min-height: 0 !important;
     padding: 88px 24px 24px !important;
+  }
+
+  /* Closed sections must fit as a static menu in every locale.
+     Scrolling is enabled only after the user expands a submenu/language list. */
+  .vonu-check-page header > div[data-vonu-mobile-menu-expanded="false"] > div {
+    overflow-y: hidden !important;
+    overscroll-behavior: none !important;
+  }
+
+  .vonu-check-page header > div[data-vonu-mobile-menu-expanded="true"] > div {
     overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+  }
+
+  /* When nothing is expanded, keep the complete menu inside one viewport even
+     in locales with longer labels (notably German and Arabic). */
+  .vonu-check-page header > div[data-vonu-mobile-menu-expanded="false"] > div > nav > a,
+  .vonu-check-page header > div[data-vonu-mobile-menu-expanded="false"] > div > nav > div > button {
+    min-height: 56px !important;
+    padding-block: 10px !important;
+    font-size: 24px !important;
+  }
+
+  .vonu-check-page header > div[data-vonu-mobile-menu-expanded="false"] > div > nav + a {
+    min-height: 44px !important;
+    margin-top: 12px !important;
+  }
+
+  .vonu-check-page header > div[data-vonu-mobile-menu-expanded="false"] > div > nav + a + div {
+    margin-top: 8px !important;
+  }
+
+  .vonu-check-page header > div[data-vonu-mobile-menu-expanded="false"] > div > div:last-child {
+    padding-top: 14px !important;
+  }
+
+  .vonu-check-page header > div[data-vonu-mobile-menu-expanded="false"] > div > div:last-child > div:first-child {
+    margin-bottom: 14px !important;
+    row-gap: 8px !important;
+  }
+
+  .vonu-check-page header > div[data-vonu-mobile-menu-expanded="false"] > div > div:last-child > div:first-child a {
+    font-size: 14px !important;
+    line-height: 1.2 !important;
+  }
+
+  .vonu-check-page header > div[data-vonu-mobile-menu-expanded="false"] .vonu-mobile-language {
+    margin-top: 10px !important;
+    padding-top: 10px !important;
   }
 
   /* Match the mobile menu CTA corner radius to the home CTA instead of a pill.
