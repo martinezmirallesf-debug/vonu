@@ -190,6 +190,49 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{
             __html: `
 (function () {
+  var retryKey = 'vonu-client-recovery:' + window.location.pathname;
+
+  function recoveryMessage(value) {
+    try {
+      if (!value) return '';
+      if (typeof value === 'string') return value;
+      if (value.message) return String(value.message);
+      return String(value);
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function isStaleAssetFailure(value) {
+    var message = recoveryMessage(value);
+    return /ChunkLoadError|Loading chunk .* failed|Failed to fetch dynamically imported module|Importing a module script failed|_next\\/static\\/chunks/i.test(message);
+  }
+
+  function recoverOnce() {
+    try {
+      var now = Date.now();
+      var previous = Number(window.sessionStorage.getItem(retryKey) || '0');
+      if (previous && now - previous < 60000) return;
+      window.sessionStorage.setItem(retryKey, String(now));
+    } catch (_) {}
+
+    window.setTimeout(function () {
+      window.location.reload();
+    }, 60);
+  }
+
+  window.addEventListener('error', function (event) {
+    var target = event && event.target;
+    var scriptSource = target && target.tagName === 'SCRIPT' ? target.src : '';
+    if (isStaleAssetFailure(event && (event.error || event.message)) || /_next\\/static\\/chunks/.test(scriptSource || '')) {
+      recoverOnce();
+    }
+  }, true);
+
+  window.addEventListener('unhandledrejection', function (event) {
+    if (isStaleAssetFailure(event && event.reason)) recoverOnce();
+  }, true);
+
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker
       .register('/sw.js?v=clean-install-1', { scope: '/', updateViaCache: 'none' })
