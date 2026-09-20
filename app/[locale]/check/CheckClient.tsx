@@ -842,7 +842,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
       dir={dir}
       onPaste={handlePaste}
       className={[
-        "flex min-h-dvh w-full max-w-[100vw] overflow-x-hidden flex-col bg-[#0d101b] text-slate-100",
+        "flex min-h-dvh w-full max-w-[100vw] overflow-x-clip flex-col bg-[#0d101b] text-slate-100",
         idle ? "md:h-dvh md:overflow-hidden" : "",
       ].join(" ")}
       style={{
@@ -875,7 +875,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
                 {mode === "url" && (
                   <div className="flex min-h-[72px] items-center rounded-[18px] bg-[#0d1220] px-4 ring-1 ring-white/[0.07] transition focus-within:ring-emerald-400/35">
                     <span className="me-3 text-emerald-300">⌕</span>
-                    <input value={url} onChange={(event) => setUrl(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void analyze(); }} placeholder={t.urlPlaceholder} inputMode="url" autoCapitalize="none" autoCorrect="off" className="w-full bg-transparent py-5 text-[15px] text-white outline-none placeholder:text-slate-600 sm:text-[16px]" />
+                    <input value={url} onChange={(event) => setUrl(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void analyze(); }} placeholder={t.urlPlaceholder} type="url" inputMode="url" autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="go" data-form-type="other" className="w-full scroll-mt-24 bg-transparent py-5 text-[15px] text-white outline-none placeholder:text-slate-600 sm:text-[16px]" />
                   </div>
                 )}
 
