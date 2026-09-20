@@ -127,7 +127,7 @@ export default function DevicePricingPage({ locale }: { locale: SupportedLocale 
             <div className="mt-7 space-y-3">
               {t.freeFeatures.map((item) => <div key={item} className="flex items-center gap-3 text-[13px] text-slate-300"><CheckIcon /><span>{item}</span></div>)}
             </div>
-            <Link href={checkPath(locale)} className="mt-auto inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.045] px-5 text-[14px] font-bold text-white hover:bg-white/[0.07]">{t.freeCta}</Link>
+            <a href={checkPath(locale)} className="mt-auto inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.045] px-5 text-[14px] font-bold text-white hover:bg-white/[0.07]">{t.freeCta}</a>
           </article>
 
           <article className="relative flex min-h-[430px] flex-col rounded-[28px] border border-emerald-400/30 bg-emerald-400/[0.055] p-7 shadow-[0_26px_80px_rgba(16,185,129,.08)]">
