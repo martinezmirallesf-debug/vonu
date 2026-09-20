@@ -24,7 +24,7 @@ const analyzeLabels = new Set([
   "حلّل مجانًا",
 ]);
 
-const subjectModeByLabel = new Map<string, "url" | "capture" | "text">([
+const subjectModeByLabel = new Map<string, "url" | "capture" | "text" | "document">([
   ["Enlace analizado", "url"],
   ["Analysed link", "url"],
   ["Lien analysé", "url"],
@@ -40,6 +40,11 @@ const subjectModeByLabel = new Map<string, "url" | "capture" | "text">([
   ["Message analysé", "text"],
   ["Analysierte Nachricht", "text"],
   ["الرسالة التي تم تحليلها", "text"],
+  ["Documento analizado", "document"],
+  ["Analysed document", "document"],
+  ["Document analysé", "document"],
+  ["Analysiertes Dokument", "document"],
+  ["المستند الذي تم تحليله", "document"],
 ]);
 
 const experienceCss = `
@@ -81,6 +86,10 @@ const experienceCss = `
 
 .vonu-check-page main > section[data-vonu-subject-mode="text"]::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z' stroke='%237bb7ff' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M7.5 8.5h9M7.5 12.5h6' stroke='%237bb7ff' stroke-width='1.9' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+.vonu-check-page main > section[data-vonu-subject-mode="document"]::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 2.75h7.5L19 8.25V21.25H6V2.75Z' stroke='%237bb7ff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Cpath d='M13.5 2.75v5.5H19M9 12h7M9 15.5h7' stroke='%237bb7ff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
 .vonu-check-page [data-vonu-radar="true"] {
@@ -451,7 +460,7 @@ export default function DeviceAccessGate({ locale }: { locale: SupportedLocale }
     window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const response = await originalFetch(input, init);
       const url = typeof input === "string" ? input : input instanceof URL ? input.pathname : input.url;
-      const isAnalysisRequest = /\/api\/check\/(web|image|text)(?:\?|$)/.test(url);
+      const isAnalysisRequest = /\/api\/check\/(web|image|text|document)(?:\?|$)/.test(url);
 
       if (isAnalysisRequest && response.status === 402) {
         setOpen(true);
