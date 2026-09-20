@@ -166,9 +166,9 @@ export default function ContactPublicPage({ locale }: { locale: SupportedLocale 
               <a href="#contact-form" className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#7bb7ff] px-5 text-[13px] font-bold text-[#07142f] shadow-[0_10px_30px_rgba(123,183,255,.18)] transition hover:-translate-y-0.5 hover:bg-[#a3ceff] sm:flex-none sm:px-6">
                 {t.write} <ArrowIcon />
               </a>
-              <Link href={checkPath(locale)} className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.04] px-5 text-[13px] font-semibold text-slate-200 transition hover:bg-white/[0.07] sm:flex-none sm:px-6">
+              <a href={checkPath(locale)} className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.04] px-5 text-[13px] font-semibold text-slate-200 transition hover:bg-white/[0.07] sm:flex-none sm:px-6">
                 {t.analyse}
-              </Link>
+              </a>
             </div>
           </div>
 
@@ -213,9 +213,9 @@ export default function ContactPublicPage({ locale }: { locale: SupportedLocale 
         <div className="mx-auto max-w-[900px] px-4 py-14 text-center sm:px-6 sm:py-20 lg:px-8">
           <h2 className="text-[34px] font-semibold leading-[1] tracking-[-0.05em] text-white sm:text-[50px]">{t.bottomTitle}</h2>
           <p className="mx-auto mt-4 max-w-[620px] text-[15px] leading-7 text-slate-500">{t.bottomText}</p>
-          <Link href={checkPath(locale)} className="mt-7 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#7bb7ff] px-6 text-[13px] font-bold text-[#07142f] transition hover:-translate-y-0.5 hover:bg-[#a3ceff]">
+          <a href={checkPath(locale)} className="mt-7 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#7bb7ff] px-6 text-[13px] font-bold text-[#07142f] transition hover:-translate-y-0.5 hover:bg-[#a3ceff]">
             {t.bottomCta} <ArrowIcon />
-          </Link>
+          </a>
         </div>
       </section>
 
