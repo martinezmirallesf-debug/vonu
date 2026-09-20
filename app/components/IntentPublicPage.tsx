@@ -13,6 +13,15 @@ import HomeFooter from "./HomeFooter";
 
 const SITE_URL = "https://vonuai.com";
 
+const DOCUMENT_INTENTS = new Set<IntentSlug>([
+  "revisar-contrato",
+  "revisar-contrato-alquiler",
+  "comprobar-factura",
+  "revisar-presupuesto",
+  "revisar-contrato-servicios",
+  "revisar-prestamo-financiacion",
+]);
+
 const ui: Record<SupportedLocale, {
   home: string;
   signalsEyebrow: string;
@@ -35,6 +44,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
   const t = ui[locale];
   const pagePath = localizedPublicPath(locale, slug);
   const pageUrl = `${SITE_URL}${pagePath}`;
+  const checkHref = DOCUMENT_INTENTS.has(slug) ? `${checkPath(locale)}?mode=document` : checkPath(locale);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -55,7 +65,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
         mainEntity: { "@id": `${pageUrl}#signals` },
         potentialAction: {
           "@type": "UseAction",
-          target: `${SITE_URL}${checkPath(locale)}`,
+          target: `${SITE_URL}${checkHref}`,
           object: { "@id": `${SITE_URL}/#vonu-check` },
         },
       },
@@ -98,7 +108,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
       <section className="overflow-hidden border-b border-white/[0.06] bg-[#080b12]">
         <div className="mx-auto max-w-[1320px] px-4 pb-16 pt-8 sm:px-6 sm:pb-24 sm:pt-12 lg:px-8">
           <nav aria-label="Breadcrumb" className="mx-auto max-w-[1000px] text-[12px] text-slate-600">
-            <a href={checkPath(locale)} className="transition hover:text-slate-300">{t.home}</a>
+            <a href={checkHref} className="transition hover:text-slate-300">{t.home}</a>
             <span className="px-2" aria-hidden="true">/</span>
             <span className="text-slate-500">{topic.eyebrow}</span>
           </nav>
@@ -118,7 +128,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
 
           <div className="mt-8 flex justify-center">
             <FunnelLink
-              href={checkPath(locale)}
+              href={checkHref}
               event="intent_answer_cta"
               properties={{ locale, slug }}
               className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#7bb7ff] px-6 text-[14px] font-bold text-[#07142f] shadow-[0_10px_30px_rgba(123,183,255,.20)] transition hover:-translate-y-0.5 hover:bg-[#a3ceff] hover:shadow-[0_14px_34px_rgba(123,183,255,.24)] active:translate-y-0"
@@ -215,7 +225,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
         <div className="mx-auto max-w-[1000px] px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8">
           <h2 className="text-[44px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[68px]">{t.finalTitle}</h2>
           <FunnelLink
-            href={checkPath(locale)}
+            href={checkHref}
             event="intent_final_cta"
             properties={{ locale, slug }}
             className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#7bb7ff] px-6 text-[14px] font-bold text-[#07142f] shadow-[0_10px_30px_rgba(123,183,255,.20)] transition hover:-translate-y-0.5 hover:bg-[#a3ceff] hover:shadow-[0_14px_34px_rgba(123,183,255,.24)] active:translate-y-0"
