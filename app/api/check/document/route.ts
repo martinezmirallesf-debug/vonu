@@ -16,6 +16,40 @@ export const dynamic = "force-dynamic";
 const MAX_PDF_BYTES = 8_000_000;
 const MAX_PDF_TEXT_CHARS = 60_000;
 
+const EVALUATION_SECTION_PATTERNS = [
+  /^\s*HOJA DE CONTROL\b.*(?:NO FORMA PARTE|EVALUACI[ÓO]N|SISTEMA AUTOM[ÁA]TICO)/i,
+  /^\s*(?:CLAVE|HOJA) DE RESPUESTAS\b/i,
+  /^\s*SOLUCI[ÓO]N(?:ES)?\b.*(?:PRUEBA|EVALUACI[ÓO]N|CONTROL)/i,
+  /^\s*ANSWER KEY\b/i,
+  /^\s*(?:TEST|EVALUATION) CONTROL SHEET\b/i,
+  /^\s*CORRIG[ÉE]\b.*(?:TEST|ÉVALUATION)/i,
+  /^\s*L[ÖO]SUNG(?:SBLATT)?\b.*(?:TEST|BEWERTUNG|PR[ÜU]FUNG)/i,
+  /^\s*نموذج الإجابة\b/i,
+];
+
+function stripEmbeddedEvaluationMaterial(text: string) {
+  const lines = text.split(/\r?\n/);
+  let cutoff = -1;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index].trim();
+    if (!line) continue;
+
+    const hasClearMarker = EVALUATION_SECTION_PATTERNS.some((pattern) => pattern.test(line));
+    if (hasClearMarker && index >= 4) {
+      cutoff = index;
+      break;
+    }
+  }
+
+  if (cutoff < 0) return { text, ignoredEvaluationMaterial: false };
+
+  const kept = lines.slice(0, cutoff).join("\n").trim();
+  if (kept.length < 120) return { text, ignoredEvaluationMaterial: false };
+
+  return { text: kept, ignoredEvaluationMaterial: true };
+}
+
 function cleanUrl(value: string) {
   return (value || "").trim().replace(/\/$/, "");
 }
@@ -605,7 +639,9 @@ export async function POST(req: NextRequest) {
             ? parsedPdf.text
             : "";
 
-    const text = rawText.replace(/\u0000/g, "").trim();
+    const rawDocumentText = rawText.replace(/\u0000/g, "").trim();
+    const sanitized = stripEmbeddedEvaluationMaterial(rawDocumentText);
+    const text = sanitized.text;
     const pageCount =
       typeof parsedPdf === "object" && parsedPdf && "totalPages" in parsedPdf
         ? Number((parsedPdf as any).totalPages || 0) || null
@@ -746,6 +782,19 @@ export async function POST(req: NextRequest) {
         return merged;
       })(),
       limitations: [
+        ...(sanitized.ignoredEvaluationMaterial
+          ? [
+              locale === "es"
+                ? "Se ha ignorado una sección identificada claramente como material de evaluación o hoja de respuestas para evitar que contamine el análisis."
+                : locale === "en"
+                  ? "A section clearly identified as evaluation material or an answer key was ignored so it would not contaminate the analysis."
+                  : locale === "fr"
+                    ? "Une section clairement identifiée comme matériel d’évaluation ou corrigé a été ignorée afin de ne pas contaminer l’analyse."
+                    : locale === "de"
+                      ? "Ein eindeutig als Bewertungs- oder Lösungsabschnitt gekennzeichneter Teil wurde ignoriert, damit er die Analyse nicht beeinflusst."
+                      : "تم تجاهل قسم تم تحديده بوضوح كمادة تقييم أو نموذج إجابة حتى لا يؤثر في التحليل.",
+            ]
+          : []),
         ...(text.length > clippedText.length
           ? [
               locale === "es"
