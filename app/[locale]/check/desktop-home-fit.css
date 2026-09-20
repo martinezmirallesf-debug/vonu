@@ -96,12 +96,18 @@
     min-height: 214px !important;
   }
 
-  .vonu-check-page [data-vonu-idle-mode="url"] [data-vonu-url-input-shell="true"] {
+  .vonu-check-page main:has(> section.text-center)
+    section[data-vonu-idle-mode="url"]
+    > div:last-child
+    > [data-vonu-url-input-shell="true"] {
     width: min(640px, calc(100% - 160px)) !important;
     max-width: 640px !important;
     min-height: 62px !important;
     height: 62px !important;
+    flex: 0 0 62px !important;
+    align-self: center !important;
     margin: 10px auto 0 !important;
+    margin-inline: auto !important;
     padding-inline: 0 !important;
     overflow: hidden !important;
     border: 1px solid rgb(35, 59, 97) !important;
@@ -127,6 +133,34 @@
 
   .vonu-check-page [data-vonu-idle-mode="url"] [data-vonu-cta-stack="true"] {
     margin-top: 30px !important;
+  }
+
+  /* Desktop action stack: move balance, CTA and legal note down together. */
+  .vonu-check-page main:has(> section.text-center)
+    section[data-vonu-idle-mode]
+    > div:last-child
+    > [data-vonu-cta-stack="true"] {
+    bottom: -2px !important;
+  }
+
+  /* Desktop active tab underline sits close to the label and matches its width. */
+  .vonu-check-page main:has(> section.text-center)
+    section[data-vonu-idle-mode]
+    > div:first-child
+    button
+    > [data-vonu-tab-underline="true"] {
+    inset-inline: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: 7px !important;
+    width: max-content !important;
+    height: 20px !important;
+    transform: translateX(-50%) !important;
+    border-radius: 0 !important;
+    border-bottom: 3px solid #7bb7ff !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    line-height: 20px !important;
   }
 
   /* Message only: lower and separate the content beneath the fixed tabs. */
@@ -206,10 +240,15 @@
     min-height: 198px !important;
   }
 
-  .vonu-check-page [data-vonu-idle-mode="url"] [data-vonu-url-input-shell="true"] {
+  .vonu-check-page main:has(> section.text-center)
+    section[data-vonu-idle-mode="url"]
+    > div:last-child
+    > [data-vonu-url-input-shell="true"] {
     width: min(620px, calc(100% - 160px)) !important;
     max-width: 620px !important;
     margin-top: 7px !important;
+    margin-inline: auto !important;
+    align-self: center !important;
   }
 
   .vonu-check-page [data-vonu-idle-mode="url"] [data-vonu-cta-stack="true"] {
