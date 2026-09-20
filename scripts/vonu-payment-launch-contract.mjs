@@ -14,13 +14,16 @@ function forbidText(source, needle, label) {
   }
 }
 
-const [middleware, metered, button, gate, checkClient, submissionNotice, checkPage, checkCss, experienceCss, desktopFitCss, entitlement, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
+const [middleware, metered, button, gate, checkClient, submissionNotice, vonuMark, socialLinks, brandAsset, checkPage, checkCss, experienceCss, desktopFitCss, entitlement, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
   read("middleware.ts"),
   read("app/api/check/metered/route.ts"),
   read("app/components/DevicePackCheckoutButton.tsx"),
   read("app/components/DeviceAccessGate.tsx"),
   read("app/[locale]/check/CheckClient.tsx"),
   read("app/[locale]/check/SubmissionNotice.tsx"),
+  read("app/components/VonuMark.tsx"),
+  read("app/components/VonuSocialLinks.tsx"),
+  read("public/vonu-mark-official.svg"),
   read("app/[locale]/check/page.tsx"),
   read("app/[locale]/check/submission-notice.css"),
   read("app/check-experience-polish.css"),
@@ -96,7 +99,19 @@ requireText(checkClient, 'data-vonu-cta-stack="true"', "stable CTA stack marker"
 requireText(submissionNotice, 'data-vonu-cta-stack="true"', "submission notice stable portal target");
 requireText(submissionNotice, 'vonu-submission-notice__ai', "submission notice AI line");
 requireText(submissionNotice, 'vonu-submission-notice__legal', "submission notice legal line");
-requireText(desktopFitCss, 'max-width: 680px !important;', "desktop URL field visibly reduced width");
+requireText(checkClient, 'data-vonu-scanner-subtitle="true"', "localized scanner desktop title");
+requireText(checkClient, 'SCANNER_HEADLINE', "five-locale scanner title copy");
+requireText(checkClient, 'bg-gradient-to-r from-[#7bb7ff] to-emerald-300', "scanner title gradient accent");
+requireText(desktopFitCss, 'font-size: 20px !important;', "desktop scanner title size");
+requireText(desktopFitCss, 'max-width: 620px !important;', "desktop URL field visibly reduced width");
+requireText(desktopFitCss, '[data-vonu-url-icon="true"]', "desktop URL icon target");
+requireText(desktopFitCss, 'display: none !important;', "desktop URL message-style icon removal");
+requireText(vonuMark, '/vonu-mark-official.svg', "official Vonu mark usage");
+requireText(brandAsset, 'data:image/png;base64,', "official Vonu embedded source");
+requireText(socialLinks, 'key: "youtube"', "YouTube social link");
+requireText(socialLinks, 'https://www.youtube.com/@vonuai', "YouTube channel target");
+requireText(socialLinks, 'network === "instagram"', "Instagram official-form icon");
+requireText(socialLinks, 'x="2.9" y="2.9" width="18.2" height="18.2"', "Instagram icon proportions");
 requireText(desktopFitCss, 'border-radius: 18px !important;', "desktop URL matches message field radius");
 requireText(desktopFitCss, 'background: #0d1220 !important;', "desktop URL matches message field background");
 requireText(desktopFitCss, 'margin-top: 30px !important;', "desktop URL CTA breathing room");
