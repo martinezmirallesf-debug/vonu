@@ -28,7 +28,12 @@ const caseSlugs: IndexedPublicSlug[] = [
 ];
 
 const resourceSlugs: IndexedPublicSlug[] = [
+  "revisar-contrato",
   "revisar-contrato-alquiler",
+  "comprobar-factura",
+  "revisar-presupuesto",
+  "revisar-contrato-servicios",
+  "revisar-prestamo-financiacion",
 ];
 
 const cookies: Record<SupportedLocale, string> = {
