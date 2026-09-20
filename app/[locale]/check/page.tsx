@@ -34,24 +34,24 @@ type Props = {
 
 const meta: Record<SupportedLocale, { title: string; description: string }> = {
   es: {
-    title: "Analizar URL, captura o mensaje sospechoso — Vonu Check",
-    description: "Comprueba URLs, capturas de pantalla y mensajes sospechosos para detectar señales de phishing, fraude y suplantación antes de actuar.",
+    title: "Analizar URL, captura, mensaje o documento — Vonu Check",
+    description: "Comprueba URLs, capturas, mensajes y documentos para detectar señales de riesgo, fraude, suplantación o condiciones que conviene revisar antes de actuar.",
   },
   en: {
-    title: "Check a URL, screenshot or suspicious message — Vonu Check",
-    description: "Analyse URLs, screenshots and suspicious messages for phishing, fraud and impersonation signals before you act.",
+    title: "Check a URL, screenshot, message or document — Vonu Check",
+    description: "Analyse URLs, screenshots, messages and documents for phishing, fraud, impersonation and document-review signals before you act.",
   },
   fr: {
-    title: "Analyser une URL, capture ou message suspect — Vonu Check",
-    description: "Analysez URLs, captures d’écran et messages suspects pour repérer des signaux de phishing, fraude et usurpation avant d’agir.",
+    title: "Analyser une URL, capture, message ou document — Vonu Check",
+    description: "Analysez URLs, captures, messages et documents pour repérer des signaux de phishing, fraude, usurpation et points à vérifier avant d’agir.",
   },
   de: {
-    title: "URL, Screenshot oder verdächtige Nachricht prüfen — Vonu Check",
-    description: "Analysiere URLs, Screenshots und verdächtige Nachrichten auf Phishing-, Betrugs- und Identitätsmissbrauchssignale, bevor du handelst.",
+    title: "URL, Screenshot, Nachricht oder Dokument prüfen — Vonu Check",
+    description: "Analysiere URLs, Screenshots, Nachrichten und Dokumente auf Betrugs-, Phishing-, Identitäts- und Prüfsignale, bevor du handelst.",
   },
   ar: {
-    title: "فحص رابط أو لقطة شاشة أو رسالة مشبوهة — Vonu Check",
-    description: "حلّل الروابط ولقطات الشاشة والرسائل المشبوهة لاكتشاف إشارات التصيد والاحتيال والانتحال قبل أن تتصرف.",
+    title: "فحص رابط أو لقطة شاشة أو رسالة أو مستند — Vonu Check",
+    description: "حلّل الروابط ولقطات الشاشة والرسائل والمستندات لاكتشاف إشارات التصيد والاحتيال والانتحال والنقاط التي تستحق المراجعة قبل أن تتصرف.",
   },
 };
 
@@ -160,7 +160,7 @@ function getCheckJsonLd(locale: SupportedLocale) {
         name: "Vonu Check",
         url: `${siteUrl}/check`,
         description:
-          "Web application that analyses suspicious URLs, screenshots and messages to surface technical and contextual risk signals before a user acts.",
+          "Web application that analyses suspicious URLs, screenshots, messages and PDF documents to surface technical, contextual and document-review signals before a user acts.",
         applicationCategory: "SecurityApplication",
         applicationSubCategory: "Fraud and phishing risk analysis",
         operatingSystem: "Any",
@@ -172,6 +172,8 @@ function getCheckJsonLd(locale: SupportedLocale) {
           "Website and URL risk analysis",
           "Screenshot analysis",
           "Suspicious message analysis",
+          "PDF document analysis",
+          "Invoice and contract review",
           "Phishing and impersonation signal detection",
           "Technical web security signal analysis",
         ],
