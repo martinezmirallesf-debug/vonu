@@ -4,6 +4,7 @@ const socials = [
   { key: "facebook", label: "Facebook", href: "https://www.facebook.com/vonuai" },
   { key: "instagram", label: "Instagram", href: "https://www.instagram.com/vonuai/" },
   { key: "tiktok", label: "TikTok", href: "https://www.tiktok.com/@vonu_ai" },
+  { key: "youtube", label: "YouTube", href: "https://www.youtube.com/@vonuai" },
 ] as const;
 
 function SocialIcon({ network }: { network: (typeof socials)[number]["key"] }) {
@@ -14,15 +15,26 @@ function SocialIcon({ network }: { network: (typeof socials)[number]["key"] }) {
       </svg>
     );
   }
+
   if (network === "instagram") {
     return (
       <svg viewBox="0 0 24 24" className="h-full w-full" fill="none" aria-hidden="true">
-        <rect x="4.2" y="4.2" width="15.6" height="15.6" rx="4.5" stroke="currentColor" strokeWidth="1.8"/>
-        <circle cx="12" cy="12" r="3.6" stroke="currentColor" strokeWidth="1.8"/>
-        <circle cx="17.4" cy="6.8" r="1" fill="currentColor"/>
+        <rect x="2.9" y="2.9" width="18.2" height="18.2" rx="5.3" stroke="currentColor" strokeWidth="2.05"/>
+        <circle cx="12" cy="12" r="4.15" stroke="currentColor" strokeWidth="2.05"/>
+        <circle cx="17.55" cy="6.45" r="1.2" fill="currentColor"/>
       </svg>
     );
   }
+
+  if (network === "youtube") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-full w-full" fill="none" aria-hidden="true">
+        <path d="M21.25 7.15a2.75 2.75 0 0 0-1.94-1.95C17.6 4.75 12 4.75 12 4.75s-5.6 0-7.31.45a2.75 2.75 0 0 0-1.94 1.95A28.7 28.7 0 0 0 2.3 12c0 1.63.15 3.25.45 4.85a2.75 2.75 0 0 0 1.94 1.95c1.71.45 7.31.45 7.31.45s5.6 0 7.31-.45a2.75 2.75 0 0 0 1.94-1.95c.3-1.6.45-3.22.45-4.85s-.15-3.25-.45-4.85Z" fill="currentColor"/>
+        <path d="m10.25 15.45 4.65-3.45-4.65-3.45v6.9Z" fill="#0b0e17"/>
+      </svg>
+    );
+  }
+
   return (
     <svg viewBox="0 0 24 24" className="h-full w-full" fill="none" aria-hidden="true">
       <path d="M14.2 4.2c.5 2.2 1.8 3.6 4 4v2.7c-1.6 0-3-.5-4-1.4v5.8a4.9 4.9 0 1 1-4.2-4.9v2.8a2.2 2.2 0 1 0 1.4 2.1V4.2h2.8Z" fill="currentColor"/>
