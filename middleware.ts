@@ -8,6 +8,7 @@ const METERED_CHECK_PATHS = new Map([
   ["/api/check/web", "web"],
   ["/api/check/image", "image"],
   ["/api/check/text", "text"],
+  ["/api/check/document", "document"],
 ]);
 
 function isUuid(value: string | null | undefined) {
