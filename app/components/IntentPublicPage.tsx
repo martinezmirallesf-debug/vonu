@@ -10,6 +10,7 @@ import {
 import GlobalPublicHeader from "./GlobalPublicHeader";
 import FunnelLink from "./FunnelLink";
 import HomeFooter from "./HomeFooter";
+import ResourceSignup from "./ResourceSignup";
 
 const SITE_URL = "https://vonuai.com";
 
@@ -220,6 +221,8 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
           </div>
         </div>
       </section>
+
+      <ResourceSignup page={slug} locale={locale} />
 
       <section className="bg-[#080b12]">
         <div className="mx-auto max-w-[1000px] px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8">
