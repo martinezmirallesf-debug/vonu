@@ -74,7 +74,7 @@ export default function GlobalPublicHeader({
     <>
       <header className="sticky top-0 z-50 isolate overflow-visible bg-[#0b0e17]/95 text-white backdrop-blur-xl max-md:backdrop-blur-none">
       <div className="relative z-[10020] mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link scroll={false} href={checkPath(locale)} className="flex items-center gap-3" aria-label="Vonu">
+        <Link href={checkPath(locale)} className="flex items-center gap-3" aria-label="Vonu">
           <VonuMark className="h-[30px] w-[30px]" framed />
           <span className="text-[23px] font-semibold tracking-[-0.045em]">Vonu</span>
         </Link>
@@ -83,7 +83,7 @@ export default function GlobalPublicHeader({
           {mainLinks.map((item) =>
             item.hasMenu ? (
               <div key={item.slug} className="group relative py-5">
-                <Link scroll={false} href={localizedPublicPath(locale, item.slug)} className="inline-flex items-center gap-1.5 transition hover:text-white group-focus-within:text-white">
+                <Link href={localizedPublicPath(locale, item.slug)} className="inline-flex items-center gap-1.5 transition hover:text-white group-focus-within:text-white">
                   {item.label}
                   <span className="text-[10px] text-slate-500">⌄</span>
                 </Link>
@@ -92,7 +92,7 @@ export default function GlobalPublicHeader({
                     {caseSlugs.map((caseSlug) => {
                       const topic = getTopic(locale, caseSlug);
                       return (
-                        <Link scroll={false} key={caseSlug} href={localizedPublicPath(locale, caseSlug)} className="rounded-2xl px-4 py-3 transition hover:bg-white/[0.045]">
+                        <Link key={caseSlug} href={localizedPublicPath(locale, caseSlug)} className="rounded-2xl px-4 py-3 transition hover:bg-white/[0.045]">
                           <span className="block text-[14px] font-semibold text-slate-100">{topic.eyebrow}</span>
                           <span className="mt-1 block text-[12px] leading-5 text-slate-500">{topic.hero}</span>
                         </Link>
@@ -102,7 +102,7 @@ export default function GlobalPublicHeader({
                 </div>
               </div>
             ) : (
-              <Link scroll={false} key={item.slug} href={localizedPublicPath(locale, item.slug)} className="transition hover:text-white">
+              <Link key={item.slug} href={localizedPublicPath(locale, item.slug)} className="transition hover:text-white">
                 {item.label}
               </Link>
             ),
@@ -121,7 +121,7 @@ export default function GlobalPublicHeader({
             </button>
             <div className="pointer-events-none invisible absolute right-0 top-[44px] w-[180px] translate-y-1 rounded-[16px] border border-white/[0.09] bg-[#101522]/98 p-2 opacity-0 shadow-[0_24px_70px_rgba(0,0,0,.4)] transition group-hover:pointer-events-auto group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
               {GLOBAL_LOCALES.map((item) => (
-                <Link scroll={false}
+                <Link
                   key={item}
                   href={localizedPublicPath(item, slug)}
                   className={[
@@ -136,7 +136,7 @@ export default function GlobalPublicHeader({
             </div>
           </div>
 
-          <Link scroll={false} href={checkPath(locale)} className="rounded-xl bg-[#7bb7ff] px-4 py-2.5 text-[14px] font-bold text-[#07142f] transition hover:bg-[#a3ceff]">
+          <Link href={checkPath(locale)} className="rounded-xl bg-[#7bb7ff] px-4 py-2.5 text-[14px] font-bold text-[#07142f] transition hover:bg-[#a3ceff]">
             {t.analyze}
           </Link>
         </div>
