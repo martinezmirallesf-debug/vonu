@@ -111,6 +111,8 @@ requireText(desktopFitCss, 'background: rgb(8, 22, 49) !important;', "desktop UR
 requireText(desktopFitCss, 'align-self: center !important;', "desktop URL centered");
 requireText(desktopFitCss, 'height: 222px !important;', "desktop URL stack reserves lower action space");
 requireText(desktopFitCss, 'margin-top: 36px !important;', "desktop URL action stack lowered");
+requireText(desktopFitCss, 'transform: translateY(8px) !important;', "desktop URL action stack final nudge");
+requireText(desktopFitCss, '@media (min-width: 1024px)', "desktop-only home styling guard");
 requireText(desktopFitCss, 'width: max-content !important;', "desktop tab underline follows label width");
 requireText(desktopFitCss, 'padding-inline: 15px !important;', "desktop tab underline includes icon and gap width");
 requireText(desktopFitCss, 'border-bottom: 3px solid #7bb7ff !important;', "desktop tab underline treatment");
