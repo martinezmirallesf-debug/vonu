@@ -426,6 +426,34 @@ const UI: Record<SupportedLocale, UiCopy> = {
   },
 };
 
+const SCANNER_HEADLINE: Record<SupportedLocale, { line1: string; line2: string; accent: string }> = {
+  es: {
+    line1: "Analiza URLs, capturas de pantalla,",
+    line2: "mensajes y documentos desde un único",
+    accent: "escáner.",
+  },
+  en: {
+    line1: "Analyse URLs, screenshots,",
+    line2: "messages and documents from one",
+    accent: "scanner.",
+  },
+  fr: {
+    line1: "Analysez URLs, captures d’écran,",
+    line2: "messages et documents depuis un seul",
+    accent: "scanner.",
+  },
+  de: {
+    line1: "Analysiere URLs, Screenshots,",
+    line2: "Nachrichten und Dokumente mit einem",
+    accent: "Scanner.",
+  },
+  ar: {
+    line1: "حلّل الروابط ولقطات الشاشة",
+    line2: "والرسائل والمستندات من ماسح",
+    accent: "واحد.",
+  },
+};
+
 const DOCUMENT_UI: Record<SupportedLocale, {
   label: string;
   dropTitle: string;
@@ -1371,7 +1399,18 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
           <main className="mx-auto flex w-full max-w-[1080px] flex-1 flex-col justify-center px-4 py-5 sm:px-6 md:min-h-0 md:py-3 lg:px-8">
             <section className="text-center">
               <h1 className="mx-auto max-w-[900px] text-balance text-[36px] font-bold leading-[1.02] tracking-[-0.055em] text-white sm:text-[48px] lg:text-[56px] xl:text-[60px]">{t.hero}</h1>
-              <p className="mx-auto mt-3 max-w-[720px] text-[15px] leading-6 text-slate-400 sm:text-[16px] lg:text-[17px]">{t.sub}</p>
+              <p data-vonu-scanner-subtitle="true" className="mx-auto mt-3 max-w-[720px] text-[15px] leading-6 text-slate-400 sm:text-[16px]">
+                <span className="lg:hidden">{t.sub}</span>
+                <span className="hidden lg:block">
+                  <span className="block text-white">{SCANNER_HEADLINE[locale].line1}</span>
+                  <span className="mt-1 block text-slate-300">
+                    {SCANNER_HEADLINE[locale].line2}{" "}
+                    <span className="bg-gradient-to-r from-[#7bb7ff] to-emerald-300 bg-clip-text font-bold text-transparent">
+                      {SCANNER_HEADLINE[locale].accent}
+                    </span>
+                  </span>
+                </span>
+              </p>
             </section>
 
             <section data-vonu-idle-mode={mode} className="mx-auto mt-5 w-full max-w-[850px] rounded-[22px] bg-[#141927]/72 shadow-[0_26px_70px_rgba(0,0,0,.24)] backdrop-blur-sm sm:mt-6">
@@ -1389,7 +1428,7 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
               <div className="px-4 pb-4 pt-4 sm:px-6 sm:pb-5 sm:pt-5">
                 {mode === "url" && (
                   <div data-vonu-url-input-shell="true" className="flex min-h-[72px] items-center rounded-[18px] bg-[#0d1220] px-4 ring-1 ring-white/[0.07] transition focus-within:ring-emerald-400/35">
-                    <span className="me-3 text-emerald-300">⌕</span>
+                    <span data-vonu-url-icon="true" className="me-3 text-emerald-300">⌕</span>
                     <input value={url} onChange={(event) => setUrl(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void analyze(); }} placeholder={t.urlPlaceholder} type="url" inputMode="url" autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="go" data-form-type="other" className="w-full scroll-mt-24 bg-transparent py-5 text-[15px] text-white outline-none placeholder:text-slate-600 sm:text-[16px]" />
                   </div>
                 )}
