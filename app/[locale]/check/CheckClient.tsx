@@ -1643,24 +1643,29 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
           <div className="mt-5 border-t border-white/[0.07] pt-5">
             <p className="max-w-3xl text-[12px] leading-5 text-slate-600">{result.version === "vonu-document-v1" ? DOCUMENT_UI[locale].disclaimer : t.noCertification}</p>
 
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <div data-vonu-result-actions="true" className="mt-4 grid w-full gap-2 sm:ms-auto sm:max-w-[520px] sm:grid-cols-2">
               <button
+                data-vonu-share-result="true"
                 type="button"
                 onClick={() => void shareResult()}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#7bb7ff]/25 bg-[#7bb7ff]/[0.07] px-5 text-[13px] font-semibold text-[#b8d8ff] transition hover:bg-[#7bb7ff]/[0.12] active:scale-[.99]"
+                className="inline-flex min-h-[52px] w-full items-center justify-center gap-2.5 rounded-[16px] border border-[#7bb7ff]/25 bg-[#7bb7ff]/[0.07] px-5 text-[14px] font-semibold text-[#cfe4ff] transition hover:bg-[#7bb7ff]/[0.12] active:scale-[.99]"
               >
-                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
-                  <path d="M18 8a3 3 0 1 0-2.83-4A3 3 0 0 0 18 8ZM6 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm12 1a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM8.7 16.4l6.6 3.2M15.3 5.6 8.7 8.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" aria-hidden="true">
+                  <circle cx="18" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.8" />
+                  <circle cx="6" cy="12" r="2.5" stroke="currentColor" strokeWidth="1.8" />
+                  <circle cx="18" cy="19" r="2.5" stroke="currentColor" strokeWidth="1.8" />
+                  <path d="m8.25 10.85 7.5-4.35M8.25 13.15l7.5 4.35" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
-                {resultActions.share}
+                <span className="min-w-0 text-center leading-tight">{resultActions.share}</span>
               </button>
 
               <button
+                data-vonu-new-check="true"
                 type="button"
                 onClick={reset}
-                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#7bb7ff] px-5 text-[13px] font-bold text-[#07142f] shadow-[0_9px_26px_rgba(123,183,255,.20)] transition hover:bg-[#a3ceff] active:scale-[.99]"
+                className="inline-flex min-h-[52px] w-full items-center justify-center rounded-[16px] bg-[#7bb7ff] px-5 text-[14px] font-bold text-[#07142f] shadow-[0_9px_26px_rgba(123,183,255,.20)] transition hover:bg-[#a3ceff] active:scale-[.99]"
               >
-                {t.newCheck}
+                <span className="min-w-0 text-center leading-tight">{t.newCheck}</span>
               </button>
             </div>
 
