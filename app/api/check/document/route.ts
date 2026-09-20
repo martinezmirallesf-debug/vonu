@@ -188,21 +188,103 @@ function fallbackDocumentFindings(
   return findings.slice(0, 4);
 }
 
-function parseJsonText(text: string) {
-  const clean = text
+function extractJsonObject(text: string) {
+  return text
     .trim()
-    .replace(/^\`\`\`(?:json)?\s*/i, "")
-    .replace(/\s*\`\`\`$/i, "")
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
     .trim();
+}
 
-  try {
-    return JSON.parse(clean);
-  } catch {
-    const first = clean.indexOf("{");
-    const last = clean.lastIndexOf("}");
-    if (first >= 0 && last > first) return JSON.parse(clean.slice(first, last + 1));
-    throw new Error("invalid_model_json");
+function repairLikelyJson(text: string) {
+  let source = extractJsonObject(text);
+  const first = source.indexOf("{");
+  const last = source.lastIndexOf("}");
+  if (first >= 0 && last > first) source = source.slice(first, last + 1);
+
+  let out = "";
+  let inString = false;
+  let escaped = false;
+
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index];
+
+    if (!inString) {
+      if (char === '"') inString = true;
+      out += char;
+      continue;
+    }
+
+    if (escaped) {
+      escaped = false;
+      out += char;
+      continue;
+    }
+
+    if (char === "\\") {
+      escaped = true;
+      out += char;
+      continue;
+    }
+
+    if (char === "\n" || char === "\r") {
+      out += "\\n";
+      continue;
+    }
+
+    if (char === '"') {
+      let next = index + 1;
+      while (next < source.length && /\s/.test(source[next])) next += 1;
+      const nextChar = source[next] || "";
+      const closesString =
+        nextChar === "" ||
+        nextChar === "," ||
+        nextChar === "}" ||
+        nextChar === "]" ||
+        nextChar === ":";
+
+      if (closesString) {
+        inString = false;
+        out += char;
+      } else {
+        out += '\\"';
+      }
+      continue;
+    }
+
+    const code = char.charCodeAt(0);
+    if (code < 0x20) {
+      out += " ";
+      continue;
+    }
+
+    out += char;
   }
+
+  return out.replace(/,\s*([}\]])/g, "$1");
+}
+
+function parseJsonText(text: string) {
+  const clean = extractJsonObject(text);
+  const candidates = [clean];
+
+  const first = clean.indexOf("{");
+  const last = clean.lastIndexOf("}");
+  if (first >= 0 && last > first) candidates.push(clean.slice(first, last + 1));
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      try {
+        return JSON.parse(repairLikelyJson(candidate));
+      } catch {
+        // Try the next candidate before asking the model for a repair pass.
+      }
+    }
+  }
+
+  throw new Error("invalid_model_json");
 }
 
 function promptFor(locale: SupportedLocale, filename: string, pageCount: number | null) {
@@ -258,6 +340,8 @@ CORE RULES:
 - Use signals to surface what the document actually is, important inclusions/conditions, meaningful dates or amounts, and any missing or ambiguous information worth confirming.
 - Low-risk findings should use neutral or positive tone and weight 0. Do not manufacture warnings just to fill the list.
 - risk.confidenceReason must briefly explain WHY confidence is limited, medium or high. It must refer to analysis coverage (for example extracted text, missing context, partial data) and must never imply that authenticity was verified.
+- Keep each signal title under 70 characters and each signal detail under 240 characters.
+- Never place unescaped double quote characters inside string values. If you need to quote a term or name, use single quotation marks instead.
 
 Return ONLY valid JSON, no markdown:
 {
@@ -293,6 +377,18 @@ Classify kind as invoice, quote_or_proforma, contract, rental_contract, service_
 Schema:
 {"kind":"other","risk":{"score":0,"confidence":"limited","confidenceReason":"brief reason"},"summary":"","signals":[{"id":"finding","tone":"neutral","title":"useful finding","detail":"evidence-based detail","weight":0}],"keyFacts":{"parties":[],"amounts":[],"dates":[],"paymentDetails":[],"keyClauses":[]},"extracted":{"urls":[],"phones":[],"emails":[],"brands":[]},"recommendedActions":[],"limitations":[]}
 The score is a caution/review index, not legal validity or fraud probability. Do not invent facts.
+`.trim();
+}
+
+
+function repairJsonPrompt(locale: SupportedLocale) {
+  return `
+The pdfText field contains a malformed JSON response from a previous document review, NOT the original document.
+Convert it into one syntactically valid JSON object while preserving the same meaning and the same schema.
+Output language remains ${locale}.
+Do not add facts. Do not analyse the underlying document again.
+Remove or replace any problematic unescaped double quotes inside text values.
+Return ONLY valid JSON with no markdown or commentary.
 `.trim();
 }
 
@@ -409,11 +505,22 @@ export async function POST(req: NextRequest) {
 
     let modelText = await callModel(edgeUrl, supabaseAnonKey, promptFor(locale, filename, pageCount), clippedText);
     let parsed: any = null;
+
     try {
       parsed = parseJsonText(modelText);
     } catch {
-      modelText = await callModel(edgeUrl, supabaseAnonKey, compactRetryPrompt(locale), clippedText);
-      parsed = parseJsonText(modelText);
+      try {
+        const repairedText = await callModel(
+          edgeUrl,
+          supabaseAnonKey,
+          repairJsonPrompt(locale),
+          modelText.slice(0, 18_000),
+        );
+        parsed = parseJsonText(repairedText);
+      } catch {
+        modelText = await callModel(edgeUrl, supabaseAnonKey, compactRetryPrompt(locale), clippedText);
+        parsed = parseJsonText(modelText);
+      }
     }
 
     const kind = normalizeKind(parsed?.kind);
