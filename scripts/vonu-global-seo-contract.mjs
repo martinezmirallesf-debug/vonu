@@ -29,6 +29,8 @@ function rejectText(source, needle, label) {
 requireText(rootLayout, "vonu-client-recovery:", "stale client chunk recovery key");
 requireText(rootLayout, "ChunkLoadError", "stale chunk error detection");
 requireText(rootLayout, "window.location.reload()", "single stale chunk recovery reload");
+requireText(rootLayout, "launch.style.display = 'none'", "launch overlay hidden without DOM removal");
+rejectText(rootLayout, "parentNode.removeChild(launch)", "launch overlay must remain inside React DOM");
 requireText(sitemap, "localizedPublicPath(locale, slug)", "sitemap localized URLs");
 requireText(sitemap, "localizedLanguageAlternates(slug)", "sitemap hreflang");
 rejectText(sitemap, "publicPath(locale, slug)", "sitemap legacy route helper");
