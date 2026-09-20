@@ -495,7 +495,10 @@ CORE RULES:
 - Do not provide a definitive legal opinion or say a clause is legal/illegal unless the text itself states a verifiable rule. Flag items for review instead.
 - Never invent missing clauses, parties, amounts, dates, law, jurisdiction or external facts.
 - Detect jurisdiction separately from the interface language. A document written in English can be governed by Spanish, German, French, UK or another law.
-- For jurisdiction.country, jurisdiction.region, jurisdiction.governingLaw and jurisdiction.venue, use only what is explicit or strongly supported by the document itself. If unclear, leave the field empty and use limited confidence.
+- For jurisdiction.countryCode, jurisdiction.country, jurisdiction.region, jurisdiction.governingLaw and jurisdiction.venue, use only what is explicit or strongly supported by the document itself. If unclear, leave the field empty and use limited confidence.
+- jurisdiction.countryCode should be the ISO 3166-1 alpha-2 code only when the country is clear (for example ES, DE, FR, GB); otherwise return an empty string.
+- jurisdiction.evidence must contain up to 3 short verbatim excerpts from the document that support the jurisdiction assessment. Do not invent or paraphrase evidence.
+- Jurisdiction confidence rubric: HIGH only when governing law and/or court/venue is explicitly stated in the document and supported by evidence excerpts; MEDIUM for strong but incomplete textual support; LIMITED when inferred from language, addresses, currency or other indirect context.
 - jurisdiction.basis must briefly state what in the document supports the jurisdiction assessment.
 - Do NOT claim that a clause is unlawful, void, enforceable or compliant based only on general model knowledge. Country-specific legal conclusions require verified legal rules supplied by the system. Without such a rule, describe the contractual effect and say that legal verification may be needed.
 - Distinguish what is explicitly written from what is unclear or absent.
@@ -516,7 +519,7 @@ Return ONLY valid JSON, no markdown:
 {
   "kind":"invoice|quote_or_proforma|contract|rental_contract|service_contract|loan_or_financing|other",
   "risk":{"score":0,"confidence":"limited|medium|high","confidenceReason":"one short explanation in ${locale}"},
-  "jurisdiction":{"country":"","region":"","governingLaw":"","venue":"","confidence":"limited|medium|high","basis":"brief evidence from the document"},
+  "jurisdiction":{"countryCode":"","country":"","region":"","governingLaw":"","venue":"","confidence":"limited|medium|high","basis":"brief explanation","evidence":["short verbatim excerpt"]},
   "summary":"short evidence-based conclusion in ${locale}",
   "signals":[
     {"id":"short_id","tone":"positive|warning|negative|neutral","title":"short title","detail":"brief evidence-based detail","weight":0}
@@ -545,7 +548,7 @@ Output language: ${locale}.
 Return ONE valid compact JSON object only.
 Classify kind as invoice, quote_or_proforma, contract, rental_contract, service_contract, loan_or_financing or other.
 Schema:
-{"kind":"other","risk":{"score":0,"confidence":"limited","confidenceReason":"brief reason"},"jurisdiction":{"country":"","region":"","governingLaw":"","venue":"","confidence":"limited","basis":""},"summary":"","signals":[{"id":"finding","tone":"neutral","title":"useful finding","detail":"evidence-based detail","weight":0}],"keyFacts":{"parties":[],"amounts":[],"dates":[],"paymentDetails":[],"keyClauses":[]},"extracted":{"urls":[],"phones":[],"emails":[],"brands":[]},"recommendedActions":[],"limitations":[]}
+{"kind":"other","risk":{"score":0,"confidence":"limited","confidenceReason":"brief reason"},"jurisdiction":{"countryCode":"","country":"","region":"","governingLaw":"","venue":"","confidence":"limited","basis":"","evidence":[]},"summary":"","signals":[{"id":"finding","tone":"neutral","title":"useful finding","detail":"evidence-based detail","weight":0}],"keyFacts":{"parties":[],"amounts":[],"dates":[],"paymentDetails":[],"keyClauses":[]},"extracted":{"urls":[],"phones":[],"emails":[],"brands":[]},"recommendedActions":[],"limitations":[]}
 The score is a caution/review index, not legal validity or fraud probability. Do not invent facts.
 `.trim();
 }
@@ -730,17 +733,37 @@ export async function POST(req: NextRequest) {
     const rawScore = clampRiskScore(parsed?.risk?.score);
     const score = calibrateModelRiskScore(rawScore, signals);
     const confidence = normalizeConfidence(parsed?.risk?.confidence);
-    const jurisdictionConfidence = normalizeConfidence(parsed?.jurisdiction?.confidence);
+    const rawCountryCode = safeString(parsed?.jurisdiction?.countryCode, 8).toUpperCase();
+    const countryCode = /^[A-Z]{2}$/.test(rawCountryCode) ? rawCountryCode : "";
+    const jurisdictionEvidence = safeStringArray(parsed?.jurisdiction?.evidence, 3, 260);
+    const governingLaw = safeString(parsed?.jurisdiction?.governingLaw, 220);
+    const venue = safeString(parsed?.jurisdiction?.venue, 220);
+    const explicitJurisdictionEvidence =
+      jurisdictionEvidence.length > 0 && Boolean(governingLaw || venue);
+    const explicitLawAndVenue =
+      jurisdictionEvidence.length > 0 && Boolean(governingLaw) && Boolean(venue);
+    const modelJurisdictionConfidence = normalizeConfidence(parsed?.jurisdiction?.confidence);
+    const jurisdictionConfidence: AnalysisConfidence = explicitLawAndVenue
+      ? "high"
+      : explicitJurisdictionEvidence && modelJurisdictionConfidence === "limited"
+        ? "medium"
+        : modelJurisdictionConfidence;
     const jurisdiction = {
+      countryCode,
       country: safeString(parsed?.jurisdiction?.country, 120),
       region: safeString(parsed?.jurisdiction?.region, 160),
-      governingLaw: safeString(parsed?.jurisdiction?.governingLaw, 220),
-      venue: safeString(parsed?.jurisdiction?.venue, 220),
+      governingLaw,
+      venue,
       confidence: jurisdictionConfidence,
       basis: safeString(parsed?.jurisdiction?.basis, 420),
+      evidence: jurisdictionEvidence,
     };
     const jurisdictionKnown = Boolean(
-      jurisdiction.country || jurisdiction.region || jurisdiction.governingLaw || jurisdiction.venue,
+      jurisdiction.countryCode ||
+      jurisdiction.country ||
+      jurisdiction.region ||
+      jurisdiction.governingLaw ||
+      jurisdiction.venue,
     );
     const confidenceReason =
       safeString(parsed?.risk?.confidenceReason, 420) ||
