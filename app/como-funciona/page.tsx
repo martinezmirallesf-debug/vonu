@@ -163,9 +163,9 @@ export default function ComoFuncionaPage() {
               Vonu Check convierte un enlace, mensaje o captura sospechosa en señales comprensibles, un nivel de riesgo y pasos concretos para verificar antes de actuar.
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Link href="/es/check" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:-translate-y-0.5 hover:bg-emerald-300">
+              <a href="/es/check" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:-translate-y-0.5 hover:bg-emerald-300">
                 Probar Vonu Check <ArrowIcon />
-              </Link>
+              </a>
               <Link href="/casos-de-uso" className="inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.045] px-6 text-[14px] font-semibold text-slate-200 transition hover:bg-white/[0.07]">
                 Ver casos de uso
               </Link>
@@ -249,7 +249,7 @@ export default function ComoFuncionaPage() {
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500/[0.08] blur-[120px]" />
         <div className="relative mx-auto max-w-[1320px] px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8">
           <h2 className="mx-auto max-w-[900px] text-[44px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[70px]">¿Algo no te cuadra? Compruébalo antes de actuar.</h2>
-          <Link href="/es/check" className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d]">Analizar ahora <ArrowIcon /></Link>
+          <a href="/es/check" className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d]">Analizar ahora <ArrowIcon /></a>
         </div>
       </section>
 
