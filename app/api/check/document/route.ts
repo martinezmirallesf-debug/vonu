@@ -8,7 +8,7 @@ import {
   riskLevelFromScore,
 } from "@/lib/vonu-check/risk-score";
 import type { DocumentCheckResult, DocumentKind } from "@/lib/vonu-check/document-types";
-import type { SignalTone, SupportedLocale } from "@/lib/vonu-check/types";
+import type { AnalysisConfidence, SignalTone, SupportedLocale } from "@/lib/vonu-check/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,6 +37,11 @@ function normalizeTone(value: unknown): SignalTone {
     return value;
   }
   return "neutral";
+}
+
+function normalizeConfidence(value: unknown): AnalysisConfidence {
+  if (value === "high" || value === "medium" || value === "limited") return value;
+  return "limited";
 }
 
 function normalizeKind(value: unknown): DocumentKind {
@@ -121,6 +126,132 @@ const documentFindingCopy: Record<SupportedLocale, {
     },
   },
 };
+
+const documentFallbackCopy: Record<SupportedLocale, {
+  genericActions: string[];
+  contractActions: string[];
+  financialActions: string[];
+  genericLimitations: string[];
+  jurisdictionUnknown: string;
+}> = {
+  es: {
+    genericActions: [
+      "Confirma por escrito cualquier condición, importe o fecha que vaya a influir en tu decisión antes de aceptar, firmar o pagar.",
+      "Verifica por un canal independiente la identidad de la otra parte y los datos de contacto o pago cuando tengan importancia económica.",
+    ],
+    contractActions: [
+      "Revisa especialmente duración, renovación, resolución, penalizaciones y obligaciones de cada parte antes de firmar.",
+      "Si una cláusula tiene un impacto económico o jurídico importante, contrástala con una fuente jurídica fiable o un profesional de la jurisdicción aplicable.",
+    ],
+    financialActions: [
+      "Comprueba que emisor, importes, impuestos y destino del pago coinciden con lo acordado antes de realizar una transferencia.",
+      "Pide aclaración o una versión actualizada si faltan datos fiscales, condiciones de pago, vigencia o información esencial.",
+    ],
+    genericLimitations: [
+      "Vonu revisa el contenido extraído del PDF, pero no certifica la identidad de las partes, la autenticidad del documento ni hechos externos.",
+      "La revisión documental no sustituye una comprobación jurídica profesional cuando una cláusula o una operación tenga consecuencias relevantes.",
+    ],
+    jurisdictionUnknown: "La jurisdicción o la ley aplicable no se identifica con suficiente claridad en el documento; no se han aplicado conclusiones jurídicas específicas de un país.",
+  },
+  en: {
+    genericActions: [
+      "Confirm in writing any term, amount or date that could affect your decision before accepting, signing or paying.",
+      "Independently verify the counterparty and any important contact or payment details when money or obligations are involved.",
+    ],
+    contractActions: [
+      "Review duration, renewal, termination, penalties and each party's obligations before signing.",
+      "If a clause has significant financial or legal impact, check it against a reliable legal source or a professional in the applicable jurisdiction.",
+    ],
+    financialActions: [
+      "Check that issuer, amounts, taxes and payment destination match what was agreed before transferring money.",
+      "Ask for clarification or an updated document if tax details, payment terms, validity or essential information are missing.",
+    ],
+    genericLimitations: [
+      "Vonu reviews text extracted from the PDF but does not certify party identity, document authenticity or external facts.",
+      "Document review does not replace professional legal review when a clause or transaction has significant consequences.",
+    ],
+    jurisdictionUnknown: "The applicable jurisdiction or governing law is not clear enough in the document; no country-specific legal conclusion has been applied.",
+  },
+  fr: {
+    genericActions: [
+      "Confirmez par écrit toute condition, montant ou date pouvant influencer votre décision avant d’accepter, de signer ou de payer.",
+      "Vérifiez indépendamment l’identité de l’autre partie ainsi que les coordonnées ou données de paiement importantes.",
+    ],
+    contractActions: [
+      "Examinez surtout la durée, le renouvellement, la résiliation, les pénalités et les obligations de chaque partie avant de signer.",
+      "Si une clause a un impact financier ou juridique important, confrontez-la à une source juridique fiable ou à un professionnel de la juridiction applicable.",
+    ],
+    financialActions: [
+      "Vérifiez que l’émetteur, les montants, les taxes et la destination du paiement correspondent à ce qui a été convenu avant tout virement.",
+      "Demandez des précisions ou une version actualisée si des données fiscales, modalités de paiement, dates de validité ou informations essentielles manquent.",
+    ],
+    genericLimitations: [
+      "Vonu analyse le texte extrait du PDF mais ne certifie ni l’identité des parties, ni l’authenticité du document, ni les faits externes.",
+      "L’analyse documentaire ne remplace pas un avis juridique professionnel lorsqu’une clause ou une opération a des conséquences importantes.",
+    ],
+    jurisdictionUnknown: "La juridiction ou la loi applicable n’est pas suffisamment claire dans le document ; aucune conclusion juridique spécifique à un pays n’a été appliquée.",
+  },
+  de: {
+    genericActions: [
+      "Bestätige vor Annahme, Unterschrift oder Zahlung schriftlich alle Bedingungen, Beträge oder Daten, die deine Entscheidung beeinflussen.",
+      "Prüfe die Identität der Gegenpartei sowie wichtige Kontakt- oder Zahlungsdaten über einen unabhängigen Kanal.",
+    ],
+    contractActions: [
+      "Prüfe vor der Unterschrift besonders Laufzeit, Verlängerung, Kündigung, Vertragsstrafen und die Pflichten beider Parteien.",
+      "Bei Klauseln mit erheblichen finanziellen oder rechtlichen Folgen sollte eine verlässliche Rechtsquelle oder fachliche Beratung der anwendbaren Rechtsordnung herangezogen werden.",
+    ],
+    financialActions: [
+      "Prüfe vor einer Zahlung, ob Aussteller, Beträge, Steuern und Zahlungsempfänger mit der Vereinbarung übereinstimmen.",
+      "Fordere Klarstellung oder eine aktualisierte Fassung an, wenn Steuerangaben, Zahlungsbedingungen, Gültigkeit oder wesentliche Informationen fehlen.",
+    ],
+    genericLimitations: [
+      "Vonu prüft den aus der PDF extrahierten Text, bestätigt aber weder die Identität der Parteien noch die Echtheit des Dokuments oder externe Tatsachen.",
+      "Die Dokumentprüfung ersetzt keine professionelle Rechtsprüfung bei Klauseln oder Vorgängen mit erheblichen Folgen.",
+    ],
+    jurisdictionUnknown: "Die anwendbare Rechtsordnung oder das maßgebliche Recht ist im Dokument nicht eindeutig genug; es wurden keine länderspezifischen Rechtsaussagen angewendet.",
+  },
+  ar: {
+    genericActions: [
+      "أكد كتابيًا أي شرط أو مبلغ أو تاريخ قد يؤثر في قرارك قبل القبول أو التوقيع أو الدفع.",
+      "تحقق بشكل مستقل من هوية الطرف الآخر ومن بيانات الاتصال أو الدفع المهمة عندما توجد التزامات مالية.",
+    ],
+    contractActions: [
+      "راجع خصوصًا المدة والتجديد والإنهاء والجزاءات والتزامات كل طرف قبل التوقيع.",
+      "إذا كان لبند ما أثر مالي أو قانوني مهم، فتحقق منه باستخدام مصدر قانوني موثوق أو مختص في الولاية القضائية المعنية.",
+    ],
+    financialActions: [
+      "تحقق من تطابق الجهة المصدرة والمبالغ والضرائب ووجهة الدفع مع ما تم الاتفاق عليه قبل التحويل.",
+      "اطلب توضيحًا أو نسخة محدثة إذا كانت البيانات الضريبية أو شروط الدفع أو مدة الصلاحية أو المعلومات الأساسية ناقصة.",
+    ],
+    genericLimitations: [
+      "يراجع Vonu النص المستخرج من ملف PDF لكنه لا يثبت هوية الأطراف أو أصالة المستند أو الوقائع الخارجية.",
+      "مراجعة المستند لا تغني عن مراجعة قانونية متخصصة عندما تكون للبند أو المعاملة آثار مهمة.",
+    ],
+    jurisdictionUnknown: "لا يحدد المستند الولاية القضائية أو القانون الواجب التطبيق بوضوح كافٍ؛ لذلك لم تُطبّق استنتاجات قانونية خاصة ببلد معين.",
+  },
+};
+
+function fallbackDocumentActions(locale: SupportedLocale, kind: DocumentKind) {
+  const copy = documentFallbackCopy[locale];
+  if (kind === "contract" || kind === "rental_contract" || kind === "service_contract") {
+    return [...copy.contractActions, ...copy.genericActions].slice(0, 4);
+  }
+  if (kind === "invoice" || kind === "quote_or_proforma" || kind === "loan_or_financing") {
+    return [...copy.financialActions, ...copy.genericActions].slice(0, 4);
+  }
+  return copy.genericActions.slice(0, 3);
+}
+
+function fallbackDocumentLimitations(
+  locale: SupportedLocale,
+  jurisdictionKnown: boolean,
+) {
+  const copy = documentFallbackCopy[locale];
+  return [
+    ...copy.genericLimitations,
+    ...(jurisdictionKnown ? [] : [copy.jurisdictionUnknown]),
+  ].slice(0, 3);
+}
 
 function fallbackDocumentFindings(
   locale: SupportedLocale,
@@ -329,6 +460,10 @@ Check lender/borrower, principal, interest/APR or equivalent when present, insta
 CORE RULES:
 - Do not provide a definitive legal opinion or say a clause is legal/illegal unless the text itself states a verifiable rule. Flag items for review instead.
 - Never invent missing clauses, parties, amounts, dates, law, jurisdiction or external facts.
+- Detect jurisdiction separately from the interface language. A document written in English can be governed by Spanish, German, French, UK or another law.
+- For jurisdiction.country, jurisdiction.region, jurisdiction.governingLaw and jurisdiction.venue, use only what is explicit or strongly supported by the document itself. If unclear, leave the field empty and use limited confidence.
+- jurisdiction.basis must briefly state what in the document supports the jurisdiction assessment.
+- Do NOT claim that a clause is unlawful, void, enforceable or compliant based only on general model knowledge. Country-specific legal conclusions require verified legal rules supplied by the system. Without such a rule, describe the contractual effect and say that legal verification may be needed.
 - Distinguish what is explicitly written from what is unclear or absent.
 - High complexity alone is not high risk.
 - Missing context lowers confidence rather than automatically increasing risk.
@@ -347,6 +482,7 @@ Return ONLY valid JSON, no markdown:
 {
   "kind":"invoice|quote_or_proforma|contract|rental_contract|service_contract|loan_or_financing|other",
   "risk":{"score":0,"confidence":"limited|medium|high","confidenceReason":"one short explanation in ${locale}"},
+  "jurisdiction":{"country":"","region":"","governingLaw":"","venue":"","confidence":"limited|medium|high","basis":"brief evidence from the document"},
   "summary":"short evidence-based conclusion in ${locale}",
   "signals":[
     {"id":"short_id","tone":"positive|warning|negative|neutral","title":"short title","detail":"brief evidence-based detail","weight":0}
@@ -363,7 +499,7 @@ Return ONLY valid JSON, no markdown:
   "limitations":[]
 }
 
-Return 3 to 6 signals whenever the PDF contains enough readable information, plus at most 8 key clauses, 6 actions and 5 limitations.
+Return 3 to 6 signals whenever the PDF contains enough readable information, plus at most 8 key clauses, 2 to 5 recommended actions and 1 to 5 limitations.
 Use weight 0-30 only for genuinely caution-increasing evidence; positive/neutral items should normally use 0.
 `.trim();
 }
@@ -375,7 +511,7 @@ Output language: ${locale}.
 Return ONE valid compact JSON object only.
 Classify kind as invoice, quote_or_proforma, contract, rental_contract, service_contract, loan_or_financing or other.
 Schema:
-{"kind":"other","risk":{"score":0,"confidence":"limited","confidenceReason":"brief reason"},"summary":"","signals":[{"id":"finding","tone":"neutral","title":"useful finding","detail":"evidence-based detail","weight":0}],"keyFacts":{"parties":[],"amounts":[],"dates":[],"paymentDetails":[],"keyClauses":[]},"extracted":{"urls":[],"phones":[],"emails":[],"brands":[]},"recommendedActions":[],"limitations":[]}
+{"kind":"other","risk":{"score":0,"confidence":"limited","confidenceReason":"brief reason"},"jurisdiction":{"country":"","region":"","governingLaw":"","venue":"","confidence":"limited","basis":""},"summary":"","signals":[{"id":"finding","tone":"neutral","title":"useful finding","detail":"evidence-based detail","weight":0}],"keyFacts":{"parties":[],"amounts":[],"dates":[],"paymentDetails":[],"keyClauses":[]},"extracted":{"urls":[],"phones":[],"emails":[],"brands":[]},"recommendedActions":[],"limitations":[]}
 The score is a caution/review index, not legal validity or fraud probability. Do not invent facts.
 `.trim();
 }
@@ -557,11 +693,19 @@ export async function POST(req: NextRequest) {
 
     const rawScore = clampRiskScore(parsed?.risk?.score);
     const score = calibrateModelRiskScore(rawScore, signals);
-    const confidenceValue = parsed?.risk?.confidence;
-    const confidence: "limited" | "medium" | "high" =
-      confidenceValue === "high" || confidenceValue === "medium" || confidenceValue === "limited"
-        ? confidenceValue
-        : "limited";
+    const confidence = normalizeConfidence(parsed?.risk?.confidence);
+    const jurisdictionConfidence = normalizeConfidence(parsed?.jurisdiction?.confidence);
+    const jurisdiction = {
+      country: safeString(parsed?.jurisdiction?.country, 120),
+      region: safeString(parsed?.jurisdiction?.region, 160),
+      governingLaw: safeString(parsed?.jurisdiction?.governingLaw, 220),
+      venue: safeString(parsed?.jurisdiction?.venue, 220),
+      confidence: jurisdictionConfidence,
+      basis: safeString(parsed?.jurisdiction?.basis, 420),
+    };
+    const jurisdictionKnown = Boolean(
+      jurisdiction.country || jurisdiction.region || jurisdiction.governingLaw || jurisdiction.venue,
+    );
     const confidenceReason =
       safeString(parsed?.risk?.confidenceReason, 420) ||
       documentFindingCopy[locale].fallbackConfidence[confidence];
@@ -583,13 +727,24 @@ export async function POST(req: NextRequest) {
       summary,
       signals,
       keyFacts,
+      jurisdiction,
       extracted: {
         urls: safeStringArray(parsed?.extracted?.urls, 5, 500),
         phones: safeStringArray(parsed?.extracted?.phones, 5, 100),
         emails: safeStringArray(parsed?.extracted?.emails, 5, 180),
         brands: safeStringArray(parsed?.extracted?.brands, 6, 120),
       },
-      recommendedActions: safeStringArray(parsed?.recommendedActions, 6, 500),
+      recommendedActions: (() => {
+        const actions = safeStringArray(parsed?.recommendedActions, 6, 500);
+        if (actions.length >= 2) return actions;
+        const fallbacks = fallbackDocumentActions(locale, kind);
+        const merged = [...actions];
+        for (const item of fallbacks) {
+          if (!merged.includes(item)) merged.push(item);
+          if (merged.length >= 4) break;
+        }
+        return merged;
+      })(),
       limitations: [
         ...(text.length > clippedText.length
           ? [
@@ -605,7 +760,8 @@ export async function POST(req: NextRequest) {
             ]
           : []),
         ...safeStringArray(parsed?.limitations, 5, 450),
-      ].slice(0, 6),
+        ...fallbackDocumentLimitations(locale, jurisdictionKnown),
+      ].filter((item, index, items) => items.indexOf(item) === index).slice(0, 6),
     };
 
     return NextResponse.json(result, { headers: { "cache-control": "no-store" } });
