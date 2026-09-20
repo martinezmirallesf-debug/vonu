@@ -13,11 +13,21 @@ type Props = {
 };
 
 export default function FunnelLink({ href, event, className, children, properties }: Props) {
+  const isCheckDestination = /^\/(?:es|en|fr|de|ar)\/check(?:[/?#]|$)/.test(href) || href === "/check";
+
   function handleClick(_: MouseEvent<HTMLAnchorElement>) {
     track(event, properties || {});
     if (typeof window !== "undefined" && typeof (window as any).gtag === "function") {
       (window as any).gtag("event", event, properties || {});
     }
+  }
+
+  if (isCheckDestination) {
+    return (
+      <a href={href} className={className} onClick={handleClick}>
+        {children}
+      </a>
+    );
   }
 
   return (
