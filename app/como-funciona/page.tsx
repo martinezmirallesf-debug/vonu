@@ -151,10 +151,7 @@ export default function ComoFuncionaPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <HomeHeader />
 
-      <section className="relative isolate overflow-hidden border-b border-white/[0.06]">
-        <div className="pointer-events-none absolute inset-0 -z-20 bg-[#080b12]" />
-        <div className="pointer-events-none absolute left-1/2 top-[-190px] -z-10 h-[620px] w-[900px] -translate-x-1/2 rounded-full bg-sky-500/[0.10] blur-[120px]" />
-        <div className="pointer-events-none absolute right-[-180px] top-[320px] -z-10 h-[460px] w-[460px] rounded-full bg-emerald-400/[0.07] blur-[120px]" />
+      <section className="overflow-hidden border-b border-white/[0.06] bg-[#080b12]">
         <div className="mx-auto max-w-[1320px] px-4 pb-20 pt-14 sm:px-6 sm:pb-28 sm:pt-20 lg:px-8 lg:pt-24">
           <div className="mx-auto max-w-[1020px] text-center">
             <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Cómo funciona</p>
