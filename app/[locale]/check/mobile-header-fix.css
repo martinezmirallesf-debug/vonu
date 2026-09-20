@@ -26,6 +26,18 @@
     pointer-events: auto !important;
   }
 
+  /* While typing on mobile, pin only the header to the visual viewport.
+     The scanner body is deliberately allowed to slide underneath it as the
+     browser makes room for the keyboard, avoiding any permanent layout offset. */
+  .vonu-check-page:has(input[inputmode="url"]:focus) header,
+  .vonu-check-page:has(textarea:focus) header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+  }
+
   .vonu-check-page header > div:first-child > button[aria-expanded] {
     position: relative !important;
     z-index: 1004 !important;
