@@ -441,6 +441,9 @@ const DOCUMENT_UI: Record<SupportedLocale, {
   dates: string;
   payment: string;
   clauses: string;
+  reviewLevel: string;
+  keyData: string;
+  disclaimer: string;
 }> = {
   es: {
     label: "Documento",
@@ -458,6 +461,9 @@ const DOCUMENT_UI: Record<SupportedLocale, {
     dates: "Fechas",
     payment: "Pago",
     clauses: "Cláusulas clave",
+    reviewLevel: "Nivel de revisión",
+    keyData: "Datos clave del documento",
+    disclaimer: "La puntuación resume puntos que conviene revisar. No certifica la autenticidad del documento, su validez legal ni que los datos reflejen una operación real.",
   },
   en: {
     label: "Document",
@@ -475,6 +481,9 @@ const DOCUMENT_UI: Record<SupportedLocale, {
     dates: "Dates",
     payment: "Payment",
     clauses: "Key clauses",
+    reviewLevel: "Review level",
+    keyData: "Key document details",
+    disclaimer: "The score summarises points worth reviewing. It does not certify document authenticity, legal validity or that the data reflects a real transaction.",
   },
   fr: {
     label: "Document",
@@ -492,6 +501,9 @@ const DOCUMENT_UI: Record<SupportedLocale, {
     dates: "Dates",
     payment: "Paiement",
     clauses: "Clauses clés",
+    reviewLevel: "Niveau de vérification",
+    keyData: "Données clés du document",
+    disclaimer: "Le score résume les points à vérifier. Il ne certifie ni l’authenticité du document, ni sa validité juridique, ni la réalité de l’opération.",
   },
   de: {
     label: "Dokument",
@@ -509,6 +521,9 @@ const DOCUMENT_UI: Record<SupportedLocale, {
     dates: "Daten",
     payment: "Zahlung",
     clauses: "Wichtige Klauseln",
+    reviewLevel: "Prüfstufe",
+    keyData: "Wichtige Dokumentdaten",
+    disclaimer: "Der Wert fasst Punkte zusammen, die geprüft werden sollten. Er bestätigt weder die Echtheit des Dokuments noch seine rechtliche Wirksamkeit oder die tatsächliche Durchführung einer Transaktion.",
   },
   ar: {
     label: "مستند",
@@ -526,6 +541,9 @@ const DOCUMENT_UI: Record<SupportedLocale, {
     dates: "التواريخ",
     payment: "الدفع",
     clauses: "البنود الرئيسية",
+    reviewLevel: "مستوى المراجعة",
+    keyData: "البيانات الأساسية للمستند",
+    disclaimer: "تلخص الدرجة النقاط التي تستحق المراجعة. وهي لا تثبت أصالة المستند أو صلاحيته القانونية أو أن البيانات تعكس معاملة حقيقية.",
   },
 };
 
@@ -1226,7 +1244,13 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
                     <><span className="text-[42px]">{risk?.score ?? 0}</span><span className="ms-1 text-[20px] text-slate-400">/100</span></>
                   )}
                 </div>
-                <div className="text-xs leading-5 text-slate-400"><div>{t.cautionIndex}</div><div className="mt-1 text-slate-300">{t.confidence}: {confidenceLabel}</div></div>
+                <div className="min-w-0 text-xs leading-5 text-slate-400">
+                  <div>{result.version === "vonu-document-v1" ? DOCUMENT_UI[locale].reviewLevel : t.cautionIndex}</div>
+                  <div className="mt-1 text-slate-300">{t.confidence}: {confidenceLabel}</div>
+                  {result.version === "vonu-document-v1" && (
+                    <p className="mt-1.5 max-w-[260px] text-[10px] leading-4 text-slate-500">{result.risk.confidenceReason}</p>
+                  )}
+                </div>
               </div>
             </div>
           </section>
@@ -1264,7 +1288,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
               ) : (
                 <>
                   <section className="min-w-0 rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08]">
-                    <h2 className="text-[17px] font-bold text-white">{t.extracted}</h2>
+                    <h2 className="text-[17px] font-bold text-white">{result.version === "vonu-document-v1" ? DOCUMENT_UI[locale].keyData : t.extracted}</h2>
                     {result.version === "vonu-capture-v1" && <p className="mt-3 text-[13px] text-slate-400">{t.context}: <span className="text-slate-200">{contextLabel(result.kind, locale)}</span></p>}
                     {result.version === "vonu-document-v1" && (
                       <div className="mt-3 grid gap-2 text-[12px] leading-5 text-slate-400 [overflow-wrap:anywhere]">
@@ -1308,7 +1332,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
           )}
 
           <div className="mt-5 flex flex-col items-start justify-between gap-4 border-t border-white/[0.07] pt-5 sm:flex-row sm:items-center">
-            <p className="max-w-2xl text-[12px] leading-5 text-slate-600">{t.noCertification}</p>
+            <p className="max-w-2xl text-[12px] leading-5 text-slate-600">{result.version === "vonu-document-v1" ? DOCUMENT_UI[locale].disclaimer : t.noCertification}</p>
             <button type="button" onClick={reset} className="rounded-xl bg-white/[0.06] px-4 py-2.5 text-sm font-semibold text-slate-200 ring-1 ring-white/[0.08] hover:bg-white/[0.09]">{t.newCheck}</button>
           </div>
         </main>
