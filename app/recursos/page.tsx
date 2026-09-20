@@ -11,11 +11,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Recursos Vonu — Estafas, phishing y señales de riesgo",
   description:
-    "Guías prácticas de Vonu para detectar phishing, suplantación, tiendas sospechosas, enlaces peligrosos, perfiles falsos, inversiones dudosas y otras señales de fraude.",
+    "Guías prácticas de Vonu para revisar estafas, phishing, enlaces, perfiles, contratos, facturas, presupuestos, servicios y financiación antes de actuar.",
   alternates: { canonical: "/recursos" },
   openGraph: {
     title: "Recursos Vonu — Comprueba antes de confiar",
-    description: "Guías prácticas para reconocer señales de fraude y verificar antes de pagar, responder o compartir datos.",
+    description: "Guías prácticas para reconocer señales de fraude y revisar documentos antes de pagar, firmar, responder o compartir datos.",
     url: `${siteUrl}/recursos`,
     siteName: "Vonu",
     locale: "es_ES",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Recursos Vonu",
-    description: "Guías para reconocer estafas, phishing, suplantación y riesgos digitales.",
+    description: "Guías para reconocer estafas y revisar contratos, facturas, presupuestos y otras decisiones importantes.",
   },
   robots: { index: true, follow: true },
 };
@@ -41,12 +41,19 @@ const featuredResources = [
   { title: "Comprobar una inversión sospechosa", category: "Inversiones", text: "Promesas de rentabilidad, urgencia, plataformas raras, pagos en cripto y otras señales antes de enviar dinero.", href: "/comprobar-inversion-estafa" },
   { title: "Estafas con criptomonedas", category: "Cripto", text: "Oportunidades irreales, falsos soportes, recuperadores de fondos y presión para mover dinero o conectar una wallet.", href: "/estafas-criptomonedas" },
   { title: "El banco me pide un código SMS", category: "Suplantación bancaria", text: "Qué hacer cuando una llamada o mensaje que dice ser de tu banco te pide códigos, claves o una acción urgente.", href: "/llamada-banco-codigo-sms" },
+  { title: "Revisar un contrato antes de firmar", category: "Documentos", text: "Partes, duración, pagos, renovaciones, penalizaciones, responsabilidad y jurisdicción: qué conviene localizar antes de aceptar.", href: "/revisar-contrato" },
+  { title: "Revisar un contrato de alquiler", category: "Documentos", text: "Renta, fianza, duración, actualización, desistimiento, gastos, reparaciones y otras condiciones que conviene entender.", href: "/revisar-contrato-alquiler" },
+  { title: "Comprobar una factura", category: "Documentos", text: "Emisor, conceptos, impuestos, importes, vencimiento y cuenta de pago antes de transferir dinero.", href: "/comprobar-factura" },
+  { title: "Revisar un presupuesto o proforma", category: "Documentos", text: "Precios, impuestos, vigencia, anticipos, exclusiones y condiciones que pueden cambiar el coste final.", href: "/revisar-presupuesto" },
+  { title: "Revisar un contrato de servicios", category: "Documentos", text: "Alcance, entregables, precio, duración, renovación, cancelación y responsabilidad antes de firmar.", href: "/revisar-contrato-servicios" },
+  { title: "Revisar un préstamo o financiación", category: "Documentos", text: "Capital, intereses, cuotas, comisiones, coste total, garantías y condiciones antes de aceptar.", href: "/revisar-prestamo-financiacion" },
 ];
 
 const categories = [
   { title: "Mensajes y suplantación", text: "SMS, WhatsApp, email, llamadas, familiares, bancos y cuentas que intentan parecer otra persona o empresa." },
   { title: "Webs, enlaces y compras", text: "Dominios, tiendas, formularios, redirecciones, métodos de pago y señales técnicas antes de introducir datos." },
   { title: "Dinero e inversiones", text: "Transferencias, Bizum, cripto, promesas de rentabilidad y situaciones donde verificar antes puede evitar una pérdida." },
+  { title: "Documentos y contratos", text: "Contratos, alquileres, facturas, presupuestos, servicios y financiación: qué revisar antes de firmar o pagar." },
 ];
 
 function GradientText({ children }: { children: ReactNode }) {
@@ -76,9 +83,9 @@ export default function RecursosPage() {
           <div className="mx-auto max-w-[1020px] text-center">
             <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Recursos</p>
             <h1 className="mx-auto mt-5 max-w-[1020px] text-[50px] font-semibold leading-[0.98] tracking-[-0.065em] text-white sm:text-[76px] sm:leading-[0.94] lg:text-[92px]">Aprende a revisar<span className="block text-slate-400">antes de <GradientText>confiar.</GradientText></span></h1>
-            <p className="mx-auto mt-7 max-w-[780px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">Guías breves para reconocer señales de phishing, suplantación, tiendas sospechosas, inversiones dudosas y otras formas de fraude antes de pagar, responder o compartir datos.</p>
+            <p className="mx-auto mt-7 max-w-[780px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">Guías breves para reconocer señales de fraude y revisar contratos, facturas, presupuestos y otras decisiones antes de pagar, firmar, responder o compartir datos.</p>
           </div>
-          <div className="mx-auto mt-14 grid max-w-[1040px] gap-4 md:grid-cols-3">
+          <div className="mx-auto mt-14 grid max-w-[1180px] gap-4 md:grid-cols-2 lg:grid-cols-4">
             {categories.map((item) => <div key={item.title} className="min-h-[220px] rounded-[24px] border border-white/[0.07] bg-white/[0.035] p-6"><p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-emerald-300">Explora</p><h2 className="mt-10 text-[28px] font-semibold leading-[1.04] tracking-[-0.045em] text-white">{item.title}</h2><p className="mt-4 text-[14px] leading-7 text-slate-400">{item.text}</p></div>)}
           </div>
         </div>
