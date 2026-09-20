@@ -73,6 +73,17 @@
     margin-top: 0 !important;
   }
 
+  .vonu-check-page [data-vonu-scanner-subtitle="true"] {
+    width: min(780px, calc(100vw - 160px)) !important;
+    max-width: 780px !important;
+    font-size: 20px !important;
+    line-height: 1.35 !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.018em !important;
+    text-align: center !important;
+    text-wrap: balance !important;
+  }
+
   /* Mode selector stays on one fixed baseline in URL, Capture and Message. */
   .vonu-check-page:has(> div:first-of-type > header + main > section.text-center) > div:first-of-type > header + main > section:nth-of-type(2) {
     margin-top: 42px !important;
@@ -86,12 +97,12 @@
   }
 
   .vonu-check-page [data-vonu-idle-mode="url"] [data-vonu-url-input-shell="true"] {
-    width: min(680px, calc(100% - 120px)) !important;
-    max-width: 680px !important;
-    min-height: 58px !important;
-    height: 58px !important;
+    width: min(620px, calc(100% - 160px)) !important;
+    max-width: 620px !important;
+    min-height: 62px !important;
+    height: 62px !important;
     margin: 10px auto 0 !important;
-    padding-inline: 16px !important;
+    padding-inline: 0 !important;
     border-radius: 18px !important;
     background: #0d1220 !important;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.07) !important;
@@ -102,8 +113,13 @@
   }
 
   .vonu-check-page [data-vonu-idle-mode="url"] [data-vonu-url-input-shell="true"] input {
-    height: 58px !important;
-    padding-block: 0 !important;
+    height: 62px !important;
+    padding: 0 18px !important;
+    text-align: start !important;
+  }
+
+  .vonu-check-page [data-vonu-idle-mode="url"] [data-vonu-url-icon="true"] {
+    display: none !important;
   }
 
   .vonu-check-page [data-vonu-idle-mode="url"] [data-vonu-cta-stack="true"] {
@@ -188,8 +204,8 @@
   }
 
   .vonu-check-page [data-vonu-idle-mode="url"] [data-vonu-url-input-shell="true"] {
-    width: min(660px, calc(100% - 120px)) !important;
-    max-width: 660px !important;
+    width: min(600px, calc(100% - 160px)) !important;
+    max-width: 600px !important;
     margin-top: 7px !important;
   }
 
