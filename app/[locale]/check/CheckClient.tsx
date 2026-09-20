@@ -444,6 +444,10 @@ const DOCUMENT_UI: Record<SupportedLocale, {
   reviewLevel: string;
   keyData: string;
   disclaimer: string;
+  jurisdiction: string;
+  governingLaw: string;
+  venue: string;
+  jurisdictionConfidence: string;
 }> = {
   es: {
     label: "Documento",
@@ -464,6 +468,10 @@ const DOCUMENT_UI: Record<SupportedLocale, {
     reviewLevel: "Nivel de revisión",
     keyData: "Datos clave del documento",
     disclaimer: "La puntuación resume puntos que conviene revisar. No certifica la autenticidad del documento, su validez legal ni que los datos reflejen una operación real.",
+    jurisdiction: "Jurisdicción detectada",
+    governingLaw: "Ley aplicable",
+    venue: "Tribunal / foro",
+    jurisdictionConfidence: "Confianza de jurisdicción",
   },
   en: {
     label: "Document",
@@ -484,6 +492,10 @@ const DOCUMENT_UI: Record<SupportedLocale, {
     reviewLevel: "Review level",
     keyData: "Key document details",
     disclaimer: "The score summarises points worth reviewing. It does not certify document authenticity, legal validity or that the data reflects a real transaction.",
+    jurisdiction: "Detected jurisdiction",
+    governingLaw: "Governing law",
+    venue: "Court / venue",
+    jurisdictionConfidence: "Jurisdiction confidence",
   },
   fr: {
     label: "Document",
@@ -504,6 +516,10 @@ const DOCUMENT_UI: Record<SupportedLocale, {
     reviewLevel: "Niveau de vérification",
     keyData: "Données clés du document",
     disclaimer: "Le score résume les points à vérifier. Il ne certifie ni l’authenticité du document, ni sa validité juridique, ni la réalité de l’opération.",
+    jurisdiction: "Juridiction détectée",
+    governingLaw: "Droit applicable",
+    venue: "Tribunal / juridiction",
+    jurisdictionConfidence: "Confiance de juridiction",
   },
   de: {
     label: "Dokument",
@@ -524,6 +540,10 @@ const DOCUMENT_UI: Record<SupportedLocale, {
     reviewLevel: "Prüfstufe",
     keyData: "Wichtige Dokumentdaten",
     disclaimer: "Der Wert fasst Punkte zusammen, die geprüft werden sollten. Er bestätigt weder die Echtheit des Dokuments noch seine rechtliche Wirksamkeit oder die tatsächliche Durchführung einer Transaktion.",
+    jurisdiction: "Erkannte Rechtsordnung",
+    governingLaw: "Anwendbares Recht",
+    venue: "Gericht / Gerichtsstand",
+    jurisdictionConfidence: "Sicherheit der Rechtsordnung",
   },
   ar: {
     label: "مستند",
@@ -544,6 +564,10 @@ const DOCUMENT_UI: Record<SupportedLocale, {
     reviewLevel: "مستوى المراجعة",
     keyData: "البيانات الأساسية للمستند",
     disclaimer: "تلخص الدرجة النقاط التي تستحق المراجعة. وهي لا تثبت أصالة المستند أو صلاحيته القانونية أو أن البيانات تعكس معاملة حقيقية.",
+    jurisdiction: "الولاية القضائية المكتشفة",
+    governingLaw: "القانون الواجب التطبيق",
+    venue: "المحكمة / جهة الاختصاص",
+    jurisdictionConfidence: "الثقة في تحديد الولاية القضائية",
   },
 };
 
@@ -704,6 +728,52 @@ function labelForRiskBand(band: RiskBand, t: UiCopy) {
   if (band === "high") return t.high;
   if (band === "very_high") return t.veryHigh;
   return t.unknown;
+}
+
+function documentReviewLabel(band: RiskBand, locale: SupportedLocale) {
+  const labels: Record<SupportedLocale, Record<RiskBand, string>> = {
+    es: {
+      very_low: "Muy pocos puntos a revisar",
+      low: "Pocos puntos a revisar",
+      moderate: "Revisión recomendada",
+      high: "Revisión prioritaria",
+      very_high: "Revisión urgente",
+      unknown: "Revisión inconclusa",
+    },
+    en: {
+      very_low: "Very few points to review",
+      low: "A few points to review",
+      moderate: "Review recommended",
+      high: "Priority review",
+      very_high: "Urgent review",
+      unknown: "Inconclusive review",
+    },
+    fr: {
+      very_low: "Très peu de points à vérifier",
+      low: "Quelques points à vérifier",
+      moderate: "Vérification recommandée",
+      high: "Vérification prioritaire",
+      very_high: "Vérification urgente",
+      unknown: "Vérification non concluante",
+    },
+    de: {
+      very_low: "Sehr wenige Prüfpunkte",
+      low: "Wenige Prüfpunkte",
+      moderate: "Prüfung empfohlen",
+      high: "Prioritäre Prüfung",
+      very_high: "Dringende Prüfung",
+      unknown: "Prüfung nicht eindeutig",
+    },
+    ar: {
+      very_low: "نقاط قليلة جدًا للمراجعة",
+      low: "بعض النقاط للمراجعة",
+      moderate: "يوصى بالمراجعة",
+      high: "مراجعة ذات أولوية",
+      very_high: "مراجعة عاجلة",
+      unknown: "مراجعة غير حاسمة",
+    },
+  };
+  return labels[locale][band];
 }
 
 function yesNoLabel(locale: SupportedLocale, value: boolean) {
@@ -964,7 +1034,9 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
   const riskBand: RiskBand = !risk || risk.level === "unknown"
     ? "unknown"
     : risk.band ?? riskBandFromScore(risk.score);
-  const riskLabel = labelForRiskBand(riskBand, t);
+  const riskLabel = result?.version === "vonu-document-v1"
+    ? documentReviewLabel(riskBand, locale)
+    : labelForRiskBand(riskBand, t);
   const confidenceLabel = risk
     ? risk.confidence === "high"
       ? t.highConfidence
@@ -1303,6 +1375,21 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
                             <p className="text-slate-500">{DOCUMENT_UI[locale].clauses}:</p>
                             <ul className="mt-1 grid gap-1">{result.keyFacts.keyClauses.map((item, index) => <li key={`${item}-${index}`}>• {item}</li>)}</ul>
                           </div>
+                        )}
+                        {(result.jurisdiction.country || result.jurisdiction.region) && (
+                          <p>
+                            <span className="text-slate-500">{DOCUMENT_UI[locale].jurisdiction}: </span>
+                            <span className="text-slate-200">{[result.jurisdiction.country, result.jurisdiction.region].filter(Boolean).join(" · ")}</span>
+                          </p>
+                        )}
+                        {result.jurisdiction.governingLaw && <p><span className="text-slate-500">{DOCUMENT_UI[locale].governingLaw}: </span>{result.jurisdiction.governingLaw}</p>}
+                        {result.jurisdiction.venue && <p><span className="text-slate-500">{DOCUMENT_UI[locale].venue}: </span>{result.jurisdiction.venue}</p>}
+                        {(result.jurisdiction.country || result.jurisdiction.governingLaw || result.jurisdiction.venue) && (
+                          <p>
+                            <span className="text-slate-500">{DOCUMENT_UI[locale].jurisdictionConfidence}: </span>
+                            {result.jurisdiction.confidence === "high" ? t.highConfidence : result.jurisdiction.confidence === "medium" ? t.medium : t.limited}
+                            {result.jurisdiction.basis ? ` · ${result.jurisdiction.basis}` : ""}
+                          </p>
                         )}
                       </div>
                     )}
