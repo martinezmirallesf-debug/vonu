@@ -69,7 +69,10 @@ requireText(checkClient, 'fetch("/api/check/entitlement"', "scanner direct entit
 requireText(checkClient, 'cache: "no-store"', "scanner no-store entitlement refresh");
 requireText(checkClient, 'data-vonu-document-thumbnail-style="page"', "document thumbnail page treatment");
 requireText(checkClient, 'className="relative h-[58px] w-[44px] shrink-0"', "document thumbnail page proportions");
+requireText(checkClient, 'data-vonu-analysis-step="true"', "stable analysis step slot");
+requireText(checkClient, 'className="mx-auto mt-3 flex h-12', "fixed mobile analysis step height");
 forbidText(checkClient, 'bg-[#dceaff] p-1 ring-1 ring-[#7bb7ff]/30', "legacy blue document thumbnail shell");
+forbidText(checkClient, 'h-[7px] w-[31px] rounded-[2px] bg-[#eef5ff]', "legacy blue document thumbnail block");
 requireText(checkPage, 'export const dynamic = "force-dynamic"', "device-specific check page");
 requireText(checkPage, "export const revalidate = 0", "check page no static revalidation");
 requireText(checkCss, 'span[data-vonu-entitlement-status="true"]', "live entitlement css target");
