@@ -11,10 +11,11 @@ import { friendlyHttpStatus, humanizeLimitation, humanizeWebSignal } from "@/lib
 import { riskBandFromScore } from "@/lib/vonu-check/risk-score";
 import type { CaptureCheckResult } from "@/lib/vonu-check/capture-types";
 import type { TextCheckResult } from "@/lib/vonu-check/text-types";
+import type { DocumentCheckResult, DocumentKind } from "@/lib/vonu-check/document-types";
 import type { RiskBand, RiskLevel, SignalTone, SupportedLocale, WebCheckResult } from "@/lib/vonu-check/types";
 
-type Mode = "url" | "capture" | "text";
-type Result = WebCheckResult | CaptureCheckResult | TextCheckResult;
+type Mode = "url" | "capture" | "text" | "document";
+type Result = WebCheckResult | CaptureCheckResult | TextCheckResult | DocumentCheckResult;
 
 type EntitlementSnapshot = {
   freeUsed: boolean;
@@ -124,7 +125,7 @@ type UiCopy = {
 const UI: Record<SupportedLocale, UiCopy> = {
   es: {
     hero: "Detecta estafas, phishing y perfiles falsos en segundos",
-    sub: "Analiza URLs, capturas de pantalla y mensajes desde un único escáner. Sin chat previo, sin registro.",
+    sub: "Analiza URLs, capturas de pantalla, mensajes y documentos desde un único escáner.",
     url: "URL o enlace",
     capture: "Captura",
     text: "Mensaje o texto",
@@ -184,7 +185,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
   },
   en: {
     hero: "Detect scams, phishing and fake profiles in seconds",
-    sub: "Analyse URLs, screenshots and messages from one scanner. No chat first, no account required.",
+    sub: "Analyse URLs, screenshots, messages and documents from one scanner.",
     url: "URL or link",
     capture: "Screenshot",
     text: "Message or text",
@@ -244,7 +245,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
   },
   fr: {
     hero: "Détectez les arnaques, le phishing et les faux profils en quelques secondes",
-    sub: "Analysez URLs, captures d’écran et messages depuis un seul scanner. Sans chat préalable ni inscription.",
+    sub: "Analysez URLs, captures d’écran, messages et documents depuis un seul scanner.",
     url: "URL ou lien",
     capture: "Capture",
     text: "Message ou texte",
@@ -304,7 +305,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
   },
   de: {
     hero: "Betrug, Phishing und Fake-Profile in Sekunden erkennen",
-    sub: "Analysiere URLs, Screenshots und Nachrichten mit einem Scanner. Ohne vorherigen Chat und ohne Konto.",
+    sub: "Analysiere URLs, Screenshots, Nachrichten und Dokumente mit einem Scanner.",
     url: "URL oder Link",
     capture: "Screenshot",
     text: "Nachricht oder Text",
@@ -364,7 +365,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
   },
   ar: {
     hero: "اكتشف الاحتيال والتصيد والملفات المزيفة خلال ثوانٍ",
-    sub: "حلّل الروابط ولقطات الشاشة والرسائل من ماسح واحد، دون محادثة مسبقة أو تسجيل.",
+    sub: "حلّل الروابط ولقطات الشاشة والرسائل والمستندات من ماسح واحد.",
     url: "رابط أو URL",
     capture: "لقطة شاشة",
     text: "رسالة أو نص",
@@ -424,6 +425,110 @@ const UI: Record<SupportedLocale, UiCopy> = {
   },
 };
 
+const DOCUMENT_UI: Record<SupportedLocale, {
+  label: string;
+  dropTitle: string;
+  dropHint: string;
+  choose: string;
+  change: string;
+  invalid: string;
+  unreadable: string;
+  scan: string[];
+  type: string;
+  pages: string;
+  parties: string;
+  amounts: string;
+  dates: string;
+  payment: string;
+  clauses: string;
+}> = {
+  es: {
+    label: "Documento",
+    dropTitle: "Sube un documento PDF",
+    dropHint: "Facturas, presupuestos, contratos, alquileres, servicios o financiación",
+    choose: "Elegir PDF",
+    change: "Cambiar PDF",
+    invalid: "Sube un PDF válido de hasta 8 MB.",
+    unreadable: "No hemos podido leer texto suficiente en este PDF. Si es un escaneado, de momento prueba con capturas de sus páginas.",
+    scan: ["Leyendo el documento…", "Identificando el tipo de documento…", "Extrayendo importes, fechas y partes…", "Revisando condiciones y cláusulas…", "Calculando el nivel de cautela…"],
+    type: "Tipo de documento",
+    pages: "Páginas",
+    parties: "Partes",
+    amounts: "Importes",
+    dates: "Fechas",
+    payment: "Pago",
+    clauses: "Cláusulas clave",
+  },
+  en: {
+    label: "Document",
+    dropTitle: "Upload a PDF document",
+    dropHint: "Invoices, quotes, contracts, rentals, services or financing",
+    choose: "Choose PDF",
+    change: "Change PDF",
+    invalid: "Upload a valid PDF up to 8 MB.",
+    unreadable: "We could not read enough text from this PDF. If it is a scanned document, try screenshots of its pages for now.",
+    scan: ["Reading the document…", "Identifying the document type…", "Extracting amounts, dates and parties…", "Reviewing terms and clauses…", "Calculating the caution level…"],
+    type: "Document type",
+    pages: "Pages",
+    parties: "Parties",
+    amounts: "Amounts",
+    dates: "Dates",
+    payment: "Payment",
+    clauses: "Key clauses",
+  },
+  fr: {
+    label: "Document",
+    dropTitle: "Importez un document PDF",
+    dropHint: "Factures, devis, contrats, locations, services ou financement",
+    choose: "Choisir un PDF",
+    change: "Changer le PDF",
+    invalid: "Importez un PDF valide de 8 Mo maximum.",
+    unreadable: "Nous n’avons pas pu lire assez de texte dans ce PDF. S’il s’agit d’un scan, essayez pour l’instant des captures de ses pages.",
+    scan: ["Lecture du document…", "Identification du type de document…", "Extraction des montants, dates et parties…", "Vérification des conditions et clauses…", "Calcul du niveau de prudence…"],
+    type: "Type de document",
+    pages: "Pages",
+    parties: "Parties",
+    amounts: "Montants",
+    dates: "Dates",
+    payment: "Paiement",
+    clauses: "Clauses clés",
+  },
+  de: {
+    label: "Dokument",
+    dropTitle: "PDF-Dokument hochladen",
+    dropHint: "Rechnungen, Angebote, Verträge, Miete, Dienstleistungen oder Finanzierung",
+    choose: "PDF auswählen",
+    change: "PDF ändern",
+    invalid: "Lade eine gültige PDF-Datei bis 8 MB hoch.",
+    unreadable: "Wir konnten nicht genügend Text aus dieser PDF lesen. Wenn es ein Scan ist, nutze vorerst Screenshots der Seiten.",
+    scan: ["Dokument wird gelesen…", "Dokumenttyp wird erkannt…", "Beträge, Daten und Parteien werden extrahiert…", "Bedingungen und Klauseln werden geprüft…", "Vorsichtsstufe wird berechnet…"],
+    type: "Dokumenttyp",
+    pages: "Seiten",
+    parties: "Parteien",
+    amounts: "Beträge",
+    dates: "Daten",
+    payment: "Zahlung",
+    clauses: "Wichtige Klauseln",
+  },
+  ar: {
+    label: "مستند",
+    dropTitle: "ارفع مستند PDF",
+    dropHint: "فواتير أو عروض أسعار أو عقود أو إيجار أو خدمات أو تمويل",
+    choose: "اختيار PDF",
+    change: "تغيير PDF",
+    invalid: "ارفع ملف PDF صالحًا بحجم لا يتجاوز 8 ميغابايت.",
+    unreadable: "لم نتمكن من قراءة نص كافٍ من ملف PDF. إذا كان المستند ممسوحًا ضوئيًا، جرّب حاليًا لقطات لصفحاته.",
+    scan: ["جارٍ قراءة المستند…", "جارٍ تحديد نوع المستند…", "جارٍ استخراج المبالغ والتواريخ والأطراف…", "جارٍ مراجعة الشروط والبنود…", "جارٍ حساب مستوى الحذر…"],
+    type: "نوع المستند",
+    pages: "الصفحات",
+    parties: "الأطراف",
+    amounts: "المبالغ",
+    dates: "التواريخ",
+    payment: "الدفع",
+    clauses: "البنود الرئيسية",
+  },
+};
+
 const unknownSummary: Record<SupportedLocale, string> = {
   es: "No hemos podido revisar suficiente contenido para dar una conclusión fiable. Esto no significa que sea una estafa: algunas webs bloquean las comprobaciones automáticas.",
   en: "We could not review enough content to give a reliable conclusion. This does not mean the site is a scam: some websites block automated checks.",
@@ -432,12 +537,12 @@ const unknownSummary: Record<SupportedLocale, string> = {
   ar: "لم نتمكن من مراجعة محتوى كافٍ لإعطاء نتيجة موثوقة. هذا لا يعني أن الموقع احتيالي؛ فبعض المواقع تمنع الفحوصات الآلية.",
 };
 
-const subjectCopy: Record<SupportedLocale, { analysed: string; url: string; capture: string; text: string }> = {
-  es: { analysed: "Analizado", url: "Enlace analizado", capture: "Captura analizada", text: "Mensaje analizado" },
-  en: { analysed: "Analysed", url: "Analysed link", capture: "Analysed screenshot", text: "Analysed message" },
-  fr: { analysed: "Analysé", url: "Lien analysé", capture: "Capture analysée", text: "Message analysé" },
-  de: { analysed: "Analysiert", url: "Analysierter Link", capture: "Analysierter Screenshot", text: "Analysierte Nachricht" },
-  ar: { analysed: "تم التحليل", url: "الرابط الذي تم تحليله", capture: "لقطة الشاشة التي تم تحليلها", text: "الرسالة التي تم تحليلها" },
+const subjectCopy: Record<SupportedLocale, { analysed: string; url: string; capture: string; text: string; document: string }> = {
+  es: { analysed: "Analizado", url: "Enlace analizado", capture: "Captura analizada", text: "Mensaje analizado", document: "Documento analizado" },
+  en: { analysed: "Analysed", url: "Analysed link", capture: "Analysed screenshot", text: "Analysed message", document: "Analysed document" },
+  fr: { analysed: "Analysé", url: "Lien analysé", capture: "Capture analysée", text: "Message analysé", document: "Document analysé" },
+  de: { analysed: "Analysiert", url: "Analysierter Link", capture: "Analysierter Screenshot", text: "Analysierte Nachricht", document: "Analysiertes Dokument" },
+  ar: { analysed: "تم التحليل", url: "الرابط الذي تم تحليله", capture: "لقطة الشاشة التي تم تحليلها", text: "الرسالة التي تم تحليلها", document: "المستند الذي تم تحليله" },
 };
 
 function VonuMark() {
@@ -457,6 +562,7 @@ function VonuMark() {
 function ModeIcon({ mode }: { mode: Mode }) {
   if (mode === "url") return <span aria-hidden="true" className="text-[17px]">◎</span>;
   if (mode === "capture") return <span aria-hidden="true" className="text-[16px]">▣</span>;
+  if (mode === "document") return <span aria-hidden="true" className="text-[16px]">▤</span>;
   return <span aria-hidden="true" className="text-[17px]">≡</span>;
 }
 
@@ -476,6 +582,15 @@ function ScannerModeIcon({ mode }: { mode: Mode }) {
         <rect x="3" y="3" width="18" height="18" rx="2.5" stroke="currentColor" strokeWidth="1.9" />
         <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" strokeWidth="1.8" />
         <path d="m21 15-5-5L5 21" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+
+  if (mode === "document") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" aria-hidden="true">
+        <path d="M6 2.75h7.5L19 8.25V21.25H6V2.75Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+        <path d="M13.5 2.75v5.5H19M9 12h7M9 15.5h7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     );
   }
@@ -513,6 +628,57 @@ function contextLabel(kind: CaptureCheckResult["kind"], locale: SupportedLocale)
   return labels[locale][kind];
 }
 
+function documentKindLabel(kind: DocumentKind, locale: SupportedLocale) {
+  const labels: Record<SupportedLocale, Record<DocumentKind, string>> = {
+    es: {
+      invoice: "Factura",
+      quote_or_proforma: "Presupuesto / proforma",
+      contract: "Contrato",
+      rental_contract: "Contrato de alquiler",
+      service_contract: "Contrato de servicios",
+      loan_or_financing: "Préstamo / financiación",
+      other: "Otro documento",
+    },
+    en: {
+      invoice: "Invoice",
+      quote_or_proforma: "Quote / pro forma",
+      contract: "Contract",
+      rental_contract: "Rental agreement",
+      service_contract: "Service contract",
+      loan_or_financing: "Loan / financing",
+      other: "Other document",
+    },
+    fr: {
+      invoice: "Facture",
+      quote_or_proforma: "Devis / pro forma",
+      contract: "Contrat",
+      rental_contract: "Contrat de location",
+      service_contract: "Contrat de services",
+      loan_or_financing: "Prêt / financement",
+      other: "Autre document",
+    },
+    de: {
+      invoice: "Rechnung",
+      quote_or_proforma: "Angebot / Proforma",
+      contract: "Vertrag",
+      rental_contract: "Mietvertrag",
+      service_contract: "Dienstleistungsvertrag",
+      loan_or_financing: "Darlehen / Finanzierung",
+      other: "Anderes Dokument",
+    },
+    ar: {
+      invoice: "فاتورة",
+      quote_or_proforma: "عرض سعر / فاتورة مبدئية",
+      contract: "عقد",
+      rental_contract: "عقد إيجار",
+      service_contract: "عقد خدمات",
+      loan_or_financing: "قرض / تمويل",
+      other: "مستند آخر",
+    },
+  };
+  return labels[locale][kind];
+}
+
 function labelForRiskBand(band: RiskBand, t: UiCopy) {
   if (band === "very_low") return t.veryLow;
   if (band === "low") return t.low;
@@ -543,12 +709,15 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
   const [imageData, setImageData] = useState<string | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [imageName, setImageName] = useState("");
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [documentName, setDocumentName] = useState("");
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [scanIndex, setScanIndex] = useState(0);
   const [entitlement, setEntitlement] = useState<EntitlementSnapshot | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const documentRef = useRef<HTMLInputElement>(null);
   const imagePreviewObjectUrlRef = useRef<string | null>(null);
 
   const refreshBalance = useCallback(async () => {
@@ -662,6 +831,18 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
     setError("");
   }
 
+  async function handleDocumentFile(file: File | null) {
+    const looksLikePdf = !!file && (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"));
+    if (!file || !looksLikePdf || file.size <= 0 || file.size > 8_000_000) {
+      setError(DOCUMENT_UI[locale].invalid);
+      return;
+    }
+    setMode("document");
+    setDocumentFile(file);
+    setDocumentName(file.name || "document.pdf");
+    setError("");
+  }
+
   async function handlePaste(event: React.ClipboardEvent<HTMLDivElement>) {
     const imageItem = Array.from(event.clipboardData.items).find((item) => item.type.startsWith("image/"));
     if (!imageItem) return;
@@ -676,6 +857,7 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
     setResult(null);
     let endpoint = "";
     let body: Record<string, unknown> = { locale };
+    let documentBody: FormData | null = null;
 
     if (mode === "url") {
       const clean = url.trim();
@@ -692,6 +874,15 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
       }
       endpoint = "/api/check/image";
       body = { ...body, imageBase64: imageData };
+    } else if (mode === "document") {
+      if (!documentFile) {
+        setError(DOCUMENT_UI[locale].invalid);
+        return;
+      }
+      endpoint = "/api/check/document";
+      documentBody = new FormData();
+      documentBody.set("locale", locale);
+      documentBody.set("file", documentFile);
     } else {
       const clean = text.trim();
       if (!clean || clean.length > 20_000) {
@@ -705,13 +896,28 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
     setLoading(true);
     setScanIndex(0);
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      const response = await fetch(
+        endpoint,
+        documentBody
+          ? { method: "POST", body: documentBody }
+          : {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify(body),
+            },
+      );
       const data = await response.json().catch(() => null);
-      if (!response.ok || !data) throw new Error(data?.error || "analysis_failed");
+      if (!response.ok || !data) {
+        if (mode === "document" && data?.error === "document_text_unavailable") {
+          setError(DOCUMENT_UI[locale].unreadable);
+          return;
+        }
+        if (mode === "document" && (data?.error === "invalid_document" || data?.error === "document_too_large")) {
+          setError(DOCUMENT_UI[locale].invalid);
+          return;
+        }
+        throw new Error(data?.error || "analysis_failed");
+      }
       setResult(data as Result);
       void refreshBalance();
     } catch {
@@ -727,7 +933,13 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
     setScanIndex(0);
   }
 
-  const steps = mode === "url" ? t.scanUrl : mode === "capture" ? t.scanCapture : t.scanText;
+  const steps = mode === "url"
+    ? t.scanUrl
+    : mode === "capture"
+      ? t.scanCapture
+      : mode === "document"
+        ? DOCUMENT_UI[locale].scan
+        : t.scanText;
   const activeStep = steps[scanIndex % steps.length];
   const risk = result?.risk;
   const styles = risk ? riskStyles(risk.level) : riskStyles("unknown");
@@ -774,6 +986,18 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
         detail: result?.version === "vonu-capture-v1" ? contextLabel(result.kind, locale) : t.dropHint,
         image: imageData || imagePreviewUrl,
         icon: "▣",
+      };
+    }
+    if (result?.version === "vonu-document-v1" || mode === "document") {
+      return {
+        mode: "document" as const,
+        label: subjectCopy[locale].document,
+        primary: result?.version === "vonu-document-v1" ? result.filename : documentName || DOCUMENT_UI[locale].label,
+        detail: result?.version === "vonu-document-v1"
+          ? documentKindLabel(result.kind, locale)
+          : DOCUMENT_UI[locale].dropHint,
+        image: null as string | null,
+        icon: "PDF",
       };
     }
     if (result?.version === "vonu-text-v1" || mode === "text") {
@@ -861,11 +1085,11 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
             </section>
 
             <section className="mx-auto mt-5 w-full max-w-[850px] rounded-[22px] bg-[#141927]/72 shadow-[0_26px_70px_rgba(0,0,0,.24)] backdrop-blur-sm sm:mt-6">
-              <div className="grid grid-cols-3 px-2 pt-1">
-                {(["url", "capture", "text"] as Mode[]).map((item) => (
-                  <button key={item} type="button" onClick={() => switchMode(item)} className={["relative flex h-[52px] items-center justify-center gap-2 px-2 text-[12px] font-semibold transition sm:text-[14px]", mode === item ? "text-emerald-300" : "text-slate-400 hover:text-slate-200"].join(" ")}>
+              <div className="grid grid-cols-4 px-1 pt-1 sm:px-2">
+                {(["url", "capture", "text", "document"] as Mode[]).map((item) => (
+                  <button key={item} type="button" onClick={() => switchMode(item)} className={["relative flex h-[52px] items-center justify-center gap-1.5 px-1 text-[11px] font-semibold transition sm:gap-2 sm:px-2 sm:text-[14px]", mode === item ? "text-emerald-300" : "text-slate-400 hover:text-slate-200"].join(" ")}>
                     <ModeIcon mode={item} />
-                    <span>{item === "url" ? t.url : item === "capture" ? t.capture : t.text}</span>
+                    <span>{item === "url" ? t.url : item === "capture" ? t.capture : item === "text" ? t.text : DOCUMENT_UI[locale].label}</span>
                     {mode === item && <span className="absolute inset-x-[18%] bottom-[6px] h-[2px] rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,.45)]" />}
                   </button>
                 ))}
@@ -903,6 +1127,35 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
                       </div>
                     )}
                     <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(event) => void handleFile(event.target.files?.[0] || null)} />
+                  </div>
+                )}
+
+                {mode === "document" && (
+                  <div
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      void handleDocumentFile(event.dataTransfer.files?.[0] || null);
+                    }}
+                    className="grid min-h-[138px] place-items-center px-3 py-2 text-center"
+                  >
+                    {documentFile ? (
+                      <div className="grid w-full gap-3 sm:grid-cols-[72px_1fr] sm:items-center sm:text-start">
+                        <div className="mx-auto grid h-16 w-14 place-items-center rounded-xl border border-[#7bb7ff]/25 bg-[#7bb7ff]/[0.06] text-[12px] font-bold tracking-[0.08em] text-[#7bb7ff]">PDF</div>
+                        <div className="min-w-0">
+                          <p className="truncate text-[14px] font-semibold text-white">{documentName}</p>
+                          <p className="mt-1 text-[13px] text-slate-400">{DOCUMENT_UI[locale].dropHint}</p>
+                          <button type="button" onClick={() => documentRef.current?.click()} className="mt-3 rounded-lg bg-white/[0.05] px-3.5 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]">{DOCUMENT_UI[locale].change}</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-[16px] font-semibold text-white sm:text-[17px]">{DOCUMENT_UI[locale].dropTitle}</p>
+                        <p className="mx-auto mt-2 max-w-lg text-[13px] leading-5 text-slate-400 sm:text-sm">{DOCUMENT_UI[locale].dropHint}</p>
+                        <button type="button" onClick={() => documentRef.current?.click()} className="mt-3 rounded-xl bg-emerald-400/[0.10] px-4 py-2 text-[13px] font-semibold text-emerald-200 ring-1 ring-emerald-400/25 hover:bg-emerald-400/[0.14]">{DOCUMENT_UI[locale].choose}</button>
+                      </div>
+                    )}
+                    <input ref={documentRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={(event) => void handleDocumentFile(event.target.files?.[0] || null)} />
                   </div>
                 )}
 
@@ -1013,6 +1266,22 @@ export default function CheckClient({ locale }: { locale: SupportedLocale }) {
                   <section className="min-w-0 rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08]">
                     <h2 className="text-[17px] font-bold text-white">{t.extracted}</h2>
                     {result.version === "vonu-capture-v1" && <p className="mt-3 text-[13px] text-slate-400">{t.context}: <span className="text-slate-200">{contextLabel(result.kind, locale)}</span></p>}
+                    {result.version === "vonu-document-v1" && (
+                      <div className="mt-3 grid gap-2 text-[12px] leading-5 text-slate-400 [overflow-wrap:anywhere]">
+                        <p><span className="text-slate-500">{DOCUMENT_UI[locale].type}: </span><span className="text-slate-200">{documentKindLabel(result.kind, locale)}</span></p>
+                        {result.pageCount && <p><span className="text-slate-500">{DOCUMENT_UI[locale].pages}: </span>{result.pageCount}</p>}
+                        {result.keyFacts.parties.length > 0 && <p><span className="text-slate-500">{DOCUMENT_UI[locale].parties}: </span>{result.keyFacts.parties.join(" · ")}</p>}
+                        {result.keyFacts.amounts.length > 0 && <p><span className="text-slate-500">{DOCUMENT_UI[locale].amounts}: </span>{result.keyFacts.amounts.join(" · ")}</p>}
+                        {result.keyFacts.dates.length > 0 && <p><span className="text-slate-500">{DOCUMENT_UI[locale].dates}: </span>{result.keyFacts.dates.join(" · ")}</p>}
+                        {result.keyFacts.paymentDetails.length > 0 && <p><span className="text-slate-500">{DOCUMENT_UI[locale].payment}: </span>{result.keyFacts.paymentDetails.join(" · ")}</p>}
+                        {result.keyFacts.keyClauses.length > 0 && (
+                          <div>
+                            <p className="text-slate-500">{DOCUMENT_UI[locale].clauses}:</p>
+                            <ul className="mt-1 grid gap-1">{result.keyFacts.keyClauses.map((item, index) => <li key={`${item}-${index}`}>• {item}</li>)}</ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <div className="mt-3 grid min-w-0 gap-2 text-[12px] text-slate-400 [overflow-wrap:anywhere]">
                       {result.extracted.urls.length > 0 && <p><span className="text-slate-500">{t.urls}: </span>{result.extracted.urls.join(", ")}</p>}
                       {result.extracted.phones.length > 0 && <p><span className="text-slate-500">{t.phones}: </span>{result.extracted.phones.join(", ")}</p>}
