@@ -685,9 +685,7 @@ function DocumentThumbnail({ completed = false }: { completed?: boolean }) {
         </svg>
       </div>
 
-      {!completed && (
-        <span className="absolute -bottom-[3px] start-1/2 h-[2px] w-6 -translate-x-1/2 animate-[pulse_1.4s_ease-in-out_infinite] rounded-full bg-[#7bb7ff]/75 shadow-[0_0_10px_rgba(123,183,255,.55)] rtl:translate-x-1/2" />
-      )}
+
     </div>
   );
 }
