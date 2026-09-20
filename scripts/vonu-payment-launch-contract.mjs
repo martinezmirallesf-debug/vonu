@@ -91,6 +91,11 @@ requireText(desktopFitCss, 'padding: 96px 28px 18px !important;', "desktop home 
 requireText(desktopFitCss, 'margin-top: 42px !important;', "desktop scanner separation");
 requireText(desktopFitCss, 'max-width: 500px !important;', "desktop disclaimer readable width");
 requireText(desktopFitCss, 'font-size: 10.5px !important;', "desktop disclaimer larger type");
+requireText(desktopFitCss, 'height: 210px !important;', "desktop URL content breathing room");
+requireText(desktopFitCss, 'max-width: 780px !important;', "desktop URL field reduced width");
+requireText(desktopFitCss, 'margin-top: 27px !important;', "desktop URL CTA separation");
+requireText(desktopFitCss, '> div:last-child:has(input[type="file"])', "file-mode desktop layout target");
+requireText(desktopFitCss, 'text-align: center !important;', "file-mode disclaimer matches URL");
 requireText(checkClient, 'data-vonu-result-actions="true"', "result action group");
 requireText(checkClient, 'data-vonu-share-result="true"', "share result action");
 requireText(checkClient, 'data-vonu-new-check="true"', "new analysis action");
