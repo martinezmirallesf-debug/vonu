@@ -52,6 +52,142 @@ function normalizeKind(value: unknown): DocumentKind {
   return allowed.includes(value as DocumentKind) ? (value as DocumentKind) : "other";
 }
 
+const documentFindingCopy: Record<SupportedLocale, {
+  identified: string;
+  financial: string;
+  dates: string;
+  terms: string;
+  payment: string;
+  fallbackConfidence: Record<"limited" | "medium" | "high", string>;
+}> = {
+  es: {
+    identified: "Documento identificado",
+    financial: "Importes relevantes detectados",
+    dates: "Fechas relevantes detectadas",
+    terms: "Condiciones importantes",
+    payment: "Condiciones de pago",
+    fallbackConfidence: {
+      limited: "Basada en el texto extraído del PDF; faltan datos o contexto para una revisión más completa y no se ha verificado la autenticidad del emisor.",
+      medium: "El PDF contiene texto suficiente para revisar los puntos principales, aunque no se ha verificado la autenticidad del emisor ni información externa.",
+      high: "El contenido extraído permite una revisión amplia del documento; esto no certifica la autenticidad del emisor ni su validez legal.",
+    },
+  },
+  en: {
+    identified: "Document identified",
+    financial: "Relevant amounts detected",
+    dates: "Relevant dates detected",
+    terms: "Important terms",
+    payment: "Payment terms",
+    fallbackConfidence: {
+      limited: "Based on extracted PDF text; some data or context is missing for a fuller review and the issuer's authenticity has not been verified.",
+      medium: "The PDF contains enough text to review the main points, although issuer authenticity and external information have not been verified.",
+      high: "The extracted content supports a broad review of the document; this does not certify issuer authenticity or legal validity.",
+    },
+  },
+  fr: {
+    identified: "Document identifié",
+    financial: "Montants pertinents détectés",
+    dates: "Dates pertinentes détectées",
+    terms: "Conditions importantes",
+    payment: "Conditions de paiement",
+    fallbackConfidence: {
+      limited: "Basée sur le texte extrait du PDF ; certaines données ou le contexte manquent et l'authenticité de l'émetteur n'a pas été vérifiée.",
+      medium: "Le PDF contient assez de texte pour examiner les points principaux, sans vérification de l'authenticité de l'émetteur ni de données externes.",
+      high: "Le contenu extrait permet une analyse étendue du document ; cela ne certifie ni l'authenticité de l'émetteur ni sa validité juridique.",
+    },
+  },
+  de: {
+    identified: "Dokument erkannt",
+    financial: "Relevante Beträge erkannt",
+    dates: "Relevante Daten erkannt",
+    terms: "Wichtige Bedingungen",
+    payment: "Zahlungsbedingungen",
+    fallbackConfidence: {
+      limited: "Basiert auf dem extrahierten PDF-Text; für eine vollständigere Prüfung fehlen Daten oder Kontext und die Echtheit des Ausstellers wurde nicht verifiziert.",
+      medium: "Die PDF enthält genug Text für die wichtigsten Prüfpunkte; die Echtheit des Ausstellers und externe Angaben wurden jedoch nicht verifiziert.",
+      high: "Der extrahierte Inhalt ermöglicht eine breite Dokumentprüfung; dies bestätigt weder die Echtheit des Ausstellers noch die rechtliche Wirksamkeit.",
+    },
+  },
+  ar: {
+    identified: "تم تحديد نوع المستند",
+    financial: "تم اكتشاف مبالغ مهمة",
+    dates: "تم اكتشاف تواريخ مهمة",
+    terms: "شروط مهمة",
+    payment: "شروط الدفع",
+    fallbackConfidence: {
+      limited: "يعتمد التحليل على النص المستخرج من ملف PDF؛ بعض البيانات أو السياق غير متاح ولم يتم التحقق من هوية الجهة المصدرة.",
+      medium: "يحتوي ملف PDF على نص كافٍ لمراجعة النقاط الرئيسية، لكن لم يتم التحقق من هوية الجهة المصدرة أو المعلومات الخارجية.",
+      high: "يسمح المحتوى المستخرج بمراجعة واسعة للمستند، لكنه لا يثبت هوية الجهة المصدرة أو الصلاحية القانونية.",
+    },
+  },
+};
+
+function fallbackDocumentFindings(
+  locale: SupportedLocale,
+  summary: string,
+  keyFacts: {
+    amounts: string[];
+    dates: string[];
+    paymentDetails: string[];
+    keyClauses: string[];
+  },
+) {
+  const copy = documentFindingCopy[locale];
+  const findings: Array<{ id: string; tone: SignalTone; title: string; detail: string; weight: number }> = [];
+
+  if (summary) {
+    findings.push({
+      id: "document_identified",
+      tone: "neutral",
+      title: copy.identified,
+      detail: summary,
+      weight: 0,
+    });
+  }
+
+  if (keyFacts.amounts.length > 0) {
+    findings.push({
+      id: "key_amounts",
+      tone: "neutral",
+      title: copy.financial,
+      detail: keyFacts.amounts.slice(0, 3).join(" · "),
+      weight: 0,
+    });
+  }
+
+  if (keyFacts.dates.length > 0) {
+    findings.push({
+      id: "key_dates",
+      tone: "neutral",
+      title: copy.dates,
+      detail: keyFacts.dates.slice(0, 3).join(" · "),
+      weight: 0,
+    });
+  }
+
+  if (keyFacts.paymentDetails.length > 0) {
+    findings.push({
+      id: "payment_terms",
+      tone: "neutral",
+      title: copy.payment,
+      detail: keyFacts.paymentDetails.slice(0, 2).join(" · "),
+      weight: 0,
+    });
+  }
+
+  if (keyFacts.keyClauses.length > 0) {
+    findings.push({
+      id: "key_terms",
+      tone: "neutral",
+      title: copy.terms,
+      detail: keyFacts.keyClauses.slice(0, 2).join(" · "),
+      weight: 0,
+    });
+  }
+
+  return findings.slice(0, 4);
+}
+
 function parseJsonText(text: string) {
   const clean = text
     .trim()
@@ -118,11 +254,15 @@ CORE RULES:
 - Use 0-19 when no material caution signals are visible; 20-39 for minor points to verify; 40-59 for meaningful ambiguity, missing information or notable obligations; 60-79 for several material concerns; 80-100 only for severe, explicit inconsistencies or high-impact terms supported by the document.
 - Keep output concise enough for mobile.
 - If the document does not fit one of the six supported families, classify as other and say what can and cannot be reviewed reliably.
+- signals MUST contain 3 to 6 useful findings even when the caution score is very low. Do not leave signals empty merely because nothing suspicious was found.
+- Use signals to surface what the document actually is, important inclusions/conditions, meaningful dates or amounts, and any missing or ambiguous information worth confirming.
+- Low-risk findings should use neutral or positive tone and weight 0. Do not manufacture warnings just to fill the list.
+- risk.confidenceReason must briefly explain WHY confidence is limited, medium or high. It must refer to analysis coverage (for example extracted text, missing context, partial data) and must never imply that authenticity was verified.
 
 Return ONLY valid JSON, no markdown:
 {
   "kind":"invoice|quote_or_proforma|contract|rental_contract|service_contract|loan_or_financing|other",
-  "risk":{"score":0,"confidence":"limited|medium|high"},
+  "risk":{"score":0,"confidence":"limited|medium|high","confidenceReason":"one short explanation in ${locale}"},
   "summary":"short evidence-based conclusion in ${locale}",
   "signals":[
     {"id":"short_id","tone":"positive|warning|negative|neutral","title":"short title","detail":"brief evidence-based detail","weight":0}
@@ -139,7 +279,7 @@ Return ONLY valid JSON, no markdown:
   "limitations":[]
 }
 
-Return at most 8 signals, 8 key clauses, 6 actions and 5 limitations.
+Return 3 to 6 signals whenever the PDF contains enough readable information, plus at most 8 key clauses, 6 actions and 5 limitations.
 Use weight 0-30 only for genuinely caution-increasing evidence; positive/neutral items should normally use 0.
 `.trim();
 }
@@ -151,7 +291,7 @@ Output language: ${locale}.
 Return ONE valid compact JSON object only.
 Classify kind as invoice, quote_or_proforma, contract, rental_contract, service_contract, loan_or_financing or other.
 Schema:
-{"kind":"other","risk":{"score":0,"confidence":"limited"},"summary":"","signals":[],"keyFacts":{"parties":[],"amounts":[],"dates":[],"paymentDetails":[],"keyClauses":[]},"extracted":{"urls":[],"phones":[],"emails":[],"brands":[]},"recommendedActions":[],"limitations":[]}
+{"kind":"other","risk":{"score":0,"confidence":"limited","confidenceReason":"brief reason"},"summary":"","signals":[{"id":"finding","tone":"neutral","title":"useful finding","detail":"evidence-based detail","weight":0}],"keyFacts":{"parties":[],"amounts":[],"dates":[],"paymentDetails":[],"keyClauses":[]},"extracted":{"urls":[],"phones":[],"emails":[],"brands":[]},"recommendedActions":[],"limitations":[]}
 The score is a caution/review index, not legal validity or fraud probability. Do not invent facts.
 `.trim();
 }
@@ -276,7 +416,17 @@ export async function POST(req: NextRequest) {
       parsed = parseJsonText(modelText);
     }
 
-    const signals = Array.isArray(parsed?.signals)
+    const kind = normalizeKind(parsed?.kind);
+    const summary = safeString(parsed?.summary, 900);
+    const keyFacts = {
+      parties: safeStringArray(parsed?.keyFacts?.parties, 8, 300),
+      amounts: safeStringArray(parsed?.keyFacts?.amounts, 10, 220),
+      dates: safeStringArray(parsed?.keyFacts?.dates, 10, 220),
+      paymentDetails: safeStringArray(parsed?.keyFacts?.paymentDetails, 8, 350),
+      keyClauses: safeStringArray(parsed?.keyFacts?.keyClauses, 8, 500),
+    };
+
+    let signals = Array.isArray(parsed?.signals)
       ? parsed.signals
           .slice(0, 8)
           .map((signal: any, index: number) => ({
@@ -289,6 +439,15 @@ export async function POST(req: NextRequest) {
           .filter((signal: any) => signal.title && signal.detail)
       : [];
 
+    if (signals.length < 2) {
+      const fallbacks = fallbackDocumentFindings(locale, summary, keyFacts);
+      const existingIds = new Set(signals.map((signal) => signal.id));
+      for (const fallback of fallbacks) {
+        if (!existingIds.has(fallback.id)) signals.push(fallback);
+        if (signals.length >= 4) break;
+      }
+    }
+
     const rawScore = clampRiskScore(parsed?.risk?.score);
     const score = calibrateModelRiskScore(rawScore, signals);
     const confidenceValue = parsed?.risk?.confidence;
@@ -296,12 +455,15 @@ export async function POST(req: NextRequest) {
       confidenceValue === "high" || confidenceValue === "medium" || confidenceValue === "limited"
         ? confidenceValue
         : "limited";
+    const confidenceReason =
+      safeString(parsed?.risk?.confidenceReason, 420) ||
+      documentFindingCopy[locale].fallbackConfidence[confidence];
 
     const result: DocumentCheckResult = {
       version: "vonu-document-v1",
       checkedAt: new Date().toISOString(),
       locale,
-      kind: normalizeKind(parsed?.kind),
+      kind,
       filename,
       pageCount,
       risk: {
@@ -309,16 +471,11 @@ export async function POST(req: NextRequest) {
         band: riskBandFromScore(score),
         score,
         confidence,
+        confidenceReason,
       },
-      summary: safeString(parsed?.summary, 900),
+      summary,
       signals,
-      keyFacts: {
-        parties: safeStringArray(parsed?.keyFacts?.parties, 8, 300),
-        amounts: safeStringArray(parsed?.keyFacts?.amounts, 10, 220),
-        dates: safeStringArray(parsed?.keyFacts?.dates, 10, 220),
-        paymentDetails: safeStringArray(parsed?.keyFacts?.paymentDetails, 8, 350),
-        keyClauses: safeStringArray(parsed?.keyFacts?.keyClauses, 8, 500),
-      },
+      keyFacts,
       extracted: {
         urls: safeStringArray(parsed?.extracted?.urls, 5, 500),
         phones: safeStringArray(parsed?.extracted?.phones, 5, 100),
