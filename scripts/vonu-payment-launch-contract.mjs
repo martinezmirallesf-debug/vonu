@@ -110,8 +110,9 @@ requireText(desktopFitCss, 'border: 1px solid rgb(35, 59, 97) !important;', "des
 requireText(desktopFitCss, 'background: rgb(8, 22, 49) !important;', "desktop URL matches message surface");
 requireText(desktopFitCss, 'align-self: center !important;', "desktop URL centered");
 requireText(desktopFitCss, 'height: 222px !important;', "desktop URL stack reserves lower action space");
-requireText(desktopFitCss, 'margin-top: 36px !important;', "desktop URL action stack lowered");
-requireText(desktopFitCss, 'transform: translateY(8px) !important;', "desktop URL action stack final nudge");
+requireText(desktopFitCss, 'margin: 20px 0 0 !important;', "desktop URL action stack authoritative gap");
+requireText(desktopFitCss, 'transform: none !important;', "desktop URL action stack uses layout spacing");
+requireText(desktopFitCss, 'section[data-vonu-idle-mode="url"]', "desktop URL mode-specific spacing target");
 requireText(desktopFitCss, '@media (min-width: 1024px)', "desktop-only home styling guard");
 requireText(desktopFitCss, 'width: max-content !important;', "desktop tab underline follows label width");
 requireText(desktopFitCss, 'padding-inline: 15px !important;', "desktop tab underline includes icon and gap width");
