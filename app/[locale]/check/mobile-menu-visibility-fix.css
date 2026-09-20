@@ -44,9 +44,20 @@
   .vonu-check-page header > div:nth-child(2) > div {
     width: 100% !important;
     height: 100% !important;
-    min-height: 100% !important;
+    min-height: 0 !important;
     padding: 88px 24px 24px !important;
+  }
+
+  /* Closed sections must fit as a static menu in every locale.
+     Scrolling is enabled only after the user expands a submenu/language list. */
+  .vonu-check-page header > div[data-vonu-mobile-menu-expanded="false"] > div {
+    overflow-y: hidden !important;
+    overscroll-behavior: none !important;
+  }
+
+  .vonu-check-page header > div[data-vonu-mobile-menu-expanded="true"] > div {
     overflow-y: auto !important;
+    overscroll-behavior: contain !important;
   }
 
   /* Match the mobile menu CTA corner radius to the home CTA instead of a pill.
