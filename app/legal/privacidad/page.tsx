@@ -39,7 +39,7 @@ export default function PrivacidadPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <HomeHeader />
 
-      <LegalPage locale="es" title="Política de privacidad" description="Información sobre el tratamiento de datos personales, contenido y acceso por dispositivo en Vonu." updatedAt="Última actualización: 18 de septiembre de 2026">
+      <LegalPage locale="es" title="Política de privacidad" description="Información sobre el tratamiento de datos personales, contenido y acceso por dispositivo en Vonu." updatedAt="Última actualización: 20 de septiembre de 2026">
         <h2>1. Responsable del tratamiento</h2>
         <p>
           El responsable del tratamiento es <strong>Francisco Luis Martínez Miralles</strong>, titular de Vonu y del dominio vonuai.com.
@@ -54,7 +54,7 @@ export default function PrivacidadPage() {
         <h2>2. Qué datos puede tratar Vonu</h2>
         <p>Dependiendo de la función que utilices, podemos tratar:</p>
         <ul>
-          <li><strong>Contenido de una comprobación:</strong> texto, mensajes, capturas o imágenes, URL y los datos visibles que contengan.</li>
+          <li><strong>Contenido de una comprobación:</strong> texto, mensajes, capturas o imágenes, URL, documentos PDF, el texto extraído de esos documentos y los datos que contengan.</li>
           <li><strong>Datos técnicos de análisis:</strong> tipo de comprobación, señales detectadas, puntuación de riesgo, tiempos de respuesta, estado técnico de una URL y datos públicos del dominio.</li>
           <li><strong>Identificador técnico del dispositivo:</strong> un UUID aleatorio pseudónimo asociado al navegador o dispositivo para controlar el análisis gratuito y los análisis comprados. No contiene tu nombre, email ni el contenido analizado.</li>
           <li><strong>Estado de uso:</strong> si el análisis gratuito ya se utilizó, número de análisis restantes y contador agregado de análisis realizados por ese identificador.</li>
@@ -82,10 +82,10 @@ export default function PrivacidadPage() {
 
         <h2>4. Análisis con inteligencia artificial</h2>
         <p>
-          Las comprobaciones de texto o imagen pueden requerir que el contenido se procese mediante proveedores de modelos de inteligencia artificial. Actualmente la infraestructura de Vonu puede utilizar servicios de <strong>OpenAI</strong> y <strong>Google Gemini</strong>, según la función y configuración activa.
+          Las comprobaciones de texto, imagen o documento PDF pueden requerir que el contenido o el texto extraído se procese mediante proveedores de modelos de inteligencia artificial. Actualmente la infraestructura de Vonu puede utilizar servicios de <strong>OpenAI</strong> y <strong>Google Gemini</strong>, según la función y configuración activa.
         </p>
         <p>
-          Vonu pide a estos sistemas una evaluación estructurada de señales de riesgo y aplica después reglas propias de calibración. La puntuación final es un índice orientativo de riesgo, no una probabilidad de fraude ni una decisión con efectos jurídicos sobre el usuario.
+          Vonu pide a estos sistemas una evaluación estructurada de señales de riesgo o puntos de revisión y aplica después reglas propias de calibración. En documentos, el sistema puede extraer partes, importes, fechas, cláusulas y referencias de jurisdicción para ayudar a organizar la revisión. La puntuación es un índice orientativo y no una probabilidad de fraude, una certificación de autenticidad, un dictamen jurídico ni una decisión con efectos jurídicos sobre el usuario.
         </p>
 
         <h2>5. Comprobación técnica de enlaces y webs</h2>
@@ -141,7 +141,7 @@ export default function PrivacidadPage() {
           <li>Los registros de compras y facturación se conservan durante los plazos exigidos por la normativa aplicable.</li>
           <li>Los datos de contacto se conservan mientras sea necesario atender y documentar la solicitud.</li>
           <li>El email de recursos se conserva hasta que solicites la baja o deje de ser necesario para esa finalidad.</li>
-          <li>El contenido enviado a una comprobación se procesa para generar el resultado. No se envía como contenido bruto a la analítica de producto. Si una función operativa de seguridad o calidad conserva un informe derivado o enmascarado, se limitará a la finalidad para la que esté activada y deberá evitar secretos o datos innecesarios.</li>
+          <li>El contenido enviado a una comprobación —incluidos documentos PDF y su texto extraído— se procesa para generar el resultado. No se envía como contenido bruto a la analítica de producto. Si una función operativa de seguridad o calidad conserva un informe derivado o enmascarado, se limitará a la finalidad para la que esté activada y deberá evitar secretos o datos innecesarios.</li>
         </ul>
 
         <h2>11. Analítica y eventos de producto</h2>
@@ -149,12 +149,12 @@ export default function PrivacidadPage() {
           Utilizamos Vercel Web Analytics y eventos de producto para conocer de forma agregada el uso del servicio. La medición puede incluir páginas visitadas, procedencia, país o región aproximada, tipo de navegador o dispositivo y eventos como modo de análisis, idioma, categoría técnica, nivel o banda de riesgo, duración, éxito o error.
         </p>
         <p>
-          No enviamos intencionadamente el texto del mensaje, la imagen o captura, el email del usuario ni la URL completa analizada como propiedad de esos eventos. En la configuración pública actual no utilizamos Google Analytics ni cookies publicitarias.
+          No enviamos intencionadamente el texto del mensaje, la imagen o captura, el contenido o texto extraído de un PDF, el email del usuario ni la URL completa analizada como propiedad de esos eventos. En la configuración pública actual no utilizamos Google Analytics ni cookies publicitarias.
         </p>
 
         <h2>12. Datos sensibles y de terceros</h2>
         <p>
-          No compartas contraseñas, códigos de verificación u OTP, PIN, números completos de tarjeta, credenciales bancarias, documentos identificativos completos, datos médicos innecesarios ni otra información especialmente sensible si no es imprescindible. Si una captura contiene datos ajenos al análisis, ocúltalos antes de subirla.
+          No compartas contraseñas, códigos de verificación u OTP, PIN, números completos de tarjeta, credenciales bancarias, documentos identificativos completos, datos médicos innecesarios ni otra información especialmente sensible si no es imprescindible. Si una captura o documento contiene datos personales de terceros que no son necesarios para la revisión, ocúltalos o elimina esas páginas antes de subirlo.
         </p>
         <p>
           Si introduces datos de otra persona, eres responsable de contar con una base legítima para hacerlo y de limitar la información a lo estrictamente necesario.
