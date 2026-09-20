@@ -39,7 +39,7 @@ export default function CookiesPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <HomeHeader />
 
-      <LegalPage locale="es" title="Cookies y almacenamiento local" description="Tecnologías técnicas y de medición utilizadas por Vonu." updatedAt="Última actualización: 18 de septiembre de 2026">
+      <LegalPage locale="es" title="Cookies y almacenamiento local" description="Tecnologías técnicas y de medición utilizadas por Vonu." updatedAt="Última actualización: 20 de septiembre de 2026">
         <h2>1. Estado actual</h2>
         <p>
           En la versión pública actual, Vonu <strong>no utiliza Google Analytics ni cookies publicitarias</strong>. La medición principal se realiza mediante Vercel Web Analytics y eventos técnicos de producto.
@@ -69,7 +69,7 @@ export default function CookiesPage() {
           Utilizamos Vercel Web Analytics para conocer de forma agregada páginas vistas, procedencia, país o región aproximada, navegador, sistema operativo, tipo de dispositivo y eventos técnicos o de producto. También podemos utilizar Vercel Speed Insights para medir rendimiento y experiencia técnica.
         </p>
         <p>
-          Estas herramientas se configuran para evitar incluir intencionadamente el texto, la imagen o captura, el email del usuario o la URL completa introducida para una comprobación como propiedades de analítica.
+          Estas herramientas se configuran para evitar incluir intencionadamente el texto, la imagen o captura, el contenido o texto extraído de documentos PDF, el email del usuario o la URL completa introducida para una comprobación como propiedades de analítica.
         </p>
 
         <h2>5. Servicios externos</h2>
