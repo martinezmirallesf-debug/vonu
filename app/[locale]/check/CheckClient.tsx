@@ -1217,7 +1217,7 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
                   <button key={item} type="button" onClick={() => switchMode(item)} className={["relative flex h-[52px] min-w-0 flex-nowrap items-center justify-center gap-[6px] px-1 text-[11px] font-semibold transition sm:px-2 sm:text-[14px]", mode === item ? "text-emerald-300" : "text-slate-400 hover:text-slate-200"].join(" ")}>
                     <ModeIcon mode={item} />
                     <span className="whitespace-nowrap leading-none">{item === "url" ? t.url : item === "capture" ? t.capture : item === "text" ? t.text : DOCUMENT_UI[locale].label}</span>
-                    {mode === item && <span className="absolute inset-x-[18%] bottom-[6px] h-[2px] rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,.45)]" />}
+                    {mode === item && <span className="absolute inset-x-0 bottom-[6px] h-[2px] rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,.45)] sm:inset-x-[18%]" />}
                   </button>
                 ))}
               </div>
