@@ -98,7 +98,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
       <section className="overflow-hidden border-b border-white/[0.06] bg-[#080b12]">
         <div className="mx-auto max-w-[1320px] px-4 pb-16 pt-8 sm:px-6 sm:pb-24 sm:pt-12 lg:px-8">
           <nav aria-label="Breadcrumb" className="mx-auto max-w-[1000px] text-[12px] text-slate-600">
-            <Link href={checkPath(locale)} className="transition hover:text-slate-300">{t.home}</Link>
+            <a href={checkPath(locale)} className="transition hover:text-slate-300">{t.home}</a>
             <span className="px-2" aria-hidden="true">/</span>
             <span className="text-slate-500">{topic.eyebrow}</span>
           </nav>
