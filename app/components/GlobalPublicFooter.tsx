@@ -34,7 +34,7 @@ export default function GlobalPublicFooter({ locale }: { locale: SupportedLocale
 
         <div className="hidden min-h-12 items-center justify-between gap-5 py-3 text-[13px] text-slate-600 md:flex">
           <div className="flex shrink-0 items-center gap-2 text-slate-500">
-            <VonuMark className="h-5 w-5" />
+            <VonuMark className="h-[22px] w-[22px]" />
             <span className="font-semibold tracking-[0.08em] text-white">Vonu</span>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
