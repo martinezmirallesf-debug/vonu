@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Cómo funciona Vonu — Comprueba antes de confiar",
   description:
-    "Cómo funciona Vonu Check: analiza enlaces, mensajes y capturas, separa señales de riesgo de hechos observables y propone qué verificar antes de actuar.",
+    "Cómo funciona Vonu Check: analiza enlaces, mensajes, capturas y documentos, separa señales observables de conclusiones y propone qué verificar antes de actuar.",
   alternates: { canonical: "/como-funciona" },
   openGraph: {
     title: "Cómo funciona Vonu — Comprueba antes de confiar",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Cómo funciona Vonu",
-    description: "Analiza enlaces, mensajes y capturas antes de confiar, pagar o compartir datos.",
+    description: "Analiza enlaces, mensajes, capturas y documentos antes de confiar, firmar, pagar o compartir datos.",
   },
   robots: { index: true, follow: true },
 };
@@ -32,7 +32,7 @@ const steps = [
   {
     number: "01",
     title: "Envía lo que te genera dudas",
-    text: "Pega un enlace o mensaje, o sube una captura. No necesitas explicar la estafa ni saber qué tipo de fraude podría ser.",
+    text: "Pega un enlace o mensaje, sube una captura o un PDF. Vonu adapta la revisión al tipo de contenido que envías.",
   },
   {
     number: "02",
@@ -42,7 +42,7 @@ const steps = [
   {
     number: "03",
     title: "Recibes riesgo y evidencia",
-    text: "La puntuación de 0 a 100 resume la evidencia disponible y se acompaña de las señales que han pesado en el resultado.",
+    text: "La puntuación de 0 a 100 resume la evidencia disponible. En documentos funciona como prioridad de revisión; en riesgos digitales, como índice orientativo de riesgo.",
   },
   {
     number: "04",
@@ -67,6 +67,11 @@ const modes = [
     title: "Lo que ves en pantalla",
     text: "Analiza el texto y el contexto visibles de una captura para aplicar los mismos criterios de riesgo que a un mensaje escrito.",
   },
+  {
+    label: "Documento",
+    title: "PDFs antes de firmar o pagar",
+    text: "Clasifica facturas, presupuestos, contratos, alquileres, servicios y financiación; extrae datos clave y señala condiciones que merecen revisión.",
+  },
 ];
 
 const faq = [
@@ -85,6 +90,10 @@ const faq = [
   {
     q: "¿Qué comprueba de una URL?",
     a: "Entre otras cosas, protocolo, redirecciones, formularios, contenido visible, edad del dominio y fuentes técnicas de reputación cuando están disponibles. Ninguna de estas señales, por sí sola, certifica legitimidad.",
+  },
+  {
+    q: "¿Qué hace Vonu con un documento PDF?",
+    a: "Extrae el texto disponible, identifica el tipo de documento y organiza partes, importes, fechas, pagos, cláusulas y jurisdicción cuando existe evidencia suficiente. Señala puntos a revisar, pero no certifica autenticidad ni sustituye un dictamen jurídico.",
   },
   {
     q: "¿Qué datos no debo enviar?",
@@ -131,7 +140,7 @@ export default function ComoFuncionaPage() {
         "@id": `${siteUrl}/como-funciona#webpage`,
         url: `${siteUrl}/como-funciona`,
         name: "Cómo funciona Vonu",
-        description: "Cómo Vonu analiza enlaces, mensajes y capturas y explica señales de riesgo antes de actuar.",
+        description: "Cómo Vonu analiza enlaces, mensajes, capturas y documentos y explica qué señales o condiciones conviene revisar antes de actuar.",
         inLanguage: "es-ES",
       },
       {
@@ -160,7 +169,7 @@ export default function ComoFuncionaPage() {
               <span className="block text-slate-400">decisión más <GradientText>segura.</GradientText></span>
             </h1>
             <p className="mx-auto mt-7 max-w-[760px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">
-              Vonu Check convierte un enlace, mensaje o captura sospechosa en señales comprensibles, un nivel de riesgo y pasos concretos para verificar antes de actuar.
+              Vonu Check convierte un enlace, mensaje, captura o documento en señales comprensibles, un nivel de riesgo o revisión y pasos concretos antes de actuar.
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <a href="/es/check" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:-translate-y-0.5 hover:bg-emerald-300">
@@ -195,11 +204,11 @@ export default function ComoFuncionaPage() {
           <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
             <div>
               <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Qué puedes comprobar</p>
-              <h2 className="mt-4 max-w-[700px] text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">Tres entradas. Una misma lógica de riesgo.</h2>
+              <h2 className="mt-4 max-w-[700px] text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">Cuatro entradas. Una misma lógica de revisión.</h2>
             </div>
             <p className="max-w-xl text-[16px] leading-8 text-slate-400 lg:justify-self-end">El objetivo no es adivinar. Es reunir señales, explicar sus límites y darte una forma práctica de verificar.</p>
           </div>
-          <div className="mt-10 grid gap-4 lg:grid-cols-3">
+          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {modes.map((mode) => (
               <article key={mode.label} className="min-h-[280px] rounded-[26px] border border-white/[0.07] bg-white/[0.03] p-7">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300">{mode.label}</p>
