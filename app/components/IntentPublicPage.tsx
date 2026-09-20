@@ -211,9 +211,8 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-[#080b12]">
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500/[0.08] blur-[120px]" />
-        <div className="relative mx-auto max-w-[1000px] px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8">
+      <section className="bg-[#080b12]">
+        <div className="mx-auto max-w-[1000px] px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8">
           <h2 className="text-[44px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[68px]">{t.finalTitle}</h2>
           <FunnelLink
             href={checkPath(locale)}
