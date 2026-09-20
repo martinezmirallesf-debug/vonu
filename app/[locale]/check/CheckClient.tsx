@@ -448,6 +448,8 @@ const DOCUMENT_UI: Record<SupportedLocale, {
   governingLaw: string;
   venue: string;
   jurisdictionConfidence: string;
+  officialSources: string;
+  reviewed: string;
 }> = {
   es: {
     label: "Documento",
@@ -472,6 +474,8 @@ const DOCUMENT_UI: Record<SupportedLocale, {
     governingLaw: "Ley aplicable",
     venue: "Tribunal / foro",
     jurisdictionConfidence: "Confianza de jurisdicción",
+    officialSources: "Fuentes oficiales de referencia",
+    reviewed: "Revisado",
   },
   en: {
     label: "Document",
@@ -496,6 +500,8 @@ const DOCUMENT_UI: Record<SupportedLocale, {
     governingLaw: "Governing law",
     venue: "Court / venue",
     jurisdictionConfidence: "Jurisdiction confidence",
+    officialSources: "Official reference sources",
+    reviewed: "Reviewed",
   },
   fr: {
     label: "Document",
@@ -520,6 +526,8 @@ const DOCUMENT_UI: Record<SupportedLocale, {
     governingLaw: "Droit applicable",
     venue: "Tribunal / juridiction",
     jurisdictionConfidence: "Confiance de juridiction",
+    officialSources: "Sources officielles de référence",
+    reviewed: "Vérifié",
   },
   de: {
     label: "Dokument",
@@ -544,6 +552,8 @@ const DOCUMENT_UI: Record<SupportedLocale, {
     governingLaw: "Anwendbares Recht",
     venue: "Gericht / Gerichtsstand",
     jurisdictionConfidence: "Sicherheit der Rechtsordnung",
+    officialSources: "Offizielle Referenzquellen",
+    reviewed: "Geprüft",
   },
   ar: {
     label: "مستند",
@@ -568,6 +578,8 @@ const DOCUMENT_UI: Record<SupportedLocale, {
     governingLaw: "القانون الواجب التطبيق",
     venue: "المحكمة / جهة الاختصاص",
     jurisdictionConfidence: "الثقة في تحديد الولاية القضائية",
+    officialSources: "المصادر الرسمية المرجعية",
+    reviewed: "تمت المراجعة",
   },
 };
 
@@ -1390,6 +1402,27 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
                             {result.jurisdiction.confidence === "high" ? t.highConfidence : result.jurisdiction.confidence === "medium" ? t.medium : t.limited}
                             {result.jurisdiction.basis ? ` · ${result.jurisdiction.basis}` : ""}
                           </p>
+                        )}
+                        {result.legalContext && result.legalContext.references.length > 0 && (
+                          <div className="pt-1">
+                            <p className="text-slate-500">{DOCUMENT_UI[locale].officialSources}:</p>
+                            <div className="mt-1 grid gap-1.5">
+                              {result.legalContext.references.map((reference) => (
+                                <a
+                                  key={reference.url}
+                                  href={reference.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-[#7bb7ff] underline decoration-[#7bb7ff]/35 underline-offset-2 hover:text-[#a3ceff]"
+                                >
+                                  {reference.title}
+                                </a>
+                              ))}
+                            </div>
+                            <p className="mt-1 text-[10px] text-slate-600">
+                              {result.legalContext.profileName} · {DOCUMENT_UI[locale].reviewed}: {result.legalContext.reviewedAt}
+                            </p>
+                          </div>
                         )}
                       </div>
                     )}
