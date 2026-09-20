@@ -266,7 +266,7 @@ const topics: Record<SupportedLocale, Record<IndexedPublicSlug, Topic>> = {
     "es-fiable": { title: "Ist es seriös? Mit Vonu prüfen", description: "Prüfe eine Website, Nachricht, ein Profil oder eine Situation, wenn etwas nicht richtig wirkt.", eyebrow: "Vonu Check", hero: "Ist es seriös? Prüfe die Signale vor dem Handeln." },
   },
   ar: {
-    producto: { title: "المنتج — Vonu", description: "يحلل Vonu الروابط ولقطات الشاشة والرسائل المشبوهة لإظهار إشارات الخطر قبل أن تتصرف.", eyebrow: "المنتج", hero: "تحقق قبل أن تثق." },
+    producto: { title: "المنتج — Vonu", description: "يحلل Vonu الروابط ولقطات الشاشة والرسائل والمستندات لإظهار إشارات الخطر أو النقاط التي تستحق المراجعة قبل أن تتصرف.", eyebrow: "المنتج", hero: "تحقق قبل أن تثق." },
     "casos-de-uso": { title: "حالات الاستخدام — Vonu", description: "مواقف حقيقية يساعد فيها Vonu على مراجعة الإشارات قبل الدفع أو الرد أو مشاركة البيانات.", eyebrow: "حالات الاستخدام", hero: "عندما يبدو شيء غير طبيعي، تحقّق قبل أن تتصرف." },
     recursos: { title: "المصادر — Vonu", description: "أدلة عملية لاكتشاف إشارات الاحتيال والتصيد والانتحال والمخاطر الرقمية.", eyebrow: "المصادر", hero: "تعلّم ما يجب التحقق منه قبل أن تثق." },
     precios: { title: "الأسعار — Vonu", description: "ابدأ مجانًا مع Vonu وزِد السعة عندما تحتاج إلى تحليلات أكثر.", eyebrow: "الأسعار", hero: "ابدأ مجانًا. طوّر خطتك عندما تحتاج." },
