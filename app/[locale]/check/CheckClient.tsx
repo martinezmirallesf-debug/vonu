@@ -787,11 +787,11 @@ function yesNoLabel(locale: SupportedLocale, value: boolean) {
   return value ? labels[locale][0] : labels[locale][1];
 }
 
-export default function CheckClient({ locale }: { locale: SupportedLocale }) {
+export default function CheckClient({ locale, initialMode = "url" }: { locale: SupportedLocale; initialMode?: Mode }) {
   const t = UI[locale];
   const nav = navCopy[locale];
   const dir = localeMeta[locale].dir;
-  const [mode, setMode] = useState<Mode>("url");
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [url, setUrl] = useState("");
   const [text, setText] = useState("");
   const [imageData, setImageData] = useState<string | null>(null);
