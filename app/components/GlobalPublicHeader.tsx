@@ -75,8 +75,8 @@ export default function GlobalPublicHeader({
       <header className="sticky top-0 z-50 isolate overflow-visible bg-[#0b0e17]/95 text-white backdrop-blur-xl max-md:backdrop-blur-none">
       <div className="relative z-[10020] mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link scroll={false} href={checkPath(locale)} className="flex items-center gap-3" aria-label="Vonu">
-          <VonuMark className="h-7 w-7" framed />
-          <span className="text-[21px] font-semibold tracking-[-0.045em]">Vonu</span>
+          <VonuMark className="h-[30px] w-[30px]" framed />
+          <span className="text-[23px] font-semibold tracking-[-0.045em]">Vonu</span>
         </Link>
 
         <nav className="hidden items-center gap-7 text-[14px] font-medium text-slate-300 md:flex">
@@ -203,7 +203,7 @@ export default function GlobalPublicHeader({
           <div className="mt-auto border-t border-white/[0.10] pt-5">
             <div className="mb-5 grid grid-cols-2 justify-items-center gap-x-4 gap-y-3 text-center">
               {secondaryLinks.map((item) => (
-                <a key={item.href} href={item.href} onClick={closeMenu} className="w-full text-center text-[13px] font-medium text-slate-500 transition hover:text-[#7bb7ff]">
+                <a key={item.href} href={item.href} onClick={closeMenu} className="w-full text-center text-[15px] font-medium text-slate-500 transition hover:text-[#7bb7ff]">
                   {item.label}
                 </a>
               ))}
