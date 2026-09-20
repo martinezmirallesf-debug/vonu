@@ -75,6 +75,7 @@ requireText(checkClient, 'className="mx-auto mt-3 flex h-12', "fixed mobile anal
 forbidText(checkClient, 'bg-[#dceaff] p-1 ring-1 ring-[#7bb7ff]/30', "legacy blue document thumbnail shell");
 forbidText(checkClient, 'h-[7px] w-[31px] rounded-[2px] bg-[#eef5ff]', "legacy blue document thumbnail block");
 forbidText(checkClient, 'animate-[pulse_1.4s_ease-in-out_infinite]', "document thumbnail blue scan accent");
+forbidText(checkClient, 'M0 0h12v12L0 0Z', "document thumbnail corner fold");
 requireText(experienceCss, 'section[data-vonu-subject-mode]:not([data-vonu-subject-mode="document"]) > :first-child', "legacy subject icon styling excludes documents");
 requireText(experienceCss, 'section[data-vonu-subject-mode="document"] > [data-vonu-document-thumbnail="true"]', "document thumbnail preserves page proportions");
 requireText(experienceCss, 'section[data-vonu-subject-mode="document"]::before', "document subject overlay disabled");
