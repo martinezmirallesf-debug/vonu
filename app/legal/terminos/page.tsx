@@ -161,27 +161,27 @@ export default function TerminosPage() {
           Podemos aplicar límites técnicos razonables para impedir automatización abusiva, fraude de pagos, elusión sistemática del límite gratuito, sobrecarga o uso que comprometa la seguridad del servicio. Estas medidas no deben interpretarse como una garantía de identificación única de cada dispositivo.
         </p>
 
-        <h2>16. Propiedad intelectual</h2>
+        <h2>17. Propiedad intelectual</h2>
         <p>
           La marca Vonu, el diseño, software, reglas internas, estructura, textos propios y demás elementos originales del servicio pertenecen a sus respectivos titulares y están protegidos por la normativa aplicable.
         </p>
 
-        <h2>17. Limitación de responsabilidad</h2>
+        <h2>18. Limitación de responsabilidad</h2>
         <p>
           Vonu no sustituye la verificación independiente y no garantiza que detecte todas las amenazas. No será responsable de decisiones adoptadas ignorando información relevante disponible fuera del servicio, de usos contrarios a estas condiciones o de daños atribuibles exclusivamente a servicios de terceros fuera de nuestro control. Nada de lo anterior excluye responsabilidad ni derechos del consumidor que legalmente no puedan excluirse o limitarse.
         </p>
 
-        <h2>18. Menores</h2>
+        <h2>19. Menores</h2>
         <p>
           Cuando una persona menor de edad utilice Vonu deberá contar con la supervisión o autorización que exija la normativa aplicable. No deben enviarse datos íntimos, identificativos o especialmente sensibles de menores que no sean estrictamente necesarios, y un menor no debe realizar una compra sin la autorización legalmente necesaria.
         </p>
 
-        <h2>19. Legislación, jurisdicción e idiomas</h2>
+        <h2>20. Legislación, jurisdicción e idiomas</h2>
         <p>
           Estas condiciones se interpretarán conforme a la normativa aplicable en España, sin perjuicio de las normas imperativas del país de residencia del consumidor y de los fueros legalmente reconocidos. Las versiones en español, inglés, francés, alemán y árabe pretenden comunicar las mismas condiciones y ninguna diferencia de traducción se interpretará para reducir un derecho imperativo del consumidor.
         </p>
 
-        <h2>20. Contacto y modificaciones</h2>
+        <h2>21. Contacto y modificaciones</h2>
         <p>
           Puedes contactar con nosotros en <strong>legal@vonuai.com</strong>. La versión vigente de estas condiciones será la publicada en esta página con su fecha de actualización. Los cambios materiales se reflejarán antes de aplicarse a nuevas compras cuando la normativa lo exija.
         </p>
