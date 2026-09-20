@@ -1213,11 +1213,9 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
             <section className="mx-auto mt-5 w-full max-w-[850px] rounded-[22px] bg-[#141927]/72 shadow-[0_26px_70px_rgba(0,0,0,.24)] backdrop-blur-sm sm:mt-6">
               <div className="grid grid-cols-4 px-1 pt-1 sm:px-2">
                 {(["url", "capture", "text", "document"] as Mode[]).map((item) => (
-                  <button key={item} type="button" onClick={() => switchMode(item)} className={["relative flex h-[52px] min-w-0 items-center justify-center px-1 text-[11px] font-semibold transition sm:px-2 sm:text-[14px]", mode === item ? "text-emerald-300" : "text-slate-400 hover:text-slate-200"].join(" ")}>
-                    <span className="inline-flex min-w-0 items-center justify-center gap-[6px] text-center leading-tight">
-                      <ModeIcon mode={item} />
-                      <span className="min-w-0">{item === "url" ? t.url : item === "capture" ? t.capture : item === "text" ? t.text : DOCUMENT_UI[locale].label}</span>
-                    </span>
+                  <button key={item} type="button" onClick={() => switchMode(item)} className={["relative flex h-[52px] min-w-0 flex-nowrap items-center justify-center gap-[6px] px-1 text-[11px] font-semibold transition sm:px-2 sm:text-[14px]", mode === item ? "text-emerald-300" : "text-slate-400 hover:text-slate-200"].join(" ")}>
+                    <ModeIcon mode={item} />
+                    <span className="whitespace-nowrap leading-none">{item === "url" ? t.url : item === "capture" ? t.capture : item === "text" ? t.text : DOCUMENT_UI[locale].label}</span>
                     {mode === item && <span className="absolute inset-x-[18%] bottom-[6px] h-[2px] rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,.45)]" />}
                   </button>
                 ))}
