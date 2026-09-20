@@ -78,29 +78,36 @@
     margin-top: 42px !important;
   }
 
-  /* URL only: give the field a calmer desktop width and add breathing room
-     before the entitlement / CTA / legal reassurance stack. */
-  .vonu-check-page main:has(> section.text-center)
-    > section:nth-of-type(2)
-    > div:last-child:has(input[inputmode="url"]) {
-    height: 210px !important;
-    min-height: 210px !important;
+  /* URL desktop: explicit stable markers, visibly shorter width and the same
+     visual language as the Message textarea, but kept to one line. */
+  .vonu-check-page [data-vonu-idle-mode="url"] > div:last-child {
+    height: 214px !important;
+    min-height: 214px !important;
   }
 
-  .vonu-check-page main:has(> section.text-center)
-    > section:nth-of-type(2)
-    > div:last-child:has(input[inputmode="url"])
-    > div:first-child:has(input[inputmode="url"]) {
-    width: min(780px, calc(100% - 48px)) !important;
-    max-width: 780px !important;
-    margin: 8px auto 0 !important;
+  .vonu-check-page [data-vonu-idle-mode="url"] [data-vonu-url-input-shell="true"] {
+    width: min(680px, calc(100% - 120px)) !important;
+    max-width: 680px !important;
+    min-height: 58px !important;
+    height: 58px !important;
+    margin: 10px auto 0 !important;
+    padding-inline: 16px !important;
+    border-radius: 18px !important;
+    background: #0d1220 !important;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.07) !important;
   }
 
-  .vonu-check-page main:has(> section.text-center)
-    > section:nth-of-type(2)
-    > div:last-child:has(input[inputmode="url"])
-    > div:last-child {
-    margin-top: 27px !important;
+  .vonu-check-page [data-vonu-idle-mode="url"] [data-vonu-url-input-shell="true"]:focus-within {
+    box-shadow: inset 0 0 0 1px rgba(52,211,153,.35) !important;
+  }
+
+  .vonu-check-page [data-vonu-idle-mode="url"] [data-vonu-url-input-shell="true"] input {
+    height: 58px !important;
+    padding-block: 0 !important;
+  }
+
+  .vonu-check-page [data-vonu-idle-mode="url"] [data-vonu-cta-stack="true"] {
+    margin-top: 30px !important;
   }
 
   /* Message only: lower and separate the content beneath the fixed tabs. */
@@ -135,24 +142,28 @@
     margin-top: 9px !important;
   }
 
-  /* Desktop-only legal reassurance: slightly larger and intentionally narrower
-     so it reads as a calm 2–3 line note instead of one long line. */
+  /* Desktop-only submission notice: exactly two logical lines in every locale.
+     Line 1 explains AI/limitations; line 2 contains Terms + Privacy consent. */
   .vonu-check-page:has(main > section.text-center) .vonu-submission-notice {
-    width: min(500px, calc(100vw - 120px)) !important;
-    max-width: 500px !important;
-    margin-top: 10px !important;
+    width: min(840px, calc(100vw - 160px)) !important;
+    max-width: 840px !important;
+    margin: 10px auto 0 !important;
     font-size: 10.5px !important;
     line-height: 1.55 !important;
+    text-align: center !important;
   }
 
-  /* Capture + Document use the exact same legal-note treatment as URL.
-     Keeping this explicit prevents file-mode layout rules from widening or shrinking it. */
-  .vonu-check-page main:has(> section.text-center)
-    > section:nth-of-type(2)
-    > div:last-child:has(input[type="file"])
-    .vonu-submission-notice {
-    width: min(500px, calc(100vw - 120px)) !important;
-    max-width: 500px !important;
+  .vonu-check-page:has(main > section.text-center) .vonu-submission-notice__ai,
+  .vonu-check-page:has(main > section.text-center) .vonu-submission-notice__legal {
+    display: block !important;
+    white-space: nowrap !important;
+  }
+
+  /* Capture and Document inherit the same two-line notice block as URL. */
+  .vonu-check-page [data-vonu-idle-mode="capture"] .vonu-submission-notice,
+  .vonu-check-page [data-vonu-idle-mode="document"] .vonu-submission-notice {
+    width: min(840px, calc(100vw - 160px)) !important;
+    max-width: 840px !important;
     margin-top: 10px !important;
     font-size: 10.5px !important;
     line-height: 1.55 !important;
@@ -171,27 +182,19 @@
     margin-top: 30px !important;
   }
 
-  .vonu-check-page main:has(> section.text-center)
-    > section:nth-of-type(2)
-    > div:last-child:has(input[inputmode="url"]) {
-    height: 194px !important;
-    min-height: 194px !important;
+  .vonu-check-page [data-vonu-idle-mode="url"] > div:last-child {
+    height: 198px !important;
+    min-height: 198px !important;
   }
 
-  .vonu-check-page main:has(> section.text-center)
-    > section:nth-of-type(2)
-    > div:last-child:has(input[inputmode="url"])
-    > div:first-child:has(input[inputmode="url"]) {
-    width: min(760px, calc(100% - 48px)) !important;
-    max-width: 760px !important;
-    margin-top: 6px !important;
+  .vonu-check-page [data-vonu-idle-mode="url"] [data-vonu-url-input-shell="true"] {
+    width: min(660px, calc(100% - 120px)) !important;
+    max-width: 660px !important;
+    margin-top: 7px !important;
   }
 
-  .vonu-check-page main:has(> section.text-center)
-    > section:nth-of-type(2)
-    > div:last-child:has(input[inputmode="url"])
-    > div:last-child {
-    margin-top: 21px !important;
+  .vonu-check-page [data-vonu-idle-mode="url"] [data-vonu-cta-stack="true"] {
+    margin-top: 24px !important;
   }
 
   .vonu-check-page main:has(> section.text-center)
