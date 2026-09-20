@@ -10,14 +10,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Producto — VonuAI",
   description:
-    "VonuAI analiza URLs, capturas y mensajes sospechosos para ayudarte a detectar señales de fraude, phishing y suplantación antes de actuar.",
+    "VonuAI analiza URLs, capturas, mensajes y documentos PDF para mostrar señales de riesgo o puntos que conviene revisar antes de actuar.",
   alternates: {
     canonical: "/producto",
   },
   openGraph: {
     title: "Producto — VonuAI",
     description:
-      "Comprueba señales de riesgo en URLs, capturas y mensajes antes de pagar, responder o compartir datos.",
+      "Comprueba URLs, capturas, mensajes y documentos antes de pagar, responder, firmar o compartir datos.",
     url: `${siteUrl}/producto`,
     siteName: "VonuAI",
     locale: "es_ES",
@@ -76,6 +76,13 @@ const capabilities = [
     accent: "from-emerald-400 to-cyan-300",
   },
   {
+    eyebrow: "Documento",
+    title: "PDFs antes de firmar o pagar",
+    text: "Contratos, alquileres, facturas, presupuestos, servicios y financiación con datos clave, cláusulas y puntos de revisión.",
+    href: "/revisar-contrato",
+    accent: "from-sky-300 to-blue-400",
+  },
+  {
     eyebrow: "Identidad",
     title: "Perfiles falsos",
     text: "Señales que pueden indicar una identidad inventada, una cuenta clonada o una persona que no es quien dice ser.",
@@ -99,7 +106,7 @@ const capabilities = [
 ];
 
 const principles = [
-  "No certificamos que una web, persona o mensaje sea legítimo o fraudulento.",
+  "No certificamos que una web, persona o documento sea legítimo, fraudulento, auténtico o jurídicamente válido.",
   "No necesitas compartir contraseñas, códigos SMS ni datos bancarios completos.",
   "Diferenciamos señales observadas de conclusiones que no pueden demostrarse.",
   "Cuando el caso lo exige, recomendamos verificar por una segunda vía o acudir a un profesional.",
@@ -204,6 +211,15 @@ function MessageIcon() {
   );
 }
 
+function DocumentIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
+      <path d="M6 2.75h7.5L19 8.25V21.25H6V2.75Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M13.5 2.75v5.5H19M9 12h7M9 15.5h7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export default function ProductoPage() {
   const jsonLd = {
     "@context": "https://schema.org",
@@ -212,7 +228,7 @@ export default function ProductoPage() {
     url: `${siteUrl}/producto`,
     name: "Producto — VonuAI",
     description:
-      "VonuAI analiza URLs, capturas y mensajes sospechosos para detectar señales de fraude, phishing y suplantación antes de actuar.",
+      "VonuAI analiza URLs, capturas, mensajes y documentos PDF para detectar señales de riesgo y condiciones que conviene revisar antes de actuar.",
     inLanguage: "es-ES",
     isPartOf: {
       "@type": "WebSite",
@@ -243,7 +259,7 @@ export default function ProductoPage() {
             </h1>
 
             <p className="mx-auto mt-7 max-w-[760px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">
-              Vonu analiza URLs, capturas y mensajes sospechosos para separar señales reales de ruido y ayudarte a decidir qué comprobar antes de pagar, responder o compartir datos.
+              Vonu analiza URLs, capturas, mensajes y documentos para separar señales útiles de ruido y ayudarte a decidir qué comprobar antes de pagar, responder, firmar o compartir datos.
             </p>
 
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
@@ -279,15 +295,18 @@ export default function ProductoPage() {
 
               <div className="grid lg:grid-cols-[1.05fr_0.95fr]">
                 <div className="border-b border-white/[0.07] p-5 sm:p-7 lg:border-b-0 lg:border-r">
-                  <div className="grid grid-cols-3 border-b border-white/[0.07] text-[12px] font-semibold text-slate-500 sm:text-[13px]">
+                  <div className="grid grid-cols-4 border-b border-white/[0.07] text-[11px] font-semibold text-slate-500 sm:text-[13px]">
                     <div className="flex items-center justify-center gap-2 border-b-2 border-sky-400 px-2 pb-4 text-slate-100">
                       <UrlIcon /> <span>Enlace</span>
                     </div>
                     <div className="flex items-center justify-center gap-2 px-2 pb-4">
                       <CaptureIcon /> <span>Captura</span>
                     </div>
-                    <div className="flex items-center justify-center gap-2 px-2 pb-4">
+                    <div className="flex items-center justify-center gap-2 px-1 pb-4 sm:px-2">
                       <MessageIcon /> <span>Mensaje</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-1.5 px-1 pb-4 sm:gap-2 sm:px-2">
+                      <DocumentIcon /> <span>Documento</span>
                     </div>
                   </div>
 
@@ -435,7 +454,7 @@ export default function ProductoPage() {
               <span className="block text-slate-500">compruébalo antes de confiar.</span>
             </h2>
             <p className="mx-auto mt-6 max-w-[640px] text-[16px] leading-8 text-slate-400">
-              Una URL, una captura o un mensaje bastan para empezar. Vonu te ayuda a revisar señales de riesgo antes de que la urgencia decida por ti.
+              Una URL, una captura, un mensaje o un documento bastan para empezar. Vonu te ayuda a revisar señales de riesgo o condiciones importantes antes de actuar.
             </p>
             <a
               href="/es/check"
