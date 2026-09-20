@@ -26,12 +26,14 @@ export type DocumentKeyFacts = {
 };
 
 export type DocumentJurisdiction = {
+  countryCode: string;
   country: string;
   region: string;
   governingLaw: string;
   venue: string;
   confidence: AnalysisConfidence;
   basis: string;
+  evidence: string[];
 };
 
 export type DocumentCheckResult = {
