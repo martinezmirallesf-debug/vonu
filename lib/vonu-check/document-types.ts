@@ -25,6 +25,15 @@ export type DocumentKeyFacts = {
   keyClauses: string[];
 };
 
+export type DocumentJurisdiction = {
+  country: string;
+  region: string;
+  governingLaw: string;
+  venue: string;
+  confidence: AnalysisConfidence;
+  basis: string;
+};
+
 export type DocumentCheckResult = {
   version: "vonu-document-v1";
   checkedAt: string;
@@ -42,6 +51,7 @@ export type DocumentCheckResult = {
   summary: string;
   signals: DocumentSignal[];
   keyFacts: DocumentKeyFacts;
+  jurisdiction: DocumentJurisdiction;
   extracted: {
     urls: string[];
     phones: string[];
