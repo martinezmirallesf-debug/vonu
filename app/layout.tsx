@@ -13,7 +13,6 @@ import CheckResultConversion from "./components/CheckResultConversion";
 import CheckExperienceController from "./components/CheckExperienceController";
 import DocumentLocaleSync from "./components/DocumentLocaleSync";
 import RouteScrollTop from "./components/RouteScrollTop";
-import PwaInstallPromptBar from "./components/PwaInstallPromptBar";
 
 const BASE_URL = "https://vonuai.com";
 const BRAND_ASSET_VERSION = "20260918-trinode";
@@ -39,7 +38,7 @@ export const metadata: Metadata = {
   description:
     "Vonu analiza URLs, capturas de pantalla y mensajes sospechosos para detectar señales de phishing, fraude y suplantación antes de que pagues, respondas o compartas datos.",
   applicationName: "Vonu",
-  manifest: "/pwa.webmanifest?v=20260919-pwa7",
+  manifest: "/install-vonu.webmanifest?v=1",
   authors: [{ name: "Vonu", url: BASE_URL }],
   creator: "Vonu",
   publisher: "Vonu",
@@ -167,57 +166,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{
             __html: `
 (function () {
-  function report(state) {
-    try {
-      fetch('/api/pwa-diagnostic?state=' + encodeURIComponent(state) + '&controller=' + (navigator.serviceWorker && navigator.serviceWorker.controller ? 'yes' : 'no'), { cache: 'no-store' }).catch(function () {});
-    } catch (_) {}
-  }
-
-  if (!('serviceWorker' in navigator)) {
-    report('unsupported');
-    return;
-  }
-
-  report('supported');
+  if (!('serviceWorker' in navigator)) return;
   navigator.serviceWorker
-    .register('/sw.js?v=20260919-pwa7', { scope: '/', updateViaCache: 'none' })
-    .then(function (registration) {
-      report('registered');
-      registration.update().catch(function () {});
-      return navigator.serviceWorker.ready;
-    })
-    .then(function () {
-      report('ready');
-      try {
-        if (navigator.getInstalledRelatedApps) {
-          navigator.getInstalledRelatedApps()
-            .then(function (apps) {
-              report('installed-related-' + (apps && apps.length ? apps.length : 0));
-            })
-            .catch(function () {
-              report('installed-related-error');
-            });
-        } else {
-          report('installed-related-unsupported');
-        }
-      } catch (_) {
-        report('installed-related-error');
-      }
-    })
-    .catch(function (error) {
-      report('register-error-' + (error && error.name ? error.name : 'unknown'));
-    });
-
-  window.addEventListener('beforeinstallprompt', function (event) {
-    event.preventDefault();
-    window.__vonuInstallPrompt = event;
-    report('beforeinstallprompt');
-    window.dispatchEvent(new Event('vonu-install-ready'));
-  });
-
-  window.addEventListener('appinstalled', function () {
-    report('installed');
-  });
+    .register('/sw.js?v=clean-install-1', { scope: '/', updateViaCache: 'none' })
+    .catch(function () {});
 })();
 `,
           }}
@@ -226,7 +178,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="font-sans">
         <DocumentLocaleSync />
         <RouteScrollTop />
-        <PwaInstallPromptBar />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(entityGraph) }}
