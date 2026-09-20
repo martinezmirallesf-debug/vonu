@@ -42,7 +42,7 @@ requireText(checkHeader, 'legalPath(locale, "terms")', "check/legal mobile terms
 requireText(checkFooter, 'legalPath(locale, "legal-notice")', "check footer legal notice");
 requireText(checkFooter, 'legalPath(locale, "privacy")', "check footer privacy");
 requireText(checkFooter, 'legalPath(locale, "terms")', "check footer terms");
-requireText(checkFooter, "localizedPublicPath(locale, "contacto")", "check footer localized contact");
+requireText(checkFooter, 'localizedPublicPath(locale, "contacto")', "check footer localized contact");
 rejectText(checkHeader, "publicPath(", "check/legal header legacy route helper");
 rejectText(checkFooter, "publicPath(", "check footer legacy route helper");
 
