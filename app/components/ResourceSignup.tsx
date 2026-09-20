@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 import { RESOURCE_CONSENT_VERSION } from "@/lib/vonu-legal/consent";
@@ -265,7 +264,7 @@ export default function ResourceSignup({ page = "unknown", locale = "es" }: { pa
 
             <label className="mt-4 flex cursor-pointer items-start gap-3 text-[12px] leading-5 text-slate-500">
               <input type="checkbox" name="consent" required className="mt-1 h-4 w-4 shrink-0 accent-emerald-400" />
-              <span>{t.consentPrefix} <Link href={legalPath(locale, "privacy")} className="text-slate-300 underline decoration-slate-600 underline-offset-2 hover:text-white">{t.privacy}</Link>{t.consentSuffix}</span>
+              <span>{t.consentPrefix} <a href={legalPath(locale, "privacy")} className="text-slate-300 underline decoration-slate-600 underline-offset-2 hover:text-white">{t.privacy}</a>{t.consentSuffix}</span>
             </label>
           </form>
 
