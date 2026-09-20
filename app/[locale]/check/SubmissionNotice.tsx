@@ -62,9 +62,7 @@ export default function SubmissionNotice({ locale }: { locale: SupportedLocale }
   const [target, setTarget] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
-    const ctaStack = document.querySelector<HTMLElement>(
-      '.vonu-check-page main:has(> section.text-center) section[class*="max-w-[850px]"] > div:last-child > div:last-child',
-    );
+    const ctaStack = document.querySelector<HTMLElement>('[data-vonu-cta-stack="true"]');
     setTarget(ctaStack);
   }, []);
 
@@ -72,12 +70,14 @@ export default function SubmissionNotice({ locale }: { locale: SupportedLocale }
 
   return createPortal(
     <p className="vonu-submission-notice">
-      {t.ai}
-      {t.beforeTerms}
-      <a href={legalPath(locale, "terms")}>{t.terms}</a>
-      {t.betweenTermsPrivacy}
-      <a href={legalPath(locale, "privacy")}>{t.privacy}</a>
-      {t.afterPrivacy}
+      <span className="vonu-submission-notice__ai">{t.ai}</span>
+      <span className="vonu-submission-notice__legal">
+        {t.beforeTerms}
+        <a href={legalPath(locale, "terms")}>{t.terms}</a>
+        {t.betweenTermsPrivacy}
+        <a href={legalPath(locale, "privacy")}>{t.privacy}</a>
+        {t.afterPrivacy}
+      </span>
     </p>,
     target,
   );

@@ -1374,7 +1374,7 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
               <p className="mx-auto mt-3 max-w-[720px] text-[15px] leading-6 text-slate-400 sm:text-[16px] lg:text-[17px]">{t.sub}</p>
             </section>
 
-            <section className="mx-auto mt-5 w-full max-w-[850px] rounded-[22px] bg-[#141927]/72 shadow-[0_26px_70px_rgba(0,0,0,.24)] backdrop-blur-sm sm:mt-6">
+            <section data-vonu-idle-mode={mode} className="mx-auto mt-5 w-full max-w-[850px] rounded-[22px] bg-[#141927]/72 shadow-[0_26px_70px_rgba(0,0,0,.24)] backdrop-blur-sm sm:mt-6">
               <div className="grid grid-cols-4 px-1 pt-1 sm:px-2">
                 {/* Keep icon and label as direct button siblings: mobile tab CSS depends on this shape. */}
                 {(["url", "capture", "text", "document"] as Mode[]).map((item) => (
@@ -1388,14 +1388,14 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
 
               <div className="px-4 pb-4 pt-4 sm:px-6 sm:pb-5 sm:pt-5">
                 {mode === "url" && (
-                  <div className="flex min-h-[72px] items-center rounded-[18px] bg-[#0d1220] px-4 ring-1 ring-white/[0.07] transition focus-within:ring-emerald-400/35">
+                  <div data-vonu-url-input-shell="true" className="flex min-h-[72px] items-center rounded-[18px] bg-[#0d1220] px-4 ring-1 ring-white/[0.07] transition focus-within:ring-emerald-400/35">
                     <span className="me-3 text-emerald-300">⌕</span>
                     <input value={url} onChange={(event) => setUrl(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void analyze(); }} placeholder={t.urlPlaceholder} type="url" inputMode="url" autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="go" data-form-type="other" className="w-full scroll-mt-24 bg-transparent py-5 text-[15px] text-white outline-none placeholder:text-slate-600 sm:text-[16px]" />
                   </div>
                 )}
 
                 {mode === "text" && (
-                  <textarea value={text} onChange={(event) => setText(event.target.value)} placeholder={t.textPlaceholder} className="min-h-[118px] w-full resize-none rounded-[18px] bg-[#0d1220] p-4 text-[15px] leading-6 text-white outline-none ring-1 ring-white/[0.07] transition placeholder:text-slate-600 focus:ring-emerald-400/35 sm:min-h-[128px]" />
+                  <textarea data-vonu-message-input="true" value={text} onChange={(event) => setText(event.target.value)} placeholder={t.textPlaceholder} className="min-h-[118px] w-full resize-none rounded-[18px] bg-[#0d1220] p-4 text-[15px] leading-6 text-white outline-none ring-1 ring-white/[0.07] transition placeholder:text-slate-600 focus:ring-emerald-400/35 sm:min-h-[128px]" />
                 )}
 
                 {mode === "capture" && (
@@ -1452,7 +1452,7 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
 
                 {error && <p className="mt-3 rounded-lg bg-rose-400/[0.07] px-4 py-2.5 text-sm text-rose-200 ring-1 ring-rose-400/20">{error}</p>}
 
-                <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div data-vonu-cta-stack="true" className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-slate-500 sm:text-xs">
                     <span data-vonu-entitlement-status="true">{balanceText}</span>
                   </div>

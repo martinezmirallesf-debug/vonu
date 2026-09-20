@@ -14,12 +14,13 @@ function forbidText(source, needle, label) {
   }
 }
 
-const [middleware, metered, button, gate, checkClient, checkPage, checkCss, experienceCss, desktopFitCss, entitlement, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
+const [middleware, metered, button, gate, checkClient, submissionNotice, checkPage, checkCss, experienceCss, desktopFitCss, entitlement, checkout, webhook, pricing, terms, privacy, cookies] = await Promise.all([
   read("middleware.ts"),
   read("app/api/check/metered/route.ts"),
   read("app/components/DevicePackCheckoutButton.tsx"),
   read("app/components/DeviceAccessGate.tsx"),
   read("app/[locale]/check/CheckClient.tsx"),
+  read("app/[locale]/check/SubmissionNotice.tsx"),
   read("app/[locale]/check/page.tsx"),
   read("app/[locale]/check/submission-notice.css"),
   read("app/check-experience-polish.css"),
@@ -89,13 +90,20 @@ requireText(checkClient, 'navigator.clipboard.writeText', "copy result fallback"
 requireText(checkClient, 'bg-[#7bb7ff]', "blue new-analysis CTA");
 requireText(desktopFitCss, 'padding: 96px 28px 18px !important;', "desktop home lowered spacing");
 requireText(desktopFitCss, 'margin-top: 42px !important;', "desktop scanner separation");
-requireText(desktopFitCss, 'max-width: 500px !important;', "desktop disclaimer readable width");
-requireText(desktopFitCss, 'font-size: 10.5px !important;', "desktop disclaimer larger type");
-requireText(desktopFitCss, 'height: 210px !important;', "desktop URL content breathing room");
-requireText(desktopFitCss, 'max-width: 780px !important;', "desktop URL field reduced width");
-requireText(desktopFitCss, 'margin-top: 27px !important;', "desktop URL CTA separation");
-requireText(desktopFitCss, '> div:last-child:has(input[type="file"])', "file-mode desktop layout target");
-requireText(desktopFitCss, 'text-align: center !important;', "file-mode disclaimer matches URL");
+requireText(checkClient, 'data-vonu-idle-mode={mode}', "stable idle mode marker");
+requireText(checkClient, 'data-vonu-url-input-shell="true"', "stable desktop URL input marker");
+requireText(checkClient, 'data-vonu-cta-stack="true"', "stable CTA stack marker");
+requireText(submissionNotice, 'data-vonu-cta-stack="true"', "submission notice stable portal target");
+requireText(submissionNotice, 'vonu-submission-notice__ai', "submission notice AI line");
+requireText(submissionNotice, 'vonu-submission-notice__legal', "submission notice legal line");
+requireText(desktopFitCss, 'max-width: 680px !important;', "desktop URL field visibly reduced width");
+requireText(desktopFitCss, 'border-radius: 18px !important;', "desktop URL matches message field radius");
+requireText(desktopFitCss, 'background: #0d1220 !important;', "desktop URL matches message field background");
+requireText(desktopFitCss, 'margin-top: 30px !important;', "desktop URL CTA breathing room");
+requireText(desktopFitCss, 'max-width: 840px !important;', "desktop two-line disclaimer width");
+requireText(desktopFitCss, 'white-space: nowrap !important;', "desktop disclaimer fixed to two logical lines");
+requireText(desktopFitCss, '[data-vonu-idle-mode="capture"] .vonu-submission-notice', "capture disclaimer parity");
+requireText(desktopFitCss, '[data-vonu-idle-mode="document"] .vonu-submission-notice', "document disclaimer parity");
 requireText(checkClient, 'data-vonu-result-actions="true"', "result action group");
 requireText(checkClient, 'data-vonu-share-result="true"', "share result action");
 requireText(checkClient, 'data-vonu-new-check="true"', "new analysis action");
