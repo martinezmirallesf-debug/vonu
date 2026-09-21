@@ -2,6 +2,7 @@ import Link from "next/link";
 import DevicePackCheckoutButton from "./DevicePackCheckoutButton";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 import { checkPath } from "@/lib/vonu-global/i18n";
+import BrandedHeadlineText from "./BrandedHeadlineText";
 
 const copy: Record<SupportedLocale, {
   eyebrow: string;
@@ -113,7 +114,9 @@ export default function DevicePricingPage({ locale }: { locale: SupportedLocale 
       <section className="border-b border-white/[0.06]">
         <div className="mx-auto max-w-[1080px] px-4 pb-16 pt-20 text-center sm:px-6 sm:pb-24 sm:pt-28">
           <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">{t.eyebrow}</p>
-          <h1 className="mx-auto mt-5 max-w-[900px] text-[48px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[76px]">{t.title}</h1>
+          <h1 className="mx-auto mt-5 max-w-[900px] text-[48px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[76px]">
+              {locale === "es" ? t.title : <BrandedHeadlineText text={t.title} />}
+            </h1>
           <p className="mx-auto mt-6 max-w-[700px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">{t.subtitle}</p>
         </div>
       </section>
