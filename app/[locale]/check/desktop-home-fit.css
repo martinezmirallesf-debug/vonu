@@ -131,13 +131,13 @@
     display: none !important;
   }
 
-  /* URL desktop: authoritative spacing for balance -> CTA -> legal note.
-     This selector deliberately outranks the generic submission-notice stack rule. */
+  /* URL desktop uses exactly the same CTA rhythm as Message. */
   .vonu-check-page main:has(> section.text-center)
     section[data-vonu-idle-mode="url"]
     > div:last-child
     > [data-vonu-cta-stack="true"] {
-    margin: 20px 0 0 !important;
+    margin: 34px 0 0 !important;
+    gap: 9px !important;
     transform: none !important;
   }
 
@@ -255,7 +255,8 @@
     section[data-vonu-idle-mode="url"]
     > div:last-child
     > [data-vonu-cta-stack="true"] {
-    margin: 18px 0 0 !important;
+    margin: 24px 0 0 !important;
+    gap: 9px !important;
     transform: none !important;
   }
 

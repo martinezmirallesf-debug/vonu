@@ -98,8 +98,6 @@ requireText(checkClient, 'data-vonu-url-input-shell="true"', "stable desktop URL
 requireText(checkClient, 'data-vonu-tab-label="true"', "stable tab label marker");
 requireText(checkClient, 'data-vonu-tab-underline="true"', "stable tab underline marker");
 requireText(checkClient, 'data-vonu-cta-stack="true"', "stable CTA stack marker");
-requireText(checkClient, 'data-vonu-desktop-url-gap="true"', "physical desktop URL action spacer");
-requireText(checkClient, 'className="hidden h-[10px] lg:block"', "desktop-only physical URL gap");
 requireText(submissionNotice, 'data-vonu-cta-stack="true"', "submission notice stable portal target");
 requireText(submissionNotice, 'vonu-submission-notice__ai', "submission notice AI line");
 requireText(submissionNotice, 'vonu-submission-notice__legal', "submission notice legal line");
@@ -112,7 +110,9 @@ requireText(desktopFitCss, 'border: 1px solid rgb(35, 59, 97) !important;', "des
 requireText(desktopFitCss, 'background: rgb(8, 22, 49) !important;', "desktop URL matches message surface");
 requireText(desktopFitCss, 'align-self: center !important;', "desktop URL centered");
 requireText(desktopFitCss, 'height: 222px !important;', "desktop URL stack reserves lower action space");
-requireText(desktopFitCss, 'margin: 20px 0 0 !important;', "desktop URL action stack authoritative gap");
+requireText(desktopFitCss, 'margin: 34px 0 0 !important;', "desktop URL matches Message action spacing");
+requireText(desktopFitCss, 'margin: 24px 0 0 !important;', "short desktop URL matches Message action spacing");
+requireText(desktopFitCss, 'gap: 9px !important;', "desktop URL matches Message internal CTA rhythm");
 requireText(desktopFitCss, 'transform: none !important;', "desktop URL action stack uses layout spacing");
 requireText(desktopFitCss, 'section[data-vonu-idle-mode="url"]', "desktop URL mode-specific spacing target");
 requireText(desktopFitCss, '@media (min-width: 1024px)', "desktop-only home styling guard");
