@@ -55,6 +55,27 @@ const visualCss = `
   display: none !important;
 }
 
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Desktop/tablet-width scanner parity. This range is important on PCs using
+     browser zoom or OS display scaling, where the CSS viewport can be <1024px. */
+  .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > textarea[data-vonu-message-input="true"] {
+    margin: 6px 10px 0 !important;
+    border: 0 !important;
+    border-radius: 18px !important;
+    background: #0d1220 !important;
+    background-color: #0d1220 !important;
+    background-image: none !important;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.07) !important;
+    outline: none !important;
+    opacity: 1 !important;
+  }
+
+  .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > textarea[data-vonu-message-input="true"]:focus {
+    background: #0d1220 !important;
+    box-shadow: 0 0 0 1px rgba(52,211,153,.35) !important;
+  }
+}
+
 @media (min-width: 1024px) {
   /* Final desktop authority for Message mode.
      It is rendered after page CSS, so spacing and field surface have one real source. */
@@ -63,6 +84,7 @@ const visualCss = `
   }
 
   .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > textarea[data-vonu-message-input="true"] {
+    margin-top: 10px !important;
     margin-bottom: 0 !important;
     border: 1px solid rgb(35, 59, 97) !important;
     border-radius: 22px !important;
