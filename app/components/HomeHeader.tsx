@@ -193,7 +193,8 @@ export default function HomeHeader() {
       >
         <div
           className={[
-            "flex h-full min-h-0 w-full flex-col px-6 pb-5 pt-[88px]",
+            "flex h-full min-h-0 w-full flex-col px-6 pb-5 pt-[88px] transition-opacity duration-100 ease-out",
+            open ? "opacity-100" : "opacity-0",
             menuOpen ? "overflow-y-auto overscroll-contain" : "overflow-y-hidden overscroll-none",
           ].join(" ")}
         >
