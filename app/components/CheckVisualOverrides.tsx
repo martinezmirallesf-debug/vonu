@@ -82,6 +82,51 @@ const visualCss = `
 }
 
 @media (min-width: 1024px) {
+  /* Final PC top-edge parity: URL and Message fields start at the exact same Y coordinate. */
+  .vonu-check-page.vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)[data-vonu-idle-mode="url"]
+    > div:last-child,
+  .vonu-check-page.vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)[data-vonu-idle-mode="text"]
+    > div:last-child:has(> textarea[data-vonu-message-input="true"]) {
+    padding-top: 18px !important;
+  }
+
+  .vonu-check-page.vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)[data-vonu-idle-mode="url"]
+    > div:last-child
+    > [data-vonu-url-input-shell="true"],
+  .vonu-check-page.vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)[data-vonu-idle-mode="text"]
+    > div:last-child:has(> textarea[data-vonu-message-input="true"])
+    > textarea[data-vonu-message-input="true"] {
+    margin-top: 10px !important;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 760px) {
+  .vonu-check-page.vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)[data-vonu-idle-mode="url"]
+    > div:last-child,
+  .vonu-check-page.vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)[data-vonu-idle-mode="text"]
+    > div:last-child:has(> textarea[data-vonu-message-input="true"]) {
+    padding-top: 12px !important;
+  }
+
+  .vonu-check-page.vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)[data-vonu-idle-mode="url"]
+    > div:last-child
+    > [data-vonu-url-input-shell="true"],
+  .vonu-check-page.vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)[data-vonu-idle-mode="text"]
+    > div:last-child:has(> textarea[data-vonu-message-input="true"])
+    > textarea[data-vonu-message-input="true"] {
+    margin-top: 10px !important;
+  }
+}
+
+@media (min-width: 1024px) {
   /* Screenshot-verified desktop Message authority.
      The :has + nth-of-type selector intentionally outranks the generic CTA rule. */
   .vonu-check-page.vonu-check-page main:has(> section.text-center)
