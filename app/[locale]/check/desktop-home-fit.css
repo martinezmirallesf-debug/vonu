@@ -331,7 +331,7 @@
     section[data-vonu-idle-mode="url"]
     > div:last-child
     > [data-vonu-cta-stack="true"] {
-    margin-top: 24px !important;
+    margin-top: 28px !important;
   }
 }
 
@@ -407,7 +407,7 @@
     > section:nth-of-type(2)[data-vonu-idle-mode="text"]
     > div:last-child:has(> textarea[data-vonu-message-input="true"])
     > [data-vonu-cta-stack="true"] {
-    margin-top: 34px !important;
+    margin-top: 38px !important;
     gap: 9px !important;
   }
 
@@ -419,6 +419,11 @@
     border: 1px solid rgb(35, 59, 97) !important;
     border-radius: 22px !important;
     background: rgb(8, 22, 49) !important;
+    background-color: rgb(8, 22, 49) !important;
+    background-image: none !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    opacity: 1 !important;
     box-shadow: none !important;
     outline: none !important;
   }
