@@ -56,40 +56,50 @@ const visualCss = `
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
-  /* Desktop/tablet-width scanner parity. This range is important on PCs using
-     browser zoom or OS display scaling, where the CSS viewport can be <1024px. */
-  .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > textarea[data-vonu-message-input="true"] {
-    margin: 14px 10px 0 !important;
+  /* Match the real URL field surface in the desktop/tablet-width layout. */
+  .vonu-check-page.vonu-check-page main
+    > section[data-vonu-idle-mode="text"]
+    > div:last-child
+    > textarea[data-vonu-message-input="true"] {
+    margin: 6px 10px 0 !important;
     border: 0 !important;
-    border-radius: 18px !important;
-    background: rgb(8, 22, 49) !important;
-    background-color: rgb(8, 22, 49) !important;
+    border-radius: 13px !important;
+    background: #0d1220 !important;
+    background-color: #0d1220 !important;
     background-image: none !important;
     box-shadow: none !important;
     outline: none !important;
     opacity: 1 !important;
   }
 
-  .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > textarea[data-vonu-message-input="true"]:focus {
-    background: rgb(8, 22, 49) !important;
-    box-shadow: 0 0 0 1px rgba(123, 183, 255, .08) !important;
+  .vonu-check-page.vonu-check-page main
+    > section[data-vonu-idle-mode="text"]
+    > div:last-child:has(> textarea[data-vonu-message-input="true"])
+    > [data-vonu-cta-stack="true"] {
+    margin: 24px 0 0 !important;
+    gap: 9px !important;
   }
 }
 
 @media (min-width: 1024px) {
-  /* Final desktop authority for Message mode.
-     It is rendered after page CSS, so spacing and field surface have one real source. */
-  .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child {
+  /* Screenshot-verified desktop Message authority.
+     The :has + nth-of-type selector intentionally outranks the generic CTA rule. */
+  .vonu-check-page.vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)[data-vonu-idle-mode="text"]
+    > div:last-child:has(> textarea[data-vonu-message-input="true"]) {
     row-gap: 0 !important;
   }
 
-  .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > textarea[data-vonu-message-input="true"] {
-    margin-top: 14px !important;
+  .vonu-check-page.vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)[data-vonu-idle-mode="text"]
+    > div:last-child:has(> textarea[data-vonu-message-input="true"])
+    > textarea[data-vonu-message-input="true"] {
+    margin-top: 10px !important;
     margin-bottom: 0 !important;
     border: 1px solid rgb(35, 59, 97) !important;
-    border-radius: 22px !important;
-    background: rgb(8, 22, 49) !important;
-    background-color: rgb(8, 22, 49) !important;
+    border-radius: 18px !important;
+    background: rgba(7, 12, 24, .56) !important;
+    background-color: rgba(7, 12, 24, .56) !important;
     background-image: none !important;
     -webkit-appearance: none !important;
     appearance: none !important;
@@ -98,21 +108,30 @@ const visualCss = `
     opacity: 1 !important;
   }
 
-  .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > textarea[data-vonu-message-input="true"]:focus {
+  .vonu-check-page.vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)[data-vonu-idle-mode="text"]
+    > div:last-child:has(> textarea[data-vonu-message-input="true"])
+    > textarea[data-vonu-message-input="true"]:focus {
     border-color: rgba(123, 183, 255, .62) !important;
-    background: rgb(8, 22, 49) !important;
+    background: rgba(7, 12, 24, .56) !important;
     box-shadow: 0 0 0 1px rgba(123, 183, 255, .08) !important;
   }
 
-  .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > [data-vonu-cta-stack="true"] {
-    margin-top: 38px !important;
+  .vonu-check-page.vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)[data-vonu-idle-mode="text"]
+    > div:last-child:has(> textarea[data-vonu-message-input="true"])
+    > [data-vonu-cta-stack="true"] {
+    margin: 42px 0 0 !important;
     gap: 9px !important;
   }
 }
 
 @media (min-width: 1024px) and (max-height: 760px) {
-  .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > [data-vonu-cta-stack="true"] {
-    margin-top: 28px !important;
+  .vonu-check-page.vonu-check-page main:has(> section.text-center)
+    > section:nth-of-type(2)[data-vonu-idle-mode="text"]
+    > div:last-child:has(> textarea[data-vonu-message-input="true"])
+    > [data-vonu-cta-stack="true"] {
+    margin-top: 36px !important;
   }
 }
 `;
