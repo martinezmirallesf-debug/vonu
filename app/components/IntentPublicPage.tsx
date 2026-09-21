@@ -11,6 +11,7 @@ import GlobalPublicHeader from "./GlobalPublicHeader";
 import FunnelLink from "./FunnelLink";
 import HomeFooter from "./HomeFooter";
 import ResourceSignup from "./ResourceSignup";
+import BrandedHeadlineText from "./BrandedHeadlineText";
 
 const SITE_URL = "https://vonuai.com";
 
@@ -117,7 +118,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
           <div className="mx-auto mt-12 max-w-[1040px] text-center sm:mt-16">
             <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">{topic.eyebrow}</p>
             <h1 className="mx-auto mt-5 max-w-[1050px] text-[48px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[72px] sm:leading-[0.95] lg:text-[86px]">
-              {topic.hero}
+              {locale === "es" ? topic.hero : <BrandedHeadlineText text={topic.hero} />}
             </h1>
             <p className="mx-auto mt-7 max-w-[800px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">{topic.description}</p>
           </div>
