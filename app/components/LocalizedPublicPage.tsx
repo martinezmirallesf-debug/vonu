@@ -11,6 +11,7 @@ import FunnelLink from "./FunnelLink";
 import PlanCheckoutButton from "./PlanCheckoutButton";
 import ResourceSignup from "./ResourceSignup";
 import GlobalPublicFooter from "./GlobalPublicFooter";
+import BrandedHeadlineText from "./BrandedHeadlineText";
 
 const SITE_URL = "https://vonuai.com";
 
@@ -135,7 +136,7 @@ export default function LocalizedPublicPage({
           <div className="mx-auto max-w-[1020px] text-center">
             <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">{topic.eyebrow}</p>
             <h1 className="mx-auto mt-5 max-w-[1050px] text-[48px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[74px] sm:leading-[0.94] lg:text-[90px]">
-              {topic.hero}
+              <BrandedHeadlineText text={topic.hero} />
             </h1>
             <p className="mx-auto mt-7 max-w-[760px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">{topic.description}</p>
             <p className="mx-auto mt-4 max-w-[740px] text-[14px] leading-7 text-slate-500">{t.intro}</p>
