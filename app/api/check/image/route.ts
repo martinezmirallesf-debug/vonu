@@ -252,6 +252,9 @@ Important rules:
 - If evidence is incomplete, say so and lower confidence.
 - A screenshot alone cannot verify that an identity is genuine.
 - For social profiles, distinguish visible anomalies from facts that require external verification.
+- Ordinary profile attributes such as interests, astrology/zodiac fields, online status, profile cosmetics or generic app UI are NOT fraud signals. Give them weight 0 and do not include them among the key findings unless they are directly relevant to a concrete risk.
+- If a social profile contains no concrete warning/negative fraud evidence, keep the risk score in the 0-9 range. Use the summary to say that no clear fraud or impersonation signs are visible, and prefer safety-relevant neutral/positive findings over ordinary profile attributes.
+- Missing interaction history, inability to verify the real identity, or other unavailable context should reduce confidence/coverage and appear as limitations; it must not increase the risk score by itself.
 - For links visible in the image, copy the visible URL as accurately as possible. Do not invent missing characters.
 - visibleText must contain only legible text actually visible in the screenshot. Preserve wording and polarity; never turn a prohibition into a request.
 - Fraud Atlas evidence excerpts must be exact substrings of visibleText. If a relevant phrase is not legible enough to transcribe, omit that evidence.
@@ -338,52 +341,6 @@ Schema:
 }
 `.trim();
 }
-
-const clearProfileCopy: Record<SupportedLocale, {
-  summary: string;
-  signals: Array<{ id: string; tone: "positive" | "neutral"; title: string; detail: string; weight: 0 }>;
-}> = {
-  es: {
-    summary: "En lo visible del perfil no hemos encontrado señales claras de fraude o suplantación.",
-    signals: [
-      { id: "profile_no_clear_fraud", tone: "positive", title: "No vemos señales claras de fraude", detail: "En la captura no aparecen indicios claros de suplantación, engaño o manipulación.", weight: 0 },
-      { id: "profile_no_sensitive_request", tone: "positive", title: "No vemos solicitudes sensibles", detail: "No se observan peticiones de dinero, códigos, contraseñas ni datos personales sensibles.", weight: 0 },
-      { id: "profile_no_pressure", tone: "positive", title: "No vemos presión ni urgencia", detail: "En lo visible no aparecen amenazas, urgencia artificial ni enlaces sospechosos.", weight: 0 },
-    ],
-  },
-  en: {
-    summary: "We did not find clear signs of fraud or impersonation in what is visible on the profile.",
-    signals: [
-      { id: "profile_no_clear_fraud", tone: "positive", title: "No clear fraud signs visible", detail: "The screenshot does not show clear signs of impersonation, deception or manipulation.", weight: 0 },
-      { id: "profile_no_sensitive_request", tone: "positive", title: "No sensitive requests visible", detail: "We do not see requests for money, codes, passwords or sensitive personal data.", weight: 0 },
-      { id: "profile_no_pressure", tone: "positive", title: "No pressure or urgency visible", detail: "The visible profile does not show threats, artificial urgency or suspicious links.", weight: 0 },
-    ],
-  },
-  fr: {
-    summary: "Dans les éléments visibles du profil, nous n’avons pas trouvé de signe clair de fraude ou d’usurpation.",
-    signals: [
-      { id: "profile_no_clear_fraud", tone: "positive", title: "Aucun signe clair de fraude", detail: "La capture ne montre pas de signe clair d’usurpation, de tromperie ou de manipulation.", weight: 0 },
-      { id: "profile_no_sensitive_request", tone: "positive", title: "Aucune demande sensible visible", detail: "Nous ne voyons pas de demande d’argent, de code, de mot de passe ni de données personnelles sensibles.", weight: 0 },
-      { id: "profile_no_pressure", tone: "positive", title: "Pas de pression ni d’urgence", detail: "Aucune menace, urgence artificielle ou lien suspect n’apparaît dans les éléments visibles.", weight: 0 },
-    ],
-  },
-  de: {
-    summary: "Im sichtbaren Profil haben wir keine klaren Hinweise auf Betrug oder Identitätsmissbrauch gefunden.",
-    signals: [
-      { id: "profile_no_clear_fraud", tone: "positive", title: "Keine klaren Betrugssignale", detail: "Im Screenshot sind keine klaren Hinweise auf Identitätsmissbrauch, Täuschung oder Manipulation zu sehen.", weight: 0 },
-      { id: "profile_no_sensitive_request", tone: "positive", title: "Keine sensiblen Forderungen", detail: "Es sind keine Aufforderungen zu Geld, Codes, Passwörtern oder sensiblen persönlichen Daten sichtbar.", weight: 0 },
-      { id: "profile_no_pressure", tone: "positive", title: "Kein Druck oder Zeitdruck", detail: "Im sichtbaren Profil erscheinen keine Drohungen, künstliche Dringlichkeit oder verdächtigen Links.", weight: 0 },
-    ],
-  },
-  ar: {
-    summary: "لم نجد في الجزء الظاهر من الملف الشخصي إشارات واضحة إلى احتيال أو انتحال.",
-    signals: [
-      { id: "profile_no_clear_fraud", tone: "positive", title: "لا توجد إشارات واضحة للاحتيال", detail: "لا تظهر في اللقطة مؤشرات واضحة على انتحال أو خداع أو تلاعب.", weight: 0 },
-      { id: "profile_no_sensitive_request", tone: "positive", title: "لا توجد طلبات حساسة ظاهرة", detail: "لا نرى طلبات أموال أو رموز أو كلمات مرور أو بيانات شخصية حساسة.", weight: 0 },
-      { id: "profile_no_pressure", tone: "positive", title: "لا يوجد ضغط أو استعجال", detail: "لا تظهر تهديدات أو استعجال مصطنع أو روابط مشبوهة في الجزء الظاهر.", weight: 0 },
-    ],
-  },
-};
 
 const linkedCopy: Record<SupportedLocale, { high: [string, string]; caution: [string, string]; low: [string, string] }> = {
   es: {
@@ -638,18 +595,16 @@ export async function POST(req: NextRequest) {
     let finalScore = combineIndependentRiskScores(baseScore, linkedScore);
 
     const profileHasConcreteRisk =
-      signals.some((signal) =>
-        (signal.tone === "warning" || signal.tone === "negative") && signal.weight > 0,
+      signals.some(
+        (signal) =>
+          (signal.tone === "warning" || signal.tone === "negative") &&
+          signal.weight > 0,
       ) ||
       atlasScore.score > 0 ||
       linkedScore >= 20;
 
     if (kind === "social_profile" && !profileHasConcreteRisk) {
-      // A normal-looking social profile with only neutral/positive observations
-      // should not sit at the top of the very-low band just because the model
-      // expressed uncertainty. Missing context belongs in coverage/limitations.
       finalScore = Math.min(finalScore, 9);
-      signals.splice(0, signals.length, ...clearProfileCopy[locale].signals);
     }
 
     const confidenceValue = parsed?.risk?.confidence;
@@ -677,10 +632,7 @@ export async function POST(req: NextRequest) {
         score: finalScore,
         confidence,
       },
-      summary:
-        kind === "social_profile" && !profileHasConcreteRisk
-          ? clearProfileCopy[locale].summary
-          : safeString(parsed?.summary, 700),
+      summary: safeString(parsed?.summary, 700),
       signals,
       extracted,
       recommendedActions: safeStringArray(parsed?.recommendedActions, 6, 450),
