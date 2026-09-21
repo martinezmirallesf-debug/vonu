@@ -57,7 +57,11 @@ function calibrationWeight(signal: RiskSignalLike): number {
  * but never raises a score. Objective reputation/technical evidence is fused
  * afterwards and can still move the final result upward.
  */
-export function calibrateModelRiskScore(rawScore: unknown, signals: RiskSignalLike[]): number {
+export function calibrateModelRiskScore(
+  rawScore: unknown,
+  signals: RiskSignalLike[],
+  noEvidenceCeiling: number = VONU_RISK_BANDS.veryLowMax,
+): number {
   const score = clampRiskScore(rawScore);
   const riskSignals = signals.filter(
     (signal) => signal.tone === "warning" || signal.tone === "negative",
@@ -72,7 +76,7 @@ export function calibrateModelRiskScore(rawScore: unknown, signals: RiskSignalLi
   // No concrete warning/negative evidence should remain outside the very-low
   // band even if the model emitted a higher number because of uncertainty.
   if (riskSignals.length === 0 || evidenceWeight === 0) {
-    return Math.min(score, VONU_RISK_BANDS.veryLowMax);
+    return Math.min(score, clampRiskScore(noEvidenceCeiling));
   }
 
   // Evidence strength defines a conservative ceiling. Examples with explicit
