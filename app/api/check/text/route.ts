@@ -105,6 +105,9 @@ Rules:
 - If context is incomplete, lower confidence and say so.
 - Legitimate-looking language, logos or spelling are not proof of legitimacy.
 - Keep signals concise and useful on mobile.
+- When several concrete phishing indicators are present (for example a claimed bank identity plus urgency plus a request for codes/data or a verification link), describe the message as PRESENTING CLEAR PHISHING SIGNALS rather than saying it merely "seems to be" phishing.
+- If a bank or other organisation is only claimed by the sender and has not been independently verified, describe the signal as POSSIBLE impersonation (for example "Posible suplantación bancaria" in Spanish), never as confirmed identity theft or confirmed impersonation.
+- If a visible domain cannot be verified as belonging to the organisation mentioned in the message, make that limitation specific: explain that ownership/association with the claimed organisation could not be confirmed, rather than using a vague statement about domain legitimacy.
 - Do NOT mark ordinary family money requests, ordinary Bizum requests, urgency alone, a new number alone, or an ordinary link alone as high risk.
 - Fraud Atlas evidence MUST be grounded in exact text excerpts. If the text does not support an evidence id, omit it.
 
