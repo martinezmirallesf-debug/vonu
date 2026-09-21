@@ -54,6 +54,40 @@ const visualCss = `
 .vonu-check-page.vonu-check-page [data-vonu-radar="true"] > div:last-child {
   display: none !important;
 }
+
+@media (min-width: 1024px) {
+  /* Final desktop authority for Message mode.
+     This style tag is rendered after the page styles, so older CSS cannot mask it. */
+  .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > textarea[data-vonu-message-input="true"] {
+    border: 1px solid rgb(35, 59, 97) !important;
+    border-radius: 22px !important;
+    background: rgb(8, 22, 49) !important;
+    background-color: rgb(8, 22, 49) !important;
+    background-image: none !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    opacity: 1 !important;
+  }
+
+  .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > textarea[data-vonu-message-input="true"]:focus {
+    border-color: rgba(123, 183, 255, .62) !important;
+    background: rgb(8, 22, 49) !important;
+    box-shadow: 0 0 0 1px rgba(123, 183, 255, .08) !important;
+  }
+
+  .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > [data-vonu-cta-stack="true"] {
+    margin-top: 38px !important;
+    gap: 9px !important;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 760px) {
+  .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > [data-vonu-cta-stack="true"] {
+    margin-top: 28px !important;
+  }
+}
 `;
 
 export default function CheckVisualOverrides() {
