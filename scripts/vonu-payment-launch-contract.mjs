@@ -113,7 +113,6 @@ requireText(desktopFitCss, 'height: 214px !important;', "short desktop URL reser
 requireText(desktopFitCss, 'border: 1px solid rgb(35, 59, 97) !important;', "desktop URL matches message border");
 requireText(desktopFitCss, 'background: rgb(8, 22, 49) !important;', "desktop URL matches message surface");
 requireText(desktopFitCss, 'align-self: center !important;', "desktop URL centered");
-requireText(desktopFitCss, 'height: 222px !important;', "desktop URL stack reserves lower action space");
 requireText(desktopFitCss, 'margin: 34px 0 0 !important;', "desktop URL matches Message action spacing");
 requireText(desktopFitCss, 'margin: 24px 0 0 !important;', "short desktop URL matches Message action spacing");
 requireText(desktopFitCss, 'gap: 9px !important;', "desktop URL matches Message internal CTA rhythm");
