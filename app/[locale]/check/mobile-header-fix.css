@@ -282,16 +282,16 @@
   .vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) nav > a,
   .vonu-check-page header:has(> div:nth-child(2)) > div:nth-child(2) nav > div > button {
     display: flex !important;
-    min-height: 60px !important;
+    min-height: 58px !important;
     align-items: center !important;
-    padding: 12px 0 !important;
+    padding: 11px 0 !important;
     border: 0 !important;
     border-radius: 0 !important;
     background: transparent !important;
     color: rgb(248 250 252) !important;
-    font-size: 26px !important;
+    font-size: 25px !important;
     font-weight: 600 !important;
-    line-height: 1 !important;
+    line-height: .98 !important;
     letter-spacing: -.045em !important;
   }
 
