@@ -92,8 +92,8 @@
   /* URL desktop: explicit stable markers, visibly shorter width and the same
      visual language as the Message textarea, but kept to one line. */
   .vonu-check-page [data-vonu-idle-mode="url"] > div:last-child {
-    height: 222px !important;
-    min-height: 222px !important;
+    height: 234px !important;
+    min-height: 234px !important;
   }
 
   .vonu-check-page main:has(> section.text-center)
@@ -106,7 +106,7 @@
     height: 62px !important;
     flex: 0 0 62px !important;
     align-self: center !important;
-    margin: 10px auto 0 !important;
+    margin: 10px auto 12px !important;
     margin-inline: auto !important;
     padding-inline: 0 !important;
     overflow: hidden !important;
@@ -236,8 +236,8 @@
   }
 
   .vonu-check-page [data-vonu-idle-mode="url"] > div:last-child {
-    height: 204px !important;
-    min-height: 204px !important;
+    height: 214px !important;
+    min-height: 214px !important;
   }
 
   .vonu-check-page main:has(> section.text-center)
@@ -247,6 +247,7 @@
     width: min(620px, calc(100% - 160px)) !important;
     max-width: 620px !important;
     margin-top: 7px !important;
+    margin-bottom: 10px !important;
     margin-inline: auto !important;
     align-self: center !important;
   }
