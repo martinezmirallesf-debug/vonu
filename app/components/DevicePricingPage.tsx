@@ -115,7 +115,30 @@ export default function DevicePricingPage({ locale }: { locale: SupportedLocale 
         <div className="mx-auto max-w-[1080px] px-4 pb-16 pt-20 text-center sm:px-6 sm:pb-24 sm:pt-28">
           <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">{t.eyebrow}</p>
           <h1 className="mx-auto mt-5 max-w-[900px] text-[48px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[76px]">
-              {locale === "es" ? t.title : <BrandedHeadlineText text={t.title} />}
+              {locale === "es" ? (
+                t.title
+              ) : locale === "en" ? (
+                <>
+                  <span className="block">Try one. Pay only</span>
+                  <span className="block text-slate-400">
+                    if you need{" "}
+                    <span
+                      className="inline"
+                      style={{
+                        backgroundImage: "linear-gradient(92deg, #60A5FA 0%, #38BDF8 35%, #34D399 100%)",
+                        WebkitBackgroundClip: "text",
+                        backgroundClip: "text",
+                        color: "transparent",
+                        WebkitTextFillColor: "transparent",
+                      }}
+                    >
+                      more.
+                    </span>
+                  </span>
+                </>
+              ) : (
+                <BrandedHeadlineText text={t.title} />
+              )}
             </h1>
           <p className="mx-auto mt-6 max-w-[700px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">{t.subtitle}</p>
         </div>
