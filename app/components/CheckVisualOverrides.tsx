@@ -59,20 +59,20 @@ const visualCss = `
   /* Desktop/tablet-width scanner parity. This range is important on PCs using
      browser zoom or OS display scaling, where the CSS viewport can be <1024px. */
   .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > textarea[data-vonu-message-input="true"] {
-    margin: 6px 10px 0 !important;
+    margin: 14px 10px 0 !important;
     border: 0 !important;
     border-radius: 18px !important;
-    background: #0d1220 !important;
-    background-color: #0d1220 !important;
+    background: rgb(8, 22, 49) !important;
+    background-color: rgb(8, 22, 49) !important;
     background-image: none !important;
-    box-shadow: 0 0 0 1px rgba(255,255,255,.07) !important;
+    box-shadow: none !important;
     outline: none !important;
     opacity: 1 !important;
   }
 
   .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > textarea[data-vonu-message-input="true"]:focus {
-    background: #0d1220 !important;
-    box-shadow: 0 0 0 1px rgba(52,211,153,.35) !important;
+    background: rgb(8, 22, 49) !important;
+    box-shadow: 0 0 0 1px rgba(123, 183, 255, .08) !important;
   }
 }
 
@@ -84,7 +84,7 @@ const visualCss = `
   }
 
   .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > textarea[data-vonu-message-input="true"] {
-    margin-top: 10px !important;
+    margin-top: 14px !important;
     margin-bottom: 0 !important;
     border: 1px solid rgb(35, 59, 97) !important;
     border-radius: 22px !important;
