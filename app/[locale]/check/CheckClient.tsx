@@ -454,6 +454,40 @@ const SCANNER_HEADLINE: Record<SupportedLocale, { line1: string; line2: string; 
   },
 };
 
+
+const MOBILE_SCANNER_HEADLINE: Record<SupportedLocale, { line1: string; line2: string; muted: string; accent: string }> = {
+  es: {
+    line1: "Analiza URLs, capturas de pantalla, mensajes",
+    line2: "y documentos desde",
+    muted: "un único",
+    accent: "escáner.",
+  },
+  en: {
+    line1: "Analyse URLs, screenshots, messages",
+    line2: "and documents",
+    muted: "from one",
+    accent: "scanner.",
+  },
+  fr: {
+    line1: "Analysez URLs, captures d’écran, messages",
+    line2: "et documents depuis",
+    muted: "un seul",
+    accent: "scanner.",
+  },
+  de: {
+    line1: "Analysiere URLs, Screenshots, Nachrichten",
+    line2: "und Dokumente",
+    muted: "mit einem",
+    accent: "Scanner.",
+  },
+  ar: {
+    line1: "حلّل الروابط ولقطات الشاشة والرسائل",
+    line2: "والمستندات",
+    muted: "من ماسح",
+    accent: "واحد.",
+  },
+};
+
 const DOCUMENT_UI: Record<SupportedLocale, {
   label: string;
   dropTitle: string;
@@ -1400,7 +1434,17 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
             <section className="text-center">
               <h1 className="mx-auto max-w-[900px] text-balance text-[36px] font-bold leading-[1.02] tracking-[-0.055em] text-white sm:text-[48px] lg:text-[56px] xl:text-[60px]">{t.hero}</h1>
               <p data-vonu-scanner-subtitle="true" className="mx-auto mt-3 max-w-[720px] text-[15px] leading-6 text-slate-400 sm:text-[16px]">
-                <span className="lg:hidden">{t.sub}</span>
+                <span data-vonu-mobile-headline="true" className="block md:hidden">
+                  <span className="block whitespace-nowrap text-white">{MOBILE_SCANNER_HEADLINE[locale].line1}</span>
+                  <span className="mt-0.5 block whitespace-nowrap text-white">
+                    {MOBILE_SCANNER_HEADLINE[locale].line2}{" "}
+                    <span className="text-slate-400">{MOBILE_SCANNER_HEADLINE[locale].muted}</span>{" "}
+                    <span className="bg-gradient-to-r from-[#7bb7ff] to-emerald-300 bg-clip-text font-bold text-transparent">
+                      {MOBILE_SCANNER_HEADLINE[locale].accent}
+                    </span>
+                  </span>
+                </span>
+                <span className="hidden md:block lg:hidden">{t.sub}</span>
                 <span className="hidden lg:block">
                   <span className="block text-white">{SCANNER_HEADLINE[locale].line1}</span>
                   <span className="mt-1 block text-slate-300">
