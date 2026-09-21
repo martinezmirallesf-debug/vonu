@@ -235,12 +235,12 @@ export default function HomeHeader() {
             )}
           </nav>
 
-          <a href={checkPath(locale)} onClick={closeMenu} className="mx-auto mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-400 px-5 text-[13px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:bg-emerald-300 active:scale-[.99]">
+          <a href={checkPath(locale)} onClick={closeMenu} className="mx-auto mt-auto inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-400 px-5 text-[13px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:bg-emerald-300 active:scale-[.99]">
             {t.analyze}
           </a>
           <VonuSocialLinks variant="mobile" />
 
-          <div className="mt-auto border-t border-white/[0.10] pt-5">
+          <div className="mt-4 border-t border-white/[0.10] pt-5">
             <div className="mb-5 grid grid-cols-2 justify-items-center gap-x-4 gap-y-3 text-center">
               {secondaryLinks.map((item) => (
                 <a key={item.href} href={item.href} onClick={closeMenu} className="w-full text-center text-[15px] font-medium text-slate-500 transition hover:text-[#7bb7ff]">
