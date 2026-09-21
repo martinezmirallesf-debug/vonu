@@ -188,13 +188,13 @@ export default function HomeHeader() {
       </div>
 
       <div
-        data-vonu-mobile-menu-expanded={menuOpen || languageOpen ? "true" : "false"}
+        data-vonu-mobile-menu-expanded={menuOpen ? "true" : "false"}
         className={["fixed inset-0 z-[10010] h-[100dvh] min-h-[100dvh] w-screen overflow-hidden bg-[#0b0e17] transition-[opacity,transform] duration-300 ease-out md:hidden", open ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none -translate-y-5 opacity-0"].join(" ")}
       >
         <div
           className={[
             "flex h-full min-h-0 w-full flex-col px-6 pb-5 pt-[88px]",
-            menuOpen || languageOpen ? "overflow-y-auto overscroll-contain" : "overflow-y-hidden overscroll-none",
+            menuOpen ? "overflow-y-auto overscroll-contain" : "overflow-y-hidden overscroll-none",
           ].join(" ")}
         >
           <nav className="grid gap-0">
@@ -249,9 +249,9 @@ export default function HomeHeader() {
               ))}
             </div>
 
-            <div className="vonu-mobile-language mt-4 border-t border-white/[0.10] pt-3">
+            <div className="vonu-mobile-language relative mt-4 translate-y-[18px] border-t border-white/[0.10] pt-3">
               {languageOpen && (
-                <div className="vonu-mobile-language-popover grid gap-0.5 p-1.5">
+                <div className="vonu-mobile-language-popover absolute bottom-[calc(100%+8px)] left-0 right-0 z-30 grid gap-0.5 rounded-2xl border border-white/[0.08] bg-[#101522]/98 p-1.5 shadow-[0_20px_60px_rgba(0,0,0,.38)]">
                   {GLOBAL_LOCALES.map((item) => (
                     <a
                       key={item}
