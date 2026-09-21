@@ -535,7 +535,11 @@ export async function POST(req: NextRequest) {
           .filter((signal: any) => signal.title && signal.detail)
       : [];
 
-    const calibratedModelScore = calibrateModelRiskScore(rawBaseScore, signals);
+    const calibratedModelScore = calibrateModelRiskScore(
+      rawBaseScore,
+      signals,
+      kind === "social_profile" ? 9 : undefined,
+    );
     const atlasEvidence = normaliseFraudAtlasEvidence(parsed?.atlas?.evidence, visibleText);
     const atlasScore = scoreFraudAtlasEvidence(atlasEvidence);
     const baseScore = Math.max(calibratedModelScore, atlasScore.score);
@@ -592,20 +596,7 @@ export async function POST(req: NextRequest) {
     }
 
     const linkedScore = linkedUrlCheck?.risk?.score ?? 0;
-    let finalScore = combineIndependentRiskScores(baseScore, linkedScore);
-
-    const profileHasConcreteRisk =
-      signals.some(
-        (signal) =>
-          (signal.tone === "warning" || signal.tone === "negative") &&
-          signal.weight > 0,
-      ) ||
-      atlasScore.score > 0 ||
-      linkedScore >= 20;
-
-    if (kind === "social_profile" && !profileHasConcreteRisk) {
-      finalScore = Math.min(finalScore, 9);
-    }
+    const finalScore = combineIndependentRiskScores(baseScore, linkedScore);
 
     const confidenceValue = parsed?.risk?.confidence;
     const modelConfidence: "limited" | "medium" | "high" =
