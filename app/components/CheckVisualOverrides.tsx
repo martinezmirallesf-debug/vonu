@@ -64,6 +64,7 @@ const visualCss = `
 
   .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > textarea[data-vonu-message-input="true"] {
     margin-bottom: 0 !important;
+    display: block !important;
     border: 1px solid rgb(35, 59, 97) !important;
     border-radius: 22px !important;
     background: rgb(8, 22, 49) !important;
