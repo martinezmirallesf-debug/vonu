@@ -345,3 +345,24 @@
     letter-spacing: 0 !important;
   }
 }
+
+
+/* Mobile scanner headline: desktop visual language in a strict two-line layout.
+   Desktop/tablet remain untouched. */
+@media (max-width: 767px) {
+  .vonu-check-page main:has(> section.text-center)
+    > section.text-center
+    > [data-vonu-scanner-subtitle="true"] {
+    max-width: 350px !important;
+    padding-inline: 0 !important;
+    font-size: clamp(13.5px, 4.15vw, 15px) !important;
+    line-height: 1.38 !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.03em !important;
+    text-align: center !important;
+  }
+
+  .vonu-check-page [data-vonu-mobile-headline="true"] > span {
+    white-space: nowrap !important;
+  }
+}
