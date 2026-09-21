@@ -4,6 +4,7 @@ import GlobalPublicFooter from "./GlobalPublicFooter";
 import ContactForm from "./ContactForm";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 import { checkPath } from "@/lib/vonu-global/i18n";
+import BrandedHeadlineText from "./BrandedHeadlineText";
 
 type ContactCopy = {
   eyebrow: string;
@@ -159,7 +160,11 @@ export default function ContactPublicPage({ locale }: { locale: SupportedLocale 
           <div className="mx-auto max-w-[900px] text-center">
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#8ec2ff]">{t.eyebrow}</p>
             <h1 className="mt-5 text-[48px] font-semibold leading-[0.96] tracking-[-0.06em] text-white sm:text-[72px] lg:text-[86px]">
-              {t.title} <span className="text-[#7bb7ff]">{t.accent}</span>
+              {locale === "es" ? (
+                <>{t.title} <span className="text-[#7bb7ff]">{t.accent}</span></>
+              ) : (
+                <BrandedHeadlineText text={`${t.title} ${t.accent}`} />
+              )}
             </h1>
             <p className="mx-auto mt-6 max-w-[720px] text-[16px] leading-7 text-slate-400 sm:text-[18px] sm:leading-8">{t.intro}</p>
             <div className="mt-8 flex justify-center gap-2.5">
