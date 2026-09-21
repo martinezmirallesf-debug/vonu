@@ -1197,11 +1197,34 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
   }
 
   function reset() {
+    if (imagePreviewObjectUrlRef.current) {
+      URL.revokeObjectURL(imagePreviewObjectUrlRef.current);
+      imagePreviewObjectUrlRef.current = null;
+    }
+
+    setMode("url");
+    setUrl("");
+    setText("");
+    setImageData(null);
+    setImagePreviewUrl(null);
+    setImageName("");
+    setDocumentFile(null);
+    setDocumentName("");
     setResult(null);
     setError("");
     setScanIndex(0);
     setShareFallbackOpen(false);
     setShareCopied(false);
+
+    if (fileRef.current) fileRef.current.value = "";
+    if (documentRef.current) documentRef.current.value = "";
+
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", `/${locale}/check`);
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      });
+    }
   }
 
   const steps = mode === "url"
