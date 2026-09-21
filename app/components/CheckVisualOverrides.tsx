@@ -57,8 +57,13 @@ const visualCss = `
 
 @media (min-width: 1024px) {
   /* Final desktop authority for Message mode.
-     This style tag is rendered after the page styles, so older CSS cannot mask it. */
+     It is rendered after page CSS, so spacing and field surface have one real source. */
+  .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child {
+    row-gap: 0 !important;
+  }
+
   .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > textarea[data-vonu-message-input="true"] {
+    margin-bottom: 0 !important;
     border: 1px solid rgb(35, 59, 97) !important;
     border-radius: 22px !important;
     background: rgb(8, 22, 49) !important;
@@ -78,14 +83,14 @@ const visualCss = `
   }
 
   .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > [data-vonu-cta-stack="true"] {
-    margin-top: 38px !important;
+    margin-top: 34px !important;
     gap: 9px !important;
   }
 }
 
 @media (min-width: 1024px) and (max-height: 760px) {
   .vonu-check-page.vonu-check-page main > section[data-vonu-idle-mode="text"] > div:last-child > [data-vonu-cta-stack="true"] {
-    margin-top: 28px !important;
+    margin-top: 24px !important;
   }
 }
 `;
