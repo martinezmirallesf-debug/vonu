@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 import { checkPath } from "@/lib/vonu-global/i18n";
 import { legalPath, type LegalDocument } from "@/lib/vonu-legal/routes";
+import BrandedHeadlineText from "./BrandedHeadlineText";
 
 type LegalPageProps = {
   title: string;
@@ -58,7 +59,7 @@ export default function LegalPage({
             </div>
 
             <h1 className="mt-5 max-w-xl text-[42px] font-bold leading-[1.02] tracking-[-0.055em] text-white sm:text-[58px]">
-              {title}
+              {locale === "es" ? title : <BrandedHeadlineText text={title} />}
             </h1>
 
             <p className="mt-5 max-w-md text-[16px] leading-7 text-slate-400">
