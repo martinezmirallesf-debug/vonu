@@ -1445,7 +1445,7 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
                 )}
 
                 {mode === "text" && (
-                  <textarea data-vonu-message-input="true" value={text} onChange={(event) => setText(event.target.value)} placeholder={t.textPlaceholder} className="min-h-[118px] w-full resize-none rounded-[18px] bg-[#0d1220] p-4 text-[15px] leading-6 text-white outline-none ring-1 ring-white/[0.07] transition placeholder:text-slate-600 focus:ring-emerald-400/35 sm:min-h-[128px]" />
+                  <textarea data-vonu-message-input="true" value={text} onChange={(event) => setText(event.target.value)} placeholder={t.textPlaceholder} className="min-h-[118px] w-full resize-none rounded-[18px] bg-[#0d1220] p-4 text-[15px] leading-6 text-white outline-none ring-1 ring-white/[0.07] transition placeholder:text-slate-600 focus:ring-emerald-400/35 sm:min-h-[128px] md:mt-[12px] md:bg-[#081631] md:ring-[#233b61]" />
                 )}
 
                 {mode === "capture" && (
