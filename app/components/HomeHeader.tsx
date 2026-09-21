@@ -189,7 +189,7 @@ export default function HomeHeader() {
 
       <div
         data-vonu-mobile-menu-expanded={menuOpen ? "true" : "false"}
-        className={["fixed inset-0 z-[10010] h-[100dvh] min-h-[100dvh] w-screen overflow-hidden bg-[#0b0e17] transition-[opacity,transform] duration-300 ease-out md:hidden", open ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none -translate-y-5 opacity-0"].join(" ")}
+        className={["fixed inset-0 z-[10010] h-[100dvh] min-h-[100dvh] w-screen overflow-hidden bg-[#0b0e17] transition-opacity duration-200 ease-out md:hidden", open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"].join(" ")}
       >
         <div
           className={[
