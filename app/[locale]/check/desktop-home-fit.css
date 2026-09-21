@@ -393,3 +393,53 @@
     margin-top: 24px !important;
   }
 }
+
+
+/* Desktop Message explicit field-to-lower-block gap — final authority. */
+@media (min-width: 1024px) {
+  /* Do not rely on margin inside the flex column: make the visible gap explicit. */
+  .vonu-check-page main:has(> section.text-center)
+    section[data-vonu-idle-mode="text"]
+    > div:last-child {
+    row-gap: 34px !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    section[data-vonu-idle-mode="text"]
+    > div:last-child
+    > textarea[data-vonu-message-input="true"] {
+    flex: 0 0 auto !important;
+    margin-bottom: 0 !important;
+    border: 1px solid rgb(35, 59, 97) !important;
+    border-radius: 22px !important;
+    background-color: rgb(8, 22, 49) !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    section[data-vonu-idle-mode="text"]
+    > div:last-child
+    > [data-vonu-cta-stack="true"] {
+    flex: 0 0 auto !important;
+    margin-top: 0 !important;
+  }
+
+  .vonu-check-page main:has(> section.text-center)
+    section[data-vonu-idle-mode="text"]
+    > div:last-child
+    > textarea[data-vonu-message-input="true"]:focus {
+    border-color: rgba(123, 183, 255, .62) !important;
+    background-color: rgb(8, 22, 49) !important;
+    box-shadow: 0 0 0 1px rgba(123, 183, 255, .08) !important;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 760px) {
+  .vonu-check-page main:has(> section.text-center)
+    section[data-vonu-idle-mode="text"]
+    > div:last-child {
+    row-gap: 24px !important;
+  }
+}
