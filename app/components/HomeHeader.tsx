@@ -186,13 +186,14 @@ export default function HomeHeader({ overlayClose, solid = false }: HomeHeaderPr
           <button
             type="button"
             onClick={overlayClose}
-            className="relative z-[10040] grid h-12 w-12 min-w-12 touch-manipulation place-items-center border-0 bg-transparent p-0 text-[#8ec2ff] transition hover:text-white active:scale-95"
+            className="group relative z-[10040] grid h-12 w-12 min-w-12 touch-manipulation place-items-center border-0 bg-transparent p-0 active:scale-95"
             aria-label="Close"
             title="Close"
           >
-            <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" aria-hidden="true">
-              <path d="M5 5l14 14M19 5 5 19" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
+            <span className="relative block h-6 w-8" aria-hidden="true">
+              <span className="absolute left-[2px] top-[7px] h-[2px] w-[28px] translate-y-[5px] rotate-45 rounded-full bg-emerald-300" />
+              <span className="absolute left-[2px] top-[17px] h-[2px] w-[28px] -translate-y-[5px] -rotate-45 rounded-full bg-emerald-300" />
+            </span>
           </button>
         ) : (
         <button
