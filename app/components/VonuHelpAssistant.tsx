@@ -4,10 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import HomeHeader from "@/app/components/HomeHeader";
 import VonuMark from "@/app/components/VonuMark";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
+import { checkPath } from "@/lib/vonu-global/i18n";
 import { localizedPublicPath } from "@/lib/vonu-global/routes";
 import { legalPath } from "@/lib/vonu-legal/routes";
 
 type Topic = "how" | "buy" | "privacy" | "scam" | "contact" | "unknown";
+type HelpAction = "pricing" | "check" | "contact" | "none";
+type ChatMessage =
+  | { id: number; role: "user"; text: string }
+  | { id: number; role: "assistant"; text: string; action: HelpAction };
 
 type AssistantCopy = {
   title: string;
@@ -18,6 +23,8 @@ type AssistantCopy = {
   send: string;
   close: string;
   notAnalysis: string;
+  thinking: string;
+  actionLabels: Record<Exclude<HelpAction, "none">, string>;
   options: Record<Exclude<Topic, "unknown">, { title: string; description: string }>;
   replies: Record<Topic, { title: string; body: string; cta?: string }>;
   howSteps: string[];
@@ -33,6 +40,8 @@ const COPY: Record<SupportedLocale, AssistantCopy> = {
     send: "Enviar",
     close: "Cerrar ayuda",
     notAnalysis: "Este asistente no analiza enlaces, imágenes, mensajes ni documentos. Para eso, utiliza las pestañas de Vonü Check.",
+    thinking: "Pensando…",
+    actionLabels: { pricing: "Ver precios", check: "Ir a Vonü Check", contact: "Contactar" },
     options: {
       how: { title: "Cómo usar Vonü", description: "Te explicamos qué pestaña utilizar en cada caso." },
       buy: { title: "Comprar más análisis", description: "Packs, precios y cómo ampliar tus análisis." },
@@ -64,6 +73,8 @@ const COPY: Record<SupportedLocale, AssistantCopy> = {
     send: "Send",
     close: "Close help",
     notAnalysis: "This assistant does not analyse links, images, messages or documents. Use the Vonü Check tabs for that.",
+    thinking: "Thinking…",
+    actionLabels: { pricing: "View pricing", check: "Go to Vonü Check", contact: "Contact us" },
     options: {
       how: { title: "How to use Vonü", description: "We’ll show you which tab to use." },
       buy: { title: "Buy more analyses", description: "Packs, pricing and how to add more analyses." },
@@ -95,6 +106,8 @@ const COPY: Record<SupportedLocale, AssistantCopy> = {
     send: "Envoyer",
     close: "Fermer l’aide",
     notAnalysis: "Cet assistant n’analyse pas les liens, images, messages ou documents. Utilisez les onglets de Vonü Check pour cela.",
+    thinking: "Je réfléchis…",
+    actionLabels: { pricing: "Voir les tarifs", check: "Aller à Vonü Check", contact: "Nous contacter" },
     options: {
       how: { title: "Comment utiliser Vonü", description: "Nous vous indiquons quel onglet utiliser." },
       buy: { title: "Acheter plus d’analyses", description: "Packs, tarifs et analyses supplémentaires." },
@@ -126,6 +139,8 @@ const COPY: Record<SupportedLocale, AssistantCopy> = {
     send: "Senden",
     close: "Hilfe schließen",
     notAnalysis: "Dieser Assistent analysiert keine Links, Bilder, Nachrichten oder Dokumente. Nutze dafür die Vonü-Check-Tabs.",
+    thinking: "Einen Moment…",
+    actionLabels: { pricing: "Preise ansehen", check: "Zu Vonü Check", contact: "Kontakt" },
     options: {
       how: { title: "Vonü verwenden", description: "Wir zeigen dir, welchen Tab du nutzen solltest." },
       buy: { title: "Mehr Analysen kaufen", description: "Pakete, Preise und zusätzliche Analysen." },
@@ -157,6 +172,8 @@ const COPY: Record<SupportedLocale, AssistantCopy> = {
     send: "إرسال",
     close: "إغلاق المساعدة",
     notAnalysis: "هذا المساعد لا يحلل الروابط أو الصور أو الرسائل أو المستندات. استخدم تبويبات Vonü Check لذلك.",
+    thinking: "لحظة…",
+    actionLabels: { pricing: "عرض الأسعار", check: "الانتقال إلى Vonü Check", contact: "تواصل معنا" },
     options: {
       how: { title: "كيفية استخدام Vonü", description: "نوضح لك أي تبويب تستخدمه." },
       buy: { title: "شراء تحليلات إضافية", description: "الحزم والأسعار وإضافة تحليلات جديدة." },
@@ -180,27 +197,6 @@ const COPY: Record<SupportedLocale, AssistantCopy> = {
     ],
   },
 };
-
-const KEYWORDS: Record<Exclude<Topic, "unknown">, string[]> = {
-  how: ["usar", "funciona", "cómo", "como", "how", "use", "utiliser", "comment", "benutzen", "funktioniert", "استخدام", "كيف"],
-  buy: ["comprar", "recargar", "recarga", "precio", "pack", "buy", "top up", "price", "pricing", "acheter", "tarif", "kaufen", "preis", "شراء", "سعر"],
-  privacy: ["privacidad", "datos", "privacy", "data", "confidentialité", "données", "datenschutz", "daten", "خصوصية", "بيانات"],
-  scam: ["estafa", "estafado", "estafada", "fraude", "he hecho clic", "he pagado", "scam", "scammed", "fraud", "already clicked", "made a payment", "arnaque", "cliqué", "payé", "betrug", "betrogen", "geklickt", "bezahlt", "احتيال", "نصب", "دفعت", "نقرت"],
-  contact: ["contacto", "contactar", "equipo", "contact", "team", "contacter", "équipe", "kontakt", "team", "تواصل", "فريق"],
-};
-
-function normalize(value: string) {
-  return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
-
-function resolveTopic(value: string): Topic {
-  const normalized = normalize(value);
-  const ordered: Exclude<Topic, "unknown">[] = ["scam", "buy", "privacy", "contact", "how"];
-  for (const topic of ordered) {
-    if (KEYWORDS[topic].some((keyword) => normalized.includes(normalize(keyword)))) return topic;
-  }
-  return "unknown";
-}
 
 function ChatGlyph({ className = "h-14 w-14" }: { className?: string }) {
   return (
@@ -255,10 +251,8 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
   const [open, setOpen] = useState(false);
   const [topic, setTopic] = useState<Topic | null>(null);
   const [value, setValue] = useState("");
-  const [chatMessages, setChatMessages] = useState<Array<
-    | { id: number; role: "user"; text: string }
-    | { id: number; role: "assistant"; topic: Topic }
-  >>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [isThinking, setIsThinking] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [viewport, setViewport] = useState({
     height: 0,
@@ -336,21 +330,25 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
     };
   }, [open]);
 
-  function submitMessage() {
+  async function submitMessage() {
     const trimmed = value.trim();
-    if (!trimmed) return;
+    if (!trimmed || isThinking) return;
 
-    const resolved = resolveTopic(trimmed);
-    const userId = ++messageId.current;
-    const assistantId = ++messageId.current;
+    const userMessage: ChatMessage = {
+      id: ++messageId.current,
+      role: "user",
+      text: trimmed,
+    };
 
-    setChatMessages((current) => [
-      ...current,
-      { id: userId, role: "user", text: trimmed },
-      { id: assistantId, role: "assistant", topic: resolved },
-    ]);
+    const history = chatMessages.map((message) => ({
+      role: message.role,
+      content: message.text,
+    }));
+
+    setChatMessages((current) => [...current, userMessage]);
     setTopic(null);
     setValue("");
+    setIsThinking(true);
     setInputFocused(false);
     inputRef.current?.blur();
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
@@ -358,7 +356,55 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
     window.setTimeout(() => {
       const main = mainRef.current;
       if (main) main.scrollTo({ top: main.scrollHeight, behavior: "smooth" });
-    }, 180);
+    }, 120);
+
+    try {
+      const response = await fetch("/api/help-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          locale,
+          userText: trimmed,
+          messages: history,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+      const answer =
+        typeof data?.text === "string" && data.text.trim()
+          ? data.text.trim()
+          : copy.replies.unknown.body;
+      const action: HelpAction =
+        data?.action === "pricing" || data?.action === "check" || data?.action === "contact"
+          ? data.action
+          : "none";
+
+      setChatMessages((current) => [
+        ...current,
+        {
+          id: ++messageId.current,
+          role: "assistant",
+          text: answer,
+          action,
+        },
+      ]);
+    } catch {
+      setChatMessages((current) => [
+        ...current,
+        {
+          id: ++messageId.current,
+          role: "assistant",
+          text: copy.replies.unknown.body,
+          action: "contact",
+        },
+      ]);
+    } finally {
+      setIsThinking(false);
+      window.setTimeout(() => {
+        const main = mainRef.current;
+        if (main) main.scrollTo({ top: main.scrollHeight, behavior: "smooth" });
+      }, 120);
+    }
   }
 
   const selected = topic ? copy.replies[topic] : null;
@@ -370,6 +416,13 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
         : topic === "contact" || topic === "scam" || topic === "unknown"
           ? localizedPublicPath(locale, "contacto")
           : null;
+
+  function actionHref(action: HelpAction) {
+    if (action === "pricing") return localizedPublicPath(locale, "precios");
+    if (action === "check") return checkPath(locale);
+    if (action === "contact") return localizedPublicPath(locale, "contacto");
+    return null;
+  }
 
   const topics: Exclude<Topic, "unknown">[] = ["how", "buy", "privacy", "scam", "contact"];
   const compactComposer = inputFocused || viewport.keyboardOpen;
@@ -471,7 +524,7 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
                   </section>
                 ) : null}
 
-                {chatMessages.length ? (
+                {chatMessages.length || isThinking ? (
                   <div className="mt-5 grid gap-3">
                     {chatMessages.map((message) => {
                       if (message.role === "user") {
@@ -484,40 +537,30 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
                         );
                       }
 
-                      const reply = copy.replies[message.topic];
-                      const messageCtaHref =
-                        message.topic === "buy"
-                          ? localizedPublicPath(locale, "precios")
-                          : message.topic === "privacy"
-                            ? legalPath(locale, "privacy")
-                            : message.topic === "contact" || message.topic === "scam" || message.topic === "unknown"
-                              ? localizedPublicPath(locale, "contacto")
-                              : null;
-
+                      const href = actionHref(message.action);
                       return (
                         <div key={message.id} className="flex justify-start">
                           <div className="max-w-[92%] rounded-[20px] rounded-bl-md border border-[#7bb7ff]/20 bg-[#0c1e3e] px-4 py-3">
-                            <p className="text-[14px] font-semibold text-white">{reply.title}</p>
-                            <p className="mt-1 text-[14px] leading-6 text-slate-300">{reply.body}</p>
-                            {message.topic === "how" ? (
-                              <div className="mt-3 grid gap-2">
-                                {copy.howSteps.map((step) => (
-                                  <div key={step} className="rounded-xl bg-white/[0.035] px-3 py-2 text-[13px] leading-5 text-slate-400">{step}</div>
-                                ))}
-                              </div>
-                            ) : null}
-                            {messageCtaHref && reply.cta ? (
+                            <p className="whitespace-pre-line text-[14px] leading-6 text-slate-300">{message.text}</p>
+                            {href && message.action !== "none" ? (
                               <a
-                                href={messageCtaHref}
+                                href={href}
                                 className="mt-3 inline-flex min-h-9 items-center justify-center rounded-xl bg-[#7bb7ff] px-3 text-[12px] font-bold text-[#07142f] transition hover:bg-[#9bc8ff]"
                               >
-                                {reply.cta}
+                                {copy.actionLabels[message.action]}
                               </a>
                             ) : null}
                           </div>
                         </div>
                       );
                     })}
+                    {isThinking ? (
+                      <div className="flex justify-start">
+                        <div className="rounded-[20px] rounded-bl-md border border-[#7bb7ff]/20 bg-[#0c1e3e] px-4 py-3 text-[14px] text-slate-400">
+                          {copy.thinking}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
 
@@ -568,8 +611,9 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
                 <button
                   type="button"
                   onClick={submitMessage}
+                  disabled={isThinking}
                   className={[
-                    "grid shrink-0 place-items-center rounded-full bg-[#7bb7ff] text-[#07142f] transition hover:bg-[#9bc8ff] active:scale-95",
+                    "grid shrink-0 place-items-center rounded-full bg-[#7bb7ff] text-[#07142f] transition hover:bg-[#9bc8ff] active:scale-95 disabled:cursor-default disabled:opacity-60",
                     compactComposer ? "h-9 w-9" : "h-11 w-11",
                   ].join(" ")}
                   aria-label={copy.send}
