@@ -30,7 +30,7 @@ export default function HomeFooter() {
     <footer className="bg-[#0b0e17]">
       <div className="mx-auto max-w-[1320px] px-3 sm:px-6 lg:px-8">
         <div dir="ltr" className="flex h-11 items-center justify-between gap-2 whitespace-nowrap text-[11px] font-medium text-slate-500 md:hidden">
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-1">
             <VonuMark className="h-5 w-5" />
             <span className="font-semibold tracking-[0.06em] text-white">Vonü</span>
           </div>
@@ -42,7 +42,7 @@ export default function HomeFooter() {
         </div>
 
         <div className="hidden min-h-12 items-center justify-between gap-5 py-3 text-[13px] text-slate-600 md:flex">
-          <div className="flex shrink-0 items-center gap-2 text-slate-500">
+          <div className="flex shrink-0 items-center gap-1.5 text-slate-500">
             <VonuMark className="h-[22px] w-[22px]" />
             <span className="font-semibold tracking-[0.08em] text-white">Vonü</span>
           </div>
