@@ -252,7 +252,7 @@ Important rules:
 - If evidence is incomplete, say so and lower confidence.
 - A screenshot alone cannot verify that an identity is genuine.
 - For social profiles, distinguish visible anomalies from facts that require external verification.
-- A standalone personal photo may come from a social or dating profile. If there is no surrounding profile UI or readable profile text, do NOT infer fraud, identity, age, profession, relationship status or intent from appearance. Treat the image conservatively as a possible social_profile with limited confidence and explain that a photo alone cannot verify identity or authenticity.
+- A standalone personal photo may come from a social or dating profile. A photo by itself cannot verify identity or authenticity. Do not infer fraud, age, profession, relationship status or intent from appearance alone; use limited confidence when profile context is missing.
 - Ordinary profile attributes such as interests, astrology/zodiac fields, online status, profile cosmetics or generic app UI are NOT fraud signals. Give them weight 0 and do not include them among the key findings unless they are directly relevant to a concrete risk.
 - If a social profile contains no concrete warning/negative fraud evidence, keep the risk score in the 0-9 range. Use the summary to say that no clear fraud or impersonation signs are visible, and prefer safety-relevant neutral/positive findings over ordinary profile attributes.
 - Missing interaction history, inability to verify the real identity, or other unavailable context should reduce confidence/coverage and appear as limitations; it must not increase the risk score by itself.
@@ -300,7 +300,6 @@ function compactRetryPrompt(locale: SupportedLocale) {
 Analyse this screenshot conservatively for fraud, phishing, impersonation or social-engineering risk. Human-readable output language: ${locale}.
 Return ONLY one valid JSON object. No markdown. Escape every quote and line break inside strings. Keep the entire response under 3500 characters.
 Use risk score 0-100 as a risk index, not a probability. Missing context lowers confidence. Do not invent facts not visible in the image.
-A standalone personal photo may be a profile photo. Do not infer fraud or identity from appearance alone; if there is no surrounding profile context, use limited confidence and explain that the photo alone cannot verify authenticity.
 Use at most 6 concise signals, 4 recommended actions and 3 limitations. visibleText must be at most 1200 characters and contain only legible decision-relevant text.
 
 Exact schema:
@@ -329,7 +328,6 @@ Rules:
 - Use only what is visible in the screenshot.
 - risk.score is a 0-100 risk index, not a probability.
 - Missing context means confidence "limited"; do not invent facts.
-- A standalone personal photo may be a profile photo. Do not infer fraud or identity from appearance alone. If profile context is absent, say that authenticity cannot be verified from the photo by itself.
 - Use at most 3 short signals, 3 actions and 2 limitations.
 
 Schema:
@@ -345,68 +343,61 @@ Schema:
 `.trim();
 }
 
-const safeFallbackCopy: Record<SupportedLocale, {
-  summary: string;
-  signalTitle: string;
-  signalDetail: string;
-  action: string;
-  limitation: string;
-}> = {
-  es: {
-    summary: "No se ven señales suficientes para evaluar el riesgo con fiabilidad en esta imagen aislada.",
-    signalTitle: "Imagen con contexto limitado",
-    signalDetail: "Una foto por sí sola no permite verificar si un perfil, una identidad o una persona son auténticos.",
-    action: "Si forma parte de un perfil social, revisa también la bio, publicaciones, interacciones, antigüedad y enlaces visibles.",
-    limitation: "El análisis se ha limitado a lo visible en la imagen; faltan datos de contexto para verificar la identidad o el perfil.",
-  },
-  en: {
-    summary: "There is not enough visible evidence to assess risk reliably from this isolated image.",
-    signalTitle: "Limited image context",
-    signalDetail: "A photo alone cannot verify whether a profile, identity or person is authentic.",
-    action: "If this comes from a social profile, also review the bio, posts, interactions, account history and visible links.",
-    limitation: "The analysis is limited to what is visible in the image; there is not enough context to verify the identity or profile.",
-  },
-  fr: {
-    summary: "Cette image isolée ne fournit pas assez d’éléments visibles pour évaluer le risque de façon fiable.",
-    signalTitle: "Contexte d’image limité",
-    signalDetail: "Une photo seule ne permet pas de vérifier si un profil, une identité ou une personne est authentique.",
-    action: "Si elle provient d’un profil social, vérifiez aussi la bio, les publications, les interactions, l’ancienneté et les liens visibles.",
-    limitation: "L’analyse est limitée à ce qui est visible dans l’image ; le contexte est insuffisant pour vérifier l’identité ou le profil.",
-  },
-  de: {
-    summary: "Aus diesem einzelnen Bild sind nicht genügend sichtbare Hinweise vorhanden, um das Risiko zuverlässig zu bewerten.",
-    signalTitle: "Begrenzter Bildkontext",
-    signalDetail: "Ein Foto allein kann nicht bestätigen, ob ein Profil, eine Identität oder eine Person echt ist.",
-    action: "Wenn das Bild aus einem Social-Media-Profil stammt, prüfe zusätzlich Bio, Beiträge, Interaktionen, Kontohistorie und sichtbare Links.",
-    limitation: "Die Analyse ist auf den sichtbaren Bildinhalt beschränkt; für eine Verifizierung von Identität oder Profil fehlt Kontext.",
-  },
-  ar: {
-    summary: "لا توجد في هذه الصورة المنفردة أدلة مرئية كافية لتقييم مستوى الخطر بشكل موثوق.",
-    signalTitle: "سياق الصورة محدود",
-    signalDetail: "لا تكفي الصورة وحدها للتحقق مما إذا كان الملف الشخصي أو الهوية أو الشخص حقيقيًا.",
-    action: "إذا كانت الصورة من ملف اجتماعي، فراجع أيضًا النبذة والمنشورات والتفاعلات وعمر الحساب والروابط الظاهرة.",
-    limitation: "يقتصر التحليل على ما يظهر في الصورة، ولا يتوفر سياق كافٍ للتحقق من الهوية أو الملف الشخصي.",
-  },
-};
+function safePhotoFallback(locale: SupportedLocale) {
+  const copy = {
+    es: {
+      summary: "La imagen por sí sola no aporta contexto suficiente para verificar la autenticidad de un perfil o una identidad.",
+      title: "Contexto limitado",
+      detail: "Una foto aislada puede pertenecer a un perfil social, pero no permite determinar por sí sola si la identidad es auténtica.",
+      action: "Si pertenece a un perfil, añade también una captura con la bio, publicaciones, interacciones o datos visibles del perfil.",
+      limitation: "Falta contexto del perfil; la foto aislada no permite verificar identidad ni autenticidad.",
+    },
+    en: {
+      summary: "This image alone does not provide enough context to verify a profile or identity.",
+      title: "Limited context",
+      detail: "A standalone photo may come from a social profile, but it cannot establish whether the identity is authentic.",
+      action: "If it belongs to a profile, also add a screenshot showing the bio, posts, interactions or other visible profile details.",
+      limitation: "Profile context is missing; a standalone photo cannot verify identity or authenticity.",
+    },
+    fr: {
+      summary: "Cette image seule ne fournit pas assez de contexte pour vérifier un profil ou une identité.",
+      title: "Contexte limité",
+      detail: "Une photo isolée peut provenir d’un profil social, mais elle ne permet pas d’établir si l’identité est authentique.",
+      action: "Si elle appartient à un profil, ajoutez aussi une capture montrant la bio, les publications, les interactions ou d’autres éléments visibles.",
+      limitation: "Le contexte du profil manque ; une photo isolée ne permet pas de vérifier l’identité ou l’authenticité.",
+    },
+    de: {
+      summary: "Dieses Bild allein bietet nicht genügend Kontext, um ein Profil oder eine Identität zu verifizieren.",
+      title: "Begrenzter Kontext",
+      detail: "Ein einzelnes Foto kann aus einem Social-Media-Profil stammen, bestätigt aber nicht, ob die Identität echt ist.",
+      action: "Wenn es zu einem Profil gehört, füge auch einen Screenshot mit Bio, Beiträgen, Interaktionen oder anderen sichtbaren Profildaten hinzu.",
+      limitation: "Profilkontext fehlt; ein einzelnes Foto kann Identität oder Authentizität nicht verifizieren.",
+    },
+    ar: {
+      summary: "لا توفر هذه الصورة وحدها سياقًا كافيًا للتحقق من ملف شخصي أو هوية.",
+      title: "سياق محدود",
+      detail: "قد تكون الصورة المنفردة مأخوذة من ملف اجتماعي، لكنها لا تكفي لإثبات أن الهوية حقيقية.",
+      action: "إذا كانت من ملف شخصي، أضف أيضًا لقطة تظهر النبذة أو المنشورات أو التفاعلات أو بيانات الملف الظاهرة.",
+      limitation: "سياق الملف الشخصي غير متوفر؛ لا تكفي الصورة وحدها للتحقق من الهوية أو الأصالة.",
+    },
+  }[locale];
 
-function buildSafeImageFallback(locale: SupportedLocale) {
-  const t = safeFallbackCopy[locale];
   return {
-    kind: "other",
+    kind: "social_profile",
     risk: { score: 0, confidence: "limited" },
-    summary: t.summary,
+    summary: copy.summary,
     visibleText: "",
     signals: [{
-      id: "limited_image_context",
+      id: "limited_profile_photo_context",
       tone: "neutral",
-      title: t.signalTitle,
-      detail: t.signalDetail,
+      title: copy.title,
+      detail: copy.detail,
       weight: 0,
     }],
     atlas: { evidence: [] },
     extracted: { urls: [], phones: [], emails: [], brands: [] },
-    recommendedActions: [t.action],
-    limitations: [t.limitation],
+    recommendedActions: [copy.action],
+    limitations: [copy.limitation],
   };
 }
 
@@ -542,7 +533,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (!retryResponse.ok || !retryData || typeof retryData.text !== "string") {
-        parsed = buildSafeImageFallback(locale);
+        parsed = safePhotoFallback(locale);
       } else try {
         parsed = parseJsonText(retryData.text);
       } catch {
@@ -578,12 +569,12 @@ export async function POST(req: NextRequest) {
         }
 
         if (!recoveryResponse.ok || !recoveryData || typeof recoveryData.text !== "string") {
-          parsed = buildSafeImageFallback(locale);
+          parsed = safePhotoFallback(locale);
         } else {
           try {
             parsed = parseJsonText(recoveryData.text);
           } catch {
-            parsed = buildSafeImageFallback(locale);
+            parsed = safePhotoFallback(locale);
           }
         }
       }
