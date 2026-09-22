@@ -252,7 +252,7 @@ Important rules:
 - If evidence is incomplete, say so and lower confidence.
 - A screenshot alone cannot verify that an identity is genuine.
 - For social profiles, distinguish visible anomalies from facts that require external verification.
-- A standalone personal photo may come from a social or dating profile. A photo by itself cannot verify identity or authenticity. Do not infer fraud, age, profession, relationship status or intent from appearance alone; use limited confidence when profile context is missing.
+- A standalone personal photo may come from a social or dating profile. Do not infer fraud, identity or intent from appearance alone. A photo by itself cannot verify authenticity, so use limited confidence when profile context is missing.
 - Ordinary profile attributes such as interests, astrology/zodiac fields, online status, profile cosmetics or generic app UI are NOT fraud signals. Give them weight 0 and do not include them among the key findings unless they are directly relevant to a concrete risk.
 - If a social profile contains no concrete warning/negative fraud evidence, keep the risk score in the 0-9 range. Use the summary to say that no clear fraud or impersonation signs are visible, and prefer safety-relevant neutral/positive findings over ordinary profile attributes.
 - Missing interaction history, inability to verify the real identity, or other unavailable context should reduce confidence/coverage and appear as limitations; it must not increase the risk score by itself.
@@ -341,64 +341,6 @@ Schema:
   "limitations":[]
 }
 `.trim();
-}
-
-function safePhotoFallback(locale: SupportedLocale) {
-  const copy = {
-    es: {
-      summary: "La imagen por sí sola no aporta contexto suficiente para verificar la autenticidad de un perfil o una identidad.",
-      title: "Contexto limitado",
-      detail: "Una foto aislada puede pertenecer a un perfil social, pero no permite determinar por sí sola si la identidad es auténtica.",
-      action: "Si pertenece a un perfil, añade también una captura con la bio, publicaciones, interacciones o datos visibles del perfil.",
-      limitation: "Falta contexto del perfil; la foto aislada no permite verificar identidad ni autenticidad.",
-    },
-    en: {
-      summary: "This image alone does not provide enough context to verify a profile or identity.",
-      title: "Limited context",
-      detail: "A standalone photo may come from a social profile, but it cannot establish whether the identity is authentic.",
-      action: "If it belongs to a profile, also add a screenshot showing the bio, posts, interactions or other visible profile details.",
-      limitation: "Profile context is missing; a standalone photo cannot verify identity or authenticity.",
-    },
-    fr: {
-      summary: "Cette image seule ne fournit pas assez de contexte pour vérifier un profil ou une identité.",
-      title: "Contexte limité",
-      detail: "Une photo isolée peut provenir d’un profil social, mais elle ne permet pas d’établir si l’identité est authentique.",
-      action: "Si elle appartient à un profil, ajoutez aussi une capture montrant la bio, les publications, les interactions ou d’autres éléments visibles.",
-      limitation: "Le contexte du profil manque ; une photo isolée ne permet pas de vérifier l’identité ou l’authenticité.",
-    },
-    de: {
-      summary: "Dieses Bild allein bietet nicht genügend Kontext, um ein Profil oder eine Identität zu verifizieren.",
-      title: "Begrenzter Kontext",
-      detail: "Ein einzelnes Foto kann aus einem Social-Media-Profil stammen, bestätigt aber nicht, ob die Identität echt ist.",
-      action: "Wenn es zu einem Profil gehört, füge auch einen Screenshot mit Bio, Beiträgen, Interaktionen oder anderen sichtbaren Profildaten hinzu.",
-      limitation: "Profilkontext fehlt; ein einzelnes Foto kann Identität oder Authentizität nicht verifizieren.",
-    },
-    ar: {
-      summary: "لا توفر هذه الصورة وحدها سياقًا كافيًا للتحقق من ملف شخصي أو هوية.",
-      title: "سياق محدود",
-      detail: "قد تكون الصورة المنفردة مأخوذة من ملف اجتماعي، لكنها لا تكفي لإثبات أن الهوية حقيقية.",
-      action: "إذا كانت من ملف شخصي، أضف أيضًا لقطة تظهر النبذة أو المنشورات أو التفاعلات أو بيانات الملف الظاهرة.",
-      limitation: "سياق الملف الشخصي غير متوفر؛ لا تكفي الصورة وحدها للتحقق من الهوية أو الأصالة.",
-    },
-  }[locale];
-
-  return {
-    kind: "social_profile",
-    risk: { score: 0, confidence: "limited" },
-    summary: copy.summary,
-    visibleText: "",
-    signals: [{
-      id: "limited_profile_photo_context",
-      tone: "neutral",
-      title: copy.title,
-      detail: copy.detail,
-      weight: 0,
-    }],
-    atlas: { evidence: [] },
-    extracted: { urls: [], phones: [], emails: [], brands: [] },
-    recommendedActions: [copy.action],
-    limitations: [copy.limitation],
-  };
 }
 
 const linkedCopy: Record<SupportedLocale, { high: [string, string]; caution: [string, string]; low: [string, string] }> = {
@@ -533,8 +475,10 @@ export async function POST(req: NextRequest) {
       }
 
       if (!retryResponse.ok || !retryData || typeof retryData.text !== "string") {
-        parsed = safePhotoFallback(locale);
-      } else try {
+        throw new Error("vision_retry_failed");
+      }
+
+      try {
         parsed = parseJsonText(retryData.text);
       } catch {
         // Last recovery path: drastically reduce the requested schema. This avoids
@@ -569,13 +513,34 @@ export async function POST(req: NextRequest) {
         }
 
         if (!recoveryResponse.ok || !recoveryData || typeof recoveryData.text !== "string") {
-          parsed = safePhotoFallback(locale);
-        } else {
-          try {
-            parsed = parseJsonText(recoveryData.text);
-          } catch {
-            parsed = safePhotoFallback(locale);
-          }
+          throw new Error("vision_recovery_failed");
+        }
+
+        try {
+          parsed = parseJsonText(recoveryData.text);
+        } catch {
+          const fallbackSummary =
+            locale === "es"
+              ? "La foto se ha procesado, pero una imagen aislada no aporta contexto suficiente para verificar la autenticidad de un perfil o una identidad."
+              : locale === "en"
+                ? "The photo was processed, but a standalone image does not provide enough context to verify a profile or identity."
+                : locale === "fr"
+                  ? "La photo a été traitée, mais une image isolée ne fournit pas assez de contexte pour vérifier un profil ou une identité."
+                  : locale === "de"
+                    ? "Das Foto wurde verarbeitet, aber ein einzelnes Bild bietet nicht genügend Kontext, um ein Profil oder eine Identität zu verifizieren."
+                    : "تمت معالجة الصورة، لكن الصورة المنفردة لا توفر سياقًا كافيًا للتحقق من ملف شخصي أو هوية.";
+
+          parsed = {
+            kind: "social_profile",
+            risk: { score: 0, confidence: "limited" },
+            summary: fallbackSummary,
+            visibleText: "",
+            signals: [],
+            atlas: { evidence: [] },
+            extracted: { urls: [], phones: [], emails: [], brands: [] },
+            recommendedActions: [],
+            limitations: [fallbackSummary],
+          };
         }
       }
     }
