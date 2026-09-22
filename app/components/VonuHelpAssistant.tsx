@@ -203,7 +203,7 @@ function ChatGlyph({ className = "h-14 w-14" }: { className?: string }) {
       <path
         d="M15 10h34a9 9 0 0 1 9 9v20a9 9 0 0 1-9 9H30L16 56l3.4-8H15a9 9 0 0 1-9-9V19a9 9 0 0 1 9-9Z"
         stroke="currentColor"
-        strokeWidth="3.3"
+        strokeWidth="3"
         strokeLinejoin="round"
       />
       <circle cx="24" cy="30" r="2.7" fill="currentColor" />
@@ -260,7 +260,7 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
     keyboardOpen: false,
   });
   const baselineViewportHeight = useRef(0);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const messageId = useRef(0);
   const copy = COPY[locale];
@@ -456,11 +456,11 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-[72px] right-5 z-[70] grid h-16 w-16 place-items-center text-[#7bb7ff] transition hover:scale-105 active:scale-95 md:bottom-8 md:right-8"
+        className="fixed bottom-[72px] right-5 z-[70] grid h-14 w-14 place-items-center text-[#7bb7ff] transition hover:scale-105 active:scale-95 md:bottom-8 md:right-8 md:h-16 md:w-16"
         aria-label={copy.title}
         title={copy.title}
       >
-        <ChatGlyph className="h-[58px] w-[58px] drop-shadow-[0_0_10px_rgba(123,183,255,.25)]" />
+        <ChatGlyph className="h-[50px] w-[50px] drop-shadow-[0_0_10px_rgba(123,183,255,.25)] md:h-[58px] md:w-[58px]" />
       </button>
 
       {open ? (
@@ -567,34 +567,27 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
 
             <div
               className={[
-                "absolute inset-x-0 bottom-0 z-20 sm:px-8",
+                "absolute inset-x-0 bottom-0 z-20 px-5 sm:px-8",
                 compactComposer
-                  ? "bg-transparent px-2 py-1"
-                  : "bg-[#071126] px-5 pb-[max(14px,env(safe-area-inset-bottom))] pt-3",
+                  ? "bg-transparent pb-1 pt-1"
+                  : "bg-[#071126] pb-[max(14px,env(safe-area-inset-bottom))] pt-3",
               ].join(" ")}
             >
-              <div
-                className={[
-                  "mx-auto flex w-full max-w-[760px] items-center gap-2 border border-[#7bb7ff]/25 bg-[#091a35] shadow-[0_-14px_40px_rgba(4,10,24,.34)]",
-                  compactComposer ? "rounded-[17px] p-1" : "rounded-[22px] p-2",
-                ].join(" ")}
-              >
-                <input
+              <div className="mx-auto flex w-full max-w-[760px] items-center gap-2 rounded-[22px] border border-[#7bb7ff]/25 bg-[#091a35] p-2 shadow-[0_-14px_40px_rgba(4,10,24,.34)]">
+                <textarea
                   ref={inputRef}
+                  rows={1}
                   value={value}
                   onChange={(event) => setValue(event.target.value)}
                   onFocus={() => setInputFocused(true)}
                   onBlur={() => setInputFocused(false)}
                   onKeyDown={(event) => {
-                    if (event.key === "Enter") {
+                    if (event.key === "Enter" && !event.shiftKey) {
                       event.preventDefault();
                       submitMessage();
                     }
                   }}
-                  className={[
-                    "min-w-0 flex-1 bg-transparent px-3 text-[15px] text-white outline-none placeholder:text-slate-600",
-                    compactComposer ? "py-2" : "py-3",
-                  ].join(" ")}
+                  className="h-11 min-h-11 max-h-11 min-w-0 flex-1 resize-none overflow-y-auto bg-transparent px-3 py-[11px] text-[15px] leading-[22px] text-white outline-none placeholder:text-slate-600"
                   placeholder={copy.input}
                   aria-label={copy.input}
                   name="vonu-chat-message"
@@ -614,7 +607,7 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
                     value.trim() && !isThinking
                       ? "border-[#7bb7ff] bg-[#7bb7ff] text-[#07142f] shadow-[0_0_18px_rgba(123,183,255,.28)] hover:bg-[#92c4ff]"
                       : "border-white/[0.08] bg-[#182033] text-slate-500",
-                    compactComposer ? "h-9 w-9" : "h-11 w-11",
+                    "h-11 w-11",
                   ].join(" ")}
                   aria-label={copy.send}
                   title={copy.send}
