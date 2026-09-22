@@ -4,6 +4,7 @@ import Link from "next/link";
 import { track } from "@vercel/analytics";
 import { useCallback, useEffect, useRef, useState } from "react";
 import HomeHeader from "@/app/components/HomeHeader";
+import VonuHelpAssistant from "@/app/components/VonuHelpAssistant";
 import { localeMeta } from "@/lib/vonu-check/i18n";
 import { navCopy } from "@/lib/vonu-global/i18n";
 import { localizedPublicPath } from "@/lib/vonu-global/routes";
@@ -1590,6 +1591,7 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
               </div>
             </div>
           </footer>
+          <VonuHelpAssistant locale={locale} />
         </>
       )}
 
