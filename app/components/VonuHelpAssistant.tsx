@@ -22,7 +22,6 @@ type AssistantCopy = {
   input: string;
   send: string;
   close: string;
-  notAnalysis: string;
   thinking: string;
   actionLabels: Record<Exclude<HelpAction, "none">, string>;
   options: Record<Exclude<Topic, "unknown">, { title: string; description: string }>;
@@ -34,12 +33,12 @@ const COPY: Record<SupportedLocale, AssistantCopy> = {
   es: {
     title: "Ayuda Vonü",
     subtitle: "¿En qué podemos ayudarte?",
-    intro: "Hola 👋 Soy el asistente de Vonü.",
+    intro: "Hola 👋 Soy el asistente de IA de Vonü.",
     question: "Puedo ayudarte con el funcionamiento de la web, pagos, privacidad y dudas habituales.",
     input: "Escribe tu mensaje…",
     send: "Enviar",
     close: "Cerrar ayuda",
-    notAnalysis: "Este asistente no analiza enlaces, imágenes, mensajes ni documentos. Para eso, utiliza las pestañas de Vonü Check.",
+
     thinking: "Pensando…",
     actionLabels: { pricing: "Ver precios", check: "Ir a Vonü Check", contact: "Contactar" },
     options: {
@@ -67,12 +66,12 @@ const COPY: Record<SupportedLocale, AssistantCopy> = {
   en: {
     title: "Vonü Help",
     subtitle: "How can we help?",
-    intro: "Hi 👋 I’m the Vonü assistant.",
+    intro: "Hi 👋 I’m Vonü’s AI assistant.",
     question: "I can help with using the website, payments, privacy and common questions.",
     input: "Type your message…",
     send: "Send",
     close: "Close help",
-    notAnalysis: "This assistant does not analyse links, images, messages or documents. Use the Vonü Check tabs for that.",
+
     thinking: "Thinking…",
     actionLabels: { pricing: "View pricing", check: "Go to Vonü Check", contact: "Contact us" },
     options: {
@@ -100,12 +99,12 @@ const COPY: Record<SupportedLocale, AssistantCopy> = {
   fr: {
     title: "Aide Vonü",
     subtitle: "Comment pouvons-nous vous aider ?",
-    intro: "Bonjour 👋 Je suis l’assistant Vonü.",
+    intro: "Bonjour 👋 Je suis l’assistant IA de Vonü.",
     question: "Je peux vous aider à utiliser le site, les paiements, la confidentialité et les questions fréquentes.",
     input: "Écrivez votre message…",
     send: "Envoyer",
     close: "Fermer l’aide",
-    notAnalysis: "Cet assistant n’analyse pas les liens, images, messages ou documents. Utilisez les onglets de Vonü Check pour cela.",
+
     thinking: "Je réfléchis…",
     actionLabels: { pricing: "Voir les tarifs", check: "Aller à Vonü Check", contact: "Nous contacter" },
     options: {
@@ -133,12 +132,12 @@ const COPY: Record<SupportedLocale, AssistantCopy> = {
   de: {
     title: "Vonü Hilfe",
     subtitle: "Wie können wir helfen?",
-    intro: "Hallo 👋 Ich bin der Vonü-Assistent.",
+    intro: "Hallo 👋 Ich bin der KI-Assistent von Vonü.",
     question: "Ich helfe bei der Nutzung der Website, Zahlungen, Datenschutz und häufigen Fragen.",
     input: "Nachricht eingeben…",
     send: "Senden",
     close: "Hilfe schließen",
-    notAnalysis: "Dieser Assistent analysiert keine Links, Bilder, Nachrichten oder Dokumente. Nutze dafür die Vonü-Check-Tabs.",
+
     thinking: "Einen Moment…",
     actionLabels: { pricing: "Preise ansehen", check: "Zu Vonü Check", contact: "Kontakt" },
     options: {
@@ -166,12 +165,12 @@ const COPY: Record<SupportedLocale, AssistantCopy> = {
   ar: {
     title: "مساعدة Vonü",
     subtitle: "كيف يمكننا مساعدتك؟",
-    intro: "مرحبًا 👋 أنا مساعد Vonü.",
+    intro: "مرحبًا 👋 أنا مساعد Vonü بالذكاء الاصطناعي.",
     question: "يمكنني مساعدتك في استخدام الموقع والدفع والخصوصية والأسئلة الشائعة.",
     input: "اكتب رسالتك…",
     send: "إرسال",
     close: "إغلاق المساعدة",
-    notAnalysis: "هذا المساعد لا يحلل الروابط أو الصور أو الرسائل أو المستندات. استخدم تبويبات Vonü Check لذلك.",
+
     thinking: "لحظة…",
     actionLabels: { pricing: "عرض الأسعار", check: "الانتقال إلى Vonü Check", contact: "تواصل معنا" },
     options: {
@@ -564,7 +563,6 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
                   </div>
                 ) : null}
 
-                <p className="mt-5 px-2 text-center text-[12px] leading-5 text-slate-500">{copy.notAnalysis}</p>
               </div>
             </main>
 
