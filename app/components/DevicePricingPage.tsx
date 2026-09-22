@@ -150,7 +150,7 @@ export default function DevicePricingPage({ locale }: { locale: SupportedLocale 
             <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">{t.freeTitle}</p>
             <p className="mt-7 text-[56px] font-semibold tracking-[-0.07em] text-white">{t.freePrice}</p>
             <p className="mt-4 text-[14px] leading-7 text-slate-400">{t.freeText}</p>
-            <div className="mt-7 space-y-3">
+            <div className="mt-7 mb-3 space-y-3">
               {t.freeFeatures.map((item) => <div key={item} className="flex items-center gap-3 text-[13px] text-slate-300"><CheckIcon /><span>{item}</span></div>)}
             </div>
             <a href={checkPath(locale)} className="mt-auto inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.045] px-5 text-[14px] font-bold text-white hover:bg-white/[0.07]">{t.freeCta}</a>
@@ -160,7 +160,7 @@ export default function DevicePricingPage({ locale }: { locale: SupportedLocale 
             <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">{t.packTitle}</p>
             <p className="mt-7 text-[56px] font-semibold tracking-[-0.07em] text-white">{t.packPrice}</p>
             <p className="mt-4 text-[14px] leading-7 text-slate-400">{t.packText}</p>
-            <div className="mt-7 space-y-3">
+            <div className="mt-7 mb-3 space-y-3">
               {t.packFeatures.map((item) => <div key={item} className="flex items-center gap-3 text-[13px] text-slate-300"><CheckIcon /><span>{item}</span></div>)}
             </div>
             <DevicePackCheckoutButton locale={locale} label={t.packCta} className="mt-auto h-12 w-full rounded-xl bg-emerald-400 px-5 text-[14px] font-bold text-[#07110d] transition hover:bg-emerald-300 disabled:opacity-70" />
