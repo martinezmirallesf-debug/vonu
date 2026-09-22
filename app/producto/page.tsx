@@ -8,24 +8,24 @@ const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Producto — VonuAI",
+  title: "Producto — VonüAI",
   description:
-    "VonuAI analiza URLs, capturas, mensajes y documentos PDF para mostrar señales de riesgo o puntos que conviene revisar antes de actuar.",
+    "VonüAI analiza URLs, capturas, mensajes y documentos PDF para mostrar señales de riesgo o puntos que conviene revisar antes de actuar.",
   alternates: {
     canonical: "/producto",
   },
   openGraph: {
-    title: "Producto — VonuAI",
+    title: "Producto — VonüAI",
     description:
       "Comprueba URLs, capturas, mensajes y documentos antes de pagar, responder, firmar o compartir datos.",
     url: `${siteUrl}/producto`,
-    siteName: "VonuAI",
+    siteName: "VonüAI",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Producto — VonuAI",
+    title: "Producto — VonüAI",
     description:
       "Detecta señales de fraude, phishing y suplantación antes de actuar.",
   },
@@ -39,7 +39,7 @@ const pillars = [
   {
     number: "01",
     title: "Detecta señales",
-    text: "Vonu revisa contexto, urgencia, identidad aparente, enlaces, dominios y patrones habituales de fraude sin convertir una sola señal en una sentencia.",
+    text: "Vonü revisa contexto, urgencia, identidad aparente, enlaces, dominios y patrones habituales de fraude sin convertir una sola señal en una sentencia.",
   },
   {
     number: "02",
@@ -226,13 +226,13 @@ export default function ProductoPage() {
     "@type": "WebPage",
     "@id": `${siteUrl}/producto#webpage`,
     url: `${siteUrl}/producto`,
-    name: "Producto — VonuAI",
+    name: "Producto — VonüAI",
     description:
-      "VonuAI analiza URLs, capturas, mensajes y documentos PDF para detectar señales de riesgo y condiciones que conviene revisar antes de actuar.",
+      "VonüAI analiza URLs, capturas, mensajes y documentos PDF para detectar señales de riesgo y condiciones que conviene revisar antes de actuar.",
     inLanguage: "es-ES",
     isPartOf: {
       "@type": "WebSite",
-      name: "VonuAI",
+      name: "VonüAI",
       url: siteUrl,
     },
   };
@@ -259,7 +259,7 @@ export default function ProductoPage() {
             </h1>
 
             <p className="mx-auto mt-7 max-w-[760px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">
-              Vonu analiza URLs, capturas, mensajes y documentos para separar señales útiles de ruido y ayudarte a decidir qué comprobar antes de pagar, responder, firmar o compartir datos.
+              Vonü analiza URLs, capturas, mensajes y documentos para separar señales útiles de ruido y ayudarte a decidir qué comprobar antes de pagar, responder, firmar o compartir datos.
             </p>
 
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
@@ -267,7 +267,7 @@ export default function ProductoPage() {
                 href="/es/check"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:-translate-y-0.5 hover:bg-emerald-300 active:translate-y-0"
               >
-                Probar Vonu Check
+                Probar Vonü Check
                 <ArrowIcon />
               </a>
               <Link
@@ -290,7 +290,7 @@ export default function ProductoPage() {
           <div className="mx-auto mt-14 max-w-[1040px] sm:mt-18">
             <div className="relative overflow-hidden rounded-[28px] border border-white/[0.09] bg-white/[0.045] shadow-[0_35px_100px_rgba(0,0,0,0.38)] backdrop-blur-xl">
               <div className="flex items-center justify-end border-b border-white/[0.07] px-4 py-3 sm:px-6">
-                <span className="text-[11px] font-medium tracking-[0.06em] text-slate-500">VONU CHECK</span>
+                <span className="text-[11px] font-medium tracking-[0.06em] text-slate-500">VONÜ CHECK</span>
               </div>
 
               <div className="grid lg:grid-cols-[1.05fr_0.95fr]">
@@ -322,7 +322,7 @@ export default function ProductoPage() {
                   </button>
 
                   <p className="mt-4 text-center text-[11px] leading-5 text-slate-600">
-                    Ejemplo visual · El análisis real se realiza en Vonu Check.
+                    Ejemplo visual · El análisis real se realiza en Vonü Check.
                   </p>
                 </div>
 
@@ -366,7 +366,7 @@ export default function ProductoPage() {
       <section className="relative border-b border-white/[0.06] bg-[#0a0d15]">
         <div className="mx-auto max-w-[1320px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
           <div className="max-w-[760px]">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Qué hace Vonu</p>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Qué hace Vonü</p>
             <h2 className="mt-4 text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">
               Menos intuición.
               <span className="block text-slate-500">Más señales útiles.</span>
@@ -428,7 +428,7 @@ export default function ProductoPage() {
               Más criterio cuando hay <GradientText>incertidumbre.</GradientText>
             </h2>
             <p className="mt-6 max-w-[560px] text-[16px] leading-8 text-slate-400">
-              Un producto de seguridad no debería fingir certeza. Vonu está diseñado para mostrar límites, separar hechos de inferencias y recomendar comprobaciones adicionales cuando hacen falta.
+              Un producto de seguridad no debería fingir certeza. Vonü está diseñado para mostrar límites, separar hechos de inferencias y recomendar comprobaciones adicionales cuando hacen falta.
             </p>
           </div>
 
@@ -454,7 +454,7 @@ export default function ProductoPage() {
               <span className="block text-slate-500">compruébalo antes de confiar.</span>
             </h2>
             <p className="mx-auto mt-6 max-w-[640px] text-[16px] leading-8 text-slate-400">
-              Una URL, una captura, un mensaje o un documento bastan para empezar. Vonu te ayuda a revisar señales de riesgo o condiciones importantes antes de actuar.
+              Una URL, una captura, un mensaje o un documento bastan para empezar. Vonü te ayuda a revisar señales de riesgo o condiciones importantes antes de actuar.
             </p>
             <a
               href="/es/check"

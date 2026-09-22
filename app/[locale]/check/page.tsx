@@ -35,23 +35,23 @@ type Props = {
 
 const meta: Record<SupportedLocale, { title: string; description: string }> = {
   es: {
-    title: "Analizar URL, captura, mensaje o documento — Vonu Check",
+    title: "Analizar URL, captura, mensaje o documento — Vonü Check",
     description: "Comprueba URLs, capturas, mensajes y documentos para detectar señales de riesgo, fraude, suplantación o condiciones que conviene revisar antes de actuar.",
   },
   en: {
-    title: "Check a URL, screenshot, message or document — Vonu Check",
+    title: "Check a URL, screenshot, message or document — Vonü Check",
     description: "Analyse URLs, screenshots, messages and documents for phishing, fraud, impersonation and document-review signals before you act.",
   },
   fr: {
-    title: "Analyser une URL, capture, message ou document — Vonu Check",
+    title: "Analyser une URL, capture, message ou document — Vonü Check",
     description: "Analysez URLs, captures, messages et documents pour repérer des signaux de phishing, fraude, usurpation et points à vérifier avant d’agir.",
   },
   de: {
-    title: "URL, Screenshot, Nachricht oder Dokument prüfen — Vonu Check",
+    title: "URL, Screenshot, Nachricht oder Dokument prüfen — Vonü Check",
     description: "Analysiere URLs, Screenshots, Nachrichten und Dokumente auf Betrugs-, Phishing-, Identitäts- und Prüfsignale, bevor du handelst.",
   },
   ar: {
-    title: "فحص رابط أو لقطة شاشة أو رسالة أو مستند — Vonu Check",
+    title: "فحص رابط أو لقطة شاشة أو رسالة أو مستند — Vonü Check",
     description: "حلّل الروابط ولقطات الشاشة والرسائل والمستندات لاكتشاف إشارات التصيد والاحتيال والانتحال والنقاط التي تستحق المراجعة قبل أن تتصرف.",
   },
 };
@@ -91,7 +91,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     openGraph: {
       type: "website",
-      siteName: "Vonu",
+      siteName: "Vonü",
       url: `${siteUrl}/${locale}/check`,
       title: selected.title,
       description: selected.description,
@@ -158,7 +158,7 @@ function getCheckJsonLd(locale: SupportedLocale) {
       {
         "@type": "WebApplication",
         "@id": `${siteUrl}/#vonu-check`,
-        name: "Vonu Check",
+        name: "Vonü Check",
         url: `${siteUrl}/check`,
         description:
           "Web application that analyses suspicious URLs, screenshots, messages and PDF documents to surface technical, contextual and document-review signals before a user acts.",
@@ -208,13 +208,13 @@ function getCheckJsonLd(locale: SupportedLocale) {
           {
             "@type": "ListItem",
             position: 1,
-            name: "Vonu",
+            name: "Vonü",
             item: siteUrl,
           },
           {
             "@type": "ListItem",
             position: 2,
-            name: "Vonu Check",
+            name: "Vonü Check",
             item: pageUrl,
           },
         ],

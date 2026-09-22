@@ -1,10 +1,10 @@
-# Vonu
+# Vonü
 
-> Vonu is a preventive online-safety analysis tool for suspicious websites, links, screenshots and messages. It surfaces technical and contextual risk signals before a user pays, replies, shares data or takes another sensitive action.
+> Vonü is a preventive online-safety analysis tool for suspicious websites, links, screenshots and messages. It surfaces technical and contextual risk signals before a user pays, replies, shares data or takes another sensitive action.
 
 ## Core product
 
-Vonu Check supports Spanish, English, French, German and Arabic.
+Vonü Check supports Spanish, English, French, German and Arabic.
 
 - https://vonuai.com/check — automatic language entry point.
 - https://vonuai.com/es/check — Spanish.
@@ -55,23 +55,23 @@ The sitemap at https://vonuai.com/sitemap.xml is the authoritative machine-reada
 - German: https://vonuai.com/de/produkt | https://vonuai.com/de/anwendungsfaelle | https://vonuai.com/de/ressourcen | https://vonuai.com/de/preise | https://vonuai.com/de/so-funktionierts | https://vonuai.com/de/kontakt
 - Arabic: https://vonuai.com/ar/product | https://vonuai.com/ar/use-cases | https://vonuai.com/ar/resources | https://vonuai.com/ar/pricing | https://vonuai.com/ar/how-it-works | https://vonuai.com/ar/contact
 
-## How Vonu works
+## How Vonü works
 
-Vonu combines deterministic technical checks with contextual analysis. Depending on the input, it can inspect HTTPS and response behaviour, redirects, DNS and security configuration, visible content, extracted URLs, suspicious language, urgency, impersonation patterns and other relevant signals.
+Vonü combines deterministic technical checks with contextual analysis. Depending on the input, it can inspect HTTPS and response behaviour, redirects, DNS and security configuration, visible content, extracted URLs, suspicious language, urgency, impersonation patterns and other relevant signals.
 
-Vonu reports risk signals and analysis confidence separately. A low-risk result is not a certification of legitimacy, and a warning signal does not by itself prove fraud.
+Vonü reports risk signals and analysis confidence separately. A low-risk result is not a certification of legitimacy, and a warning signal does not by itself prove fraud.
 
 ## Important safety and interpretation notes
 
-- Vonu is a preventive analysis tool, not a legal authority or fraud-certification service.
+- Vonü is a preventive analysis tool, not a legal authority or fraud-certification service.
 - Users should not submit passwords, authentication codes, PINs, full card details or other highly sensitive information.
 - Results should be interpreted together with the evidence and confidence shown in the report.
-- If a service blocks automated inspection, Vonu should distinguish that limitation from an actual fraud signal.
-- For high-impact financial, legal, medical or safety decisions, Vonu can help organise information and identify questions but does not replace qualified professionals or authorities.
+- If a service blocks automated inspection, Vonü should distinguish that limitation from an actual fraud signal.
+- For high-impact financial, legal, medical or safety decisions, Vonü can help organise information and identify questions but does not replace qualified professionals or authorities.
 
 ## Commercial model
 
-Vonu Check does not require an account to start. The first analysis is free per browser/device. After the free analysis, a user can buy a pack of 3 additional analyses for EUR 3.99 as a one-time payment. There is no subscription or automatic renewal in the current public offer.
+Vonü Check does not require an account to start. The first analysis is free per browser/device. After the free analysis, a user can buy a pack of 3 additional analyses for EUR 3.99 as a one-time payment. There is no subscription or automatic renewal in the current public offer.
 
 Pricing pages:
 

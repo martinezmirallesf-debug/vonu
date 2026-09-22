@@ -75,12 +75,12 @@ export default function PaywallModal({
   <div className="flex items-center gap-2.5 min-w-0">
   <img
     src="/logo/vonu-cube-black.png?v=4"
-    alt="Vonu"
+    alt="Vonü"
     className="h-8 w-8 shrink-0 object-contain"
     draggable={false}
   />
   <span className="font-sans text-[20px] leading-none tracking-[-0.035em] text-zinc-900 font-bold">
-    VonuAI
+    VonüAI
   </span>
 </div>
 
@@ -331,7 +331,7 @@ export default function PaywallModal({
 
               <div className="mt-2 min-h-[20px] text-center text-[12px] text-zinc-500">
                 {billing === "topup"
-                  ? "Elige una recarga para continuar usando Vonu."
+                  ? "Elige una recarga para continuar usando Vonü."
                   : "Cancela cuando quieras"}
               </div>
 

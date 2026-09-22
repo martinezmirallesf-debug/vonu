@@ -83,9 +83,9 @@ export default function PwaInstallPromptBar() {
       type="button"
       onClick={install}
       className="fixed bottom-5 left-1/2 z-[20000] -translate-x-1/2 rounded-2xl border border-[#7bb7ff]/30 bg-[#091632]/95 px-5 py-3 text-sm font-semibold text-white shadow-2xl backdrop-blur-md"
-      aria-label="Instalar Vonu"
+      aria-label="Instalar Vonü"
     >
-      Instalar Vonu
+      Instalar Vonü
     </button>
   );
 }

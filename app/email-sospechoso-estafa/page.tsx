@@ -17,17 +17,17 @@ export const metadata: Metadata = {
     canonical: "/email-sospechoso-estafa",
   },
   openGraph: {
-    title: "Email sospechoso o phishing — VonuAI",
+    title: "Email sospechoso o phishing — VonüAI",
     description:
       "Revisa señales de phishing, enlaces falsos, adjuntos sospechosos y correos urgentes antes de actuar.",
     url: `${siteUrl}/email-sospechoso-estafa`,
-    siteName: "VonuAI",
+    siteName: "VonüAI",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Email sospechoso o phishing — VonuAI",
+    title: "Email sospechoso o phishing — VonüAI",
     description:
       "Detecta correos falsos, phishing y señales de riesgo antes de pulsar enlaces o compartir datos.",
   },
@@ -70,7 +70,7 @@ const whatToDo = [
   "No introduzcas contraseñas, tarjeta, DNI ni códigos SMS.",
   "Comprueba el remitente real y el dominio del enlace.",
   "Entra desde la app oficial o escribiendo tú la web manualmente.",
-  "Pega el email en Vonu para revisar señales antes de actuar.",
+  "Pega el email en Vonü para revisar señales antes de actuar.",
 ];
 
 const commonExamples = [
@@ -118,8 +118,8 @@ const faqs = [
     a: "Mira la dirección completa del remitente, no solo el nombre visible. Revisa si el dominio coincide con la empresa real y desconfía de variaciones raras, letras añadidas o dominios que no encajan.",
   },
   {
-    q: "¿Puedo analizar un email con VonuAI?",
-    a: "Sí. Puedes pegar el texto del email, describir el remitente o subir una captura para que Vonu te ayude a revisar señales de phishing, enlaces sospechosos y pasos prudentes antes de actuar.",
+    q: "¿Puedo analizar un email con VonüAI?",
+    a: "Sí. Puedes pegar el texto del email, describir el remitente o subir una captura para que Vonü te ayude a revisar señales de phishing, enlaces sospechosos y pasos prudentes antes de actuar.",
   },
 ];
 
@@ -684,7 +684,7 @@ export default function EmailSospechosoEstafaPage() {
           </h2>
 
           <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
-            Pega el email, sube una captura o explica qué te ha llegado. Vonu te
+            Pega el email, sube una captura o explica qué te ha llegado. Vonü te
             ayuda a revisar señales de phishing antes de abrir enlaces,
             descargar archivos o compartir datos.
           </p>
@@ -693,7 +693,7 @@ export default function EmailSospechosoEstafaPage() {
             href="/chat"
             className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
           >
-            Revisar con Vonu
+            Revisar con Vonü
             <ArrowIcon />
           </Link>
         </div>

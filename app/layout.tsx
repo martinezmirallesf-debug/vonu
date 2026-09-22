@@ -32,20 +32,20 @@ const playfairDisplay = Playfair_Display({
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: "Vonu — Comprueba antes de confiar",
-    template: "%s | Vonu",
+    default: "Vonü — Comprueba antes de confiar",
+    template: "%s | Vonü",
   },
   description:
-    "Vonu analiza URLs, capturas de pantalla y mensajes sospechosos para detectar señales de phishing, fraude y suplantación antes de que pagues, respondas o compartas datos.",
-  applicationName: "Vonu",
+    "Vonü analiza URLs, capturas de pantalla y mensajes sospechosos para detectar señales de phishing, fraude y suplantación antes de que pagues, respondas o compartas datos.",
+  applicationName: "Vonü",
   manifest: "/install-vonu.webmanifest?v=1",
-  authors: [{ name: "Vonu", url: BASE_URL }],
-  creator: "Vonu",
-  publisher: "Vonu",
+  authors: [{ name: "Vonü", url: BASE_URL }],
+  creator: "Vonü",
+  publisher: "Vonü",
   category: "security",
   appleWebApp: {
     capable: true,
-    title: "Vonu",
+    title: "Vonü",
     statusBarStyle: "black-translucent",
   },
   referrer: "origin-when-cross-origin",
@@ -61,21 +61,21 @@ export const metadata: Metadata = {
     type: "website",
     locale: "es_ES",
     url: BASE_URL,
-    siteName: "Vonu",
-    title: "Vonu — Comprueba antes de confiar",
+    siteName: "Vonü",
+    title: "Vonü — Comprueba antes de confiar",
     description: "Analiza URLs, capturas y mensajes sospechosos para detectar señales de riesgo antes de actuar.",
     images: [
       {
         url: `/api/og?v=${BRAND_ASSET_VERSION}`,
         width: 1200,
         height: 630,
-        alt: "Vonu",
+        alt: "Vonü",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Vonu — Comprueba antes de confiar",
+    title: "Vonü — Comprueba antes de confiar",
     description: "Analiza URLs, capturas y mensajes sospechosos para detectar señales de riesgo antes de actuar.",
     images: [`/api/og?v=${BRAND_ASSET_VERSION}`],
   },
@@ -105,17 +105,17 @@ const entityGraph = {
     {
       "@type": "Organization",
       "@id": `${BASE_URL}/#organization`,
-      name: "Vonu",
-      alternateName: "VonuAI",
+      name: "Vonü",
+      alternateName: "VonüAI",
       url: BASE_URL,
       description:
-        "Vonu develops preventive tools that analyse risk signals in websites, links, screenshots and suspicious messages.",
+        "Vonü develops preventive tools that analyse risk signals in websites, links, screenshots and suspicious messages.",
       logo: {
         "@type": "ImageObject",
         "@id": `${BASE_URL}/#logo`,
         url: `${BASE_URL}/icon.svg`,
         contentUrl: `${BASE_URL}/icon.svg`,
-        caption: "Vonu",
+        caption: "Vonü",
       },
       email: "hello@vonuai.com",
       contactPoint: {
@@ -141,8 +141,8 @@ const entityGraph = {
     {
       "@type": "WebSite",
       "@id": `${BASE_URL}/#website`,
-      name: "Vonu",
-      alternateName: "VonuAI",
+      name: "Vonü",
+      alternateName: "VonüAI",
       url: BASE_URL,
       description:
         "Preventive tool for analysing suspicious URLs, screenshots and messages before a user pays, replies or shares data.",
@@ -159,9 +159,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta property="og:image" content={SOCIAL_IMAGE} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
-        <meta property="og:image:alt" content="Vonu — comprueba antes de confiar" />
+        <meta property="og:image:alt" content="Vonü — comprueba antes de confiar" />
         <meta name="twitter:image" content={SOCIAL_IMAGE} />
-        <meta name="twitter:image:alt" content="Vonu — comprueba antes de confiar" />
+        <meta name="twitter:image:alt" content="Vonü — comprueba antes de confiar" />
         <style>{`
           #vonu-app-launch { display: none; }
           @media (display-mode: standalone) {

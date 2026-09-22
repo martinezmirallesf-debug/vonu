@@ -10,24 +10,24 @@ const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "¿Es fiable? — Compruébalo con VonuAI antes de actuar",
+  title: "¿Es fiable? — Compruébalo con VonüAI antes de actuar",
   description:
     "Comprueba si una web, tienda online, mensaje, perfil, inversión, factura o contrato parece fiable antes de pagar, firmar, contestar o compartir datos.",
   alternates: {
     canonical: "/es-fiable",
   },
   openGraph: {
-    title: "¿Es fiable? — Compruébalo con VonuAI",
+    title: "¿Es fiable? — Compruébalo con VonüAI",
     description:
       "Revisa señales de riesgo antes de confiar en una web, tienda, mensaje, perfil, oferta, inversión o documento.",
     url: `${siteUrl}/es-fiable`,
-    siteName: "VonuAI",
+    siteName: "VonüAI",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "¿Es fiable? — VonuAI",
+    title: "¿Es fiable? — VonüAI",
     description:
       "Comprueba si algo parece fiable antes de pagar, firmar, contestar o decidir.",
   },
@@ -70,7 +70,7 @@ const checklist = [
   "Revisa si te piden dinero, códigos, tarjeta o documentos.",
   "Busca señales externas fuera de la propia web o mensaje.",
   "Desconfía de precios, beneficios o promesas demasiado buenos.",
-  "Pega el caso en Vonu para revisarlo antes de decidir.",
+  "Pega el caso en Vonü para revisarlo antes de decidir.",
 ];
 
 const warningSigns = [
@@ -131,11 +131,11 @@ const mistakes = [
 const faqs = [
   {
     q: "¿Cómo saber si algo es fiable?",
-    a: "No hay una sola prueba. Conviene revisar quién está detrás, si hay datos reales, si te meten prisa, si piden dinero o datos sensibles, si existen opiniones externas y si las condiciones son claras. Vonu puede ayudarte a mirar esas señales juntas.",
+    a: "No hay una sola prueba. Conviene revisar quién está detrás, si hay datos reales, si te meten prisa, si piden dinero o datos sensibles, si existen opiniones externas y si las condiciones son claras. Vonü puede ayudarte a mirar esas señales juntas.",
   },
   {
-    q: "¿Puedo comprobar si una web es fiable con VonuAI?",
-    a: "Sí. Puedes pegar la web, explicar qué te pide o subir una captura. Vonu revisa señales como dominio, método de pago, urgencia, datos legales, devoluciones y posibles riesgos antes de comprar.",
+    q: "¿Puedo comprobar si una web es fiable con VonüAI?",
+    a: "Sí. Puedes pegar la web, explicar qué te pide o subir una captura. Vonü revisa señales como dominio, método de pago, urgencia, datos legales, devoluciones y posibles riesgos antes de comprar.",
   },
   {
     q: "¿El candado HTTPS significa que una web es fiable?",
@@ -146,8 +146,8 @@ const faqs = [
     a: "Sí. Puedes pegar el texto o subir una captura para revisar si hay phishing, enlaces sospechosos, urgencia, petición de datos o suplantación de una empresa conocida.",
   },
   {
-    q: "¿VonuAI sustituye a un profesional?",
-    a: "No. Vonu ofrece orientación preventiva para ayudarte a decidir con más calma, pero no sustituye a abogados, asesores financieros, médicos, psicólogos ni autoridades.",
+    q: "¿VonüAI sustituye a un profesional?",
+    a: "No. Vonü ofrece orientación preventiva para ayudarte a decidir con más calma, pero no sustituye a abogados, asesores financieros, médicos, psicólogos ni autoridades.",
   },
 ];
 
@@ -437,7 +437,7 @@ export default function EsFiablePage() {
 
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
               Si tienes dudas sobre una web, tienda online, mensaje, perfil,
-              inversión, factura o contrato, Vonu te ayuda a revisar señales de
+              inversión, factura o contrato, Vonü te ayuda a revisar señales de
               riesgo antes de pagar, firmar, contestar o compartir datos.
             </p>
 
@@ -610,7 +610,7 @@ export default function EsFiablePage() {
             </div>
 
             <p className="max-w-md text-[17px] leading-8 text-zinc-600">
-              Vonu no se queda en “sí” o “no”. Te ayuda a mirar el contexto, la
+              Vonü no se queda en “sí” o “no”. Te ayuda a mirar el contexto, la
               presión, el dinero, los datos y las señales que normalmente se pasan
               por alto.
             </p>
@@ -803,7 +803,7 @@ export default function EsFiablePage() {
           </h2>
 
           <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
-            Pega una web, mensaje, perfil, oferta, factura o contrato. Vonu te
+            Pega una web, mensaje, perfil, oferta, factura o contrato. Vonü te
             ayuda a revisar señales antes de pagar, firmar, contestar o compartir
             datos.
           </p>
@@ -812,7 +812,7 @@ export default function EsFiablePage() {
             href="/chat"
             className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
           >
-            Comprobar con Vonu
+            Comprobar con Vonü
             <ArrowIcon />
           </Link>
         </div>

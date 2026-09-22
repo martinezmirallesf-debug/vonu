@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     title: selected.title,
     description: selected.description,
     url: `${siteUrl}${canonical}`,
-    siteName: "Vonu",
+    siteName: "Vonü",
     locale: "es_ES",
     type: "website",
   },

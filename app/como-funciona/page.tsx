@@ -8,21 +8,21 @@ const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Cómo funciona Vonu — Comprueba antes de confiar",
+  title: "Cómo funciona Vonü — Comprueba antes de confiar",
   description:
-    "Cómo funciona Vonu Check: analiza enlaces, mensajes, capturas y documentos, separa señales observables de conclusiones y propone qué verificar antes de actuar.",
+    "Cómo funciona Vonü Check: analiza enlaces, mensajes, capturas y documentos, separa señales observables de conclusiones y propone qué verificar antes de actuar.",
   alternates: { canonical: "/como-funciona" },
   openGraph: {
-    title: "Cómo funciona Vonu — Comprueba antes de confiar",
+    title: "Cómo funciona Vonü — Comprueba antes de confiar",
     description: "De una duda a señales claras, nivel de riesgo y próximos pasos antes de actuar.",
     url: `${siteUrl}/como-funciona`,
-    siteName: "Vonu",
+    siteName: "Vonü",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cómo funciona Vonu",
+    title: "Cómo funciona Vonü",
     description: "Analiza enlaces, mensajes, capturas y documentos antes de confiar, firmar, pagar o compartir datos.",
   },
   robots: { index: true, follow: true },
@@ -32,11 +32,11 @@ const steps = [
   {
     number: "01",
     title: "Envía lo que te genera dudas",
-    text: "Pega un enlace o mensaje, sube una captura o un PDF. Vonu adapta la revisión al tipo de contenido que envías.",
+    text: "Pega un enlace o mensaje, sube una captura o un PDF. Vonü adapta la revisión al tipo de contenido que envías.",
   },
   {
     number: "02",
-    title: "Vonu busca señales",
+    title: "Vonü busca señales",
     text: "Analiza contexto, identidad aparente, urgencia, peticiones de dinero o datos, enlaces y señales técnicas disponibles.",
   },
   {
@@ -47,7 +47,7 @@ const steps = [
   {
     number: "04",
     title: "Verifica antes de actuar",
-    text: "Vonu propone próximos pasos: qué no hacer todavía y qué confirmar por un canal independiente u oficial.",
+    text: "Vonü propone próximos pasos: qué no hacer todavía y qué confirmar por un canal independiente u oficial.",
   },
 ];
 
@@ -55,7 +55,7 @@ const modes = [
   {
     label: "URL",
     title: "Enlaces y webs",
-    text: "Vonu revisa la URL final, HTTPS, redirecciones, formularios, antigüedad del dominio, señales visibles y reputación técnica disponible.",
+    text: "Vonü revisa la URL final, HTTPS, redirecciones, formularios, antigüedad del dominio, señales visibles y reputación técnica disponible.",
   },
   {
     label: "Mensaje",
@@ -77,14 +77,14 @@ const modes = [
 const faq = [
   {
     q: "¿Qué significa la puntuación de 0 a 100?",
-    a: "Es un índice orientativo de riesgo basado en las señales que Vonu ha podido observar. No es una probabilidad matemática de fraude ni una prueba de que alguien haya cometido un delito.",
+    a: "Es un índice orientativo de riesgo basado en las señales que Vonü ha podido observar. No es una probabilidad matemática de fraude ni una prueba de que alguien haya cometido un delito.",
   },
   {
     q: "¿Una puntuación baja significa que es seguro?",
     a: "No. Significa que no se han detectado señales fuertes en lo analizado. Si el contexto externo sigue siendo extraño, verifica igualmente por un canal oficial o independiente.",
   },
   {
-    q: "¿Vonu reconoce solo estafas que ya conoce?",
+    q: "¿Vonü reconoce solo estafas que ya conoce?",
     a: "No. El sistema utiliza patrones conocidos como referencia, pero también puntúa señales observables y combinaciones de riesgo para poder detectar variantes nuevas.",
   },
   {
@@ -92,7 +92,7 @@ const faq = [
     a: "Entre otras cosas, protocolo, redirecciones, formularios, contenido visible, edad del dominio y fuentes técnicas de reputación cuando están disponibles. Ninguna de estas señales, por sí sola, certifica legitimidad.",
   },
   {
-    q: "¿Qué hace Vonu con un documento PDF?",
+    q: "¿Qué hace Vonü con un documento PDF?",
     a: "Extrae el texto disponible, identifica el tipo de documento y organiza partes, importes, fechas, pagos, cláusulas y jurisdicción cuando existe evidencia suficiente. Señala puntos a revisar, pero no certifica autenticidad ni sustituye un dictamen jurídico.",
   },
   {
@@ -139,8 +139,8 @@ export default function ComoFuncionaPage() {
         "@type": "WebPage",
         "@id": `${siteUrl}/como-funciona#webpage`,
         url: `${siteUrl}/como-funciona`,
-        name: "Cómo funciona Vonu",
-        description: "Cómo Vonu analiza enlaces, mensajes, capturas y documentos y explica qué señales o condiciones conviene revisar antes de actuar.",
+        name: "Cómo funciona Vonü",
+        description: "Cómo Vonü analiza enlaces, mensajes, capturas y documentos y explica qué señales o condiciones conviene revisar antes de actuar.",
         inLanguage: "es-ES",
       },
       {
@@ -169,11 +169,11 @@ export default function ComoFuncionaPage() {
               <span className="block text-slate-400">decisión más <GradientText>segura.</GradientText></span>
             </h1>
             <p className="mx-auto mt-7 max-w-[760px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">
-              Vonu Check convierte un enlace, mensaje, captura o documento en señales comprensibles, un nivel de riesgo o revisión y pasos concretos antes de actuar.
+              Vonü Check convierte un enlace, mensaje, captura o documento en señales comprensibles, un nivel de riesgo o revisión y pasos concretos antes de actuar.
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <a href="/es/check" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:-translate-y-0.5 hover:bg-emerald-300">
-                Probar Vonu Check <ArrowIcon />
+                Probar Vonü Check <ArrowIcon />
               </a>
               <Link href="/casos-de-uso" className="inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.045] px-6 text-[14px] font-semibold text-slate-200 transition hover:bg-white/[0.07]">
                 Ver casos de uso
@@ -225,12 +225,12 @@ export default function ComoFuncionaPage() {
           <article className="rounded-[26px] border border-white/[0.07] bg-white/[0.03] p-7">
             <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-sky-300">Señales conocidas + variantes nuevas</p>
             <h2 className="mt-5 text-[36px] font-semibold leading-[1.02] tracking-[-0.05em] text-white">Fraud Atlas no es una lista cerrada de estafas.</h2>
-            <p className="mt-5 text-[15px] leading-8 text-slate-400">Vonu utiliza patrones de fraude conocidos como contexto, pero la puntuación se apoya también en evidencia observable: suplantación, urgencia, petición de dinero, bloqueo de verificación, credenciales, enlaces y combinaciones de señales.</p>
+            <p className="mt-5 text-[15px] leading-8 text-slate-400">Vonü utiliza patrones de fraude conocidos como contexto, pero la puntuación se apoya también en evidencia observable: suplantación, urgencia, petición de dinero, bloqueo de verificación, credenciales, enlaces y combinaciones de señales.</p>
           </article>
           <article className="rounded-[26px] border border-white/[0.07] bg-white/[0.03] p-7">
             <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Límites responsables</p>
             <h2 className="mt-5 text-[36px] font-semibold leading-[1.02] tracking-[-0.05em] text-white">Una señal no debe convertirse en una sentencia.</h2>
-            <p className="mt-5 text-[15px] leading-8 text-slate-400">Una palabra, un Bizum, un dominio nuevo o una petición urgente pueden ser legítimos. Vonu intenta valorar combinaciones y contexto para evitar tanto falsas alarmas como falsa tranquilidad.</p>
+            <p className="mt-5 text-[15px] leading-8 text-slate-400">Una palabra, un Bizum, un dominio nuevo o una petición urgente pueden ser legítimos. Vonü intenta valorar combinaciones y contexto para evitar tanto falsas alarmas como falsa tranquilidad.</p>
           </article>
         </div>
       </section>

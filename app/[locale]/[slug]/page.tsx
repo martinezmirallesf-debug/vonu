@@ -27,19 +27,19 @@ const NON_SPANISH = ["en", "fr", "de", "ar"] as const;
 
 const pricingMeta = {
   en: {
-    title: "Pricing — Vonu",
+    title: "Pricing — Vonü",
     description: "1 free analysis per browser or device, then 3 additional analyses for €3.99 as a one-time payment. No subscription.",
   },
   fr: {
-    title: "Tarifs — Vonu",
+    title: "Tarifs — Vonü",
     description: "1 analyse gratuite par navigateur ou appareil, puis 3 analyses supplémentaires pour 3,99 € en paiement unique. Sans abonnement.",
   },
   de: {
-    title: "Preise — Vonu",
+    title: "Preise — Vonü",
     description: "1 kostenlose Analyse pro Browser oder Gerät, danach 3 zusätzliche Analysen für 3,99 € als Einmalzahlung. Kein Abo.",
   },
   ar: {
-    title: "الأسعار — Vonu",
+    title: "الأسعار — Vonü",
     description: "تحليل مجاني واحد لكل متصفح أو جهاز، ثم 3 تحليلات إضافية مقابل 3.99 € بدفعة واحدة، بدون اشتراك.",
   },
 } as const;
@@ -80,7 +80,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     openGraph: {
       type: "website",
-      siteName: "Vonu",
+      siteName: "Vonü",
       url: `${SITE_URL}${canonical}`,
       locale: ogLocale,
       title: selected.title,

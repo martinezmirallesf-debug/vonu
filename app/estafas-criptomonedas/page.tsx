@@ -17,17 +17,17 @@ export const metadata: Metadata = {
     canonical: "/estafas-criptomonedas",
   },
   openGraph: {
-    title: "Estafas con criptomonedas — VonuAI",
+    title: "Estafas con criptomonedas — VonüAI",
     description:
       "Revisa señales de riesgo antes de invertir en una plataforma crypto, enviar dinero o seguir instrucciones por Telegram o WhatsApp.",
     url: `${siteUrl}/estafas-criptomonedas`,
-    siteName: "VonuAI",
+    siteName: "VonüAI",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Estafas con criptomonedas — VonuAI",
+    title: "Estafas con criptomonedas — VonüAI",
     description:
       "Detecta promesas sospechosas, falsas plataformas crypto y señales de inversión fraudulenta antes de pagar.",
   },
@@ -70,7 +70,7 @@ const whatToDo = [
   "No instales apps ni herramientas que te pidan por chat.",
   "Busca el nombre de la plataforma, dominio y empresa con calma.",
   "Si ya has pagado, guarda conversaciones, justificantes y direcciones.",
-  "Pega el caso en Vonu para revisar señales antes de seguir.",
+  "Pega el caso en Vonü para revisar señales antes de seguir.",
 ];
 
 const commonExamples = [
@@ -114,12 +114,12 @@ const faqs = [
     a: "No envíes más para recuperar lo perdido. Guarda conversaciones, justificantes, direcciones de wallet, webs y datos disponibles. Contacta con tu banco o plataforma usada y valora denunciar.",
   },
   {
-    q: "¿VonuAI puede recuperar mi dinero?",
-    a: "No. VonuAI no recupera fondos ni sustituye a autoridades, bancos o asesores legales. Te ayuda a revisar señales, ordenar el caso y decidir próximos pasos con más calma.",
+    q: "¿VonüAI puede recuperar mi dinero?",
+    a: "No. VonüAI no recupera fondos ni sustituye a autoridades, bancos o asesores legales. Te ayuda a revisar señales, ordenar el caso y decidir próximos pasos con más calma.",
   },
   {
-    q: "¿Puedo analizar una web o conversación crypto con VonuAI?",
-    a: "Sí. Puedes pegar mensajes, explicar la situación o subir capturas para que Vonu te ayude a detectar señales de riesgo antes de pagar, invertir o seguir instrucciones.",
+    q: "¿Puedo analizar una web o conversación crypto con VonüAI?",
+    a: "Sí. Puedes pegar mensajes, explicar la situación o subir capturas para que Vonü te ayude a detectar señales de riesgo antes de pagar, invertir o seguir instrucciones.",
   },
 ];
 
@@ -684,7 +684,7 @@ export default function EstafasCriptomonedasPage() {
 
           <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
             Pega la conversación, describe la plataforma o sube una captura.
-            Vonu te ayuda a revisar señales de riesgo antes de invertir, pagar o
+            Vonü te ayuda a revisar señales de riesgo antes de invertir, pagar o
             seguir instrucciones.
           </p>
 
@@ -692,7 +692,7 @@ export default function EstafasCriptomonedasPage() {
             href="/chat"
             className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
           >
-            Revisar con Vonu
+            Revisar con Vonü
             <ArrowIcon />
           </Link>
         </div>

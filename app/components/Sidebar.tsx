@@ -558,7 +558,7 @@ const planIsCanceledAtPeriodEnd =
       href="/"
       className="text-[22px] font-semibold tracking-[-0.045em] text-zinc-950"
     >
-      VonuAI
+      VonüAI
     </a>
   </div>
 ) : null}
@@ -1146,7 +1146,7 @@ const planIsCanceledAtPeriodEnd =
                     </button>
                   ) : (
                     <div className="text-center text-[12px] leading-5 text-zinc-500">
-                      Elige una recarga para continuar usando Vonu.
+                      Elige una recarga para continuar usando Vonü.
                     </div>
                   )}
 

@@ -32,11 +32,11 @@ const ui: Record<SupportedLocale, {
   relatedEyebrow: string;
   finalTitle: string;
 }> = {
-  es: { home: "Vonu", signalsEyebrow: "Qué comprobar", stepsEyebrow: "Siguiente paso", faqEyebrow: "FAQ", relatedEyebrow: "Explora", finalTitle: "Comprueba las señales antes de actuar." },
-  en: { home: "Vonu", signalsEyebrow: "What to check", stepsEyebrow: "Next step", faqEyebrow: "FAQ", relatedEyebrow: "Explore", finalTitle: "Check the signals before you act." },
-  fr: { home: "Vonu", signalsEyebrow: "À vérifier", stepsEyebrow: "Étape suivante", faqEyebrow: "FAQ", relatedEyebrow: "Explorer", finalTitle: "Vérifiez les signaux avant d’agir." },
-  de: { home: "Vonu", signalsEyebrow: "Was prüfen", stepsEyebrow: "Nächster Schritt", faqEyebrow: "FAQ", relatedEyebrow: "Entdecken", finalTitle: "Prüfe die Signale, bevor du handelst." },
-  ar: { home: "Vonu", signalsEyebrow: "ما الذي تتحقق منه", stepsEyebrow: "الخطوة التالية", faqEyebrow: "الأسئلة الشائعة", relatedEyebrow: "استكشف", finalTitle: "تحقق من الإشارات قبل أن تتصرف." },
+  es: { home: "Vonü", signalsEyebrow: "Qué comprobar", stepsEyebrow: "Siguiente paso", faqEyebrow: "FAQ", relatedEyebrow: "Explora", finalTitle: "Comprueba las señales antes de actuar." },
+  en: { home: "Vonü", signalsEyebrow: "What to check", stepsEyebrow: "Next step", faqEyebrow: "FAQ", relatedEyebrow: "Explore", finalTitle: "Check the signals before you act." },
+  fr: { home: "Vonü", signalsEyebrow: "À vérifier", stepsEyebrow: "Étape suivante", faqEyebrow: "FAQ", relatedEyebrow: "Explorer", finalTitle: "Vérifiez les signaux avant d’agir." },
+  de: { home: "Vonü", signalsEyebrow: "Was prüfen", stepsEyebrow: "Nächster Schritt", faqEyebrow: "FAQ", relatedEyebrow: "Entdecken", finalTitle: "Prüfe die Signale, bevor du handelst." },
+  ar: { home: "Vonü", signalsEyebrow: "ما الذي تتحقق منه", stepsEyebrow: "الخطوة التالية", faqEyebrow: "الأسئلة الشائعة", relatedEyebrow: "استكشف", finalTitle: "تحقق من الإشارات قبل أن تتصرف." },
 };
 
 export default function IntentPublicPage({ locale, slug }: { locale: SupportedLocale; slug: IntentSlug }) {
@@ -86,7 +86,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
         "@type": "BreadcrumbList",
         "@id": `${pageUrl}#breadcrumb`,
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Vonu", item: SITE_URL },
+          { "@type": "ListItem", position: 1, name: "Vonü", item: SITE_URL },
           { "@type": "ListItem", position: 2, name: topic.eyebrow, item: pageUrl },
         ],
       },

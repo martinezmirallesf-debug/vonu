@@ -139,7 +139,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
     analyze: "Analizar ahora",
     privacy: "Sin registro",
     firstFree: "Primer análisis gratuito",
-    aiNotice: "Vonu utiliza IA y comprobaciones automatizadas. Puede equivocarse y el resultado no es un veredicto.",
+    aiNotice: "Vonü utiliza IA y comprobaciones automatizadas. Puede equivocarse y el resultado no es un veredicto.",
     pasteImage: "También puedes pegar una captura con Ctrl+V",
     scanning: "Analizando señales de riesgo",
     scanUrl: ["Comprobando a qué página lleva…", "Revisando si la conexión es segura…", "Comprobando cambios de dirección…", "Buscando señales sospechosas…", "Calculando el nivel de riesgo…"],
@@ -199,7 +199,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
     analyze: "Analyse now",
     privacy: "No account required",
     firstFree: "First analysis free",
-    aiNotice: "Vonu uses AI and automated checks. It can make mistakes and the result is not a verdict.",
+    aiNotice: "Vonü uses AI and automated checks. It can make mistakes and the result is not a verdict.",
     pasteImage: "You can also paste a screenshot with Ctrl+V",
     scanning: "Analysing risk signals",
     scanUrl: ["Checking where the link leads…", "Checking whether the connection is secure…", "Reviewing changes of destination…", "Looking for suspicious signs…", "Calculating the risk level…"],
@@ -259,7 +259,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
     analyze: "Analyser",
     privacy: "Sans inscription",
     firstFree: "Première analyse gratuite",
-    aiNotice: "Vonu utilise l’IA et des vérifications automatisées. Il peut se tromper et le résultat n’est pas un verdict.",
+    aiNotice: "Vonü utilise l’IA et des vérifications automatisées. Il peut se tromper et le résultat n’est pas un verdict.",
     pasteImage: "Vous pouvez aussi coller une capture avec Ctrl+V",
     scanning: "Analyse des signaux de risque",
     scanUrl: ["Vérification de la destination du lien…", "Vérification de la sécurité de la connexion…", "Analyse des changements de destination…", "Recherche de signes suspects…", "Calcul du niveau de risque…"],
@@ -319,7 +319,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
     analyze: "Jetzt analysieren",
     privacy: "Ohne Konto",
     firstFree: "Erste Analyse kostenlos",
-    aiNotice: "Vonu nutzt KI und automatisierte Prüfungen. Fehler sind möglich; das Ergebnis ist kein Urteil.",
+    aiNotice: "Vonü nutzt KI und automatisierte Prüfungen. Fehler sind möglich; das Ergebnis ist kein Urteil.",
     pasteImage: "Screenshot auch mit Ctrl+V einfügen",
     scanning: "Risikosignale werden analysiert",
     scanUrl: ["Prüfen, wohin der Link führt…", "Prüfen, ob die Verbindung sicher ist…", "Prüfen von Zielwechseln…", "Suchen nach verdächtigen Hinweisen…", "Berechnen des Risikoniveaus…"],
@@ -379,7 +379,7 @@ const UI: Record<SupportedLocale, UiCopy> = {
     analyze: "حلّل الآن",
     privacy: "بدون تسجيل",
     firstFree: "أول تحليل مجاني",
-    aiNotice: "يستخدم Vonu الذكاء الاصطناعي وفحوصاً آلية. قد يخطئ والنتيجة ليست حكماً نهائياً.",
+    aiNotice: "يستخدم Vonü الذكاء الاصطناعي وفحوصاً آلية. قد يخطئ والنتيجة ليست حكماً نهائياً.",
     pasteImage: "يمكنك أيضاً لصق لقطة باستخدام Ctrl+V",
     scanning: "جارٍ تحليل إشارات المخاطر",
     scanUrl: ["جارٍ التحقق من وجهة الرابط…", "جارٍ التحقق من أمان الاتصال…", "جارٍ مراجعة تغيّر الوجهة…", "جارٍ البحث عن إشارات مريبة…", "جارٍ حساب مستوى المخاطر…"],
@@ -846,7 +846,7 @@ const RESULT_ACTION_COPY: Record<SupportedLocale, ResultActionCopy> = {
     score: "Puntuación",
     highlights: "Señales principales",
     actions: "Qué hacer",
-    analysedWith: "Analizado con Vonu",
+    analysedWith: "Analizado con Vonü",
   },
   en: {
     share: "Share result",
@@ -858,7 +858,7 @@ const RESULT_ACTION_COPY: Record<SupportedLocale, ResultActionCopy> = {
     score: "Score",
     highlights: "Main signals",
     actions: "What to do",
-    analysedWith: "Analysed with Vonu",
+    analysedWith: "Analysed with Vonü",
   },
   fr: {
     share: "Partager le résultat",
@@ -870,7 +870,7 @@ const RESULT_ACTION_COPY: Record<SupportedLocale, ResultActionCopy> = {
     score: "Score",
     highlights: "Signaux principaux",
     actions: "Que faire",
-    analysedWith: "Analysé avec Vonu",
+    analysedWith: "Analysé avec Vonü",
   },
   de: {
     share: "Ergebnis teilen",
@@ -882,7 +882,7 @@ const RESULT_ACTION_COPY: Record<SupportedLocale, ResultActionCopy> = {
     score: "Bewertung",
     highlights: "Wichtigste Signale",
     actions: "Nächste Schritte",
-    analysedWith: "Mit Vonu analysiert",
+    analysedWith: "Mit Vonü analysiert",
   },
   ar: {
     share: "مشاركة النتيجة",
@@ -894,7 +894,7 @@ const RESULT_ACTION_COPY: Record<SupportedLocale, ResultActionCopy> = {
     score: "النتيجة",
     highlights: "أهم الإشارات",
     actions: "ما الذي يجب فعله",
-    analysedWith: "تم التحليل بواسطة Vonu",
+    analysedWith: "تم التحليل بواسطة Vonü",
   },
 };
 
@@ -1277,7 +1277,7 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
       : result.recommendedActions.slice(0, 2);
 
     const lines = [
-      `Vonu — ${riskLabel}`,
+      `Vonü — ${riskLabel}`,
       risk?.level === "unknown" ? null : `${resultActions.score}: ${risk?.score ?? 0}/100`,
       summary,
       signalTitles.length ? `\n${resultActions.highlights}:\n${signalTitles.map((item) => `• ${item}`).join("\n")}` : null,
@@ -1311,7 +1311,7 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
     if (typeof navigator.share === "function") {
       try {
         await navigator.share({
-          title: `Vonu — ${riskLabel}`,
+          title: `Vonü — ${riskLabel}`,
           text: shareText,
         });
         track("analysis_result_shared", { method: "native", locale, mode: subject.mode });
@@ -1334,7 +1334,7 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
   function shareResultByEmail() {
     const shareText = shareTextForResult();
     if (!shareText) return;
-    window.location.href = `mailto:?subject=${encodeURIComponent(`Vonu — ${riskLabel}`)}&body=${encodeURIComponent(shareText)}`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(`Vonü — ${riskLabel}`)}&body=${encodeURIComponent(shareText)}`;
     track("analysis_result_shared", { method: "email", locale, mode: subject.mode });
   }
 
@@ -1581,7 +1581,7 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
 
           <footer className="vonu-check-inner-footer shrink-0 bg-[#0b0e17]/55">
             <div className="mx-auto flex min-h-11 max-w-[1320px] items-center justify-between gap-3 px-4 text-[11px] text-slate-600 sm:px-6 lg:px-8">
-              <div className="flex items-center gap-2 text-slate-500"><VonuMark /><span className="font-semibold tracking-[0.08em] text-white">Vonu</span></div>
+              <div className="flex items-center gap-2 text-slate-500"><VonuMark /><span className="font-semibold tracking-[0.08em] text-white">Vonü</span></div>
               <div className="flex items-center gap-3 sm:gap-4">
                 <Link href={localizedPublicPath(locale, "producto")} className="hidden hover:text-slate-400 sm:inline">{nav.product}</Link>
                 <Link href={localizedPublicPath(locale, "casos-de-uso")} className="hidden hover:text-slate-400 sm:inline">{nav.cases}</Link>

@@ -1,7 +1,7 @@
 const manifest = {
   id: "/vonu-app",
-  name: "Vonu",
-  short_name: "Vonu",
+  name: "Vonü",
+  short_name: "Vonü",
   description:
     "Analiza enlaces, capturas de pantalla y mensajes sospechosos antes de confiar, pagar o compartir datos.",
   start_url: "/es/check?source=pwa2",

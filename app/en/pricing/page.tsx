@@ -6,7 +6,7 @@ import DevicePricingPage from "@/app/components/DevicePricingPage";
 const siteUrl = "https://vonuai.com";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Pricing — Vonu",
+  title: "Pricing — Vonü",
   description: "1 free analysis per browser or device, then 3 additional analyses for €3.99 as a one-time payment.",
   alternates: {
     canonical: "/en/pricing",

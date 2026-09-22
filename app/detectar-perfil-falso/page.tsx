@@ -17,17 +17,17 @@ export const metadata: Metadata = {
     canonical: "/detectar-perfil-falso",
   },
   openGraph: {
-    title: "Cómo detectar un perfil falso — VonuAI",
+    title: "Cómo detectar un perfil falso — VonüAI",
     description:
       "Sube una captura de un perfil, foto o conversación y revisa señales de perfil falso, catfishing, romance scam, presión o intento de estafa.",
     url: `${siteUrl}/detectar-perfil-falso`,
-    siteName: "VonuAI",
+    siteName: "VonüAI",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cómo detectar un perfil falso — VonuAI",
+    title: "Cómo detectar un perfil falso — VonüAI",
     description:
       "Revisa capturas de perfiles y conversaciones para detectar señales de catfishing, fotos reutilizadas o estafas en apps de citas.",
   },
@@ -557,7 +557,7 @@ export default function DetectarPerfilFalsoPage() {
             </div>
 
             <p className="max-w-md text-[17px] leading-8 text-zinc-600">
-              Vonu puede ayudarte a revisar capturas de perfiles, fotos,
+              Vonü puede ayudarte a revisar capturas de perfiles, fotos,
               biografías o conversaciones para separar dudas normales de señales
               realmente preocupantes.
             </p>
@@ -710,7 +710,7 @@ export default function DetectarPerfilFalsoPage() {
           </h2>
 
           <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
-            Sube una captura del perfil, foto o conversación. Vonu te ayuda a
+            Sube una captura del perfil, foto o conversación. Vonü te ayuda a
             revisar señales de catfishing, foto reutilizada, presión, dinero o
             incoherencias antes de seguir adelante.
           </p>
@@ -719,7 +719,7 @@ export default function DetectarPerfilFalsoPage() {
             href="/chat"
             className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
           >
-            Revisar perfil con Vonu
+            Revisar perfil con Vonü
             <ArrowIcon />
           </Link>
         </div>

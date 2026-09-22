@@ -10,24 +10,24 @@ const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Cómo saber si un SMS es una estafa — Analízalo con VonuAI",
+  title: "Cómo saber si un SMS es una estafa — Analízalo con VonüAI",
   description:
-    "Aprende a detectar SMS sospechosos, enlaces falsos, phishing y mensajes de bancos, Correos o paquetes. Pega el SMS y analízalo con VonuAI antes de pulsar o pagar.",
+    "Aprende a detectar SMS sospechosos, enlaces falsos, phishing y mensajes de bancos, Correos o paquetes. Pega el SMS y analízalo con VonüAI antes de pulsar o pagar.",
   alternates: {
     canonical: "/analizar-sms-estafa",
   },
   openGraph: {
-    title: "Cómo saber si un SMS es una estafa — VonuAI",
+    title: "Cómo saber si un SMS es una estafa — VonüAI",
     description:
       "Revisa un SMS sospechoso antes de pulsar un enlace, pagar o compartir tus datos.",
     url: `${siteUrl}/analizar-sms-estafa`,
-    siteName: "VonuAI",
+    siteName: "VonüAI",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cómo saber si un SMS es una estafa — VonuAI",
+    title: "Cómo saber si un SMS es una estafa — VonüAI",
     description:
       "Detecta señales de phishing, enlaces falsos y mensajes sospechosos antes de actuar.",
   },
@@ -70,7 +70,7 @@ const whatToDo = [
   "Busca la web oficial desde Google o escribiendo la dirección manualmente.",
   "Comprueba el aviso desde la app oficial del banco, tienda o empresa.",
   "Si ya has pagado o compartido datos, contacta cuanto antes con tu banco.",
-  "Pega el SMS en Vonu para revisar señales de riesgo antes de actuar.",
+  "Pega el SMS en Vonü para revisar señales de riesgo antes de actuar.",
 ];
 
 const commonExamples = [
@@ -118,8 +118,8 @@ const faqs = [
     a: "Algunas entidades pueden enviar avisos por SMS, pero no deberías introducir claves, códigos o datos sensibles desde un enlace recibido. Entra siempre desde la app oficial o escribiendo tú la dirección web.",
   },
   {
-    q: "¿Puedo analizar un SMS con VonuAI?",
-    a: "Sí. Puedes pegar el texto del SMS o subir una captura para que Vonu te ayude a revisar señales de riesgo, qué comprobar y qué pasos dar antes de actuar.",
+    q: "¿Puedo analizar un SMS con VonüAI?",
+    a: "Sí. Puedes pegar el texto del SMS o subir una captura para que Vonü te ayude a revisar señales de riesgo, qué comprobar y qué pasos dar antes de actuar.",
   },
 ];
 
@@ -665,7 +665,7 @@ export default function AnalizarSmsEstafaPage() {
           </h2>
 
           <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
-            Pega el SMS, sube una captura o explica qué te ha llegado. Vonu te
+            Pega el SMS, sube una captura o explica qué te ha llegado. Vonü te
             ayuda a revisar señales de riesgo antes de pagar, contestar o
             compartir datos.
           </p>
@@ -674,7 +674,7 @@ export default function AnalizarSmsEstafaPage() {
             href="/chat"
             className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
           >
-            Analizar SMS con Vonu
+            Analizar SMS con Vonü
             <ArrowIcon />
           </Link>
         </div>

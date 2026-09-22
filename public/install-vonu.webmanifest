@@ -1,7 +1,7 @@
 {
   "id": "/vonu-app-v2",
-  "name": "Vonu",
-  "short_name": "Vonu",
+  "name": "Vonü",
+  "short_name": "Vonü",
   "description": "Comprueba enlaces, capturas y mensajes sospechosos antes de actuar.",
   "start_url": "/es/check?source=pwa-install",
   "scope": "/",

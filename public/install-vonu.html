@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#020b24" />
-  <title>Instalar Vonu</title>
+  <title>Instalar Vonü</title>
   <link rel="manifest" href="/install-vonu.webmanifest?v=1" />
   <style>
     :root{color-scheme:dark}
@@ -61,7 +61,7 @@
 <body>
   <main>
     <div class="logo">●</div>
-    <h1>Instalar Vonu</h1>
+    <h1>Instalar Vonü</h1>
     <p>Esta página de instalación está aislada de la aplicación principal para comprobar la instalación nativa de Chrome.</p>
     <button id="install" type="button" disabled>Preparando instalación…</button>
     <div id="status">Esperando a Chrome…</div>
@@ -73,7 +73,7 @@
     function sync() {
       if (window.__installEvent) {
         button.disabled = false;
-        button.textContent = 'Instalar Vonu';
+        button.textContent = 'Instalar Vonü';
         status.textContent = 'Lista para instalar';
       }
     }

@@ -9,21 +9,21 @@ const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Recursos Vonu — Estafas, phishing y señales de riesgo",
+  title: "Recursos Vonü — Estafas, phishing y señales de riesgo",
   description:
-    "Guías prácticas de Vonu para revisar estafas, phishing, enlaces, perfiles, contratos, facturas, presupuestos, servicios y financiación antes de actuar.",
+    "Guías prácticas de Vonü para revisar estafas, phishing, enlaces, perfiles, contratos, facturas, presupuestos, servicios y financiación antes de actuar.",
   alternates: { canonical: "/recursos" },
   openGraph: {
-    title: "Recursos Vonu — Comprueba antes de confiar",
+    title: "Recursos Vonü — Comprueba antes de confiar",
     description: "Guías prácticas para reconocer señales de fraude y revisar documentos antes de pagar, firmar, responder o compartir datos.",
     url: `${siteUrl}/recursos`,
-    siteName: "Vonu",
+    siteName: "Vonü",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Recursos Vonu",
+    title: "Recursos Vonü",
     description: "Guías para reconocer estafas y revisar contratos, facturas, presupuestos y otras decisiones importantes.",
   },
   robots: { index: true, follow: true },
@@ -34,7 +34,7 @@ const featuredResources = [
   { title: "Analizar un link sospechoso", category: "Enlaces", text: "Qué revisar en un enlace recibido por SMS, WhatsApp, email, redes o QR antes de abrirlo o introducir datos.", href: "/analizar-link-sospechoso" },
   { title: "Cómo saber si un SMS puede ser una estafa", category: "Mensajes", text: "Urgencia, suplantación, pagos, códigos y otros patrones que conviene comprobar antes de responder.", href: "/analizar-sms-estafa" },
   { title: "Email sospechoso o phishing", category: "Email", text: "Señales habituales en correos que imitan bancos, empresas, pagos, facturas o avisos urgentes.", href: "/email-sospechoso-estafa" },
-  { title: "Cómo comprobar si una web es fiable", category: "Webs", text: "Dominio, formularios, redirecciones, reputación técnica y otras pistas que Vonu puede revisar antes de que confíes.", href: "/comprobar-web-fiable" },
+  { title: "Cómo comprobar si una web es fiable", category: "Webs", text: "Dominio, formularios, redirecciones, reputación técnica y otras pistas que Vonü puede revisar antes de que confíes.", href: "/comprobar-web-fiable" },
   { title: "Cómo comprobar una tienda online", category: "Compras online", text: "Antes de pagar, revisa señales de identidad, dominio, métodos de pago, presión y coherencia de la tienda.", href: "/comprobar-tienda-online" },
   { title: "Analizar una captura de pantalla", category: "Capturas", text: "Sube una captura de un chat, SMS, perfil, web o pantalla de pago para revisar lo que se ve antes de actuar.", href: "/analizar-captura-pantalla" },
   { title: "Cómo detectar un perfil falso", category: "Identidad", text: "Revisa señales de cuentas clonadas, identidades inventadas, catfishing y conversaciones que intentan ganar confianza demasiado rápido.", href: "/detectar-perfil-falso" },
@@ -68,7 +68,7 @@ export default function RecursosPage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
-      { "@type": "CollectionPage", "@id": `${siteUrl}/recursos#webpage`, url: `${siteUrl}/recursos`, name: "Recursos Vonu", description: "Guías prácticas para detectar estafas, phishing, suplantación y señales de riesgo digital.", inLanguage: "es-ES" },
+      { "@type": "CollectionPage", "@id": `${siteUrl}/recursos#webpage`, url: `${siteUrl}/recursos`, name: "Recursos Vonü", description: "Guías prácticas para detectar estafas, phishing, suplantación y señales de riesgo digital.", inLanguage: "es-ES" },
       { "@type": "ItemList", "@id": `${siteUrl}/recursos#resources`, itemListElement: featuredResources.map((item, index) => ({ "@type": "ListItem", position: index + 1, name: item.title, url: `${siteUrl}${item.href}` })) },
     ],
   };
@@ -111,7 +111,7 @@ export default function RecursosPage() {
 
       <section className="relative overflow-hidden bg-[#0a0d15]">
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500/[0.08] blur-[120px]" />
-        <div className="relative mx-auto max-w-[1320px] px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8"><h2 className="mx-auto max-w-[900px] text-[44px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[70px]">¿Tienes algo sospechoso delante? Analízalo ahora.</h2><a href="/es/check" className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d]">Abrir Vonu Check <ArrowIcon /></a></div>
+        <div className="relative mx-auto max-w-[1320px] px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8"><h2 className="mx-auto max-w-[900px] text-[44px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[70px]">¿Tienes algo sospechoso delante? Analízalo ahora.</h2><a href="/es/check" className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d]">Abrir Vonü Check <ArrowIcon /></a></div>
       </section>
 
       <HomeFooter />

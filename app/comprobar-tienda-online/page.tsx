@@ -10,24 +10,24 @@ const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Cómo saber si una tienda online es fiable — Compruébala con VonuAI",
+  title: "Cómo saber si una tienda online es fiable — Compruébala con VonüAI",
   description:
     "Aprende cómo saber si una tienda online es fiable o confiable antes de comprar: datos legales, métodos de pago, precios sospechosos, reseñas, devoluciones y señales de estafa.",
   alternates: {
     canonical: "/comprobar-tienda-online",
   },
   openGraph: {
-    title: "Cómo saber si una tienda online es fiable — VonuAI",
+    title: "Cómo saber si una tienda online es fiable — VonüAI",
     description:
       "Revisa una tienda online antes de pagar o introducir tus datos. Detecta señales de riesgo, precios sospechosos y métodos de pago poco seguros.",
     url: `${siteUrl}/comprobar-tienda-online`,
-    siteName: "VonuAI",
+    siteName: "VonüAI",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cómo saber si una tienda online es fiable — VonuAI",
+    title: "Cómo saber si una tienda online es fiable — VonüAI",
     description:
       "Comprueba tiendas online sospechosas antes de comprar, pagar o compartir datos.",
   },
@@ -70,7 +70,7 @@ const checklist = [
   "Comprueba si el método de pago permite reclamar si algo sale mal.",
   "Desconfía de precios demasiado buenos para ser verdad.",
   "Mira si las reseñas existen también en sitios externos.",
-  "Pega la tienda en Vonu para revisar señales antes de comprar.",
+  "Pega la tienda en Vonü para revisar señales antes de comprar.",
 ];
 
 const commonCases = [
@@ -114,8 +114,8 @@ const faqs = [
     a: "Suelen ser más recomendables los métodos que permiten reclamar o disputar un cargo. Si una tienda solo acepta transferencia, Bizum a particulares o métodos sin protección, revisa muy bien antes de pagar.",
   },
   {
-    q: "¿Puedo comprobar una tienda online con VonuAI?",
-    a: "Sí. Puedes pegar el enlace o explicar lo que ves en la tienda para que Vonu revise señales de riesgo, métodos de pago, datos legales, urgencia y qué comprobar antes de comprar.",
+    q: "¿Puedo comprobar una tienda online con VonüAI?",
+    a: "Sí. Puedes pegar el enlace o explicar lo que ves en la tienda para que Vonü revise señales de riesgo, métodos de pago, datos legales, urgencia y qué comprobar antes de comprar.",
   },
   {
     q: "¿Qué hago si ya he comprado en una tienda sospechosa?",
@@ -680,7 +680,7 @@ export default function ComprobarTiendaOnlinePage() {
 
           <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
             Pega el enlace, explica qué producto quieres comprar o sube una
-            captura. Vonu te ayuda a revisar señales antes de pagar o compartir
+            captura. Vonü te ayuda a revisar señales antes de pagar o compartir
             datos.
           </p>
 
@@ -688,7 +688,7 @@ export default function ComprobarTiendaOnlinePage() {
             href="/chat"
             className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
           >
-            Comprobar tienda con Vonu
+            Comprobar tienda con Vonü
             <ArrowIcon />
           </Link>
         </div>

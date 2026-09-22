@@ -12,24 +12,24 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Me llama el banco y me pide un código SMS — ¿Es una estafa?",
   description:
-    "Si te llaman diciendo que son tu banco y te piden un código SMS, una clave o una confirmación urgente, revisa las señales con VonuAI antes de compartir datos.",
+    "Si te llaman diciendo que son tu banco y te piden un código SMS, una clave o una confirmación urgente, revisa las señales con VonüAI antes de compartir datos.",
   alternates: {
     canonical: "/llamada-banco-codigo-sms",
   },
   openGraph: {
-    title: "Me llama el banco y me pide un código SMS — VonuAI",
+    title: "Me llama el banco y me pide un código SMS — VonüAI",
     description:
       "Revisa señales de vishing, llamadas falsas del banco y peticiones de códigos SMS antes de actuar.",
     url: `${siteUrl}/llamada-banco-codigo-sms`,
-    siteName: "VonuAI",
+    siteName: "VonüAI",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Me llama el banco y me pide un código SMS — VonuAI",
+    title: "Me llama el banco y me pide un código SMS — VonüAI",
     description:
-      "Antes de dar un código SMS por teléfono, revisa las señales con VonuAI.",
+      "Antes de dar un código SMS por teléfono, revisa las señales con VonüAI.",
   },
   robots: {
     index: true,
@@ -70,7 +70,7 @@ const whatToDo = [
   "Abre tú la app oficial del banco o llama al número oficial.",
   "No pulses enlaces que te dicten o te envíen durante la llamada.",
   "Si ya has dado un código, contacta urgentemente con tu banco.",
-  "Describe la llamada en Vonu para revisar señales antes de actuar.",
+  "Describe la llamada en Vonü para revisar señales antes de actuar.",
 ];
 
 const commonExamples = [
@@ -118,8 +118,8 @@ const faqs = [
     a: "Contacta urgentemente con tu banco, revisa movimientos, cambia claves si procede y bloquea tarjetas o accesos si te lo recomiendan desde el canal oficial.",
   },
   {
-    q: "¿VonuAI puede saber quién me ha llamado?",
-    a: "VonuAI no identifica titulares de números ni confirma identidades absolutas. Te ayuda a revisar señales de riesgo, presión, urgencia, petición de códigos y pasos seguros antes de actuar.",
+    q: "¿VonüAI puede saber quién me ha llamado?",
+    a: "VonüAI no identifica titulares de números ni confirma identidades absolutas. Te ayuda a revisar señales de riesgo, presión, urgencia, petición de códigos y pasos seguros antes de actuar.",
   },
 ];
 
@@ -684,7 +684,7 @@ export default function LlamadaBancoCodigoSmsPage() {
           </h2>
 
           <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
-            Describe la llamada, pega el SMS o explica qué te han pedido. Vonu
+            Describe la llamada, pega el SMS o explica qué te han pedido. Vonü
             te ayuda a revisar señales de riesgo antes de compartir códigos,
             datos o dinero.
           </p>
@@ -693,7 +693,7 @@ export default function LlamadaBancoCodigoSmsPage() {
             href="/chat"
             className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
           >
-            Revisar con Vonu
+            Revisar con Vonü
             <ArrowIcon />
           </Link>
         </div>

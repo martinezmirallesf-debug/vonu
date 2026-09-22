@@ -10,24 +10,24 @@ const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Cómo saber si una web es fiable — Compruébala con VonuAI",
+  title: "Cómo saber si una web es fiable — Compruébala con VonüAI",
   description:
-    "Aprende a comprobar si una web o tienda online es fiable antes de comprar, pagar por transferencia o introducir tus datos. Analiza enlaces sospechosos con VonuAI.",
+    "Aprende a comprobar si una web o tienda online es fiable antes de comprar, pagar por transferencia o introducir tus datos. Analiza enlaces sospechosos con VonüAI.",
   alternates: {
     canonical: "/comprobar-web-fiable",
   },
   openGraph: {
-    title: "Cómo saber si una web es fiable — VonuAI",
+    title: "Cómo saber si una web es fiable — VonüAI",
     description:
       "Revisa señales de riesgo en webs, tiendas online, ofertas demasiado buenas y páginas sospechosas antes de pagar.",
     url: `${siteUrl}/comprobar-web-fiable`,
-    siteName: "VonuAI",
+    siteName: "VonüAI",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cómo saber si una web es fiable — VonuAI",
+    title: "Cómo saber si una web es fiable — VonüAI",
     description:
       "Comprueba una web sospechosa antes de comprar, pagar o compartir datos.",
   },
@@ -70,7 +70,7 @@ const checklist = [
   "Mira si el método de pago permite reclamar si algo sale mal.",
   "Revisa si el dominio parece imitar a otra marca conocida.",
   "Desconfía de precios demasiado buenos para ser verdad.",
-  "Pega la web en Vonu para revisar señales antes de pagar.",
+  "Pega la web en Vonü para revisar señales antes de pagar.",
 ];
 
 const commonCases = [
@@ -114,8 +114,8 @@ const faqs = [
     a: "Frena y revisa bien. La transferencia suele ofrecer menos protección que otros métodos de pago. Comprueba datos fiscales, opiniones externas, antigüedad del dominio y si hay formas reales de reclamar.",
   },
   {
-    q: "¿Puedo analizar una web con VonuAI?",
-    a: "Sí. Puedes pegar el enlace o explicar lo que ves en la web para que Vonu revise señales de riesgo, métodos de pago, urgencia, datos legales y qué comprobar antes de comprar.",
+    q: "¿Puedo analizar una web con VonüAI?",
+    a: "Sí. Puedes pegar el enlace o explicar lo que ves en la web para que Vonü revise señales de riesgo, métodos de pago, urgencia, datos legales y qué comprobar antes de comprar.",
   },
   {
     q: "¿Qué hago si ya he comprado en una web sospechosa?",
@@ -684,7 +684,7 @@ export default function ComprobarWebFiablePage() {
 
           <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
             Pega el enlace, explica qué te pide la página o sube una captura.
-            Vonu te ayuda a revisar señales de riesgo antes de pagar o compartir
+            Vonü te ayuda a revisar señales de riesgo antes de pagar o compartir
             datos.
           </p>
 
@@ -692,7 +692,7 @@ export default function ComprobarWebFiablePage() {
             href="/chat"
             className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
           >
-            Comprobar web con Vonu
+            Comprobar web con Vonü
             <ArrowIcon />
           </Link>
         </div>

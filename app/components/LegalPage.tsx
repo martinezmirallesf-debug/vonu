@@ -21,11 +21,11 @@ const legalLabels: Record<SupportedLocale, Record<LegalDocument, string>> = {
 };
 
 const backLabels: Record<SupportedLocale, string> = {
-  es: "Volver a Vonu Check",
-  en: "Back to Vonu Check",
-  fr: "Retour à Vonu Check",
-  de: "Zurück zu Vonu Check",
-  ar: "العودة إلى Vonu Check",
+  es: "Volver a Vonü Check",
+  en: "Back to Vonü Check",
+  fr: "Retour à Vonü Check",
+  de: "Zurück zu Vonü Check",
+  ar: "العودة إلى Vonü Check",
 };
 
 const legalBadges: Record<SupportedLocale, string> = {
@@ -55,7 +55,7 @@ export default function LegalPage({
           <aside className="lg:sticky lg:top-24 lg:self-start">
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/[0.06] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              {legalBadges[locale]} · Vonu
+              {legalBadges[locale]} · Vonü
             </div>
 
             <h1 className="mt-5 max-w-xl text-[42px] font-bold leading-[1.02] tracking-[-0.055em] text-white sm:text-[58px]">

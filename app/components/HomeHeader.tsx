@@ -104,9 +104,9 @@ export default function HomeHeader() {
       className="sticky top-0 z-50 isolate overflow-visible bg-[#0b0e17]/95 text-white backdrop-blur-xl max-md:backdrop-blur-none"
     >
       <div className={["relative z-[10020] mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8", isCheckHome ? "relative" : ""].join(" ")}>
-        <a href={checkPath(locale)} className="flex items-center gap-3" aria-label="Vonu">
+        <a href={checkPath(locale)} className="flex items-center gap-3" aria-label="Vonü">
           <VonuMark className="h-[30px] w-[30px]" framed />
-          <span className="text-[23px] font-semibold tracking-[-0.045em]">Vonu</span>
+          <span className="text-[23px] font-semibold tracking-[-0.045em]">Vonü</span>
         </a>
 
         <nav className={["hidden items-center gap-7 text-[14px] font-medium text-slate-300 md:flex", isCheckHome ? "md:absolute md:left-1/2 md:-translate-x-1/2" : ""].join(" ")}>

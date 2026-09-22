@@ -10,24 +10,24 @@ const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Analizar link sospechoso — Revísalo con VonuAI antes de pulsar",
+  title: "Analizar link sospechoso — Revísalo con VonüAI antes de pulsar",
   description:
     "Revisa enlaces sospechosos recibidos por SMS, WhatsApp, email, redes sociales o códigos QR antes de pulsar, pagar o compartir datos.",
   alternates: {
     canonical: "/analizar-link-sospechoso",
   },
   openGraph: {
-    title: "Analizar link sospechoso — VonuAI",
+    title: "Analizar link sospechoso — VonüAI",
     description:
       "Comprueba señales de phishing, suplantación, urgencia y riesgo antes de abrir un enlace sospechoso.",
     url: `${siteUrl}/analizar-link-sospechoso`,
-    siteName: "VonuAI",
+    siteName: "VonüAI",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Analizar link sospechoso — VonuAI",
+    title: "Analizar link sospechoso — VonüAI",
     description:
       "Revisa un enlace raro antes de pulsar, pagar o meter tus datos.",
   },
@@ -70,7 +70,7 @@ const checklist = [
   "Comprueba la dirección oficial escribiéndola tú en el navegador.",
   "Revisa si el dominio coincide exactamente con la empresa real.",
   "Desconfía si el enlace llega por un canal inesperado.",
-  "Pega el enlace o sube una captura en Vonu antes de actuar.",
+  "Pega el enlace o sube una captura en Vonü antes de actuar.",
 ];
 
 const commonExamples = [
@@ -107,8 +107,8 @@ const faqs = [
     a: "Desconfía si llega con urgencia, promete algo demasiado bueno, usa un dominio raro, te pide datos sensibles o suplanta a una empresa conocida. Lo más prudente es no pulsar y comprobar la dirección oficial por separado.",
   },
   {
-    q: "¿Puedo analizar un enlace con VonuAI?",
-    a: "Sí. Puedes pegar el enlace, copiar el mensaje recibido o subir una captura. Vonu te ayuda a revisar señales de phishing, suplantación, urgencia y riesgo antes de actuar.",
+    q: "¿Puedo analizar un enlace con VonüAI?",
+    a: "Sí. Puedes pegar el enlace, copiar el mensaje recibido o subir una captura. Vonü te ayuda a revisar señales de phishing, suplantación, urgencia y riesgo antes de actuar.",
   },
   {
     q: "¿Es seguro abrir un enlace si tiene https?",
@@ -682,7 +682,7 @@ export default function AnalizarLinkSospechosoPage() {
           </h2>
 
           <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
-            Pega el link, sube una captura o explica qué te ha llegado. Vonu te
+            Pega el link, sube una captura o explica qué te ha llegado. Vonü te
             ayuda a revisar señales de riesgo antes de abrir, pagar o compartir
             datos.
           </p>
@@ -691,7 +691,7 @@ export default function AnalizarLinkSospechosoPage() {
             href="/chat"
             className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
           >
-            Analizar link con Vonu
+            Analizar link con Vonü
             <ArrowIcon />
           </Link>
         </div>

@@ -23,7 +23,7 @@ type TopBarProps = {
 function LogoMark() {
   return (
     <span className="text-[20px] font-semibold tracking-[-0.045em] text-zinc-950">
-      VonuAI
+      VonüAI
     </span>
   );
 }

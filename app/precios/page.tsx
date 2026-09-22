@@ -8,7 +8,7 @@ const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Precios — Vonu",
+  title: "Precios — Vonü",
   description: "1 análisis gratuito por navegador o dispositivo. Después, 3 análisis adicionales por 3,99 € con un pago único.",
   alternates: {
     canonical: "/precios",
@@ -22,10 +22,10 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Precios — Vonu",
+    title: "Precios — Vonü",
     description: "Prueba un análisis gratis. Si necesitas más, compra 3 análisis por 3,99 € sin suscripción.",
     url: `${siteUrl}/precios`,
-    siteName: "Vonu",
+    siteName: "Vonü",
     locale: "es_ES",
     type: "website",
   },

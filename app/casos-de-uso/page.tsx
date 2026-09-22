@@ -8,21 +8,21 @@ const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Casos de uso — Vonu",
+  title: "Casos de uso — Vonü",
   description:
-    "Casos reales para usar Vonu: familiares que piden dinero desde otro número, bancos que piden códigos, phishing, tiendas sospechosas, perfiles falsos, inversiones y enlaces dudosos.",
+    "Casos reales para usar Vonü: familiares que piden dinero desde otro número, bancos que piden códigos, phishing, tiendas sospechosas, perfiles falsos, inversiones y enlaces dudosos.",
   alternates: { canonical: "/casos-de-uso" },
   openGraph: {
-    title: "Casos de uso — Vonu",
+    title: "Casos de uso — Vonü",
     description: "Comprueba señales antes de pagar, responder, abrir un enlace o compartir datos.",
     url: `${siteUrl}/casos-de-uso`,
-    siteName: "Vonu",
+    siteName: "Vonü",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Casos de uso — Vonu",
+    title: "Casos de uso — Vonü",
     description: "Situaciones reales donde comprobar antes de confiar puede evitar un problema.",
   },
   robots: { index: true, follow: true },
@@ -92,7 +92,7 @@ const moments = [
 
 const faqs = [
   {
-    q: "¿Vonu solo reconoce estafas conocidas?",
+    q: "¿Vonü solo reconoce estafas conocidas?",
     a: "No. Utiliza patrones conocidos como contexto, pero también analiza señales observables y combinaciones de riesgo para detectar variantes nuevas.",
   },
   {
@@ -101,7 +101,7 @@ const faqs = [
   },
   {
     q: "¿Pedir un Bizum significa que es fraude?",
-    a: "No. Un Bizum o una transferencia pueden ser totalmente legítimos. Vonu intenta valorar el contexto y la combinación de señales en lugar de tratar una sola palabra como prueba.",
+    a: "No. Un Bizum o una transferencia pueden ser totalmente legítimos. Vonü intenta valorar el contexto y la combinación de señales en lugar de tratar una sola palabra como prueba.",
   },
   {
     q: "¿Qué hago si el resultado es alto?",
@@ -129,7 +129,7 @@ export default function CasosDeUsoPage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
-      { "@type": "WebPage", "@id": `${siteUrl}/casos-de-uso#webpage`, url: `${siteUrl}/casos-de-uso`, name: "Casos de uso de Vonu", description: "Situaciones reales para comprobar señales de fraude antes de actuar.", inLanguage: "es-ES" },
+      { "@type": "WebPage", "@id": `${siteUrl}/casos-de-uso#webpage`, url: `${siteUrl}/casos-de-uso`, name: "Casos de uso de Vonü", description: "Situaciones reales para comprobar señales de fraude antes de actuar.", inLanguage: "es-ES" },
       { "@type": "FAQPage", "@id": `${siteUrl}/casos-de-uso#faq`, mainEntity: faqs.map((item) => ({ "@type": "Question", name: item.q, acceptedAnswer: { "@type": "Answer", text: item.a } })) },
     ],
   };
@@ -147,7 +147,7 @@ export default function CasosDeUsoPage() {
           <div className="mx-auto max-w-[1020px] text-center">
             <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Casos de uso</p>
             <h1 className="mx-auto mt-5 max-w-[1050px] text-[50px] font-semibold leading-[0.98] tracking-[-0.065em] text-white sm:text-[76px] sm:leading-[0.94] lg:text-[92px]">La estafa cambia.<span className="block text-slate-400">Las señales dejan <GradientText>pistas.</GradientText></span></h1>
-            <p className="mx-auto mt-7 max-w-[800px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">Vonu está pensado para el momento anterior a una acción difícil de deshacer: pagar, compartir un código, introducir datos o confiar en una identidad.</p>
+            <p className="mx-auto mt-7 max-w-[800px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">Vonü está pensado para el momento anterior a una acción difícil de deshacer: pagar, compartir un código, introducir datos o confiar en una identidad.</p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row"><a href="/es/check" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d]">Analizar ahora <ArrowIcon /></a><Link href="/como-funciona" className="inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.045] px-6 text-[14px] font-semibold text-slate-200">Cómo funciona</Link></div>
           </div>
         </div>
@@ -170,7 +170,7 @@ export default function CasosDeUsoPage() {
 
       <section className="border-b border-white/[0.06] bg-[#080b12]">
         <div className="mx-auto grid max-w-[1320px] gap-10 px-4 py-20 sm:px-6 sm:py-24 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
-          <div><p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">El momento importante</p><h2 className="mt-4 text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">Antes, no después.</h2><p className="mt-5 max-w-[480px] text-[15px] leading-8 text-slate-400">Vonu tiene más valor antes de que una acción sensible sea irreversible.</p></div>
+          <div><p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">El momento importante</p><h2 className="mt-4 text-[42px] font-semibold leading-[1] tracking-[-0.055em] text-white sm:text-[62px]">Antes, no después.</h2><p className="mt-5 max-w-[480px] text-[15px] leading-8 text-slate-400">Vonü tiene más valor antes de que una acción sensible sea irreversible.</p></div>
           <div className="grid gap-3 sm:grid-cols-2">{moments.map((moment) => <div key={moment} className="flex items-start gap-3 rounded-[18px] border border-white/[0.07] bg-white/[0.03] px-4 py-4 text-[14px] leading-6 text-slate-300"><span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-400/[0.10] text-emerald-300"><CheckIcon /></span>{moment}</div>)}</div>
         </div>
       </section>
@@ -184,7 +184,7 @@ export default function CasosDeUsoPage() {
 
       <section className="relative overflow-hidden bg-[#080b12]">
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500/[0.08] blur-[120px]" />
-        <div className="relative mx-auto max-w-[1320px] px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8"><h2 className="mx-auto max-w-[900px] text-[44px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[70px]">Si algo te hace dudar, compruébalo antes de confiar.</h2><a href="/es/check" className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d]">Abrir Vonu Check <ArrowIcon /></a></div>
+        <div className="relative mx-auto max-w-[1320px] px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8"><h2 className="mx-auto max-w-[900px] text-[44px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-[70px]">Si algo te hace dudar, compruébalo antes de confiar.</h2><a href="/es/check" className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-[14px] font-bold text-[#07110d]">Abrir Vonü Check <ArrowIcon /></a></div>
       </section>
 
       <HomeFooter />

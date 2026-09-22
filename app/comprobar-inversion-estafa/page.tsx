@@ -10,24 +10,24 @@ const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Comprobar si una inversión es estafa — Revísala con VonuAI",
+  title: "Comprobar si una inversión es estafa — Revísala con VonüAI",
   description:
     "Revisa una inversión, plataforma de trading, criptomonedas, supuestos beneficios rápidos o propuesta por WhatsApp antes de enviar dinero.",
   alternates: {
     canonical: "/comprobar-inversion-estafa",
   },
   openGraph: {
-    title: "Comprobar si una inversión es estafa — VonuAI",
+    title: "Comprobar si una inversión es estafa — VonüAI",
     description:
       "Analiza señales de riesgo en inversiones, trading, criptomonedas, plataformas desconocidas y promesas de ganancias rápidas.",
     url: `${siteUrl}/comprobar-inversion-estafa`,
-    siteName: "VonuAI",
+    siteName: "VonüAI",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Comprobar si una inversión es estafa — VonuAI",
+    title: "Comprobar si una inversión es estafa — VonüAI",
     description:
       "Revísala antes de transferir dinero, registrarte o seguir instrucciones.",
   },
@@ -70,7 +70,7 @@ const checklist = [
   "Comprueba si la empresa está identificada y regulada.",
   "Desconfía de rentabilidades garantizadas o muy altas.",
   "Revisa si puedes retirar dinero sin pagar más.",
-  "Pega la propuesta en Vonu antes de enviar dinero.",
+  "Pega la propuesta en Vonü antes de enviar dinero.",
 ];
 
 const commonExamples = [
@@ -107,8 +107,8 @@ const faqs = [
     a: "Desconfía si prometen beneficios altos o garantizados, te meten prisa, te contactan por WhatsApp o Telegram, no está claro quién está detrás, cuesta retirar dinero o te piden ingresar más para desbloquear ganancias.",
   },
   {
-    q: "¿Puedo comprobar una plataforma de inversión con VonuAI?",
-    a: "Sí. Puedes pegar el nombre, la web, el mensaje recibido o subir capturas. Vonu te ayuda a revisar señales de riesgo antes de enviar dinero o compartir datos.",
+    q: "¿Puedo comprobar una plataforma de inversión con VonüAI?",
+    a: "Sí. Puedes pegar el nombre, la web, el mensaje recibido o subir capturas. Vonü te ayuda a revisar señales de riesgo antes de enviar dinero o compartir datos.",
   },
   {
     q: "¿Es normal que me pidan pagar para retirar mis ganancias?",
@@ -119,8 +119,8 @@ const faqs = [
     a: "Guarda capturas, movimientos, conversaciones, webs y datos de pago. Contacta con tu banco cuanto antes y valora denunciar. No sigas enviando dinero para desbloquear supuestas ganancias.",
   },
   {
-    q: "¿VonuAI da asesoramiento financiero?",
-    a: "No. Vonu ofrece orientación preventiva para revisar señales de riesgo y ayudarte a decidir con más calma. No sustituye a asesores financieros, abogados, bancos, reguladores ni autoridades.",
+    q: "¿VonüAI da asesoramiento financiero?",
+    a: "No. Vonü ofrece orientación preventiva para revisar señales de riesgo y ayudarte a decidir con más calma. No sustituye a asesores financieros, abogados, bancos, reguladores ni autoridades.",
   },
 ];
 
@@ -686,7 +686,7 @@ export default function ComprobarInversionEstafaPage() {
           </h2>
 
           <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
-            Pega la web, conversación, propuesta o capturas. Vonu te ayuda a
+            Pega la web, conversación, propuesta o capturas. Vonü te ayuda a
             revisar señales de riesgo antes de invertir, registrarte o transferir.
           </p>
 
@@ -694,7 +694,7 @@ export default function ComprobarInversionEstafaPage() {
             href="/chat"
             className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
           >
-            Revisar inversión con Vonu
+            Revisar inversión con Vonü
             <ArrowIcon />
           </Link>
         </div>

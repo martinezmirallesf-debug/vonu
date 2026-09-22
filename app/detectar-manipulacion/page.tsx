@@ -10,24 +10,24 @@ const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Cómo saber si me están manipulando — Analízalo con VonuAI",
+  title: "Cómo saber si me están manipulando — Analízalo con VonüAI",
   description:
-    "Aprende a detectar señales de manipulación emocional, presión, culpa, urgencia o control en mensajes y situaciones. Analízalo con VonuAI antes de contestar.",
+    "Aprende a detectar señales de manipulación emocional, presión, culpa, urgencia o control en mensajes y situaciones. Analízalo con VonüAI antes de contestar.",
   alternates: {
     canonical: "/detectar-manipulacion",
   },
   openGraph: {
-    title: "Cómo saber si me están manipulando — VonuAI",
+    title: "Cómo saber si me están manipulando — VonüAI",
     description:
       "Revisa mensajes o situaciones donde sientes presión, culpa, urgencia o manipulación antes de responder o decidir.",
     url: `${siteUrl}/detectar-manipulacion`,
-    siteName: "VonuAI",
+    siteName: "VonüAI",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cómo saber si me están manipulando — VonuAI",
+    title: "Cómo saber si me están manipulando — VonüAI",
     description:
       "Detecta señales de presión, culpa o manipulación emocional antes de contestar.",
   },
@@ -70,7 +70,7 @@ const checklist = [
   "Separa hechos reales de interpretaciones o reproches.",
   "Mira si respeta tus límites o intenta saltárselos.",
   "No tomes decisiones importantes en caliente.",
-  "Pega el mensaje en Vonu para analizar tono, presión y posibles señales de manipulación.",
+  "Pega el mensaje en Vonü para analizar tono, presión y posibles señales de manipulación.",
 ];
 
 const commonCases = [
@@ -110,8 +110,8 @@ const faqs = [
     a: "No tienes que responder inmediatamente. Puedes pausar, guardar el mensaje, leerlo con calma y contestar solo cuando tengas claro qué quieres decir. Si hay amenaza o riesgo, busca ayuda externa.",
   },
   {
-    q: "¿VonuAI puede analizar si un mensaje es manipulador?",
-    a: "Sí. Puedes pegar el mensaje o explicar la situación para que Vonu revise señales de presión, culpa, urgencia, control o manipulación. No sustituye a un profesional, pero puede ayudarte a ganar claridad.",
+    q: "¿VonüAI puede analizar si un mensaje es manipulador?",
+    a: "Sí. Puedes pegar el mensaje o explicar la situación para que Vonü revise señales de presión, culpa, urgencia, control o manipulación. No sustituye a un profesional, pero puede ayudarte a ganar claridad.",
   },
   {
     q: "¿Manipulación significa que la otra persona es mala?",
@@ -680,7 +680,7 @@ export default function DetectarManipulacionPage() {
           </h2>
 
           <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
-            Pega el mensaje o explica la situación. Vonu te ayuda a revisar si
+            Pega el mensaje o explica la situación. Vonü te ayuda a revisar si
             hay presión, culpa, urgencia o señales de manipulación antes de
             responder.
           </p>
@@ -689,7 +689,7 @@ export default function DetectarManipulacionPage() {
             href="/chat"
             className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
           >
-            Analizar mensaje con Vonu
+            Analizar mensaje con Vonü
             <ArrowIcon />
           </Link>
         </div>

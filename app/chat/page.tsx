@@ -74,7 +74,7 @@ type Message = {
   boardImagePlacement?: { x: number; y: number; w: number; h: number } | null;
   revealMs?: number;
 
-  // Estado visual de los puntos de Vonu:
+  // Estado visual de los puntos de Vonü:
   // - undefined = mensajes antiguos: se infiere como hasta ahora.
   // - null = no pintar puntos.
   // - safe/warning/high/danger = pintar ese color.
@@ -215,7 +215,7 @@ async function getChatAccessTokenWithTimeout(
     return null;
   } catch (error) {
     console.warn(
-      "[Vonu chat] getSession timeout/error, continuing without token",
+      "[Vonü chat] getSession timeout/error, continuing without token",
       error
     );
     return null;
@@ -628,7 +628,7 @@ function inferRiskStatusFromAssistantText(text: string): RiskStatus | null {
   }
 
   // ✅ OVERRIDE ULTRA PRIORITARIO:
-// Si la respuesta de Vonu dice que un perfil de citas no tiene banderas rojas
+// Si la respuesta de Vonü dice que un perfil de citas no tiene banderas rojas
 // y además menciona verificación/confianza, debe ser VERDE antes de mirar porcentajes,
 // palabras sueltas como "inversión" en contexto negativo, o precaución normal.
 const hasUltraSafeDatingProfileVerdict =
@@ -773,7 +773,7 @@ if (hasBankPhoneCodeFraud || hasCrossChannelPhoneFraud || hasStrongOtpFraudLangu
 }
 
 // ✅ TELÉFONO: solo número válido + sin señal fuerte = verde/neutro.
-// Evita puntos naranjas cuando Vonu solo dice prudencia normal
+// Evita puntos naranjas cuando Vonü solo dice prudencia normal
 // ante un número de teléfono sin contexto peligroso.
 const looksLikeLowRiskPhoneOnlyAnswer =
   (
@@ -1110,7 +1110,7 @@ if (hasLowRiskDatingProfileVerdict && !hasRealDatingDangerInVerdict) {
 
   // ✅ Caso importante:
   // Perfil Tinder/Bumble/Badoo/Instagram normal o verificado, sin señales fuertes:
-  // verde aunque Vonu recomiende prudencia normal.
+  // verde aunque Vonü recomiende prudencia normal.
   if (
     isDatingOrSocialProfile &&
     hasCalmDatingOpening &&
@@ -1266,7 +1266,7 @@ if (
   }
 
   // ✅ Foto de perfil social normal = verde.
-// Si Vonu concluye que una foto de perfil de Facebook/Instagram/red social
+// Si Vonü concluye que una foto de perfil de Facebook/Instagram/red social
 // es normal/natural y sin señales sospechosas, NO debe pintarse naranja
 // por prudencia genérica posterior.
 const hasLowRiskSocialProfilePhotoVerdict =
@@ -1797,7 +1797,7 @@ function getAssistantVisualRiskStatusFromApi(
   if (model === "usage-limit-guard") return null;
   if (mode === "tutor" || data?.autoTutor?.active === true) return null;
 
-  // Preguntas normales sobre Vonu/producto: nunca deben pintar puntos de riesgo.
+  // Preguntas normales sobre Vonü/producto: nunca deben pintar puntos de riesgo.
   if (looksLikeGeneralVonuProductQuestion(userText)) {
     return null;
   }
@@ -1912,7 +1912,7 @@ function initialAssistantMessage(): Message {
     id: "init",
     role: "assistant",
     text:
-      "Hola 👋 Soy **Vonu**.\n\n" +
+      "Hola 👋 Soy **Vonü**.\n\n" +
       "Cuéntame qué quieres revisar —un mensaje, una web, una captura, un PDF o simplemente lo que te ha pasado— y lo miramos con calma antes de que hagas nada importante.\n\n" +
       "_Importante: no compartas contraseñas, códigos ni datos bancarios._",
     riskStatus: null,
@@ -3666,12 +3666,12 @@ setSubscriptionInfo(null);
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
       console.warn(
-        "[Vonu] No se pudo asegurar profile:",
+        "[Vonü] No se pudo asegurar profile:",
         json?.error || res.status
       );
     }
   } catch (error) {
-    console.warn("[Vonu] Error asegurando profile:", error);
+    console.warn("[Vonü] Error asegurando profile:", error);
   }
 }
 
@@ -4017,7 +4017,7 @@ useEffect(() => {
         refreshUsageInfo();
       }, 80);
     } catch (error) {
-      console.warn("[Vonu auth] late session recovery failed:", error);
+      console.warn("[Vonü auth] late session recovery failed:", error);
     }
   };
 
@@ -4570,7 +4570,7 @@ async function getHistoryAccessToken() {
 
 async function saveThreadToCloud(thread?: ChatThread | null) {
   try {
-    console.log("[Vonu history] saveThreadToCloud START", {
+    console.log("[Vonü history] saveThreadToCloud START", {
       hasThread: !!thread,
       isLoggedIn,
       threadId: thread?.id,
@@ -4579,7 +4579,7 @@ async function saveThreadToCloud(thread?: ChatThread | null) {
     });
     if (!thread) return;
     if (!isLoggedIn) {
-  console.log("[Vonu history] cancelado: usuario no logueado");
+  console.log("[Vonü history] cancelado: usuario no logueado");
   return;
 }
 
@@ -4604,7 +4604,7 @@ const threadForCloud = {
 
     const token = await getHistoryAccessToken();
     if (!token) {
-  console.log("[Vonu history] cancelado: sin token");
+  console.log("[Vonü history] cancelado: sin token");
   return;
 }
 
@@ -4620,7 +4620,7 @@ const threadForCloud = {
 }),
     });
 
-    console.log("[Vonu history] POST /api/chat-history", {
+    console.log("[Vonü history] POST /api/chat-history", {
   status: res.status,
   ok: res.ok,
   threadId: safeThread.id,
@@ -4630,20 +4630,20 @@ const threadForCloud = {
 
     if (!res.ok) {
       const txt = await res.text().catch(() => "");
-      console.warn("[Vonu] No se pudo guardar historial remoto:", txt);
+      console.warn("[Vonü] No se pudo guardar historial remoto:", txt);
     }
   } catch (error) {
-    console.warn("[Vonu] Error guardando historial remoto:", error);
+    console.warn("[Vonü] Error guardando historial remoto:", error);
   }
 }
 
 function queueSaveThreadToCloud(threadId: string, delay = 700) {
   if (!threadId) {
-    console.log("[Vonu history] queue cancelada: sin threadId");
+    console.log("[Vonü history] queue cancelada: sin threadId");
     return;
   }
 
-  console.log("[Vonu history] queue save", {
+  console.log("[Vonü history] queue save", {
     threadId,
     delay,
   });
@@ -4651,7 +4651,7 @@ function queueSaveThreadToCloud(threadId: string, delay = 700) {
   window.setTimeout(() => {
     const thread = threadsRef.current.find((t) => t.id === threadId);
 
-    console.log("[Vonu history] queue fired", {
+    console.log("[Vonü history] queue fired", {
       threadId,
       found: !!thread,
       title: thread?.title,
@@ -4685,10 +4685,10 @@ async function deleteThreadFromCloud(threadId: string) {
 
     if (!res.ok) {
       const txt = await res.text().catch(() => "");
-      console.warn("[Vonu] No se pudo borrar historial remoto:", txt);
+      console.warn("[Vonü] No se pudo borrar historial remoto:", txt);
     }
   } catch (error) {
-    console.warn("[Vonu] Error borrando historial remoto:", error);
+    console.warn("[Vonü] Error borrando historial remoto:", error);
   }
 }
 
@@ -4738,7 +4738,7 @@ async function loadCloudThreadsOnce(options?: { force?: boolean }) {
       return;
     }
 
-    console.log("[Vonu history] GET /api/chat-history START", {
+    console.log("[Vonü history] GET /api/chat-history START", {
       force,
       authUserId,
     });
@@ -4753,7 +4753,7 @@ async function loadCloudThreadsOnce(options?: { force?: boolean }) {
 
     const json = await res.json().catch(() => null);
 
-    console.log("[Vonu history] GET /api/chat-history END", {
+    console.log("[Vonü history] GET /api/chat-history END", {
       force,
       status: res.status,
       ok: res.ok,
@@ -4765,7 +4765,7 @@ async function loadCloudThreadsOnce(options?: { force?: boolean }) {
     });
 
     if (!res.ok || !json?.ok) {
-      console.warn("[Vonu] No se pudo cargar historial remoto:", json);
+      console.warn("[Vonü] No se pudo cargar historial remoto:", json);
       cloudHistoryLoadedForUserRef.current = null;
       return;
     }
@@ -4805,7 +4805,7 @@ async function loadCloudThreadsOnce(options?: { force?: boolean }) {
       }
     }, 0);
   } catch (error) {
-    console.warn("[Vonu] Error cargando historial remoto:", error);
+    console.warn("[Vonü] Error cargando historial remoto:", error);
     cloudHistoryLoadedForUserRef.current = null;
   }
 }
@@ -4954,7 +4954,7 @@ useEffect(() => {
 
     // Protección: nunca sobrescribimos el historial con algo vacío o corrupto.
     if (!looksLikeValidStoredThreads(safeThreads)) {
-      console.warn("[Vonu] Guardado cancelado: historial vacío o no válido.");
+      console.warn("[Vonü] Guardado cancelado: historial vacío o no válido.");
       return;
     }
 
@@ -4969,7 +4969,7 @@ useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, nextRaw);
     window.localStorage.setItem(STORAGE_LAST_GOOD_KEY, nextRaw);
   } catch (error) {
-    console.warn("[Vonu] No se pudo guardar el historial completo:", error);
+    console.warn("[Vonü] No se pudo guardar el historial completo:", error);
 
     try {
       const ultraSafeThreads = sanitizeThreadsForStorage(threads)
@@ -4980,7 +4980,7 @@ useEffect(() => {
         }));
 
       if (!looksLikeValidStoredThreads(ultraSafeThreads)) {
-        console.warn("[Vonu] Guardado reducido cancelado: historial no válido.");
+        console.warn("[Vonü] Guardado reducido cancelado: historial no válido.");
         return;
       }
 
@@ -4995,7 +4995,7 @@ useEffect(() => {
       window.localStorage.setItem(STORAGE_KEY, fallbackRaw);
       window.localStorage.setItem(STORAGE_LAST_GOOD_KEY, fallbackRaw);
     } catch (fallbackError) {
-      console.warn("[Vonu] No se pudo guardar ni el historial reducido:", fallbackError);
+      console.warn("[Vonü] No se pudo guardar ni el historial reducido:", fallbackError);
     }
   }
 }, [threads, mounted]);
@@ -5329,7 +5329,7 @@ function openVoiceTopupModal() {
   setPayLoading(false);
 
   setPayMsg(
-    "Se han agotado tus minutos de voz. Puedes seguir usando el chat escrito, o hacer una recarga para continuar hablando con Vonu."
+    "Se han agotado tus minutos de voz. Puedes seguir usando el chat escrito, o hacer una recarga para continuar hablando con Vonü."
   );
 
   setBilling("topup");
@@ -5339,7 +5339,7 @@ function openVoiceTopupModal() {
 
 function openMessageLimitTopupModal() {
   setPayMsg(
-    "Has llegado al límite de mensajes de este mes. Puedes esperar a la renovación mensual o hacer una recarga para seguir usando Vonu ahora."
+    "Has llegado al límite de mensajes de este mes. Puedes esperar a la renovación mensual o hacer una recarga para seguir usando Vonü ahora."
   );
 
   setBilling("topup");
@@ -5454,7 +5454,7 @@ function toggleDictation() {
     return;
   }
 
-  // Si Vonu está hablando, cortamos para no pisar
+  // Si Vonü está hablando, cortamos para no pisar
   stopTTS();
 
   // Encender/apagar micro
@@ -5588,7 +5588,7 @@ async function toggleConversation() {
   realtimeManualCloseRef.current = false;
   realtimeStoppedByLimitRef.current = false;
 
-  setMicMsg("Conectando con Vonu por voz…");
+  setMicMsg("Conectando con Vonü por voz…");
   setRealtimeStatus("connecting");
 
   try {
@@ -5605,7 +5605,7 @@ async function toggleConversation() {
         }
 
         if (status === "speaking") {
-          setMicMsg("🗣️ Vonu está respondiendo…");
+          setMicMsg("🗣️ Vonü está respondiendo…");
         }
 
         if (status === "closed") {
@@ -6304,7 +6304,7 @@ function blockSendBecauseMessageLimitReached() {
   }
 
   function unlockChatUi(reason?: string) {
-  console.log("[Vonu unlockChatUi]", reason ?? "unknown");
+  console.log("[Vonü unlockChatUi]", reason ?? "unknown");
 
   setIsTyping(false);
   sendGuardRef.current.busy = false;
@@ -6324,7 +6324,7 @@ function blockSendBecauseMessageLimitReached() {
 }
 
 function unlockWrittenChatUi(reason?: string) {
-  console.log("[Vonu unlockWrittenChatUi]", reason ?? "unknown");
+  console.log("[Vonü unlockWrittenChatUi]", reason ?? "unknown");
 
   setIsTyping(false);
   sendGuardRef.current.busy = false;
@@ -6599,7 +6599,7 @@ function stopMic() {
 
 async function startMic(purpose: MicPurpose) {
   if (isTyping) return;
-  // ✅ Anti-eco: no arrancar escucha mientras acaba de hablar Vonu
+  // ✅ Anti-eco: no arrancar escucha mientras acaba de hablar Vonü
 if (purpose === "conversation" && inTtsCooldown()) {
   setTimeout(() => {
     if (!voiceModeRef.current) return;
@@ -6823,7 +6823,7 @@ const purposeAtStart = purpose; // snapshot
     rec.onresult = (event: any) => {
   if (micSessionIdRef.current !== mySessionId) return;
 
-  // ✅ Anti-eco: si Vonu acaba de hablar, ignoramos lo que “oye” el micro
+  // ✅ Anti-eco: si Vonü acaba de hablar, ignoramos lo que “oye” el micro
   if (micPurposeRef.current === "conversation" && inTtsCooldown()) return;
 
   const results = event?.results ?? [];
@@ -8111,7 +8111,7 @@ useEffect(() => {
 
 // ✅ Nuevo comportamiento:
 // Solo recolocamos el chat cuando el usuario envía un mensaje.
-// Mientras Vonu responde, NO perseguimos el final.
+// Mientras Vonü responde, NO perseguimos el final.
 // Así evitamos el "bote" y dejamos que la respuesta crezca hacia abajo.
 useEffect(() => {
   // intencionadamente vacío:
@@ -8173,7 +8173,7 @@ async function onSelectImage(e: React.ChangeEvent<HTMLInputElement>) {
 
 async function processPdfFile(file: File) {
   try {
-    setMicMsg("Vonu está leyendo el documento…");
+    setMicMsg("Vonü está leyendo el documento…");
 
     const formData = new FormData();
     formData.append("file", file);
@@ -8197,7 +8197,7 @@ async function processPdfFile(file: File) {
 const hiddenPdfContext =
   `PDF adjunto por el usuario: "${json.filename}"` +
   `${json.pageCount ? ` (${json.pageCount} páginas)` : ""}.\n\n` +
-  `INSTRUCCIONES PARA VONU:\n` +
+  `INSTRUCCIONES PARA VONÜ:\n` +
   `- El usuario ha adjuntado este PDF como contexto de su mensaje.\n` +
   `- No pegues ni transcribas el contenido completo del PDF.\n` +
   `- No respondas como una plantilla fija.\n` +
@@ -8250,7 +8250,7 @@ async function onSelectPdf(e: React.ChangeEvent<HTMLInputElement>) {
   // puede seguir dentro de su consulta/límite, pero no crear consultas infinitas.
   if (!isPro) {
     setPayMsg(
-      "Nueva consulta es una función de los planes de Vonu. Puedes seguir en tu consulta actual o mejorar tu plan."
+      "Nueva consulta es una función de los planes de Vonü. Puedes seguir en tu consulta actual o mejorar tu plan."
     );
     openPlansModal();
     return;
@@ -8461,7 +8461,7 @@ queueSaveThreadToCloud(targetThreadId, 350);
 
     if (guestFreeAlreadyUsed || nextUserCount > GUEST_MESSAGE_LIMIT) {
       setLoginMsg(
-        "Puedes probar Vonu con 1 mensaje gratuito. Para seguir, inicia sesión."
+        "Puedes probar Vonü con 1 mensaje gratuito. Para seguir, inicia sesión."
       );
       openLoginModal("signin");
       return true;
@@ -8980,7 +8980,7 @@ if (isDesktopPointer()) {
       sendGuardRef.current.busy = false;
 
       setLoginMsg(
-        "Puedes probar Vonu con 1 mensaje gratuito. Para revisar esto, inicia sesión."
+        "Puedes probar Vonü con 1 mensaje gratuito. Para revisar esto, inicia sesión."
       );
       openLoginModal("signin");
       return;
@@ -9020,7 +9020,7 @@ if (isDesktopPointer()) {
 
   if (!isLoggedIn && hasDraftToSendNow && hasGuestFreeMessageBeenUsed()) {
     setLoginMsg(
-      "Puedes probar Vonu con 1 mensaje gratuito. Para seguir, inicia sesión."
+      "Puedes probar Vonü con 1 mensaje gratuito. Para seguir, inicia sesión."
     );
     openLoginModal("signin");
     return;
@@ -9147,7 +9147,7 @@ setThreads((prev) =>
   })
 );
 
-// Guardado rápido en nube: así el hilo aparece en otro dispositivo aunque Vonu siga pensando.
+// Guardado rápido en nube: así el hilo aparece en otro dispositivo aunque Vonü siga pensando.
 queueSaveThreadToCloud(targetThreadId, 350);
 
 pinUserMessageNearTop(userMsg.id);
@@ -9211,7 +9211,7 @@ body: JSON.stringify({
 
     return result?.data?.session?.access_token ?? null;
   } catch (error) {
-    console.warn("[Vonu chat] getSession timeout/error, continuing without token", error);
+    console.warn("[Vonü chat] getSession timeout/error, continuing without token", error);
     return null;
   } finally {
     if (timeoutId !== null) {
@@ -9623,7 +9623,7 @@ const chatBottomPad = paywallOpen
 
   const payTitleNode = (
     <span className="inline-flex items-center gap-1">
-      Vonu {PLUS_NODE}
+      Vonü {PLUS_NODE}
     </span>
   );
 
@@ -9806,7 +9806,7 @@ async function copyConversationToClipboard() {
     const conversationText = messages
       .filter((msg) => (msg.text ?? "").trim())
       .map((msg) => {
-        const roleLabel = msg.role === "user" ? "Tú" : "Vonu";
+        const roleLabel = msg.role === "user" ? "Tú" : "Vonü";
         const cleanText = stripMarkdownForCopy(msg.text ?? "");
         return `${roleLabel}:\n${cleanText}`;
       })
@@ -9825,7 +9825,7 @@ async function shareConversation() {
     const conversationText = messages
       .filter((msg) => (msg.text ?? "").trim())
       .map((msg) => {
-        const roleLabel = msg.role === "user" ? "Tú" : "Vonu";
+        const roleLabel = msg.role === "user" ? "Tú" : "Vonü";
         const cleanText = stripMarkdownForCopy(msg.text ?? "");
         return `${roleLabel}:\n${cleanText}`;
       })
@@ -9835,7 +9835,7 @@ async function shareConversation() {
 
     if (navigator.share) {
       await navigator.share({
-        title: "Conversación de Vonu",
+        title: "Conversación de Vonü",
         text: conversationText,
       });
       return;
@@ -9860,7 +9860,7 @@ function buildConversationForExport() {
   return messages
     .filter((msg) => (msg.text ?? "").trim())
     .map((msg) => {
-      const roleLabel = msg.role === "user" ? "Tú" : "Vonu";
+      const roleLabel = msg.role === "user" ? "Tú" : "Vonü";
       const cleanText = stripMarkdownForCopy(msg.text ?? "");
       return { roleLabel, cleanText };
     });
@@ -9876,7 +9876,7 @@ function downloadConversationAsPdf() {
       <html lang="es">
         <head>
           <meta charset="utf-8" />
-          <title>Conversación de Vonu</title>
+          <title>Conversación de Vonü</title>
           <style>
             @page {
               size: A4;
@@ -9956,7 +9956,7 @@ function downloadConversationAsPdf() {
         </head>
         <body>
           <div class="wrap">
-            <h1 class="title">Conversación de Vonu</h1>
+            <h1 class="title">Conversación de Vonü</h1>
             <p class="subtitle">Exportación lista para guardar como PDF</p>
 
             ${items
@@ -10017,7 +10017,7 @@ return (
     }
   }
 
-  /* Markdown real de respuestas Vonu */
+  /* Markdown real de respuestas Vonü */
 .vonu-markdown {
   font-size: 18px;
   line-height: 1.78;
@@ -10677,7 +10677,7 @@ html.vonu-home-keyboard-open .vonu-home-input-centered {
 
         {toastMsg.toLowerCase().includes("cancelado") ? (
           <div className="mt-0.5 text-[12.5px] leading-5 text-zinc-500">
-            Puedes seguir usando VonuAI hasta que termine el periodo pagado.
+            Puedes seguir usando VonüAI hasta que termine el periodo pagado.
           </div>
         ) : null}
       </div>
@@ -11167,10 +11167,10 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   <div className="flex justify-start">
     <div className="max-w-[92%] md:max-w-[85%] rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 md:px-4 md:py-3 text-zinc-900 shadow-sm">
       <div className="mt-1 hidden text-[13px] leading-6 text-zinc-700 md:block">
-  Puedes esperar a la renovación mensual o añadir una recarga para seguir usando Vonu ahora.
+  Puedes esperar a la renovación mensual o añadir una recarga para seguir usando Vonü ahora.
 </div>
       <div className="mt-1 text-[13px] text-zinc-700 leading-6">
-        Puedes esperar a la renovación mensual o añadir una recarga para seguir usando Vonu ahora.
+        Puedes esperar a la renovación mensual o añadir una recarga para seguir usando Vonü ahora.
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <button
@@ -11225,7 +11225,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
 ) : null}
 
 
-      {/* ✅ Mensajes usuario / Vonu */}
+      {/* ✅ Mensajes usuario / Vonü */}
       <div className="flex flex-col gap-4">
         {messages.map((m, i) => {
           const isUser = m.role === "user";
@@ -11299,8 +11299,8 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
             );
           }
 
-                              // ===== VONU PENSANDO =====
-          // Sale siempre durante la espera para que Vonu se sienta vivo.
+                              // ===== VONÜ PENSANDO =====
+          // Sale siempre durante la espera para que Vonü se sienta vivo.
           // Si luego la respuesta es de riesgo, quedará un indicador fijo encima.
           if (isStreaming && !((m.text ?? "").trim())) {
   return (
@@ -11317,7 +11317,7 @@ cancelSubscriptionFromHere={cancelSubscriptionFromHere}
   );
 }
 
-          // ===== VONU RESPONDIENDO (sin burbuja) =====
+          // ===== VONÜ RESPONDIENDO (sin burbuja) =====
           return (
             <div
               key={m.id}

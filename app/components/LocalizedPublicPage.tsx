@@ -66,11 +66,11 @@ const pricingCopy: Record<SupportedLocale, {
   chooseMax: string;
   perMonth: string;
 }> = {
-  es: { section: "Planes", title: "Elige cuánto margen necesitas", free: "Free", plus: "Plus", max: "Max", freeText: "Primer análisis y uso puntual para probar las comprobaciones de Vonu.", plusText: "Más comprobaciones de enlaces, mensajes y capturas para un uso frecuente.", maxText: "Mayor capacidad para un uso intensivo y más comprobaciones cada mes.", start: "Empezar gratis", choosePlus: "Elegir Plus", chooseMax: "Elegir Max", perMonth: "/ mes" },
-  en: { section: "Plans", title: "Choose the capacity you need", free: "Free", plus: "Plus", max: "Max", freeText: "First analysis and occasional use to try Vonu checks.", plusText: "More link, message and screenshot checks for regular use.", maxText: "Higher capacity for intensive use and more checks each month.", start: "Start free", choosePlus: "Choose Plus", chooseMax: "Choose Max", perMonth: "/ month" },
-  fr: { section: "Offres", title: "Choisissez la capacité dont vous avez besoin", free: "Free", plus: "Plus", max: "Max", freeText: "Première analyse et usage ponctuel pour découvrir les vérifications Vonu.", plusText: "Plus de vérifications de liens, messages et captures pour un usage régulier.", maxText: "Davantage de capacité pour un usage intensif et plus de vérifications chaque mois.", start: "Commencer gratuitement", choosePlus: "Choisir Plus", chooseMax: "Choisir Max", perMonth: "/ mois" },
-  de: { section: "Pläne", title: "Wähle die Kapazität, die du brauchst", free: "Free", plus: "Plus", max: "Max", freeText: "Erste Analyse und gelegentliche Nutzung zum Testen der Vonu-Prüfungen.", plusText: "Mehr Link-, Nachrichten- und Screenshot-Prüfungen für regelmäßige Nutzung.", maxText: "Mehr Kapazität für intensive Nutzung und mehr Prüfungen pro Monat.", start: "Kostenlos starten", choosePlus: "Plus wählen", chooseMax: "Max wählen", perMonth: "/ Monat" },
-  ar: { section: "الخطط", title: "اختر السعة التي تحتاجها", free: "مجاني", plus: "Plus", max: "Max", freeText: "التحليل الأول واستخدام محدود لتجربة فحوص Vonu.", plusText: "فحوص أكثر للروابط والرسائل ولقطات الشاشة للاستخدام المنتظم.", maxText: "سعة أكبر للاستخدام المكثف وعدد أكبر من الفحوص كل شهر.", start: "ابدأ مجانًا", choosePlus: "اختر Plus", chooseMax: "اختر Max", perMonth: "/ شهر" },
+  es: { section: "Planes", title: "Elige cuánto margen necesitas", free: "Free", plus: "Plus", max: "Max", freeText: "Primer análisis y uso puntual para probar las comprobaciones de Vonü.", plusText: "Más comprobaciones de enlaces, mensajes y capturas para un uso frecuente.", maxText: "Mayor capacidad para un uso intensivo y más comprobaciones cada mes.", start: "Empezar gratis", choosePlus: "Elegir Plus", chooseMax: "Elegir Max", perMonth: "/ mes" },
+  en: { section: "Plans", title: "Choose the capacity you need", free: "Free", plus: "Plus", max: "Max", freeText: "First analysis and occasional use to try Vonü checks.", plusText: "More link, message and screenshot checks for regular use.", maxText: "Higher capacity for intensive use and more checks each month.", start: "Start free", choosePlus: "Choose Plus", chooseMax: "Choose Max", perMonth: "/ month" },
+  fr: { section: "Offres", title: "Choisissez la capacité dont vous avez besoin", free: "Free", plus: "Plus", max: "Max", freeText: "Première analyse et usage ponctuel pour découvrir les vérifications Vonü.", plusText: "Plus de vérifications de liens, messages et captures pour un usage régulier.", maxText: "Davantage de capacité pour un usage intensif et plus de vérifications chaque mois.", start: "Commencer gratuitement", choosePlus: "Choisir Plus", chooseMax: "Choisir Max", perMonth: "/ mois" },
+  de: { section: "Pläne", title: "Wähle die Kapazität, die du brauchst", free: "Free", plus: "Plus", max: "Max", freeText: "Erste Analyse und gelegentliche Nutzung zum Testen der Vonü-Prüfungen.", plusText: "Mehr Link-, Nachrichten- und Screenshot-Prüfungen für regelmäßige Nutzung.", maxText: "Mehr Kapazität für intensive Nutzung und mehr Prüfungen pro Monat.", start: "Kostenlos starten", choosePlus: "Plus wählen", chooseMax: "Max wählen", perMonth: "/ Monat" },
+  ar: { section: "الخطط", title: "اختر السعة التي تحتاجها", free: "مجاني", plus: "Plus", max: "Max", freeText: "التحليل الأول واستخدام محدود لتجربة فحوص Vonü.", plusText: "فحوص أكثر للروابط والرسائل ولقطات الشاشة للاستخدام المنتظم.", maxText: "سعة أكبر للاستخدام المكثف وعدد أكبر من الفحوص كل شهر.", start: "ابدأ مجانًا", choosePlus: "اختر Plus", chooseMax: "اختر Max", perMonth: "/ شهر" },
 };
 
 function Arrow() {
@@ -107,7 +107,7 @@ export default function LocalizedPublicPage({
         "@type": "BreadcrumbList",
         "@id": `${pageUrl}#breadcrumb`,
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Vonu", item: `${SITE_URL}${checkPath(locale)}` },
+          { "@type": "ListItem", position: 1, name: "Vonü", item: `${SITE_URL}${checkPath(locale)}` },
           { "@type": "ListItem", position: 2, name: topic.eyebrow, item: pageUrl },
         ],
       },

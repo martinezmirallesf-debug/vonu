@@ -26,7 +26,7 @@ const copy: Record<SupportedLocale, {
     summary: "3 análisis adicionales · 3,99 € · pago único · sin suscripción ni renovación automática.",
     terms: "Acepto las condiciones de compra y confirmo que he podido consultar la información de privacidad.",
     immediate: "Solicito acceso inmediato a los análisis y reconozco que, conforme se preste el servicio, mi derecho de desistimiento puede verse afectado en los límites previstos por la ley.",
-    privacyNote: "Pago seguro procesado por Stripe. Vonu registra estas confirmaciones con la compra.",
+    privacyNote: "Pago seguro procesado por Stripe. Vonü registra estas confirmaciones con la compra.",
     continue: "Continuar a Stripe · 3,99 €",
     cancel: "Cancelar",
   },
@@ -37,7 +37,7 @@ const copy: Record<SupportedLocale, {
     summary: "3 additional analyses · €3.99 · one-time payment · no subscription or automatic renewal.",
     terms: "I accept the purchase terms and confirm that I have been able to review the privacy information.",
     immediate: "I request immediate access to the analyses and acknowledge that, as the service is performed, my withdrawal right may be affected to the extent permitted by law.",
-    privacyNote: "Secure payment processed by Stripe. Vonu records these confirmations with the purchase.",
+    privacyNote: "Secure payment processed by Stripe. Vonü records these confirmations with the purchase.",
     continue: "Continue to Stripe · €3.99",
     cancel: "Cancel",
   },
@@ -48,7 +48,7 @@ const copy: Record<SupportedLocale, {
     summary: "3 analyses supplémentaires · 3,99 € · paiement unique · sans abonnement ni renouvellement automatique.",
     terms: "J’accepte les conditions d’achat et confirme avoir pu consulter les informations de confidentialité.",
     immediate: "Je demande l’accès immédiat aux analyses et reconnais que mon droit de rétractation peut être affecté au fur et à mesure de l’exécution, dans les limites prévues par la loi.",
-    privacyNote: "Paiement sécurisé traité par Stripe. Vonu enregistre ces confirmations avec l’achat.",
+    privacyNote: "Paiement sécurisé traité par Stripe. Vonü enregistre ces confirmations avec l’achat.",
     continue: "Continuer vers Stripe · 3,99 €",
     cancel: "Annuler",
   },
@@ -59,7 +59,7 @@ const copy: Record<SupportedLocale, {
     summary: "3 zusätzliche Analysen · 3,99 € · Einmalzahlung · kein Abo und keine automatische Verlängerung.",
     terms: "Ich akzeptiere die Kaufbedingungen und bestätige, dass ich die Datenschutzinformationen einsehen konnte.",
     immediate: "Ich wünsche sofortigen Zugriff auf die Analysen und nehme zur Kenntnis, dass mein Widerrufsrecht mit der Leistungserbringung im gesetzlich zulässigen Umfang beeinflusst werden kann.",
-    privacyNote: "Sichere Zahlung über Stripe. Vonu speichert diese Bestätigungen zusammen mit dem Kauf.",
+    privacyNote: "Sichere Zahlung über Stripe. Vonü speichert diese Bestätigungen zusammen mit dem Kauf.",
     continue: "Weiter zu Stripe · 3,99 €",
     cancel: "Abbrechen",
   },
@@ -70,7 +70,7 @@ const copy: Record<SupportedLocale, {
     summary: "3 تحليلات إضافية · 3.99 € · دفعة واحدة · بدون اشتراك أو تجديد تلقائي.",
     terms: "أوافق على شروط الشراء وأؤكد أنني تمكنت من مراجعة معلومات الخصوصية.",
     immediate: "أطلب الوصول الفوري إلى التحليلات وأقر بأن حق الانسحاب قد يتأثر مع تنفيذ الخدمة، في الحدود التي يسمح بها القانون.",
-    privacyNote: "دفع آمن تتم معالجته عبر Stripe. يسجل Vonu هذه التأكيدات مع عملية الشراء.",
+    privacyNote: "دفع آمن تتم معالجته عبر Stripe. يسجل Vonü هذه التأكيدات مع عملية الشراء.",
     continue: "المتابعة إلى Stripe · 3.99 €",
     cancel: "إلغاء",
   },
@@ -146,7 +146,7 @@ export default function DevicePackCheckoutButton({
       {confirming && (
         <div className="fixed inset-0 z-[11000] flex overflow-y-auto bg-[#020711]/80 p-3 backdrop-blur-sm sm:grid sm:place-items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="vonu-checkout-legal-title">
           <div dir={locale === "ar" ? "rtl" : "ltr"} className="my-auto w-full max-w-[560px] max-h-[calc(100dvh-24px)] overflow-y-auto rounded-[24px] border border-white/[0.10] bg-[#101522] p-4 text-start text-slate-200 shadow-[0_32px_100px_rgba(0,0,0,.55)] sm:max-h-[calc(100dvh-32px)] sm:p-6">
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#8ec2ff] sm:text-[11px]">Vonu · Checkout</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#8ec2ff] sm:text-[11px]">Vonü · Checkout</p>
             <h2 id="vonu-checkout-legal-title" className="mt-1.5 text-[22px] font-bold leading-tight tracking-[-0.04em] text-white sm:mt-2 sm:text-[24px]">{t.title}</h2>
             <p className="mt-2 text-[12.5px] leading-5 text-slate-400 sm:mt-3 sm:text-[14px] sm:leading-6">{t.summary}</p>
 

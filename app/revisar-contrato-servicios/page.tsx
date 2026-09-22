@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    siteName: "Vonu",
+    siteName: "Vonü",
     url: `${SITE_URL}${localizedPublicPath("es", slug)}`,
     locale: "es_ES",
     title: topic.title,

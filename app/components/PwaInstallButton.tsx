@@ -9,11 +9,11 @@ type InstallPromptEvent = Event & {
 };
 
 const labels: Record<SupportedLocale, string> = {
-  es: "Instalar Vonu",
-  en: "Install Vonu",
-  fr: "Installer Vonu",
-  de: "Vonu installieren",
-  ar: "تثبيت Vonu",
+  es: "Instalar Vonü",
+  en: "Install Vonü",
+  fr: "Installer Vonü",
+  de: "Vonü installieren",
+  ar: "تثبيت Vonü",
 };
 
 function storedPrompt() {

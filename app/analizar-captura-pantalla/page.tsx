@@ -17,19 +17,19 @@ export const metadata: Metadata = {
     canonical: "/analizar-captura-pantalla",
   },
   openGraph: {
-    title: "Analizar captura de pantalla online — VonuAI",
+    title: "Analizar captura de pantalla online — VonüAI",
     description:
       "Revisa capturas de SMS, WhatsApp, perfiles, webs, facturas o conversaciones para detectar señales de estafa, manipulación o riesgo.",
     url: `${siteUrl}/analizar-captura-pantalla`,
-    siteName: "VonuAI",
+    siteName: "VonüAI",
     locale: "es_ES",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Analizar captura de pantalla online — VonuAI",
+    title: "Analizar captura de pantalla online — VonüAI",
     description:
-      "Sube una captura y VonuAI te ayuda a revisar señales de riesgo antes de pagar, contestar, firmar o confiar.",
+      "Sube una captura y VonüAI te ayuda a revisar señales de riesgo antes de pagar, contestar, firmar o confiar.",
   },
   robots: {
     index: true,
@@ -70,7 +70,7 @@ const checklist = [
   "No metas tarjeta, códigos ni contraseñas si algo te parece raro.",
   "Si hay enlace, no lo abras desde el mensaje: compruébalo antes.",
   "Si hay presión, dinero, urgencia o amenazas, guarda pruebas.",
-  "Vonu revisa señales y te ayuda a decidir el siguiente paso.",
+  "Vonü revisa señales y te ayuda a decidir el siguiente paso.",
 ];
 
 const warningSigns = [
@@ -116,18 +116,18 @@ const faqs = [
   },
   {
     q: "¿Sirve para perfiles de Tinder, Badoo o Instagram?",
-    a: "Sí. Vonu puede revisar capturas de perfiles, fotos o conversaciones para detectar señales de perfil falso, foto reutilizada, catfishing, presión para invertir o intentos de sacar la conversación fuera de la plataforma.",
+    a: "Sí. Vonü puede revisar capturas de perfiles, fotos o conversaciones para detectar señales de perfil falso, foto reutilizada, catfishing, presión para invertir o intentos de sacar la conversación fuera de la plataforma.",
   },
   {
     q: "¿Puedo subir una factura o contrato?",
-    a: "Sí. Si la captura se ve bien, Vonu puede ayudarte a entender conceptos, importes, cláusulas o señales que conviene revisar antes de pagar, reclamar o firmar.",
+    a: "Sí. Si la captura se ve bien, Vonü puede ayudarte a entender conceptos, importes, cláusulas o señales que conviene revisar antes de pagar, reclamar o firmar.",
   },
   {
     q: "¿Tengo que tapar datos personales?",
     a: "Es recomendable tapar datos sensibles como DNI completo, tarjeta, IBAN, teléfono, dirección, códigos, contraseñas o información íntima que no haga falta para el análisis.",
   },
   {
-    q: "¿Vonu confirma al 100% si algo es falso?",
+    q: "¿Vonü confirma al 100% si algo es falso?",
     a: "No siempre se puede confirmar al 100% solo con una captura. Lo útil es detectar señales, estimar el nivel de riesgo y decirte qué haría antes de pagar, contestar o seguir adelante.",
   },
 ];
@@ -367,7 +367,7 @@ export default function AnalizarCapturaPantallaPage() {
 
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
               Sube una captura de un SMS, WhatsApp, perfil, web, factura,
-              contrato o conversación. Vonu te ayuda a revisar señales de riesgo
+              contrato o conversación. Vonü te ayuda a revisar señales de riesgo
               antes de pagar, contestar, firmar o confiar.
             </p>
 
@@ -539,7 +539,7 @@ export default function AnalizarCapturaPantallaPage() {
             </div>
 
             <p className="max-w-md text-[17px] leading-8 text-zinc-600">
-              Vonu no se limita a describir la imagen: analiza señales visibles,
+              Vonü no se limita a describir la imagen: analiza señales visibles,
               contexto, presión, dinero, enlaces, identidad y próximos pasos.
             </p>
           </div>
@@ -688,7 +688,7 @@ export default function AnalizarCapturaPantallaPage() {
           </h2>
 
           <p className="mx-auto mt-6 max-w-2xl text-[18px] leading-8 text-zinc-300">
-            Sube la imagen, explica qué te preocupa y Vonu te ayuda a detectar
+            Sube la imagen, explica qué te preocupa y Vonü te ayuda a detectar
             señales de riesgo, entender el contexto y decidir el siguiente paso
             con más calma.
           </p>
@@ -697,7 +697,7 @@ export default function AnalizarCapturaPantallaPage() {
             href="/chat"
             className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
           >
-            Analizar captura con Vonu
+            Analizar captura con Vonü
             <ArrowIcon />
           </Link>
         </div>
