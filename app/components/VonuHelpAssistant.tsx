@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import HomeHeader from "@/app/components/HomeHeader";
 import VonuMark from "@/app/components/VonuMark";
@@ -237,9 +237,9 @@ function MailIcon() {
 
 function SendIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-[19px] w-[19px]" fill="none" aria-hidden="true">
-      <path d="M5 12h13" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
-      <path d="m13.5 6.5 5.5 5.5-5.5 5.5" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
+      <path d="m3 11 18-8-7.5 18-2-7.5L3 11Z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
+      <path d="m11.5 13.5 4-4" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
     </svg>
   );
 }
@@ -256,26 +256,77 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
   const [open, setOpen] = useState(false);
   const [topic, setTopic] = useState<Topic | null>(null);
   const [value, setValue] = useState("");
+  const [inputFocused, setInputFocused] = useState(false);
+  const [viewport, setViewport] = useState({
+    height: 0,
+    width: 0,
+    offsetTop: 0,
+    offsetLeft: 0,
+    keyboardOpen: false,
+  });
+  const baselineViewportHeight = useRef(0);
   const copy = COPY[locale];
   const isRtl = locale === "ar";
 
   useEffect(() => {
     if (!open) return;
+
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
     const previousBodyOverscroll = document.body.style.overscrollBehavior;
+    const previousBodyPosition = document.body.style.position;
+    const previousBodyTop = document.body.style.top;
+    const previousBodyWidth = document.body.style.width;
+    const scrollY = window.scrollY;
+
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
     document.body.style.overscrollBehavior = "none";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+
+    const visualViewport = window.visualViewport;
+    const initialHeight = visualViewport?.height ?? window.innerHeight;
+    baselineViewportHeight.current = initialHeight;
+
+    const syncViewport = () => {
+      const height = visualViewport?.height ?? window.innerHeight;
+      const width = visualViewport?.width ?? window.innerWidth;
+      const offsetTop = visualViewport?.offsetTop ?? 0;
+      const offsetLeft = visualViewport?.offsetLeft ?? 0;
+      const keyboardOpen = baselineViewportHeight.current - height > 120;
+
+      setViewport({ height, width, offsetTop, offsetLeft, keyboardOpen });
+    };
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
+
+    syncViewport();
+    visualViewport?.addEventListener("resize", syncViewport);
+    visualViewport?.addEventListener("scroll", syncViewport);
+    window.addEventListener("resize", syncViewport);
     window.addEventListener("keydown", onKeyDown);
+
     return () => {
+      visualViewport?.removeEventListener("resize", syncViewport);
+      visualViewport?.removeEventListener("scroll", syncViewport);
+      window.removeEventListener("resize", syncViewport);
+      window.removeEventListener("keydown", onKeyDown);
+
       document.body.style.overflow = previousBodyOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
       document.body.style.overscrollBehavior = previousBodyOverscroll;
-      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.position = previousBodyPosition;
+      document.body.style.top = previousBodyTop;
+      document.body.style.width = previousBodyWidth;
+      window.scrollTo(0, scrollY);
+
+      baselineViewportHeight.current = 0;
+      setViewport({ height: 0, width: 0, offsetTop: 0, offsetLeft: 0, keyboardOpen: false });
+      setInputFocused(false);
     };
   }, [open]);
 
@@ -298,6 +349,7 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
           : null;
 
   const topics: Exclude<Topic, "unknown">[] = ["how", "buy", "privacy", "scam", "contact"];
+  const compactComposer = inputFocused || viewport.keyboardOpen;
 
   return (
     <>
@@ -314,8 +366,12 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
       {open ? (
         <div
           dir={isRtl ? "rtl" : "ltr"}
-          className="fixed inset-0 z-[2147483000] flex h-dvh max-h-dvh w-screen flex-col overflow-hidden overscroll-none bg-[#071126] text-white"
+          className="fixed z-[2147483000] flex flex-col overflow-hidden overscroll-none bg-[#071126] text-white"
           style={{
+            top: viewport.height ? `${viewport.offsetTop}px` : 0,
+            left: viewport.width ? `${viewport.offsetLeft}px` : 0,
+            width: viewport.width ? `${viewport.width}px` : "100vw",
+            height: viewport.height ? `${viewport.height}px` : "100dvh",
             backgroundImage:
               "radial-gradient(circle at 50% 22%, rgba(59,130,246,.12), transparent 30%), linear-gradient(180deg,#061027 0%,#07162f 100%)",
           }}
@@ -326,17 +382,14 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
           <HomeHeader overlayClose={() => setOpen(false)} solid />
 
           <div className="relative min-h-0 flex-1 overflow-hidden">
-            <main className="absolute inset-0 overflow-y-auto overscroll-contain px-5 pb-[118px] pt-7 sm:px-8 sm:pb-[126px] sm:pt-10">
+            <main
+              className={[
+                "absolute inset-0 overflow-y-auto overscroll-contain px-5 pt-4 sm:px-8 sm:pt-6",
+                compactComposer ? "pb-[76px] sm:pb-[82px]" : "pb-[118px] sm:pb-[126px]",
+              ].join(" ")}
+            >
               <div className="mx-auto flex w-full max-w-[760px] flex-col">
-                <div className="text-center">
-                  <h2 className="text-[38px] font-bold tracking-[-0.055em] sm:text-[46px]">
-                    <span className="text-white">{copy.title.split(" ")[0]} </span>
-                    <span className="text-[#69a9ff]">{copy.title.split(" ").slice(1).join(" ")}</span>
-                  </h2>
-                  <p className="mt-1 text-[22px] font-semibold text-slate-400 sm:text-[26px]">{copy.subtitle}</p>
-                </div>
-
-                <div className="mt-7 flex items-center gap-3">
+                <div className="flex items-center gap-3">
                   <div className="hidden h-14 w-14 shrink-0 place-items-center rounded-full bg-[#0b234a] text-[#7bb7ff] ring-1 ring-[#7bb7ff]/25 sm:grid">
                     <VonuMark className="h-8 w-8" />
                   </div>
@@ -398,15 +451,30 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
               </div>
             </main>
 
-            <div className="absolute inset-x-0 bottom-0 z-20 bg-[#071126] px-5 pb-[max(14px,env(safe-area-inset-bottom))] pt-3 sm:px-8">
+            <div
+              className={[
+                "absolute inset-x-0 bottom-0 z-20 bg-[#071126] sm:px-8",
+                compactComposer
+                  ? "px-3 py-1.5"
+                  : "px-5 pb-[max(14px,env(safe-area-inset-bottom))] pt-3",
+              ].join(" ")}
+            >
               <form
                 onSubmit={submit}
-                className="mx-auto flex w-full max-w-[760px] items-center gap-2 rounded-[22px] border border-[#7bb7ff]/25 bg-[#091a35] p-2 shadow-[0_-14px_40px_rgba(4,10,24,.34)]"
+                className={[
+                  "mx-auto flex w-full max-w-[760px] items-center gap-2 border border-[#7bb7ff]/25 bg-[#091a35] shadow-[0_-14px_40px_rgba(4,10,24,.34)]",
+                  compactComposer ? "rounded-[18px] p-1.5" : "rounded-[22px] p-2",
+                ].join(" ")}
               >
                 <input
                   value={value}
                   onChange={(event) => setValue(event.target.value)}
-                  className="min-w-0 flex-1 bg-transparent px-3 py-3 text-[15px] text-white outline-none placeholder:text-slate-600"
+                  onFocus={() => setInputFocused(true)}
+                  onBlur={() => setInputFocused(false)}
+                  className={[
+                    "min-w-0 flex-1 bg-transparent px-3 text-[15px] text-white outline-none placeholder:text-slate-600",
+                    compactComposer ? "py-2.5" : "py-3",
+                  ].join(" ")}
                   placeholder={copy.input}
                   aria-label={copy.input}
                   autoComplete="off"
@@ -414,7 +482,10 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
                 />
                 <button
                   type="submit"
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#7bb7ff] text-[#07142f] transition hover:bg-[#9bc8ff] active:scale-95"
+                  className={[
+                    "grid shrink-0 place-items-center rounded-full bg-[#7bb7ff] text-[#07142f] transition hover:bg-[#9bc8ff] active:scale-95",
+                    compactComposer ? "h-10 w-10" : "h-11 w-11",
+                  ].join(" ")}
                   aria-label={copy.send}
                   title={copy.send}
                 >
