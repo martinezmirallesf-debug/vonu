@@ -4,7 +4,7 @@ import type { SupportedLocale } from "@/lib/vonu-check/types";
 
 export const runtime = "nodejs";
 
-type HelpAction = "pricing" | "check" | "contact" | "none";
+type HelpAction = "pricing" | "check" | "privacy" | "contact" | "none";
 
 type HelpMessage = {
   role: "user" | "assistant";
@@ -113,10 +113,10 @@ function looksLikeAnalysisRequest(text: string) {
 }
 
 function parseAction(text: string): { text: string; action: HelpAction } {
-  const match = text.match(/\[\[ACTION:(PRICING|CHECK|CONTACT|NONE)\]\]/i);
+  const match = text.match(/\[\[ACTION:(PRICING|CHECK|PRIVACY|CONTACT|NONE)\]\]/i);
   const action = (match?.[1]?.toLowerCase() ?? "none") as HelpAction;
   return {
-    text: text.replace(/\s*\[\[ACTION:(PRICING|CHECK|CONTACT|NONE)\]\]\s*/gi, "").trim(),
+    text: text.replace(/\s*\[\[ACTION:(PRICING|CHECK|PRIVACY|CONTACT|NONE)\]\]\s*/gi, "").trim(),
     action,
   };
 }
@@ -139,6 +139,7 @@ YOUR JOB:
 - Help users understand how to navigate the product.
 - If the user asks how to get more analyses, where to recharge, how packs work, or says they have run out, direct them to the Pricing page and use the PRICING action.
 - If the user asks to analyse, verify or judge a URL, message, screenshot, profile, PDF, contract or suspicious content, DO NOT analyse it in this support chat. Tell them to use Vonü Check and use the CHECK action.
+- If the user asks about privacy, stored data, uploaded files or data handling, answer briefly and use the PRIVACY action when linking to the privacy page.
 - If they need a human or the answer is not safely known, direct them to Contact and use the CONTACT action.
 
 PRODUCT BOUNDARIES:
@@ -161,6 +162,7 @@ MACHINE ACTION:
 End EVERY answer with exactly one marker on its own line:
 [[ACTION:PRICING]]
 [[ACTION:CHECK]]
+[[ACTION:PRIVACY]]
 [[ACTION:CONTACT]]
 or
 [[ACTION:NONE]]
