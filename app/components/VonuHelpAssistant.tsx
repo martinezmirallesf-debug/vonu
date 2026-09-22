@@ -9,7 +9,7 @@ import { localizedPublicPath } from "@/lib/vonu-global/routes";
 import { legalPath } from "@/lib/vonu-legal/routes";
 
 type Topic = "how" | "buy" | "privacy" | "scam" | "contact" | "unknown";
-type HelpAction = "pricing" | "check" | "contact" | "none";
+type HelpAction = "pricing" | "check" | "privacy" | "contact" | "none";
 type ChatMessage =
   | { id: number; role: "user"; text: string }
   | { id: number; role: "assistant"; text: string; action: HelpAction };
@@ -40,7 +40,7 @@ const COPY: Record<SupportedLocale, AssistantCopy> = {
     close: "Cerrar ayuda",
 
     thinking: "Pensando…",
-    actionLabels: { pricing: "Ver precios", check: "Ir a Vonü Check", contact: "Contactar" },
+    actionLabels: { pricing: "Ver precios", check: "Ir a Vonü Check", privacy: "Ver privacidad", contact: "Contactar" },
     options: {
       how: { title: "Cómo usar Vonü", description: "Te explicamos qué pestaña utilizar en cada caso." },
       buy: { title: "Comprar más análisis", description: "Packs, precios y cómo ampliar tus análisis." },
@@ -73,7 +73,7 @@ const COPY: Record<SupportedLocale, AssistantCopy> = {
     close: "Close help",
 
     thinking: "Thinking…",
-    actionLabels: { pricing: "View pricing", check: "Go to Vonü Check", contact: "Contact us" },
+    actionLabels: { pricing: "View pricing", check: "Go to Vonü Check", privacy: "View privacy", contact: "Contact us" },
     options: {
       how: { title: "How to use Vonü", description: "We’ll show you which tab to use." },
       buy: { title: "Buy more analyses", description: "Packs, pricing and how to add more analyses." },
@@ -106,7 +106,7 @@ const COPY: Record<SupportedLocale, AssistantCopy> = {
     close: "Fermer l’aide",
 
     thinking: "Je réfléchis…",
-    actionLabels: { pricing: "Voir les tarifs", check: "Aller à Vonü Check", contact: "Nous contacter" },
+    actionLabels: { pricing: "Voir les tarifs", check: "Aller à Vonü Check", privacy: "Voir la confidentialité", contact: "Nous contacter" },
     options: {
       how: { title: "Comment utiliser Vonü", description: "Nous vous indiquons quel onglet utiliser." },
       buy: { title: "Acheter plus d’analyses", description: "Packs, tarifs et analyses supplémentaires." },
@@ -139,7 +139,7 @@ const COPY: Record<SupportedLocale, AssistantCopy> = {
     close: "Hilfe schließen",
 
     thinking: "Einen Moment…",
-    actionLabels: { pricing: "Preise ansehen", check: "Zu Vonü Check", contact: "Kontakt" },
+    actionLabels: { pricing: "Preise ansehen", check: "Zu Vonü Check", privacy: "Datenschutz ansehen", contact: "Kontakt" },
     options: {
       how: { title: "Vonü verwenden", description: "Wir zeigen dir, welchen Tab du nutzen solltest." },
       buy: { title: "Mehr Analysen kaufen", description: "Pakete, Preise und zusätzliche Analysen." },
@@ -172,7 +172,7 @@ const COPY: Record<SupportedLocale, AssistantCopy> = {
     close: "إغلاق المساعدة",
 
     thinking: "لحظة…",
-    actionLabels: { pricing: "عرض الأسعار", check: "الانتقال إلى Vonü Check", contact: "تواصل معنا" },
+    actionLabels: { pricing: "عرض الأسعار", check: "الانتقال إلى Vonü Check", privacy: "عرض الخصوصية", contact: "تواصل معنا" },
     options: {
       how: { title: "كيفية استخدام Vonü", description: "نوضح لك أي تبويب تستخدمه." },
       buy: { title: "شراء تحليلات إضافية", description: "الحزم والأسعار وإضافة تحليلات جديدة." },
@@ -231,9 +231,9 @@ function MailIcon() {
 
 function SendIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
-      <path d="M22 2 15 22l-4-9-9-4 20-7Z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
-      <path d="M22 2 11 13" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+    <svg viewBox="0 0 24 24" className="h-[19px] w-[19px]" fill="none" aria-hidden="true">
+      <path d="M12 19V5" stroke="currentColor" strokeWidth="2.15" strokeLinecap="round" />
+      <path d="m6.5 10.5 5.5-5.5 5.5 5.5" stroke="currentColor" strokeWidth="2.15" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -248,7 +248,6 @@ function TopicIcon({ topic }: { topic: Exclude<Topic, "unknown"> }) {
 
 export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale }) {
   const [open, setOpen] = useState(false);
-  const [topic, setTopic] = useState<Topic | null>(null);
   const [value, setValue] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isThinking, setIsThinking] = useState(false);
@@ -329,6 +328,42 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
     };
   }, [open]);
 
+  function quickPromptAction(item: Exclude<Topic, "unknown">): HelpAction {
+    if (item === "buy") return "pricing";
+    if (item === "privacy") return "privacy";
+    if (item === "contact" || item === "scam") return "contact";
+    return "check";
+  }
+
+  function handleQuickPrompt(item: Exclude<Topic, "unknown">) {
+    if (isThinking) return;
+
+    const option = copy.options[item];
+    const reply = copy.replies[item];
+    const userId = ++messageId.current;
+    const assistantId = ++messageId.current;
+    const details = item === "how" ? `\n\n${copy.howSteps.join("\n")}` : "";
+
+    setChatMessages((current) => [
+      ...current,
+      { id: userId, role: "user", text: option.title },
+      {
+        id: assistantId,
+        role: "assistant",
+        text: `${reply.body}${details}`,
+        action: quickPromptAction(item),
+      },
+    ]);
+
+    inputRef.current?.blur();
+    setInputFocused(false);
+
+    window.setTimeout(() => {
+      const main = mainRef.current;
+      if (main) main.scrollTo({ top: main.scrollHeight, behavior: "smooth" });
+    }, 100);
+  }
+
   async function submitMessage() {
     const trimmed = value.trim();
     if (!trimmed || isThinking) return;
@@ -345,7 +380,6 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
     }));
 
     setChatMessages((current) => [...current, userMessage]);
-    setTopic(null);
     setValue("");
     setIsThinking(true);
     setInputFocused(false);
@@ -374,7 +408,7 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
           ? data.text.trim()
           : copy.replies.unknown.body;
       const action: HelpAction =
-        data?.action === "pricing" || data?.action === "check" || data?.action === "contact"
+        data?.action === "pricing" || data?.action === "check" || data?.action === "privacy" || data?.action === "contact"
           ? data.action
           : "none";
 
@@ -406,19 +440,10 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
     }
   }
 
-  const selected = topic ? copy.replies[topic] : null;
-  const ctaHref =
-    topic === "buy"
-      ? localizedPublicPath(locale, "precios")
-      : topic === "privacy"
-        ? legalPath(locale, "privacy")
-        : topic === "contact" || topic === "scam" || topic === "unknown"
-          ? localizedPublicPath(locale, "contacto")
-          : null;
-
   function actionHref(action: HelpAction) {
     if (action === "pricing") return localizedPublicPath(locale, "precios");
     if (action === "check") return checkPath(locale);
+    if (action === "privacy") return legalPath(locale, "privacy");
     if (action === "contact") return localizedPublicPath(locale, "contacto");
     return null;
   }
@@ -482,13 +507,9 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
                       <button
                         key={item}
                         type="button"
-                        onClick={() => setTopic(item)}
-                        className={[
-                          "flex w-full items-center gap-4 rounded-[22px] border px-4 py-3.5 text-start transition active:scale-[.995]",
-                          topic === item
-                            ? "border-[#7bb7ff]/60 bg-[#10284f]"
-                            : "border-[#7bb7ff]/25 bg-[#0a1b38] hover:border-[#7bb7ff]/45 hover:bg-[#0d2348]",
-                        ].join(" ")}
+                        onClick={() => handleQuickPrompt(item)}
+                        disabled={isThinking}
+                        className="flex w-full items-center gap-4 rounded-[22px] border border-[#7bb7ff]/25 bg-[#0a1b38] px-4 py-3.5 text-start transition hover:border-[#7bb7ff]/45 hover:bg-[#0d2348] active:scale-[.995] disabled:cursor-default disabled:opacity-60"
                       >
                         <span className="grid h-11 w-11 shrink-0 place-items-center text-[#69a9ff]"><TopicIcon topic={item} /></span>
                         <span className="min-w-0 flex-1">
@@ -500,28 +521,6 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
                     );
                   })}
                 </div>
-
-                {selected ? (
-                  <section className="mt-5 rounded-[24px] border border-[#7bb7ff]/25 bg-[#0c1e3e] px-5 py-5">
-                    <h3 className="text-[18px] font-semibold text-white">{selected.title}</h3>
-                    <p className="mt-2 text-[14px] leading-6 text-slate-300">{selected.body}</p>
-                    {topic === "how" ? (
-                      <div className="mt-3 grid gap-2">
-                        {copy.howSteps.map((step) => (
-                          <div key={step} className="rounded-xl bg-white/[0.035] px-3 py-2 text-[13px] leading-5 text-slate-400">{step}</div>
-                        ))}
-                      </div>
-                    ) : null}
-                    {ctaHref && selected.cta ? (
-                      <a
-                        href={ctaHref}
-                        className="mt-4 inline-flex min-h-10 items-center justify-center rounded-xl bg-[#7bb7ff] px-4 text-[13px] font-bold text-[#07142f] transition hover:bg-[#9bc8ff]"
-                      >
-                        {selected.cta}
-                      </a>
-                    ) : null}
-                  </section>
-                ) : null}
 
                 {chatMessages.length || isThinking ? (
                   <div className="mt-5 grid gap-3">
@@ -609,9 +608,12 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
                 <button
                   type="button"
                   onClick={submitMessage}
-                  disabled={isThinking}
+                  disabled={isThinking || !value.trim()}
                   className={[
-                    "grid shrink-0 place-items-center rounded-full bg-[#7bb7ff] text-[#07142f] transition hover:bg-[#9bc8ff] active:scale-95 disabled:cursor-default disabled:opacity-60",
+                    "grid shrink-0 place-items-center rounded-full border transition-all duration-200 active:scale-95",
+                    value.trim() && !isThinking
+                      ? "border-[#7bb7ff] bg-[#7bb7ff] text-[#07142f] shadow-[0_0_18px_rgba(123,183,255,.28)] hover:bg-[#92c4ff]"
+                      : "border-white/[0.08] bg-[#182033] text-slate-500",
                     compactComposer ? "h-9 w-9" : "h-11 w-11",
                   ].join(" ")}
                   aria-label={copy.send}
