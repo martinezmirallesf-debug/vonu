@@ -573,7 +573,7 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
                   : "bg-[#071126] pb-[max(14px,env(safe-area-inset-bottom))] pt-3",
               ].join(" ")}
             >
-              <div className="mx-auto flex w-full max-w-[760px] items-center gap-2 rounded-[22px] border border-[#7bb7ff]/25 bg-[#091a35] p-2 shadow-[0_-14px_40px_rgba(4,10,24,.34)]">
+              <div className="mx-auto flex w-full max-w-[760px] items-center gap-2 rounded-[22px] border border-[#7bb7ff]/35 bg-[#06101f] p-2 shadow-[0_-14px_40px_rgba(4,10,24,.34),inset_0_0_0_1px_rgba(123,183,255,.025)]">
                 <textarea
                   ref={inputRef}
                   rows={1}
