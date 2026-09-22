@@ -530,16 +530,49 @@ export async function POST(req: NextRequest) {
                     ? "Das Foto wurde verarbeitet, aber ein einzelnes Bild bietet nicht genügend Kontext, um ein Profil oder eine Identität zu verifizieren."
                     : "تمت معالجة الصورة، لكن الصورة المنفردة لا توفر سياقًا كافيًا للتحقق من ملف شخصي أو هوية.";
 
+          const fallbackSignal =
+            locale === "es"
+              ? {
+                  title: "Contexto insuficiente",
+                  detail: "Una foto aislada puede pertenecer a un perfil social, pero no permite verificar por sí sola si la identidad es auténtica.",
+                }
+              : locale === "en"
+                ? {
+                    title: "Not enough context",
+                    detail: "A standalone photo may belong to a social profile, but it cannot verify by itself whether the identity is authentic.",
+                  }
+                : locale === "fr"
+                  ? {
+                      title: "Contexte insuffisant",
+                      detail: "Une photo isolée peut provenir d’un profil social, mais elle ne permet pas à elle seule de vérifier si l’identité est authentique.",
+                    }
+                  : locale === "de"
+                    ? {
+                        title: "Nicht genügend Kontext",
+                        detail: "Ein einzelnes Foto kann zu einem Social-Media-Profil gehören, kann aber allein nicht bestätigen, ob die Identität echt ist.",
+                      }
+                    : {
+                        title: "السياق غير كافٍ",
+                        detail: "قد تكون الصورة المنفردة جزءًا من ملف اجتماعي، لكنها لا تكفي وحدها للتحقق من أن الهوية حقيقية.",
+                      };
+
           parsed = {
             kind: "social_profile",
             risk: { score: 0, confidence: "limited" },
             summary: fallbackSummary,
             visibleText: "",
-            signals: [],
+            signals: [{
+              id: "standalone_photo_context",
+              tone: "neutral",
+              title: fallbackSignal.title,
+              detail: fallbackSignal.detail,
+              weight: 0,
+            }],
             atlas: { evidence: [] },
             extracted: { urls: [], phones: [], emails: [], brands: [] },
             recommendedActions: [],
             limitations: [fallbackSummary],
+            safeFallback: true,
           };
         }
       }
@@ -644,9 +677,9 @@ export async function POST(req: NextRequest) {
       locale,
       kind,
       risk: {
-        level: riskLevelFromScore(finalScore),
-        band: riskBandFromScore(finalScore),
-        score: finalScore,
+        level: parsed?.safeFallback === true ? "unknown" : riskLevelFromScore(finalScore),
+        band: parsed?.safeFallback === true ? "unknown" : riskBandFromScore(finalScore),
+        score: parsed?.safeFallback === true ? 0 : finalScore,
         confidence,
       },
       summary: safeString(parsed?.summary, 700),
