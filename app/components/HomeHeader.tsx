@@ -50,11 +50,17 @@ const cookies: Record<SupportedLocale, string> = {
   ar: "ملفات تعريف الارتباط",
 };
 
-export default function HomeHeader() {
+type HomeHeaderProps = {
+  overlayClose?: () => void;
+  solid?: boolean;
+};
+
+export default function HomeHeader({ overlayClose, solid = false }: HomeHeaderProps = {}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState<IndexedPublicSlug | null>(null);
   const [languageOpen, setLanguageOpen] = useState(false);
+  const overlayMode = typeof overlayClose === "function";
 
   const first = pathname.split("/").filter(Boolean)[0] || "";
   const locale: SupportedLocale = isGlobalLocale(first) ? first : "es";
@@ -101,7 +107,10 @@ export default function HomeHeader() {
     <>
       <header
       data-vonu-use-case={isCoreUseCase ? "core" : undefined}
-      className="sticky top-0 z-50 isolate overflow-visible bg-[#0b0e17]/95 text-white backdrop-blur-xl max-md:backdrop-blur-none"
+      className={[
+        "sticky top-0 z-50 isolate shrink-0 overflow-visible text-white",
+        solid ? "bg-[#0b0e17]" : "bg-[#0b0e17]/95 backdrop-blur-xl max-md:backdrop-blur-none",
+      ].join(" ")}
     >
       <div className={["relative z-[10020] mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8", isCheckHome ? "relative" : ""].join(" ")}>
         <a href={checkPath(locale)} className="flex items-center gap-2" aria-label="Vonü">
@@ -109,7 +118,7 @@ export default function HomeHeader() {
           <span className="text-[23px] font-semibold tracking-[-0.045em]">Vonü</span>
         </a>
 
-        <nav className={["hidden items-center gap-7 text-[14px] font-medium text-slate-300 md:flex", isCheckHome ? "md:absolute md:left-1/2 md:-translate-x-1/2" : ""].join(" ")}>
+        <nav className={[overlayMode ? "hidden" : "hidden items-center gap-7 text-[14px] font-medium text-slate-300 md:flex", isCheckHome ? "md:absolute md:left-1/2 md:-translate-x-1/2" : ""].join(" ")}>
           {mainLinks.map((item) =>
             item.menuSlugs ? (
               <div key={item.slug} className="group relative py-5">
@@ -139,7 +148,7 @@ export default function HomeHeader() {
           )}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className={["hidden items-center gap-2 md:flex", overlayMode ? "!hidden" : ""].join(" ")}>
           <div className="group relative">
             <button
               type="button"
@@ -173,6 +182,19 @@ export default function HomeHeader() {
           )}
         </div>
 
+        {overlayMode ? (
+          <button
+            type="button"
+            onClick={overlayClose}
+            className="relative z-[10040] grid h-12 w-12 min-w-12 touch-manipulation place-items-center border-0 bg-transparent p-0 text-[#8ec2ff] transition hover:text-white active:scale-95"
+            aria-label="Close"
+            title="Close"
+          >
+            <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" aria-hidden="true">
+              <path d="M5 5l14 14M19 5 5 19" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
+        ) : (
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
@@ -185,6 +207,7 @@ export default function HomeHeader() {
             <span className={["absolute top-[17px] h-[2px] rounded-full bg-emerald-300 transition-transform duration-300 ease-out", open ? "left-[2px] w-[28px] -translate-y-[5px] -rotate-45" : "right-0 w-[22px] translate-y-0 rotate-0"].join(" ")} />
           </span>
         </button>
+        )}
       </div>
 
       <div

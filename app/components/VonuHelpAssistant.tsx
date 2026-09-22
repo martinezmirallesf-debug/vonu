@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import HomeHeader from "@/app/components/HomeHeader";
+import VonuMark from "@/app/components/VonuMark";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 import { localizedPublicPath } from "@/lib/vonu-global/routes";
 import { legalPath } from "@/lib/vonu-legal/routes";
@@ -201,20 +203,6 @@ function resolveTopic(value: string): Topic {
   return "unknown";
 }
 
-function VonuMark({ className = "h-8 w-8" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 40 40" className={className} fill="none" aria-hidden="true">
-      <g fill="#7bb7ff">
-        <circle cx="24.6" cy="8.7" r="7.2" />
-        <circle cx="8.6" cy="20.1" r="7.2" />
-        <circle cx="25.1" cy="31.1" r="7.2" />
-        <circle cx="18.7" cy="20.1" r="5.9" />
-        <path d="M12.8 16.3 19.7 10.9 24.8 15.4 20.8 20.1 25.4 25.5 20.7 30.1 14.2 23.8Z" />
-      </g>
-    </svg>
-  );
-}
-
 function ChatGlyph({ className = "h-14 w-14" }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" className={className} fill="none" aria-hidden="true">
@@ -247,6 +235,15 @@ function MailIcon() {
   return <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" strokeWidth="1.9" /><path d="m4.5 7 7.5 6 7.5-6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
+function SendIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[19px] w-[19px]" fill="none" aria-hidden="true">
+      <path d="M5 12h13" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
+      <path d="m13.5 6.5 5.5 5.5-5.5 5.5" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function TopicIcon({ topic }: { topic: Exclude<Topic, "unknown"> }) {
   if (topic === "how") return <SearchIcon />;
   if (topic === "buy") return <CartIcon />;
@@ -264,14 +261,20 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
 
   useEffect(() => {
     if (!open) return;
-    const previousOverflow = document.body.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousBodyOverscroll = document.body.style.overscrollBehavior;
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "none";
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.overscrollBehavior = previousBodyOverscroll;
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
@@ -311,7 +314,7 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
       {open ? (
         <div
           dir={isRtl ? "rtl" : "ltr"}
-          className="fixed inset-0 z-[2147483000] h-dvh overflow-y-auto bg-[#071126] text-white"
+          className="fixed inset-0 z-[2147483000] flex h-dvh max-h-dvh w-screen flex-col overflow-hidden overscroll-none bg-[#071126] text-white"
           style={{
             backgroundImage:
               "radial-gradient(circle at 50% 22%, rgba(59,130,246,.12), transparent 30%), linear-gradient(180deg,#061027 0%,#07162f 100%)",
@@ -320,115 +323,105 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
           aria-modal="true"
           aria-label={copy.title}
         >
-          <div className="mx-auto flex min-h-dvh w-full max-w-[860px] flex-col px-5 pb-[max(18px,env(safe-area-inset-bottom))] pt-[max(18px,env(safe-area-inset-top))] sm:px-8">
-            <header className="flex shrink-0 items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <VonuMark className="h-9 w-9" />
-                <span className="text-[26px] font-semibold tracking-[-0.045em]">Vonü</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="grid h-12 w-12 place-items-center text-[#8ec2ff] transition hover:text-white active:scale-95"
-                aria-label={copy.close}
-                title={copy.close}
-              >
-                <svg viewBox="0 0 24 24" className="h-9 w-9" fill="none" aria-hidden="true">
-                  <path d="M5 5l14 14M19 5 5 19" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
-              </button>
-            </header>
+          <HomeHeader overlayClose={() => setOpen(false)} solid />
 
-            <main className="mx-auto flex w-full max-w-[760px] flex-1 flex-col pt-7 sm:pt-10">
-              <div className="text-center">
-                <h2 className="text-[38px] font-bold tracking-[-0.055em] sm:text-[46px]">
-                  <span className="text-white">{copy.title.split(" ")[0]} </span>
-                  <span className="text-[#69a9ff]">{copy.title.split(" ").slice(1).join(" ")}</span>
-                </h2>
-                <p className="mt-1 text-[22px] font-semibold text-slate-400 sm:text-[26px]">{copy.subtitle}</p>
-              </div>
-
-              <div className="mt-7 flex items-center gap-3">
-                <div className="hidden h-14 w-14 shrink-0 place-items-center rounded-full bg-[#0b234a] text-[#7bb7ff] ring-1 ring-[#7bb7ff]/25 sm:grid">
-                  <VonuMark className="h-8 w-8" />
+          <div className="relative min-h-0 flex-1 overflow-hidden">
+            <main className="absolute inset-0 overflow-y-auto overscroll-contain px-5 pb-[118px] pt-7 sm:px-8 sm:pb-[126px] sm:pt-10">
+              <div className="mx-auto flex w-full max-w-[760px] flex-col">
+                <div className="text-center">
+                  <h2 className="text-[38px] font-bold tracking-[-0.055em] sm:text-[46px]">
+                    <span className="text-white">{copy.title.split(" ")[0]} </span>
+                    <span className="text-[#69a9ff]">{copy.title.split(" ").slice(1).join(" ")}</span>
+                  </h2>
+                  <p className="mt-1 text-[22px] font-semibold text-slate-400 sm:text-[26px]">{copy.subtitle}</p>
                 </div>
-                <div className="w-full rounded-[24px] border border-[#7bb7ff]/20 bg-[#0a1a36]/88 px-5 py-4 shadow-[0_18px_60px_rgba(0,0,0,.18)]">
-                  <p className="text-[18px] font-medium text-slate-100">{copy.intro}</p>
-                  <p className="mt-1 text-[15px] leading-6 text-slate-400">{copy.question}</p>
+
+                <div className="mt-7 flex items-center gap-3">
+                  <div className="hidden h-14 w-14 shrink-0 place-items-center rounded-full bg-[#0b234a] text-[#7bb7ff] ring-1 ring-[#7bb7ff]/25 sm:grid">
+                    <VonuMark className="h-8 w-8" />
+                  </div>
+                  <div className="w-full rounded-[24px] border border-[#7bb7ff]/20 bg-[#0a1a36] px-5 py-4 shadow-[0_18px_60px_rgba(0,0,0,.18)]">
+                    <p className="text-[18px] font-medium text-slate-100">{copy.intro}</p>
+                    <p className="mt-1 text-[15px] leading-6 text-slate-400">{copy.question}</p>
+                  </div>
                 </div>
+
+                <div className="mt-5 grid gap-2.5">
+                  {topics.map((item) => {
+                    const option = copy.options[item];
+                    return (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => setTopic(item)}
+                        className={[
+                          "flex w-full items-center gap-4 rounded-[22px] border px-4 py-3.5 text-start transition active:scale-[.995]",
+                          topic === item
+                            ? "border-[#7bb7ff]/60 bg-[#10284f]"
+                            : "border-[#7bb7ff]/25 bg-[#0a1b38] hover:border-[#7bb7ff]/45 hover:bg-[#0d2348]",
+                        ].join(" ")}
+                      >
+                        <span className="grid h-11 w-11 shrink-0 place-items-center text-[#69a9ff]"><TopicIcon topic={item} /></span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[16px] font-semibold text-white sm:text-[17px]">{option.title}</span>
+                          <span className="mt-0.5 block text-[13px] leading-5 text-slate-400 sm:text-[14px]">{option.description}</span>
+                        </span>
+                        <span className="text-[34px] font-light leading-none text-[#69a9ff]">{isRtl ? "‹" : "›"}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {selected ? (
+                  <section className="mt-5 rounded-[24px] border border-[#7bb7ff]/25 bg-[#0c1e3e] px-5 py-5">
+                    <h3 className="text-[18px] font-semibold text-white">{selected.title}</h3>
+                    <p className="mt-2 text-[14px] leading-6 text-slate-300">{selected.body}</p>
+                    {topic === "how" ? (
+                      <div className="mt-3 grid gap-2">
+                        {copy.howSteps.map((step) => (
+                          <div key={step} className="rounded-xl bg-white/[0.035] px-3 py-2 text-[13px] leading-5 text-slate-400">{step}</div>
+                        ))}
+                      </div>
+                    ) : null}
+                    {ctaHref && selected.cta ? (
+                      <a
+                        href={ctaHref}
+                        className="mt-4 inline-flex min-h-10 items-center justify-center rounded-xl bg-[#7bb7ff] px-4 text-[13px] font-bold text-[#07142f] transition hover:bg-[#9bc8ff]"
+                      >
+                        {selected.cta}
+                      </a>
+                    ) : null}
+                  </section>
+                ) : null}
+
+                <p className="mt-5 px-2 text-center text-[12px] leading-5 text-slate-500">{copy.notAnalysis}</p>
               </div>
-
-              <div className="mt-5 grid gap-2.5">
-                {topics.map((item) => {
-                  const option = copy.options[item];
-                  return (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => setTopic(item)}
-                      className={[
-                        "flex w-full items-center gap-4 rounded-[22px] border px-4 py-3.5 text-start transition active:scale-[.995]",
-                        topic === item
-                          ? "border-[#7bb7ff]/60 bg-[#10284f]"
-                          : "border-[#7bb7ff]/25 bg-[#0a1b38]/72 hover:border-[#7bb7ff]/45 hover:bg-[#0d2348]/80",
-                      ].join(" ")}
-                    >
-                      <span className="grid h-11 w-11 shrink-0 place-items-center text-[#69a9ff]"><TopicIcon topic={item} /></span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[16px] font-semibold text-white sm:text-[17px]">{option.title}</span>
-                        <span className="mt-0.5 block text-[13px] leading-5 text-slate-400 sm:text-[14px]">{option.description}</span>
-                      </span>
-                      <span className="text-[34px] font-light leading-none text-[#69a9ff]">{isRtl ? "‹" : "›"}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {selected ? (
-                <section className="mt-5 rounded-[24px] border border-[#7bb7ff]/25 bg-[#0c1e3e]/88 px-5 py-5">
-                  <h3 className="text-[18px] font-semibold text-white">{selected.title}</h3>
-                  <p className="mt-2 text-[14px] leading-6 text-slate-300">{selected.body}</p>
-                  {topic === "how" ? (
-                    <div className="mt-3 grid gap-2">
-                      {copy.howSteps.map((step) => (
-                        <div key={step} className="rounded-xl bg-white/[0.035] px-3 py-2 text-[13px] leading-5 text-slate-400">{step}</div>
-                      ))}
-                    </div>
-                  ) : null}
-                  {ctaHref && selected.cta ? (
-                    <a
-                      href={ctaHref}
-                      className="mt-4 inline-flex min-h-10 items-center justify-center rounded-xl bg-[#7bb7ff] px-4 text-[13px] font-bold text-[#07142f] transition hover:bg-[#9bc8ff]"
-                    >
-                      {selected.cta}
-                    </a>
-                  ) : null}
-                </section>
-              ) : null}
-
-              <p className="mt-5 px-2 text-center text-[12px] leading-5 text-slate-500">{copy.notAnalysis}</p>
             </main>
 
-            <form onSubmit={submit} className="sticky bottom-0 mt-5 flex shrink-0 items-center gap-2 rounded-[22px] border border-[#7bb7ff]/25 bg-[#091a35]/95 p-2 shadow-[0_-14px_40px_rgba(4,10,24,.34)] backdrop-blur-xl">
-              <input
-                value={value}
-                onChange={(event) => setValue(event.target.value)}
-                className="min-w-0 flex-1 bg-transparent px-3 py-3 text-[15px] text-white outline-none placeholder:text-slate-600"
-                placeholder={copy.input}
-                aria-label={copy.input}
-              />
-              <button
-                type="submit"
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#7bb7ff] text-[#07142f] transition hover:bg-[#9bc8ff] active:scale-95"
-                aria-label={copy.send}
-                title={copy.send}
+            <div className="absolute inset-x-0 bottom-0 z-20 bg-[#071126] px-5 pb-[max(14px,env(safe-area-inset-bottom))] pt-3 sm:px-8">
+              <form
+                onSubmit={submit}
+                className="mx-auto flex w-full max-w-[760px] items-center gap-2 rounded-[22px] border border-[#7bb7ff]/25 bg-[#091a35] p-2 shadow-[0_-14px_40px_rgba(4,10,24,.34)]"
               >
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
-                  <path d="m3 11 18-8-7.5 18-2-7.5L3 11Z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
-                  <path d="m11.5 13.5 4-4" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-                </svg>
-              </button>
-            </form>
+                <input
+                  value={value}
+                  onChange={(event) => setValue(event.target.value)}
+                  className="min-w-0 flex-1 bg-transparent px-3 py-3 text-[15px] text-white outline-none placeholder:text-slate-600"
+                  placeholder={copy.input}
+                  aria-label={copy.input}
+                  autoComplete="off"
+                  enterKeyHint="send"
+                />
+                <button
+                  type="submit"
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#7bb7ff] text-[#07142f] transition hover:bg-[#9bc8ff] active:scale-95"
+                  aria-label={copy.send}
+                  title={copy.send}
+                >
+                  <SendIcon />
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       ) : null}
