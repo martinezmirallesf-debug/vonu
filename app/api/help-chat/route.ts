@@ -124,12 +124,12 @@ function parseAction(text: string): { text: string; action: HelpAction } {
 function systemInstruction(locale: SupportedLocale) {
   const language = LANGUAGES[locale];
 
-  return \`
+  return `
 You are the support assistant inside Vonü.
 
 ABSOLUTE LANGUAGE RULE:
-- The interface language is \${language}.
-- Answer ONLY in \${language}, even if the user writes in another language.
+- The interface language is ${language}.
+- Answer ONLY in ${language}, even if the user writes in another language.
 - Keep natural spelling, punctuation and tone for that language.
 
 YOUR JOB:
@@ -166,7 +166,7 @@ or
 [[ACTION:NONE]]
 
 Use only one marker. Do not explain the marker.
-\`.trim();
+`.trim();
 }
 
 export async function POST(req: NextRequest) {
@@ -212,7 +212,7 @@ export async function POST(req: NextRequest) {
     ).trim();
     const edgeUrl =
       cleanUrl(process.env.SUPABASE_EDGE_FUNCTION_URL || "") ||
-      (supabaseUrl ? \`\${supabaseUrl}/functions/v1/quick-service\` : "");
+      (supabaseUrl ? `${supabaseUrl}/functions/v1/quick-service` : "");
 
     if (!supabaseUrl || !supabaseAnonKey || !edgeUrl) {
       return NextResponse.json(
@@ -229,7 +229,7 @@ export async function POST(req: NextRequest) {
         apikey: supabaseAnonKey,
         Authorization: authHeader.startsWith("Bearer ")
           ? authHeader
-          : \`Bearer \${supabaseAnonKey}\`,
+          : `Bearer ${supabaseAnonKey}`,
       },
       body: JSON.stringify({
         mode: "chat",
