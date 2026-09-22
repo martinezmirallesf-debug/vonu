@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { FormEvent } from "react";
 import HomeHeader from "@/app/components/HomeHeader";
 import VonuMark from "@/app/components/VonuMark";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
@@ -238,8 +237,8 @@ function MailIcon() {
 function SendIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
-      <path d="m3 11 18-8-7.5 18-2-7.5L3 11Z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
-      <path d="m11.5 13.5 4-4" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <path d="M22 2 15 22l-4-9-9-4 20-7Z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
+      <path d="M22 2 11 13" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
     </svg>
   );
 }
@@ -256,6 +255,10 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
   const [open, setOpen] = useState(false);
   const [topic, setTopic] = useState<Topic | null>(null);
   const [value, setValue] = useState("");
+  const [chatMessages, setChatMessages] = useState<Array<
+    | { id: number; role: "user"; text: string }
+    | { id: number; role: "assistant"; topic: Topic }
+  >>([]);
   const [inputFocused, setInputFocused] = useState(false);
   const [viewport, setViewport] = useState({
     height: 0,
@@ -265,6 +268,9 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
     keyboardOpen: false,
   });
   const baselineViewportHeight = useRef(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const messageId = useRef(0);
   const copy = COPY[locale];
   const isRtl = locale === "ar";
 
@@ -330,12 +336,29 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
     };
   }, [open]);
 
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function submitMessage() {
     const trimmed = value.trim();
     if (!trimmed) return;
-    setTopic(resolveTopic(trimmed));
+
+    const resolved = resolveTopic(trimmed);
+    const userId = ++messageId.current;
+    const assistantId = ++messageId.current;
+
+    setChatMessages((current) => [
+      ...current,
+      { id: userId, role: "user", text: trimmed },
+      { id: assistantId, role: "assistant", topic: resolved },
+    ]);
+    setTopic(null);
     setValue("");
+    setInputFocused(false);
+    inputRef.current?.blur();
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+
+    window.setTimeout(() => {
+      const main = mainRef.current;
+      if (main) main.scrollTo({ top: main.scrollHeight, behavior: "smooth" });
+    }, 180);
   }
 
   const selected = topic ? copy.replies[topic] : null;
@@ -383,6 +406,7 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
 
           <div className="relative min-h-0 flex-1 overflow-hidden">
             <main
+              ref={mainRef}
               className={[
                 "absolute inset-0 overflow-y-auto overscroll-contain px-5 pt-4 sm:px-8 sm:pt-6",
                 compactComposer ? "pb-[76px] sm:pb-[82px]" : "pb-[118px] sm:pb-[126px]",
@@ -447,51 +471,113 @@ export default function VonuHelpAssistant({ locale }: { locale: SupportedLocale 
                   </section>
                 ) : null}
 
+                {chatMessages.length ? (
+                  <div className="mt-5 grid gap-3">
+                    {chatMessages.map((message) => {
+                      if (message.role === "user") {
+                        return (
+                          <div key={message.id} className="flex justify-end">
+                            <div className="max-w-[82%] rounded-[20px] rounded-br-md bg-[#7bb7ff] px-4 py-3 text-[14px] leading-5 text-[#07142f]">
+                              {message.text}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      const reply = copy.replies[message.topic];
+                      const messageCtaHref =
+                        message.topic === "buy"
+                          ? localizedPublicPath(locale, "precios")
+                          : message.topic === "privacy"
+                            ? legalPath(locale, "privacy")
+                            : message.topic === "contact" || message.topic === "scam" || message.topic === "unknown"
+                              ? localizedPublicPath(locale, "contacto")
+                              : null;
+
+                      return (
+                        <div key={message.id} className="flex justify-start">
+                          <div className="max-w-[92%] rounded-[20px] rounded-bl-md border border-[#7bb7ff]/20 bg-[#0c1e3e] px-4 py-3">
+                            <p className="text-[14px] font-semibold text-white">{reply.title}</p>
+                            <p className="mt-1 text-[14px] leading-6 text-slate-300">{reply.body}</p>
+                            {message.topic === "how" ? (
+                              <div className="mt-3 grid gap-2">
+                                {copy.howSteps.map((step) => (
+                                  <div key={step} className="rounded-xl bg-white/[0.035] px-3 py-2 text-[13px] leading-5 text-slate-400">{step}</div>
+                                ))}
+                              </div>
+                            ) : null}
+                            {messageCtaHref && reply.cta ? (
+                              <a
+                                href={messageCtaHref}
+                                className="mt-3 inline-flex min-h-9 items-center justify-center rounded-xl bg-[#7bb7ff] px-3 text-[12px] font-bold text-[#07142f] transition hover:bg-[#9bc8ff]"
+                              >
+                                {reply.cta}
+                              </a>
+                            ) : null}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
+
                 <p className="mt-5 px-2 text-center text-[12px] leading-5 text-slate-500">{copy.notAnalysis}</p>
               </div>
             </main>
 
             <div
               className={[
-                "absolute inset-x-0 bottom-0 z-20 bg-[#071126] sm:px-8",
+                "absolute inset-x-0 bottom-0 z-20 sm:px-8",
                 compactComposer
-                  ? "px-3 py-1.5"
-                  : "px-5 pb-[max(14px,env(safe-area-inset-bottom))] pt-3",
+                  ? "bg-transparent px-2 py-1"
+                  : "bg-[#071126] px-5 pb-[max(14px,env(safe-area-inset-bottom))] pt-3",
               ].join(" ")}
             >
-              <form
-                onSubmit={submit}
+              <div
                 className={[
                   "mx-auto flex w-full max-w-[760px] items-center gap-2 border border-[#7bb7ff]/25 bg-[#091a35] shadow-[0_-14px_40px_rgba(4,10,24,.34)]",
-                  compactComposer ? "rounded-[18px] p-1.5" : "rounded-[22px] p-2",
+                  compactComposer ? "rounded-[17px] p-1" : "rounded-[22px] p-2",
                 ].join(" ")}
               >
                 <input
+                  ref={inputRef}
                   value={value}
                   onChange={(event) => setValue(event.target.value)}
                   onFocus={() => setInputFocused(true)}
                   onBlur={() => setInputFocused(false)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      submitMessage();
+                    }
+                  }}
                   className={[
                     "min-w-0 flex-1 bg-transparent px-3 text-[15px] text-white outline-none placeholder:text-slate-600",
-                    compactComposer ? "py-2.5" : "py-3",
+                    compactComposer ? "py-2" : "py-3",
                   ].join(" ")}
                   placeholder={copy.input}
                   aria-label={copy.input}
+                  name="vonu-chat-message"
+                  inputMode="text"
                   autoComplete="off"
+                  autoCapitalize="sentences"
+                  autoCorrect="on"
+                  spellCheck
                   enterKeyHint="send"
                 />
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={submitMessage}
                   className={[
                     "grid shrink-0 place-items-center rounded-full bg-[#7bb7ff] text-[#07142f] transition hover:bg-[#9bc8ff] active:scale-95",
-                    compactComposer ? "h-10 w-10" : "h-11 w-11",
+                    compactComposer ? "h-9 w-9" : "h-11 w-11",
                   ].join(" ")}
                   aria-label={copy.send}
                   title={copy.send}
                 >
                   <SendIcon />
                 </button>
-              </form>
+              </div>
             </div>
           </div>
         </div>
