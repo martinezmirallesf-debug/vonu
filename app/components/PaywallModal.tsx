@@ -72,7 +72,7 @@ export default function PaywallModal({
           <div className="flex h-full flex-col">
             {/* HEADER */}
             <div className="flex items-center justify-between px-5 pt-4 pb-3 shrink-0">
-  <div className="flex items-center gap-2.5 min-w-0">
+  <div className="flex items-center gap-2 min-w-0">
   <img
     src="/logo/vonu-cube-black.png?v=4"
     alt="Vonü"
