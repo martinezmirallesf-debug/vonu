@@ -265,6 +265,260 @@ const groupCopy: Record<SupportedLocale, Record<IntentGroup, GroupCopy>> = {
   },
 };
 
+
+const intentOverrides: Partial<Record<SupportedLocale, Partial<Record<IntentSlug, GroupCopy>>>> = {
+  es: {
+    "revisar-contrato": {
+      signalsTitle: "Qué revisar en un contrato antes de firmar",
+      stepsTitle: "Una revisión útil empieza por el contrato y termina en la jurisdicción",
+      signals: [
+        "Partes y objeto: quién firma, en qué nombre y qué debe entregar o hacer cada parte.",
+        "Precio y pagos: importes, impuestos, anticipos, hitos, vencimientos y consecuencias del impago.",
+        "Duración y renovación: fecha de inicio, plazo, prórrogas automáticas y preavisos para evitar renovaciones no deseadas.",
+        "Terminación: cuándo puede salir cada parte, qué incumplimientos permiten resolver y qué obligaciones sobreviven al fin del contrato.",
+        "Penalizaciones y responsabilidad: límites de daños, indemnizaciones, garantías y cláusulas que trasladan un riesgo económico importante.",
+        "Datos, confidencialidad e propiedad intelectual cuando el contrato las regula: qué se puede usar, compartir, conservar o explotar.",
+        "Ley aplicable y jurisdicción: país, región, tribunales o arbitraje. El idioma del contrato no determina por sí solo qué ley se aplica.",
+      ],
+      steps: [
+        "Sube el PDF y deja que Vonü identifique tipo de contrato, partes, importes, fechas, obligaciones y cláusulas relevantes.",
+        "Confirma el país o región si lo sabes. Vonü lo usa solo como pista y exige evidencia del propio contrato para aplicar reglas jurídicas específicas.",
+        "Antes de firmar, aclara por escrito los puntos con impacto económico o jurídico y busca asesoramiento profesional si la consecuencia puede ser importante.",
+      ],
+      faqs: [
+        { q: "¿Vonü puede decirme si un contrato es legal?", a: "No debe dar un veredicto universal. Puede explicar el efecto de las cláusulas, detectar puntos de revisión y comparar con reglas oficiales verificadas cuando la jurisdicción está suficientemente acreditada." },
+        { q: "¿El idioma del contrato indica qué ley se aplica?", a: "No. Un contrato en español puede estar sujeto a otra ley y uno en inglés puede pertenecer a múltiples jurisdicciones. La ley aplicable debe salir del documento y del contexto jurídico, no del idioma." },
+        { q: "¿Qué cláusulas merecen más atención?", a: "Pagos, renovación automática, terminación, penalizaciones, responsabilidad, garantías, exclusividad, confidencialidad, propiedad intelectual y jurisdicción suelen tener consecuencias relevantes." },
+        { q: "¿Qué pasa si Vonü no tiene un perfil legal de ese país?", a: "Revisa estructura, obligaciones y efectos contractuales, pero evita afirmar que una cláusula es válida o inválida según un derecho nacional no verificado. Te indicará esa limitación." },
+      ],
+    },
+    "revisar-contrato-alquiler": {
+      signalsTitle: "Qué revisar en un contrato de alquiler antes de firmar",
+      stepsTitle: "Primero el inmueble y el tipo de alquiler; después, la ley aplicable",
+      signals: [
+        "Arrendador, arrendatario e inmueble: identidad, dirección, descripción y derecho de la otra parte para alquilar.",
+        "Renta y actualización: importe, fecha de pago, índice o mecanismo de revisión y condiciones de cualquier aumento.",
+        "Fianza y garantías: cantidad, garantías adicionales, devolución y reglas especiales que puedan depender del país o región.",
+        "Duración, prórroga y salida: inicio, plazo, renovación, desistimiento, preavisos y causas de terminación.",
+        "Gastos y suministros: comunidad, impuestos, suministros, seguros, honorarios y cualquier coste trasladado al inquilino.",
+        "Reparaciones y estado de la vivienda: mantenimiento, averías, inventario, obras y responsabilidades de cada parte.",
+        "Jurisdicción y tipo de arrendamiento: vivienda habitual, temporal, habitación u otro uso pueden tener reglas distintas incluso dentro del mismo país.",
+      ],
+      steps: [
+        "Sube el PDF y Vonü separará renta, fianza, fechas, gastos, reparaciones, salida y demás obligaciones.",
+        "Indica país o región solo como pista. Vonü debe confirmar la jurisdicción en el contrato antes de aplicar reglas legales específicas.",
+        "Si la normativa está cambiando o depende de una comunidad, ciudad o tipo de alquiler, comprueba la fuente oficial vigente antes de firmar.",
+      ],
+      faqs: [
+        { q: "¿La fianza máxima es igual en todos los países?", a: "No. Cambia por jurisdicción y a veces por tipo de alquiler. Vonü solo compara una cantidad con un límite legal cuando dispone de una fuente oficial verificada y el contrato encaja en su ámbito." },
+        { q: "¿Puede el propietario subir el alquiler como quiera?", a: "Depende del contrato, la fecha, el tipo de arrendamiento, la ubicación y la normativa vigente. Vonü revisa la cláusula y evita aplicar automáticamente reglas de otro país o región." },
+        { q: "¿Qué ocurre si la ley acaba de cambiar?", a: "Vonü utiliza perfiles jurídicos con fecha de revisión. Si una norma está pendiente, derogada o en transición, debe decirlo y remitir a la fuente oficial en vez de adivinar." },
+        { q: "¿Un contrato de temporada se revisa igual que una vivienda habitual?", a: "No necesariamente. El uso real, duración y jurisdicción pueden cambiar el régimen aplicable. Vonü debe identificar primero el tipo de alquiler y no asumirlo por el título del PDF." },
+      ],
+    },
+  },
+  en: {
+    "revisar-contrato": {
+      signalsTitle: "What to check in a contract before signing",
+      stepsTitle: "A useful review starts with the contract and ends with jurisdiction",
+      signals: [
+        "Parties and purpose: who is signing, in what capacity, and exactly what each side must deliver or do.",
+        "Price and payment: amounts, taxes, deposits, milestones, due dates and consequences of late or missed payment.",
+        "Term and renewal: start date, duration, automatic renewal and notice deadlines that could lock you in.",
+        "Termination: when each party may leave, which breaches trigger termination and which duties survive the end of the agreement.",
+        "Penalties and liability: damages caps, indemnities, warranties and clauses that transfer significant financial risk.",
+        "Data, confidentiality and intellectual property where relevant: what may be used, shared, retained or commercially exploited.",
+        "Governing law and forum: country, region, courts or arbitration. Contract language alone does not determine the applicable law.",
+      ],
+      steps: [
+        "Upload the PDF so Vonü can identify the contract type, parties, amounts, dates, duties and material clauses.",
+        "Add a country or region if you know it. Vonü treats it only as a hint and requires evidence from the contract before using country-specific rules.",
+        "Clarify material financial or legal points in writing before signing and seek professional advice where the downside is significant.",
+      ],
+      faqs: [
+        { q: "Can Vonü tell me whether a contract is legal?", a: "It should not give a universal legal verdict. It can explain clause effects, flag review points and compare against verified official rules when jurisdiction is sufficiently supported." },
+        { q: "Does the language of the contract determine the law?", a: "No. An English contract can be governed by many different legal systems. Governing law must come from the document and legal context, not the interface or document language." },
+        { q: "Which clauses deserve the most attention?", a: "Payment, automatic renewal, termination, penalties, liability, warranties, exclusivity, confidentiality, intellectual property and jurisdiction often carry the greatest consequences." },
+        { q: "What if Vonü has no legal profile for that country?", a: "It can still review structure, obligations and contractual effects, but it should not claim national-law validity or invalidity without a maintained verified profile." },
+      ],
+    },
+    "revisar-contrato-alquiler": {
+      signalsTitle: "What to check in a rental agreement before signing",
+      stepsTitle: "Identify the property and tenancy type first; then the law",
+      signals: [
+        "Landlord, tenant and property: identity, address, description and whether the other party appears entitled to let the property.",
+        "Rent and increases: amount, payment date, index or review mechanism and conditions for any increase.",
+        "Deposit and security: amount, additional guarantees, return conditions and jurisdiction-specific protection rules.",
+        "Duration, renewal and leaving: start date, term, periodic or fixed status, notice periods and termination grounds.",
+        "Fees, utilities and charges: service charges, taxes, utilities, insurance, agent fees and any other cost shifted to the tenant.",
+        "Repairs and condition: maintenance duties, defects, inventory, works and responsibility for damage.",
+        "Jurisdiction and tenancy type: main residence, temporary rental, room rental and other arrangements can follow different rules even within one country.",
+      ],
+      steps: [
+        "Upload the PDF and Vonü will separate rent, deposit, dates, charges, repairs, exit terms and other obligations.",
+        "Enter a country or region only as a hint. Vonü must confirm jurisdiction from the contract before applying specific legal rules.",
+        "If rules are changing or depend on a state, nation, city or tenancy type, verify the current official source before signing.",
+      ],
+      faqs: [
+        { q: "Is the maximum deposit the same everywhere?", a: "No. It varies by jurisdiction and sometimes by tenancy type. Vonü only applies a legal cap when a verified official source and the contract scope both support it." },
+        { q: "Can a landlord increase rent however they want?", a: "That depends on the agreement, tenancy type, date, location and current law. Vonü reviews the clause without importing rules from another country or region." },
+        { q: "What if rental law has just changed?", a: "Vonü uses legal profiles with review dates. Pending, repealed or transitional rules should be identified as such and checked against the current official source." },
+        { q: "Is a short-term or seasonal rental reviewed like a main home?", a: "Not necessarily. Actual use, duration and jurisdiction can change the regime. Vonü should identify the tenancy type rather than infer it from a filename." },
+      ],
+    },
+  },
+  fr: {
+    "revisar-contrato": {
+      signalsTitle: "Que vérifier dans un contrat avant de signer",
+      stepsTitle: "Une bonne analyse commence par le contrat et se termine par la juridiction",
+      signals: [
+        "Parties et objet : qui signe, à quel titre et ce que chaque partie doit précisément fournir ou faire.",
+        "Prix et paiement : montants, taxes, acomptes, échéances et conséquences d’un retard ou défaut de paiement.",
+        "Durée et renouvellement : prise d’effet, terme, renouvellement automatique et délais de préavis.",
+        "Résiliation : conditions de sortie, manquements permettant de mettre fin au contrat et obligations qui subsistent.",
+        "Pénalités et responsabilité : plafonds, indemnisations, garanties et transfert d’un risque financier important.",
+        "Données, confidentialité et propriété intellectuelle lorsque le contrat les prévoit.",
+        "Loi applicable et juridiction : pays, région, tribunaux ou arbitrage. La langue du contrat ne suffit jamais à déterminer le droit applicable.",
+      ],
+      steps: [
+        "Importez le PDF pour que Vonü identifie type de contrat, parties, montants, dates, obligations et clauses importantes.",
+        "Indiquez pays ou région si vous le connaissez : ce n’est qu’un indice et Vonü exige des éléments du contrat avant d’appliquer une règle nationale.",
+        "Faites clarifier par écrit tout point à fort impact financier ou juridique et sollicitez un professionnel lorsque l’enjeu le justifie.",
+      ],
+      faqs: [
+        { q: "Vonü peut-il dire qu’un contrat est légal ?", a: "Il ne doit pas rendre un verdict universel. Il peut expliquer l’effet des clauses, signaler les points sensibles et utiliser des règles officielles vérifiées lorsque la juridiction est suffisamment établie." },
+        { q: "La langue du contrat détermine-t-elle la loi applicable ?", a: "Non. Un contrat en français peut relever d’un autre droit. La loi applicable doit être déterminée à partir du document et du contexte juridique." },
+        { q: "Quelles clauses faut-il regarder en priorité ?", a: "Paiement, renouvellement automatique, résiliation, pénalités, responsabilité, garanties, exclusivité, confidentialité, propriété intellectuelle et juridiction." },
+        { q: "Que se passe-t-il si Vonü ne couvre pas ce pays ?", a: "Vonü peut analyser les obligations et effets du texte, mais évite d’affirmer qu’une clause est valide ou invalide selon un droit national non vérifié." },
+      ],
+    },
+    "revisar-contrato-alquiler": {
+      signalsTitle: "Que vérifier dans un bail avant de signer",
+      stepsTitle: "D’abord le logement et le type de location, ensuite la loi applicable",
+      signals: [
+        "Bailleur, locataire et logement : identité, adresse, description et qualité de la personne qui loue.",
+        "Loyer et révision : montant, date de paiement, indice ou mécanisme de révision et conditions d’augmentation.",
+        "Dépôt et garanties : montant, garanties supplémentaires, restitution et règles propres à la juridiction.",
+        "Durée, renouvellement et départ : prise d’effet, terme, reconduction, préavis et motifs de résiliation.",
+        "Charges et services : charges, taxes, énergie, assurance, honoraires et coûts transférés au locataire.",
+        "Réparations et état du logement : entretien, défauts, inventaire, travaux et responsabilités.",
+        "Juridiction et type de bail : résidence principale, meublé, location temporaire ou chambre peuvent relever de régimes différents.",
+      ],
+      steps: [
+        "Importez le PDF : Vonü sépare loyer, dépôt, dates, charges, réparations, départ et autres obligations.",
+        "Indiquez pays ou région uniquement comme indice. Vonü doit confirmer la juridiction dans le contrat avant d’appliquer des règles spécifiques.",
+        "Si la règle dépend d’une ville, zone ou catégorie de bail, vérifiez la source officielle actuelle avant de signer.",
+      ],
+      faqs: [
+        { q: "Le dépôt maximal est-il le même partout ?", a: "Non. Il dépend du pays et parfois du type de bail. Vonü n’applique un plafond que si une source officielle vérifiée et le champ du contrat le permettent." },
+        { q: "Le bailleur peut-il augmenter librement le loyer ?", a: "Cela dépend du bail, de sa date, du type de location, du lieu et du droit en vigueur. Vonü examine la clause sans importer une règle étrangère." },
+        { q: "Que faire si le droit locatif vient de changer ?", a: "Les profils juridiques de Vonü portent une date de révision. Une règle en attente, abrogée ou transitoire doit être signalée et vérifiée auprès de la source officielle." },
+        { q: "Une location temporaire suit-elle les mêmes règles qu’une résidence principale ?", a: "Pas nécessairement. L’usage réel, la durée et la juridiction peuvent changer le régime applicable." },
+      ],
+    },
+  },
+  de: {
+    "revisar-contrato": {
+      signalsTitle: "Was du in einem Vertrag vor der Unterschrift prüfen solltest",
+      stepsTitle: "Eine gute Prüfung beginnt beim Vertrag und endet bei der Rechtsordnung",
+      signals: [
+        "Parteien und Vertragszweck: Wer unterschreibt, in welcher Rolle und welche Leistung schuldet jede Seite?",
+        "Preis und Zahlung: Beträge, Steuern, Vorauszahlungen, Fälligkeiten und Folgen eines Zahlungsverzugs.",
+        "Laufzeit und Verlängerung: Beginn, Dauer, automatische Verlängerung und Kündigungsfristen.",
+        "Beendigung: Kündigungsrechte, Vertragsverletzungen und Pflichten, die nach Vertragsende fortbestehen.",
+        "Vertragsstrafen und Haftung: Haftungsgrenzen, Freistellungen, Garantien und erhebliche finanzielle Risiken.",
+        "Daten, Vertraulichkeit und geistiges Eigentum, soweit der Vertrag diese Bereiche regelt.",
+        "Anwendbares Recht und Gerichtsstand: Land, Region, Gericht oder Schiedsgericht. Die Vertragssprache bestimmt das Recht nicht.",
+      ],
+      steps: [
+        "PDF hochladen: Vonü erkennt Vertragsart, Parteien, Beträge, Daten, Pflichten und wichtige Klauseln.",
+        "Land oder Region nur als Hinweis angeben. Länderspezifische Regeln werden erst bei ausreichenden Belegen im Vertrag genutzt.",
+        "Wesentliche finanzielle oder rechtliche Punkte vor der Unterschrift schriftlich klären und bei hohem Risiko fachlichen Rat einholen.",
+      ],
+      faqs: [
+        { q: "Kann Vonü sagen, ob ein Vertrag rechtmäßig ist?", a: "Vonü sollte kein pauschales Rechtsurteil abgeben. Es kann Klauselwirkungen erklären, Prüfpunkte markieren und verifizierte Regeln nutzen, wenn die Rechtsordnung ausreichend belegt ist." },
+        { q: "Bestimmt die Vertragssprache das anwendbare Recht?", a: "Nein. Ein deutschsprachiger Vertrag kann anderem Recht unterliegen. Maßgeblich sind Vertragsinhalt und Rechtskontext." },
+        { q: "Welche Klauseln sind besonders wichtig?", a: "Zahlung, automatische Verlängerung, Kündigung, Vertragsstrafen, Haftung, Garantien, Exklusivität, Vertraulichkeit, geistiges Eigentum und Gerichtsstand." },
+        { q: "Was passiert ohne Vonü-Rechtsprofil für das Land?", a: "Struktur und Vertragswirkungen können geprüft werden, aber Vonü sollte ohne verifiziertes Profil keine landesspezifische Wirksamkeit behaupten." },
+      ],
+    },
+    "revisar-contrato-alquiler": {
+      signalsTitle: "Was du in einem Mietvertrag vor der Unterschrift prüfen solltest",
+      stepsTitle: "Zuerst Wohnung und Mietart, dann die anwendbare Rechtsordnung",
+      signals: [
+        "Vermieter, Mieter und Objekt: Identität, Anschrift, Beschreibung und Berechtigung zur Vermietung.",
+        "Miete und Erhöhungen: Betrag, Zahlungszeitpunkt, Index oder Erhöhungsmechanismus.",
+        "Kaution und Sicherheiten: Höhe, zusätzliche Sicherheiten, Rückzahlung und gesetzliche Grenzen.",
+        "Laufzeit, Verlängerung und Auszug: Beginn, Befristung, Kündigungsfristen und Beendigungsgründe.",
+        "Nebenkosten und Gebühren: Betriebskosten, Steuern, Energie, Versicherung, Vermittlung und sonstige Kosten.",
+        "Reparaturen und Zustand: Instandhaltung, Mängel, Inventar, Arbeiten und Schadensverantwortung.",
+        "Rechtsordnung und Mietart: Hauptwohnung, befristete Vermietung, Zimmer oder andere Modelle können unterschiedlichen Regeln folgen.",
+      ],
+      steps: [
+        "PDF hochladen und Miete, Kaution, Daten, Nebenkosten, Reparaturen, Kündigung und weitere Pflichten trennen lassen.",
+        "Land oder Region nur als Hinweis eingeben. Vonü bestätigt die Rechtsordnung anhand des Vertrags, bevor spezielle Regeln angewendet werden.",
+        "Bei ortsabhängigen oder neuen Regeln immer die aktuelle offizielle Quelle vor der Unterschrift prüfen.",
+      ],
+      faqs: [
+        { q: "Ist die maximale Kaution überall gleich?", a: "Nein. Sie hängt von Rechtsordnung und teils Mietart ab. Vonü wendet einen Grenzwert nur mit verifizierter offizieller Quelle und passendem Anwendungsbereich an." },
+        { q: "Kann der Vermieter die Miete beliebig erhöhen?", a: "Das hängt von Vertrag, Mietart, Datum, Ort und geltendem Recht ab. Vonü prüft die Klausel, ohne Regeln aus einem anderen Land zu übertragen." },
+        { q: "Was passiert bei einer gerade geänderten Mietrechtslage?", a: "Vonü-Rechtsprofile haben ein Prüfdatum. Anhängige, aufgehobene oder Übergangsregeln werden nicht als sichere aktuelle Rechtslage ausgegeben." },
+        { q: "Gilt für eine befristete Vermietung dasselbe wie für die Hauptwohnung?", a: "Nicht zwingend. Tatsächliche Nutzung, Dauer und Rechtsordnung können das anwendbare Regime verändern." },
+      ],
+    },
+  },
+  ar: {
+    "revisar-contrato": {
+      signalsTitle: "ما الذي يجب مراجعته في العقد قبل التوقيع",
+      stepsTitle: "تبدأ المراجعة الجيدة بالعقد وتنتهي بالولاية القضائية",
+      signals: [
+        "الأطراف وموضوع العقد: من يوقّع وبأي صفة وما الذي يلتزم كل طرف بتقديمه أو تنفيذه.",
+        "السعر والدفع: المبالغ والضرائب والدفعات المقدمة والمواعيد ونتائج التأخر أو عدم الدفع.",
+        "المدة والتجديد: تاريخ البداية والمدة والتجديد التلقائي ومهل الإخطار.",
+        "الإنهاء: متى يستطيع كل طرف الخروج وما حالات الإخلال التي تسمح بإنهاء العقد.",
+        "الجزاءات والمسؤولية: حدود التعويض والضمانات ونقل المخاطر المالية بين الأطراف.",
+        "البيانات والسرية والملكية الفكرية عندما ينظمها العقد.",
+        "القانون الواجب التطبيق والاختصاص: البلد أو الإقليم والمحاكم أو التحكيم. لغة العقد وحدها لا تحدد القانون.",
+      ],
+      steps: [
+        "ارفع ملف PDF ليحدد Vonü نوع العقد والأطراف والمبالغ والتواريخ والالتزامات والبنود المهمة.",
+        "أدخل البلد أو الإقليم فقط كمعلومة مساعدة. لا يطبق Vonü قواعد خاصة ببلد إلا إذا دعم العقد نفسه الولاية القضائية.",
+        "اطلب توضيح النقاط ذات الأثر المالي أو القانوني كتابةً واستعن بمختص عندما تكون العواقب كبيرة.",
+      ],
+      faqs: [
+        { q: "هل يستطيع Vonü أن يقول إن العقد قانوني؟", a: "لا ينبغي أن يعطي حكمًا قانونيًا شاملًا. يمكنه شرح أثر البنود وتحديد نقاط المراجعة واستخدام قواعد رسمية موثَّقة عندما تكون الولاية القضائية واضحة بما يكفي." },
+        { q: "هل تحدد لغة العقد القانون الواجب التطبيق؟", a: "لا. العقد العربي قد يخضع لقوانين بلدان مختلفة. يجب تحديد القانون من العقد والسياق القانوني لا من اللغة." },
+        { q: "ما البنود التي تستحق اهتمامًا أكبر؟", a: "الدفع والتجديد التلقائي والإنهاء والجزاءات والمسؤولية والضمانات والحصرية والسرية والملكية الفكرية والاختصاص." },
+        { q: "ماذا لو لم يكن لدى Vonü ملف قانوني لذلك البلد؟", a: "يمكنه مراجعة الالتزامات وآثار البنود، لكنه لا يدّعي صلاحية أو بطلان البند وفق قانون وطني غير موثَّق." },
+      ],
+    },
+    "revisar-contrato-alquiler": {
+      signalsTitle: "ما الذي يجب مراجعته في عقد الإيجار قبل التوقيع",
+      stepsTitle: "حدد العقار ونوع الإيجار أولًا ثم القانون الواجب التطبيق",
+      signals: [
+        "المؤجر والمستأجر والعقار: الهوية والعنوان ووصف العقار وصفة الطرف الذي يؤجره.",
+        "الإيجار والزيادة: المبلغ وموعد الدفع والمؤشر أو آلية مراجعة الإيجار.",
+        "التأمين والضمانات: المبلغ والضمانات الإضافية وشروط الإرجاع والقواعد الخاصة بالولاية القضائية.",
+        "المدة والتجديد والخروج: البداية والمدة ومهل الإخطار وأسباب الإنهاء.",
+        "الرسوم والخدمات: المصاريف والضرائب والمرافق والتأمين وأتعاب الوسيط وأي تكاليف إضافية.",
+        "الإصلاحات وحالة العقار: الصيانة والعيوب والجرد والأعمال والمسؤولية عن الأضرار.",
+        "الولاية القضائية ونوع الإيجار: السكن الرئيسي أو المؤقت أو الغرفة أو غيرها قد تخضع لقواعد مختلفة داخل البلد نفسه.",
+      ],
+      steps: [
+        "ارفع PDF ليفصل Vonü الإيجار والتأمين والتواريخ والرسوم والإصلاحات وشروط الخروج وبقية الالتزامات.",
+        "أدخل البلد أو الإقليم فقط كمعلومة مساعدة. يجب تأكيد الولاية من نص العقد قبل تطبيق قواعد قانونية خاصة.",
+        "إذا كان القانون جديدًا أو محليًا أو مرتبطًا بنوع معين من الإيجار فتحقق من المصدر الرسمي الحالي قبل التوقيع.",
+      ],
+      faqs: [
+        { q: "هل الحد الأقصى للتأمين متساوٍ في كل البلدان؟", a: "لا. يختلف حسب الولاية القضائية وأحيانًا حسب نوع الإيجار. لا يطبق Vonü حدًا قانونيًا إلا إذا توفرت قاعدة رسمية موثَّقة وينطبق نطاقها على العقد." },
+        { q: "هل يستطيع المؤجر زيادة الإيجار كما يريد؟", a: "يعتمد ذلك على العقد ونوع الإيجار والتاريخ والمكان والقانون الساري. يراجع Vonü البند دون نقل قواعد بلد آخر." },
+        { q: "ماذا لو تغيّر قانون الإيجار للتو؟", a: "لملفات Vonü القانونية تاريخ مراجعة. القواعد المعلقة أو الملغاة أو الانتقالية يجب توضيح وضعها والرجوع إلى المصدر الرسمي." },
+        { q: "هل الإيجار المؤقت يخضع لنفس قواعد السكن الرئيسي؟", a: "ليس بالضرورة. الاستخدام الفعلي والمدة والولاية القضائية قد تغيّر النظام القانوني المطبق." },
+      ],
+    },
+  },
+};
+
 export const relatedIntentSlugs: Record<IntentSlug, IntentSlug[]> = {
   "comprobar-web-fiable": ["comprobar-tienda-online", "analizar-link-sospechoso", "es-fiable"],
   "comprobar-tienda-online": ["comprobar-web-fiable", "comprobar-factura", "analizar-link-sospechoso"],
@@ -294,7 +548,7 @@ export function getIntentContent(locale: SupportedLocale, slug: IntentSlug) {
   const group = groupBySlug[slug];
   return {
     answer: answers[locale][slug],
-    ...groupCopy[locale][group],
+    ...(intentOverrides[locale]?.[slug] ?? groupCopy[locale][group]),
     related: relatedIntentSlugs[slug],
   };
 }
