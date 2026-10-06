@@ -8,11 +8,13 @@ import { LEGAL_DOCUMENTS, legalAlternates, legalPath } from "@/lib/vonu-legal/ro
 
 const BASE_URL = "https://vonuai.com";
 const UPDATED_AT = new Date("2026-09-20T00:00:00.000Z");
-const TRUST_LANDING_UPDATED_AT = new Date("2026-10-06T00:00:00.000Z");
-const TRUST_LANDING_SLUGS = new Set([
+const PRIORITY_INTENT_UPDATED_AT = new Date("2026-10-06T00:00:00.000Z");
+const PRIORITY_INTENT_SLUGS = new Set([
   "comprobar-web-fiable",
   "comprobar-tienda-online",
   "es-fiable",
+  "revisar-contrato",
+  "revisar-contrato-alquiler",
 ]);
 // Deployment sync
 
@@ -36,15 +38,14 @@ const localizedCheckRoutes: MetadataRoute.Sitemap = GLOBAL_LOCALES.map((locale) 
 const publicRoutes: MetadataRoute.Sitemap = INDEXED_PUBLIC_SLUGS.flatMap((slug) =>
   GLOBAL_LOCALES.map((locale) => ({
     url: `${BASE_URL}${localizedPublicPath(locale, slug)}`,
-    lastModified:
-      locale === "es" && TRUST_LANDING_SLUGS.has(slug)
-        ? TRUST_LANDING_UPDATED_AT
-        : UPDATED_AT,
+    lastModified: PRIORITY_INTENT_SLUGS.has(slug) ? PRIORITY_INTENT_UPDATED_AT : UPDATED_AT,
     changeFrequency: slug === "recursos" ? ("weekly" as const) : ("monthly" as const),
     priority:
       slug === "comprobar-web-fiable" ||
       slug === "comprobar-tienda-online" ||
-      slug === "es-fiable"
+      slug === "es-fiable" ||
+      slug === "revisar-contrato" ||
+      slug === "revisar-contrato-alquiler"
         ? 0.95
         : slug === "producto" || slug === "casos-de-uso" || slug === "precios"
           ? 0.9

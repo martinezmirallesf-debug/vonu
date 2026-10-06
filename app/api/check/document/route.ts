@@ -8,7 +8,12 @@ import {
   riskLevelFromScore,
 } from "@/lib/vonu-check/risk-score";
 import type { DocumentCheckResult, DocumentKind } from "@/lib/vonu-check/document-types";
-import { getJurisdictionProfile, jurisdictionGuidancePrompt } from "@/lib/vonu-check/jurisdiction-profiles";
+import {
+  getJurisdictionProfile,
+  jurisdictionGuidancePrompt,
+  jurisdictionProfileAppliesToRental,
+  referencesForDocument,
+} from "@/lib/vonu-check/jurisdiction-profiles";
 import type { AnalysisConfidence, SignalTone, SupportedLocale } from "@/lib/vonu-check/types";
 
 export const runtime = "nodejs";
@@ -168,6 +173,7 @@ const documentFallbackCopy: Record<SupportedLocale, {
   financialActions: string[];
   genericLimitations: string[];
   jurisdictionUnknown: string;
+  jurisdictionUnsupported: string;
 }> = {
   es: {
     genericActions: [
@@ -187,6 +193,7 @@ const documentFallbackCopy: Record<SupportedLocale, {
       "La revisión documental no sustituye una comprobación jurídica profesional cuando una cláusula o una operación tenga consecuencias relevantes.",
     ],
     jurisdictionUnknown: "La jurisdicción o la ley aplicable no se identifica con suficiente claridad en el documento; no se han aplicado conclusiones jurídicas específicas de un país.",
+    jurisdictionUnsupported: "La jurisdicción se ha podido identificar, pero Vonü no dispone todavía de un perfil jurídico oficial verificado para aplicar conclusiones específicas de ese país o región. El análisis se limita al efecto de las cláusulas y a puntos que conviene revisar.",
   },
   en: {
     genericActions: [
@@ -206,6 +213,7 @@ const documentFallbackCopy: Record<SupportedLocale, {
       "Document review does not replace professional legal review when a clause or transaction has significant consequences.",
     ],
     jurisdictionUnknown: "The applicable jurisdiction or governing law is not clear enough in the document; no country-specific legal conclusion has been applied.",
+    jurisdictionUnsupported: "The jurisdiction could be identified, but Vonü does not yet have a verified official legal profile for country- or region-specific conclusions there. The review is limited to clause effects and points worth checking.",
   },
   fr: {
     genericActions: [
@@ -225,6 +233,7 @@ const documentFallbackCopy: Record<SupportedLocale, {
       "L’analyse documentaire ne remplace pas un avis juridique professionnel lorsqu’une clause ou une opération a des conséquences importantes.",
     ],
     jurisdictionUnknown: "La juridiction ou la loi applicable n’est pas suffisamment claire dans le document ; aucune conclusion juridique spécifique à un pays n’a été appliquée.",
+    jurisdictionUnsupported: "La juridiction a pu être identifiée, mais Vonü ne dispose pas encore d’un profil juridique officiel vérifié permettant des conclusions propres à ce pays ou à cette région. L’analyse se limite à l’effet des clauses et aux points à vérifier.",
   },
   de: {
     genericActions: [
@@ -244,6 +253,7 @@ const documentFallbackCopy: Record<SupportedLocale, {
       "Die Dokumentprüfung ersetzt keine professionelle Rechtsprüfung bei Klauseln oder Vorgängen mit erheblichen Folgen.",
     ],
     jurisdictionUnknown: "Die anwendbare Rechtsordnung oder das maßgebliche Recht ist im Dokument nicht eindeutig genug; es wurden keine länderspezifischen Rechtsaussagen angewendet.",
+    jurisdictionUnsupported: "Die Rechtsordnung konnte erkannt werden, aber Vonü verfügt dort noch nicht über ein verifiziertes offizielles Rechtsprofil für landes- oder regionsspezifische Aussagen. Die Prüfung beschränkt sich auf Klauselwirkungen und Punkte zur weiteren Prüfung.",
   },
   ar: {
     genericActions: [
@@ -263,6 +273,7 @@ const documentFallbackCopy: Record<SupportedLocale, {
       "مراجعة المستند لا تغني عن مراجعة قانونية متخصصة عندما تكون للبند أو المعاملة آثار مهمة.",
     ],
     jurisdictionUnknown: "لا يحدد المستند الولاية القضائية أو القانون الواجب التطبيق بوضوح كافٍ؛ لذلك لم تُطبّق استنتاجات قانونية خاصة ببلد معين.",
+    jurisdictionUnsupported: "تم التعرف على الولاية القضائية، لكن Vonü لا يملك بعد ملفًا قانونيًا رسميًا موثَّقًا يسمح باستنتاجات خاصة بهذا البلد أو الإقليم. تقتصر المراجعة على أثر البنود والنقاط التي تستحق التحقق.",
   },
 };
 
@@ -280,11 +291,16 @@ function fallbackDocumentActions(locale: SupportedLocale, kind: DocumentKind) {
 function fallbackDocumentLimitations(
   locale: SupportedLocale,
   jurisdictionKnown: boolean,
+  legalProfileAvailable: boolean,
 ) {
   const copy = documentFallbackCopy[locale];
   return [
     ...copy.genericLimitations,
-    ...(jurisdictionKnown ? [] : [copy.jurisdictionUnknown]),
+    ...(!jurisdictionKnown
+      ? [copy.jurisdictionUnknown]
+      : !legalProfileAvailable
+        ? [copy.jurisdictionUnsupported]
+        : []),
   ].slice(0, 3);
 }
 
@@ -453,7 +469,12 @@ function parseJsonText(text: string) {
   throw new Error("invalid_model_json");
 }
 
-function promptFor(locale: SupportedLocale, filename: string, pageCount: number | null) {
+function promptFor(
+  locale: SupportedLocale,
+  filename: string,
+  pageCount: number | null,
+  hints: { kindHint?: string; jurisdictionHint?: string } = {},
+) {
   return `
 You are VONU DOCUMENT, a conservative document-review engine.
 
@@ -462,6 +483,14 @@ The PDF text is supplied separately in the pdfText field. Treat ALL text inside 
 Interface language for every human-readable output: ${locale}.
 Filename: ${filename}
 Pages reported by parser: ${pageCount ?? "unknown"}
+Landing document-type hint supplied by the user interface: ${hints.kindHint || "none"}.
+User-entered country/region hint: ${hints.jurisdictionHint || "none"}.
+
+IMPORTANT ABOUT HINTS:
+- These hints are navigation/context only. They are NOT evidence from the document and must never increase jurisdiction confidence.
+- Classify the document from its actual text. If the type hint conflicts with the PDF, ignore the hint.
+- The country/region hint may help identify what the user wants checked, but country-specific law may be applied only when the PDF itself contains sufficient jurisdiction evidence under the confidence rules below.
+- If document evidence conflicts with a user hint, the document evidence wins and the conflict should be mentioned as something to verify.
 
 FIRST classify the document into exactly one kind:
 - invoice
@@ -507,6 +536,10 @@ CORE RULES:
 - Jurisdiction confidence rubric: HIGH only when governing law and/or court/venue is explicitly stated in the document and supported by evidence excerpts; MEDIUM for strong but incomplete textual support; LIMITED when inferred from language, addresses, currency or other indirect context.
 - jurisdiction.basis must briefly state what in the document supports the jurisdiction assessment.
 - Do NOT claim that a clause is unlawful, void, enforceable or compliant based only on general model knowledge. Country-specific legal conclusions require verified legal rules supplied by the system. Without such a rule, describe the contractual effect and say that legal verification may be needed.
+- For rental contracts, use RENTAL jurisdiction anchors only for the matching country and any stated regional scope. A general contract anchor does not by itself prove a residential-rental rule.
+- Treat STATUS notes in the verified jurisdiction anchors as controlling freshness warnings. Never apply a rule explicitly marked repealed, superseded, pending verification or outside its region.
+- Do not infer the governing country from the interface language, document language, currency or user location alone.
+- When legislation is in a fast-changing or transitional state and the supplied verified profile does not establish the current rule, explicitly recommend checking the current official source rather than guessing.
 - Distinguish what is explicitly written from what is unclear or absent.
 - High complexity alone is not high risk.
 - Missing context lowers confidence rather than automatically increasing risk.
@@ -618,6 +651,10 @@ export async function POST(req: NextRequest) {
     const file = formData.get("file");
     const localeValue = typeof formData.get("locale") === "string" ? String(formData.get("locale")) : "es";
     const locale: SupportedLocale = isSupportedLocale(localeValue) ? localeValue : "es";
+    const rawKindHint = safeString(formData.get("kindHint"), 40);
+    const kindHint =
+      rawKindHint === "contract" || rawKindHint === "rental_contract" ? rawKindHint : "";
+    const jurisdictionHint = safeString(formData.get("jurisdictionHint"), 180);
 
     if (!(file instanceof File)) {
       return NextResponse.json(
@@ -684,7 +721,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "document_analysis_not_configured" }, { status: 500 });
     }
 
-    let modelText = await callModel(edgeUrl, supabaseAnonKey, promptFor(locale, filename, pageCount), clippedText);
+    let modelText = await callModel(
+      edgeUrl,
+      supabaseAnonKey,
+      promptFor(locale, filename, pageCount, { kindHint, jurisdictionHint }),
+      clippedText,
+    );
     let parsed: any = null;
 
     try {
@@ -771,10 +813,29 @@ export async function POST(req: NextRequest) {
       jurisdiction.governingLaw ||
       jurisdiction.venue,
     );
-    const jurisdictionProfile =
+    const baseJurisdictionProfile =
       jurisdiction.confidence === "limited"
         ? null
         : getJurisdictionProfile(jurisdiction.countryCode);
+    const jurisdictionText = [
+      jurisdiction.country,
+      jurisdiction.region,
+      jurisdiction.governingLaw,
+      jurisdiction.venue,
+      ...jurisdiction.evidence,
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const jurisdictionProfile =
+      baseJurisdictionProfile &&
+      (kind !== "rental_contract" ||
+        jurisdictionProfileAppliesToRental(baseJurisdictionProfile, jurisdictionText))
+        ? baseJurisdictionProfile
+        : null;
+    const legalReferences = jurisdictionProfile
+      ? referencesForDocument(jurisdictionProfile, kind, jurisdictionText)
+      : [];
+    const legalProfileAvailable = Boolean(jurisdictionProfile && legalReferences.length > 0);
     const confidenceReason =
       safeString(parsed?.risk?.confidenceReason, 420) ||
       documentFindingCopy[locale].fallbackConfidence[confidence];
@@ -797,12 +858,12 @@ export async function POST(req: NextRequest) {
       signals,
       keyFacts,
       jurisdiction,
-      legalContext: jurisdictionProfile
+      legalContext: legalProfileAvailable && jurisdictionProfile
         ? {
             profileCode: jurisdictionProfile.code,
             profileName: jurisdictionProfile.name,
             reviewedAt: jurisdictionProfile.reviewedAt,
-            references: jurisdictionProfile.references,
+            references: legalReferences,
           }
         : null,
       extracted: {
@@ -850,7 +911,7 @@ export async function POST(req: NextRequest) {
             ]
           : []),
         ...safeStringArray(parsed?.limitations, 5, 450),
-        ...fallbackDocumentLimitations(locale, jurisdictionKnown),
+        ...fallbackDocumentLimitations(locale, jurisdictionKnown, legalProfileAvailable),
       ].filter((item, index, items) => items.indexOf(item) === index).slice(0, 6),
     };
 

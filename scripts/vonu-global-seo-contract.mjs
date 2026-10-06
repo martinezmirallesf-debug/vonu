@@ -21,6 +21,12 @@ const trustWebPage = read("app/comprobar-web-fiable/page.tsx");
 const trustShopPage = read("app/comprobar-tienda-online/page.tsx");
 const trustHubPage = read("app/es-fiable/page.tsx");
 const trustAuthoritySection = read("app/components/TrustSeoAuthoritySection.tsx");
+const inlineDocumentAnalyzer = read("app/components/InlineDocumentAnalyzer.tsx");
+const legalIntentAuthority = read("app/components/LegalIntentAuthoritySection.tsx");
+const jurisdictionProfiles = read("lib/vonu-check/jurisdiction-profiles.ts");
+const documentRoute = read("app/api/check/document/route.ts");
+const globalI18n = read("lib/vonu-global/i18n.ts");
+const trustIntentAuthority = read("app/components/TrustIntentAuthoritySection.tsx");
 
 function requireText(source, needle, label) {
   if (!source.includes(needle)) throw new Error(`${label}: missing ${JSON.stringify(needle)}`);
@@ -166,8 +172,62 @@ for (const [source, slug, label] of [
 requireText(trustAuthoritySection, "Fuentes oficiales de referencia", "trust authority sources");
 requireText(trustAuthoritySection, "Comprueba según tu caso", "trust landing intent links");
 requireText(trustAuthoritySection, "Actualizado el", "trust landing visible freshness");
-requireText(sitemap, "TRUST_LANDING_UPDATED_AT", "trust landing sitemap freshness");
+requireText(sitemap, "PRIORITY_INTENT_UPDATED_AT", "priority intent sitemap freshness");
 requireText(sitemap, '"comprobar-tienda-online"', "shop trust landing sitemap priority");
+
+
+requireText(intentPage, "<TrustIntentAuthoritySection", "international trust authority section");
+requireText(intentPage, "ENHANCED_TRUST_INTENTS", "international trust intent routing");
+requireText(trustIntentAuthority, "UK NCSC", "English trust authority source");
+requireText(trustIntentAuthority, "Cybermalveillance.gouv.fr", "French trust authority source");
+requireText(trustIntentAuthority, "BSI", "German trust authority source");
+requireText(trustIntentAuthority, "الهيئة الوطنية للأمن السيبراني", "Arabic trust authority source");
+requireText(trustIntentAuthority, "6 October 2026", "English trust source freshness");
+requireText(intentContent, "7 checks to tell whether a website is trustworthy", "English web trust depth");
+requireText(intentContent, "7 vérifications pour savoir si un site est fiable", "French web trust depth");
+requireText(intentContent, "7 Prüfungen, um eine seriöse Website einzuschätzen", "German web trust depth");
+requireText(intentContent, "7 فحوصات لمعرفة ما إذا كان الموقع موثوقًا", "Arabic web trust depth");
+
+requireText(intentPage, "<InlineDocumentAnalyzer locale={locale} intent={documentIntent} />", "inline legal analyzer");
+requireText(intentPage, "<LegalIntentAuthoritySection locale={locale} intent={documentIntent} />", "legal authority section");
+requireText(intentPage, "<DeviceAccessGate locale={locale} />", "inline legal entitlement gate");
+requireText(intentPage, 'dateModified: "2026-10-06"', "legal intent structured freshness");
+requireText(inlineDocumentAnalyzer, 'form.set("jurisdictionHint"', "jurisdiction hint submission");
+requireText(inlineDocumentAnalyzer, 'form.set("kindHint", intent)', "document intent hint submission");
+requireText(inlineDocumentAnalyzer, 'fetch("/api/check/document"', "real inline document analysis");
+requireText(inlineDocumentAnalyzer, 'data-vonu-analyze-cta="true"', "inline analyzer entitlement CTA");
+requireText(legalIntentAuthority, "JURISDICTION_PROFILES", "visible legal source profiles");
+requireText(legalIntentAuthority, "2026-10-06", "visible legal source review date");
+
+for (const locale of ["es", "en", "fr", "de", "ar"]) {
+  requireText(intentContent, `${locale}: {`, `legal intent locale override ${locale}`);
+}
+requireText(intentContent, "Qué revisar en un contrato de alquiler antes de firmar", "Spanish rental intent depth");
+requireText(intentContent, "What to check in a rental agreement before signing", "English rental intent depth");
+requireText(intentContent, "Que vérifier dans un bail avant de signer", "French rental intent depth");
+requireText(intentContent, "Was du in einem Mietvertrag vor der Unterschrift prüfen solltest", "German rental intent depth");
+requireText(intentContent, "ما الذي يجب مراجعته في عقد الإيجار قبل التوقيع", "Arabic rental intent depth");
+
+requireText(jurisdictionProfiles, 'reviewedAt: "2026-10-06"', "jurisdiction profile freshness");
+requireText(jurisdictionProfiles, "Real Decreto-ley 26/2026 and Real Decreto-ley 27/2026", "Spain repealed-law guard");
+requireText(jurisdictionProfiles, 'rentalRegionRequirement: "England"', "England-only rental scope");
+requireText(jurisdictionProfiles, "BGB §551", "German rental legal anchor");
+requireText(jurisdictionProfiles, "Loi n° 89-462", "French rental legal anchor");
+requireText(documentRoute, "hints.jurisdictionHint", "document jurisdiction hint is non-evidence");
+requireText(documentRoute, "STATUS notes", "document current-law status guard");
+requireText(documentRoute, "jurisdictionProfileAppliesToRental", "rental regional scope enforcement");
+requireText(documentRoute, "legalProfileAvailable", "unsupported jurisdiction limitation");
+
+for (const staleTitle of [
+  "Review a rental agreement — Vonü",
+  "Vérifier un contrat de location — Vonü",
+  "Mietvertrag prüfen — Vonü",
+  "مراجعة عقد إيجار — Vonü",
+]) {
+  rejectText(globalI18n, staleTitle, `duplicate-brand legal title ${staleTitle}`);
+}
+requireText(sitemap, '"revisar-contrato-alquiler"', "rental intent sitemap priority");
+requireText(sitemap, '"revisar-contrato"', "contract intent sitemap priority");
 
 requireText(rootLayout, "<DocumentLocaleSync />", "document locale synchronization");
 rejectText(rootLayout, '<html lang="es"', "hardcoded Spanish document language");

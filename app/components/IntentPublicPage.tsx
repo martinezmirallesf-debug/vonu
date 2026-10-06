@@ -12,6 +12,10 @@ import FunnelLink from "./FunnelLink";
 import HomeFooter from "./HomeFooter";
 import ResourceSignup from "./ResourceSignup";
 import BrandedHeadlineText from "./BrandedHeadlineText";
+import InlineDocumentAnalyzer from "./InlineDocumentAnalyzer";
+import LegalIntentAuthoritySection from "./LegalIntentAuthoritySection";
+import DeviceAccessGate from "./DeviceAccessGate";
+import TrustIntentAuthoritySection from "./TrustIntentAuthoritySection";
 
 const SITE_URL = "https://vonuai.com";
 
@@ -22,6 +26,17 @@ const DOCUMENT_INTENTS = new Set<IntentSlug>([
   "revisar-presupuesto",
   "revisar-contrato-servicios",
   "revisar-prestamo-financiacion",
+]);
+
+const INLINE_LEGAL_INTENTS = new Set<IntentSlug>([
+  "revisar-contrato",
+  "revisar-contrato-alquiler",
+]);
+
+const ENHANCED_TRUST_INTENTS = new Set<IntentSlug>([
+  "comprobar-web-fiable",
+  "comprobar-tienda-online",
+  "es-fiable",
 ]);
 
 const ui: Record<SupportedLocale, {
@@ -47,6 +62,10 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
   const pagePath = localizedPublicPath(locale, slug);
   const pageUrl = `${SITE_URL}${pagePath}`;
   const checkHref = DOCUMENT_INTENTS.has(slug) ? `${checkPath(locale)}?mode=document` : checkPath(locale);
+  const inlineLegalIntent = INLINE_LEGAL_INTENTS.has(slug);
+  const enhancedTrustIntent = ENHANCED_TRUST_INTENTS.has(slug);
+  const documentIntent =
+    slug === "revisar-contrato-alquiler" ? "rental_contract" : "contract";
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -58,6 +77,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
         name: topic.title,
         description: topic.description,
         inLanguage: locale,
+        ...(inlineLegalIntent || enhancedTrustIntent ? { dateModified: "2026-10-06" } : {}),
         isPartOf: { "@id": `${SITE_URL}/#website` },
         publisher: { "@id": `${SITE_URL}/#organization` },
         about: {
@@ -67,7 +87,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
         mainEntity: { "@id": `${pageUrl}#signals` },
         potentialAction: {
           "@type": "UseAction",
-          target: `${SITE_URL}${checkHref}`,
+          target: inlineLegalIntent ? pageUrl : `${SITE_URL}${checkHref}`,
           object: { "@id": `${SITE_URL}/#vonu-check` },
         },
       },
@@ -123,21 +143,27 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
             <p className="mx-auto mt-7 max-w-[800px] text-[17px] leading-8 text-slate-400 sm:text-[19px]">{topic.description}</p>
           </div>
 
-          <article id="answer" className="mx-auto mt-10 max-w-[900px] rounded-[28px] border border-sky-300/15 bg-sky-400/[0.055] p-6 text-start shadow-[0_24px_80px_rgba(14,116,144,.06)] sm:p-8">
+          {inlineLegalIntent ? (
+            <InlineDocumentAnalyzer locale={locale} intent={documentIntent} />
+          ) : null}
+
+          <article id="answer" className={`mx-auto max-w-[900px] rounded-[28px] border border-sky-300/15 bg-sky-400/[0.055] p-6 text-start shadow-[0_24px_80px_rgba(14,116,144,.06)] sm:p-8 ${inlineLegalIntent ? "mt-6" : "mt-10"}`}>
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sky-300">{labels.answer}</p>
             <p className="mt-4 text-[18px] leading-8 text-slate-200 sm:text-[20px] sm:leading-9">{content.answer}</p>
           </article>
 
-          <div className="mt-8 flex justify-center">
-            <FunnelLink
-              href={checkHref}
-              event="intent_answer_cta"
-              properties={{ locale, slug }}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#7bb7ff] px-6 text-[14px] font-bold text-[#07142f] shadow-[0_10px_30px_rgba(123,183,255,.20)] transition hover:-translate-y-0.5 hover:bg-[#a3ceff] hover:shadow-[0_14px_34px_rgba(123,183,255,.24)] active:translate-y-0"
-            >
-              {labels.cta} <span aria-hidden="true">→</span>
-            </FunnelLink>
-          </div>
+          {!inlineLegalIntent ? (
+            <div className="mt-8 flex justify-center">
+              <FunnelLink
+                href={checkHref}
+                event="intent_answer_cta"
+                properties={{ locale, slug }}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#7bb7ff] px-6 text-[14px] font-bold text-[#07142f] shadow-[0_10px_30px_rgba(123,183,255,.20)] transition hover:-translate-y-0.5 hover:bg-[#a3ceff] hover:shadow-[0_14px_34px_rgba(123,183,255,.24)] active:translate-y-0"
+              >
+                {labels.cta} <span aria-hidden="true">→</span>
+              </FunnelLink>
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -172,6 +198,17 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
           </ol>
         </div>
       </section>
+
+      {inlineLegalIntent ? (
+        <LegalIntentAuthoritySection locale={locale} intent={documentIntent} />
+      ) : null}
+
+      {enhancedTrustIntent ? (
+        <TrustIntentAuthoritySection
+          locale={locale}
+          slug={slug as "comprobar-web-fiable" | "comprobar-tienda-online" | "es-fiable"}
+        />
+      ) : null}
 
       <section className="border-b border-white/[0.06] bg-[#0a0d15]">
         <div className="mx-auto grid max-w-[1180px] gap-8 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[0.8fr_1.2fr] lg:px-8 lg:items-center">
@@ -239,6 +276,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
         </div>
       </section>
 
+      {inlineLegalIntent ? <DeviceAccessGate locale={locale} /> : null}
       <HomeFooter />
     </main>
   );
