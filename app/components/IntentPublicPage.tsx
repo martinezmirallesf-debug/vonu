@@ -15,6 +15,7 @@ import BrandedHeadlineText from "./BrandedHeadlineText";
 import InlineDocumentAnalyzer from "./InlineDocumentAnalyzer";
 import LegalIntentAuthoritySection from "./LegalIntentAuthoritySection";
 import DeviceAccessGate from "./DeviceAccessGate";
+import TrustIntentAuthoritySection from "./TrustIntentAuthoritySection";
 
 const SITE_URL = "https://vonuai.com";
 
@@ -30,6 +31,12 @@ const DOCUMENT_INTENTS = new Set<IntentSlug>([
 const INLINE_LEGAL_INTENTS = new Set<IntentSlug>([
   "revisar-contrato",
   "revisar-contrato-alquiler",
+]);
+
+const ENHANCED_TRUST_INTENTS = new Set<IntentSlug>([
+  "comprobar-web-fiable",
+  "comprobar-tienda-online",
+  "es-fiable",
 ]);
 
 const ui: Record<SupportedLocale, {
@@ -56,6 +63,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
   const pageUrl = `${SITE_URL}${pagePath}`;
   const checkHref = DOCUMENT_INTENTS.has(slug) ? `${checkPath(locale)}?mode=document` : checkPath(locale);
   const inlineLegalIntent = INLINE_LEGAL_INTENTS.has(slug);
+  const enhancedTrustIntent = ENHANCED_TRUST_INTENTS.has(slug);
   const documentIntent =
     slug === "revisar-contrato-alquiler" ? "rental_contract" : "contract";
 
@@ -69,7 +77,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
         name: topic.title,
         description: topic.description,
         inLanguage: locale,
-        ...(inlineLegalIntent ? { dateModified: "2026-10-06" } : {}),
+        ...(inlineLegalIntent || enhancedTrustIntent ? { dateModified: "2026-10-06" } : {}),
         isPartOf: { "@id": `${SITE_URL}/#website` },
         publisher: { "@id": `${SITE_URL}/#organization` },
         about: {
@@ -193,6 +201,13 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
 
       {inlineLegalIntent ? (
         <LegalIntentAuthoritySection locale={locale} intent={documentIntent} />
+      ) : null}
+
+      {enhancedTrustIntent ? (
+        <TrustIntentAuthoritySection
+          locale={locale}
+          slug={slug as "comprobar-web-fiable" | "comprobar-tienda-online" | "es-fiable"}
+        />
       ) : null}
 
       <section className="border-b border-white/[0.06] bg-[#0a0d15]">
