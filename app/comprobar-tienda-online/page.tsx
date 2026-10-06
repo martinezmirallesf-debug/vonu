@@ -5,21 +5,24 @@ import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
 import ResourceSignup from "../components/ResourceSignup";
 import VoiceBarsIcon from "../components/VoiceBarsIcon";
+import TrustSeoAuthoritySection from "../components/TrustSeoAuthoritySection";
+import { localizedLanguageAlternates } from "@/lib/vonu-global/routes";
 
 const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Cómo saber si una tienda online es fiable — Compruébala con VonüAI",
+  title: "Cómo saber si una tienda online es fiable: 7 claves",
   description:
-    "Aprende cómo saber si una tienda online es fiable o confiable antes de comprar: datos legales, métodos de pago, precios sospechosos, reseñas, devoluciones y señales de estafa.",
+    "Comprueba si una tienda online es fiable antes de comprar: vendedor, aviso legal, pagos, devoluciones, dominio, opiniones externas y señales de estafa.",
   alternates: {
     canonical: "/comprobar-tienda-online",
+    languages: localizedLanguageAlternates("comprobar-tienda-online"),
   },
   openGraph: {
-    title: "Cómo saber si una tienda online es fiable — VonüAI",
+    title: "Cómo saber si una tienda online es fiable: 7 claves | Vonü",
     description:
-      "Revisa una tienda online antes de pagar o introducir tus datos. Detecta señales de riesgo, precios sospechosos y métodos de pago poco seguros.",
+      "Comprueba vendedor, pagos, devoluciones, dominio y opiniones externas antes de comprar en una tienda que no conoces.",
     url: `${siteUrl}/comprobar-tienda-online`,
     siteName: "VonüAI",
     locale: "es_ES",
@@ -27,9 +30,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cómo saber si una tienda online es fiable — VonüAI",
+    title: "Cómo saber si una tienda online es fiable: 7 claves | Vonü",
     description:
-      "Comprueba tiendas online sospechosas antes de comprar, pagar o compartir datos.",
+      "Comprueba una tienda antes de comprar: identidad del vendedor, pagos, devoluciones, dominio y reputación externa.",
   },
   robots: {
     index: true,
@@ -120,6 +123,73 @@ const faqs = [
   {
     q: "¿Qué hago si ya he comprado en una tienda sospechosa?",
     a: "Guarda capturas, justificantes, emails y condiciones de compra. Contacta con tu banco si has pagado con tarjeta, revisa si puedes reclamar y cambia contraseñas si has usado datos que también utilizas en otros servicios.",
+  },
+];
+
+const verificationChecks = [
+  {
+    title: "Identifica al vendedor",
+    text: "Busca nombre o razón social, NIF o CIF cuando corresponda, domicilio y un contacto real. Debes poder saber a quién compras y cómo reclamar si surge un problema.",
+  },
+  {
+    title: "Compara el precio con el mercado",
+    text: "Una rebaja fuerte no demuestra una estafa, pero un precio muy por debajo de vendedores conocidos merece revisar con más cuidado el resto de señales.",
+  },
+  {
+    title: "Elige pagos con protección",
+    text: "Prioriza métodos que permitan reclamar o disputar un cargo. Si solo aceptan transferencia, Bizum a particulares o criptomonedas, aumenta la cautela.",
+  },
+  {
+    title: "Lee envío, devolución y desistimiento",
+    text: "Comprueba plazos, costes, quién asume la devolución, garantías y cómo solicitar un reembolso. Las condiciones vagas o copiadas son una mala señal.",
+  },
+  {
+    title: "Revisa dominio y coherencia de marca",
+    text: "Mira si el dominio coincide con la empresa, si imita a una marca conocida o si hay cambios extraños de nombre, idioma, moneda o datos de contacto.",
+  },
+  {
+    title: "Busca opiniones fuera de la tienda",
+    text: "Contrasta reseñas y menciones en fuentes independientes. Una puntuación perfecta dentro de la propia web no sustituye una reputación externa verificable.",
+  },
+  {
+    title: "Guarda pruebas antes de pagar",
+    text: "Conserva capturas del producto, precio, condiciones, pedido y justificante. Si algo falla, esa información puede ayudarte a reclamar.",
+  },
+];
+
+const officialSources = [
+  {
+    name: "INCIBE",
+    text: "Material oficial sobre compra segura en Internet, identidad de la tienda, pagos y señales de fraude.",
+    href: "https://www.incibe.es/sites/default/files/docs/fichas_compra_segura_internet_web_vfinal.pdf",
+  },
+  {
+    name: "CEC España",
+    text: "Derechos del consumidor en compras online: identidad, precio, pago, garantías y desistimiento.",
+    href: "https://portal-cec.consumo.gob.es/es/informacion-general/compras-online/derechos-del-consumidor",
+  },
+  {
+    name: "BOE · LSSI",
+    text: "El artículo 10 de la Ley 34/2002 regula la información que debe facilitar el prestador de servicios online.",
+    href: "https://www.boe.es/buscar/act.php?id=BOE-A-2002-13758",
+  },
+];
+
+const relatedGuides = [
+  {
+    title: "Comprobar una web fiable",
+    text: "Si tu duda no es solo sobre la compra, revisa dominio, identidad, reputación y solicitudes de datos.",
+    href: "/comprobar-web-fiable",
+  },
+  {
+    title: "Analizar un enlace sospechoso",
+    text: "Si llegaste a la tienda desde un SMS, email, anuncio o WhatsApp, revisa también el enlace.",
+    href: "/analizar-link-sospechoso",
+  },
+  {
+    title: "¿Es fiable?",
+    text: "Para dudas más amplias sobre una web, perfil, inversión, mensaje o documento.",
+    href: "/es-fiable",
   },
 ];
 
@@ -312,21 +382,47 @@ function CommonCaseTitle({ title }: { title: string }) {
 
 export default function ComprobarTiendaOnlinePage() {
 
+  const pageUrl = `${siteUrl}/comprobar-tienda-online`;
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "WebPage",
-        "@id": `${siteUrl}/comprobar-tienda-online#webpage`,
-        url: `${siteUrl}/comprobar-tienda-online`,
+        "@id": `${pageUrl}#webpage`,
+        url: pageUrl,
         name: "Cómo saber si una tienda online es fiable",
         description:
-          "Guía para revisar tiendas online antes de comprar: precios, datos legales, métodos de pago, reseñas, devoluciones y señales de alerta.",
+          "Guía práctica para comprobar vendedor, pagos, devoluciones, dominio y reputación antes de comprar en una tienda online.",
         inLanguage: "es-ES",
+        dateModified: "2026-10-06",
+        isPartOf: { "@id": `${siteUrl}/#website` },
+        breadcrumb: { "@id": `${pageUrl}#breadcrumb` },
+        mainEntity: { "@id": `${pageUrl}#checks` },
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${pageUrl}#breadcrumb`,
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Vonü", item: siteUrl },
+          { "@type": "ListItem", position: 2, name: "Recursos", item: `${siteUrl}/recursos` },
+          { "@type": "ListItem", position: 3, name: "Cómo saber si una tienda online es fiable", item: pageUrl },
+        ],
+      },
+      {
+        "@type": "ItemList",
+        "@id": `${pageUrl}#checks`,
+        name: "7 claves para saber si una tienda online es fiable",
+        numberOfItems: verificationChecks.length,
+        itemListElement: verificationChecks.map((item, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: item.title,
+          description: item.text,
+        })),
       },
       {
         "@type": "FAQPage",
-        "@id": `${siteUrl}/comprobar-tienda-online#faq`,
+        "@id": `${pageUrl}#faq`,
         mainEntity: faqs.map((item) => ({
           "@type": "Question",
           name: item.q,
@@ -352,15 +448,15 @@ export default function ComprobarTiendaOnlinePage() {
         <div className="mx-auto max-w-[1500px] px-4 pb-12 pt-8 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8">
           <div className="mx-auto max-w-[1120px] text-center">
             <h1 className="mx-auto max-w-[1080px] text-[52px] font-semibold leading-[1.02] tracking-[-0.064em] text-zinc-950 sm:text-[86px] sm:leading-[0.94] sm:tracking-[-0.078em] lg:text-[118px]">
-              Comprueba una{" "}
-              <GradientText tone="blueGreen">tienda online.</GradientText>
-              <span className="block text-zinc-500">Antes de meter tarjeta.</span>
+              Cómo saber si una{" "}
+              <GradientText tone="blueGreen">tienda online es fiable.</GradientText>
+              <span className="block text-zinc-500">Compruébala antes de pagar.</span>
             </h1>
 
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
-              Antes de comprar en una tienda que no conoces, revisa precios,
-              datos legales, métodos de pago, reseñas, devoluciones y señales de
-              alerta.
+              Antes de comprar en una tienda que no conoces, comprueba quién
+              vende, cómo puedes reclamar, qué métodos de pago acepta, sus
+              devoluciones, el dominio y su reputación fuera de la propia web.
             </p>
 
             <div className="mt-7 flex flex-row justify-center gap-2.5 sm:mt-9 sm:gap-3">
@@ -488,9 +584,10 @@ export default function ComprobarTiendaOnlinePage() {
                 </h2>
 
                 <p className="mt-6 text-[17px] leading-8 text-zinc-600">
-                  Una tienda puede parecer profesional y aun así no ser segura.
-                  Lo importante es comprobar si hay empresa real, forma de
-                  reclamar, métodos de pago protegidos y condiciones claras.
+                  Una tienda fiable debe permitirte identificar al vendedor,
+                  entender qué compras y cómo devolverlo, y pagar con un método
+                  que ofrezca protección. El diseño bonito o el candado HTTPS no
+                  sustituyen esas comprobaciones.
                 </p>
               </div>
 
@@ -629,6 +726,16 @@ export default function ComprobarTiendaOnlinePage() {
           </div>
         </div>
       </section>
+
+      <TrustSeoAuthoritySection
+        eyebrow="Comprobación de compra"
+        title="7 claves para saber si una tienda online es fiable."
+        intro="La revisión útil no consiste en buscar una señal mágica, sino en comprobar si identidad, precio, pagos, condiciones, dominio y reputación cuentan una historia coherente antes de entregar dinero o datos."
+        updatedAt="6 de octubre de 2026"
+        checks={verificationChecks}
+        sources={officialSources}
+        related={relatedGuides}
+      />
 
       <section className="bg-[#f5f5f7]">
         <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">

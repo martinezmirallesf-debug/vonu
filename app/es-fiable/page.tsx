@@ -5,21 +5,24 @@ import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
 import ResourceSignup from "../components/ResourceSignup";
 import VoiceBarsIcon from "../components/VoiceBarsIcon";
+import TrustSeoAuthoritySection from "../components/TrustSeoAuthoritySection";
+import { localizedLanguageAlternates } from "@/lib/vonu-global/routes";
 
 const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "¿Es fiable? — Compruébalo con VonüAI antes de actuar",
+  title: "¿Es fiable? Cómo comprobar antes de confiar",
   description:
-    "Comprueba si una web, tienda online, mensaje, perfil, inversión, factura o contrato parece fiable antes de pagar, firmar, contestar o compartir datos.",
+    "Comprueba si una web, tienda online, mensaje, perfil o inversión parece fiable antes de pagar, responder o compartir datos. Revisa señales y contexto con Vonü.",
   alternates: {
     canonical: "/es-fiable",
+    languages: localizedLanguageAlternates("es-fiable"),
   },
   openGraph: {
-    title: "¿Es fiable? — Compruébalo con VonüAI",
+    title: "¿Es fiable? Cómo comprobar antes de confiar | Vonü",
     description:
-      "Revisa señales de riesgo antes de confiar en una web, tienda, mensaje, perfil, oferta, inversión o documento.",
+      "Revisa identidad, contexto, presión, dinero, datos y señales externas antes de confiar en una web, mensaje, perfil u oportunidad.",
     url: `${siteUrl}/es-fiable`,
     siteName: "VonüAI",
     locale: "es_ES",
@@ -27,9 +30,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "¿Es fiable? — VonüAI",
+    title: "¿Es fiable? Cómo comprobar antes de confiar | Vonü",
     description:
-      "Comprueba si algo parece fiable antes de pagar, firmar, contestar o decidir.",
+      "Comprueba señales de fiabilidad antes de pagar, responder, firmar o compartir datos.",
   },
   robots: {
     index: true,
@@ -148,6 +151,68 @@ const faqs = [
   {
     q: "¿VonüAI sustituye a un profesional?",
     a: "No. Vonü ofrece orientación preventiva para ayudarte a decidir con más calma, pero no sustituye a abogados, asesores financieros, médicos, psicólogos ni autoridades.",
+  },
+];
+
+const verificationChecks = [
+  {
+    title: "Define qué estás intentando verificar",
+    text: "No se comprueba igual una web, una tienda, un mensaje, un perfil o una inversión. Identifica primero qué decisión vas a tomar y qué podría salir mal.",
+  },
+  {
+    title: "Identifica quién está detrás",
+    text: "Busca una empresa, persona u organización verificable, datos de contacto coherentes y un rastro que exista fuera del propio mensaje, perfil o página.",
+  },
+  {
+    title: "Mira qué te está pidiendo",
+    text: "Dinero, contraseñas, códigos SMS, documentos, datos bancarios o salir a otro canal aumentan el riesgo cuando no hay una razón clara y verificable.",
+  },
+  {
+    title: "Detecta prisa, miedo o presión",
+    text: "Las decisiones fiables soportan una comprobación. Si te exigen actuar ya, aprovechar una oportunidad única o evitar una amenaza inmediata, frena antes de continuar.",
+  },
+  {
+    title: "Contrasta señales externas",
+    text: "Busca referencias independientes, información oficial y coherencia entre nombres, dominios, perfiles, teléfonos, documentos y condiciones.",
+  },
+  {
+    title: "Valora el coste de equivocarte",
+    text: "Cuanto mayor sea el dinero, la información sensible o el compromiso que arriesgas, más pruebas necesitas antes de confiar.",
+  },
+  {
+    title: "No conviertas una señal en un veredicto",
+    text: "Un candado, una reseña, una foto profesional o una cuenta antigua no prueban fiabilidad por sí solos. Lo importante es el conjunto y el contexto.",
+  },
+];
+
+const officialSources = [
+  {
+    name: "INCIBE",
+    text: "Recursos oficiales para reconocer fraudes, phishing, suplantaciones y otras señales de riesgo digital.",
+    href: "https://www.incibe.es/ciudadania/tematicas/fraudes-online",
+  },
+  {
+    name: "CEC España",
+    text: "Información oficial para consumidores sobre fraudes online y comprobaciones antes de comprar o pagar.",
+    href: "https://portal-cec.consumo.gob.es/es/informacion-general/compras-online/fraudes-online",
+  },
+];
+
+const relatedGuides = [
+  {
+    title: "¿Es fiable esta web?",
+    text: "Comprueba dominio, identidad, reputación, solicitudes de datos y señales técnicas de una página concreta.",
+    href: "/comprobar-web-fiable",
+  },
+  {
+    title: "¿Es fiable esta tienda?",
+    text: "Revisa vendedor, métodos de pago, devoluciones, precio, dominio y opiniones antes de comprar.",
+    href: "/comprobar-tienda-online",
+  },
+  {
+    title: "¿Es sospechoso este enlace?",
+    text: "Si la duda empieza en un SMS, email, WhatsApp o anuncio, analiza el enlace y su contexto.",
+    href: "/analizar-link-sospechoso",
   },
 ];
 
@@ -389,21 +454,47 @@ function ExampleTitle({ title }: { title: string }) {
 }
 
 export default function EsFiablePage() {
+  const pageUrl = `${siteUrl}/es-fiable`;
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "WebPage",
-        "@id": `${siteUrl}/es-fiable#webpage`,
-        url: `${siteUrl}/es-fiable`,
-        name: "¿Es fiable?",
+        "@id": `${pageUrl}#webpage`,
+        url: pageUrl,
+        name: "¿Es fiable? Cómo comprobar antes de confiar",
         description:
-          "Herramienta de orientación para comprobar si una web, tienda, mensaje, perfil, inversión, factura o contrato parece fiable antes de actuar.",
+          "Guía para comprobar la fiabilidad de una web, tienda, mensaje, perfil, inversión o documento antes de actuar.",
         inLanguage: "es-ES",
+        dateModified: "2026-10-06",
+        isPartOf: { "@id": `${siteUrl}/#website` },
+        breadcrumb: { "@id": `${pageUrl}#breadcrumb` },
+        mainEntity: { "@id": `${pageUrl}#checks` },
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${pageUrl}#breadcrumb`,
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Vonü", item: siteUrl },
+          { "@type": "ListItem", position: 2, name: "Recursos", item: `${siteUrl}/recursos` },
+          { "@type": "ListItem", position: 3, name: "¿Es fiable?", item: pageUrl },
+        ],
+      },
+      {
+        "@type": "ItemList",
+        "@id": `${pageUrl}#checks`,
+        name: "7 comprobaciones antes de decidir si algo es fiable",
+        numberOfItems: verificationChecks.length,
+        itemListElement: verificationChecks.map((item, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: item.title,
+          description: item.text,
+        })),
       },
       {
         "@type": "FAQPage",
-        "@id": `${siteUrl}/es-fiable#faq`,
+        "@id": `${pageUrl}#faq`,
         mainEntity: faqs.map((item) => ({
           "@type": "Question",
           name: item.q,
@@ -431,14 +522,15 @@ export default function EsFiablePage() {
             <h1 className="mx-auto max-w-[1080px] text-[52px] font-semibold leading-[1.02] tracking-[-0.064em] text-zinc-950 sm:text-[86px] sm:leading-[0.94] sm:tracking-[-0.078em] lg:text-[118px]">
               ¿Es fiable?
               <span className="block text-zinc-500">
-                Compruébalo antes de <GradientText tone="blueCyan">actuar.</GradientText>
+                Compruébalo antes de <GradientText tone="blueCyan">confiar.</GradientText>
               </span>
             </h1>
 
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
-              Si tienes dudas sobre una web, tienda online, mensaje, perfil,
-              inversión, factura o contrato, Vonü te ayuda a revisar señales de
-              riesgo antes de pagar, firmar, contestar o compartir datos.
+              Si buscas si una web, tienda, mensaje, perfil, inversión o
+              documento es fiable, empieza por identificar quién está detrás,
+              qué te pide y qué señales puedes contrastar antes de pagar,
+              responder, firmar o compartir datos.
             </p>
 
             <div className="mt-7 flex flex-row justify-center gap-2.5 sm:mt-9 sm:gap-3">
@@ -569,9 +661,10 @@ export default function EsFiablePage() {
                 </h2>
 
                 <p className="mt-6 text-[17px] leading-8 text-zinc-600">
-                  Muchas decisiones salen mal por actuar con prisa: pagar, pulsar,
-                  firmar, contestar o compartir datos antes de revisar señales
-                  básicas. Parar un minuto puede ahorrarte un problema grande.
+                  “¿Es fiable?” no tiene una respuesta universal. Primero define
+                  qué estás comprobando y después contrasta identidad, contexto,
+                  presión, dinero, datos sensibles y señales externas antes de
+                  decidir.
                 </p>
               </div>
 
@@ -753,6 +846,16 @@ export default function EsFiablePage() {
           </div>
         </div>
       </section>
+
+      <TrustSeoAuthoritySection
+        eyebrow="Método de comprobación"
+        title="Cómo comprobar si algo es fiable sin depender de una sola señal."
+        intro="Esta página funciona como punto de entrada para la intención “¿es fiable?”. Cuando el caso es una web, una tienda o un enlace, las guías específicas profundizan en las señales que más importan para ese contexto."
+        updatedAt="6 de octubre de 2026"
+        checks={verificationChecks}
+        sources={officialSources}
+        related={relatedGuides}
+      />
 
       <section className="bg-[#f5f5f7]">
         <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
