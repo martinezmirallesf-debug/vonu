@@ -36,7 +36,10 @@ const localizedCheckRoutes: MetadataRoute.Sitemap = GLOBAL_LOCALES.map((locale) 
 const publicRoutes: MetadataRoute.Sitemap = INDEXED_PUBLIC_SLUGS.flatMap((slug) =>
   GLOBAL_LOCALES.map((locale) => ({
     url: `${BASE_URL}${localizedPublicPath(locale, slug)}`,
-    lastModified: TRUST_LANDING_SLUGS.has(slug) ? TRUST_LANDING_UPDATED_AT : UPDATED_AT,
+    lastModified:
+      locale === "es" && TRUST_LANDING_SLUGS.has(slug)
+        ? TRUST_LANDING_UPDATED_AT
+        : UPDATED_AT,
     changeFrequency: slug === "recursos" ? ("weekly" as const) : ("monthly" as const),
     priority:
       slug === "comprobar-web-fiable" ||
