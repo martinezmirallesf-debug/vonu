@@ -26,6 +26,7 @@ const legalIntentAuthority = read("app/components/LegalIntentAuthoritySection.ts
 const jurisdictionProfiles = read("lib/vonu-check/jurisdiction-profiles.ts");
 const documentRoute = read("app/api/check/document/route.ts");
 const globalI18n = read("lib/vonu-global/i18n.ts");
+const trustIntentAuthority = read("app/components/TrustIntentAuthoritySection.tsx");
 
 function requireText(source, needle, label) {
   if (!source.includes(needle)) throw new Error(`${label}: missing ${JSON.stringify(needle)}`);
@@ -174,6 +175,18 @@ requireText(trustAuthoritySection, "Actualizado el", "trust landing visible fres
 requireText(sitemap, "PRIORITY_INTENT_UPDATED_AT", "priority intent sitemap freshness");
 requireText(sitemap, '"comprobar-tienda-online"', "shop trust landing sitemap priority");
 
+
+requireText(intentPage, "<TrustIntentAuthoritySection", "international trust authority section");
+requireText(intentPage, "ENHANCED_TRUST_INTENTS", "international trust intent routing");
+requireText(trustIntentAuthority, "UK NCSC", "English trust authority source");
+requireText(trustIntentAuthority, "Cybermalveillance.gouv.fr", "French trust authority source");
+requireText(trustIntentAuthority, "BSI", "German trust authority source");
+requireText(trustIntentAuthority, "الهيئة الوطنية للأمن السيبراني", "Arabic trust authority source");
+requireText(trustIntentAuthority, "6 October 2026", "English trust source freshness");
+requireText(intentContent, "7 checks to tell whether a website is trustworthy", "English web trust depth");
+requireText(intentContent, "7 vérifications pour savoir si un site est fiable", "French web trust depth");
+requireText(intentContent, "7 Prüfungen, um eine seriöse Website einzuschätzen", "German web trust depth");
+requireText(intentContent, "7 فحوصات لمعرفة ما إذا كان الموقع موثوقًا", "Arabic web trust depth");
 
 requireText(intentPage, "<InlineDocumentAnalyzer locale={locale} intent={documentIntent} />", "inline legal analyzer");
 requireText(intentPage, "<LegalIntentAuthoritySection locale={locale} intent={documentIntent} />", "legal authority section");
