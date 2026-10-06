@@ -17,6 +17,10 @@ const devicePricing = read("app/components/DevicePricingPage.tsx");
 const pricingSchema = read("app/components/PricingStructuredData.tsx");
 const routes = read("lib/vonu-global/routes.ts");
 const llms = read("public/llms.txt");
+const trustWebPage = read("app/comprobar-web-fiable/page.tsx");
+const trustShopPage = read("app/comprobar-tienda-online/page.tsx");
+const trustHubPage = read("app/es-fiable/page.tsx");
+const trustAuthoritySection = read("app/components/TrustSeoAuthoritySection.tsx");
 
 function requireText(source, needle, label) {
   if (!source.includes(needle)) throw new Error(`${label}: missing ${JSON.stringify(needle)}`);
@@ -145,6 +149,25 @@ requireText(intentPage, '"@type": "ItemList"', "intent signal list schema");
 requireText(intentPage, '"@type": "FAQPage"', "intent FAQ semantics");
 requireText(intentPage, '"@type": "UseAction"', "intent conversion action");
 requireText(intentPage, "content.related.map", "intent internal links");
+
+
+for (const [source, slug, label] of [
+  [trustWebPage, "comprobar-web-fiable", "web trust landing"],
+  [trustShopPage, "comprobar-tienda-online", "shop trust landing"],
+  [trustHubPage, "es-fiable", "trust intent hub"],
+]) {
+  requireText(source, `localizedLanguageAlternates("${slug}")`, `${label} hreflang metadata`);
+  requireText(source, '"@type": "BreadcrumbList"', `${label} breadcrumb schema`);
+  requireText(source, '"@type": "ItemList"', `${label} verification list schema`);
+  requireText(source, 'dateModified: "2026-10-06"', `${label} freshness`);
+  requireText(source, "<TrustSeoAuthoritySection", `${label} visible authority section`);
+  requireText(source, 'isPartOf: { "@id": `${siteUrl}/#website` }', `${label} website entity relationship`);
+}
+requireText(trustAuthoritySection, "Fuentes oficiales de referencia", "trust authority sources");
+requireText(trustAuthoritySection, "Comprueba según tu caso", "trust landing intent links");
+requireText(trustAuthoritySection, "Actualizado el", "trust landing visible freshness");
+requireText(sitemap, "TRUST_LANDING_UPDATED_AT", "trust landing sitemap freshness");
+requireText(sitemap, '"comprobar-tienda-online"', "shop trust landing sitemap priority");
 
 requireText(rootLayout, "<DocumentLocaleSync />", "document locale synchronization");
 rejectText(rootLayout, '<html lang="es"', "hardcoded Spanish document language");
