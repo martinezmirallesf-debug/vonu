@@ -5,21 +5,24 @@ import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
 import ResourceSignup from "../components/ResourceSignup";
 import VoiceBarsIcon from "../components/VoiceBarsIcon";
+import TrustSeoAuthoritySection from "../components/TrustSeoAuthoritySection";
+import { localizedLanguageAlternates } from "@/lib/vonu-global/routes";
 
 const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Cómo saber si una web es fiable — Compruébala con VonüAI",
+  title: "Cómo saber si una web es fiable: 7 comprobaciones",
   description:
-    "Aprende a comprobar si una web o tienda online es fiable antes de comprar, pagar por transferencia o introducir tus datos. Analiza enlaces sospechosos con VonüAI.",
+    "Comprueba si una web es fiable antes de pagar o dar datos: dominio, HTTPS, identidad, reputación, pagos, reseñas y señales de phishing. Revisa la URL con Vonü.",
   alternates: {
     canonical: "/comprobar-web-fiable",
+    languages: localizedLanguageAlternates("comprobar-web-fiable"),
   },
   openGraph: {
-    title: "Cómo saber si una web es fiable — VonüAI",
+    title: "Cómo saber si una web es fiable: 7 comprobaciones | Vonü",
     description:
-      "Revisa señales de riesgo en webs, tiendas online, ofertas demasiado buenas y páginas sospechosas antes de pagar.",
+      "Comprueba dominio, identidad, reputación, pagos y señales de phishing antes de confiar en una web o introducir datos.",
     url: `${siteUrl}/comprobar-web-fiable`,
     siteName: "VonüAI",
     locale: "es_ES",
@@ -27,9 +30,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cómo saber si una web es fiable — VonüAI",
+    title: "Cómo saber si una web es fiable: 7 comprobaciones | Vonü",
     description:
-      "Comprueba una web sospechosa antes de comprar, pagar o compartir datos.",
+      "Comprueba una web antes de pagar o compartir datos: dominio, identidad, reputación, pagos y señales de riesgo.",
   },
   robots: {
     index: true,
@@ -120,6 +123,73 @@ const faqs = [
   {
     q: "¿Qué hago si ya he comprado en una web sospechosa?",
     a: "Guarda capturas, justificantes y correos. Contacta con tu banco si has metido tarjeta o pagado, cambia contraseñas si reutilizaste alguna y revisa si puedes reclamar el cargo.",
+  },
+];
+
+const verificationChecks = [
+  {
+    title: "Comprueba el dominio exacto",
+    text: "Mira letra por letra el dominio, subdominios y terminación. Las suplantaciones suelen añadir palabras, cambiar una letra o imitar una marca conocida.",
+  },
+  {
+    title: "Separa HTTPS de fiabilidad",
+    text: "HTTPS cifra la conexión, pero no demuestra que la empresa o persona detrás de la web sea legítima. Una página fraudulenta también puede tener certificado.",
+  },
+  {
+    title: "Identifica quién está detrás",
+    text: "Busca responsable, empresa, datos de contacto y aviso legal cuando corresponda. Si vende productos o servicios, comprueba que puedas identificar a quién pagarías y a quién reclamarías.",
+  },
+  {
+    title: "Busca señales fuera de la propia web",
+    text: "Consulta menciones, opiniones y referencias externas. La ausencia de resultados no prueba fraude, pero una web sin rastro verificable merece más cautela.",
+  },
+  {
+    title: "Mira qué te pide y en qué contexto",
+    text: "Desconfía de páginas inesperadas que solicitan contraseña, código SMS, tarjeta, DNI o un pago urgente, especialmente si llegaste desde un mensaje o anuncio.",
+  },
+  {
+    title: "Revisa pagos, devoluciones y garantías",
+    text: "Si la web vende, comprueba métodos de pago con capacidad de reclamación, condiciones de compra, devoluciones y una vía clara de contacto antes de introducir la tarjeta.",
+  },
+  {
+    title: "Valora varias señales juntas",
+    text: "Ninguna comprobación aislada certifica una web. Dominio raro, presión, precio imposible y falta de identidad pesan mucho más cuando aparecen combinados.",
+  },
+];
+
+const officialSources = [
+  {
+    name: "INCIBE",
+    text: "Guías de ciberseguridad y compra segura para revisar URLs, identidad, pagos y señales de fraude.",
+    href: "https://www.incibe.es/sites/default/files/docs/senior/guia_ciberseguridad_para_todos.pdf",
+  },
+  {
+    name: "CEC España",
+    text: "Recomendaciones oficiales sobre fraudes online, identidad del vendedor y compras por Internet.",
+    href: "https://portal-cec.consumo.gob.es/es/informacion-general/compras-online/fraudes-online",
+  },
+  {
+    name: "BOE · LSSI",
+    text: "La Ley 34/2002 regula, entre otras materias, la información que debe facilitar un prestador de servicios online.",
+    href: "https://www.boe.es/buscar/act.php?id=BOE-A-2002-13758",
+  },
+];
+
+const relatedGuides = [
+  {
+    title: "Comprobar una tienda online",
+    text: "Si la web vende productos, revisa las señales específicas de una tienda antes de comprar.",
+    href: "/comprobar-tienda-online",
+  },
+  {
+    title: "Analizar un enlace sospechoso",
+    text: "Si has llegado desde un SMS, email o WhatsApp, revisa primero el enlace y su contexto.",
+    href: "/analizar-link-sospechoso",
+  },
+  {
+    title: "¿Es fiable?",
+    text: "Para dudas más amplias sobre mensajes, perfiles, inversiones, documentos o webs.",
+    href: "/es-fiable",
   },
 ];
 
@@ -316,21 +386,47 @@ function CommonCaseTitle({ title }: { title: string }) {
 
 export default function ComprobarWebFiablePage() {
 
+  const pageUrl = `${siteUrl}/comprobar-web-fiable`;
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "WebPage",
-        "@id": `${siteUrl}/comprobar-web-fiable#webpage`,
-        url: `${siteUrl}/comprobar-web-fiable`,
+        "@id": `${pageUrl}#webpage`,
+        url: pageUrl,
         name: "Cómo saber si una web es fiable",
         description:
-          "Guía para comprobar si una web o tienda online parece fiable antes de comprar, pagar o introducir datos.",
+          "Guía práctica para comprobar dominio, identidad, reputación, pagos y señales de riesgo antes de confiar en una web.",
         inLanguage: "es-ES",
+        dateModified: "2026-10-06",
+        isPartOf: { "@id": `${siteUrl}/#website` },
+        breadcrumb: { "@id": `${pageUrl}#breadcrumb` },
+        mainEntity: { "@id": `${pageUrl}#checks` },
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${pageUrl}#breadcrumb`,
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Vonü", item: siteUrl },
+          { "@type": "ListItem", position: 2, name: "Recursos", item: `${siteUrl}/recursos` },
+          { "@type": "ListItem", position: 3, name: "Cómo saber si una web es fiable", item: pageUrl },
+        ],
+      },
+      {
+        "@type": "ItemList",
+        "@id": `${pageUrl}#checks`,
+        name: "7 comprobaciones para saber si una web es fiable",
+        numberOfItems: verificationChecks.length,
+        itemListElement: verificationChecks.map((item, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: item.title,
+          description: item.text,
+        })),
       },
       {
         "@type": "FAQPage",
-        "@id": `${siteUrl}/comprobar-web-fiable#faq`,
+        "@id": `${pageUrl}#faq`,
         mainEntity: faqs.map((item) => ({
           "@type": "Question",
           name: item.q,
@@ -356,15 +452,15 @@ export default function ComprobarWebFiablePage() {
         <div className="mx-auto max-w-[1500px] px-4 pb-12 pt-8 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8">
           <div className="mx-auto max-w-[1120px] text-center">
             <h1 className="mx-auto max-w-[1080px] text-[52px] font-semibold leading-[1.02] tracking-[-0.064em] text-zinc-950 sm:text-[86px] sm:leading-[0.94] sm:tracking-[-0.078em] lg:text-[118px]">
-              Comprueba una{" "}
-              <GradientText tone="blueCyan">web fiable.</GradientText>
-              <span className="block text-zinc-500">Antes de pagar.</span>
+              Cómo saber si una{" "}
+              <GradientText tone="blueCyan">web es fiable.</GradientText>
+              <span className="block text-zinc-500">Compruébala antes de confiar.</span>
             </h1>
 
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
-              Si una tienda online tiene un descuento enorme, te pide pagar por
-              transferencia o algo no termina de encajar, revisa la web antes de
-              meter tus datos o comprar.
+              No te fíes solo del diseño o del candado. Comprueba dominio,
+              identidad, reputación externa, qué datos te pide y cómo cobra antes
+              de iniciar sesión, pagar o compartir información.
             </p>
 
             <div className="mt-7 flex flex-row justify-center gap-2.5 sm:mt-9 sm:gap-3">
@@ -492,9 +588,10 @@ export default function ComprobarWebFiablePage() {
                 </h2>
 
                 <p className="mt-6 text-[17px] leading-8 text-zinc-600">
-                  Una web puede tener buen diseño, candado HTTPS y fotos
-                  profesionales, pero seguir siendo poco fiable. Lo importante
-                  es comprobar quién está detrás, cómo cobra y qué garantías da.
+                  Una web no es fiable solo por tener HTTPS o un diseño
+                  profesional. Comprueba el dominio exacto, quién está detrás,
+                  qué reputación tiene fuera de su página y qué te pide antes de
+                  pagar, iniciar sesión o compartir datos.
                 </p>
               </div>
 
@@ -633,6 +730,16 @@ export default function ComprobarWebFiablePage() {
           </div>
         </div>
       </section>
+
+      <TrustSeoAuthoritySection
+        eyebrow="Comprobación verificable"
+        title="Cómo comprobar si una web es fiable, paso a paso."
+        intro="Esta es la revisión que conviene hacer antes de introducir credenciales, datos personales o un medio de pago. Vonü combina estas señales en contexto, pero ninguna herramienta puede certificar por sí sola que una web sea segura."
+        updatedAt="6 de octubre de 2026"
+        checks={verificationChecks}
+        sources={officialSources}
+        related={relatedGuides}
+      />
 
       <section className="bg-[#f5f5f7]">
         <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
