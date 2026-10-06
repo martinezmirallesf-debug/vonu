@@ -196,7 +196,7 @@ requireText(intentContent, "Was du in einem Mietvertrag vor der Unterschrift pr�
 requireText(intentContent, "ما الذي يجب مراجعته في عقد الإيجار قبل التوقيع", "Arabic rental intent depth");
 
 requireText(jurisdictionProfiles, 'reviewedAt: "2026-10-06"', "jurisdiction profile freshness");
-requireText(jurisdictionProfiles, "RDL 26/2026 and Real Decreto-ley 27/2026", "Spain repealed-law guard");
+requireText(jurisdictionProfiles, "Real Decreto-ley 26/2026 and Real Decreto-ley 27/2026", "Spain repealed-law guard");
 requireText(jurisdictionProfiles, 'rentalRegionRequirement: "England"', "England-only rental scope");
 requireText(jurisdictionProfiles, "BGB §551", "German rental legal anchor");
 requireText(jurisdictionProfiles, "Loi n° 89-462", "French rental legal anchor");
