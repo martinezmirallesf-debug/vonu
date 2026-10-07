@@ -162,10 +162,12 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
             />
           ) : null}
 
-          <article id="answer" className={`mx-auto max-w-[900px] rounded-[28px] border border-sky-300/15 bg-sky-400/[0.055] p-6 text-start shadow-[0_24px_80px_rgba(14,116,144,.06)] sm:p-8 ${inlineAnalyzerIntent ? "mt-6" : "mt-10"}`}>
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sky-300">{labels.answer}</p>
-            <p className="mt-4 text-[18px] leading-8 text-slate-200 sm:text-[20px] sm:leading-9">{content.answer}</p>
-          </article>
+          {!enhancedTrustIntent ? (
+            <article id="answer" className={`mx-auto max-w-[900px] rounded-[28px] border border-sky-300/15 bg-sky-400/[0.055] p-6 text-start shadow-[0_24px_80px_rgba(14,116,144,.06)] sm:p-8 ${inlineAnalyzerIntent ? "mt-6" : "mt-10"}`}>
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sky-300">{labels.answer}</p>
+              <p className="mt-4 text-[18px] leading-8 text-slate-200 sm:text-[20px] sm:leading-9">{content.answer}</p>
+            </article>
+          ) : null}
 
           {!inlineAnalyzerIntent ? (
             <div className="mt-8 flex justify-center">
