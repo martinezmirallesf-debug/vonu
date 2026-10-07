@@ -29,6 +29,8 @@ const globalI18n = read("lib/vonu-global/i18n.ts");
 const trustIntentAuthority = read("app/components/TrustIntentAuthoritySection.tsx");
 const inlineTrustAnalyzer = read("app/components/InlineTrustAnalyzer.tsx");
 const checkClient = read("app/[locale]/check/CheckClient.tsx");
+const coreUseCaseDemo = read("app/components/CoreUseCaseCheckDemo.tsx");
+const homeHeader = read("app/components/HomeHeader.tsx");
 
 function requireText(source, needle, label) {
   if (!source.includes(needle)) throw new Error(`${label}: missing ${JSON.stringify(needle)}`);
@@ -181,6 +183,10 @@ requireText(intentPage, "<InlineTrustAnalyzer", "international inline trust anal
 requireText(inlineTrustAnalyzer, '["url", "capture", "text", "document"]', "generic trust scanner parity");
 requireText(inlineTrustAnalyzer, '["url"]', "focused URL trust scanner");
 requireText(checkClient, "embeddedEyebrow", "embedded home scanner support");
+rejectText(coreUseCaseDemo, '"/comprobar-web-fiable"', "legacy web trust demo removed");
+rejectText(coreUseCaseDemo, '"/comprobar-tienda-online"', "legacy store trust demo removed");
+requireText(coreUseCaseDemo, 'document.querySelector("#analizador")', "legacy demo real-analyzer guard");
+requireText(homeHeader, "!hasInlineTrustAnalyzer ? <CoreUseCaseCheckDemo", "header demo guard for functional trust landings");
 
 requireText(trustAuthoritySection, "Fuentes oficiales de referencia", "trust authority sources");
 requireText(trustAuthoritySection, "Comprueba según tu caso", "trust landing intent links");
