@@ -16,6 +16,7 @@ import InlineDocumentAnalyzer from "./InlineDocumentAnalyzer";
 import LegalIntentAuthoritySection from "./LegalIntentAuthoritySection";
 import DeviceAccessGate from "./DeviceAccessGate";
 import TrustIntentAuthoritySection from "./TrustIntentAuthoritySection";
+import InlineTrustAnalyzer from "./InlineTrustAnalyzer";
 
 const SITE_URL = "https://vonuai.com";
 
@@ -64,6 +65,13 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
   const checkHref = DOCUMENT_INTENTS.has(slug) ? `${checkPath(locale)}?mode=document` : checkPath(locale);
   const inlineLegalIntent = INLINE_LEGAL_INTENTS.has(slug);
   const enhancedTrustIntent = ENHANCED_TRUST_INTENTS.has(slug);
+  const trustAnalyzerIntent =
+    slug === "comprobar-web-fiable"
+      ? "website"
+      : slug === "comprobar-tienda-online"
+        ? "online_store"
+        : "generic";
+  const inlineAnalyzerIntent = inlineLegalIntent || enhancedTrustIntent;
   const documentIntent =
     slug === "revisar-contrato-alquiler" ? "rental_contract" : "contract";
 
@@ -77,7 +85,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
         name: topic.title,
         description: topic.description,
         inLanguage: locale,
-        ...(inlineLegalIntent || enhancedTrustIntent ? { dateModified: "2026-10-06" } : {}),
+        ...(inlineAnalyzerIntent ? { dateModified: "2026-10-07" } : {}),
         isPartOf: { "@id": `${SITE_URL}/#website` },
         publisher: { "@id": `${SITE_URL}/#organization` },
         about: {
@@ -87,7 +95,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
         mainEntity: { "@id": `${pageUrl}#signals` },
         potentialAction: {
           "@type": "UseAction",
-          target: inlineLegalIntent ? pageUrl : `${SITE_URL}${checkHref}`,
+          target: inlineAnalyzerIntent ? pageUrl : `${SITE_URL}${checkHref}`,
           object: { "@id": `${SITE_URL}/#vonu-check` },
         },
       },
@@ -147,12 +155,19 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
             <InlineDocumentAnalyzer locale={locale} intent={documentIntent} />
           ) : null}
 
-          <article id="answer" className={`mx-auto max-w-[900px] rounded-[28px] border border-sky-300/15 bg-sky-400/[0.055] p-6 text-start shadow-[0_24px_80px_rgba(14,116,144,.06)] sm:p-8 ${inlineLegalIntent ? "mt-6" : "mt-10"}`}>
+          {enhancedTrustIntent ? (
+            <InlineTrustAnalyzer
+              locale={locale}
+              intent={trustAnalyzerIntent}
+            />
+          ) : null}
+
+          <article id="answer" className={`mx-auto max-w-[900px] rounded-[28px] border border-sky-300/15 bg-sky-400/[0.055] p-6 text-start shadow-[0_24px_80px_rgba(14,116,144,.06)] sm:p-8 ${inlineAnalyzerIntent ? "mt-6" : "mt-10"}`}>
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sky-300">{labels.answer}</p>
             <p className="mt-4 text-[18px] leading-8 text-slate-200 sm:text-[20px] sm:leading-9">{content.answer}</p>
           </article>
 
-          {!inlineLegalIntent ? (
+          {!inlineAnalyzerIntent ? (
             <div className="mt-8 flex justify-center">
               <FunnelLink
                 href={checkHref}
@@ -276,7 +291,7 @@ export default function IntentPublicPage({ locale, slug }: { locale: SupportedLo
         </div>
       </section>
 
-      {inlineLegalIntent ? <DeviceAccessGate locale={locale} /> : null}
+      {inlineAnalyzerIntent ? <DeviceAccessGate locale={locale} /> : null}
       <HomeFooter />
     </main>
   );
