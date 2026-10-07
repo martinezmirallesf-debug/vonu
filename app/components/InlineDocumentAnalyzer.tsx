@@ -36,19 +36,19 @@ const COPY: Record<SupportedLocale, {
   privacy: string;
 }> = {
   es: {
-    eyebrow: "Vonü Check · análisis real",
+    eyebrow: "Vonü Check · analiza gratis",
     title: {
-      contract: "Sube tu contrato y revísalo aquí.",
-      rental_contract: "Sube tu contrato de alquiler y revísalo aquí.",
+      contract: "Entiende tu contrato antes de firmarlo.",
+      rental_contract: "Entiende tu contrato de alquiler antes de firmarlo.",
     },
-    text: "Vonü extrae cláusulas, importes, fechas, obligaciones y jurisdicción. Si dispone de una referencia legal oficial verificada para ese país o región, la aplica con cautela.",
+    text: "Vonü identifica cláusulas, importes, fechas, obligaciones y jurisdicción. Si encuentra referencias legales oficiales verificadas para ese país o región, las incorpora al análisis con cautela.",
     drop: "Arrastra un PDF aquí o selecciónalo",
     hint: "PDF · máximo 8 MB",
     choose: "Elegir PDF",
     change: "Cambiar PDF",
     jurisdiction: "País o región que crees que aplica",
     jurisdictionPlaceholder: "Opcional · p. ej. España, Cataluña, England…",
-    jurisdictionHelp: "Solo sirve como pista. Vonü no lo tratará como prueba y comprobará la jurisdicción en el propio contrato.",
+    jurisdictionHelp: "Indica tu país o región para ayudar a Vonü a interpretar mejor la jurisdicción aplicable y los matices legales de esa zona. El contrato seguirá siendo la referencia principal del análisis.",
     analyze: "Analizar ahora",
     analysing: "Revisando contrato…",
     invalid: "Sube un PDF válido de hasta 8 MB.",
@@ -64,22 +64,22 @@ const COPY: Record<SupportedLocale, {
     source: "Abrir fuente",
     reviewed: "Perfil legal revisado",
     noJurisdiction: "No se ha confirmado una jurisdicción suficiente para aplicar reglas legales específicas.",
-    privacy: "No subas contraseñas, códigos de acceso ni información que no sea necesaria para revisar el documento.",
+    privacy: "Sube solo la información necesaria para revisar el documento.\nEvita contraseñas, códigos de acceso o datos que no sean relevantes.",
   },
   en: {
-    eyebrow: "Vonü Check · real analysis",
+    eyebrow: "Vonü Check · analyse for free",
     title: {
-      contract: "Upload your contract and review it here.",
-      rental_contract: "Upload your rental agreement and review it here.",
+      contract: "Understand your contract before you sign it.",
+      rental_contract: "Understand your rental agreement before you sign it.",
     },
-    text: "Vonü extracts clauses, amounts, dates, obligations and jurisdiction. When a verified official legal profile exists for that country or region, it uses it conservatively.",
+    text: "Vonü identifies clauses, amounts, dates, obligations and jurisdiction. When it finds verified official legal references for that country or region, it incorporates them into the analysis with caution.",
     drop: "Drop a PDF here or choose one",
     hint: "PDF · up to 8 MB",
     choose: "Choose PDF",
     change: "Change PDF",
     jurisdiction: "Country or region you believe applies",
     jurisdictionPlaceholder: "Optional · e.g. England, Spain, France…",
-    jurisdictionHelp: "This is only a hint. Vonü will not treat it as evidence and will check jurisdiction from the contract itself.",
+    jurisdictionHelp: "Enter your country or region to help Vonü interpret the applicable jurisdiction and local legal nuances more accurately. The contract itself remains the main reference for the analysis.",
     analyze: "Analyse now",
     analysing: "Reviewing contract…",
     invalid: "Upload a valid PDF up to 8 MB.",
@@ -95,22 +95,22 @@ const COPY: Record<SupportedLocale, {
     source: "Open source",
     reviewed: "Legal profile reviewed",
     noJurisdiction: "No jurisdiction was confirmed strongly enough to apply country-specific legal rules.",
-    privacy: "Do not upload passwords, access codes or information that is not necessary to review the document.",
+    privacy: "Upload only the information needed to review the document.\nAvoid passwords, access codes or unrelated sensitive data.",
   },
   fr: {
-    eyebrow: "Vonü Check · analyse réelle",
+    eyebrow: "Vonü Check · analyse gratuite",
     title: {
-      contract: "Importez votre contrat et vérifiez-le ici.",
-      rental_contract: "Importez votre bail et vérifiez-le ici.",
+      contract: "Comprenez votre contrat avant de le signer.",
+      rental_contract: "Comprenez votre bail avant de le signer.",
     },
-    text: "Vonü extrait clauses, montants, dates, obligations et juridiction. Lorsqu’un profil juridique officiel vérifié existe pour le pays ou la région, il l’utilise avec prudence.",
+    text: "Vonü identifie les clauses, montants, dates, obligations et la juridiction. Lorsqu’il trouve des références juridiques officielles vérifiées pour ce pays ou cette région, il les intègre à l’analyse avec prudence.",
     drop: "Déposez un PDF ici ou sélectionnez-le",
     hint: "PDF · 8 Mo maximum",
     choose: "Choisir un PDF",
     change: "Changer de PDF",
     jurisdiction: "Pays ou région que vous pensez applicable",
     jurisdictionPlaceholder: "Facultatif · ex. France, England, Espagne…",
-    jurisdictionHelp: "Il s’agit uniquement d’un indice. Vonü ne le traite pas comme une preuve et vérifie la juridiction dans le contrat.",
+    jurisdictionHelp: "Indiquez votre pays ou votre région pour aider Vonü à mieux interpréter la juridiction applicable et les particularités juridiques locales. Le contrat reste la référence principale de l’analyse.",
     analyze: "Analyser",
     analysing: "Analyse du contrat…",
     invalid: "Importez un PDF valide de 8 Mo maximum.",
@@ -126,22 +126,22 @@ const COPY: Record<SupportedLocale, {
     source: "Ouvrir la source",
     reviewed: "Profil juridique vérifié",
     noJurisdiction: "Aucune juridiction n’a été confirmée avec assez de certitude pour appliquer des règles juridiques propres à un pays.",
-    privacy: "N’importez pas de mots de passe, codes d’accès ou données inutiles à la vérification du document.",
+    privacy: "Importez uniquement les informations nécessaires à la vérification du document.\nÉvitez les mots de passe, codes d’accès ou données sensibles non pertinentes.",
   },
   de: {
-    eyebrow: "Vonü Check · echte Analyse",
+    eyebrow: "Vonü Check · kostenlos analysieren",
     title: {
-      contract: "Vertrag hochladen und hier prüfen.",
-      rental_contract: "Mietvertrag hochladen und hier prüfen.",
+      contract: "Verstehe deinen Vertrag, bevor du unterschreibst.",
+      rental_contract: "Verstehe deinen Mietvertrag, bevor du unterschreibst.",
     },
-    text: "Vonü extrahiert Klauseln, Beträge, Daten, Pflichten und Rechtsordnung. Gibt es für Land oder Region ein verifiziertes offizielles Rechtsprofil, wird es vorsichtig angewendet.",
+    text: "Vonü erkennt Klauseln, Beträge, Daten, Pflichten und die anwendbare Rechtsordnung. Wenn verifizierte offizielle Rechtsquellen für dieses Land oder diese Region vorliegen, werden sie mit Vorsicht in die Analyse einbezogen.",
     drop: "PDF hier ablegen oder auswählen",
     hint: "PDF · maximal 8 MB",
     choose: "PDF auswählen",
     change: "PDF ändern",
     jurisdiction: "Land oder Region, die deiner Meinung nach gilt",
     jurisdictionPlaceholder: "Optional · z. B. Deutschland, England, Frankreich…",
-    jurisdictionHelp: "Nur ein Hinweis. Vonü behandelt ihn nicht als Beleg und prüft die Rechtsordnung im Vertrag selbst.",
+    jurisdictionHelp: "Gib dein Land oder deine Region an, damit Vonü die anwendbare Rechtsordnung und lokale rechtliche Besonderheiten besser einordnen kann. Der Vertrag selbst bleibt die wichtigste Grundlage der Analyse.",
     analyze: "Jetzt analysieren",
     analysing: "Vertrag wird geprüft…",
     invalid: "Lade eine gültige PDF-Datei bis 8 MB hoch.",
@@ -157,22 +157,22 @@ const COPY: Record<SupportedLocale, {
     source: "Quelle öffnen",
     reviewed: "Rechtsprofil geprüft",
     noJurisdiction: "Es wurde keine Rechtsordnung sicher genug bestätigt, um länderspezifische Rechtsregeln anzuwenden.",
-    privacy: "Lade keine Passwörter, Zugangscodes oder für die Vertragsprüfung unnötigen Daten hoch.",
+    privacy: "Lade nur die Informationen hoch, die für die Prüfung des Dokuments nötig sind.\nVermeide Passwörter, Zugangscodes oder andere nicht relevante sensible Daten.",
   },
   ar: {
-    eyebrow: "Vonü Check · تحليل فعلي",
+    eyebrow: "Vonü Check · حلّل مجانًا",
     title: {
-      contract: "ارفع العقد وراجعه هنا.",
-      rental_contract: "ارفع عقد الإيجار وراجعه هنا.",
+      contract: "افهم عقدك قبل أن توقّعه.",
+      rental_contract: "افهم عقد الإيجار قبل أن توقّعه.",
     },
-    text: "يستخرج Vonü البنود والمبالغ والتواريخ والالتزامات والولاية القضائية. وعند توفر ملف قانوني رسمي موثَّق للبلد أو الإقليم، يستخدمه بحذر.",
+    text: "يحدّد Vonü البنود والمبالغ والتواريخ والالتزامات والولاية القضائية. وعندما يجد مراجع قانونية رسمية موثّقة لذلك البلد أو الإقليم، يضمّنها في التحليل بحذر.",
     drop: "اسحب ملف PDF هنا أو اختر ملفًا",
     hint: "PDF · حتى 8 ميغابايت",
     choose: "اختيار PDF",
     change: "تغيير PDF",
     jurisdiction: "البلد أو الإقليم الذي تعتقد أنه ينطبق",
     jurisdictionPlaceholder: "اختياري · مثال: السعودية، فرنسا، England…",
-    jurisdictionHelp: "هذه مجرد إشارة من المستخدم. لن يعتبرها Vonü دليلًا وسيحاول تحديد الولاية القضائية من نص العقد نفسه.",
+    jurisdictionHelp: "حدّد بلدك أو منطقتك لمساعدة Vonü على تفسير الولاية القضائية المطبقة وفهم الفروقات القانونية المحلية بشكل أدق. يظل العقد نفسه المرجع الأساسي في التحليل.",
     analyze: "حلّل الآن",
     analysing: "جارٍ مراجعة العقد…",
     invalid: "ارفع ملف PDF صالحًا بحجم لا يتجاوز 8 ميغابايت.",
@@ -188,7 +188,7 @@ const COPY: Record<SupportedLocale, {
     source: "فتح المصدر",
     reviewed: "تمت مراجعة الملف القانوني",
     noJurisdiction: "لم يتم تأكيد ولاية قضائية بدرجة كافية لتطبيق قواعد قانونية خاصة ببلد معين.",
-    privacy: "لا ترفع كلمات مرور أو رموز دخول أو بيانات غير ضرورية لمراجعة المستند.",
+    privacy: "ارفع فقط المعلومات اللازمة لمراجعة المستند.\nتجنّب كلمات المرور أو رموز الدخول أو أي بيانات حساسة غير مرتبطة بالمراجعة.",
   },
 };
 
@@ -288,10 +288,10 @@ export default function InlineDocumentAnalyzer({
 
   return (
     <section
-      className="mx-auto mt-10 max-w-[1040px] rounded-[32px] border border-white/[0.09] bg-[#0b1020] p-4 text-left shadow-[0_30px_90px_rgba(0,0,0,.22)] sm:mt-12 sm:p-6"
+      className="mx-auto mt-10 max-w-[1040px] text-left sm:mt-12"
       aria-label={t.title[intent]}
     >
-      <div className="rounded-[26px] border border-white/[0.06] bg-white/[0.035] p-5 sm:p-7">
+      <div className="rounded-[32px] border border-white/[0.09] bg-[#0b1020] p-5 shadow-[0_30px_90px_rgba(0,0,0,.22)] sm:p-7">
         <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#7bb7ff]">
           {t.eyebrow}
         </p>
@@ -304,7 +304,7 @@ export default function InlineDocumentAnalyzer({
               {t.text}
             </p>
           </div>
-          <p className="text-[11px] leading-5 text-slate-500 lg:text-right">{t.privacy}</p>
+          <p className="whitespace-pre-line text-[11px] leading-5 text-slate-500 lg:max-w-[430px] lg:justify-self-end lg:text-right">{t.privacy}</p>
         </div>
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[1.1fr_.9fr]">
