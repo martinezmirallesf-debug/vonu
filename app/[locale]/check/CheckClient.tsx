@@ -965,11 +965,29 @@ function yesNoLabel(locale: SupportedLocale, value: boolean) {
   return value ? labels[locale][0] : labels[locale][1];
 }
 
-export default function CheckClient({ locale, initialMode = "url" }: { locale: SupportedLocale; initialMode?: Mode }) {
+export default function CheckClient({
+  locale,
+  initialMode = "url",
+  embedded = false,
+  allowedModes,
+  embeddedEyebrow,
+  embeddedTitle,
+  embeddedDescription,
+}: {
+  locale: SupportedLocale;
+  initialMode?: Mode;
+  embedded?: boolean;
+  allowedModes?: Mode[];
+  embeddedEyebrow?: string;
+  embeddedTitle?: string;
+  embeddedDescription?: string;
+}) {
   const t = UI[locale];
+  const availableModes: Mode[] = allowedModes?.length ? allowedModes : ["url", "capture", "text", "document"];
+  const resolvedInitialMode = availableModes.includes(initialMode) ? initialMode : availableModes[0] || "url";
   const nav = navCopy[locale];
   const dir = localeMeta[locale].dir;
-  const [mode, setMode] = useState<Mode>(initialMode);
+  const [mode, setMode] = useState<Mode>(resolvedInitialMode);
   const [url, setUrl] = useState("");
   const [text, setText] = useState("");
   const [imageData, setImageData] = useState<string | null>(null);
@@ -1065,7 +1083,7 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
   })();
 
   function switchMode(next: Mode) {
-    if (loading) return;
+    if (loading || !availableModes.includes(next)) return;
     setMode(next);
     setError("");
     setResult(null);
@@ -1203,7 +1221,7 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
       imagePreviewObjectUrlRef.current = null;
     }
 
-    setMode("url");
+    setMode(resolvedInitialMode);
     setUrl("");
     setText("");
     setImageData(null);
@@ -1220,7 +1238,7 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
     if (fileRef.current) fileRef.current.value = "";
     if (documentRef.current) documentRef.current.value = "";
 
-    if (typeof window !== "undefined") {
+    if (!embedded && typeof window !== "undefined") {
       window.history.replaceState(null, "", `/${locale}/check`);
       window.requestAnimationFrame(() => {
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -1441,21 +1459,27 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
     <div
       dir={dir}
       onPaste={handlePaste}
-      className={[
-        "flex min-h-dvh w-full max-w-[100vw] overflow-x-clip flex-col bg-[#0d101b] text-slate-100",
-        idle ? "md:h-dvh md:overflow-hidden" : "",
-      ].join(" ")}
-      style={{
-        backgroundImage:
-          "radial-gradient(circle at 50% 44%, rgba(16,185,129,.07), transparent 28%), radial-gradient(circle at 88% 68%, rgba(56,189,248,.035), transparent 24%), linear-gradient(180deg,#0b0e17 0%,#111523 100%)",
-      }}
+      className={embedded
+        ? "w-full max-w-[100vw] overflow-x-clip text-slate-100"
+        : [
+            "flex min-h-dvh w-full max-w-[100vw] overflow-x-clip flex-col bg-[#0d101b] text-slate-100",
+            idle ? "md:h-dvh md:overflow-hidden" : "",
+          ].join(" ")}
+      style={embedded
+        ? undefined
+        : {
+            backgroundImage:
+              "radial-gradient(circle at 50% 44%, rgba(16,185,129,.07), transparent 28%), radial-gradient(circle at 88% 68%, rgba(56,189,248,.035), transparent 24%), linear-gradient(180deg,#0b0e17 0%,#111523 100%)",
+          }}
     >
-      <HomeHeader />
+      {!embedded && <HomeHeader />}
 
       {idle && (
         <>
-          <main className="mx-auto flex w-full max-w-[1080px] flex-1 flex-col justify-center px-4 py-5 sm:px-6 md:min-h-0 md:py-3 lg:px-8">
-            <section className="text-center">
+          <main className={embedded
+            ? "mx-auto w-full max-w-[1080px]"
+            : "mx-auto flex w-full max-w-[1080px] flex-1 flex-col justify-center px-4 py-5 sm:px-6 md:min-h-0 md:py-3 lg:px-8"}>
+            {!embedded && <section className="text-center">
               <h1 className="mx-auto max-w-[900px] text-balance text-[36px] font-bold leading-[1.02] tracking-[-0.055em] text-white sm:text-[48px] lg:text-[56px] xl:text-[60px]">{t.hero}</h1>
               <p data-vonu-scanner-subtitle="true" className="mx-auto mt-3 max-w-[720px] text-[15px] leading-6 text-slate-400 sm:text-[16px]">
                 <span data-vonu-mobile-headline="true" className="block md:hidden">
@@ -1479,12 +1503,37 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
                   </span>
                 </span>
               </p>
-            </section>
+            </section>}
 
-            <section data-vonu-idle-mode={mode} className="mx-auto mt-5 w-full max-w-[850px] rounded-[22px] bg-[#141927]/72 shadow-[0_26px_70px_rgba(0,0,0,.24)] backdrop-blur-sm sm:mt-6">
+            <section
+              data-vonu-idle-mode={mode}
+              className={embedded
+                ? "mx-auto w-full max-w-[1040px] rounded-[32px] border border-white/[0.09] bg-[#0b1020] shadow-[0_30px_90px_rgba(0,0,0,.22)]"
+                : "mx-auto mt-5 w-full max-w-[850px] rounded-[22px] bg-[#141927]/72 shadow-[0_26px_70px_rgba(0,0,0,.24)] backdrop-blur-sm sm:mt-6"}
+            >
+              {embedded && (embeddedEyebrow || embeddedTitle || embeddedDescription) && (
+                <div className="px-5 pt-5 sm:px-7 sm:pt-7">
+                  {embeddedEyebrow && (
+                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#7bb7ff]">
+                      {embeddedEyebrow}
+                    </p>
+                  )}
+                  {embeddedTitle && (
+                    <h2 className="mt-3 text-[28px] font-semibold leading-[1.03] tracking-[-0.045em] text-white sm:text-[38px]">
+                      {embeddedTitle}
+                    </h2>
+                  )}
+                  {embeddedDescription && (
+                    <p className="mt-3 max-w-3xl text-[14px] leading-6 text-slate-400 sm:text-[15px]">
+                      {embeddedDescription}
+                    </p>
+                  )}
+                </div>
+              )}
+              {availableModes.length > 1 && (
               <div className="grid grid-cols-4 px-1 pt-1 sm:px-2">
                 {/* Keep icon and label as direct button siblings: mobile tab CSS depends on this shape. */}
-                {(["url", "capture", "text", "document"] as Mode[]).map((item) => {
+                {availableModes.map((item) => {
                   const label = item === "url" ? t.url : item === "capture" ? t.capture : item === "text" ? t.text : DOCUMENT_UI[locale].label;
                   return (
                     <button key={item} type="button" onClick={() => switchMode(item)} className={["relative flex h-[52px] min-w-0 flex-nowrap items-center justify-center gap-[6px] px-1 text-[11px] font-semibold transition sm:px-2 sm:text-[14px]", mode === item ? "text-emerald-300" : "text-slate-400 hover:text-slate-200"].join(" ")}>
@@ -1503,8 +1552,9 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
                   );
                 })}
               </div>
+              )}
 
-              <div className="px-4 pb-4 pt-4 sm:px-6 sm:pb-5 sm:pt-5">
+              <div className={embedded ? "px-5 pb-5 pt-5 sm:px-7 sm:pb-7" : "px-4 pb-4 pt-4 sm:px-6 sm:pb-5 sm:pt-5"}>
                 {mode === "url" && (
                   <div data-vonu-url-input-shell="true" className="flex min-h-[72px] items-center rounded-[18px] bg-[#0d1220] px-4 ring-1 ring-white/[0.07] transition focus-within:ring-emerald-400/35">
                     <span data-vonu-url-icon="true" className="me-3 text-emerald-300">⌕</span>
@@ -1580,7 +1630,7 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
             </section>
           </main>
 
-          <footer className="vonu-check-inner-footer shrink-0 bg-[#0b0e17]/55">
+          {!embedded && <footer className="vonu-check-inner-footer shrink-0 bg-[#0b0e17]/55">
             <div className="mx-auto flex min-h-11 max-w-[1320px] items-center justify-between gap-3 px-4 text-[11px] text-slate-600 sm:px-6 lg:px-8">
               <div className="flex items-center gap-2 text-slate-500"><VonuMark /><span className="font-semibold tracking-[0.08em] text-white">Vonü</span></div>
               <div className="flex items-center gap-3 sm:gap-4">
@@ -1590,13 +1640,15 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
                 <Link href={legalPath(locale, "privacy")} className="hover:text-slate-400">{t.privacyMenu}</Link>
               </div>
             </div>
-          </footer>
-          <VonuHelpAssistant locale={locale} />
+          </footer>}
+          {!embedded && <VonuHelpAssistant locale={locale} />}
         </>
       )}
 
       {loading && (
-        <main className="mx-auto grid min-h-[calc(100dvh-68px)] w-full min-w-0 max-w-[900px] place-items-center overflow-x-hidden px-4 py-8 sm:py-10">
+        <main className={embedded
+          ? "mx-auto grid w-full min-w-0 max-w-[900px] place-items-center overflow-x-hidden py-3"
+          : "mx-auto grid min-h-[calc(100dvh-68px)] w-full min-w-0 max-w-[900px] place-items-center overflow-x-hidden px-4 py-8 sm:py-10"}>
           <section className="w-full min-w-0 max-w-full overflow-hidden">
             <SubjectCard />
             <div className="w-full min-w-0 overflow-hidden rounded-[26px] bg-[#141927]/86 p-5 text-center shadow-[0_30px_80px_rgba(0,0,0,.34)] ring-1 ring-white/[0.08] sm:p-9">
@@ -1618,7 +1670,9 @@ export default function CheckClient({ locale, initialMode = "url" }: { locale: S
       )}
 
       {result && (
-        <main className="mx-auto w-full min-w-0 max-w-[1080px] flex-1 overflow-x-hidden px-4 py-8 sm:px-6 lg:px-8">
+        <main className={embedded
+          ? "mx-auto w-full min-w-0 max-w-[1080px] overflow-x-hidden py-3"
+          : "mx-auto w-full min-w-0 max-w-[1080px] flex-1 overflow-x-hidden px-4 py-8 sm:px-6 lg:px-8"}>
           <SubjectCard completed />
 
           <section className="rounded-[28px] p-5 shadow-[0_30px_90px_rgba(0,0,0,.35)] ring-1 sm:p-8" style={{ background: `linear-gradient(180deg, ${styles.bg}, rgba(20,25,39,.94))`, borderColor: styles.border }}>
