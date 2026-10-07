@@ -27,6 +27,8 @@ const jurisdictionProfiles = read("lib/vonu-check/jurisdiction-profiles.ts");
 const documentRoute = read("app/api/check/document/route.ts");
 const globalI18n = read("lib/vonu-global/i18n.ts");
 const trustIntentAuthority = read("app/components/TrustIntentAuthoritySection.tsx");
+const inlineTrustAnalyzer = read("app/components/InlineTrustAnalyzer.tsx");
+const checkClient = read("app/[locale]/check/CheckClient.tsx");
 
 function requireText(source, needle, label) {
   if (!source.includes(needle)) throw new Error(`${label}: missing ${JSON.stringify(needle)}`);
@@ -165,10 +167,21 @@ for (const [source, slug, label] of [
   requireText(source, `localizedLanguageAlternates("${slug}")`, `${label} hreflang metadata`);
   requireText(source, '"@type": "BreadcrumbList"', `${label} breadcrumb schema`);
   requireText(source, '"@type": "ItemList"', `${label} verification list schema`);
-  requireText(source, 'dateModified: "2026-10-06"', `${label} freshness`);
+  requireText(source, 'dateModified: "2026-10-07"', `${label} freshness`);
   requireText(source, "<TrustSeoAuthoritySection", `${label} visible authority section`);
   requireText(source, 'isPartOf: { "@id": `${siteUrl}/#website` }', `${label} website entity relationship`);
 }
+requireText(trustWebPage, '<InlineTrustAnalyzer locale="es" intent="website" />', "Spanish web inline analyzer");
+requireText(trustShopPage, '<InlineTrustAnalyzer locale="es" intent="online_store" />', "Spanish shop inline analyzer");
+requireText(trustHubPage, '<InlineTrustAnalyzer locale="es" intent="generic" />', "Spanish trust hub inline analyzer");
+rejectText(trustWebPage, "Web revisada", "Spanish web static demo removed");
+rejectText(trustShopPage, "Tienda revisada", "Spanish shop static demo removed");
+rejectText(trustHubPage, "Fiabilidad revisada", "Spanish trust hub static demo removed");
+requireText(intentPage, "<InlineTrustAnalyzer", "international inline trust analyzer");
+requireText(inlineTrustAnalyzer, '["url", "capture", "text", "document"]', "generic trust scanner parity");
+requireText(inlineTrustAnalyzer, '["url"]', "focused URL trust scanner");
+requireText(checkClient, "embeddedEyebrow", "embedded home scanner support");
+
 requireText(trustAuthoritySection, "Fuentes oficiales de referencia", "trust authority sources");
 requireText(trustAuthoritySection, "Comprueba según tu caso", "trust landing intent links");
 requireText(trustAuthoritySection, "Actualizado el", "trust landing visible freshness");
@@ -191,7 +204,7 @@ requireText(intentContent, "7 فحوصات لمعرفة ما إذا كان ال�
 requireText(intentPage, "<InlineDocumentAnalyzer locale={locale} intent={documentIntent} />", "inline legal analyzer");
 requireText(intentPage, "<LegalIntentAuthoritySection locale={locale} intent={documentIntent} />", "legal authority section");
 requireText(intentPage, "<DeviceAccessGate locale={locale} />", "inline legal entitlement gate");
-requireText(intentPage, 'dateModified: "2026-10-06"', "legal intent structured freshness");
+requireText(intentPage, 'dateModified: "2026-10-07"', "intent structured freshness");
 requireText(inlineDocumentAnalyzer, 'form.set("jurisdictionHint"', "jurisdiction hint submission");
 requireText(inlineDocumentAnalyzer, 'form.set("kindHint", intent)', "document intent hint submission");
 requireText(inlineDocumentAnalyzer, 'fetch("/api/check/document"', "real inline document analysis");
