@@ -71,6 +71,10 @@ export default function HomeHeader({ overlayClose, solid = false }: HomeHeaderPr
   const pathParts = pathname.split("/").filter(Boolean);
   const currentRouteSlug = (isGlobalLocale(pathParts[0] || "") ? pathParts[1] : pathParts[0]) || "";
   const currentSlug = currentRouteSlug ? resolveInternalSlug(locale, currentRouteSlug) : null;
+  const hasInlineTrustAnalyzer =
+    currentSlug === "comprobar-web-fiable" ||
+    currentSlug === "comprobar-tienda-online" ||
+    currentSlug === "es-fiable";
   const currentLegalDocument = legalDocumentFromPath(pathname);
 
   const mainLinks = [
@@ -305,7 +309,7 @@ export default function HomeHeader({ overlayClose, solid = false }: HomeHeaderPr
         </div>
       </div>
 
-        <CoreUseCaseCheckDemo pathname={pathname} />
+        {!hasInlineTrustAnalyzer ? <CoreUseCaseCheckDemo pathname={pathname} /> : null}
       </header>
     </>
   );
