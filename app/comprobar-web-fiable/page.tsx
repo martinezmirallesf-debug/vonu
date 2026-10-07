@@ -4,7 +4,8 @@ import type { ReactNode } from "react";
 import HomeHeader from "../components/HomeHeader";
 import HomeFooter from "../components/HomeFooter";
 import ResourceSignup from "../components/ResourceSignup";
-import VoiceBarsIcon from "../components/VoiceBarsIcon";
+import InlineTrustAnalyzer from "../components/InlineTrustAnalyzer";
+import DeviceAccessGate from "../components/DeviceAccessGate";
 import TrustSeoAuthoritySection from "../components/TrustSeoAuthoritySection";
 import { localizedLanguageAlternates } from "@/lib/vonu-global/routes";
 
@@ -398,7 +399,7 @@ export default function ComprobarWebFiablePage() {
         description:
           "Guía práctica para comprobar dominio, identidad, reputación, pagos y señales de riesgo antes de confiar en una web.",
         inLanguage: "es-ES",
-        dateModified: "2026-10-06",
+        dateModified: "2026-10-07",
         isPartOf: { "@id": `${siteUrl}/#website` },
         breadcrumb: { "@id": `${pageUrl}#breadcrumb` },
         mainEntity: { "@id": `${pageUrl}#checks` },
@@ -465,7 +466,7 @@ export default function ComprobarWebFiablePage() {
 
             <div className="mt-7 flex flex-row justify-center gap-2.5 sm:mt-9 sm:gap-3">
               <Link
-                href="/chat"
+                href="#analizador"
                 className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] transition hover:scale-[1.02] active:scale-[0.99] sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-[15px]"
               >
                 <span className="truncate">Comprobar web</span>
@@ -482,92 +483,7 @@ export default function ComprobarWebFiablePage() {
             </div>
           </div>
 
-          <div className="mx-auto mt-10 max-w-5xl sm:mt-14">
-            <div className="rounded-[38px] border border-zinc-200 bg-white p-3 shadow-[0_2px_5px_rgba(0,0,0,0.04),0_28px_80px_rgba(0,0,0,0.12)]">
-              <div className="rounded-[30px] bg-[#f5f5f7] p-4 sm:p-6">
-                <div className="mb-6 flex justify-end">
-                  <span className="rounded-full bg-white px-3 py-1 text-[12px] font-medium text-zinc-500 shadow-sm">
-                    Web revisada
-                  </span>
-                </div>
-
-                <div className="mx-auto max-w-3xl">
-                  <div className="ml-auto max-w-[88%] rounded-[26px] bg-[#e9edf1] px-5 py-4 text-left text-[16px] leading-7 text-zinc-900 sm:max-w-[78%]">
-                    Esta web tiene un descuento enorme y me pide pagar por
-                    transferencia. Tiene candado y parece profesional. ¿La revisas?
-                  </div>
-
-                  <div className="mt-7 text-left">
-                    <div className="mb-4 flex items-center gap-2">
-                      <span className="h-3.5 w-3.5 rounded-full bg-orange-400" />
-                      <span className="h-3.5 w-3.5 rounded-full bg-orange-400" />
-                      <span className="h-3.5 w-3.5 rounded-full bg-orange-400" />
-                    </div>
-
-                    <div className="text-[17px] leading-8 text-zinc-900">
-                      <p className="text-[28px] font-semibold leading-[1.05] tracking-[-0.055em] text-zinc-950 sm:text-[38px]">
-                        Yo no pagaría todavía. Buen diseño y candado no bastan para confiar.
-                      </p>
-
-                      <div className="mt-5">
-                        <p className="font-semibold text-zinc-950">
-                          Lo que revisaría:
-                        </p>
-
-                        <ul className="mt-3 space-y-3 text-zinc-700">
-                          <li className="flex gap-3">
-                            <span className="mt-[11px] h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" />
-                            <span>Si el dominio imita a una marca o parece recién creado.</span>
-                          </li>
-                          <li className="flex gap-3">
-                            <span className="mt-[11px] h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" />
-                            <span>Si hay empresa real, contacto y política de devoluciones.</span>
-                          </li>
-                          <li className="flex gap-3">
-                            <span className="mt-[11px] h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" />
-                            <span>
-                              Si el método de pago permite reclamar si algo sale mal.
-                            </span>
-                          </li>
-                        </ul>
-                      </div>
-
-                      <div className="mt-5">
-                        <p className="font-semibold text-zinc-950">
-                          Qué haría ahora:
-                        </p>
-
-                        <p className="mt-2 text-zinc-700">
-                          Buscaría la web fuera de su propia página y no pagaría
-                          por transferencia hasta comprobar quién está detrás.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-7 rounded-full border border-zinc-200 bg-white px-3 py-2 shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_0_13px_rgba(0,0,0,0.135),0_3px_8px_rgba(0,0,0,0.085)]">
-                    <div className="flex items-center gap-2">
-                      <div className="grid h-9 w-9 place-items-center rounded-full text-zinc-900">
-                        <span className="text-[25px] leading-none">+</span>
-                      </div>
-
-                      <div className="min-w-0 flex-1 truncate whitespace-nowrap text-left text-[13.5px] text-zinc-400 sm:text-[16px]">
-                        Pega una web o sube captura
-                      </div>
-
-                      <div className="grid h-10 w-10 place-items-center rounded-full bg-zinc-950 text-white">
-                        <VoiceBarsIcon />
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="mt-2 text-center text-[11.5px] text-zinc-500">
-                    Orientación preventiva · No sustituye profesionales.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <InlineTrustAnalyzer locale="es" intent="website" />
         </div>
       </section>
 
@@ -805,6 +721,7 @@ export default function ComprobarWebFiablePage() {
         </div>
       </section>
 
+      <DeviceAccessGate locale="es" />
       <HomeFooter />
     </main>
   );
