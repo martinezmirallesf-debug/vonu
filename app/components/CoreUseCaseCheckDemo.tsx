@@ -15,30 +15,6 @@ type DemoConfig = {
 };
 
 const demos: Record<string, DemoConfig> = {
-  "/comprobar-web-fiable": {
-    mode: "url",
-    input: "https://oferta-ejemplo.shop/producto",
-    result: "Precaución antes de pagar",
-    score: 68,
-    signals: [
-      "Dominio reciente y con poco historial verificable",
-      "El pago por transferencia reduce la protección del comprador",
-      "Tener HTTPS no demuestra que la tienda sea legítima",
-    ],
-    nextStep: "busca la empresa fuera de la propia web y no pagues hasta verificar quién está detrás y qué opciones de reclamación ofrece.",
-  },
-  "/comprobar-tienda-online": {
-    mode: "url",
-    input: "https://superoferta-ejemplo.shop",
-    result: "Riesgo elevado antes de comprar",
-    score: 76,
-    signals: [
-      "Precios muy por debajo de lo habitual para productos populares",
-      "No aparece una empresa claramente verificable detrás de la tienda",
-      "Los métodos de pago disponibles ofrecen poca protección",
-    ],
-    nextStep: "no completes la compra hasta encontrar datos empresariales verificables, opiniones externas y un método de pago con protección.",
-  },
   "/analizar-link-sospechoso": {
     mode: "url",
     input: "https://correos-seguridad-ejemplo.com/entrega",
@@ -248,6 +224,10 @@ export default function CoreUseCaseCheckDemo({ pathname }: { pathname: string })
 
   useEffect(() => {
     if (!config) return;
+
+    // Functional intent landings render the real Vonü Check inline. A visual
+    // demo must never be added on top of a real analyser.
+    if (document.querySelector("#analizador")) return;
 
     const heroInner = document.querySelector<HTMLElement>(
       'main > section:first-of-type > div[class*="max-w-[1500px]"]',
