@@ -1,0 +1,40 @@
+name: Verify Supabase Data API grants
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'scripts/check-supabase-grants.mjs'
+      - '.github/workflows/verify-supabase-grants.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'supabase/migrations/**'
+      - 'scripts/check-supabase-grants.mjs'
+      - '.github/workflows/verify-supabase-grants.yml'
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Unit test the SQL grant checker
+        run: node scripts/check-supabase-grants.mjs --self-test
+      - name: Verify changed SQL migrations
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          if [[ -z "$BASE_SHA" || "$BASE_SHA" == '0000000000000000000000000000000000000000' ]]; then
+            BASE_SHA="$(git rev-parse HEAD^)"
+          fi
+          mapfile -d '' files < <(git diff --diff-filter=ACMR --name-only -z "$BASE_SHA" "$HEAD_SHA" -- 'supabase/migrations/*.sql')
+          if (( ${#files[@]} )); then
+            node scripts/check-supabase-grants.mjs "${files[@]}"
+          else
+            echo 'No changed SQL migrations.'
+          fi
