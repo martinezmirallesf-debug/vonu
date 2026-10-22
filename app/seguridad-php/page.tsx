@@ -7,6 +7,7 @@ import HomeFooter from "../components/HomeFooter";
 import InlineTrustAnalyzer from "../components/InlineTrustAnalyzer";
 import DeviceAccessGate from "../components/DeviceAccessGate";
 import TrustSeoAuthoritySection from "../components/TrustSeoAuthoritySection";
+import { phpSecurityLanguageAlternates } from "@/lib/vonu-global/php-security";
 
 
 const siteUrl = "https://vonuai.com";
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
   description: "Seguridad PHP explicada: qué vulnerabilidades pueden existir, cómo comprobar versiones y qué señales externas revisa Vonü.",
   alternates: {
     canonical: "/seguridad-php",
-    languages: { es: "https://vonuai.com/seguridad-php", en: "https://vonuai.com/en/seguridad-php", fr: "https://vonuai.com/fr/seguridad-php", de: "https://vonuai.com/de/seguridad-php", ar: "https://vonuai.com/ar/seguridad-php", "x-default": "https://vonuai.com/seguridad-php" },
+    languages: phpSecurityLanguageAlternates(),
     
   },
   openGraph: {
