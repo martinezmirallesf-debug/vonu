@@ -76,7 +76,7 @@ const mistakes = [
 
 const faqs = [
   { q: "¿Qué es PHP?", a: "PHP es una tecnología utilizada para crear páginas y aplicaciones web. Como cualquier software, puede contener fallos de seguridad." },
-  { q: "¿Vonü detecta vulnerabilidades PHP?", a: "No. Vonü revisa señales visibles, conexión, redirecciones, datos del dominio y coincidencias con URLs de malware conocidas. No verifica la versión interna de PHP ni realiza un escaneo de vulnerabilidades." },
+  { q: "¿Vonü detecta vulnerabilidades PHP?", a: "Vonü comprueba señales visibles y, si la web publica una versión completa de PHP, puede contrastarla con avisos CVE conocidos. Son coincidencias potenciales, no vulnerabilidades confirmadas. No verifica la versión instalada internamente ni realiza pruebas de explotación." },
   { q: "¿Cómo sé si una web utiliza PHP vulnerable?", a: "Si la administras, consulta la versión en tu hosting y compárala con los avisos oficiales. Como visitante normalmente no puedes verificarlo desde fuera." },
   { q: "¿HTTPS garantiza que una web sea segura?", a: "No. HTTPS cifra la conexión, pero no demuestra que el servidor o sus componentes estén actualizados." },
   { q: "¿Riesgo bajo significa que no hay vulnerabilidades?", a: "No. La puntuación de Vonü refleja señales externas observables, no una auditoría de seguridad interna." },
