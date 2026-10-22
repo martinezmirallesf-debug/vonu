@@ -127,7 +127,7 @@ const copy: Record<SupportedLocale, FriendlySignalCopy> = {
 
 const limitations: Record<SupportedLocale, Record<string, string>> = {
   es: {
-    "technical-signals-only": "Hemos podido comprobar aspectos técnicos y visibles de la web, pero no toda su actividad ni quién está realmente detrás.",
+    "technical-signals-only": "Hemos revisado lo que esta página muestra desde fuera. No podemos ver si su servidor tiene fallos internos ni confirmar quién está detrás. Antes de pagar o dar datos personales, comprueba también la identidad de la empresa.",
     "no-reputation-layer-yet": "No hemos podido contrastar esta web con todas las fuentes externas de reputación disponibles.",
     "no-business-identity-layer-yet": "No hemos podido confirmar la identidad de la empresa o persona que está detrás de la web.",
     "no-domain-age-layer-yet": "No hemos podido comprobar desde cuándo está registrado el dominio.",
@@ -135,7 +135,7 @@ const limitations: Record<SupportedLocale, Record<string, string>> = {
     "urlhaus-covers-known-malware-not-all-fraud": "La comprobación externa utilizada detecta amenazas conocidas, pero no puede descartar todas las formas de fraude, phishing o suplantación.",
   },
   en: {
-    "technical-signals-only": "We could check technical and visible parts of the site, but not all of its activity or who is really behind it.",
+    "technical-signals-only": "We checked what this page reveals from the outside. We cannot see hidden server security flaws or confirm who runs the site. Before paying or sharing personal details, verify the business independently.",
     "no-reputation-layer-yet": "We could not cross-check this site against every available external reputation source.",
     "no-business-identity-layer-yet": "We could not confirm the identity of the company or person behind the site.",
     "no-domain-age-layer-yet": "We could not confirm how long the domain has been registered.",
@@ -143,7 +143,7 @@ const limitations: Record<SupportedLocale, Record<string, string>> = {
     "urlhaus-covers-known-malware-not-all-fraud": "The external check can detect known threats, but it cannot rule out every form of fraud, phishing or impersonation.",
   },
   fr: {
-    "technical-signals-only": "Nous avons pu vérifier des éléments techniques et visibles, mais pas toute l’activité du site ni l’identité réelle de la personne qui se trouve derrière.",
+    "technical-signals-only": "Nous avons vérifié ce que la page montre de l’extérieur. Nous ne pouvons pas voir les failles internes du serveur ni confirmer qui gère le site. Avant de payer ou de partager vos données, vérifiez l’entreprise par une autre source.",
     "no-reputation-layer-yet": "Nous n’avons pas pu recouper ce site avec toutes les sources externes de réputation disponibles.",
     "no-business-identity-layer-yet": "Nous n’avons pas pu confirmer l’identité de l’entreprise ou de la personne derrière le site.",
     "no-domain-age-layer-yet": "Nous n’avons pas pu confirmer depuis combien de temps le domaine est enregistré.",
@@ -151,7 +151,7 @@ const limitations: Record<SupportedLocale, Record<string, string>> = {
     "urlhaus-covers-known-malware-not-all-fraud": "La vérification externe peut détecter des menaces connues, mais elle ne peut pas exclure toutes les formes de fraude, phishing ou usurpation.",
   },
   de: {
-    "technical-signals-only": "Wir konnten technische und sichtbare Teile der Website prüfen, aber nicht ihre gesamte Aktivität oder wer tatsächlich dahintersteht.",
+    "technical-signals-only": "Wir haben geprüft, was die Seite von außen zeigt. Versteckte Sicherheitslücken des Servers und die Identität des Betreibers können wir nicht bestätigen. Prüfe das Unternehmen unabhängig, bevor du zahlst oder persönliche Daten teilst.",
     "no-reputation-layer-yet": "Wir konnten die Website nicht mit allen verfügbaren externen Reputationsquellen abgleichen.",
     "no-business-identity-layer-yet": "Wir konnten die Identität des Unternehmens oder der Person hinter der Website nicht bestätigen.",
     "no-domain-age-layer-yet": "Wir konnten nicht bestätigen, wie lange die Domain bereits registriert ist.",
@@ -159,7 +159,7 @@ const limitations: Record<SupportedLocale, Record<string, string>> = {
     "urlhaus-covers-known-malware-not-all-fraud": "Die externe Prüfung kann bekannte Bedrohungen erkennen, aber nicht jede Form von Betrug, Phishing oder Identitätsmissbrauch ausschließen.",
   },
   ar: {
-    "technical-signals-only": "تمكنا من فحص الجوانب التقنية والظاهرة من الموقع، لكن ليس كل نشاطه أو هوية من يقف خلفه فعلياً.",
+    "technical-signals-only": "فحصنا ما يظهر من الموقع من الخارج. لا يمكننا رؤية الثغرات الداخلية في الخادم أو تأكيد هوية من يدير الموقع. تحقق من الجهة بوسيلة مستقلة قبل الدفع أو مشاركة بياناتك الشخصية.",
     "no-reputation-layer-yet": "لم نتمكن من مقارنة الموقع بكل مصادر السمعة الخارجية المتاحة.",
     "no-business-identity-layer-yet": "لم نتمكن من تأكيد هوية الشركة أو الشخص الذي يقف خلف الموقع.",
     "no-domain-age-layer-yet": "لم نتمكن من تأكيد مدة تسجيل النطاق.",
