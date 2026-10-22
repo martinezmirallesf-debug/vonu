@@ -61,7 +61,7 @@ export function parseNvdPhpCandidates(
       id,
       ...severity,
       published: typeof cve.published === "string" ? cve.published.slice(0, 10) : null,
-      summary: typeof english?.value === "string" ? english.value.replace(/\s+/g, " ").slice(0, 230) : null,
+      summary: typeof english?.value === "string" ? english.value.replace(/\s+/g, " ").trim().slice(0, 230) : null,
     });
   }
   const unique = [...new Map(matches.map((x) => [x.id, x])).values()];
