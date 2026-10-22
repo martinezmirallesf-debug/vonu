@@ -4,6 +4,7 @@ import Link from "next/link";
 import { track } from "@vercel/analytics";
 import { useCallback, useEffect, useRef, useState } from "react";
 import HomeHeader from "@/app/components/HomeHeader";
+import WebSecurityFindings from "@/app/components/WebSecurityFindings";
 import VonuHelpAssistant from "@/app/components/VonuHelpAssistant";
 import { localeMeta } from "@/lib/vonu-check/i18n";
 import { navCopy } from "@/lib/vonu-global/i18n";
@@ -1870,22 +1871,7 @@ export default function CheckClient({
                       <p className={`mt-3 text-[14px] font-semibold ${statusColor}`}>{assessmentText}</p>
                       <p className="mt-2 text-[13px] leading-6 text-slate-300">{explanation}</p>
                     </section>
-                    <section className="min-w-0 rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08]">
-                      <h2 className="text-[17px] font-bold text-white">{copy[9]}</h2>
-                      <p className="mt-2 text-[12px] leading-5 text-slate-400">{copy[10]}</p>
-                      <dl className="mt-4 grid gap-3 text-[12px]">
-                        {technicalRows.map(([label, value]) => (
-                          <div key={label} className="flex justify-between gap-3">
-                            <dt className="min-w-0 text-slate-400">{label}</dt>
-                            <dd className="shrink-0 text-right font-medium text-slate-200">{value}</dd>
-                          </div>
-                        ))}
-                      </dl>
-                      <h3 className="mt-4 text-[13px] font-semibold text-[#79b4ff]">{copy[15]}</h3>
-                      <p className="mt-2 text-[12px] leading-5 text-slate-400">{copy[16]}</p>
-                      <p className="mt-3 text-[12px] leading-5 text-slate-400">{copy[22]}</p>
-                      <a href={locale === "es" ? "/seguridad-php" : `/${locale}/seguridad-php`} className="mt-4 inline-flex rounded-[12px] bg-[#1a73e8] px-4 py-2.5 text-[12px] font-semibold text-white">{copy[17]} →</a>
-                    </section>
+                    <WebSecurityFindings locale={locale} security={result.facts.security} />
                   </>
                 );
               })()}
