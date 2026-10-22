@@ -1,4 +1,5 @@
 import type { SupportedLocale, WebSecurityAssessment, WebSecurityFinding } from "@/lib/vonu-check/types";
+import { phpSecurityPath } from "@/lib/vonu-global/php-security";
 
 type FindingId = WebSecurityFinding["id"];
 type FindingText = { title: string; description: string; action: string };
@@ -437,7 +438,7 @@ export default function WebSecurityFindings({
 
       <p className="mt-4 text-[12px] leading-5 text-slate-400">{t.disclaimer}</p>
       <a
-        href={locale === "es" ? "/seguridad-php" : `/${locale}/seguridad-php`}
+        href={phpSecurityPath(locale)}
         className="mt-4 inline-flex rounded-[12px] bg-[#1a73e8] px-4 py-2.5 text-[12px] font-semibold text-white"
       >
         {t.source} →
