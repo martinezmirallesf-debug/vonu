@@ -13,6 +13,46 @@ export type WebCheckSignal = {
   weight: number;
 };
 
+export type WebSecurityFinding = {
+  id:
+    | "php-unsupported"
+    | "cookie-insecure"
+    | "session-cookie-httponly"
+    | "cookie-samesite"
+    | "missing-hsts"
+    | "missing-csp"
+    | "missing-nosniff"
+    | "missing-frame-protection"
+    | "missing-referrer-policy";
+  severity: "attention" | "improvement";
+  count?: number;
+};
+
+export type WebSecurityAssessment = {
+  inspected: boolean;
+  limited: boolean;
+  headers: {
+    hsts: boolean;
+    csp: boolean;
+    nosniff: boolean;
+    frameProtection: boolean;
+    referrerPolicy: boolean;
+  };
+  cookies: {
+    observed: number;
+    sessionCookies: number;
+    missingSecure: number;
+    sessionMissingHttpOnly: number;
+    missingSameSite: number;
+  };
+  php: {
+    indicators: Array<"powered-by" | "session-cookie" | "url-extension">;
+    reportedVersion: string | null;
+    support: "active" | "security-only" | "unsupported" | "unknown";
+  };
+  findings: WebSecurityFinding[];
+};
+
 export type WebCheckFacts = {
   hostname: string;
   normalizedUrl: string;
@@ -32,6 +72,7 @@ export type WebCheckFacts = {
   domainAgeDays?: number | null;
   urlhausChecked?: boolean;
   urlhausMatch?: boolean | null;
+  security?: WebSecurityAssessment;
 };
 
 export type WebCheckResult = {
