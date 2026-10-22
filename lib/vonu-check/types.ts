@@ -42,6 +42,7 @@ export type WebSecurityAssessment = {
     observed: number;
     sessionCookies: number;
     missingSecure: number;
+    sessionMissingSecure: number;
     sessionMissingHttpOnly: number;
     missingSameSite: number;
   };
