@@ -86,6 +86,7 @@ export default function HomeHeader({ overlayClose, solid = false }: HomeHeaderPr
   ];
 
   const secondaryLinks = [
+    { label: "Seguridad PHP", href: "/seguridad-php" },
     { label: t.legal, href: legalPath(locale, "legal-notice") },
     { label: t.privacy, href: legalPath(locale, "privacy") },
     { label: cookies[locale], href: legalPath(locale, "cookies") },
@@ -150,6 +151,7 @@ export default function HomeHeader({ overlayClose, solid = false }: HomeHeaderPr
               </Link>
             ),
           )}
+          <Link href="/seguridad-php" className="text-[14px] font-medium text-slate-300 transition hover:text-white">Seguridad PHP</Link>
         </nav>
 
         <div className={["hidden items-center gap-2 md:flex", overlayMode ? "!hidden" : ""].join(" ")}>
@@ -263,6 +265,8 @@ export default function HomeHeader({ overlayClose, solid = false }: HomeHeaderPr
               ),
             )}
           </nav>
+
+          <a href="/seguridad-php" onClick={closeMenu} className="mt-3 flex min-h-[44px] items-center text-[17px] font-semibold text-[#8ec2ff]">Seguridad PHP</a>
 
           <a href={checkPath(locale)} onClick={closeMenu} className="mx-auto mt-auto translate-y-[6px] inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-400 px-5 text-[13px] font-bold text-[#07110d] shadow-[0_9px_26px_rgba(52,211,153,.15)] transition hover:bg-emerald-300 active:scale-[.99]">
             {t.analyze}
