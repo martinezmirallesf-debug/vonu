@@ -174,5 +174,163 @@ export const PHP_GUIDE_FULL: Record<PhpGuideLocale, PhpGuideCopy> = {
     finalTitle: "Vérifiez les indices. Comprenez leurs limites.",
     finalIntro: "Collez une URL pour examiner les indices publics de sécurité et de confiance. Les réglages internes demandent une vérification distincte.",
     finalCta: "Vérifier une URL avec VONÜ"
-  }
+  },
+  de: {
+    heroLead: "Website-Sicherheit.", heroAccent: "PHP-Schwachstellen?", heroLast: "Was sich wirklich prüfen lässt.",
+    intro: "Viele Websites nutzen PHP. Erfahre, welche Risiken veraltete Software mit sich bringt, was von außen sichtbar ist und wie du Warnungen ohne unnötige Panik einordnen kannst.",
+    cta: "Website prüfen", secondaryCta: "Warnzeichen ansehen",
+    quickLabel: "Die kurze Antwort", quickTitle: "Eine Website nutzt PHP?", quickAccent: "Das macht sie nicht unsicher.",
+    quickIntro: "Das Risiko hängt von Version, Modulen, Patches und Konfiguration ab. VONÜ prüft öffentliche Signale und gleicht eine offen angegebene PHP-Version mit CVE-Meldungen ab. Die interne Serverkonfiguration bleibt dabei unbekannt.",
+    checklist: [
+      "PHP wird häufig eingesetzt. Seine bloße Verwendung ist kein Warnzeichen.",
+      "VONÜ prüft öffentlich sichtbare Signale, nicht die private Serverkonfiguration.",
+      "Wenn der Server eine genaue PHP-Version nennt, können bekannte CVE-Meldungen zugeordnet werden.",
+      "Ein CVE-Versionstreffer beweist keine ausnutzbare Schwachstelle dieser Website.",
+      "HTTPS schützt die Übertragung, belegt aber nicht den Patch-Stand des Servers.",
+      "Keine bekannten Malware-Treffer bedeuten nicht, dass es keine Schwachstellen gibt.",
+      "Betreiber sollten installierte Versionen und Sicherheitsupdates beim Hoster überprüfen."
+    ],
+    warningLabel: "Wichtige Warnzeichen", warningTitle: "PHP-Sicherheit:", warningAccent: "sechs wichtige Punkte.",
+    warningIntro: "Eine weit verbreitete Sicherheitsmeldung betrifft nicht automatisch jede PHP-Website. Entscheidend sind Version, Bedingungen und offizielle Quellen.",
+    warnings: [
+      { title: "Veraltetes PHP", text: "PHP-Versionen ohne Sicherheitsupdates sollten geprüft werden. Betreiber finden die tatsächliche Version meist beim Hoster." },
+      { title: "Version nicht sichtbar", text: "Viele Websites geben ihre PHP-Version nicht preis. Das bedeutet weder, dass sie sicher, noch dass sie verwundbar sind." },
+      { title: "HTTPS allein reicht nicht", text: "Das Schloss steht für eine verschlüsselte Verbindung, nicht für aktuelle PHP-, CMS- oder Plugin-Versionen." },
+      { title: "Plugins und Erweiterungen", text: "Auch mit aktuellem PHP können unsichere Erweiterungen, Themes oder Abhängigkeiten eingesetzt werden." },
+      { title: "Dramatische Schlagzeilen", text: "Ein CVSS-Wert bewertet die allgemeine Schwere einer bekannten Schwachstelle, nicht ein bestätigtes Risiko der geprüften Website." },
+      { title: "Persönliche Daten", text: "Prüfe vor Anmeldung, Dokumenten-Upload oder Zahlung die echte Organisation und ihre offizielle Webadresse." }
+    ],
+    casesLabel: "Typische Situationen", casesTitle: "Unterschiedliche Fragen", casesAccent: "brauchen passende Antworten.",
+    casesIntro: "Besucher möchten wissen, ob sie Daten teilen sollten. Betreiber benötigen Hinweise auf verbesserungsbedürftige Einstellungen.",
+    cases: [
+      { title: "Online einkaufen", text: "Prüfe Händler, Rückgaberegeln und offizielle Domain. Ein guter Betrugswert ist keine Server-Sicherheitszertifizierung." },
+      { title: "WordPress betreiben", text: "Prüfe PHP, WordPress, Themes und Plugins im Admin- und Hosting-Bereich und plane sichere Updates." },
+      { title: "Eine neue CVE-Meldung lesen", text: "Prüfe Originalmeldung, betroffene Versionen, notwendige Bedingungen und verfügbare Updates." },
+      { title: "Einen verdächtigen Link erhalten", text: "Prüfe Domain und Nachrichtenkontext, bevor du Daten teilst. Phishing und PHP-Schwachstellen sind verschiedene Risiken." }
+    ],
+    mistakesLabel: "Häufige Fehler", mistakesTitle: "Ein guter Wert", mistakesAccent: "ist kein PHP-Sicherheitsaudit.",
+    mistakesIntro: "Eine Website kann wenige öffentlich sichtbare Betrugssignale zeigen und dennoch interne Probleme haben, die ein externer Check nicht erkennt.",
+    mistakes: [
+      "Eine Website als verwundbar bezeichnen, ohne Version und Konfiguration zu bestätigen.",
+      "Keine bekannten Malware-Treffer mit einer vollständigen Serverprüfung verwechseln.",
+      "Annehmen, dass HTTPS gegen alle internen Schwachstellen schützt.",
+      "Ohne Backups oder Tests in der Live-Umgebung aktualisieren.",
+      "Glauben, dass jede PHP-Website von einer viralen Sicherheitsmeldung betroffen ist."
+    ],
+    stepsLabel: "Nachvollziehbare Prüfung", stepsTitle: "PHP-Sicherheit Schritt für Schritt überprüfen.",
+    stepsIntro: "VONÜ analysiert öffentliche Hinweise. Betreiber können ihre installierte Software, Einstellungen und Patches mit Hosting- und Administrationstools überprüfen.",
+    dateLabel: "Aktualisiert am 22. Oktober 2026",
+    checks: [
+      { title: "Kläre deine Rolle", text: "Besucher beurteilen öffentliche Signale. Betreiber können die tatsächliche Serverkonfiguration und Software prüfen." },
+      { title: "PHP-Version ermitteln", text: "Schau in die Hosting-Verwaltung oder frage deinen Anbieter. Veröffentliche keine Diagnose-Dateien mit privaten Daten." },
+      { title: "Offiziellen Support prüfen", text: "Vergleiche installierte Version und Patch-Stand mit PHP.net und offiziellen Sicherheitshinweisen." },
+      { title: "Gesamte Software prüfen", text: "Berücksichtige CMS, Plugins, Themes, Erweiterungen und Bibliotheken statt nur PHP." },
+      { title: "Vorsichtig aktualisieren", text: "Erstelle Backups und teste die Kompatibilität vor Änderungen an der Live-Website." },
+      { title: "VONÜ richtig verstehen", text: "Gemeldete Versionen können CVE-Treffer ergeben. Diese beweisen keine ausnutzbaren Lücken oder Datenlecks." },
+      { title: "Sinnvolle Maßnahmen wählen", text: "Besucher sollten die Organisation unabhängig verifizieren. Betreiber können Hinweise mit dem Hoster prüfen." }
+    ],
+    sourcesLabel: "Offizielle Referenzen", sourceAction: "Quelle öffnen",
+    sources: [
+      { title: "PHP.net · Unterstützte Versionen", text: "Offizieller Zeitplan zur PHP-Wartung und Sicherheitsunterstützung.", href: "https://www.php.net/supported-versions.php" },
+      { title: "PHP.net · Sicherheit", text: "Offizielle Sicherheitshinweise und Informationen zu PHP.", href: "https://www.php.net/security" },
+      { title: "NVD · CVE-Datenbank", text: "Öffentlich dokumentierte Schwachstellen und ihre allgemeine Schwere.", href: "https://nvd.nist.gov/" }
+    ],
+    relatedLabel: "Weitere Prüfungen", relatedAction: "Ratgeber lesen",
+    related: [
+      { title: "Ist diese Website seriös?", text: "Identität und Reputation prüfen, bevor du vertraust.", slug: "comprobar-web-fiable" },
+      { title: "Verdächtigen Link prüfen", text: "Eine per Nachricht erhaltene URL bewerten.", slug: "analizar-link-sospechoso" },
+      { title: "Onlineshop prüfen", text: "Worauf du vor dem Einkauf achten solltest.", slug: "comprobar-tienda-online" }
+    ],
+    faqLabel: "Häufig gestellte Fragen", faqTitle: "Fragen zur", faqAccent: "PHP-Sicherheit",
+    faqs: [
+      { q: "Was ist PHP?", a: "PHP ist eine Programmiersprache für Websites und Webanwendungen. Wie jede Software kann sie Sicherheitslücken enthalten." },
+      { q: "Erkennt VONÜ PHP-Schwachstellen?", a: "VONÜ untersucht öffentliche Hinweise und kann eine gemeldete PHP-Version mit bekannten CVE-Einträgen abgleichen. Ob eine Website tatsächlich ausnutzbar ist, wird dadurch nicht bestätigt." },
+      { q: "Woran erkenne ich eine verwundbare PHP-Version?", a: "Betreiber müssen die reale Version, Module, Konfiguration und Patches prüfen. Eine öffentliche Versionsangabe ist nur ein Hinweis." },
+      { q: "Ist eine HTTPS-Website automatisch sicher?", a: "Nein. HTTPS verschlüsselt Daten auf dem Übertragungsweg, garantiert aber weder die Echtheit des Anbieters noch sichere Datenspeicherung oder aktuelle Software." },
+      { q: "Bedeutet ein niedriger VONÜ-Risikowert, dass es keine Schwachstellen gibt?", a: "Nein. Der Wert beschreibt beobachtbare Signale und ersetzt kein vollständiges Server- oder Datenschutz-Audit." },
+      { q: "Was tun, wenn PHP nicht mehr unterstützt wird?", a: "Kontaktiere den Hoster, sichere die Website, plane ein Update auf eine unterstützte Version und teste anschließend die Funktionen." }
+    ],
+    finalTitle: "Signale prüfen. Grenzen verstehen.",
+    finalIntro: "Gib eine URL ein, um öffentlich sichtbare Sicherheits- und Vertrauenshinweise zu prüfen. Interne Patches und Datenspeicherung müssen separat kontrolliert werden.",
+    finalCta: "URL mit VONÜ prüfen"
+  },
+  ar: {
+    heroLead: "أمان المواقع.", heroAccent: "هل PHP معرّض للثغرات؟", heroLast: "ما الذي نستطيع التحقق منه؟",
+    intro: "تعتمد مواقع كثيرة على PHP. تعرّف إلى مخاطر البرامج القديمة، وما تكشفه الفحوص العامة، وكيف تفهم التنبيهات دون إثارة مخاوف غير مبررة.",
+    cta: "فحص موقع", secondaryCta: "عرض مؤشرات الخطر",
+    quickLabel: "الإجابة المختصرة", quickTitle: "هل يستخدم الموقع PHP؟", quickAccent: "هذا لا يعني أنه غير آمن.",
+    quickIntro: "يعتمد الخطر على الإصدار الفعلي والمكونات والتحديثات والإعدادات. يفحص VONÜ الإشارات العامة ويمكنه مقارنة إصدار PHP المعلن بسجلات CVE، لكنه لا يتحقق من إعدادات الخادم الداخلية.",
+    checklist: [
+      "PHP تقنية واسعة الانتشار، واستخدامها ليس علامة خطر بحد ذاته.",
+      "يفحص VONÜ معلومات الموقع العامة، لا إعدادات الخادم الخاصة.",
+      "إذا كشف الخادم إصدار PHP دقيقاً، يمكن مقارنته بتنبيهات CVE المنشورة.",
+      "تطابق الإصدار مع CVE لا يثبت إمكانية استغلال ثغرة في هذا الموقع.",
+      "يحمي HTTPS البيانات أثناء نقلها، لكنه لا يثبت أن الخادم محدّث.",
+      "عدم ظهور الموقع في قوائم البرمجيات الضارة لا ينفي وجود ثغرات.",
+      "على مسؤولي المواقع التأكد من الإصدارات والتحديثات عبر الاستضافة."
+    ],
+    warningLabel: "إشارات مهمة", warningTitle: "أمان PHP:", warningAccent: "ست نقاط ينبغي معرفتها.",
+    warningIntro: "انتشار خبر عن ثغرة لا يعني أن كل المواقع التي تستخدم PHP متأثرة. يجب مراجعة الإصدارات والشروط والمصادر الرسمية.",
+    warnings: [
+      { title: "إصدار PHP قديم", text: "الإصدارات التي توقفت تحديثاتها الأمنية تحتاج إلى مراجعة. يمكن للمالك فحص الإصدار المثبت في لوحة الاستضافة." },
+      { title: "الإصدار غير ظاهر", text: "كثير من المواقع لا يكشف إصدار PHP. عدم ظهوره لا يثبت أن الموقع آمن أو معرض للخطر." },
+      { title: "HTTPS وحده لا يكفي", text: "يشفّر رمز القفل الاتصال، لكنه لا يثبت تحديث PHP أو نظام إدارة المحتوى أو الإضافات." },
+      { title: "الإضافات والمكونات", text: "قد يستخدم الموقع PHP محدثاً مع وجود إضافات أو قوالب أو مكتبات تحتوي على ثغرات." },
+      { title: "عناوين الأخبار المخيفة", text: "تعبّر درجة CVSS عن الخطورة العامة لثغرة منشورة، ولا تؤكد وجودها في الموقع الذي فحصته." },
+      { title: "بياناتك الشخصية", text: "قبل تسجيل الدخول أو إرسال مستندات أو دفع المال، تحقق من الجهة الحقيقية وعنوان موقعها الرسمي." }
+    ],
+    casesLabel: "حالات شائعة", casesTitle: "لكل حالة", casesAccent: "طريقة مناسبة للتحقق.",
+    casesIntro: "يريد الزائر معرفة مدى ملاءمة مشاركة بياناته، بينما يريد مالك الموقع معرفة إعدادات الحماية التي يجب تحسينها.",
+    cases: [
+      { title: "التسوق عبر الإنترنت", text: "تحقق من التاجر وسياسة الإرجاع والنطاق الرسمي. انخفاض مؤشرات الاحتيال لا يعني اعتماد أمان الخادم." },
+      { title: "إدارة WordPress", text: "تحقق من PHP وWordPress والقوالب والإضافات في لوحة الإدارة والاستضافة، ثم خطط للتحديثات." },
+      { title: "قراءة خبر عن CVE", text: "راجع التنبيه الأصلي والإصدارات المتأثرة وشروط الاستغلال والتصحيحات المتاحة." },
+      { title: "استلام رابط مشبوه", text: "افحص النطاق وسياق الرسالة قبل مشاركة بياناتك. التصيد الاحتيالي وثغرات PHP نوعان مختلفان من المخاطر." }
+    ],
+    mistakesLabel: "أخطاء ينبغي تجنبها", mistakesTitle: "النتيجة الجيدة", mistakesAccent: "ليست تدقيقاً شاملاً لأمان PHP.",
+    mistakesIntro: "قد لا تظهر على موقع إشارات احتيال عامة، ومع ذلك تكون لديه مشكلات داخلية لا يستطيع الفحص الخارجي رؤيتها.",
+    mistakes: [
+      "وصف موقع بأنه معرض للثغرات دون التأكد من إصداره الفعلي وإعداداته.",
+      "الاعتقاد أن غياب بلاغات البرمجيات الضارة يعني إتمام تدقيق كامل للخادم.",
+      "الاعتقاد أن HTTPS يحمي من جميع المشكلات الأمنية الداخلية.",
+      "تحديث الموقع مباشرة دون نسخ احتياطية أو اختبارات توافق.",
+      "افتراض أن خبراً واسع الانتشار عن ثغرة ينطبق على جميع مواقع PHP."
+    ],
+    stepsLabel: "خطوات عملية", stepsTitle: "كيف تراجع أمان PHP خطوة بخطوة؟",
+    stepsIntro: "يفحص VONÜ الإشارات العامة. ويمكن لمالكي المواقع التحقق من المكونات والتحديثات الفعلية عبر الاستضافة ولوحات الإدارة.",
+    dateLabel: "آخر تحديث: 22 أكتوبر 2026",
+    checks: [
+      { title: "حدّد دورك", text: "يستطيع الزائر مراجعة الأدلة العامة، بينما يمكن للمالك فحص إعدادات الخادم والبرامج المثبتة." },
+      { title: "تعرّف على إصدار PHP", text: "راجعه في لوحة الاستضافة أو اسأل المزود. لا تنشر ملفات تشخيص تكشف معلومات خاصة." },
+      { title: "راجع الدعم الرسمي", text: "قارن الإصدار المثبت والتحديثات مع الإصدارات المدعومة وتنبيهات PHP.net." },
+      { title: "راجع المكونات كلها", text: "يشمل ذلك نظام إدارة المحتوى والإضافات والقوالب والمكتبات والتبعيات، لا PHP وحده." },
+      { title: "حدّث بحذر", text: "أنشئ نسخاً احتياطية واختبر التوافق قبل تطبيق التحديثات على الموقع الفعلي." },
+      { title: "افهم نتائج VONÜ", text: "قد تظهر تطابقات CVE لإصدار معلن، لكنها لا تثبت ثغرة قابلة للاستغلال أو تسرب بيانات." },
+      { title: "اختر الخطوة التالية", text: "على الزائر التأكد من الجهة بشكل مستقل؛ ويمكن للمالك مراجعة النتائج مع الاستضافة أو المطور." }
+    ],
+    sourcesLabel: "مصادر رسمية", sourceAction: "فتح المصدر",
+    sources: [
+      { title: "PHP.net · الإصدارات المدعومة", text: "جدول الدعم والتحديثات الرسمية لإصدارات PHP.", href: "https://www.php.net/supported-versions.php" },
+      { title: "PHP.net · الأمان", text: "معلومات وتنبيهات أمنية رسمية عن PHP.", href: "https://www.php.net/security" },
+      { title: "NVD · قاعدة CVE", text: "سجلات الثغرات المنشورة وتقييمات خطورتها العامة.", href: "https://nvd.nist.gov/" }
+    ],
+    relatedLabel: "فحوص أخرى", relatedAction: "قراءة الدليل",
+    related: [
+      { title: "هل هذا الموقع موثوق؟", text: "راجع السمعة والهوية قبل الثقة بالموقع.", slug: "comprobar-web-fiable" },
+      { title: "فحص رابط مشبوه", text: "راجع رابطاً تلقيته عبر رسالة.", slug: "analizar-link-sospechoso" },
+      { title: "فحص متجر إلكتروني", text: "ما الذي ينبغي التحقق منه قبل الشراء؟", slug: "comprobar-tienda-online" }
+    ],
+    faqLabel: "الأسئلة الشائعة", faqTitle: "أسئلة حول", faqAccent: "أمان PHP",
+    faqs: [
+      { q: "ما PHP؟", a: "PHP لغة برمجة تُستخدم لبناء مواقع وتطبيقات الويب. ومثل أي برنامج قد تحتوي على ثغرات أمنية." },
+      { q: "هل يكتشف VONÜ ثغرات PHP؟", a: "يفحص VONÜ إشارات عامة وقد يقارن إصدار PHP المعلن بتنبيهات CVE المنشورة. لكنه لا يثبت أن الثغرة قابلة للاستغلال في الموقع." },
+      { q: "كيف أعرف ما إذا كان الموقع يستخدم إصداراً ضعيفاً؟", a: "على المالك التحقق من الإصدار الحقيقي والمكونات والتصحيحات. أما الإصدار المعلن للعامة فمجرد مؤشر." },
+      { q: "هل يضمن HTTPS أمان الموقع؟", a: "لا. يشفر HTTPS الاتصال، لكنه لا يضمن هوية الجهة أو أمان تخزين البيانات أو تحديث البرامج." },
+      { q: "هل تعني درجة الخطر المنخفضة عدم وجود ثغرات؟", a: "لا. تعكس درجة VONÜ الإشارات العامة المرصودة ولا تحل محل تدقيق أمني كامل للخادم أو حماية البيانات." },
+      { q: "ماذا أفعل إذا توقف دعم إصدار PHP؟", a: "استشر مزود الاستضافة وأنشئ نسخة احتياطية وخطط للتحديث إلى إصدار مدعوم واختبر الموقع بعد ذلك." }
+    ],
+    finalTitle: "افحص الإشارات. وافهم حدود الفحص.",
+    finalIntro: "الصق رابطاً لمراجعة مؤشرات الأمان والثقة العامة. تحتاج الإعدادات الداخلية وتخزين البيانات إلى تحقق مستقل.",
+    finalCta: "فحص رابط باستخدام VONÜ"
+  },
 };
