@@ -162,6 +162,82 @@ const COPY: Record<SupportedLocale, Copy> = {
   },
 };
 
+const CVE_COPY: Record<SupportedLocale, {
+  title: string;
+  noVersion: string;
+  loadingUnavailable: string;
+  incomplete: string;
+  empty: string;
+  found: (count: number) => string;
+  partial: string;
+  warning: string;
+  label: string;
+  source: string;
+  owner: string;
+}> = {
+  es: {
+    title: "Coincidencias de vulnerabilidades publicadas (CVE)",
+    noVersion: "La web no expone una versión PHP completa. Sin una versión verificable no podemos buscar coincidencias específicas.",
+    loadingUnavailable: "La consulta de NVD no se ha podido completar. No significa que haya cero vulnerabilidades.",
+    incomplete: "La versión PHP anunciada es incompleta; hace falta la versión exacta para la consulta.",
+    empty: "No aparecen coincidencias en esta consulta a NVD. Esto no garantiza la ausencia de vulnerabilidades.",
+    found: (count) => `${count} coincidencias potenciales publicadas para la versión declarada`,
+    partial: "La consulta es parcial: se muestran algunos registros; pueden existir más CVE.",
+    warning: "Son coincidencias de versión según NVD, no vulnerabilidades verificadas en esta web. Pueden depender de módulos, compilación, configuración o parches del proveedor.",
+    label: "CVSS",
+    source: "Consultar NVD",
+    owner: "Si administras el sitio, comprueba la versión instalada y los parches reales antes de sacar conclusiones.",
+  },
+  en: {
+    title: "Published vulnerability matches (CVE)",
+    noVersion: "The website does not publicly disclose a full PHP version, so we cannot check version-specific CVEs.",
+    loadingUnavailable: "The NVD request did not complete. This does not mean there are zero vulnerabilities.",
+    incomplete: "The publicly reported PHP version is incomplete; a full version is required.",
+    empty: "No matches were returned by this NVD query. This does not guarantee the absence of vulnerabilities.",
+    found: (count) => `${count} possible published matches for the reported version`,
+    partial: "Partial NVD result: other CVEs may not be included in the displayed list.",
+    warning: "These are NVD version matches, not verified vulnerabilities of this website. Applicability depends on modules, builds, configuration and vendor patches.",
+    label: "CVSS", source: "View NVD record",
+    owner: "If you own the website, check its actual installed version and patch level before drawing conclusions.",
+  },
+  fr: {
+    title: "Correspondances de vulnérabilités publiées (CVE)",
+    noVersion: "Le site ne publie pas de version PHP complète ; nous ne pouvons pas consulter les CVE propres à cette version.",
+    loadingUnavailable: "La consultation NVD a échoué. Cela ne signifie pas qu'il n'existe aucune vulnérabilité.",
+    incomplete: "La version PHP annoncée est incomplète.",
+    empty: "Aucune correspondance renvoyée par NVD. Cela ne garantit pas l'absence de vulnérabilités.",
+    found: (count) => `${count} correspondances potentielles pour la version déclarée`,
+    partial: "Résultat NVD partiel : d'autres CVE peuvent exister.",
+    warning: "Ce sont des correspondances de version, pas des vulnérabilités vérifiées sur ce site. Leur pertinence dépend des modules, de la configuration et des correctifs.",
+    label: "CVSS", source: "Voir la fiche NVD",
+    owner: "Si vous gérez ce site, vérifiez la version réellement installée et les correctifs.",
+  },
+  de: {
+    title: "Bekannte Schwachstellen-Kandidaten (CVE)",
+    noVersion: "Die Website veröffentlicht keine vollständige PHP-Version. Ein versionsspezifischer CVE-Abgleich ist nicht möglich.",
+    loadingUnavailable: "NVD war nicht erreichbar. Dies bedeutet nicht, dass es keine Schwachstellen gibt.",
+    incomplete: "Die gemeldete PHP-Version ist unvollständig.",
+    empty: "Diese NVD-Abfrage ergab keine Treffer. Das ist keine Sicherheitsgarantie.",
+    found: (count) => `${count} mögliche veröffentlichte Treffer zur gemeldeten Version`,
+    partial: "NVD-Teilergebnis: weitere CVEs können vorhanden sein.",
+    warning: "Es handelt sich um Versionszuordnungen, nicht um bestätigte Schwachstellen der Website. Module, Konfiguration und Hersteller-Patches beeinflussen die Anwendbarkeit.",
+    label: "CVSS", source: "NVD-Eintrag öffnen",
+    owner: "Betreiber sollten die tatsächlich installierte Version und den Patch-Stand überprüfen.",
+  },
+  ar: {
+    title: "تطابقات الثغرات المنشورة (CVE)",
+    noVersion: "لا يكشف الموقع إصدار PHP كاملاً، لذا لا يمكن مطابقة ثغرات هذا الإصدار.",
+    loadingUnavailable: "تعذر إكمال استعلام NVD. هذا لا يعني عدم وجود ثغرات.",
+    incomplete: "إصدار PHP المعلن غير مكتمل.",
+    empty: "لم يُرجع استعلام NVD تطابقات. هذا لا يضمن عدم وجود ثغرات.",
+    found: (count) => `${count} تطابقات محتملة منشورة للإصدار المعلن`,
+    partial: "نتيجة NVD جزئية؛ ربما توجد سجلات CVE إضافية.",
+    warning: "هذه تطابقات إصدارات من NVD وليست ثغرات مؤكدة في الموقع. يعتمد انطباقها على المكونات والإعدادات وتصحيحات المزود.",
+    label: "CVSS", source: "عرض سجل NVD",
+    owner: "إذا كنت تدير الموقع فتحقق من الإصدار الفعلي والتحديثات الأمنية قبل الاستنتاج.",
+  },
+};
+
 export default function WebSecurityFindings({
   locale,
   security,
@@ -213,6 +289,48 @@ export default function WebSecurityFindings({
         <p className="mt-2 text-[12px] leading-5 text-slate-400">
           {t.cookies}: {security?.cookies.observed ? `${security.cookies.observed} ${t.cookiesObserved}` : t.cookiesNone}
         </p>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-white/[0.07] bg-black/15 p-3">
+        <h3 className="text-[13px] font-semibold text-white">{CVE_COPY[locale].title}</h3>
+        {!php?.reportedVersion ? (
+          <p className="mt-2 text-[12px] leading-5 text-slate-400">{CVE_COPY[locale].noVersion}</p>
+        ) : php.cves?.status === "unavailable" || !php.cves ? (
+          <p className="mt-2 text-[12px] leading-5 text-slate-400">{CVE_COPY[locale].loadingUnavailable}</p>
+        ) : php.cves.status === "incomplete-version" ? (
+          <p className="mt-2 text-[12px] leading-5 text-slate-400">{CVE_COPY[locale].incomplete}</p>
+        ) : (
+          <>
+            <p className={`mt-2 text-[12px] font-semibold ${(php.cves.totalMatches ?? 0) > 0 ? "text-amber-200" : "text-[#79b4ff]"}`}>
+              {(php.cves.totalMatches ?? 0) > 0 ? CVE_COPY[locale].found(php.cves.totalMatches ?? 0) : CVE_COPY[locale].empty}
+            </p>
+            {php.cves.status === "partial" && <p className="mt-2 text-[12px] leading-5 text-amber-200">{CVE_COPY[locale].partial}</p>}
+            {(php.cves.totalMatches ?? 0) > 0 && (
+              <p className="mt-2 text-[12px] leading-5 text-slate-400">{CVE_COPY[locale].warning}</p>
+            )}
+            {php.cves.items.length > 0 && (
+              <div className="mt-3 grid gap-2">
+                {php.cves.items.map((entry) => (
+                  <div key={entry.id} className="rounded-lg border border-white/[0.05] bg-black/15 p-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <a
+                        href={`https://nvd.nist.gov/vuln/detail/${entry.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[12px] font-semibold text-[#79b4ff] hover:underline"
+                      >{entry.id} ↗</a>
+                      <span className="text-[11px] text-slate-300">
+                        {entry.severity}{entry.score !== null ? ` · ${CVE_COPY[locale].label} ${entry.score.toFixed(1)}` : ""}
+                      </span>
+                    </div>
+                    {entry.summary && <p className="mt-1.5 text-[11px] leading-5 text-slate-400">{entry.summary}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="mt-3 text-[11px] leading-5 text-slate-400">{CVE_COPY[locale].owner}</p>
+          </>
+        )}
       </div>
 
       {findings.length > 0 && (
