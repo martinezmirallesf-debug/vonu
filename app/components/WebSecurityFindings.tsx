@@ -53,7 +53,7 @@ const COPY: Record<SupportedLocale, Copy> = {
     cookies: "Cookies de esta respuesta",
     cookiesNone: "Ninguna observada",
     cookiesObserved: "observadas",
-    source: "Soporte de versiones PHP",
+    source: "Guía de seguridad PHP",
     sourceUrl: "https://www.php.net/supported-versions.php",
     headings: ["HSTS", "Política CSP", "X-Content-Type-Options", "Protección de marcos", "Referrer-Policy"],
     findings: {
@@ -80,7 +80,7 @@ const COPY: Record<SupportedLocale, Copy> = {
     php: "PHP technology", noPhp: "No public indicators in this response", phpUnknown: "PHP indicators found; version unknown", phpDetected: "Server-reported version",
     supported: "active support", securityOnly: "security fixes only", unsupported: "out of support", supportUnknown: "support unknown",
     cookies: "Cookies in this response", cookiesNone: "None observed", cookiesObserved: "observed",
-    source: "PHP version support", sourceUrl: "https://www.php.net/supported-versions.php",
+    source: "PHP security guide", sourceUrl: "https://www.php.net/supported-versions.php",
     headings: ["HSTS", "CSP policy", "X-Content-Type-Options", "Frame protection", "Referrer-Policy"],
     findings: {
       "php-unsupported": { title: "Server-reported PHP version is unsupported", description: "A response header advertises an end-of-life PHP branch. The header may not reflect the actual installation.", action: "If you own this website, verify the installed version in hosting settings and upgrade to a supported branch." },
@@ -102,7 +102,7 @@ const COPY: Record<SupportedLocale, Copy> = {
     php: "Technologie PHP", noPhp: "Aucun indice public dans cette réponse", phpUnknown: "Indices PHP détectés ; version inconnue", phpDetected: "Version déclarée par le serveur",
     supported: "support actif", securityOnly: "correctifs de sécurité seuls", unsupported: "hors support", supportUnknown: "support inconnu",
     cookies: "Cookies de cette réponse", cookiesNone: "Aucun observé", cookiesObserved: "observés",
-    source: "Versions PHP prises en charge", sourceUrl: "https://www.php.net/supported-versions.php",
+    source: "Guide de sécurité PHP", sourceUrl: "https://www.php.net/supported-versions.php",
     headings: ["HSTS", "Politique CSP", "X-Content-Type-Options", "Protection des cadres", "Referrer-Policy"],
     findings: {
       "php-unsupported": { title: "Version PHP déclarée hors support", description: "Une en-tête annonce une version PHP non maintenue ; elle peut ne pas correspondre à la version installée.", action: "Vérifiez la version réelle chez votre hébergeur et mettez-la à jour." },
@@ -124,7 +124,7 @@ const COPY: Record<SupportedLocale, Copy> = {
     php: "PHP-Technologie", noPhp: "Keine öffentlichen Hinweise in dieser Antwort", phpUnknown: "PHP-Hinweise erkannt; Version unbekannt", phpDetected: "Vom Server gemeldete Version",
     supported: "aktiver Support", securityOnly: "nur Sicherheitsupdates", unsupported: "ohne Support", supportUnknown: "Support unbekannt",
     cookies: "Cookies in dieser Antwort", cookiesNone: "Keine beobachtet", cookiesObserved: "beobachtet",
-    source: "PHP-Versionssupport", sourceUrl: "https://www.php.net/supported-versions.php",
+    source: "PHP-Sicherheitsleitfaden", sourceUrl: "https://www.php.net/supported-versions.php",
     headings: ["HSTS", "CSP-Richtlinie", "X-Content-Type-Options", "Frame-Schutz", "Referrer-Policy"],
     findings: {
       "php-unsupported": { title: "Gemeldete PHP-Version ohne Support", description: "Ein HTTP-Header nennt eine nicht mehr unterstützte PHP-Version. Die tatsächliche Version kann abweichen.", action: "Prüfe die installierte Version beim Hoster und aktualisiere sie." },
@@ -146,7 +146,7 @@ const COPY: Record<SupportedLocale, Copy> = {
     php: "تقنية PHP", noPhp: "لا توجد مؤشرات عامة في هذه الاستجابة", phpUnknown: "مؤشرات PHP موجودة، والإصدار غير معروف", phpDetected: "الإصدار المعلن من الخادم",
     supported: "دعم نشط", securityOnly: "تصحيحات أمنية فقط", unsupported: "خارج الدعم", supportUnknown: "الدعم غير معروف",
     cookies: "ملفات تعريف الارتباط في هذه الاستجابة", cookiesNone: "لم يُرصد شيء", cookiesObserved: "مرصودة",
-    source: "دعم إصدارات PHP", sourceUrl: "https://www.php.net/supported-versions.php",
+    source: "دليل أمان PHP", sourceUrl: "https://www.php.net/supported-versions.php",
     headings: ["HSTS", "سياسة CSP", "X-Content-Type-Options", "الحماية من الإطارات", "Referrer-Policy"],
     findings: {
       "php-unsupported": { title: "إصدار PHP معلن خارج الدعم", description: "يُظهر ترويس الخادم إصدار PHP لم يعد مدعوماً، وقد لا يعكس الإصدار المثبت فعلياً.", action: "تحقق من الإصدار في الاستضافة وحدّثه إلى إصدار مدعوم." },
