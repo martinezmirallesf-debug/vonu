@@ -28,6 +28,24 @@ export type WebSecurityFinding = {
   count?: number;
 };
 
+/** NVD candidates are version/CPE correlations, never proof of an exploitable website. */
+export type PhpCveMatch = {
+  id: string;
+  severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "UNKNOWN";
+  score: number | null;
+  published: string | null;
+  summary: string | null;
+};
+
+export type PhpCveLookup = {
+  status: "ok" | "partial" | "unavailable" | "incomplete-version";
+  source: "NVD CVE API 2.0";
+  version: string;
+  checkedAt: string;
+  totalMatches: number | null;
+  items: PhpCveMatch[];
+};
+
 export type WebSecurityAssessment = {
   inspected: boolean;
   limited: boolean;
@@ -50,6 +68,7 @@ export type WebSecurityAssessment = {
     indicators: Array<"powered-by" | "session-cookie" | "url-extension">;
     reportedVersion: string | null;
     support: "active" | "security-only" | "unsupported" | "unknown";
+    cves?: PhpCveLookup;
   };
   findings: WebSecurityFinding[];
 };
