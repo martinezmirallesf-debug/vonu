@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { collectWebSignals } from "@/lib/vonu-check/web-signals";
 import { enrichWebResult } from "@/lib/vonu-check/web-enrichment";
+import { lookupNvdPhpCves } from "@/lib/vonu-check/php-cve";
 import { isSupportedLocale } from "@/lib/vonu-check/i18n";
 import type { SupportedLocale, WebCheckResult } from "@/lib/vonu-check/types";
 
@@ -273,7 +274,24 @@ export async function POST(request: Request) {
     }
 
     const baseResult = await collectWebSignalsWithRetry(url, locale);
-    const result = await enrichWebResult(baseResult);
+    const reportedPhpVersion = baseResult.facts.security?.php.reportedVersion;
+    // Independent outbound NVD request: only the public PHP version is sent.
+    // The visited domain is never shared with the CVE provider.
+    const [enriched, cves] = await Promise.all([
+      enrichWebResult(baseResult),
+      reportedPhpVersion ? lookupNvdPhpCves(reportedPhpVersion) : Promise.resolve(null),
+    ]);
+    const result: WebCheckResult = cves && enriched.facts.security
+      ? {
+        ...enriched,
+        facts: {
+          ...enriched.facts,
+          security: {
+            ...enriched.facts.security,
+            php: { ...enriched.facts.security.php, cves },
+          },
+        },
+      } : enriched;
     return NextResponse.json(result, {
       status: 200,
       headers: {
