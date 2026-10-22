@@ -250,6 +250,17 @@ export default function SeguridadPhpPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
+      <style>{`
+        .php-authority-theme section { background: #030b25; }
+        .php-authority-theme section > div > div { background: #101c3c; border-color: #273858; border-radius: 28px; }
+        .php-authority-theme h2, .php-authority-theme h3 { color: #fff; }
+        .php-authority-theme p { color: #cbd5e1; }
+        .php-authority-theme li, .php-authority-theme a { background: #172448; border-color: #273858; border-radius: 18px; }
+        .php-authority-theme li > span { background: #1a73e8; border-radius: 12px; color: #fff; }
+        .php-authority-theme a span:first-child { color: #fff; }
+        .php-authority-theme a span:last-child { color: #79b4ff; }
+        .php-authority-theme .border-t { border-color: #273858; }
+      `}</style>
       <HomeHeader />
 
       <section className="relative overflow-hidden bg-[#030b25]">
@@ -442,6 +453,7 @@ export default function SeguridadPhpPage() {
         </div>
       </section>
 
+      <div className="php-authority-theme">
       <TrustSeoAuthoritySection
         eyebrow="Comprobación verificable"
         title="Cómo revisar la seguridad PHP, paso a paso."
@@ -451,6 +463,7 @@ export default function SeguridadPhpPage() {
         sources={officialSources}
         related={relatedGuides}
       />
+      </div>
 
       <section className="bg-[#030b25]">
         <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
