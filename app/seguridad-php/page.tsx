@@ -13,7 +13,7 @@ const siteUrl = "https://vonuai.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Seguridad PHP: riesgos, versiones y qué comprobar",
+  title: "Seguridad PHP: ¿tu web utiliza una versión vulnerable? | Vonü",
   description: "Seguridad PHP explicada: qué vulnerabilidades pueden existir, cómo comprobar versiones y qué señales externas revisa Vonü.",
   alternates: {
     canonical: "/seguridad-php",
@@ -98,7 +98,7 @@ const officialSources = [
 ];
 
 const relatedGuides = [
-  { title: "Seguridad PHP: guía para usuarios", text: "Señales de fraude y reputación.", href: "/seguridad-php" },
+  { title: "Cómo saber si una web es fiable", text: "Señales de fraude y reputación.", href: "/comprobar-web-fiable" },
   { title: "Analizar un enlace sospechoso", text: "Revisa enlaces recibidos por mensajes.", href: "/analizar-link-sospechoso" },
   { title: "Comprobar una tienda online", text: "Comprueba antes de comprar.", href: "/comprobar-tienda-online" },
 ];
@@ -256,13 +256,13 @@ export default function SeguridadPhpPage() {
         <div className="mx-auto max-w-[1500px] px-4 pb-12 pt-8 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8">
           <div className="mx-auto max-w-[1120px] text-center">
             <h1 className="mx-auto max-w-[1080px] text-[52px] font-semibold leading-[1.02] tracking-[-0.064em] text-zinc-950 sm:text-[86px] sm:leading-[0.94] sm:tracking-[-0.078em] lg:text-[118px]">
-              Seguridad{" "}
-              <GradientText tone="blueCyan">PHP.</GradientText>
-              <span className="block text-zinc-500">¿Es vulnerable una web?</span>
+              Comprueba la seguridad{" "}
+              <GradientText tone="blueCyan">de páginas web.</GradientText>
+              <span className="block text-zinc-500">¿Tu web usa PHP vulnerable?</span>
             </h1>
 
             <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
-              PHP está presente en muchas páginas. Aprende qué significa una vulnerabilidad, qué puede comprobarse desde fuera y por qué ninguna comprobación externa garantiza la seguridad del servidor.
+              Muchas webs utilizan PHP. Aprende a reconocer los riesgos de versiones desactualizadas, qué puede comprobarse desde fuera y cómo actuar sin falsas alarmas.
             </p>
 
             <div className="mt-7 flex flex-row justify-center gap-2.5 sm:mt-9 sm:gap-3">
@@ -270,7 +270,7 @@ export default function SeguridadPhpPage() {
                 href="#analizador"
                 className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] transition hover:scale-[1.02] active:scale-[0.99] sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-[15px]"
               >
-                <span className="truncate">Revisar URL</span>
+                <span className="truncate">Comprobar web</span>
                 <ArrowIcon />
               </Link>
 
@@ -298,9 +298,9 @@ export default function SeguridadPhpPage() {
                 </p>
 
                 <h2 className="mt-4 text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
-                  ¿Utiliza PHP?
+                  ¿Tu web usa PHP?
                   <span className="block text-zinc-500">
-                    <GradientText tone="orangeRed">No significa que sea vulnerable.</GradientText>
+                    <GradientText tone="blueCyan">No significa que sea vulnerable.</GradientText>
                   </span>
                 </h2>
 
@@ -338,7 +338,7 @@ export default function SeguridadPhpPage() {
               <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
                 Seguridad PHP:
                 <span className="block text-zinc-500">
-                  <GradientText tone="orangeRed">6 claves importantes.</GradientText>
+                  <GradientText tone="blueCyan">6 claves importantes.</GradientText>
                 </span>
               </h2>
             </div>
@@ -416,7 +416,7 @@ export default function SeguridadPhpPage() {
               <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
                 Una buena puntuación
                 <span className="block text-zinc-500">
-                  no es una <GradientText tone="purplePink">auditoría PHP.</GradientText>
+                  no es una <GradientText tone="blueCyan">auditoría PHP.</GradientText>
                 </span>
               </h2>
 
