@@ -155,7 +155,7 @@ export default function PhpSecurityLocalizedPage({ locale }: { locale: PhpLocale
       <Link href="#analyzer" className="mt-8 inline-flex rounded-[14px] bg-[#1a73e8] px-7 py-4 font-semibold text-white">{copy.cta} ↓</Link>
     </section>
     <section className="mx-auto grid max-w-6xl gap-4 px-4 md:grid-cols-2">{copy.checks.map((item,i) => <article key={item} className="rounded-[22px] border border-white/10 bg-[#101c3c] p-7"><span className="text-sm font-semibold text-[#79b4ff]">0{i+1}</span><h2 className="mt-3 text-xl font-semibold">{item}</h2></article>)}</section>
-    <section id="analyzer" className="mx-auto max-w-6xl px-4 py-16"><InlineTrustAnalyzer locale={locale as Locale} intent="website" /></section>
+    <section id="analyzer" className="mx-auto max-w-6xl px-4 py-16"><InlineTrustAnalyzer locale={locale} intent="website" /></section>
     <section className="mx-auto max-w-5xl px-4 pb-20"><h2 className="mb-8 text-4xl font-semibold">{copy.guide}</h2><div className="grid gap-4">{copy.faq.map(([q,a])=><article key={q} className="rounded-[22px] border border-white/10 bg-[#101c3c] p-7"><h3 className="text-xl font-semibold">{q}</h3><p className="mt-3 leading-7 text-slate-300">{a}</p></article>)}</div><div className="mt-8 flex flex-wrap gap-4"><a className="text-[#79b4ff] underline" href="https://www.php.net/supported-versions.php">PHP supported versions ↗</a><a className="text-[#79b4ff] underline" href="https://www.php.net/security">PHP security ↗</a></div></section>
     <HomeFooter />
   </main>;
