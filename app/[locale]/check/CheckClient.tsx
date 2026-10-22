@@ -1730,7 +1730,7 @@ export default function CheckClient({
                     <h3 className="mt-4 text-[13px] font-semibold text-white">{php[3]}</h3>
                     <p className="mt-2 text-[12px] leading-5 text-slate-400">{php[4]}</p>
                     <p className="mt-3 text-[12px] leading-5 text-slate-300">{php[5]}</p>
-                    <a href="/seguridad-php" className="mt-4 inline-flex rounded-[12px] bg-[#1a73e8] px-4 py-2.5 text-[12px] font-semibold text-white">{php[6]} →</a>
+                    <a href={locale === "es" ? "/seguridad-php" : "/es/seguridad-php"} className="mt-4 inline-flex rounded-[12px] bg-[#1a73e8] px-4 py-2.5 text-[12px] font-semibold text-white">{php[6]} →</a>
                   </section>
                 );
               })()}
