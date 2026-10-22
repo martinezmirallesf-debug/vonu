@@ -15,7 +15,7 @@ import DocumentLocaleSync from "./components/DocumentLocaleSync";
 import RouteScrollTop from "./components/RouteScrollTop";
 
 const BASE_URL = "https://vonuai.com";
-const BRAND_ASSET_VERSION = "20260918-trinode";
+const BRAND_ASSET_VERSION = "20261022-og-premium-v1";
 const FAVICON_VERSION = "20260918-trinode-v2";
 const SOCIAL_IMAGE = `${BASE_URL}/api/og?v=${BRAND_ASSET_VERSION}`;
 
