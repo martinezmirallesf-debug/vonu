@@ -34,13 +34,13 @@ const COPY: Record<SupportedLocale, Copy> = {
   es: {
     title: "Seguridad técnica de la web",
     subtitle: "Comprobaciones pasivas de la respuesta pública. No son una auditoría ni una prueba de explotación.",
-    review: "Se han observado señales técnicas que requieren revisión",
-    improvements: "Hay configuraciones que podrían mejorarse",
+    review: "Hay aspectos que conviene revisar",
+    improvements: "Se pueden mejorar algunas protecciones",
     noIssues: "Sin problemas destacados en las comprobaciones disponibles",
-    partial: "Evaluación técnica parcial",
+    partial: "Solo hemos podido hacer parte de las comprobaciones",
     disclaimer: "No podemos verificar cómo se guardan los datos, el control de acceso, las bases de datos ni las vulnerabilidades internas. La ausencia de alertas no demuestra que la web sea segura.",
     observed: "Detectada",
-    notObserved: "No observada",
+    notObserved: "No detectada aquí",
     notVerified: "No verificable",
     php: "Tecnología PHP",
     noPhp: "Sin indicios públicos en esta respuesta",
@@ -48,7 +48,7 @@ const COPY: Record<SupportedLocale, Copy> = {
     phpDetected: "Versión declarada por el servidor",
     supported: "soporte activo",
     securityOnly: "solo actualizaciones de seguridad",
-    unsupported: "fuera de soporte",
+    unsupported: "ya no recibe actualizaciones de seguridad oficiales",
     supportUnknown: "soporte no determinado",
     cookies: "Cookies de esta respuesta",
     cookiesNone: "Ninguna observada",
@@ -76,7 +76,7 @@ const COPY: Record<SupportedLocale, Copy> = {
     noIssues: "No major findings in the available checks",
     partial: "Partial technical assessment",
     disclaimer: "We cannot verify how data is stored, access controls, databases or internal vulnerabilities. No alerts do not mean a website is safe.",
-    observed: "Observed", notObserved: "Not observed", notVerified: "Not verifiable",
+    observed: "Observed", notObserved: "Not detected here", notVerified: "Not verifiable",
     php: "PHP technology", noPhp: "No public indicators in this response", phpUnknown: "PHP indicators found; version unknown", phpDetected: "Server-reported version",
     supported: "active support", securityOnly: "security fixes only", unsupported: "out of support", supportUnknown: "support unknown",
     cookies: "Cookies in this response", cookiesNone: "None observed", cookiesObserved: "observed",
@@ -98,7 +98,7 @@ const COPY: Record<SupportedLocale, Copy> = {
     title: "Sécurité technique du site", subtitle: "Contrôles passifs d'une réponse publique. Ni audit complet ni preuve d'exploitation.",
     review: "Des indices techniques nécessitent une vérification", improvements: "Certaines configurations peuvent être améliorées", noIssues: "Aucun problème majeur dans les contrôles disponibles", partial: "Évaluation technique partielle",
     disclaimer: "Ces contrôles ne vérifient ni le stockage des données, ni les accès, ni les bases de données ou les vulnérabilités internes. L'absence d'alerte n'est pas une garantie.",
-    observed: "Observé", notObserved: "Non observé", notVerified: "Non vérifiable",
+    observed: "Observé", notObserved: "Non détecté ici", notVerified: "Non vérifiable",
     php: "Technologie PHP", noPhp: "Aucun indice public dans cette réponse", phpUnknown: "Indices PHP détectés ; version inconnue", phpDetected: "Version déclarée par le serveur",
     supported: "support actif", securityOnly: "correctifs de sécurité seuls", unsupported: "hors support", supportUnknown: "support inconnu",
     cookies: "Cookies de cette réponse", cookiesNone: "Aucun observé", cookiesObserved: "observés",
@@ -120,7 +120,7 @@ const COPY: Record<SupportedLocale, Copy> = {
     title: "Technische Website-Sicherheit", subtitle: "Passive Prüfung einer öffentlichen Antwort; kein Penetrationstest und kein Beweis einer Schwachstelle.",
     review: "Technische Hinweise sollten geprüft werden", improvements: "Einige Einstellungen können verbessert werden", noIssues: "Keine wichtigen Auffälligkeiten in den verfügbaren Prüfungen", partial: "Teilweise technische Prüfung",
     disclaimer: "Datenspeicherung, Zugriffsrechte, Datenbanken und interne Schwachstellen können nicht geprüft werden. Keine Warnung ist keine Sicherheitsgarantie.",
-    observed: "Erkannt", notObserved: "Nicht beobachtet", notVerified: "Nicht prüfbar",
+    observed: "Erkannt", notObserved: "Hier nicht erkannt", notVerified: "Nicht prüfbar",
     php: "PHP-Technologie", noPhp: "Keine öffentlichen Hinweise in dieser Antwort", phpUnknown: "PHP-Hinweise erkannt; Version unbekannt", phpDetected: "Vom Server gemeldete Version",
     supported: "aktiver Support", securityOnly: "nur Sicherheitsupdates", unsupported: "ohne Support", supportUnknown: "Support unbekannt",
     cookies: "Cookies in dieser Antwort", cookiesNone: "Keine beobachtet", cookiesObserved: "beobachtet",
@@ -142,7 +142,7 @@ const COPY: Record<SupportedLocale, Copy> = {
     title: "الأمان التقني للموقع", subtitle: "فحوص سلبية لاستجابة عامة؛ ليست اختبار اختراق ولا دليلاً على استغلال ثغرة.",
     review: "هناك مؤشرات تقنية تحتاج إلى مراجعة", improvements: "يمكن تحسين بعض إعدادات الأمان", noIssues: "لا توجد مشكلات بارزة في الفحوص المتاحة", partial: "فحص تقني جزئي",
     disclaimer: "لا تتحقق هذه الفحوص من تخزين البيانات أو صلاحيات الوصول أو قواعد البيانات أو الثغرات الداخلية. غياب التحذيرات لا يعني ضمان الأمان.",
-    observed: "مرصود", notObserved: "غير مرصود", notVerified: "غير قابل للتحقق",
+    observed: "مرصود", notObserved: "غير مكتشف هنا", notVerified: "غير قابل للتحقق",
     php: "تقنية PHP", noPhp: "لا توجد مؤشرات عامة في هذه الاستجابة", phpUnknown: "مؤشرات PHP موجودة، والإصدار غير معروف", phpDetected: "الإصدار المعلن من الخادم",
     supported: "دعم نشط", securityOnly: "تصحيحات أمنية فقط", unsupported: "خارج الدعم", supportUnknown: "الدعم غير معروف",
     cookies: "ملفات تعريف الارتباط في هذه الاستجابة", cookiesNone: "لم يُرصد شيء", cookiesObserved: "مرصودة",
@@ -238,6 +238,80 @@ const CVE_COPY: Record<SupportedLocale, {
   },
 };
 
+const TECH_UI: Record<SupportedLocale, {
+  open: string;
+  hint: string;
+  explanation: string;
+  original: string;
+  candidate: string;
+  critical: string;
+  high: string;
+  medium: string;
+  low: string;
+  unknown: string;
+}> = {
+  es: {
+    open: "Ver análisis técnico completo",
+    hint: "Información adicional para responsables de la web",
+    explanation: "«No detectada» significa que no apareció en la respuesta que VONÜ recibió. No confirma que esa protección falte en toda la web. Una versión anunciada por el servidor tampoco prueba qué software se ejecuta realmente.",
+    original: "Ver explicación técnica original en inglés",
+    candidate: "Este registro describe un problema publicado de PHP. La puntuación valora la gravedad del problema en general, no el riesgo confirmado de esta web.",
+    critical: "Gravedad general muy alta",
+    high: "Gravedad general alta",
+    medium: "Gravedad general media",
+    low: "Gravedad general baja",
+    unknown: "Gravedad sin determinar",
+  },
+  en: {
+    open: "Show the full technical analysis",
+    hint: "Additional information for website administrators",
+    explanation: "«Not detected» means the setting was absent from the response VONÜ received. It does not prove the whole website lacks the protection. A reported PHP version is also not proof of the actual runtime.",
+    original: "Show original technical explanation",
+    candidate: "This published PHP issue is a version-based candidate, not a verified vulnerability of this website. CVSS is a general severity score.",
+    critical: "Very high general severity",
+    high: "High general severity",
+    medium: "Medium general severity",
+    low: "Low general severity",
+    unknown: "Unknown severity",
+  },
+  fr: {
+    open: "Afficher l'analyse technique complète",
+    hint: "Informations supplémentaires pour les responsables du site",
+    explanation: "«Non détecté» signifie absent de la réponse reçue. Cela ne prouve pas que tout le site manque de cette protection. Une version PHP annoncée n'est pas une preuve de la version réellement exécutée.",
+    original: "Voir la description technique originale (anglais)",
+    candidate: "Cet avis PHP est une correspondance possible, et non une vulnérabilité confirmée de ce site. CVSS indique la gravité générale.",
+    critical: "Gravité générale très élevée",
+    high: "Gravité générale élevée",
+    medium: "Gravité générale moyenne",
+    low: "Gravité générale faible",
+    unknown: "Gravité inconnue",
+  },
+  de: {
+    open: "Vollständige technische Analyse anzeigen",
+    hint: "Zusatzinformationen für Websitebetreiber",
+    explanation: "«Nicht erkannt» bedeutet, dass die Einstellung in der geprüften Antwort nicht vorkam. Es beweist nicht, dass die gesamte Website ungeschützt ist. Eine gemeldete PHP-Version beweist nicht die tatsächlich installierte Version.",
+    original: "Technischen Originaltext auf Englisch anzeigen",
+    candidate: "Dieser PHP-Hinweis ist ein möglicher Versionstreffer, keine bestätigte Schwachstelle der Website. CVSS beschreibt die allgemeine Schwere.",
+    critical: "Sehr hoher allgemeiner Schweregrad",
+    high: "Hoher allgemeiner Schweregrad",
+    medium: "Mittlerer allgemeiner Schweregrad",
+    low: "Niedriger allgemeiner Schweregrad",
+    unknown: "Schweregrad unbekannt",
+  },
+  ar: {
+    open: "عرض التحليل التقني الكامل",
+    hint: "معلومات إضافية لمسؤولي الموقع",
+    explanation: "«غير مكتشف» يعني أن الإعداد لم يظهر في الاستجابة التي فحصها VONÜ، ولا يثبت غيابه عن الموقع كله. كما أن إصدار PHP المعلن لا يؤكد الإصدار الفعلي.",
+    original: "عرض الوصف التقني الأصلي بالإنجليزية",
+    candidate: "هذا سجل محتمل مرتبط بإصدار PHP، وليس ثغرة مثبتة في هذا الموقع. تعبر CVSS عن الخطورة العامة فقط.",
+    critical: "خطورة عامة شديدة جداً",
+    high: "خطورة عامة مرتفعة",
+    medium: "خطورة عامة متوسطة",
+    low: "خطورة عامة منخفضة",
+    unknown: "خطورة غير محددة",
+  },
+};
+
 export default function WebSecurityFindings({
   locale,
   security,
@@ -270,9 +344,18 @@ export default function WebSecurityFindings({
     ? `${t.phpDetected}: PHP ${php.reportedVersion} (${phpSupport})`
     : php?.indicators.length ? t.phpUnknown : t.noPhp;
   return (
-    <section className="min-w-0 rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08]">
+    <details className="group min-w-0 overflow-hidden rounded-[24px] bg-[#141927]/86 ring-1 ring-white/[0.08]">
+      <summary className="flex cursor-pointer list-none items-start justify-between gap-3 p-5 hover:bg-white/[0.025]">
+        <span className="min-w-0">
+          <span className="block text-[16px] font-semibold text-white">{TECH_UI[locale].open}</span>
+          <span className="mt-1 block text-[12px] leading-5 text-slate-400">{TECH_UI[locale].hint}</span>
+        </span>
+        <span className="shrink-0 rounded-full bg-[#233452] px-2.5 py-1 text-[18px] leading-6 text-[#79b4ff] group-open:rotate-45">+</span>
+      </summary>
+      <section className="border-t border-white/[0.07] p-5">
       <h2 className="text-[17px] font-bold text-white">{t.title}</h2>
       <p className="mt-2 text-[12px] leading-5 text-slate-400">{t.subtitle}</p>
+      <p className="mt-2 text-[12px] leading-5 text-slate-300">{TECH_UI[locale].explanation}</p>
       <p className={`mt-4 text-[14px] font-semibold ${hasAttention ? "text-amber-300" : "text-[#79b4ff]"}`}>{verdict}</p>
 
       <dl className="mt-4 grid gap-2.5 text-[12px]">
@@ -320,10 +403,11 @@ export default function WebSecurityFindings({
                         className="text-[12px] font-semibold text-[#79b4ff] hover:underline"
                       >{entry.id} ↗</a>
                       <span className="text-[11px] text-slate-300">
-                        {entry.severity}{entry.score !== null ? ` · ${CVE_COPY[locale].label} ${entry.score.toFixed(1)}` : ""}
+                        {entry.severity === "CRITICAL" ? TECH_UI[locale].critical : entry.severity === "HIGH" ? TECH_UI[locale].high : entry.severity === "MEDIUM" ? TECH_UI[locale].medium : entry.severity === "LOW" ? TECH_UI[locale].low : TECH_UI[locale].unknown}{entry.score !== null ? ` · ${CVE_COPY[locale].label} ${entry.score.toFixed(1)}/10` : ""}
                       </span>
                     </div>
-                    {entry.summary && <p className="mt-1.5 text-[11px] leading-5 text-slate-400">{entry.summary}</p>}
+                    <p className="mt-2 text-[11px] leading-5 text-slate-300">{TECH_UI[locale].candidate}</p>
+                    {entry.summary && <details className="mt-2"><summary className="cursor-pointer text-[11px] text-[#79b4ff]">{TECH_UI[locale].original}</summary><p lang="en" className="mt-2 text-[11px] leading-5 text-slate-400">{entry.summary}</p></details>}
                   </div>
                 ))}
               </div>
@@ -358,6 +442,7 @@ export default function WebSecurityFindings({
       >
         {t.source} →
       </a>
-    </section>
+      </section>
+    </details>
   );
 }
