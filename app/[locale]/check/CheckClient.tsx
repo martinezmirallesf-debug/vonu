@@ -1720,6 +1720,20 @@ export default function CheckClient({
             </section>
 
             <div className="grid min-w-0 content-start gap-5">
+              {result.version === "vonu-check-v1" && (() => {
+                const php = ({"es":["Seguridad PHP","No podemos verificar la versión de PHP","Desde fuera no podemos confirmar si esta web utiliza PHP ni si su servidor tiene vulnerabilidades. Eso no significa que sea insegura ni que esté protegida.","¿Qué hemos comprobado?","La conexión, la respuesta de la página y otras señales externas del enlace. No hemos realizado una prueba de vulnerabilidades PHP.","Si administras esta web, revisa la versión de PHP en tu alojamiento y consulta los avisos oficiales.","Entender la seguridad PHP"],"en":["PHP security","We cannot verify the PHP version","From the outside, we cannot confirm whether this site uses PHP or whether its server has vulnerabilities. That does not mean it is unsafe or protected.","What did we check?","The connection, page response and other external signals. We did not run a PHP vulnerability scan.","If you manage this site, check the PHP version with your hosting provider and consult official security advisories.","Understand PHP security"],"fr":["Sécurité PHP","Nous ne pouvons pas vérifier la version de PHP","Depuis l’extérieur, nous ne pouvons pas confirmer si ce site utilise PHP ni si son serveur présente des vulnérabilités. Cela ne prouve ni sa sécurité ni son insécurité.","Qu’avons-nous vérifié ?","La connexion, la réponse de la page et d’autres signaux externes. Aucun scan de vulnérabilités PHP n’a été effectué.","Si vous gérez ce site, vérifiez la version de PHP chez votre hébergeur et consultez les avis officiels.","Comprendre la sécurité PHP"],"de":["PHP-Sicherheit","Wir können die PHP-Version nicht überprüfen","Von außen können wir nicht bestätigen, ob diese Website PHP verwendet oder ob ihr Server Sicherheitslücken hat. Das beweist weder Sicherheit noch Unsicherheit.","Was wurde geprüft?","Die Verbindung, die Antwort der Seite und weitere äußere Signale. Es wurde kein PHP-Schwachstellenscan durchgeführt.","Wenn du diese Website verwaltest, prüfe die PHP-Version beim Hostinganbieter und offizielle Sicherheitshinweise.","PHP-Sicherheit verstehen"],"ar":["أمان PHP","لا يمكننا التحقق من إصدار PHP","لا يمكننا من الخارج تأكيد ما إذا كان الموقع يستخدم PHP أو ما إذا كان خادمه يحتوي على ثغرات. هذا لا يثبت أن الموقع آمن أو غير آمن.","ماذا فحصنا؟","الاتصال واستجابة الصفحة وإشارات خارجية أخرى. لم نجرِ فحصًا لثغرات PHP.","إذا كنت تدير الموقع، فتحقق من إصدار PHP لدى شركة الاستضافة وراجع التنبيهات الأمنية الرسمية.","فهم أمان PHP"]} as Record<SupportedLocale, string[]>)[locale];
+                return (
+                  <section className="min-w-0 rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08]">
+                    <h2 className="text-[17px] font-bold text-white">{php[0]}</h2>
+                    <p className="mt-3 text-[14px] font-semibold text-[#79b4ff]">{php[1]}</p>
+                    <p className="mt-2 text-[13px] leading-6 text-slate-300">{php[2]}</p>
+                    <h3 className="mt-4 text-[13px] font-semibold text-white">{php[3]}</h3>
+                    <p className="mt-2 text-[12px] leading-5 text-slate-400">{php[4]}</p>
+                    <p className="mt-3 text-[12px] leading-5 text-slate-300">{php[5]}</p>
+                    <a href="/seguridad-php" className="mt-4 inline-flex rounded-[12px] bg-[#1a73e8] px-4 py-2.5 text-[12px] font-semibold text-white">{php[6]} →</a>
+                  </section>
+                );
+              })()}
               {result.version === "vonu-check-v1" ? (
                 <section className="min-w-0 rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08]">
                   <h2 className="text-[17px] font-bold text-white">{t.technical}</h2>
