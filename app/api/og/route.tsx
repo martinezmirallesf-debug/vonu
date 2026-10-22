@@ -1,63 +1,221 @@
 import { ImageResponse } from "next/og";
+import { OFFICIAL_VONU_PATH } from "@/app/components/VonuMark";
 
 export const runtime = "edge";
 
-const MARK_PATH = "M 27.92 2.00 L 27.83 2.27 L 26.68 2.62 L 25.00 3.59 L 23.76 4.92 L 23.49 5.54 L 23.23 5.80 L 22.61 8.01 L 22.61 9.43 L 22.79 10.05 L 22.79 11.73 L 22.61 12.44 L 21.99 13.68 L 20.93 14.83 L 19.96 15.44 L 18.89 15.89 L 17.13 16.06 L 16.15 15.89 L 13.94 14.65 L 11.73 13.94 L 9.70 13.94 L 8.81 14.12 L 7.13 14.74 L 5.63 15.80 L 4.83 16.59 L 4.12 17.66 L 3.50 19.25 L 3.24 19.34 L 3.24 22.61 L 3.50 22.70 L 4.03 24.11 L 4.74 25.26 L 5.63 26.15 L 6.42 26.77 L 7.57 27.39 L 9.43 27.92 L 11.46 27.92 L 12.97 27.56 L 14.65 26.77 L 16.42 25.44 L 18.01 24.82 L 19.96 24.73 L 21.02 25.09 L 22.43 26.24 L 22.96 27.21 L 23.05 29.15 L 22.70 30.30 L 22.70 32.43 L 23.05 33.67 L 23.94 35.26 L 25.09 36.41 L 26.94 37.47 L 27.83 37.73 L 27.92 38.00 L 31.19 38.00 L 31.28 37.73 L 32.16 37.47 L 33.75 36.58 L 34.99 35.52 L 35.79 34.55 L 36.50 32.87 L 36.76 32.78 L 36.76 29.24 L 36.41 29.07 L 35.43 27.03 L 34.02 25.71 L 32.52 24.82 L 31.19 24.47 L 30.39 24.47 L 28.89 23.85 L 27.92 22.96 L 27.47 22.34 L 26.94 21.02 L 26.94 19.07 L 27.47 17.66 L 28.80 16.24 L 29.86 15.71 L 31.19 15.53 L 32.52 15.09 L 34.20 14.03 L 35.17 13.06 L 36.14 11.20 L 36.50 9.43 L 36.76 9.34 L 36.76 8.46 L 36.50 8.37 L 36.23 6.95 L 35.52 5.27 L 34.99 4.57 L 33.75 3.42 L 32.52 2.71 L 31.01 2.27 L 30.92 2.00 Z";
+/**
+ * Main social preview.
+ * VONÜ's actual mark comes directly from app/components/VonuMark.tsx.
+ * No artificial certification badges or fabricated UI/scan results.
+ */
+const COPY = {
+  es: {
+    lines: ["COMPRUEBA", "ANTES DE", "CONFIAR."],
+    subjects: "URLS  ·  CAPTURAS  ·  MENSAJES  ·  DOCUMENTOS",
+  },
+  en: {
+    lines: ["CHECK", "BEFORE YOU", "TRUST."],
+    subjects: "URLS  ·  SCREENSHOTS  ·  MESSAGES  ·  DOCUMENTS",
+  },
+} as const;
 
-function TriNodeMark({ size }: { size: number }) {
+function OfficialMark({ size }: { size: number }) {
   return (
-    <svg viewBox="0 0 40 40" width={size} height={size} fill="none">
-      <path d={MARK_PATH} fill="#7bb7ff" />
+    <svg width={size} height={size} viewBox="0 0 2000 2000" aria-hidden="true">
+      <path d={OFFICIAL_VONU_PATH} fill="#7bb7ff" />
     </svg>
   );
 }
 
-export async function GET() {
+function OrbitArtwork() {
+  return (
+    <svg width="500" height="520" viewBox="0 0 500 520" aria-hidden="true">
+      {[225, 204, 181].map((r, i) => (
+        <circle
+          key={r}
+          cx="250"
+          cy="260"
+          r={r}
+          fill="none"
+          stroke="#7bb7ff"
+          strokeWidth={i === 0 ? 1.3 : 1}
+          strokeOpacity={i === 0 ? 0.39 : i === 1 ? 0.28 : 0.20}
+        />
+      ))}
+      {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => (
+        <line
+          key={i}
+          x1={50 + 38 * i}
+          x2={50 + 38 * i}
+          y1="0"
+          y2="520"
+          stroke="#7bb7ff"
+          strokeWidth="1"
+          strokeOpacity="0.09"
+        />
+      ))}
+      {[
+        [412, 80, 1.8], [44, 284, 1.8], [76, 151, 3.2],
+        [410, 417, 2.2], [463, 348, 2.7], [111, 454, 1.8],
+        [224, 44, 1.7], [342, 472, 1.6],
+      ].map(([x, y, radius], i) => (
+        <circle key={i} cx={x} cy={y} r={radius} fill="#7bb7ff" opacity="0.65" />
+      ))}
+    </svg>
+  );
+}
+
+export async function GET(request: Request) {
+  const lang = new URL(request.url).searchParams.get("lang") === "en" ? "en" : "es";
+  const copy = COPY[lang];
+
   return new ImageResponse(
     (
       <div
         style={{
-          width: "1200px",
-          height: "630px",
-          display: "flex",
           position: "relative",
+          display: "flex",
+          width: 1200,
+          height: 630,
           overflow: "hidden",
-          background: "#020b24",
-          color: "white",
+          background: "linear-gradient(112deg, #020b24 0%, #04102d 54%, #071b42 100%)",
+          color: "#fff",
           fontFamily: "Arial, sans-serif",
         }}
       >
-        <div style={{ position: "absolute", width: 520, height: 520, borderRadius: 520, right: -110, top: -145, background: "rgba(123,183,255,.08)" }} />
-        <div style={{ position: "absolute", width: 360, height: 360, borderRadius: 360, left: -150, bottom: -190, background: "rgba(123,183,255,.045)" }} />
+        <div
+          style={{
+            position: "absolute",
+            display: "flex",
+            right: -64,
+            top: 44,
+            width: 620,
+            height: 520,
+            background: "radial-gradient(ellipse at center, rgba(52,116,214,.23) 0%, rgba(7,27,66,.05) 65%, rgba(7,27,66,0) 100%)",
+          }}
+        />
+        <div
+          style={{ position: "absolute", display: "flex", right: -8, top: 10, width: 500, height: 520 }}
+        >
+          <OrbitArtwork />
+        </div>
 
-        <div style={{ display: "flex", width: "100%", padding: "76px 84px", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", flexDirection: "column", width: 720, height: "100%", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
-              <TriNodeMark size={76} />
-              <div style={{ fontSize: 42, fontWeight: 750, letterSpacing: "-1.8px", color: "#ffffff" }}>Vonü</div>
+        <div
+          style={{
+            position: "absolute",
+            display: "flex",
+            alignItems: "center",
+            top: 48,
+            left: 68,
+            gap: 12,
+          }}
+        >
+          <OfficialMark size={55} />
+          <div style={{ fontSize: 43, fontWeight: 750, letterSpacing: "-1.8px", color: "#fff" }}>Vonü</div>
+        </div>
+
+        <div
+          style={{
+            position: "absolute",
+            display: "flex",
+            flexDirection: "column",
+            left: 80,
+            top: lang === "es" ? 199 : 190,
+            width: 650,
+          }}
+        >
+          {copy.lines.map((line, index) => (
+            <div
+              key={line}
+              style={{
+                display: "flex",
+                fontWeight: 800,
+                fontSize: lang === "es" ? (index === 2 ? 77 : 69) : (index === 1 ? 66 : 78),
+                lineHeight: lang === "es" ? 1.08 : 1.06,
+                letterSpacing: "-3.6px",
+                color: index === 2 ? "#7bb7ff" : "#ffffff",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {line}
             </div>
+          ))}
+        </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              <div style={{ fontSize: 58, fontWeight: 740, lineHeight: 1.03, letterSpacing: "-2.8px", color: "#ffffff" }}>
-                Comprueba antes de confiar.
-              </div>
-              <div style={{ fontSize: 25, lineHeight: 1.35, color: "#9fb1c5" }}>
-                URLs, capturas y mensajes sospechosos, en un solo análisis.
-              </div>
-              <div style={{ fontSize: 23, color: "#7bb7ff", letterSpacing: ".2px" }}>vonuai.com</div>
-            </div>
-          </div>
+        <div
+          style={{
+            position: "absolute",
+            display: "flex",
+            left: 80,
+            top: 466,
+            color: "#a3b8da",
+            letterSpacing: "0.25px",
+            fontSize: lang === "es" ? 20 : 19,
+            fontWeight: 600,
+          }}
+        >
+          {copy.subjects}
+        </div>
 
-          <div style={{ display: "flex", width: 310, height: 310, borderRadius: 155, alignItems: "center", justifyContent: "center", border: "1px solid rgba(123,183,255,.24)", background: "rgba(123,183,255,.045)" }}>
-            <TriNodeMark size={232} />
-          </div>
+        <div
+          style={{
+            position: "absolute",
+            display: "flex",
+            right: 64,
+            top: 127,
+            width: 370,
+            height: 370,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <OfficialMark size={364} />
+        </div>
+
+        <div
+          style={{
+            position: "absolute",
+            display: "flex",
+            left: 80,
+            right: 80,
+            bottom: 82,
+            borderBottom: "1px solid rgba(143,175,223,.3)",
+          }}
+        />
+
+        <div
+          style={{
+            position: "absolute",
+            display: "flex",
+            bottom: 37,
+            left: 80,
+            color: "#7bb7ff",
+            fontSize: 23,
+            fontWeight: 650,
+          }}
+        >
+          vonuai.com
+        </div>
+
+        <div
+          style={{
+            position: "absolute",
+            display: "flex",
+            bottom: 41,
+            right: 82,
+            color: "#8298be",
+            fontSize: 17,
+            letterSpacing: ".5px",
+          }}
+        >
+          CHECK BEFORE YOU TRUST
         </div>
       </div>
     ),
     {
       width: 1200,
       height: 630,
-      headers: { "Cache-Control": "public, max-age=3600, s-maxage=3600" },
+      headers: { "Cache-Control": "public, max-age=3600, s-maxage=86400" },
     },
   );
 }
