@@ -5,6 +5,7 @@ import {
   localizedPublicPath,
 } from "@/lib/vonu-global/routes";
 import { LEGAL_DOCUMENTS, legalAlternates, legalPath } from "@/lib/vonu-legal/routes";
+import { phpSecurityLanguageAlternates, phpSecurityPath } from "@/lib/vonu-global/php-security";
 
 const BASE_URL = "https://vonuai.com";
 const UPDATED_AT = new Date("2026-09-20T00:00:00.000Z");
@@ -54,20 +55,12 @@ const publicRoutes: MetadataRoute.Sitemap = INDEXED_PUBLIC_SLUGS.flatMap((slug) 
   })),
 );
 
-const phpLanguages = {
-  es: `${BASE_URL}/seguridad-php`,
-  en: `${BASE_URL}/en/seguridad-php`,
-  fr: `${BASE_URL}/fr/seguridad-php`,
-  de: `${BASE_URL}/de/seguridad-php`,
-  ar: `${BASE_URL}/ar/seguridad-php`,
-  "x-default": `${BASE_URL}/seguridad-php`,
-};
-const phpRoutes: MetadataRoute.Sitemap = ["es", "en", "fr", "de", "ar"].map(locale => ({
-  url: phpLanguages[locale as keyof typeof phpLanguages],
+const phpRoutes: MetadataRoute.Sitemap = GLOBAL_LOCALES.map((locale) => ({
+  url: `${BASE_URL}${phpSecurityPath(locale)}`,
   lastModified: new Date("2026-10-22T00:00:00.000Z"),
   changeFrequency: "weekly" as const,
   priority: 0.95,
-  alternates: { languages: phpLanguages },
+  alternates: { languages: phpSecurityLanguageAlternates() },
 }));
 
 const legalRoutes: MetadataRoute.Sitemap = LEGAL_DOCUMENTS.flatMap((document) =>
