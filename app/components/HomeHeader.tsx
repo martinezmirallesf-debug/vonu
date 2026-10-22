@@ -16,6 +16,7 @@ import {
   type IndexedPublicSlug,
 } from "@/lib/vonu-global/i18n";
 import { localizedPublicPath, resolveInternalSlug } from "@/lib/vonu-global/routes";
+import { PHP_SECURITY_LABELS, isPhpSecurityRoute, phpSecurityPath } from "@/lib/vonu-global/php-security";
 import { legalDocumentFromPath, legalPath } from "@/lib/vonu-legal/routes";
 import type { SupportedLocale } from "@/lib/vonu-check/types";
 import "./use-case-product-theme.css";
@@ -96,6 +97,7 @@ export default function HomeHeader({ overlayClose, solid = false }: HomeHeaderPr
 
   function localeTarget(next: SupportedLocale) {
     if (isCheckHome) return checkPath(next);
+    if (isPhpSecurityRoute(locale, currentRouteSlug)) return phpSecurityPath(next);
     if (currentLegalDocument) return legalPath(next, currentLegalDocument);
     if (currentSlug) return localizedPublicPath(next, currentSlug);
     return checkPath(next);
@@ -142,8 +144,8 @@ export default function HomeHeader({ overlayClose, solid = false }: HomeHeaderPr
                       );
                     })}
                     {item.slug === "recursos" && (
-                      <Link href={locale === "es" ? "/seguridad-php" : `/${locale}/seguridad-php`} className="rounded-2xl px-4 py-3 transition hover:bg-white/[0.045]">
-                        <span className="block text-[14px] font-semibold text-slate-100">{locale === "es" ? "Seguridad PHP" : locale === "en" ? "PHP security" : locale === "fr" ? "Sécurité PHP" : locale === "de" ? "PHP-Sicherheit" : "أمان PHP"}</span>
+                      <Link href={phpSecurityPath(locale)} className="rounded-2xl px-4 py-3 transition hover:bg-white/[0.045]">
+                        <span className="block text-[14px] font-semibold text-slate-100">{PHP_SECURITY_LABELS[locale]}</span>
                         <span className="mt-1 block text-[12px] leading-5 text-slate-500">PHP · Security</span>
                       </Link>
                     )}
@@ -254,8 +256,8 @@ export default function HomeHeader({ overlayClose, solid = false }: HomeHeaderPr
                         </a>
                       ))}
                       {item.slug === "recursos" && (
-                        <a href={locale === "es" ? "/seguridad-php" : `/${locale}/seguridad-php`} onClick={closeMenu} className="py-2.5 text-[14px] font-medium text-slate-400 transition hover:text-emerald-300">
-                          {locale === "es" ? "Seguridad PHP" : locale === "en" ? "PHP security" : locale === "fr" ? "Sécurité PHP" : locale === "de" ? "PHP-Sicherheit" : "أمان PHP"}
+                        <a href={phpSecurityPath(locale)} onClick={closeMenu} className="py-2.5 text-[14px] font-medium text-slate-400 transition hover:text-emerald-300">
+                          {PHP_SECURITY_LABELS[locale]}
                         </a>
                       )}
                     </div>
