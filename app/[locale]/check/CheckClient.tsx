@@ -1850,26 +1850,30 @@ export default function CheckClient({
                   ],
                 } as Record<SupportedLocale, string[]>)[locale];
                 const malwareMatch = result.facts.urlhausMatch === true;
-                const strongWarning = malwareMatch || !result.facts.usesHttps && result.facts.httpStatus !== null || result.risk.level === "high";
-                const caution = !strongWarning && (result.risk.level === "caution" || result.facts.externalFormActions > 0);
-                const enoughEvidence = result.risk.level === "low" && result.risk.confidence !== "limited" &&
+                const technicalAttention = result.facts.security?.findings.some((item) => item.severity === "attention") ?? false;
+                const technicalLimited = !result.facts.security || result.facts.security.limited;
+                const strongWarning = malwareMatch || (!result.facts.usesHttps && result.facts.httpStatus !== null) || result.risk.level === "high";
+                const caution = !strongWarning && (technicalAttention || result.risk.level === "caution" || result.facts.externalFormActions > 0);
+                const enoughEvidence = !technicalAttention && !technicalLimited && result.risk.level === "low" && result.risk.confidence !== "limited" &&
                   result.facts.usesHttps && (result.facts.httpStatus ?? 0) >= 200 && (result.facts.httpStatus ?? 0) < 400;
                 const assessment = strongWarning ? 0 : caution ? 1 : enoughEvidence ? 3 : 2;
                 const assessmentText = [copy[1], copy[2], copy[3], copy[4]][assessment];
                 const explanation = [copy[5], copy[6], copy[7], copy[8]][assessment];
                 const statusColor = assessment === 0 ? "text-red-300" : assessment === 1 ? "text-amber-300" : assessment === 3 ? "text-emerald-300" : "text-[#79b4ff]";
-                const technicalRows = [
-                  [copy[11], result.facts.usesHttps && result.facts.httpStatus !== null ? copy[18] : copy[19]],
-                  [copy[12], result.signals.some((item) => item.id === "infra-hsts") ? copy[18] : copy[19]],
-                  [copy[13], result.signals.some((item) => item.id === "infra-csp") ? copy[18] : copy[19]],
-                  [copy[14], result.facts.externalFormActions > 0 ? `${copy[21]} (${result.facts.externalFormActions})` : result.facts.httpStatus !== null && result.facts.formCount > 0 ? copy[20] : copy[19]],
-                ];
+                const technicalNotice: Record<SupportedLocale, string> = {
+                  es: "Se han observado señales técnicas que podrían afectar a la protección de información sensible. Revisa los detalles; no implican por sí mismas una filtración demostrada.",
+                  en: "We observed technical signs that could affect the protection of sensitive information. Review the details; they do not, by themselves, prove a data leak.",
+                  fr: "Des indices techniques pourraient affecter la protection des données sensibles. Consultez les détails ; ils ne prouvent pas une fuite.",
+                  de: "Technische Hinweise könnten den Schutz sensibler Daten beeinträchtigen. Prüfe die Details; sie beweisen keinen Datenabfluss.",
+                  ar: "رُصدت مؤشرات تقنية قد تؤثر في حماية المعلومات الحساسة. راجع التفاصيل؛ فهي لا تثبت وحدها تسرب بيانات.",
+                };
                 return (
                   <>
                     <section className="min-w-0 rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08]">
                       <h2 className="text-[17px] font-bold text-white">{copy[0]}</h2>
                       <p className={`mt-3 text-[14px] font-semibold ${statusColor}`}>{assessmentText}</p>
                       <p className="mt-2 text-[13px] leading-6 text-slate-300">{explanation}</p>
+                      {technicalAttention && <p className="mt-3 text-[12px] leading-5 text-amber-200">{technicalNotice[locale]}</p>}
                     </section>
                     <WebSecurityFindings locale={locale} security={result.facts.security} />
                   </>
