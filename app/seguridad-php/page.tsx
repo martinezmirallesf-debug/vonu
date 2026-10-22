@@ -244,7 +244,7 @@ export default function SeguridadPhpPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f5f7] text-zinc-950">
+    <main className="min-h-screen bg-[#030b25] text-white">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -252,23 +252,23 @@ export default function SeguridadPhpPage() {
 
       <HomeHeader />
 
-      <section className="relative overflow-hidden bg-[#f5f5f7]">
+      <section className="relative overflow-hidden bg-[#030b25]">
         <div className="mx-auto max-w-[1500px] px-4 pb-12 pt-8 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8">
           <div className="mx-auto max-w-[1120px] text-center">
-            <h1 className="mx-auto max-w-[1080px] text-[52px] font-semibold leading-[1.02] tracking-[-0.064em] text-zinc-950 sm:text-[86px] sm:leading-[0.94] sm:tracking-[-0.078em] lg:text-[118px]">
-              Comprueba la seguridad{" "}
-              <GradientText tone="blueCyan">de páginas web.</GradientText>
-              <span className="block text-zinc-500">¿Tu web usa PHP vulnerable?</span>
+            <h1 className="mx-auto max-w-[1080px] text-[clamp(2.65rem,9vw,7.25rem)] font-semibold leading-[1.04] tracking-[-0.065em] text-white sm:text-[86px] sm:leading-[0.94] sm:tracking-[-0.078em] lg:text-[118px]">
+              Seguridad web.
+              <span className="block"><GradientText tone="blueCyan">¿PHP vulnerable?</GradientText></span>
+              <span className="mt-3 block text-[0.55em] leading-[1.1] tracking-[-0.04em] text-slate-300">Qué puedes comprobar.</span>
             </h1>
 
-            <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-zinc-600 sm:text-[21px]">
+            <p className="mx-auto mt-7 max-w-3xl text-[18px] leading-8 text-slate-300 sm:text-[21px]">
               Muchas webs utilizan PHP. Aprende a reconocer los riesgos de versiones desactualizadas, qué puede comprobarse desde fuera y cómo actuar sin falsas alarmas.
             </p>
 
             <div className="mt-7 flex flex-row justify-center gap-2.5 sm:mt-9 sm:gap-3">
               <Link
                 href="#analizador"
-                className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] transition hover:scale-[1.02] active:scale-[0.99] sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-[15px]"
+                className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[14px] bg-[#1a73e8] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.24)] transition hover:scale-[1.02] active:scale-[0.99] sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-[15px]"
               >
                 <span className="truncate">Comprobar web</span>
                 <ArrowIcon />
@@ -276,7 +276,7 @@ export default function SeguridadPhpPage() {
 
               <a
                 href="#senales"
-                className="inline-flex min-w-0 flex-1 items-center justify-center rounded-full border border-zinc-200 bg-white px-4 py-3 text-[14px] font-semibold text-zinc-800 shadow-sm transition hover:-translate-y-[1px] hover:shadow-md sm:flex-none sm:px-7 sm:py-3.5 sm:text-[15px]"
+                className="inline-flex min-w-0 flex-1 items-center justify-center rounded-[14px] border border-white/10 bg-[#101c3c] px-4 py-3 text-[14px] font-semibold text-slate-100 shadow-sm transition hover:-translate-y-[1px] hover:shadow-md sm:flex-none sm:px-7 sm:py-3.5 sm:text-[15px]"
               >
                 <span className="sm:hidden">Ver señales</span>
                 <span className="hidden sm:inline">Ver qué revisar</span>
@@ -288,23 +288,23 @@ export default function SeguridadPhpPage() {
         </div>
       </section>
 
-      <section className="bg-[#f5f5f7]">
+      <section className="bg-[#030b25]">
         <div className="mx-auto max-w-[1500px] px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
-          <div className="rounded-[42px] border border-zinc-200 bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_44px_rgba(0,0,0,0.055)] sm:p-10 lg:p-14">
+          <div className="rounded-[28px] border border-white/10 bg-[#101c3c] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_44px_rgba(0,0,0,0.055)] sm:p-10 lg:p-14">
             <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
               <div>
-                <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-600">
+                <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-[#79b4ff]">
                   Respuesta rápida
                 </p>
 
-                <h2 className="mt-4 text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
+                <h2 className="mt-4 text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-white sm:text-[72px]">
                   ¿Tu web usa PHP?
-                  <span className="block text-zinc-500">
+                  <span className="block text-slate-400">
                     <GradientText tone="blueCyan">No significa que sea vulnerable.</GradientText>
                   </span>
                 </h2>
 
-                <p className="mt-6 text-[17px] leading-8 text-zinc-600">
+                <p className="mt-6 text-[17px] leading-8 text-slate-300">
                   Una vulnerabilidad depende de la versión, la configuración y otros componentes. Vonü analiza señales externas, pero no identifica de forma fiable la versión interna de PHP.
                 </p>
               </div>
@@ -313,9 +313,9 @@ export default function SeguridadPhpPage() {
                 {checklist.map((item) => (
                   <div
                     key={item}
-                    className="flex gap-4 rounded-[30px] border border-zinc-200 bg-[#f5f5f7] p-5 text-[15.5px] leading-7 text-zinc-700"
+                    className="flex gap-4 rounded-[22px] border border-white/10 bg-[#030b25] p-5 text-[15.5px] leading-7 text-slate-200"
                   >
-                    <span className="shrink-0 text-zinc-950">
+                    <span className="shrink-0 text-white">
                       <CheckIcon />
                     </span>
                     <span>{item}</span>
@@ -327,23 +327,23 @@ export default function SeguridadPhpPage() {
         </div>
       </section>
 
-      <section id="senales" className="bg-[#f5f5f7]">
+      <section id="senales" className="bg-[#030b25]">
         <div className="mx-auto max-w-[1500px] px-4 py-16 sm:px-6 lg:px-8">
           <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
-              <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-600">
+              <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-[#79b4ff]">
                 Señales de alerta
               </p>
 
-              <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
+              <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-white sm:text-[72px]">
                 Seguridad PHP:
-                <span className="block text-zinc-500">
+                <span className="block text-slate-400">
                   <GradientText tone="blueCyan">6 claves importantes.</GradientText>
                 </span>
               </h2>
             </div>
 
-            <p className="max-w-md text-[17px] leading-8 text-zinc-600">
+            <p className="max-w-md text-[17px] leading-8 text-slate-300">
               Una noticia viral no demuestra que todas las webs PHP estén afectadas. Hay que contrastar fuentes y versiones.
             </p>
           </div>
@@ -352,13 +352,13 @@ export default function SeguridadPhpPage() {
             {warningSigns.map((item) => (
               <article
                 key={item.title}
-                className="min-h-[320px] rounded-[34px] border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)] transition hover:-translate-y-1 hover:shadow-[0_2px_5px_rgba(0,0,0,0.045),0_24px_58px_rgba(0,0,0,0.075)]"
+                className="min-h-[240px] rounded-[24px] border border-white/10 bg-[#101c3c] p-7 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_16px_40px_rgba(0,0,0,0.055)] transition hover:-translate-y-1 hover:shadow-[0_2px_5px_rgba(0,0,0,0.045),0_24px_58px_rgba(0,0,0,0.075)]"
               >
-                <h3 className="mt-12 text-[34px] font-semibold leading-[1.08] tracking-[-0.045em] text-zinc-950">
+                <h3 className="mt-3 text-[30px] font-semibold leading-[1.08] tracking-[-0.045em] text-white">
                   <WarningTitle title={item.title} />
                 </h3>
 
-                <p className="mt-5 text-[15.5px] leading-7 text-zinc-600">
+                <p className="mt-5 text-[15.5px] leading-7 text-slate-300">
                   {item.text}
                 </p>
               </article>
@@ -367,7 +367,7 @@ export default function SeguridadPhpPage() {
         </div>
       </section>
 
-      <section className="bg-zinc-950 text-white">
+      <section className="bg-[#030b25] text-white">
         <div className="mx-auto grid max-w-[1500px] gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
           <div>
             <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-300">
@@ -390,7 +390,7 @@ export default function SeguridadPhpPage() {
             {commonCases.map((item) => (
               <div
                 key={item.title}
-                className="rounded-[30px] border border-white/10 bg-white/[0.06] p-6 shadow-[0_18px_44px_rgba(0,0,0,0.18)]"
+                className="rounded-[22px] border border-white/10 bg-[#101c3c] p-6 shadow-[0_18px_44px_rgba(0,0,0,0.18)]"
               >
                 <h3 className="text-[26px] font-semibold leading-[1.12] tracking-[-0.04em] text-white">
                   <CommonCaseTitle title={item.title} />
@@ -405,22 +405,22 @@ export default function SeguridadPhpPage() {
         </div>
       </section>
 
-      <section className="bg-[#f5f5f7]">
+      <section className="bg-[#030b25]">
         <div className="mx-auto max-w-[1500px] px-4 py-16 sm:px-6 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
             <div>
-              <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-blue-600">
+              <p className="text-[14px] font-semibold uppercase tracking-[0.16em] text-[#79b4ff]">
                 Errores a evitar
               </p>
 
-              <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-zinc-950 sm:text-[72px]">
+              <h2 className="mt-3 max-w-3xl text-[44px] font-semibold leading-[1.06] tracking-[-0.058em] sm:leading-[0.98] sm:tracking-[-0.065em] text-white sm:text-[72px]">
                 Una buena puntuación
-                <span className="block text-zinc-500">
+                <span className="block text-slate-400">
                   no es una <GradientText tone="blueCyan">auditoría PHP.</GradientText>
                 </span>
               </h2>
 
-              <p className="mt-5 max-w-xl text-[17px] leading-8 text-zinc-600">
+              <p className="mt-5 max-w-xl text-[17px] leading-8 text-slate-300">
                 Un resultado de riesgo bajo puede coexistir con problemas internos que Vonü no puede ver desde fuera.
               </p>
             </div>
@@ -429,9 +429,9 @@ export default function SeguridadPhpPage() {
               {mistakes.map((item) => (
                 <div
                   key={item}
-                  className="flex gap-4 rounded-[30px] border border-zinc-200 bg-white p-5 text-[15.5px] leading-7 text-zinc-700 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_12px_30px_rgba(0,0,0,0.045)]"
+                  className="flex gap-4 rounded-[22px] border border-white/10 bg-[#101c3c] p-5 text-[15.5px] leading-7 text-slate-200 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_12px_30px_rgba(0,0,0,0.045)]"
                 >
-                  <span className="shrink-0 text-red-600">
+                  <span className="shrink-0 text-[#79b4ff]">
                     <RedXIcon />
                   </span>
                   <span>{item}</span>
@@ -452,16 +452,16 @@ export default function SeguridadPhpPage() {
         related={relatedGuides}
       />
 
-      <section className="bg-[#f5f5f7]">
+      <section className="bg-[#030b25]">
         <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="mb-10 text-center">
-            <p className="text-[14px] font-semibold uppercase tracking-[0.18em] text-blue-600">
+            <p className="text-[14px] font-semibold uppercase tracking-[0.18em] text-[#79b4ff]">
               Preguntas frecuentes
             </p>
 
-            <h2 className="mx-auto mt-3 max-w-3xl text-[54px] font-semibold leading-[0.9] tracking-[-0.075em] text-zinc-950 sm:text-[82px]">
+            <h2 className="mx-auto mt-3 max-w-3xl text-[54px] font-semibold leading-[0.9] tracking-[-0.075em] text-white sm:text-[82px]">
               Dudas sobre
-              <span className="block text-zinc-500">seguridad PHP</span>
+              <span className="block text-slate-400">seguridad PHP</span>
             </h2>
           </div>
 
@@ -469,21 +469,21 @@ export default function SeguridadPhpPage() {
             {faqs.map((faq) => (
               <details
                 key={faq.q}
-                className="group rounded-[30px] border border-zinc-200 bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_12px_30px_rgba(0,0,0,0.045)] transition hover:-translate-y-[2px] hover:shadow-[0_2px_5px_rgba(0,0,0,0.045),0_18px_40px_rgba(0,0,0,0.06)]"
+                className="group rounded-[22px] border border-white/10 bg-[#101c3c] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.035),0_12px_30px_rgba(0,0,0,0.045)] transition hover:-translate-y-[2px] hover:shadow-[0_2px_5px_rgba(0,0,0,0.045),0_18px_40px_rgba(0,0,0,0.06)]"
               >
                 <summary className="cursor-pointer list-none">
                   <div className="flex items-center justify-between gap-5">
-                    <span className="text-[20px] font-semibold leading-tight tracking-[-0.04em] text-zinc-950 sm:text-[24px]">
+                    <span className="text-[20px] font-semibold leading-tight tracking-[-0.04em] text-white sm:text-[24px]">
                       {faq.q}
                     </span>
 
-                    <span className="text-[38px] font-light leading-none text-zinc-500 transition group-open:rotate-45 group-open:text-zinc-950 sm:text-[44px]">
+                    <span className="text-[38px] font-light leading-none text-slate-400 transition group-open:rotate-45 group-open:text-white sm:text-[44px]">
                       +
                     </span>
                   </div>
                 </summary>
 
-                <p className="mt-4 text-[15.5px] leading-7 text-zinc-600">
+                <p className="mt-4 text-[15.5px] leading-7 text-slate-300">
                   {faq.a}
                 </p>
               </details>
@@ -494,7 +494,7 @@ export default function SeguridadPhpPage() {
 
       
 
-      <section className="bg-zinc-950 text-white">
+      <section className="bg-[#030b25] text-white">
         <div className="mx-auto max-w-[1500px] px-4 py-16 text-center sm:px-6 lg:px-8">
           <h2 className="mx-auto max-w-5xl text-[48px] font-semibold leading-[0.98] tracking-[-0.064em] sm:text-[82px]">
             Comprueba las señales. Entiende sus límites.
@@ -506,7 +506,7 @@ export default function SeguridadPhpPage() {
 
           <Link
             href="#analizador"
-            className="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-zinc-950 shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
+            className="mt-9 inline-flex items-center justify-center gap-2 rounded-[14px] bg-[#101c3c] px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_14px_32px_rgba(255,255,255,0.12)] transition hover:scale-[1.02] active:scale-[0.99]"
           >
             Revisar una URL con Vonü
             <ArrowIcon />
