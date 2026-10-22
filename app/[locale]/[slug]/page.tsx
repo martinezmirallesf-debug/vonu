@@ -7,6 +7,8 @@ import PricingStructuredData from "@/app/components/PricingStructuredData";
 import GlobalPublicHeader from "@/app/components/GlobalPublicHeader";
 import HomeFooter from "@/app/components/HomeFooter";
 import ContactPublicPage from "@/app/components/ContactPublicPage";
+import PhpSecurityLocalizedPage, { phpSecurityLocalizedMetadata } from "@/app/components/PhpSecurityLocalizedPage";
+import { PHP_SECURITY_SLUGS } from "@/lib/vonu-global/php-security";
 import {
   INDEXED_PUBLIC_SLUGS,
   getTopic,
@@ -51,17 +53,25 @@ type Props = {
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return NON_SPANISH.flatMap((locale) =>
-    INDEXED_PUBLIC_SLUGS.map((slug) => ({
+  return [
+    ...NON_SPANISH.flatMap((locale) =>
+      INDEXED_PUBLIC_SLUGS.map((slug) => ({
+        locale,
+        slug: localizedRouteSlug(locale, slug),
+      })),
+    ),
+    ...NON_SPANISH.map((locale) => ({
       locale,
-      slug: localizedRouteSlug(locale, slug),
+      slug: PHP_SECURITY_SLUGS[locale],
     })),
-  );
+  ];
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug: routeSlug } = await params;
   if (!isGlobalLocale(locale) || locale === "es") return {};
+
+  if (routeSlug === PHP_SECURITY_SLUGS[locale]) return phpSecurityLocalizedMetadata(locale);
 
   const slug = resolveInternalSlug(locale, routeSlug);
   if (!slug) return {};
@@ -112,6 +122,10 @@ export default async function GlobalLocalizedPage({ params }: Props) {
 
   if (!isGlobalLocale(locale) || locale === "es") {
     notFound();
+  }
+
+  if (routeSlug === PHP_SECURITY_SLUGS[locale]) {
+    return <PhpSecurityLocalizedPage locale={locale} />;
   }
 
   const slug = resolveInternalSlug(locale, routeSlug);
