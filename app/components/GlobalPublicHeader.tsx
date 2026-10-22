@@ -14,6 +14,7 @@ import {
   navCopy,
 } from "@/lib/vonu-global/i18n";
 import { localizedPublicPath } from "@/lib/vonu-global/routes";
+import { PHP_SECURITY_LABELS, phpSecurityPath } from "@/lib/vonu-global/php-security";
 import { legalPath } from "@/lib/vonu-legal/routes";
 
 const caseSlugs: IndexedPublicSlug[] = [
@@ -123,6 +124,12 @@ export default function GlobalPublicHeader({
                         </Link>
                       );
                     })}
+                    {item.slug === "recursos" && (
+                      <Link href={phpSecurityPath(locale)} className="rounded-2xl px-4 py-3 transition hover:bg-white/[0.045]">
+                        <span className="block text-[14px] font-semibold text-slate-100">{PHP_SECURITY_LABELS[locale]}</span>
+                        <span className="mt-1 block text-[12px] leading-5 text-slate-500">PHP · Security</span>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
@@ -203,6 +210,11 @@ export default function GlobalPublicHeader({
                           {getTopic(locale, caseSlug).eyebrow}
                         </a>
                       ))}
+                      {item.slug === "recursos" && (
+                        <a href={phpSecurityPath(locale)} onClick={closeMenu} className="py-2.5 text-[14px] font-medium text-slate-400 transition hover:text-emerald-300">
+                          {PHP_SECURITY_LABELS[locale]}
+                        </a>
+                      )}
                     </div>
                   )}
                 </div>
