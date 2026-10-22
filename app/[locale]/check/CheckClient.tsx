@@ -5,6 +5,7 @@ import { track } from "@vercel/analytics";
 import { useCallback, useEffect, useRef, useState } from "react";
 import HomeHeader from "@/app/components/HomeHeader";
 import WebSecurityFindings from "@/app/components/WebSecurityFindings";
+import WebPersonalDataVerdict from "@/app/components/WebPersonalDataVerdict";
 import VonuHelpAssistant from "@/app/components/VonuHelpAssistant";
 import { localeMeta } from "@/lib/vonu-check/i18n";
 import { navCopy } from "@/lib/vonu-global/i18n";
@@ -1702,6 +1703,8 @@ export default function CheckClient({
             </div>
           </section>
 
+          {result.version === "vonu-check-v1" && <WebPersonalDataVerdict result={result} locale={locale} />}
+
           <div className="mt-5 grid min-w-0 gap-5 lg:grid-cols-[1.15fr_.85fr]">
             <section className="min-w-0 rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08] sm:p-6">
               <h2 className="text-[17px] font-bold text-white">{t.evidence}</h2>
@@ -1721,164 +1724,7 @@ export default function CheckClient({
             </section>
 
             <div className="grid min-w-0 content-start gap-5">
-              {result.version === "vonu-check-v1" && (() => {
-                const copy = ({
-                  es: [
-                    "Protección de tus datos personales",
-                    "Señales de riesgo: evita compartir datos",
-                    "Precaución antes de compartir información",
-                    "Comprobación insuficiente",
-                    "Sin alertas importantes en las señales revisadas",
-                    "Hay señales de riesgo relevantes. No introduzcas contraseñas, datos personales, documentos o datos bancarios sin verificar la web por otra vía.",
-                    "Hemos encontrado señales que requieren revisión. Comprueba quién está detrás de la web antes de registrarte, pagar o compartir documentos.",
-                    "No hemos podido verificar suficientes señales para emitir una recomendación fiable. No interpretes la falta de alertas como garantía de seguridad.",
-                    "No encontramos alertas importantes en las comprobaciones disponibles, pero esto no confirma que el sitio sea legítimo ni que trate tus datos de forma segura.",
-                    "Seguridad técnica de la web",
-                    "Comprobaciones externas observadas. Si administras esta web, estas señales te ayudan a identificar posibles mejoras.",
-                    "HTTPS",
-                    "HSTS",
-                    "Política CSP",
-                    "Formularios hacia otro dominio",
-                    "Seguridad PHP: no verificada",
-                    "No se ha confirmado la tecnología o versión PHP ni se han efectuado pruebas de vulnerabilidades del servidor.",
-                    "Más sobre seguridad PHP",
-                    "Detectado",
-                    "No confirmado",
-                    "No se han visto",
-                    "Detectados",
-                    "Estas comprobaciones no verifican almacenamiento de datos, autenticación, permisos, protección de la base de datos ni cumplimiento normativo.",
-                  ],
-                  en: [
-                    "Protection of your personal data",
-                    "Risk signals: avoid sharing information",
-                    "Take care before sharing information",
-                    "Insufficient evidence",
-                    "No major alerts in the signals checked",
-                    "Relevant risk signals were detected. Do not submit passwords, personal details, documents or banking information without independently verifying the site.",
-                    "Some signs need further review. Verify who operates the website before registering, paying or sharing documents.",
-                    "We could not verify enough signals to provide a reliable recommendation. No detected alert does not mean the website is safe.",
-                    "No major alerts were found in the available checks, but this does not prove the site is legitimate or handles your information safely.",
-                    "Website technical security",
-                    "Observed external checks. If you own this website, these signs can help identify areas to improve.",
-                    "HTTPS",
-                    "HSTS",
-                    "CSP policy",
-                    "Forms submitting to another domain",
-                    "PHP security: not verified",
-                    "PHP technology or version was not confirmed and no server vulnerability testing was performed.",
-                    "Learn about PHP security",
-                    "Observed",
-                    "Not confirmed",
-                    "None observed",
-                    "Detected",
-                    "These checks cannot verify data storage, authentication, permissions, database protection or regulatory compliance.",
-                  ],
-                  fr: [
-                    "Protection de vos données personnelles",
-                    "Signaux de risque : évitez de partager des données",
-                    "Prudence avant de partager des informations",
-                    "Vérification insuffisante",
-                    "Alerte majeure non relevée dans les signaux vérifiés",
-                    "Des signaux de risque existent. Ne communiquez pas vos mots de passe, données personnelles, documents ou coordonnées bancaires sans vérifier le site indépendamment.",
-                    "Certains indices nécessitent une vérification. Identifiez l'exploitant du site avant de vous inscrire, payer ou transmettre des documents.",
-                    "Les vérifications disponibles ne suffisent pas à formuler une recommandation fiable. L'absence d'alerte n'est pas une garantie.",
-                    "Aucune alerte majeure dans les vérifications disponibles, mais cela ne prouve ni la légitimité du site ni la sécurité du traitement de vos données.",
-                    "Sécurité technique du site",
-                    "Contrôles externes observés. Si vous gérez ce site, ces indices peuvent guider les améliorations.",
-                    "HTTPS",
-                    "HSTS",
-                    "Politique CSP",
-                    "Formulaires vers un autre domaine",
-                    "Sécurité PHP : non vérifiée",
-                    "La technologie ou version PHP n'a pas été confirmée et aucun test de vulnérabilité du serveur n'a été effectué.",
-                    "Comprendre la sécurité PHP",
-                    "Observé",
-                    "Non confirmé",
-                    "Aucun observé",
-                    "Détectés",
-                    "Ces contrôles ne vérifient ni le stockage des données, ni l'authentification, ni les permissions, ni la sécurité des bases de données, ni la conformité réglementaire.",
-                  ],
-                  de: [
-                    "Schutz deiner persönlichen Daten",
-                    "Risikosignale: keine Daten übermitteln",
-                    "Vorsicht vor der Weitergabe von Daten",
-                    "Unzureichende Prüfung",
-                    "Keine größeren Warnungen in den geprüften Signalen",
-                    "Es wurden relevante Risiken erkannt. Gib Passwörter, persönliche Daten, Dokumente oder Bankdaten erst nach einer unabhängigen Prüfung ein.",
-                    "Einige Hinweise müssen geprüft werden. Prüfe den Betreiber, bevor du dich anmeldest, bezahlst oder Dokumente teilst.",
-                    "Die verfügbaren Prüfungen reichen für eine verlässliche Empfehlung nicht aus. Keine Warnung bedeutet nicht, dass die Website sicher ist.",
-                    "Keine größeren Warnungen bei den verfügbaren Prüfungen. Dies beweist aber weder die Seriosität noch einen sicheren Umgang mit deinen Daten.",
-                    "Technische Sicherheit der Website",
-                    "Beobachtete externe Prüfungen. Betreiber können diese Hinweise zur Verbesserung nutzen.",
-                    "HTTPS",
-                    "HSTS",
-                    "CSP-Richtlinie",
-                    "Formulare an andere Domains",
-                    "PHP-Sicherheit: nicht geprüft",
-                    "PHP-Technologie und Version wurden nicht bestätigt; Schwachstellen des Servers wurden nicht geprüft.",
-                    "Mehr über PHP-Sicherheit",
-                    "Erkannt",
-                    "Nicht bestätigt",
-                    "Keine beobachtet",
-                    "Erkannt",
-                    "Diese Prüfungen untersuchen weder Datenspeicherung noch Authentifizierung, Berechtigungen, Datenbankschutz oder die Einhaltung rechtlicher Vorgaben.",
-                  ],
-                  ar: [
-                    "حماية بياناتك الشخصية",
-                    "مؤشرات خطر: تجنب مشاركة البيانات",
-                    "توخ الحذر قبل مشاركة المعلومات",
-                    "التحقق غير كافٍ",
-                    "لا توجد تحذيرات كبيرة في الإشارات التي فُحصت",
-                    "تم رصد مؤشرات خطر مهمة. لا تدخل كلمات المرور أو البيانات الشخصية أو المستندات أو البيانات البنكية قبل التحقق من الموقع بشكل مستقل.",
-                    "هناك مؤشرات تحتاج للمراجعة. تحقق من الجهة المشغلة قبل التسجيل أو الدفع أو مشاركة المستندات.",
-                    "لم نتمكن من التحقق من إشارات كافية لتقديم توصية موثوقة. عدم ظهور تحذير لا يعني أن الموقع آمن.",
-                    "لم نجد تحذيرات كبيرة في الفحوص المتاحة، لكن ذلك لا يثبت شرعية الموقع أو سلامة معالجة بياناتك.",
-                    "الأمان التقني للموقع",
-                    "فحوص خارجية مرصودة. إذا كنت تدير الموقع، يمكن أن تساعدك النتائج في تحسين الحماية.",
-                    "HTTPS",
-                    "HSTS",
-                    "سياسة CSP",
-                    "نماذج ترسل إلى نطاق آخر",
-                    "أمان PHP: لم يتم التحقق",
-                    "لم يتم تأكيد تقنية PHP أو إصدارها ولم تُجرَ اختبارات ثغرات للخادم.",
-                    "المزيد عن أمان PHP",
-                    "تم رصده",
-                    "غير مؤكد",
-                    "لم يُرصد",
-                    "تم اكتشافها",
-                    "لا تتحقق هذه الفحوص من تخزين البيانات أو المصادقة أو الصلاحيات أو حماية قواعد البيانات أو الامتثال التنظيمي.",
-                  ],
-                } as Record<SupportedLocale, string[]>)[locale];
-                const malwareMatch = result.facts.urlhausMatch === true;
-                const technicalAttention = result.facts.security?.findings.some((item) => item.severity === "attention") ?? false;
-                const technicalLimited = !result.facts.security || result.facts.security.limited;
-                const strongWarning = malwareMatch || (!result.facts.usesHttps && result.facts.httpStatus !== null) || result.risk.level === "high";
-                const caution = !strongWarning && (technicalAttention || result.risk.level === "caution" || result.facts.externalFormActions > 0);
-                const enoughEvidence = !technicalAttention && !technicalLimited && result.risk.level === "low" && result.risk.confidence !== "limited" &&
-                  result.facts.usesHttps && (result.facts.httpStatus ?? 0) >= 200 && (result.facts.httpStatus ?? 0) < 400;
-                const assessment = strongWarning ? 0 : caution ? 1 : enoughEvidence ? 3 : 2;
-                const assessmentText = [copy[1], copy[2], copy[3], copy[4]][assessment];
-                const explanation = [copy[5], copy[6], copy[7], copy[8]][assessment];
-                const statusColor = assessment === 0 ? "text-red-300" : assessment === 1 ? "text-amber-300" : assessment === 3 ? "text-emerald-300" : "text-[#79b4ff]";
-                const technicalNotice: Record<SupportedLocale, string> = {
-                  es: "Se han observado señales técnicas que podrían afectar a la protección de información sensible. Revisa los detalles; no implican por sí mismas una filtración demostrada.",
-                  en: "We observed technical signs that could affect the protection of sensitive information. Review the details; they do not, by themselves, prove a data leak.",
-                  fr: "Des indices techniques pourraient affecter la protection des données sensibles. Consultez les détails ; ils ne prouvent pas une fuite.",
-                  de: "Technische Hinweise könnten den Schutz sensibler Daten beeinträchtigen. Prüfe die Details; sie beweisen keinen Datenabfluss.",
-                  ar: "رُصدت مؤشرات تقنية قد تؤثر في حماية المعلومات الحساسة. راجع التفاصيل؛ فهي لا تثبت وحدها تسرب بيانات.",
-                };
-                return (
-                  <>
-                    <section className="min-w-0 rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08]">
-                      <h2 className="text-[17px] font-bold text-white">{copy[0]}</h2>
-                      <p className={`mt-3 text-[14px] font-semibold ${statusColor}`}>{assessmentText}</p>
-                      <p className="mt-2 text-[13px] leading-6 text-slate-300">{explanation}</p>
-                      {technicalAttention && <p className="mt-3 text-[12px] leading-5 text-amber-200">{technicalNotice[locale]}</p>}
-                    </section>
-                    <WebSecurityFindings locale={locale} security={result.facts.security} />
-                  </>
-                );
-              })()}
+              {result.version === "vonu-check-v1" && <WebSecurityFindings locale={locale} security={result.facts.security} />}
               {result.version === "vonu-check-v1" ? (
                 <section className="min-w-0 rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08]">
                   <h2 className="text-[17px] font-bold text-white">{t.technical}</h2>
