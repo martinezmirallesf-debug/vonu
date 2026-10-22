@@ -38,6 +38,7 @@ export function assessPublicWebSecurity(
 
   let sessionCookies = 0;
   let missingSecure = 0;
+  let sessionMissingSecure = 0;
   let sessionMissingHttpOnly = 0;
   let missingSameSite = 0;
   let phpSession = false;
@@ -58,7 +59,10 @@ export function assessPublicWebSecurity(
     const hasHttpOnly = attributes.some((part) => part === "httponly");
     const hasSameSite = attributes.some((part) => part.startsWith("samesite="));
 
-    if (https && !hasSecure) missingSecure += 1;
+    if (https && !hasSecure) {
+      missingSecure += 1;
+      if (isSession) sessionMissingSecure += 1;
+    }
     if (isSession && !hasHttpOnly) sessionMissingHttpOnly += 1;
     if (isSession && !hasSameSite) missingSameSite += 1;
   }
@@ -97,7 +101,7 @@ export function assessPublicWebSecurity(
     findings.push({ id, severity, ...(count ? { count } : {}) });
 
   if (support === "unsupported") add("php-unsupported", "attention");
-  if (missingSecure) add("cookie-insecure", "attention", missingSecure);
+  if (missingSecure) add("cookie-insecure", sessionMissingSecure ? "attention" : "improvement", missingSecure);
   if (sessionMissingHttpOnly) add("session-cookie-httponly", "attention", sessionMissingHttpOnly);
   if (missingSameSite) add("cookie-samesite", "improvement", missingSameSite);
 
@@ -119,6 +123,7 @@ export function assessPublicWebSecurity(
       observed: rawCookies.length,
       sessionCookies,
       missingSecure,
+      sessionMissingSecure,
       sessionMissingHttpOnly,
       missingSameSite,
     },
