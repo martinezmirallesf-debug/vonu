@@ -54,6 +54,22 @@ const publicRoutes: MetadataRoute.Sitemap = INDEXED_PUBLIC_SLUGS.flatMap((slug) 
   })),
 );
 
+const phpLanguages = {
+  es: `${BASE_URL}/seguridad-php`,
+  en: `${BASE_URL}/en/seguridad-php`,
+  fr: `${BASE_URL}/fr/seguridad-php`,
+  de: `${BASE_URL}/de/seguridad-php`,
+  ar: `${BASE_URL}/ar/seguridad-php`,
+  "x-default": `${BASE_URL}/seguridad-php`,
+};
+const phpRoutes: MetadataRoute.Sitemap = ["es", "en", "fr", "de", "ar"].map(locale => ({
+  url: phpLanguages[locale as keyof typeof phpLanguages],
+  lastModified: new Date("2026-10-22T00:00:00.000Z"),
+  changeFrequency: "weekly" as const,
+  priority: 0.95,
+  alternates: { languages: phpLanguages },
+}));
+
 const legalRoutes: MetadataRoute.Sitemap = LEGAL_DOCUMENTS.flatMap((document) =>
   GLOBAL_LOCALES.map((locale) => ({
     url: `${BASE_URL}${legalPath(locale, document)}`,
@@ -65,5 +81,5 @@ const legalRoutes: MetadataRoute.Sitemap = LEGAL_DOCUMENTS.flatMap((document) =>
 );
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  return [...localizedCheckRoutes, ...publicRoutes, ...legalRoutes];
+  return [...localizedCheckRoutes, ...publicRoutes, ...phpRoutes, ...legalRoutes];
 }
