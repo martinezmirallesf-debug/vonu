@@ -1,6 +1,7 @@
 import { resolve4, resolve6 } from "node:dns/promises";
 import { isIP } from "node:net";
 import type { SupportedLocale, WebCheckResult, WebCheckSignal } from "./types";
+import { assessPublicWebSecurity } from "./web-security";
 
 const MAX_REDIRECTS = 4;
 const MAX_HTML_BYTES = 400_000;
@@ -323,6 +324,7 @@ export async function collectWebSignals(input: string, locale: SupportedLocale):
   const paymentRiskTextDetected = /(bank transfer|wire transfer|transferencia bancaria|virement bancaire|überweisung|bitcoin|cryptocurrency|crypto|criptomoneda|kryptowährung|bizum|عملة مشفرة|تحويل بنكي)/i.test(lower);
   const accessProtected = [401, 403, 429].includes(response.status);
   const contentInspectable = html.trim().length > 0;
+  const securityAssessment = assessPublicWebSecurity(response.headers, finalUrl, response.status, contentInspectable);
 
   const signals: WebCheckSignal[] = [];
   let score = 0;
@@ -393,6 +395,7 @@ export async function collectWebSignals(input: string, locale: SupportedLocale):
       legalTextDetected,
       contactTextDetected,
       paymentRiskTextDetected,
+      security: securityAssessment,
     },
     signals,
     limitations,
