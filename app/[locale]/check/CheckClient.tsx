@@ -1721,17 +1721,172 @@ export default function CheckClient({
 
             <div className="grid min-w-0 content-start gap-5">
               {result.version === "vonu-check-v1" && (() => {
-                const php = ({"es":["Seguridad PHP","No podemos verificar la versión de PHP","Desde fuera no podemos confirmar si esta web utiliza PHP ni si su servidor tiene vulnerabilidades. Eso no significa que sea insegura ni que esté protegida.","¿Qué hemos comprobado?","La conexión, la respuesta de la página y otras señales externas del enlace. No hemos realizado una prueba de vulnerabilidades PHP.","Si administras esta web, revisa la versión de PHP en tu alojamiento y consulta los avisos oficiales.","Entender la seguridad PHP"],"en":["PHP security","We cannot verify the PHP version","From the outside, we cannot confirm whether this site uses PHP or whether its server has vulnerabilities. That does not mean it is unsafe or protected.","What did we check?","The connection, page response and other external signals. We did not run a PHP vulnerability scan.","If you manage this site, check the PHP version with your hosting provider and consult official security advisories.","Understand PHP security"],"fr":["Sécurité PHP","Nous ne pouvons pas vérifier la version de PHP","Depuis l’extérieur, nous ne pouvons pas confirmer si ce site utilise PHP ni si son serveur présente des vulnérabilités. Cela ne prouve ni sa sécurité ni son insécurité.","Qu’avons-nous vérifié ?","La connexion, la réponse de la page et d’autres signaux externes. Aucun scan de vulnérabilités PHP n’a été effectué.","Si vous gérez ce site, vérifiez la version de PHP chez votre hébergeur et consultez les avis officiels.","Comprendre la sécurité PHP"],"de":["PHP-Sicherheit","Wir können die PHP-Version nicht überprüfen","Von außen können wir nicht bestätigen, ob diese Website PHP verwendet oder ob ihr Server Sicherheitslücken hat. Das beweist weder Sicherheit noch Unsicherheit.","Was wurde geprüft?","Die Verbindung, die Antwort der Seite und weitere äußere Signale. Es wurde kein PHP-Schwachstellenscan durchgeführt.","Wenn du diese Website verwaltest, prüfe die PHP-Version beim Hostinganbieter und offizielle Sicherheitshinweise.","PHP-Sicherheit verstehen"],"ar":["أمان PHP","لا يمكننا التحقق من إصدار PHP","لا يمكننا من الخارج تأكيد ما إذا كان الموقع يستخدم PHP أو ما إذا كان خادمه يحتوي على ثغرات. هذا لا يثبت أن الموقع آمن أو غير آمن.","ماذا فحصنا؟","الاتصال واستجابة الصفحة وإشارات خارجية أخرى. لم نجرِ فحصًا لثغرات PHP.","إذا كنت تدير الموقع، فتحقق من إصدار PHP لدى شركة الاستضافة وراجع التنبيهات الأمنية الرسمية.","فهم أمان PHP"]} as Record<"es" | "en" | "fr" | "de" | "ar", string[]>)[locale];
+                const copy = ({
+                  es: [
+                    "Protección de tus datos personales",
+                    "Señales de riesgo: evita compartir datos",
+                    "Precaución antes de compartir información",
+                    "Comprobación insuficiente",
+                    "Sin alertas importantes en las señales revisadas",
+                    "Hay señales de riesgo relevantes. No introduzcas contraseñas, datos personales, documentos o datos bancarios sin verificar la web por otra vía.",
+                    "Hemos encontrado señales que requieren revisión. Comprueba quién está detrás de la web antes de registrarte, pagar o compartir documentos.",
+                    "No hemos podido verificar suficientes señales para emitir una recomendación fiable. No interpretes la falta de alertas como garantía de seguridad.",
+                    "No encontramos alertas importantes en las comprobaciones disponibles, pero esto no confirma que el sitio sea legítimo ni que trate tus datos de forma segura.",
+                    "Seguridad técnica de la web",
+                    "Comprobaciones externas observadas. Si administras esta web, estas señales te ayudan a identificar posibles mejoras.",
+                    "HTTPS",
+                    "HSTS",
+                    "Política CSP",
+                    "Formularios hacia otro dominio",
+                    "Seguridad PHP: no verificada",
+                    "No se ha confirmado la tecnología o versión PHP ni se han efectuado pruebas de vulnerabilidades del servidor.",
+                    "Más sobre seguridad PHP",
+                    "Detectado",
+                    "No confirmado",
+                    "No se han visto",
+                    "Detectados",
+                    "Estas comprobaciones no verifican almacenamiento de datos, autenticación, permisos, protección de la base de datos ni cumplimiento normativo.",
+                  ],
+                  en: [
+                    "Protection of your personal data",
+                    "Risk signals: avoid sharing information",
+                    "Take care before sharing information",
+                    "Insufficient evidence",
+                    "No major alerts in the signals checked",
+                    "Relevant risk signals were detected. Do not submit passwords, personal details, documents or banking information without independently verifying the site.",
+                    "Some signs need further review. Verify who operates the website before registering, paying or sharing documents.",
+                    "We could not verify enough signals to provide a reliable recommendation. No detected alert does not mean the website is safe.",
+                    "No major alerts were found in the available checks, but this does not prove the site is legitimate or handles your information safely.",
+                    "Website technical security",
+                    "Observed external checks. If you own this website, these signs can help identify areas to improve.",
+                    "HTTPS",
+                    "HSTS",
+                    "CSP policy",
+                    "Forms submitting to another domain",
+                    "PHP security: not verified",
+                    "PHP technology or version was not confirmed and no server vulnerability testing was performed.",
+                    "Learn about PHP security",
+                    "Observed",
+                    "Not confirmed",
+                    "None observed",
+                    "Detected",
+                    "These checks cannot verify data storage, authentication, permissions, database protection or regulatory compliance.",
+                  ],
+                  fr: [
+                    "Protection de vos données personnelles",
+                    "Signaux de risque : évitez de partager des données",
+                    "Prudence avant de partager des informations",
+                    "Vérification insuffisante",
+                    "Alerte majeure non relevée dans les signaux vérifiés",
+                    "Des signaux de risque existent. Ne communiquez pas vos mots de passe, données personnelles, documents ou coordonnées bancaires sans vérifier le site indépendamment.",
+                    "Certains indices nécessitent une vérification. Identifiez l'exploitant du site avant de vous inscrire, payer ou transmettre des documents.",
+                    "Les vérifications disponibles ne suffisent pas à formuler une recommandation fiable. L'absence d'alerte n'est pas une garantie.",
+                    "Aucune alerte majeure dans les vérifications disponibles, mais cela ne prouve ni la légitimité du site ni la sécurité du traitement de vos données.",
+                    "Sécurité technique du site",
+                    "Contrôles externes observés. Si vous gérez ce site, ces indices peuvent guider les améliorations.",
+                    "HTTPS",
+                    "HSTS",
+                    "Politique CSP",
+                    "Formulaires vers un autre domaine",
+                    "Sécurité PHP : non vérifiée",
+                    "La technologie ou version PHP n'a pas été confirmée et aucun test de vulnérabilité du serveur n'a été effectué.",
+                    "Comprendre la sécurité PHP",
+                    "Observé",
+                    "Non confirmé",
+                    "Aucun observé",
+                    "Détectés",
+                    "Ces contrôles ne vérifient ni le stockage des données, ni l'authentification, ni les permissions, ni la sécurité des bases de données, ni la conformité réglementaire.",
+                  ],
+                  de: [
+                    "Schutz deiner persönlichen Daten",
+                    "Risikosignale: keine Daten übermitteln",
+                    "Vorsicht vor der Weitergabe von Daten",
+                    "Unzureichende Prüfung",
+                    "Keine größeren Warnungen in den geprüften Signalen",
+                    "Es wurden relevante Risiken erkannt. Gib Passwörter, persönliche Daten, Dokumente oder Bankdaten erst nach einer unabhängigen Prüfung ein.",
+                    "Einige Hinweise müssen geprüft werden. Prüfe den Betreiber, bevor du dich anmeldest, bezahlst oder Dokumente teilst.",
+                    "Die verfügbaren Prüfungen reichen für eine verlässliche Empfehlung nicht aus. Keine Warnung bedeutet nicht, dass die Website sicher ist.",
+                    "Keine größeren Warnungen bei den verfügbaren Prüfungen. Dies beweist aber weder die Seriosität noch einen sicheren Umgang mit deinen Daten.",
+                    "Technische Sicherheit der Website",
+                    "Beobachtete externe Prüfungen. Betreiber können diese Hinweise zur Verbesserung nutzen.",
+                    "HTTPS",
+                    "HSTS",
+                    "CSP-Richtlinie",
+                    "Formulare an andere Domains",
+                    "PHP-Sicherheit: nicht geprüft",
+                    "PHP-Technologie und Version wurden nicht bestätigt; Schwachstellen des Servers wurden nicht geprüft.",
+                    "Mehr über PHP-Sicherheit",
+                    "Erkannt",
+                    "Nicht bestätigt",
+                    "Keine beobachtet",
+                    "Erkannt",
+                    "Diese Prüfungen untersuchen weder Datenspeicherung noch Authentifizierung, Berechtigungen, Datenbankschutz oder die Einhaltung rechtlicher Vorgaben.",
+                  ],
+                  ar: [
+                    "حماية بياناتك الشخصية",
+                    "مؤشرات خطر: تجنب مشاركة البيانات",
+                    "توخ الحذر قبل مشاركة المعلومات",
+                    "التحقق غير كافٍ",
+                    "لا توجد تحذيرات كبيرة في الإشارات التي فُحصت",
+                    "تم رصد مؤشرات خطر مهمة. لا تدخل كلمات المرور أو البيانات الشخصية أو المستندات أو البيانات البنكية قبل التحقق من الموقع بشكل مستقل.",
+                    "هناك مؤشرات تحتاج للمراجعة. تحقق من الجهة المشغلة قبل التسجيل أو الدفع أو مشاركة المستندات.",
+                    "لم نتمكن من التحقق من إشارات كافية لتقديم توصية موثوقة. عدم ظهور تحذير لا يعني أن الموقع آمن.",
+                    "لم نجد تحذيرات كبيرة في الفحوص المتاحة، لكن ذلك لا يثبت شرعية الموقع أو سلامة معالجة بياناتك.",
+                    "الأمان التقني للموقع",
+                    "فحوص خارجية مرصودة. إذا كنت تدير الموقع، يمكن أن تساعدك النتائج في تحسين الحماية.",
+                    "HTTPS",
+                    "HSTS",
+                    "سياسة CSP",
+                    "نماذج ترسل إلى نطاق آخر",
+                    "أمان PHP: لم يتم التحقق",
+                    "لم يتم تأكيد تقنية PHP أو إصدارها ولم تُجرَ اختبارات ثغرات للخادم.",
+                    "المزيد عن أمان PHP",
+                    "تم رصده",
+                    "غير مؤكد",
+                    "لم يُرصد",
+                    "تم اكتشافها",
+                    "لا تتحقق هذه الفحوص من تخزين البيانات أو المصادقة أو الصلاحيات أو حماية قواعد البيانات أو الامتثال التنظيمي.",
+                  ],
+                } as Record<SupportedLocale, string[]>)[locale];
+                const malwareMatch = result.facts.urlhausMatch === true;
+                const strongWarning = malwareMatch || !result.facts.usesHttps && result.facts.httpStatus !== null || result.risk.level === "high";
+                const caution = !strongWarning && (result.risk.level === "caution" || result.facts.externalFormActions > 0);
+                const enoughEvidence = result.risk.level === "low" && result.risk.confidence !== "limited" &&
+                  result.facts.usesHttps && (result.facts.httpStatus ?? 0) >= 200 && (result.facts.httpStatus ?? 0) < 400;
+                const assessment = strongWarning ? 0 : caution ? 1 : enoughEvidence ? 3 : 2;
+                const assessmentText = [copy[1], copy[2], copy[3], copy[4]][assessment];
+                const explanation = [copy[5], copy[6], copy[7], copy[8]][assessment];
+                const statusColor = assessment === 0 ? "text-red-300" : assessment === 1 ? "text-amber-300" : assessment === 3 ? "text-emerald-300" : "text-[#79b4ff]";
+                const technicalRows = [
+                  [copy[11], result.facts.usesHttps && result.facts.httpStatus !== null ? copy[18] : copy[19]],
+                  [copy[12], result.signals.some((item) => item.id === "infra-hsts") ? copy[18] : copy[19]],
+                  [copy[13], result.signals.some((item) => item.id === "infra-csp") ? copy[18] : copy[19]],
+                  [copy[14], result.facts.externalFormActions > 0 ? `${copy[21]} (${result.facts.externalFormActions})` : result.facts.httpStatus !== null && result.facts.formCount > 0 ? copy[20] : copy[19]],
+                ];
                 return (
-                  <section className="min-w-0 rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08]">
-                    <h2 className="text-[17px] font-bold text-white">{php[0]}</h2>
-                    <p className="mt-3 text-[14px] font-semibold text-[#79b4ff]">{php[1]}</p>
-                    <p className="mt-2 text-[13px] leading-6 text-slate-300">{php[2]}</p>
-                    <h3 className="mt-4 text-[13px] font-semibold text-white">{php[3]}</h3>
-                    <p className="mt-2 text-[12px] leading-5 text-slate-400">{php[4]}</p>
-                    <p className="mt-3 text-[12px] leading-5 text-slate-300">{php[5]}</p>
-                    <a href={locale === "es" ? "/seguridad-php" : "/es/seguridad-php"} className="mt-4 inline-flex rounded-[12px] bg-[#1a73e8] px-4 py-2.5 text-[12px] font-semibold text-white">{php[6]} →</a>
-                  </section>
+                  <>
+                    <section className="min-w-0 rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08]">
+                      <h2 className="text-[17px] font-bold text-white">{copy[0]}</h2>
+                      <p className={`mt-3 text-[14px] font-semibold ${statusColor}`}>{assessmentText}</p>
+                      <p className="mt-2 text-[13px] leading-6 text-slate-300">{explanation}</p>
+                    </section>
+                    <section className="min-w-0 rounded-[24px] bg-[#141927]/86 p-5 ring-1 ring-white/[0.08]">
+                      <h2 className="text-[17px] font-bold text-white">{copy[9]}</h2>
+                      <p className="mt-2 text-[12px] leading-5 text-slate-400">{copy[10]}</p>
+                      <dl className="mt-4 grid gap-3 text-[12px]">
+                        {technicalRows.map(([label, value]) => (
+                          <div key={label} className="flex justify-between gap-3">
+                            <dt className="min-w-0 text-slate-400">{label}</dt>
+                            <dd className="shrink-0 text-right font-medium text-slate-200">{value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                      <h3 className="mt-4 text-[13px] font-semibold text-[#79b4ff]">{copy[15]}</h3>
+                      <p className="mt-2 text-[12px] leading-5 text-slate-400">{copy[16]}</p>
+                      <p className="mt-3 text-[12px] leading-5 text-slate-400">{copy[22]}</p>
+                      <a href={locale === "es" ? "/seguridad-php" : `/${locale}/seguridad-php`} className="mt-4 inline-flex rounded-[12px] bg-[#1a73e8] px-4 py-2.5 text-[12px] font-semibold text-white">{copy[17]} →</a>
+                    </section>
+                  </>
                 );
               })()}
               {result.version === "vonu-check-v1" ? (
